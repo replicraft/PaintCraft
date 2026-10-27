@@ -44,6 +44,16 @@ pub(super) enum PreparedProfile {
     Avif(crate::avif::ImportAssessment),
     AvifSdr(crate::avif::sdr::ImportAssessment),
 }
+pub(super) enum Selection {
+    Fixed,
+    Avif(crate::avif::FamilyAssessment),
+    Jxr(crate::jxr::NativeImportAssessment),
+}
+impl Selection {
+    fn writer(&self) -> bool {
+        matches!(self, Self::Jxr(value) if value.is_writer_compatible())
+    }
+}
 impl PreparedProfile {
     fn jxr(&self) -> Option<&crate::jxr::ImportAssessment> {
         match self {
@@ -137,7 +147,7 @@ impl Job {
             lease,
             host_check,
             current_owner,
-            |_, _, _| Ok(None),
+            |_, _, _| Ok(Selection::Fixed),
             launch,
         )
     }
@@ -172,7 +182,7 @@ impl Job {
                 };
                 admit(codec, &selected)?;
                 check()?;
-                Ok(Some(selected))
+                Ok(Selection::Avif(selected))
             },
             launch,
         )
@@ -185,11 +195,7 @@ impl Job {
         lease: ResourceLease,
         host_check: &dyn Fn() -> Result<()>,
         current_owner: &dyn Fn() -> Result<Owner>,
-        select: impl FnOnce(
-            &[u8],
-            u64,
-            &dyn Fn() -> Result<()>,
-        ) -> Result<Option<crate::avif::FamilyAssessment>>,
+        select: impl FnOnce(&[u8], u64, &dyn Fn() -> Result<()>) -> Result<Selection>,
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     ) -> Result<PreparedImport> {
         if !matches!(
@@ -210,20 +216,21 @@ impl Job {
         let owner = self.owner;
         let fixed_codec = self.codec;
         let (document, sha256, profile) = self.consume_profile(
-            writer,
             host_check,
             current_owner,
             |bytes, pixels, check| {
                 let selected = select(bytes, pixels, check)?;
                 let codec = match &selected {
-                    Some(crate::avif::FamilyAssessment::Identity(_)) => Codec::AvifSrgb8,
-                    Some(crate::avif::FamilyAssessment::Sdr(_)) => Codec::AvifSdr8,
-                    None => fixed_codec,
+                    Selection::Avif(crate::avif::FamilyAssessment::Identity(_)) => Codec::AvifSrgb8,
+                    Selection::Avif(crate::avif::FamilyAssessment::Sdr(_)) => Codec::AvifSdr8,
+                    _ => fixed_codec,
                 };
-                Ok((codec, selected))
+                let mode = writer || selected.writer();
+                Ok((codec, selected, mode))
             },
             launch,
             |request, frame, selected, _, check| {
+                let writer = writer || selected.writer();
                 let Pixels::SrgbRgba8(rgba) = frame.pixels else {
                     return Err(unsupported(
                         "Native gray encoding has no assigned document color conversion",
@@ -232,16 +239,21 @@ impl Job {
                 let profile = match request.header.codec {
                     Codec::JxlRgba8 => PreparedProfile::Jxl,
                     Codec::JxrRgb8 => {
-                        let assess = if writer {
-                            crate::jxr::assess_writer_import
-                        } else {
-                            crate::jxr::assess_import
+                        let assessment = match selected {
+                            Selection::Jxr(value) => value.assessment().clone(),
+                            _ => {
+                                let assess = if writer {
+                                    crate::jxr::assess_writer_import
+                                } else {
+                                    crate::jxr::assess_import
+                                };
+                                assess(
+                                    request.source.as_slice(),
+                                    u64::from(request.header.pixels),
+                                    check,
+                                )?
+                            }
                         };
-                        let assessment = assess(
-                            request.source.as_slice(),
-                            u64::from(request.header.pixels),
-                            check,
-                        )?;
                         let source = assessment.source();
                         if (frame.width, frame.height) != (source.width, source.height)
                             || rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 255)
@@ -258,11 +270,13 @@ impl Job {
                     }
                     Codec::AvifSrgb8 => {
                         let assessment = match selected {
-                            Some(crate::avif::FamilyAssessment::Identity(assessment)) => assessment,
-                            Some(_) => {
+                            Selection::Avif(crate::avif::FamilyAssessment::Identity(
+                                assessment,
+                            )) => assessment,
+                            Selection::Avif(_) | Selection::Jxr(_) => {
                                 return Err(invalid("AVIF selected assessment/profile mismatch"));
                             }
-                            None => crate::avif::assess_import(
+                            Selection::Fixed => crate::avif::assess_import(
                                 request.source.as_slice(),
                                 u64::from(request.header.pixels),
                                 check,
@@ -281,11 +295,13 @@ impl Job {
                     }
                     Codec::AvifSdr8 => {
                         let assessment = match selected {
-                            Some(crate::avif::FamilyAssessment::Sdr(assessment)) => assessment,
-                            Some(_) => {
+                            Selection::Avif(crate::avif::FamilyAssessment::Sdr(assessment)) => {
+                                assessment
+                            }
+                            Selection::Avif(_) | Selection::Jxr(_) => {
                                 return Err(invalid("AVIF selected assessment/profile mismatch"));
                             }
-                            None => crate::avif::sdr::assess_import(
+                            Selection::Fixed => crate::avif::sdr::assess_import(
                                 request.source.as_slice(),
                                 u64::from(request.header.pixels),
                                 check,
@@ -414,7 +430,7 @@ impl PreparedImport {
             }
             PreparedProfile::Jxr(_) => NATIVE_JXR_IMPORT_VARIANT,
             PreparedProfile::JxrWriter(_) => {
-                super::super::jxr_encode::candidate::WRITER_IMPORT_VARIANT
+                super::super::jxr_encode::qualified::WRITER_IMPORT_VARIANT
             }
             PreparedProfile::Heif(_) => NATIVE_HEIF_IMPORT_VARIANT,
             PreparedProfile::Avif(_) => NATIVE_AVIF_IMPORT_VARIANT,

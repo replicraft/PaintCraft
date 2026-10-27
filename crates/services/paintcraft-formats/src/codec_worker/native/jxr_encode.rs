@@ -1,4 +1,4 @@
-//! Private supervised encoding. No production discovery, export gate or executor.
+//! Supervised encoding with the exact final contract; no export gate or executor.
 use super::super::jxr_encode as wire;
 use super::*;
 use paintcraft_core::types::resources::ResourceLease;
@@ -86,20 +86,20 @@ fn check_owner(
     Ok(())
 }
 fn installed(check: &dyn Fn() -> Result<()>) -> Result<codec_helper::VerifiedEncoderHelper> {
-    let record = wire::candidate::build_record(env!("CARGO_PKG_VERSION"))?;
+    let record = wire::qualified::build_record(env!("CARGO_PKG_VERSION"))?;
     codec_helper::discover_encoder(
         codec_helper::EncoderContract {
             decode: codec_helper::Contract {
                 application_version: env!("CARGO_PKG_VERSION"),
                 protocol_version: PROTOCOL_VERSION,
-                profile: wire::candidate::NATIVE_PROFILE,
+                profile: wire::qualified::NATIVE_PROFILE,
                 requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: wire::candidate::IMPORT_VARIANTS,
-                build_marker: wire::candidate::BUILD_RECORD_MARKER,
+                qualified_import_variants: wire::qualified::IMPORT_VARIANTS,
+                build_marker: wire::qualified::BUILD_RECORD_MARKER,
                 build_record: &record,
             },
             encode_protocol_version: wire::VERSION,
-            qualified_export_variants: wire::candidate::EXPORT_VARIANTS,
+            qualified_export_variants: wire::qualified::EXPORT_VARIANTS,
         },
         check,
     )
@@ -135,7 +135,7 @@ impl JxrEncodeJob {
         let request = wire::Request::capture(self.layout, rgb, self.owner, &check)?;
         admit(self.layout, wire::PROFILE)?;
         check()?;
-        // The capability is obtained here from one exact installed candidate;
+        // The capability is obtained here from one exact installed qualified helper;
         // callers cannot inject a generic VerifiedHelper or an executable path.
         let helper = installed(&check)?;
         let executable = helper.checked_executable(&check)?;

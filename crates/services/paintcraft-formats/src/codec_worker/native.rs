@@ -68,15 +68,22 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, S, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
-        self.consume_profile(false, host_check, current_owner, select, launch, consume)
+        self.consume_profile(
+            host_check,
+            current_owner,
+            |bytes, pixels, check| {
+                let (codec, selected) = select(bytes, pixels, check)?;
+                Ok((codec, selected, false))
+            },
+            launch,
+            consume,
+        )
     }
-    #[allow(clippy::too_many_arguments)] // One shared supervisor; mode is selected by typed preparation only.
     fn consume_profile<T, S>(
         self,
-        writer: bool,
         host_check: &dyn Fn() -> Result<()>,
         current_owner: &dyn Fn() -> Result<Owner>,
-        select: impl FnOnce(&[u8], u64, &dyn Fn() -> Result<()>) -> Result<(Codec, S)>,
+        select: impl FnOnce(&[u8], u64, &dyn Fn() -> Result<()>) -> Result<(Codec, S, bool)>,
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, S, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
@@ -123,7 +130,7 @@ impl Job {
                 ));
             }
         }
-        let (codec, selected) = select(&source, self.pixels, &check)?;
+        let (codec, selected, writer) = select(&source, self.pixels, &check)?;
         check()?;
         let request = Request::capture_for(codec, Arc::new(source), self.owner, self.pixels)?;
         self.identity
@@ -167,7 +174,7 @@ fn installed_helper(
     codec: Codec,
     version: &str,
     check: &dyn Fn() -> Result<()>,
-) -> Result<codec_helper::VerifiedHelper> {
+) -> Result<codec_helper::VerifiedDecoderInstallation> {
     let legacy_record = native_build_record(version)?;
     let avif_record = native_avif_build_record(version)?;
     let sdr_record = native_avif_sdr_build_record(version)?;
@@ -208,12 +215,32 @@ fn installed_helper(
         build_marker: FLOAT_BUILD_RECORD_MARKER,
         build_record: &float_record,
     };
-    match codec {
-        Codec::HdrSdr8 | Codec::ExrSdr8 => codec_helper::discover(float, check),
-        Codec::AvifSdr8 => codec_helper::discover_compatible(sdr, float, check),
-        Codec::AvifSrgb8 => codec_helper::discover_compatible_three(avif, sdr, float, check),
-        _ => codec_helper::discover_compatible_four(base, avif, sdr, float, check),
-    }
+    let historical = [base, avif, sdr, float];
+    let first = match codec {
+        Codec::HdrSdr8 | Codec::ExrSdr8 => 3,
+        Codec::AvifSdr8 => 2,
+        Codec::AvifSrgb8 => 1,
+        _ => 0,
+    };
+    let legacy = &historical[first..];
+    let qualified_record = super::jxr_encode::qualified::build_record(version)?;
+    codec_helper::discover_decoder_compatible(
+        legacy,
+        codec_helper::EncoderContract {
+            decode: codec_helper::Contract {
+                application_version: version,
+                protocol_version: PROTOCOL_VERSION,
+                profile: super::jxr_encode::qualified::NATIVE_PROFILE,
+                requested_heap_ceiling_bytes: HEAP_BYTES,
+                qualified_import_variants: super::jxr_encode::qualified::IMPORT_VARIANTS,
+                build_marker: super::jxr_encode::qualified::BUILD_RECORD_MARKER,
+                build_record: &qualified_record,
+            },
+            encode_protocol_version: super::jxr_encode::VERSION,
+            qualified_export_variants: super::jxr_encode::qualified::EXPORT_VARIANTS,
+        },
+        check,
+    )
 }
 #[cfg(test)]
 mod compatibility_tests;

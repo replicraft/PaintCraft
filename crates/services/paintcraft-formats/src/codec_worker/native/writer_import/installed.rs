@@ -1,4 +1,4 @@
-//! Called only inside the actual copied private schema3 installation fixture.
+//! Called only inside the actual copied final schema3 installation fixture.
 use super::*;
 use paintcraft_runtime::process;
 use std::{
@@ -90,9 +90,9 @@ pub(super) fn qualify(root: &Path) {
             .iter()
             .flat_map(|p| [p[0], p[1], p[2], 255])
             .collect::<Vec<_>>();
-        let source = crate::jxr::assess_writer_import(&raw, 1_048_576, &|| Ok(()))
-            .unwrap()
-            .source();
+        let selected = crate::jxr::assess_native_import(&raw, 1_048_576, &|| Ok(())).unwrap();
+        let writer = selected.is_writer_compatible();
+        let source = selected.assessment().source();
         let tiles_x = u64::from(source.width).checked_add(255).unwrap() / 256;
         let tiles_y = u64::from(source.height).checked_add(255).unwrap() / 256;
         let resident_quote = tiles_x
@@ -119,13 +119,24 @@ pub(super) fn qualify(root: &Path) {
             expected_sha256: Some(hex(&Sha256::digest(&raw))),
         };
         let prepare = |stale, residency: SharedBudget| {
-            job().prepare_jxr_writer(
+            job().prepare_jxr_family(
                 residency,
                 ResourceLease::new(budget.reserve(quote).unwrap()),
                 &|| Ok(()),
                 &|| Ok(current.get()),
+                |assessment| {
+                    assert_eq!(assessment, &selected);
+                    Ok(())
+                },
                 |context, check| {
-                    assert_eq!(context.arguments[0], "--jxr-writer-source");
+                    assert_eq!(
+                        context.arguments[0],
+                        if writer {
+                            "--jxr-writer-source"
+                        } else {
+                            "--jxr-source"
+                        }
+                    );
                     let private = PathBuf::from(&context.arguments[1]);
                     assert_eq!(fs::read(&private).unwrap(), raw);
                     *backing.borrow_mut() = Some(private.parent().unwrap().to_owned());
@@ -161,7 +172,14 @@ pub(super) fn qualify(root: &Path) {
         assert!(!input.with_extension("pcnd").exists());
         let prepared = prepare(false, resident.clone()).unwrap();
         assert!(!backing.borrow().as_ref().unwrap().exists());
-        assert_eq!(prepared.decoder_profile(), candidate::WRITER_IMPORT_VARIANT);
+        assert_eq!(
+            prepared.decoder_profile(),
+            if writer {
+                qualified::WRITER_IMPORT_VARIANT
+            } else {
+                NATIVE_JXR_IMPORT_VARIANT
+            }
+        );
         assert_eq!(prepared.losses(), &["jxr-resolution-not-retained"]);
         assert_eq!(budget.usage().reserved, quote);
         pixels(prepared.document(), &expected);
@@ -199,19 +217,21 @@ pub(super) fn qualify(root: &Path) {
         assert!(!backing.borrow().as_ref().unwrap().exists());
         assert_eq!(budget.usage().reserved, 0);
         current.set(owner);
-        // An exact schema3 installation is never a fifth legacy decode choice.
-        assert_eq!(
-            job()
-                .consume(
-                    &|| Ok(()),
-                    &|| Ok(owner),
-                    |_, _| panic!("no default schema3 launch"),
-                    |_, _, _, _| Ok(())
-                )
-                .unwrap_err()
-                .code,
-            ErrorCode::CapabilityUnsupported
-        );
+        // Generic short-reader admission stays short-only even with a final helper.
+        if crate::jxr::assess_import(&raw, 1_048_576, &|| Ok(())).is_err() {
+            assert_eq!(
+                job()
+                    .consume(
+                        &|| Ok(()),
+                        &|| Ok(owner),
+                        |_, _| panic!("long source must not enter generic short-reader launch"),
+                        |_, _, _, _| Ok(())
+                    )
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported
+            );
+        }
         assert_eq!(fs::read(&input).unwrap(), raw);
     }
 }

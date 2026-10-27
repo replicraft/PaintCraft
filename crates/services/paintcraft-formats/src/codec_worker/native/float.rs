@@ -143,19 +143,7 @@ impl Job {
         )?;
         self.identity
             .verify_bytes(&self.input, self.length, &raw_sha, &check)?;
-        let record = native_float_build_record(&self.application_version)?;
-        let helper = codec_helper::discover(
-            codec_helper::Contract {
-                application_version: &self.application_version,
-                protocol_version: PROTOCOL_VERSION,
-                profile: FLOAT_NATIVE_PROFILE,
-                requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: QUALIFIED_FLOAT_IMPORT_VARIANTS,
-                build_marker: FLOAT_BUILD_RECORD_MARKER,
-                build_record: &record,
-            },
-            &check,
-        )?;
+        let helper = super::installed_helper(self.codec, &self.application_version, &check)?;
         let executable = helper.checked_executable(&check)?;
         let remaining = self
             .deadline
