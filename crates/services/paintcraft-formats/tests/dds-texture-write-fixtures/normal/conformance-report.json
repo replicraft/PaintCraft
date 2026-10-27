@@ -1,0 +1,3215 @@
+{
+    "verifier_sha256": "9bcddf2be1510515475cf1972b51854607ac7c79bb8d461163a90e6cf97809ab",
+    "pillow_version": "13.0.0",
+    "python_version": "3.14.0 (v3.14.0:ebf955df7a8, Oct  7 2025, 08:20:14) [Clang 16.0.0 (clang-1600.0.26.6)]",
+    "imaging_binary_sha256": "3b2c5b011e928b71339ccc938c75363562bcecca26a5520f42af6d314569ac9f",
+    "python_plugin_sha256": {
+        "DdsImagePlugin.py": "133b4bfe48e78e3096e065431cfe873d00b7abb4b5039833b297692e7fa38c9c",
+        "Image.py": "04050c2d4dd67931ce8c3cfdbc49ac4a6944d379d037c8f1d5eeeb67fba29a10"
+    },
+    "scope": "original DX10 fields and all mip extents independently parsed; each mip Pillow-decodes a new single-level wrapper; SRGB is separately rewrapped UNORM for pixel evidence only",
+    "cases": [
+        {
+            "file": "17x1-Bc1-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "75dddf5bc4b32e43b6f4ae833429e6412176f685fa9219ad602606926c0fbf2f",
+            "source_rgba_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "9da44797dc46d0575f150a9149237caf27bbc15ac3977300a0245eced98687b3",
+                    "intended_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "9b001f7a5dd69e88f65d492cb3d53ca387c2885b796119b18251ea6c698ba4a5",
+                    "intended_sha256": "b5469818ce7aaabb9d6d8b683c8346aab763a6f734b739eacbd397293b22b571",
+                    "rgb_max_error": 49,
+                    "rgb_rms_error": 15.759917512474486,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "ee91a08dae4f6812d4e5be3aa495ea81f51b1e1cac8a9c8a9cc4286c09b122fa",
+                    "intended_sha256": "b0100fc22ff55ae6cf9c5fc9ef85e93f8e1080db1e5f96fdc7666a1e051f7750",
+                    "rgb_max_error": 66,
+                    "rgb_rms_error": 29.82029510249689,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "4035516ae6e02b4c0914940c80bc64d9d8cc222e8d657eadf456167d87255de6",
+                    "intended_sha256": "ceefa33ac789c9e9bb5b0fdcd11ab407b2cccfb030c42b8c26aca7638e927f8e",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 2.041241452319315,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "49a3eb31363bced4bd1cc6310cb109ed0a00af49f809c4d7a7dc10182e6fd682",
+                    "intended_sha256": "49a3eb31363bced4bd1cc6310cb109ed0a00af49f809c4d7a7dc10182e6fd682",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Bc1-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "75465701736077064048a167dbf4a348397dfe64d231e19d9fbb15388b99cf48",
+            "source_rgba_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "9da44797dc46d0575f150a9149237caf27bbc15ac3977300a0245eced98687b3",
+                    "intended_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "c80eb9c1d900b1f0e0ad6c712662b5298f6044ecff1c5372168fe44e28be2a8b",
+                    "intended_sha256": "32ddc089dbb217e1984753f11a098b578d2b60f647890b80c6f580e513509464",
+                    "rgb_max_error": 116,
+                    "rgb_rms_error": 32.506409624359726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "c329153ee646169bddac915e0ae666bdbd628edc17bd99b47db374bc97fa1281",
+                    "intended_sha256": "ae06b7d1d94d5bdce89dcdcee698b33dae5b7c2a78218156849ba3ea639a917b",
+                    "rgb_max_error": 58,
+                    "rgb_rms_error": 27.299267389437397,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "ef6abf24fad1244f2d09538fb40e674705ee7712af5ef2b9e5fad27b16f6d2a3",
+                    "intended_sha256": "60cdad3ff8fe6f5656052c608a74b2be3064149df79d5c5fb11203543ddf83f5",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "cea7c562d1006fb9ce237667347b0fea7c11c8ee18261ba9619da2f65bf7547d",
+                    "intended_sha256": "cbcdd27dcfd60fa3b3a443a97cdd687700dc650a2e348ad32db9afe4b0b1bc90",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Bc1-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "1484816a6a8786c1e785d89c33aba08855d4c924f59119aeb45be775295c791c",
+            "source_rgba_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "9da44797dc46d0575f150a9149237caf27bbc15ac3977300a0245eced98687b3",
+                    "intended_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "9b001f7a5dd69e88f65d492cb3d53ca387c2885b796119b18251ea6c698ba4a5",
+                    "intended_sha256": "b5469818ce7aaabb9d6d8b683c8346aab763a6f734b739eacbd397293b22b571",
+                    "rgb_max_error": 49,
+                    "rgb_rms_error": 15.759917512474486,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "ee91a08dae4f6812d4e5be3aa495ea81f51b1e1cac8a9c8a9cc4286c09b122fa",
+                    "intended_sha256": "b0100fc22ff55ae6cf9c5fc9ef85e93f8e1080db1e5f96fdc7666a1e051f7750",
+                    "rgb_max_error": 66,
+                    "rgb_rms_error": 29.82029510249689,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "4035516ae6e02b4c0914940c80bc64d9d8cc222e8d657eadf456167d87255de6",
+                    "intended_sha256": "ceefa33ac789c9e9bb5b0fdcd11ab407b2cccfb030c42b8c26aca7638e927f8e",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 2.041241452319315,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "49a3eb31363bced4bd1cc6310cb109ed0a00af49f809c4d7a7dc10182e6fd682",
+                    "intended_sha256": "49a3eb31363bced4bd1cc6310cb109ed0a00af49f809c4d7a7dc10182e6fd682",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 72"
+            }
+        },
+        {
+            "file": "17x1-Bc1-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "01cc1a90f85957508f1bb13affe638859607c78942fb91444a183e5d43de2720",
+            "source_rgba_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "9da44797dc46d0575f150a9149237caf27bbc15ac3977300a0245eced98687b3",
+                    "intended_sha256": "b412f26746c9217255db99d22183a4b552dce26f1b63f325190fc5c01f10ea78",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "c80eb9c1d900b1f0e0ad6c712662b5298f6044ecff1c5372168fe44e28be2a8b",
+                    "intended_sha256": "32ddc089dbb217e1984753f11a098b578d2b60f647890b80c6f580e513509464",
+                    "rgb_max_error": 116,
+                    "rgb_rms_error": 32.506409624359726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "c329153ee646169bddac915e0ae666bdbd628edc17bd99b47db374bc97fa1281",
+                    "intended_sha256": "ae06b7d1d94d5bdce89dcdcee698b33dae5b7c2a78218156849ba3ea639a917b",
+                    "rgb_max_error": 58,
+                    "rgb_rms_error": 27.299267389437397,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "ef6abf24fad1244f2d09538fb40e674705ee7712af5ef2b9e5fad27b16f6d2a3",
+                    "intended_sha256": "60cdad3ff8fe6f5656052c608a74b2be3064149df79d5c5fb11203543ddf83f5",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "cea7c562d1006fb9ce237667347b0fea7c11c8ee18261ba9619da2f65bf7547d",
+                    "intended_sha256": "cbcdd27dcfd60fa3b3a443a97cdd687700dc650a2e348ad32db9afe4b0b1bc90",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 72"
+            }
+        },
+        {
+            "file": "17x1-Bc2-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "11dfe153a794868bbcb5201e7857cff287708059373bd96c8be85ce63b03f06d",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "3e190713c4457dfa209ad79df928f23f652d06761f27f1793cecb5130644a1cf",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "ef8b8573c4a79ab260dfb9f2eed1327b3f9318f15ce0eb9bdb87d8e086d2f929",
+                    "intended_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "rgb_max_error": 27,
+                    "rgb_rms_error": 13.363507523600731,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.373213921133975
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "542ffa3e29e2a3a4a9d3660b8d509e39a217604d009704b02c1f8309d771eb9f",
+                    "intended_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "rgb_max_error": 54,
+                    "rgb_rms_error": 23.939158993860527,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.873670062235365
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "8b5e2d362acaf0883a40b439d7fdddfeadffead35ba0dd3697a1390e96e15769",
+                    "intended_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.041241452319315,
+                    "alpha_max_error": 6,
+                    "alpha_rms_error": 5.0990195135927845
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "31d375cdaed8dda82f6bbd88599f440b04a821fbc5c5ecf3d311ac347298c3ae",
+                    "intended_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 4,
+                    "alpha_rms_error": 4.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Bc2-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "5aa3a4136fa730e04521b2bfed7606c05074b3436fac9c81b894d3f30bdf1f6e",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "3e190713c4457dfa209ad79df928f23f652d06761f27f1793cecb5130644a1cf",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "104e13353e937d8600e8247a4cf2052e4c2619af1d72e7906b8a2c92736c7d73",
+                    "intended_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "rgb_max_error": 116,
+                    "rgb_rms_error": 32.506409624359726,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 2.8284271247461903
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "344c6dfad5e69a0ba0ac19b24ec16f7beef59d26548d87627ae8782b47ddbb51",
+                    "intended_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "rgb_max_error": 58,
+                    "rgb_rms_error": 27.299267389437397,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "1771de764039699d8d08ee8b46865187b3dbea414643a5b565f7203e2b50c272",
+                    "intended_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.656854249492381
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "6ab62cd23b5694bf56babfee03872ebcf9f66466eba987bbcf7bb6b67aca2668",
+                    "intended_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Bc2-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "a2cf538f3b8f0adaaf290cf19027f8cef1fc06fa0b43b3fbf3f1807346fd8277",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "3e190713c4457dfa209ad79df928f23f652d06761f27f1793cecb5130644a1cf",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "ef8b8573c4a79ab260dfb9f2eed1327b3f9318f15ce0eb9bdb87d8e086d2f929",
+                    "intended_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "rgb_max_error": 27,
+                    "rgb_rms_error": 13.363507523600731,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.373213921133975
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "542ffa3e29e2a3a4a9d3660b8d509e39a217604d009704b02c1f8309d771eb9f",
+                    "intended_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "rgb_max_error": 54,
+                    "rgb_rms_error": 23.939158993860527,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.873670062235365
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "8b5e2d362acaf0883a40b439d7fdddfeadffead35ba0dd3697a1390e96e15769",
+                    "intended_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.041241452319315,
+                    "alpha_max_error": 6,
+                    "alpha_rms_error": 5.0990195135927845
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "31d375cdaed8dda82f6bbd88599f440b04a821fbc5c5ecf3d311ac347298c3ae",
+                    "intended_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 4,
+                    "alpha_rms_error": 4.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 75"
+            }
+        },
+        {
+            "file": "17x1-Bc2-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "aae5c9cfc19a4acda9ba273d1dab402432885484ee9e977fd4078d782094d956",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "3e190713c4457dfa209ad79df928f23f652d06761f27f1793cecb5130644a1cf",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "104e13353e937d8600e8247a4cf2052e4c2619af1d72e7906b8a2c92736c7d73",
+                    "intended_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "rgb_max_error": 116,
+                    "rgb_rms_error": 32.506409624359726,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 2.8284271247461903
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "344c6dfad5e69a0ba0ac19b24ec16f7beef59d26548d87627ae8782b47ddbb51",
+                    "intended_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "rgb_max_error": 58,
+                    "rgb_rms_error": 27.299267389437397,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "1771de764039699d8d08ee8b46865187b3dbea414643a5b565f7203e2b50c272",
+                    "intended_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.656854249492381
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "6ab62cd23b5694bf56babfee03872ebcf9f66466eba987bbcf7bb6b67aca2668",
+                    "intended_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 75"
+            }
+        },
+        {
+            "file": "17x1-Bc3-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "9adb68abb05419fc12bd62e187e60009aa831645b09ca6ae8d9ca32902927987",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "e9520fc237f7568752c72c529e1745072305bc9573ad1340a930bb31bd57c13e",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "b17243fe7ea5c1eb68ae71439cb77673ef87c8cddec41348d1293bc2c4f54e8c",
+                    "intended_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "rgb_max_error": 27,
+                    "rgb_rms_error": 13.363507523600731,
+                    "alpha_max_error": 5,
+                    "alpha_rms_error": 2.850438562747845
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "3b83dcdf124c21da759c1c5ed76f30a6efe873a962a7da5a4e7b98b241bd2cc2",
+                    "intended_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "rgb_max_error": 54,
+                    "rgb_rms_error": 23.939158993860527,
+                    "alpha_max_error": 1,
+                    "alpha_rms_error": 0.5
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "6862f6f155aa15011bbe79353bb4752cf75a09663969945de36af88b21843dfa",
+                    "intended_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.041241452319315,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "73d75e2f49025fcec6c746e835ce4351ffd4abc80d57437308838ff9fde7e51e",
+                    "intended_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Bc3-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "54c7fcd21f032423699190b452f64fcca485936b97ee4ccc27e7173288db9344",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "e9520fc237f7568752c72c529e1745072305bc9573ad1340a930bb31bd57c13e",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "ec4c425db5d5ea9064a95e88e56c0e3476514695f3e2a7f9b0869204c8445fee",
+                    "intended_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "rgb_max_error": 116,
+                    "rgb_rms_error": 32.506409624359726,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 4.387482193696061
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "a5bc31f19196ba318ce1f6dbbbea406f4ca89252dd3897b50af68c73cefd50b7",
+                    "intended_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "rgb_max_error": 58,
+                    "rgb_rms_error": 27.299267389437397,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "e6614960905afb6200c4d46e808aa07f499c080450613180f5a8ae885ebb9ea0",
+                    "intended_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "6ab62cd23b5694bf56babfee03872ebcf9f66466eba987bbcf7bb6b67aca2668",
+                    "intended_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Bc3-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "7c12d54c2cec6ad2f0adcaea26656668ca2a81369fd2b60a31987282f9731ed6",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "e9520fc237f7568752c72c529e1745072305bc9573ad1340a930bb31bd57c13e",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "b17243fe7ea5c1eb68ae71439cb77673ef87c8cddec41348d1293bc2c4f54e8c",
+                    "intended_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "rgb_max_error": 27,
+                    "rgb_rms_error": 13.363507523600731,
+                    "alpha_max_error": 5,
+                    "alpha_rms_error": 2.850438562747845
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "3b83dcdf124c21da759c1c5ed76f30a6efe873a962a7da5a4e7b98b241bd2cc2",
+                    "intended_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "rgb_max_error": 54,
+                    "rgb_rms_error": 23.939158993860527,
+                    "alpha_max_error": 1,
+                    "alpha_rms_error": 0.5
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "6862f6f155aa15011bbe79353bb4752cf75a09663969945de36af88b21843dfa",
+                    "intended_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.041241452319315,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "73d75e2f49025fcec6c746e835ce4351ffd4abc80d57437308838ff9fde7e51e",
+                    "intended_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 78"
+            }
+        },
+        {
+            "file": "17x1-Bc3-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "1e1a297f569907dd9654339950a8012b90664528c2e37d176e56ecda7d482e7e",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "e9520fc237f7568752c72c529e1745072305bc9573ad1340a930bb31bd57c13e",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 24,
+                    "rgb_rms_error": 6.178711078229447,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "ec4c425db5d5ea9064a95e88e56c0e3476514695f3e2a7f9b0869204c8445fee",
+                    "intended_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "rgb_max_error": 116,
+                    "rgb_rms_error": 32.506409624359726,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 4.387482193696061
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "a5bc31f19196ba318ce1f6dbbbea406f4ca89252dd3897b50af68c73cefd50b7",
+                    "intended_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "rgb_max_error": 58,
+                    "rgb_rms_error": 27.299267389437397,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "e6614960905afb6200c4d46e808aa07f499c080450613180f5a8ae885ebb9ea0",
+                    "intended_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "6ab62cd23b5694bf56babfee03872ebcf9f66466eba987bbcf7bb6b67aca2668",
+                    "intended_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 78"
+            }
+        },
+        {
+            "file": "17x1-Rgba8-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "27a8987edac73b138c635dcec93376ad50e8f8479cebab2655a91af85899301d",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "intended_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "intended_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "intended_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "intended_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Rgba8-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "94e97d0bd2e118fee40109af059e78c0c2fa551b24fe66340f5f24e56f2a8327",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "intended_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "intended_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "intended_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "intended_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "17x1-Rgba8-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "8f82deb08bfc39c3ff47eb7ada7e6df56c54903d62b68653a1f6f67ce993f1b7",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "intended_sha256": "438ee9a8f927724d2e37247695bee008d823b67c7f530422375aeab733c1ad0c",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "intended_sha256": "967e5cb6ca39a2213d28091f400f123ee3556e8e732de44046f2633ae1805487",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "intended_sha256": "f3455e4da8c046196200089ee4888569e3745b14d59b12ab4ee82ef99158cf8f",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "intended_sha256": "cbaf93466b990ddaad812acadf7550d09bb93324eb62cb62d06f35fa0ebb00da",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": "accepted"
+        },
+        {
+            "file": "17x1-Rgba8-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "1825822f05b89f0cdeae271748a2f2aaa92d710d9c1f69d38449dc2602766db0",
+            "source_rgba_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 17,
+                    "height": 1,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "intended_sha256": "5a114c318ca416b931fa9a1c0754b87ab1dc55a970880eb86548d8071929a2a2",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 8,
+                    "height": 1,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "intended_sha256": "ca15b02489b49c294bcf359400ca8626af40d0dbe9e91931d774dd2c1474d331",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 4,
+                    "height": 1,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "intended_sha256": "705545f76eabdc844cd2fba54c5d58faea13895ebaf474a581c60ef1f6b1d274",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 2,
+                    "height": 1,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "intended_sha256": "1c38444f2f45d4777e1b31b3ff8666623ec9dacc85e4b7212e06c5d6a2368177",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "intended_sha256": "a5511c348a3f661aa6cf66726978ca26b73af8b04366f57747caedfc7a3881d1",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": "accepted"
+        },
+        {
+            "file": "1x17-Bc1-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "e2fc37dd29375629460d892e17f73421cd416ec985149c7dce4b7b02f51c76aa",
+            "source_rgba_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "b2783a237a8b23b05d13440d9b37003f4f60b68a55988d152dd72e2d2f60a8ee",
+                    "intended_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "b339dd69ccd4a3a1df3d817421afaf484f9ca8edaaf93830d5385859375986f3",
+                    "intended_sha256": "4137d891ab80cf0b85d9b669440be1a5cf2695ea46e0580ac36ef35e52e95855",
+                    "rgb_max_error": 15,
+                    "rgb_rms_error": 5.762667206540157,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "b3511007fccb4044049a5d0f9dc98f69d9d94e2912290f4254859beefa6322db",
+                    "intended_sha256": "f060831c7b653c5fefc54fee8c134c5ca65eee8e7c752ce3d92cd39e9498d7a0",
+                    "rgb_max_error": 50,
+                    "rgb_rms_error": 23.785499784532593,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "98868a0fbe00e901ed9d47fcbe3a9a05bf7ade4c8ae9249c7c0c5468a72bff3b",
+                    "intended_sha256": "0b082ace2f20562a086d002a52f319226334c068a1ada7da60aa1cd3adbedcf4",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.48327740429189,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "276869470b8e8afcd61256a62ed329473e669007391db0f887f82bb2032fb0f4",
+                    "intended_sha256": "a5576f54995e6d3dd3b40bd1f032f8622bd020456d9bd656f2d481ac09e7cd6e",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Bc1-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "aa7843a8292e846b9468574e66264de37b2b8ef45336af97066aa82d225a6c78",
+            "source_rgba_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "b2783a237a8b23b05d13440d9b37003f4f60b68a55988d152dd72e2d2f60a8ee",
+                    "intended_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "3ebf1efe55d87be05896f5716f58166ac0af13c3e411773a73ed465629101ff0",
+                    "intended_sha256": "f5d9a7eb24831d5a71af4e437535c65435be96a49c0f5039c6ca088431b7a842",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 1.5811388300841898,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "1497c880d44a63a08a76b431820f5ae314ed177bfc3924fa31dfef91fbd9f3f7",
+                    "intended_sha256": "23bc20fa4654fb4d291ff1a463cbf5ccb1c403fd6bbd9e9b6164bcf2b2bada0e",
+                    "rgb_max_error": 42,
+                    "rgb_rms_error": 27.173823188257234,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "120f10b815935f9aab72ef60c04df214002944f1429c9627786f71d12587a657",
+                    "intended_sha256": "851f0c75222383dca81e4bfe4aa0a4ab652d6caaedf44c7166cff7c674a5f306",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "342fc7aec6a884f9d6894a596c08249fc84ac1ab50649ed91ea2e96219fe7d83",
+                    "intended_sha256": "359c4d5d840c194cbaca4ac4b3679808c926045dac35355a2456bea12c4e72ee",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Bc1-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "a499ec7fcef3565ce6cc7cff607a5a3ec7835ea1a789df4048ec0f6c3c3c2e4e",
+            "source_rgba_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "b2783a237a8b23b05d13440d9b37003f4f60b68a55988d152dd72e2d2f60a8ee",
+                    "intended_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "b339dd69ccd4a3a1df3d817421afaf484f9ca8edaaf93830d5385859375986f3",
+                    "intended_sha256": "4137d891ab80cf0b85d9b669440be1a5cf2695ea46e0580ac36ef35e52e95855",
+                    "rgb_max_error": 15,
+                    "rgb_rms_error": 5.762667206540157,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "b3511007fccb4044049a5d0f9dc98f69d9d94e2912290f4254859beefa6322db",
+                    "intended_sha256": "f060831c7b653c5fefc54fee8c134c5ca65eee8e7c752ce3d92cd39e9498d7a0",
+                    "rgb_max_error": 50,
+                    "rgb_rms_error": 23.785499784532593,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "98868a0fbe00e901ed9d47fcbe3a9a05bf7ade4c8ae9249c7c0c5468a72bff3b",
+                    "intended_sha256": "0b082ace2f20562a086d002a52f319226334c068a1ada7da60aa1cd3adbedcf4",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.48327740429189,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "276869470b8e8afcd61256a62ed329473e669007391db0f887f82bb2032fb0f4",
+                    "intended_sha256": "a5576f54995e6d3dd3b40bd1f032f8622bd020456d9bd656f2d481ac09e7cd6e",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 72"
+            }
+        },
+        {
+            "file": "1x17-Bc1-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "17c177bc19cf6b59ccc07d23e4e7953cba6d49e187562a636c3be1fd1d53646c",
+            "source_rgba_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 40,
+                    "decoded_sha256": "b2783a237a8b23b05d13440d9b37003f4f60b68a55988d152dd72e2d2f60a8ee",
+                    "intended_sha256": "5242f3d18b8901d578734e131a38744c92c9f626ff655d7ce1f844268a19befd",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 188,
+                    "bytes": 16,
+                    "decoded_sha256": "3ebf1efe55d87be05896f5716f58166ac0af13c3e411773a73ed465629101ff0",
+                    "intended_sha256": "f5d9a7eb24831d5a71af4e437535c65435be96a49c0f5039c6ca088431b7a842",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 1.5811388300841898,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 204,
+                    "bytes": 8,
+                    "decoded_sha256": "1497c880d44a63a08a76b431820f5ae314ed177bfc3924fa31dfef91fbd9f3f7",
+                    "intended_sha256": "23bc20fa4654fb4d291ff1a463cbf5ccb1c403fd6bbd9e9b6164bcf2b2bada0e",
+                    "rgb_max_error": 42,
+                    "rgb_rms_error": 27.173823188257234,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 8,
+                    "decoded_sha256": "120f10b815935f9aab72ef60c04df214002944f1429c9627786f71d12587a657",
+                    "intended_sha256": "851f0c75222383dca81e4bfe4aa0a4ab652d6caaedf44c7166cff7c674a5f306",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 220,
+                    "bytes": 8,
+                    "decoded_sha256": "342fc7aec6a884f9d6894a596c08249fc84ac1ab50649ed91ea2e96219fe7d83",
+                    "intended_sha256": "359c4d5d840c194cbaca4ac4b3679808c926045dac35355a2456bea12c4e72ee",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 72"
+            }
+        },
+        {
+            "file": "1x17-Bc2-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "3f4159ea06226c480c11792a4a7f83e11c4e34805cdd85e57ab70d09a186aed6",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "2eac046edca9731985a5422e26d9326fdda10c9979b75e737bcd27fe31819814",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "01564c6194467b4ca2f4f9e7c8cdc9b9c7ee86207539d9be31b18bc4bd5744ae",
+                    "intended_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "rgb_max_error": 19,
+                    "rgb_rms_error": 7.926747967062743,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.373213921133975
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "6bc25d86c1ea89040d2764829679e7e37ec60724516cac6d584888ee17a6f967",
+                    "intended_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "rgb_max_error": 55,
+                    "rgb_rms_error": 22.107690969434145,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.873670062235365
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "6cb36a8da8bde885e3e2e564ae7fb8725e874a5d8a64a1e15349fe42fb6b3c1d",
+                    "intended_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 2.0,
+                    "alpha_max_error": 6,
+                    "alpha_rms_error": 5.0990195135927845
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "34b61ea6511fafe0e556b9ce77ce1192ee04c05fa39ed39fde036eb58217fbd8",
+                    "intended_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 1.0,
+                    "alpha_max_error": 4,
+                    "alpha_rms_error": 4.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Bc2-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "481dbee92bc6823521934347822355c83a54dbedcf4bcfe6cde0bb2b1edebf61",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "2eac046edca9731985a5422e26d9326fdda10c9979b75e737bcd27fe31819814",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "94f534d8f3dbe4af4d12d47296ab1c936ced65e395ef0c02fe22b88e644b4922",
+                    "intended_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 1.5811388300841898,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 2.8284271247461903
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "12feb8d70a043ca43d306f08b9b55c15f6defef28289fa34bef7a6ba53a05afb",
+                    "intended_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "rgb_max_error": 42,
+                    "rgb_rms_error": 27.173823188257234,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "aa628f72a44301d32c3ac8e9ce6bf60d6917c45a05f7f586d7d5c8b095c90f56",
+                    "intended_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.656854249492381
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "c1bac4a39ce09f4378b0357a369327138bdac492283e218a37e7860fe76b0ec6",
+                    "intended_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Bc2-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "b4af15d50637c63061795efcad8e4b0f1523d28ba337cc4c9e1957d5b7b77952",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "2eac046edca9731985a5422e26d9326fdda10c9979b75e737bcd27fe31819814",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "01564c6194467b4ca2f4f9e7c8cdc9b9c7ee86207539d9be31b18bc4bd5744ae",
+                    "intended_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "rgb_max_error": 19,
+                    "rgb_rms_error": 7.926747967062743,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.373213921133975
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "6bc25d86c1ea89040d2764829679e7e37ec60724516cac6d584888ee17a6f967",
+                    "intended_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "rgb_max_error": 55,
+                    "rgb_rms_error": 22.107690969434145,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.873670062235365
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "6cb36a8da8bde885e3e2e564ae7fb8725e874a5d8a64a1e15349fe42fb6b3c1d",
+                    "intended_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 2.0,
+                    "alpha_max_error": 6,
+                    "alpha_rms_error": 5.0990195135927845
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "34b61ea6511fafe0e556b9ce77ce1192ee04c05fa39ed39fde036eb58217fbd8",
+                    "intended_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 1.0,
+                    "alpha_max_error": 4,
+                    "alpha_rms_error": 4.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 75"
+            }
+        },
+        {
+            "file": "1x17-Bc2-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "b8f14e255b437d7ca67d7b3c598758d641b5092b0b81719aa45db756e140726c",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "2eac046edca9731985a5422e26d9326fdda10c9979b75e737bcd27fe31819814",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.3606722016672235
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "94f534d8f3dbe4af4d12d47296ab1c936ced65e395ef0c02fe22b88e644b4922",
+                    "intended_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 1.5811388300841898,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 2.8284271247461903
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "12feb8d70a043ca43d306f08b9b55c15f6defef28289fa34bef7a6ba53a05afb",
+                    "intended_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "rgb_max_error": 42,
+                    "rgb_rms_error": 27.173823188257234,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 4.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "aa628f72a44301d32c3ac8e9ce6bf60d6917c45a05f7f586d7d5c8b095c90f56",
+                    "intended_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 5.656854249492381
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "c1bac4a39ce09f4378b0357a369327138bdac492283e218a37e7860fe76b0ec6",
+                    "intended_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 75"
+            }
+        },
+        {
+            "file": "1x17-Bc3-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "595e56ffbd9809b1401658e265a881ee0c0be5368f93c09079a2f81740711cd4",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "6153e154037fc210e9840d21f7f270d994a8aa184a2515e37b2fb79e4a639200",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "85bb56d914c9101bdec80fe3d5b64a723f7772276af8b1b0f55cd724e0c2b868",
+                    "intended_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "rgb_max_error": 19,
+                    "rgb_rms_error": 7.926747967062743,
+                    "alpha_max_error": 5,
+                    "alpha_rms_error": 2.850438562747845
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "69b91e425c99890a6505bdb5a9598766b03d42cc6254b4b27cacd22e7468cb92",
+                    "intended_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "rgb_max_error": 55,
+                    "rgb_rms_error": 22.107690969434145,
+                    "alpha_max_error": 1,
+                    "alpha_rms_error": 0.5
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "081bf4ded465d5ddb91c25ae23cc9fd33c3c460632e975daeb4704d9220ef67a",
+                    "intended_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 2.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "b66bb9432a4dcad20a5cb2dfb908fbd51857bbf7302f47b5749609de9093fd09",
+                    "intended_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 1.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Bc3-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "cd0f3ae1f0969adbddf2fb8d79183034e2c2e460516bd5190ba4fe155e81a89c",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "6153e154037fc210e9840d21f7f270d994a8aa184a2515e37b2fb79e4a639200",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "0f55aa5059358086042380bb6e79af24524b05d12920a61f39f93963666db92c",
+                    "intended_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 1.5811388300841898,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 4.387482193696061
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "50065552bebf94020c287fd0ac2cce692989ec4ddb8430e1895974b3811c1c26",
+                    "intended_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "rgb_max_error": 42,
+                    "rgb_rms_error": 27.173823188257234,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "d22c0a2f6d1635e0b221a3d97863bd86f2e095ac552b0a8ab49ea2f359a9becd",
+                    "intended_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "c1bac4a39ce09f4378b0357a369327138bdac492283e218a37e7860fe76b0ec6",
+                    "intended_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Bc3-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "eacdd4fee7c2c393b51c3dd9ee2f69818f423228877ea5eda2b46b7ebf5b2024",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "6153e154037fc210e9840d21f7f270d994a8aa184a2515e37b2fb79e4a639200",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "85bb56d914c9101bdec80fe3d5b64a723f7772276af8b1b0f55cd724e0c2b868",
+                    "intended_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "rgb_max_error": 19,
+                    "rgb_rms_error": 7.926747967062743,
+                    "alpha_max_error": 5,
+                    "alpha_rms_error": 2.850438562747845
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "69b91e425c99890a6505bdb5a9598766b03d42cc6254b4b27cacd22e7468cb92",
+                    "intended_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "rgb_max_error": 55,
+                    "rgb_rms_error": 22.107690969434145,
+                    "alpha_max_error": 1,
+                    "alpha_rms_error": 0.5
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "081bf4ded465d5ddb91c25ae23cc9fd33c3c460632e975daeb4704d9220ef67a",
+                    "intended_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 2.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "b66bb9432a4dcad20a5cb2dfb908fbd51857bbf7302f47b5749609de9093fd09",
+                    "intended_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 1.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 78"
+            }
+        },
+        {
+            "file": "1x17-Bc3-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "c967e9f7bb4e87d56c9ae536bade4cce0bf615cb00a63d5a52153d1c7752db43",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 80,
+                    "decoded_sha256": "6153e154037fc210e9840d21f7f270d994a8aa184a2515e37b2fb79e4a639200",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 1.9352255783798658,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 3.0097879542273014
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 228,
+                    "bytes": 32,
+                    "decoded_sha256": "0f55aa5059358086042380bb6e79af24524b05d12920a61f39f93963666db92c",
+                    "intended_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "rgb_max_error": 3,
+                    "rgb_rms_error": 1.5811388300841898,
+                    "alpha_max_error": 9,
+                    "alpha_rms_error": 4.387482193696061
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 260,
+                    "bytes": 16,
+                    "decoded_sha256": "50065552bebf94020c287fd0ac2cce692989ec4ddb8430e1895974b3811c1c26",
+                    "intended_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "rgb_max_error": 42,
+                    "rgb_rms_error": 27.173823188257234,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 276,
+                    "bytes": 16,
+                    "decoded_sha256": "d22c0a2f6d1635e0b221a3d97863bd86f2e095ac552b0a8ab49ea2f359a9becd",
+                    "intended_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "rgb_max_error": 4,
+                    "rgb_rms_error": 2.273030282830976,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 292,
+                    "bytes": 16,
+                    "decoded_sha256": "c1bac4a39ce09f4378b0357a369327138bdac492283e218a37e7860fe76b0ec6",
+                    "intended_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "rgb_max_error": 2,
+                    "rgb_rms_error": 1.1547005383792515,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 78"
+            }
+        },
+        {
+            "file": "1x17-Rgba8-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "aae48c5cc2a21153440fd4b8ab9727fad3a5df573dad1b0d71e3dfb5eeae7998",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "intended_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "intended_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "intended_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "intended_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Rgba8-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "08244fe133d3b5a57f9bdf2c26bea51a904f936d86a9ac96ae9951e7ce7c216f",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "intended_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "intended_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "intended_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "intended_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "1x17-Rgba8-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "037b75b48e4f17ba71fba218b2a1fb45cd2ecb909e2132be8923e8bbf4dc0b81",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "intended_sha256": "c2702fb251710e4e9237ad047920dc4e17ded407f0fdf52baa8678f00615a29f",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "intended_sha256": "be5c3a37225d28140c8eba97afba44ceb4b44b09b25b442dd810b93b774878e1",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "intended_sha256": "f9b880588fdf9df71a9b7a125b11fb39219fb962260d65b6711c52a0b3d4bd2b",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "intended_sha256": "cf91b3cab3b504a4222b3ceb3eaaaf6726a1f687ba0f8c2d53bbc78bfa3d1a70",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": "accepted"
+        },
+        {
+            "file": "1x17-Rgba8-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "7e4050ceef96012531924149527442c7fe86acdbfdcd3b8b06e257af6c4de7b4",
+            "source_rgba_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 1,
+                    "height": 17,
+                    "offset": 148,
+                    "bytes": 68,
+                    "decoded_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "intended_sha256": "65971b6e61e493d4c840d59b14767b1c704875bf55d0aa952f1cc40b10585527",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 1,
+                    "height": 8,
+                    "offset": 216,
+                    "bytes": 32,
+                    "decoded_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "intended_sha256": "37dd0948e6e745df4709dcce6d1fd9635141ce343d855f93af11da5a3878bbea",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 4,
+                    "offset": 248,
+                    "bytes": 16,
+                    "decoded_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "intended_sha256": "9153deb5e6fb240d0182ac74d6fbeac4fca169707e6f863ff160c556d38bedaa",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 3,
+                    "width": 1,
+                    "height": 2,
+                    "offset": 264,
+                    "bytes": 8,
+                    "decoded_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "intended_sha256": "8807a817eee6c1bbf437000db7157a5141cb99c6ad3bedbf962ee23b6301f9de",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 4,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 272,
+                    "bytes": 4,
+                    "decoded_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "intended_sha256": "a5e25aff4146aeb640649ae9049a8d0521a7d5230501cc3e48bbf598971d278e",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": "accepted"
+        },
+        {
+            "file": "7x5-Bc1-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "3648296b0b288fcc3b526b4a1074980c9a8ee3733015d8ef4ffbe323ca2ae6a6",
+            "source_rgba_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 32,
+                    "decoded_sha256": "ced17aa96f8aee244be34215633122625004571488ef2e91c776934d87abd63b",
+                    "intended_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 180,
+                    "bytes": 8,
+                    "decoded_sha256": "12140171852d2f57724f7cd3eae4ef89228fe16bcce3d7a74bb87fe1f288549e",
+                    "intended_sha256": "75c16e89f8fa26e4f26a29e7048603583d1614547c8fb96771823a2c7476c72d",
+                    "rgb_max_error": 47,
+                    "rgb_rms_error": 18.76758434701233,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 8,
+                    "decoded_sha256": "69100d987afa2b4a5eadeb0d45642dd63f8a3f326f30ab40d76a6b31f4f3fd91",
+                    "intended_sha256": "abcb47ec48d5bb83f34d045c08c1d3d96037d70ddf6d868100a79b4ba7d00340",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Bc1-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "582c9a131ca63dddbc60fad9df9a7af9a35de38f80b89f328caab5a5775c0716",
+            "source_rgba_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 32,
+                    "decoded_sha256": "ced17aa96f8aee244be34215633122625004571488ef2e91c776934d87abd63b",
+                    "intended_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 180,
+                    "bytes": 8,
+                    "decoded_sha256": "f4c6c364224c09431642a3f348528d2b8a3f6ecff3e59299053db96bd3a6bd93",
+                    "intended_sha256": "593bd789bcc68fb9da95baea58ef664c96fb4e97325db742a2eeb1d4237ddd0d",
+                    "rgb_max_error": 39,
+                    "rgb_rms_error": 16.06237840420901,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 8,
+                    "decoded_sha256": "69100d987afa2b4a5eadeb0d45642dd63f8a3f326f30ab40d76a6b31f4f3fd91",
+                    "intended_sha256": "abcb47ec48d5bb83f34d045c08c1d3d96037d70ddf6d868100a79b4ba7d00340",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Bc1-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "4ea07901118cbf81648f07e8a177a2964b8fdc41977eb2baed61cec8fdaae0c4",
+            "source_rgba_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 32,
+                    "decoded_sha256": "ced17aa96f8aee244be34215633122625004571488ef2e91c776934d87abd63b",
+                    "intended_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 180,
+                    "bytes": 8,
+                    "decoded_sha256": "12140171852d2f57724f7cd3eae4ef89228fe16bcce3d7a74bb87fe1f288549e",
+                    "intended_sha256": "75c16e89f8fa26e4f26a29e7048603583d1614547c8fb96771823a2c7476c72d",
+                    "rgb_max_error": 47,
+                    "rgb_rms_error": 18.76758434701233,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 8,
+                    "decoded_sha256": "69100d987afa2b4a5eadeb0d45642dd63f8a3f326f30ab40d76a6b31f4f3fd91",
+                    "intended_sha256": "abcb47ec48d5bb83f34d045c08c1d3d96037d70ddf6d868100a79b4ba7d00340",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 72"
+            }
+        },
+        {
+            "file": "7x5-Bc1-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "1fe7ee11845714b4ccef9a44a1d45ab9423b885b4abe2530854e26a5b569a8c2",
+            "source_rgba_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 32,
+                    "decoded_sha256": "ced17aa96f8aee244be34215633122625004571488ef2e91c776934d87abd63b",
+                    "intended_sha256": "9a38fca3a076bca1647e9013d6198b239315218021a527e45d2e642688886441",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 180,
+                    "bytes": 8,
+                    "decoded_sha256": "f4c6c364224c09431642a3f348528d2b8a3f6ecff3e59299053db96bd3a6bd93",
+                    "intended_sha256": "593bd789bcc68fb9da95baea58ef664c96fb4e97325db742a2eeb1d4237ddd0d",
+                    "rgb_max_error": 39,
+                    "rgb_rms_error": 16.06237840420901,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 188,
+                    "bytes": 8,
+                    "decoded_sha256": "69100d987afa2b4a5eadeb0d45642dd63f8a3f326f30ab40d76a6b31f4f3fd91",
+                    "intended_sha256": "abcb47ec48d5bb83f34d045c08c1d3d96037d70ddf6d868100a79b4ba7d00340",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 72"
+            }
+        },
+        {
+            "file": "7x5-Bc2-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "cbe866899cf0367e026c5a2017105e64bf737b4b77a898f098f98578ba9424cc",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "8c3cee9195de519511f5f97cdb4456e56630b4f05919191d781012ac51d6a852",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.5777087639996634
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "6bb03615979dd1f04b46fd09d2ecb5137bc1e826fda1d4b4b16e08fefcdf0a5a",
+                    "intended_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "rgb_max_error": 41,
+                    "rgb_rms_error": 19.199247670445608,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 6.164414002968976
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "ee5a625f9753dc81cce2959f816cff4c0e7c5415a357fb89f0d9a09445c06fd7",
+                    "intended_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 8.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Bc2-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "e99da56f6d953f8d37645b3211da618e5539eca192da490301d5ecc98fb02088",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "8c3cee9195de519511f5f97cdb4456e56630b4f05919191d781012ac51d6a852",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.5777087639996634
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "2cb82d58b0a58df02ff39a8dfdeea31b27f3c73dff324810bbd1f77ed00255a7",
+                    "intended_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "rgb_max_error": 39,
+                    "rgb_rms_error": 16.06237840420901,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.265986323710904
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "fd5fd27402b0b0870abd280fe346377bf42a1b946f2660a600c001d5e96bda35",
+                    "intended_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Bc2-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "4c68593a4538aa28e02231e61d49f7e388971311dfdaa3736f2d4919dd018781",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "8c3cee9195de519511f5f97cdb4456e56630b4f05919191d781012ac51d6a852",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.5777087639996634
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "6bb03615979dd1f04b46fd09d2ecb5137bc1e826fda1d4b4b16e08fefcdf0a5a",
+                    "intended_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "rgb_max_error": 41,
+                    "rgb_rms_error": 19.199247670445608,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 6.164414002968976
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "ee5a625f9753dc81cce2959f816cff4c0e7c5415a357fb89f0d9a09445c06fd7",
+                    "intended_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 8.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 75"
+            }
+        },
+        {
+            "file": "7x5-Bc2-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "2770930d22feea79685d3e852f2b35f99328a9b8254c0f54f2cb759a4f3b6ecf",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "8c3cee9195de519511f5f97cdb4456e56630b4f05919191d781012ac51d6a852",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.5777087639996634
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "2cb82d58b0a58df02ff39a8dfdeea31b27f3c73dff324810bbd1f77ed00255a7",
+                    "intended_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "rgb_max_error": 39,
+                    "rgb_rms_error": 16.06237840420901,
+                    "alpha_max_error": 8,
+                    "alpha_rms_error": 3.265986323710904
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "fd5fd27402b0b0870abd280fe346377bf42a1b946f2660a600c001d5e96bda35",
+                    "intended_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 75"
+            }
+        },
+        {
+            "file": "7x5-Bc3-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "c2c553a4e107f90bbe4ee2f74a99aab7f5c312a21df9f26df6cff9248523732f",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "1ab72988e4fb8b48468837f32c65383177fe6a82e159053c3d2031043c084a4e",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 11,
+                    "alpha_rms_error": 5.398412465054624
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "664e55f92b9d5b89005b21f7eae02063e3a0f970f7bddd47ca634047a901bec9",
+                    "intended_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "rgb_max_error": 41,
+                    "rgb_rms_error": 19.199247670445608,
+                    "alpha_max_error": 4,
+                    "alpha_rms_error": 2.614064523559687
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "fb48329af7780f8f56d79224ccf065ade667e5531c7ce45c982287924a3e173e",
+                    "intended_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Bc3-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "b270270fe0b08c5c9957e7b320461093140c66c41a9768c4e74848636a998758",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "1ab72988e4fb8b48468837f32c65383177fe6a82e159053c3d2031043c084a4e",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 11,
+                    "alpha_rms_error": 5.398412465054624
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "954c9e4dc33d189e4978f477d3a8898a90813a72a9d212ca124b48051aa41833",
+                    "intended_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "rgb_max_error": 39,
+                    "rgb_rms_error": 16.06237840420901,
+                    "alpha_max_error": 10,
+                    "alpha_rms_error": 5.354126134736337
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "fd5fd27402b0b0870abd280fe346377bf42a1b946f2660a600c001d5e96bda35",
+                    "intended_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Bc3-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "46cbd26770d12f6bbb1923b76eef69d9e3f88e567c6354afc3138746d945b6b0",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "1ab72988e4fb8b48468837f32c65383177fe6a82e159053c3d2031043c084a4e",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 11,
+                    "alpha_rms_error": 5.398412465054624
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "664e55f92b9d5b89005b21f7eae02063e3a0f970f7bddd47ca634047a901bec9",
+                    "intended_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "rgb_max_error": 41,
+                    "rgb_rms_error": 19.199247670445608,
+                    "alpha_max_error": 4,
+                    "alpha_rms_error": 2.614064523559687
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "fb48329af7780f8f56d79224ccf065ade667e5531c7ce45c982287924a3e173e",
+                    "intended_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 78"
+            }
+        },
+        {
+            "file": "7x5-Bc3-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "56fc79ed5bffd3893ec2a5d96c0af2236a43df599f83fe587777499796c4d137",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 64,
+                    "decoded_sha256": "1ab72988e4fb8b48468837f32c65383177fe6a82e159053c3d2031043c084a4e",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 34,
+                    "rgb_rms_error": 12.410441072703566,
+                    "alpha_max_error": 11,
+                    "alpha_rms_error": 5.398412465054624
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 212,
+                    "bytes": 16,
+                    "decoded_sha256": "954c9e4dc33d189e4978f477d3a8898a90813a72a9d212ca124b48051aa41833",
+                    "intended_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "rgb_max_error": 39,
+                    "rgb_rms_error": 16.06237840420901,
+                    "alpha_max_error": 10,
+                    "alpha_rms_error": 5.354126134736337
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 228,
+                    "bytes": 16,
+                    "decoded_sha256": "fd5fd27402b0b0870abd280fe346377bf42a1b946f2660a600c001d5e96bda35",
+                    "intended_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "rgb_max_error": 1,
+                    "rgb_rms_error": 0.816496580927726,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": {
+                "unqualified_by_this_oracle": "Unimplemented DXGI format 78"
+            }
+        },
+        {
+            "file": "7x5-Rgba8-Linear-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "769d5ee92462757a62c184c7b92b27f4695765990f8f70079a99d1ae5fa4c36f",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 140,
+                    "decoded_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 288,
+                    "bytes": 24,
+                    "decoded_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "intended_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 312,
+                    "bytes": 4,
+                    "decoded_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "intended_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Rgba8-Linear-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "cd726e8ef62d31e6ce6383a8b679834382b7dee3f9fa1286791006f111e09bde",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 140,
+                    "decoded_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 288,
+                    "bytes": 24,
+                    "decoded_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "intended_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 312,
+                    "bytes": 4,
+                    "decoded_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "intended_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ]
+        },
+        {
+            "file": "7x5-Rgba8-Srgb-BoxStored.dds",
+            "quality": "Normal",
+            "sha256": "19e4a755f7cecc481cd14d1537a5832478b2032852bb097674afe332fb8b72c7",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 140,
+                    "decoded_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 288,
+                    "bytes": 24,
+                    "decoded_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "intended_sha256": "257810df6bbee074601c8292886d7ad4032645ec2366be23fec5260c7f7fdfaf",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 312,
+                    "bytes": 4,
+                    "decoded_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "intended_sha256": "b4f5b078ec51ec067727644360ddeb8ad696cdc6ff33f3e734346821b45d1380",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": "accepted"
+        },
+        {
+            "file": "7x5-Rgba8-Srgb-Nearest.dds",
+            "quality": "Normal",
+            "sha256": "92feb377a065c79a13ef25f42c8e9d34e1fac5d58d6c3a4ebfe034603292d99a",
+            "source_rgba_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+            "levels": [
+                {
+                    "level": 0,
+                    "width": 7,
+                    "height": 5,
+                    "offset": 148,
+                    "bytes": 140,
+                    "decoded_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "intended_sha256": "75b3bcd9ba1751d54796e492f17397401e6aa06440382c2bd62bd4181d962aa5",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 1,
+                    "width": 3,
+                    "height": 2,
+                    "offset": 288,
+                    "bytes": 24,
+                    "decoded_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "intended_sha256": "eac381de1e3af9d003a169a4940f61193a3195bfbb8eb71b9efae8cb690b4c35",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                },
+                {
+                    "level": 2,
+                    "width": 1,
+                    "height": 1,
+                    "offset": 312,
+                    "bytes": 4,
+                    "decoded_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "intended_sha256": "a4e2ff1c87401257e63c3386ecab46d03e73580b3063fbc0a74ea571a0009d28",
+                    "rgb_max_error": 0,
+                    "rgb_rms_error": 0.0,
+                    "alpha_max_error": 0,
+                    "alpha_rms_error": 0.0
+                }
+            ],
+            "original_srgb_wrapper": "accepted"
+        }
+    ],
+    "quality_failures": [
+        {
+            "file": "17x1-Bc1-Linear-Nearest.dds",
+            "level": 1,
+            "rgb_max_error": 116,
+            "rgb_rms_error": 32.506409624359726,
+            "alpha_max_error": 0,
+            "alpha_limit": 0
+        },
+        {
+            "file": "17x1-Bc1-Srgb-Nearest.dds",
+            "level": 1,
+            "rgb_max_error": 116,
+            "rgb_rms_error": 32.506409624359726,
+            "alpha_max_error": 0,
+            "alpha_limit": 0
+        },
+        {
+            "file": "17x1-Bc2-Linear-Nearest.dds",
+            "level": 1,
+            "rgb_max_error": 116,
+            "rgb_rms_error": 32.506409624359726,
+            "alpha_max_error": 8,
+            "alpha_limit": 8
+        },
+        {
+            "file": "17x1-Bc2-Srgb-Nearest.dds",
+            "level": 1,
+            "rgb_max_error": 116,
+            "rgb_rms_error": 32.506409624359726,
+            "alpha_max_error": 8,
+            "alpha_limit": 8
+        },
+        {
+            "file": "17x1-Bc3-Linear-Nearest.dds",
+            "level": 1,
+            "rgb_max_error": 116,
+            "rgb_rms_error": 32.506409624359726,
+            "alpha_max_error": 9,
+            "alpha_limit": 36
+        },
+        {
+            "file": "17x1-Bc3-Srgb-Nearest.dds",
+            "level": 1,
+            "rgb_max_error": 116,
+            "rgb_rms_error": 32.506409624359726,
+            "alpha_max_error": 9,
+            "alpha_limit": 36
+        }
+    ],
+    "policy": "uniform-lossy-v1",
+    "initial_targets_met": false,
+    "standard_decoding_layout_filter_and_goldens_passed": true,
+    "expected_report_sha256": "31c31c28c3a4907874c659b6f6aae6431f84c57dd5d5ac9ba48ab1c8b8e6fb7b"
+}
