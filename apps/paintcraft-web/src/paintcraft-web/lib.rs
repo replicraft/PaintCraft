@@ -16,6 +16,7 @@ mod preferences;
 mod printing;
 mod selection_ui;
 mod text_ui;
+mod touch_navigation;
 pub use app::WebApp;
 
 #[cfg(test)]
@@ -88,13 +89,25 @@ mod browser {
             if !paintcraft_ui::fonts::web_cjk_ready() {
                 return Err(JsValue::from_str("Browser fonts have not been loaded"));
             }
+            let cancel_target: web_sys::EventTarget = canvas.clone().unchecked_into();
             self.runner
                 .start(
                     canvas,
                     eframe::WebOptions::default(),
                     Box::new(|cc| Ok(Box::new(super::WebApp::new(&cc.egui_ctx)))),
                 )
-                .await
+                .await?;
+            // eframe 0.37 queues TouchCancel without requesting a repaint.
+            // Wake its existing input pipeline; the runner owns listener cleanup.
+            if let Err(error) = self.runner.add_event_listener(
+                &cancel_target,
+                "touchcancel",
+                |_: web_sys::Event, runner| runner.egui_ctx().request_repaint(),
+            ) {
+                self.runner.destroy();
+                return Err(error);
+            }
+            Ok(())
         }
 
         pub fn application_version(&self) -> String {
@@ -167,3 +180,6 @@ mod canvas_anchor_tests;
 
 #[cfg(test)]
 mod responsive_tests;
+
+#[cfg(test)]
+mod touch_navigation_tests;

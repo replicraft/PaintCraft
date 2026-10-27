@@ -212,7 +212,7 @@ impl WebApp {
                 ((pos.y - rect.min.y) / zoom).floor() as i64,
             )
         };
-        for event in ui.input(|i| i.events.clone()) {
+        for event in self.canvas_events(ui.ctx()) {
             if self.keyboard_event(ui.ctx(), &event) {
                 continue;
             }
@@ -306,3 +306,23 @@ impl WebApp {
 }
 #[cfg(test)]
 mod tests;
+
+impl crate::WebApp {
+    pub(crate) fn interrupt_paste_touch_drag(&mut self) {
+        if let Some(p) = &mut self.paste.placing {
+            p.position.interrupt_drag();
+        }
+    }
+    pub(crate) fn paste_touch_press_is_one_shot(&self, pos: Option<egui::Pos2>) -> bool {
+        self.paste.placing.as_ref().is_some_and(|p| {
+            pos.zip(self.canvas.rect).is_some_and(|(pos, rect)| {
+                let at = (pos - rect.min) / self.zoom;
+                p.position.is_dragging()
+                    || !p
+                        .position
+                        .bounds()
+                        .contains(at.x.floor() as i64, at.y.floor() as i64)
+            })
+        })
+    }
+}

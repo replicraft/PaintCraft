@@ -174,6 +174,9 @@ impl WebApp {
             .collect()
     }
     pub(crate) fn blocked(&self) -> bool {
+        self.canvas.touch.block_ui || self.modal_blocked()
+    }
+    pub(crate) fn modal_blocked(&self) -> bool {
         self.welcome.open()
             || self.printing_pending()
             || self.paste.modal()
@@ -249,7 +252,7 @@ impl WebApp {
     }
 
     pub(crate) fn edit(&mut self, action: Edit) {
-        if self.welcome.open() {
+        if self.welcome.open() || self.canvas.touch.block_ui {
             return;
         }
         if self.paste.is_placing() {
@@ -296,7 +299,7 @@ impl WebApp {
     }
 
     fn action(&mut self, ctx: &egui::Context, action: Action) {
-        if self.welcome.open() {
+        if self.welcome.open() || self.canvas.touch.block_ui {
             return;
         }
         if self.paste.is_placing() {
@@ -559,7 +562,7 @@ impl WebApp {
     }
 
     pub(crate) fn keyboard_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
-        if self.welcome.open() {
+        if self.welcome.open() || self.canvas.touch.block_ui {
             return true;
         }
         if self.paste_keyboard(ctx, event) {

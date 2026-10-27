@@ -267,3 +267,49 @@ fn actual_shortcut_modal_drag_release_regrab_and_apply_work_in_each_skin_and_two
         }
     }
 }
+
+#[test]
+fn actual_touch_pair_outside_paste_keeps_the_private_draft_unpublished() {
+    use crate::touch_navigation_tests::{end, start};
+    let mut h = egui_kittest::Harness::builder()
+        .with_size(egui::vec2(600.0, 800.0))
+        .build_eframe(|cc| {
+            let mut app = fixture(&cc.egui_ctx);
+            stage(&mut app, &cc.egui_ctx);
+            app
+        });
+    h.run();
+    let ticket = h.state().editor.session.ticket();
+    let origin = h.state().paste.placing.as_ref().unwrap().position.origin();
+    let p = h.state().canvas.rect.unwrap().min + egui::vec2(7.5, 5.5) * h.state().zoom;
+    assert!(
+        !h.state()
+            .paste
+            .placing
+            .as_ref()
+            .unwrap()
+            .position
+            .bounds()
+            .contains(7, 5)
+    );
+    start(&mut h, 1, p);
+    start(&mut h, 2, p + egui::vec2(25.0, 0.0));
+    end(&mut h, 2, p + egui::vec2(25.0, 0.0));
+    end(&mut h, 1, p);
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+    assert!(h.state().paste.is_placing());
+    assert_eq!(
+        h.state().paste.placing.as_ref().unwrap().position.origin(),
+        origin
+    );
+    assert!(
+        !h.state()
+            .paste
+            .placing
+            .as_ref()
+            .unwrap()
+            .position
+            .is_dragging()
+    );
+}

@@ -24,6 +24,8 @@ impl WebApp {
         egui::Id::unique((
             self.editor.session.history_ticket().owner,
             self.zoom.to_bits(),
+            self.frontend as u8,
+            self.variant as u8,
         ))
     }
     pub(super) fn studio_windows(&mut self, ctx: &egui::Context) {
@@ -109,8 +111,15 @@ impl WebApp {
                 zoom: 1.0,
             })
         };
+        // Contacts belong to the live input stream, never a parked document.
+        // Carry only their retired tails into the incoming interface.
+        let mut touch = std::mem::take(&mut self.canvas.touch);
+        touch.retire_owner(ctx);
+        self.editor.cancel_floating();
+        self.editor.tools.cancel_gesture();
         std::mem::swap(&mut self.editor, &mut other.editor);
         std::mem::swap(&mut self.canvas, &mut other.canvas);
+        self.canvas.touch = touch;
         std::mem::swap(&mut self.controls, &mut other.controls);
         std::mem::swap(&mut self.text, &mut other.text);
         std::mem::swap(&mut self.workspace, &mut other.workspace);
@@ -191,5 +200,82 @@ mod tests {
             "discarded edits must not return"
         );
         assert_ne!(app.editor.session.history_ticket().owner, classic);
+    }
+}
+
+#[cfg(test)]
+mod touch_tests {
+    use super::*;
+    use crate::touch_navigation_tests::{canvas_point, end, start};
+    use egui::{Event, Modifiers, PointerButton};
+    use egui_kittest::Harness;
+
+    #[test]
+    fn touch_interface_swap_retires_strokes_tails_and_focus_ghosts() {
+        let mut h = Harness::builder()
+            .with_size(egui::vec2(600.0, 800.0))
+            .build_eframe(|cc| WebApp::new(&cc.egui_ctx));
+        h.run();
+        let p = canvas_point(&h, 0.0);
+        let classic = h.state().editor.session.snapshot();
+        let ticket = h.state().editor.session.ticket();
+        start(&mut h, 1, p);
+        assert!(h.state().editor.tools.gesture_in_progress());
+        let ctx = h.ctx.clone();
+        h.state_mut().switch_frontend(&ctx, Frontend::Studio);
+        h.step();
+        assert!(
+            !h.state()
+                .parked
+                .as_ref()
+                .unwrap()
+                .editor
+                .tools
+                .gesture_in_progress()
+        );
+        let studio = h.state().editor.session.ticket();
+        end(&mut h, 1, p);
+        h.run();
+        assert_eq!(h.state().editor.session.ticket(), studio);
+        h.state_mut().switch_frontend(&ctx, Frontend::Classic);
+        h.run();
+        assert_eq!(h.state().editor.session.ticket(), ticket);
+        assert!(std::sync::Arc::ptr_eq(
+            &classic,
+            &h.state().editor.session.snapshot()
+        ));
+        let p = canvas_point(&h, 0.0);
+        start(&mut h, 2, p);
+        h.input_mut().focused = false;
+        h.input_mut().events.push(Event::WindowFocused(false));
+        h.step();
+        h.input_mut().focused = true;
+        h.input_mut().events.push(Event::WindowFocused(true));
+        h.step();
+        // The backend touch inventory still contains id2; our retired raw state
+        // must not turn it into an interface-wide quarantine on either swap.
+        h.state_mut().switch_frontend(&ctx, Frontend::Studio);
+        h.step();
+        h.state_mut().switch_frontend(&ctx, Frontend::Classic);
+        h.run();
+        let p = canvas_point(&h, 0.0);
+        h.input_mut().events.extend([
+            Event::PointerMoved(p),
+            Event::PointerButton {
+                pos: p,
+                button: PointerButton::Primary,
+                pressed: true,
+                modifiers: Modifiers::NONE,
+            },
+        ]);
+        h.step();
+        h.input_mut().events.push(Event::PointerButton {
+            pos: p,
+            button: PointerButton::Primary,
+            pressed: false,
+            modifiers: Modifiers::NONE,
+        });
+        h.run();
+        assert_ne!(h.state().editor.session.ticket(), ticket);
     }
 }

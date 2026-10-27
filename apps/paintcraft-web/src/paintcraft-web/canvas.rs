@@ -7,6 +7,7 @@ use paintcraft_tools::{Preview, PreviewRevision, Tool};
 
 #[derive(Default)]
 pub(crate) struct Canvas {
+    pub(crate) touch: crate::touch_navigation::TouchNavigation,
     pub(crate) texture: Option<TextureHandle>,
     pub(crate) pixel_grid: bool,
     pub(crate) outline: paintcraft_raster::selection::OutlineCache,
@@ -146,6 +147,9 @@ impl WebApp {
         let size = Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom;
         let paint = |ui: &mut egui::Ui, response: egui::Response, painter: egui::Painter| {
             self.canvas.rect = Some(response.rect);
+            self.canvas
+                .touch
+                .viewport(ui.clip_rect().intersect(viewport), ui.layer_id());
             if let Some((x, y)) = self.canvas.pending_center.take() {
                 let center = response.rect.min + Vec2::new(x, y) * self.zoom;
                 ui.scroll_to_rect(
@@ -269,18 +273,20 @@ impl WebApp {
                 paint,
             );
         } else if rulers {
-            paintcraft_classic::canvas::ruled_canvas(
+            paintcraft_classic::canvas::ruled_canvas_for_scope(
                 ui,
                 egui::Id::unique("web-editor-canvas"),
+                scope,
                 size,
                 extent,
                 clearance,
                 paint,
             );
         } else {
-            paintcraft_classic::canvas::canvas(
+            paintcraft_classic::canvas::canvas_for_scope(
                 ui,
                 egui::Id::unique("web-editor-canvas"),
+                scope,
                 size,
                 clearance,
                 paint,
@@ -352,6 +358,9 @@ impl WebApp {
     }
 
     fn canvas_input(&mut self, ui: &egui::Ui, response: &egui::Response) {
+        if self.canvas.touch.suppress {
+            return;
+        }
         if self.paste.is_placing() {
             self.paste_canvas_input(ui, response);
             return;
@@ -405,7 +414,7 @@ impl WebApp {
             let p = (pos - rect.min) / zoom;
             ((p.x * 256.0).floor() as i64, (p.y * 256.0).floor() as i64)
         };
-        let events = ui.input(|i| i.events.clone());
+        let events = self.canvas_events(ui.ctx());
         if !ui.input(|i| i.focused) {
             self.editor.cancel_floating();
             self.editor.tools.cancel_gesture();
@@ -465,7 +474,9 @@ impl WebApp {
                         && rect.contains(pos)
                         && ui.clip_rect().contains(pos)
                         && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
-                        && response.contains_pointer()
+                        && (response.contains_pointer()
+                            || (self.canvas.touch.delivered_tap == Some(pos)
+                                && ui.ctx().layer_id_at(pos) == Some(ui.layer_id())))
                     {
                         if self.controls.tool == Tool::Magnifier {
                             let p = point(pos);

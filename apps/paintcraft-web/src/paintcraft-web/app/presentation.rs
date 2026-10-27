@@ -20,6 +20,7 @@ impl WebApp {
             self.poll_copy(&ctx);
             self.poll_paste(&ctx);
             self.poll_print();
+            self.begin_touch_frame(&ctx);
         }
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
@@ -30,7 +31,7 @@ impl WebApp {
                 (adopted.tip().width(), adopted.tip().height()),
             )
         });
-        if self.welcome.open() {
+        if self.welcome.open() || self.canvas.touch.block_ui {
             ui.disable();
         }
         let context = self.context();

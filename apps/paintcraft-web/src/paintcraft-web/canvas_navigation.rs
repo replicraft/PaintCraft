@@ -5,10 +5,6 @@ use paintcraft_ui::actions::Frontend;
 
 impl WebApp {
     pub(crate) fn navigate_canvas(&mut self, ui: &egui::Ui, response: &egui::Response) -> bool {
-        let touch = ui.input(|input| input.multi_touch()).filter(|touch| {
-            ui.clip_rect().contains(touch.start_pos)
-                && ui.ctx().layer_id_at(touch.start_pos) == Some(ui.layer_id())
-        });
         let temporary = response.drag_stopped_by(PointerButton::Middle)
             || ui.input(|input| {
                 input.pointer.button_down(PointerButton::Middle)
@@ -18,7 +14,7 @@ impl WebApp {
                         && !self.editor.has_text())
             });
         let on_canvas = response.hovered() || response.dragged();
-        if touch.is_none() && !(temporary && on_canvas) {
+        if !(temporary && on_canvas) {
             return false;
         }
         self.editor.cancel_floating();
@@ -27,16 +23,11 @@ impl WebApp {
             || response.drag_stopped_by(PointerButton::Middle)
             || response.dragged_by(PointerButton::Primary)
             || response.drag_stopped_by(PointerButton::Primary);
-        let delta = touch.map_or_else(
-            || {
-                if dragging {
-                    ui.input(|input| input.pointer.delta())
-                } else {
-                    Vec2::ZERO
-                }
-            },
-            |touch| touch.translation_delta,
-        );
+        let delta = if dragging {
+            ui.input(|input| input.pointer.delta())
+        } else {
+            Vec2::ZERO
+        };
         if self.frontend == Frontend::Studio {
             paintcraft_studio::canvas::pan_by(
                 ui.ctx(),
