@@ -212,7 +212,9 @@ mod private {
             let output = run(&helper, &req, true, &bytes, &|| Ok(())).unwrap();
             let frame = wire::decode(&output.bytes, &req, req.header.owner).unwrap();
             let expected_rgba: Vec<_> = raw
-                .chunks_exact(3)
+                .as_chunks::<3>()
+                .0
+                .iter()
                 .flat_map(|p| [p[0], p[1], p[2], 255])
                 .collect();
             assert_eq!(frame.pixels, wire::Pixels::SrgbRgba8(&expected_rgba));
