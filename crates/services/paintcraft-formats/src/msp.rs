@@ -12,6 +12,8 @@ pub use encode::{encode_v1, encode_v1_rgba_exact};
 pub use encode_v2::{V2WritePlan, encode_v2, encode_v2_rgba_exact, preflight_v2};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub use rgba_plan::{RgbaLayout, RgbaWritePlan, preflight_rgba_exact};
+/// Explicit native Studio fresh MSP2 copies; ordinary Open/Save policy unchanged.
+pub const NATIVE_V2_EXPORT_VARIANT: &str = "native-msp2-row-rle-v1";
 pub const BYTES_MAX: usize = 16 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
