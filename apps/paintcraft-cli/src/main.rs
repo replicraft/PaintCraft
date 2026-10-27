@@ -56,6 +56,8 @@ enum Command {
     ExportIcns(commands::export_icns::Options),
     /// Export exactly one DCX page using an explicit PCX mode.
     ExportDcx(commands::export_dcx::Options),
+    /// Export a native fresh lossless opaque RGB8 JPEG XR copy.
+    ExportJxr(commands::export_jxr::Options),
     /// Export a fresh layered copy, subject to registry writer qualification.
     ExportLayered(commands::export_layered::Options),
     /// Import an image as a native document.
@@ -89,6 +91,7 @@ fn main() -> ExitCode {
         Command::ExportIcons(a) => commands::export_icons::run(a, cli.json),
         Command::ExportIcns(a) => commands::export_icns::run(a, cli.json),
         Command::ExportDcx(a) => commands::export_dcx::run(a, cli.json),
+        Command::ExportJxr(a) => commands::export_jxr::run(a, cli.json),
         Command::ExportLayered(a) => commands::export_layered::run(a, cli.json),
         Command::Import(a) => commands::import::run(a, cli.json),
         Command::PasteImage(a) => commands::paste_image::run(a, cli.json),

@@ -324,3 +324,6 @@ pub mod brushes;
 
 pub mod codec_import;
 pub mod codec_worker;
+
+pub mod export_jxr;
+mod jxr_export_job;
