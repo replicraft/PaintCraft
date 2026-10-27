@@ -6,6 +6,18 @@ is not hooked in this source group. It is an initial implementation slice, not a
 claim of comprehensive native tablet support or physical hardware qualification.
 Windows, XInput2 and Wayland acquisition remain required work.
 
+The native App now has an **opt-in host foundation** (`with_native_tablet`) using
+the shared bounded receiver, actual pressure edit path and guarded legacy tool
+fallback. Default startup does not call it. It is **not acquisition-ready**:
+mixed genuine-mouse/pen ordering is still unresolved before the GUI frame. A
+physical mouse Down followed by pen Down before a frame can currently assign
+priority to the pen; translated widget records can also reorder a pen release
+and later mouse press. Raw-frame bookkeeping and passing headless host tests do
+not establish source-time chronology. Do not enable capture by default or claim
+native tablet support until a maintained ordered acquisition/GUI bridge passes
+those counterexamples, focus/IME/capture tests and the native input integration
+spike. No physical tablet or live monitor qualification is claimed here.
+
 The AppKit monitor is scoped to the retained native view/window. It monitors
 local tablet/proximity events and documented tablet-subtype mouse events, not
 keys or IME. Actual capability bits govern pressure, tilt and rotation presence;

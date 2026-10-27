@@ -46,6 +46,10 @@ fn prepare(
     Ok(Prepared { edit, source, mask })
 }
 impl Editor {
+    #[cfg(target_os = "macos")]
+    pub(crate) fn pressure_eligible(&self, sample: Sample) -> bool {
+        self.tools.pressure_eligible(sample)
+    }
     /// True means the dedicated pressure path owns this sample. False preserves
     /// the established source-specific tool route; callers must not relabel media.
     pub(crate) fn pen_sample(&mut self, sample: Sample, budget: &SharedBudget) -> Result<bool> {

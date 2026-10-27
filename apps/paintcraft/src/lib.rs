@@ -93,6 +93,9 @@ mod status;
 mod studio_canvas;
 #[path = "app/switching.rs"]
 mod switching;
+#[cfg(target_os = "macos")]
+#[path = "app/tablet.rs"]
+mod tablet;
 #[path = "app/tabs.rs"]
 mod tabs;
 #[cfg(test)]
@@ -224,6 +227,8 @@ struct RenderedFrame {
 type RenderKey = (Uuid, u64, u64, paintcraft_core::types::Rect, u8);
 
 pub struct App {
+    #[cfg(target_os = "macos")]
+    tablet: Option<tablet::Receiver>,
     #[cfg(target_os = "macos")]
     native_menu: Option<paintcraft_platform::native_menu::NativeMenu>,
     fonts: text_ui::FontState,
@@ -461,6 +466,8 @@ impl App {
             closing_workspace: false,
             confirm: None,
             canvas_rect: None,
+            #[cfg(target_os = "macos")]
+            tablet: None,
             canvas_viewport: None,
             hover_doc: None,
             exit_after_frames: None,

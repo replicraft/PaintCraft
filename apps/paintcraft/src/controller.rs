@@ -343,6 +343,12 @@ impl Editor {
         self.session.is_dirty() || self.has_pending_edits() || self.has_image_paste()
     }
 
+    /// Exact native input owner, including reopening an otherwise equal snapshot.
+    #[cfg(target_os = "macos")]
+    pub(crate) fn session_owner_id(&self) -> Uuid {
+        self.session.owner_id()
+    }
+
     /// Number of publications so far (commits, undo and redo each count).
     pub fn publications(&self) -> u64 {
         self.session.ticket().publication_epoch

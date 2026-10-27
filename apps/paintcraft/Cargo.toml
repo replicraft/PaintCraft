@@ -23,7 +23,7 @@ paintcraft-document.workspace = true
 paintcraft-editor.workspace = true
 paintcraft-formats.workspace = true
 paintcraft-input.workspace = true
-paintcraft-platform = { workspace = true, features = ["dialogs", "menus", "fonts", "printing", "clipboard"] }
+paintcraft-platform = { workspace = true, features = ["dialogs", "menus", "fonts", "printing", "clipboard", "tablet"] }
 paintcraft-raster.workspace = true
 paintcraft-runtime = { workspace = true, features = ["native-io"] }
 paintcraft-render = { workspace = true, features = ["gpu"] }

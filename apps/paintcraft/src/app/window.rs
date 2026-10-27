@@ -238,6 +238,8 @@ impl App {
             ctx.request_repaint_after(Duration::from_millis(250));
         }
         self.tick_documents(&ctx);
+        #[cfg(target_os = "macos")]
+        self.publish_tablet_view(&ctx);
         if self.any_dirty_documents() {
             ctx.request_repaint_after(self.autosave_every.max(Duration::from_millis(250)));
         }
@@ -252,6 +254,10 @@ impl App {
 }
 
 impl eframe::App for App {
+    #[cfg(target_os = "macos")]
+    fn raw_input_hook(&mut self, ctx: &egui::Context, input: &mut egui::RawInput) {
+        self.tablet_raw_input(ctx, input);
+    }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         App::ui(self, ui);
     }

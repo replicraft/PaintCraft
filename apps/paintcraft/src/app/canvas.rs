@@ -110,6 +110,12 @@ impl App {
         self.validate_studio_pan(ui, viewport);
         if first_pass {
             let events = ui.input(|i| i.events.clone());
+            #[cfg(target_os = "macos")]
+            let events = {
+                let mut events = events;
+                self.tablet_canvas_input(&mut events, first_pass, painter.layer_id(), controls);
+                events
+            };
             for event in events {
                 if self.studio_pan_event(ui, &painter, viewport, &event)
                     || self.studio_zoom_event(ui, &painter, rect, viewport, &event)
