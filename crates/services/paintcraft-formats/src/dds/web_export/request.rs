@@ -1,0 +1,115 @@
+use super::*;
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Header {
+    pub source_len: u32,
+    pub size: (u32, u32),
+    pub owner: Owner,
+    pub nonce: Uuid,
+    pub source_sha256: [u8; 32],
+    pub settings: [u8; 8],
+    pub source_flags: u8,
+}
+impl Header {
+    pub fn capture(plan: &SourcePlan, source: &[u8], owner: Owner, nonce: Uuid) -> Result<Self> {
+        if owner.state != plan.state {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Browser DDS source state changed",
+            ));
+        }
+        let header = Self {
+            source_len: u32::try_from(source.len())
+                .map_err(|_| resource("Browser DDS source extent"))?,
+            size: plan.size,
+            owner,
+            nonce,
+            source_sha256: Sha256::digest(source).into(),
+            settings: plan.settings,
+            source_flags: plan.source_flags,
+        };
+        header.validate()?;
+        Ok(header)
+    }
+    pub(super) fn validate(&self) -> Result<()> {
+        if self.owner.frontend != 3 {
+            return Err(invalid("Browser DDS is Studio-only"));
+        }
+        if self.source_len == 0
+            || self.source_len as usize > SOURCE_BYTES_MAX
+            || self.size.0 == 0
+            || self.size.1 == 0
+            || self.size.0 > 65536
+            || self.size.1 > 65536
+            || u64::from(self.size.0) * u64::from(self.size.1) > PIXELS_MAX
+        {
+            return Err(resource("Browser DDS request profile"));
+        }
+        if self.source_flags > 3 {
+            return Err(invalid("Browser DDS source flags"));
+        }
+        decode_settings(self.settings, self.size)?;
+        Ok(())
+    }
+    pub fn encode(&self) -> [u8; REQUEST_HEADER] {
+        let mut bytes = [0; REQUEST_HEADER];
+        bytes[..8].copy_from_slice(b"PCDDSQ01");
+        bytes[8..10].copy_from_slice(&PROTOCOL_VERSION.to_be_bytes());
+        bytes[12..16].copy_from_slice(&self.source_len.to_be_bytes());
+        bytes[16..20].copy_from_slice(&self.size.0.to_be_bytes());
+        bytes[20..24].copy_from_slice(&self.size.1.to_be_bytes());
+        bytes[24..65].copy_from_slice(&owner_bytes(self.owner));
+        bytes[65..81].copy_from_slice(self.nonce.as_bytes());
+        bytes[81..113].copy_from_slice(&self.source_sha256);
+        bytes[113..121].copy_from_slice(&self.settings);
+        bytes[121] = self.source_flags;
+        bytes
+    }
+    pub fn decode(bytes: &[u8]) -> Result<Self> {
+        if bytes.len() != REQUEST_HEADER
+            || &bytes[..8] != b"PCDDSQ01"
+            || bytes[8..10] != PROTOCOL_VERSION.to_be_bytes()
+            || bytes[10..12] != [0, 0]
+            || bytes[122..].iter().any(|b| *b != 0)
+        {
+            return Err(invalid("Browser DDS request framing/reserved fields"));
+        }
+        let header = Self {
+            source_len: u32::from_be_bytes(bytes[12..16].try_into().unwrap()),
+            size: (
+                u32::from_be_bytes(bytes[16..20].try_into().unwrap()),
+                u32::from_be_bytes(bytes[20..24].try_into().unwrap()),
+            ),
+            owner: read_owner(&bytes[24..65]),
+            nonce: Uuid::from_bytes(bytes[65..81].try_into().unwrap()),
+            source_sha256: bytes[81..113].try_into().unwrap(),
+            settings: bytes[113..121].try_into().unwrap(),
+            source_flags: bytes[121],
+        };
+        header.validate()?;
+        Ok(header)
+    }
+    pub fn check_source(&self, source: &[u8]) -> Result<()> {
+        if source.len() != self.source_len as usize
+            || <[u8; 32]>::from(Sha256::digest(source)) != self.source_sha256
+        {
+            return Err(failed("Browser DDS source length/hash mismatch"));
+        }
+        Ok(())
+    }
+}
+pub(super) fn owner_bytes(owner: Owner) -> [u8; 41] {
+    let mut bytes = [0; 41];
+    bytes[..16].copy_from_slice(owner.session.as_bytes());
+    bytes[16..32].copy_from_slice(owner.state.as_bytes());
+    bytes[32..40].copy_from_slice(&owner.epoch.to_be_bytes());
+    bytes[40] = owner.frontend;
+    bytes
+}
+pub(super) fn read_owner(bytes: &[u8]) -> Owner {
+    Owner {
+        session: Uuid::from_bytes(bytes[..16].try_into().unwrap()),
+        state: Uuid::from_bytes(bytes[16..32].try_into().unwrap()),
+        epoch: u64::from_be_bytes(bytes[32..40].try_into().unwrap()),
+        frontend: bytes[40],
+    }
+}

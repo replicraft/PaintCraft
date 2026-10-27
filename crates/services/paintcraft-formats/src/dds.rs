@@ -7,6 +7,7 @@ mod encode;
 mod input;
 mod mip;
 mod texture_write;
+pub mod web_export;
 pub use encode::{encode_rgba8, encode_rgba8_checked};
 pub use mip::{
     DecodedTopMip, MipInspection, MipLevel, OTHER_MIPS_LOSS, decode_top_mip_checked,
