@@ -6,6 +6,7 @@ mod chrome_tests;
 #[cfg(test)]
 #[path = "crop_tests.rs"]
 mod crop_tests;
+mod dds_exporting;
 mod documents;
 mod exporting;
 #[cfg(test)]
@@ -54,6 +55,8 @@ pub struct WebApp {
     settings_draft: Option<settings::Draft>,
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
+    pub(crate) dds: dds_exporting::State,
+    dds_settings: paintcraft_ui::dds_export::Settings,
     icon_export: Option<icon_exporting::State>,
     icns_export: Option<icns_exporting::State>,
     palettes: palettes::State,
@@ -121,6 +124,8 @@ impl WebApp {
             },
             preferences,
             export_confirm: None,
+            dds: Default::default(),
+            dds_settings: Default::default(),
             icon_export: None,
             icns_export: None,
             palettes: Default::default(),

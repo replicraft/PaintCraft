@@ -2,6 +2,10 @@
 use super::*;
 impl WebApp {
     pub(super) fn export_dialog(&mut self, ctx: &egui::Context) {
+        if self.dds.reviewing() {
+            self.dds_export_dialog(ctx);
+            return;
+        }
         if let Some(mut format) = self.export_confirm {
             egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| {
                 ui.set_width(380.0);
@@ -11,6 +15,8 @@ impl WebApp {
                 });
                 self.export_confirm = Some(format);
                 ui.label(t!(ui.ctx(), format.description()));
+                let advanced_dds=format==ImageExport::Dds && self.frontend==Frontend::Studio && dds_exporting::admit().is_ok();
+                if advanced_dds {paintcraft_ui::dds_export::controls(ui,&mut self.dds_settings,self.editor.session.document().canvas.0,self.editor.session.document().canvas.1);}
                 let mut preview_ready=true;
                 if format==ImageExport::Pcx {
                     paintcraft_ui::pcx_export::controls(ui,&mut self.export_pcx_encoding);
@@ -37,9 +43,10 @@ impl WebApp {
                 ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));
                 if format == ImageExport::Jpeg { ui.label(t!(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(preview_ready,egui::Button::new(t!(ui.ctx(), "Download { $format }", &[("format", format.name().into())]))).clicked() {
-                        self.download_image(ctx, format);
-                        self.export_confirm = None;
+                    let advanced=advanced_dds&&dds_exporting::advanced(self.dds_settings,self.editor.session.document().canvas);
+                    let caption=if advanced{t!(ui.ctx(),"Preview export")}else{t!(ui.ctx(),"Download { $format }", &[("format", format.name().into())])};
+                    if ui.add_enabled(preview_ready,egui::Button::new(caption)).clicked() {
+                        if advanced {self.begin_dds_export(ctx);} else {self.download_image(ctx, format);self.export_confirm=None;}
                     }
                     if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.export_confirm = None; }
                 });
