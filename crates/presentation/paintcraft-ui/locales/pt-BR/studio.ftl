@@ -412,3 +412,8 @@ converting-to-linear-8-bit-samples-loses-color-precision = A conversão em amost
 bc1-requires-a-picture-without-transparency-choose-rgba8-bc2-or-bc3 = BC1 exige uma imagem sem transparência. Escolha RGBA8, BC2 ou BC3.
 preview-export = Prévia da exportação
 not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-layers = Não há memória suficiente para exportar com estas configurações. Use uma imagem menor ou menos camadas.
+
+# Explicit MSP version choice. Hosts own preparation and publication.
+msp-version = Versão MSP
+version-1-uncompressed = Versão 1 (sem compressão)
+version-2-compressed = Versão 2 (comprimida)

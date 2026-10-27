@@ -412,3 +412,8 @@ converting-to-linear-8-bit-samples-loses-color-precision = 转换为线性 8 位
 bc1-requires-a-picture-without-transparency-choose-rgba8-bc2-or-bc3 = BC1 要求图像没有透明度。请选择 RGBA8、BC2 或 BC3。
 preview-export = 导出预览
 not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-layers = 内存不足，无法使用这些设置导出。请使用较小的图像或减少图层。
+
+# Explicit MSP version choice. Hosts own preparation and publication.
+msp-version = MSP 版本
+version-1-uncompressed = 版本 1（未压缩）
+version-2-compressed = 版本 2（已压缩）

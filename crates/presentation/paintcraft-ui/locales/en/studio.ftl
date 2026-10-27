@@ -412,3 +412,8 @@ converting-to-linear-8-bit-samples-loses-color-precision = Converting to linear 
 bc1-requires-a-picture-without-transparency-choose-rgba8-bc2-or-bc3 = BC1 requires a picture without transparency. Choose RGBA8, BC2 or BC3.
 preview-export = Preview export
 not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-layers = Not enough memory to export with these settings. Use a smaller image or fewer layers.
+
+# Explicit MSP version choice. Hosts own preparation and publication.
+msp-version = MSP version
+version-1-uncompressed = Version 1 (uncompressed)
+version-2-compressed = Version 2 (compressed)

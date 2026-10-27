@@ -412,3 +412,8 @@ converting-to-linear-8-bit-samples-loses-color-precision = リニア 8 ビット
 bc1-requires-a-picture-without-transparency-choose-rgba8-bc2-or-bc3 = BC1 には透明部分のない画像が必要です。RGBA8、BC2 または BC3 を選んでください。
 preview-export = 書き出しプレビュー
 not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-layers = この設定で書き出すためのメモリが不足しています。画像を小さくするか、レイヤーを減らしてください。
+
+# Explicit MSP version choice. Hosts own preparation and publication.
+msp-version = MSP バージョン
+version-1-uncompressed = バージョン 1（非圧縮）
+version-2-compressed = バージョン 2（圧縮）

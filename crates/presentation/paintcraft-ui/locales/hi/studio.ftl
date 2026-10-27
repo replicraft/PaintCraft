@@ -412,3 +412,8 @@ converting-to-linear-8-bit-samples-loses-color-precision = रैखिक 8-ब
 bc1-requires-a-picture-without-transparency-choose-rgba8-bc2-or-bc3 = BC1 के लिए बिना पारदर्शिता की छवि चाहिए। RGBA8, BC2 या BC3 चुनें।
 preview-export = निर्यात का पूर्वावलोकन
 not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-layers = इन सेटिंग के साथ निर्यात करने के लिए पर्याप्त मेमोरी नहीं है। छोटी छवि या कम परतें उपयोग करें।
+
+# Explicit MSP version choice. Hosts own preparation and publication.
+msp-version = MSP संस्करण
+version-1-uncompressed = संस्करण 1 (असंपीड़ित)
+version-2-compressed = संस्करण 2 (संपीड़ित)

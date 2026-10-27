@@ -4,6 +4,7 @@ pub mod brush_resources;
 pub mod chrome;
 pub mod confirmation;
 pub mod dds_export;
+pub mod msp_export;
 pub mod entry_import;
 pub mod fonts;
 pub mod icns_export;
