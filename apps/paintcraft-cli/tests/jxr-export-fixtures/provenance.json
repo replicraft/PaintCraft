@@ -1,0 +1,185 @@
+{
+  "cases": [
+    {
+      "cli_receipt": {
+        "engine": {
+          "density_policy": "t832-stored-positive-zero-resolution-effective-96-dpi",
+          "encoded_sha256": "eeaec009ebcde9e6a17c9b103715d9e3e53e8711cd6924a5bb82dfa753b2f9e8",
+          "encoder_profile": "native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1",
+          "format": "jxr",
+          "helper_sha256": "529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c",
+          "pixel_profile": "jxr-rgb8-lossless-yuv444-spatial-qp0-no-overlap-zero-dpi-v1",
+          "preserving_save": false
+        },
+        "exit_code": 0,
+        "file": {
+          "acknowledged_state_id": null,
+          "binding_generation": "0",
+          "destination_id": "dest:d839f6391524adb63e49053f6480de12",
+          "durability": "confirmed",
+          "losses_acknowledged": [],
+          "observed_destination_sha256": "eeaec009ebcde9e6a17c9b103715d9e3e53e8711cd6924a5bb82dfa753b2f9e8",
+          "operation": "export",
+          "operation_id": "43a586f1-755c-4064-a083-9a36959fed5f",
+          "reasons": [],
+          "replacement": "replaced",
+          "requested_durability": "durable",
+          "retry": "no-automatic-retry",
+          "save_sequence": "1",
+          "schema": "paintcraft.file-operation/v1",
+          "source_lineage_adopted": false,
+          "source_sha256": "25c529e2c45f878d3c8a41593ce49782d1e6d63c4478aff979ea0213ca5e1133",
+          "source_state_id": "647c8ba0-78c3-59fd-ac8a-e38a7540f28e",
+          "staged_sha256": "eeaec009ebcde9e6a17c9b103715d9e3e53e8711cd6924a5bb82dfa753b2f9e8",
+          "synthetic": false
+        },
+        "outcome": "success",
+        "schema": "paintcraft.file-command/v1",
+        "synthetic": false
+      },
+      "encoded_sha256": "eeaec009ebcde9e6a17c9b103715d9e3e53e8711cd6924a5bb82dfa753b2f9e8",
+      "height": 3,
+      "input_rgba_sha256": "8d97416c911510b8993d931692c2595e08a1646fa2afc741959d88aa19b66165",
+      "name": "4x3",
+      "reference_rgb_sha256": "77ccf6c13e62966c63415c996facb83c95b4208c7c053b95cbb9c632dbf5d0b5",
+      "width": 4
+    },
+    {
+      "cli_receipt": {
+        "engine": {
+          "density_policy": "t832-stored-positive-zero-resolution-effective-96-dpi",
+          "encoded_sha256": "b61b29118fe63fd717a887114f7bbd33a7255abbf3e5b17de167e6e5492f9da0",
+          "encoder_profile": "native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1",
+          "format": "jxr",
+          "helper_sha256": "529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c",
+          "pixel_profile": "jxr-rgb8-lossless-yuv444-spatial-qp0-no-overlap-zero-dpi-v1",
+          "preserving_save": false
+        },
+        "exit_code": 0,
+        "file": {
+          "acknowledged_state_id": null,
+          "binding_generation": "0",
+          "destination_id": "dest:8534818ff903d919ef43fc2f4a71583b",
+          "durability": "confirmed",
+          "losses_acknowledged": [],
+          "observed_destination_sha256": "b61b29118fe63fd717a887114f7bbd33a7255abbf3e5b17de167e6e5492f9da0",
+          "operation": "export",
+          "operation_id": "f1232ed4-8119-4eff-b5bb-7eb09df4c32d",
+          "reasons": [],
+          "replacement": "replaced",
+          "requested_durability": "durable",
+          "retry": "no-automatic-retry",
+          "save_sequence": "1",
+          "schema": "paintcraft.file-operation/v1",
+          "source_lineage_adopted": false,
+          "source_sha256": "59b3ff0560a53b1730b495e940e3aaacc336cf204f87998b271aa5567f871ba7",
+          "source_state_id": "db141c97-74d8-5fb7-a420-5970d9298902",
+          "staged_sha256": "b61b29118fe63fd717a887114f7bbd33a7255abbf3e5b17de167e6e5492f9da0",
+          "synthetic": false
+        },
+        "outcome": "success",
+        "schema": "paintcraft.file-command/v1",
+        "synthetic": false
+      },
+      "encoded_sha256": "b61b29118fe63fd717a887114f7bbd33a7255abbf3e5b17de167e6e5492f9da0",
+      "height": 19,
+      "input_rgba_sha256": "c74aaa77afc87cc39bf46bc54721cd7e34997f05870e0f582649a98528df6840",
+      "name": "17x19",
+      "reference_rgb_sha256": "69cfa1498f85857b16769503e109e25476cc9d391d1933d394004cf7be5266e5",
+      "width": 17
+    },
+    {
+      "cli_receipt": {
+        "engine": {
+          "density_policy": "t832-stored-positive-zero-resolution-effective-96-dpi",
+          "encoded_sha256": "bb50604acfcfebcee6941168c3850d9adbaaf7994514c0af63b4095c1e6af692",
+          "encoder_profile": "native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1",
+          "format": "jxr",
+          "helper_sha256": "529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c",
+          "pixel_profile": "jxr-rgb8-lossless-yuv444-spatial-qp0-no-overlap-zero-dpi-v1",
+          "preserving_save": false
+        },
+        "exit_code": 0,
+        "file": {
+          "acknowledged_state_id": null,
+          "binding_generation": "0",
+          "destination_id": "dest:7328188c4f0ce15cc4703c45491bdf99",
+          "durability": "confirmed",
+          "losses_acknowledged": [],
+          "observed_destination_sha256": "bb50604acfcfebcee6941168c3850d9adbaaf7994514c0af63b4095c1e6af692",
+          "operation": "export",
+          "operation_id": "c2ddccef-7b44-4436-9818-91fb7c796c29",
+          "reasons": [],
+          "replacement": "replaced",
+          "requested_durability": "durable",
+          "retry": "no-automatic-retry",
+          "save_sequence": "1",
+          "schema": "paintcraft.file-operation/v1",
+          "source_lineage_adopted": false,
+          "source_sha256": "b691e1ab96982a2e10335b397f616d54f0e537739c805c7f8d76b005d85ebcf2",
+          "source_state_id": "76e3d81f-0cda-5dac-bc1c-c689b212193c",
+          "staged_sha256": "bb50604acfcfebcee6941168c3850d9adbaaf7994514c0af63b4095c1e6af692",
+          "synthetic": false
+        },
+        "outcome": "success",
+        "schema": "paintcraft.file-command/v1",
+        "synthetic": false
+      },
+      "encoded_sha256": "bb50604acfcfebcee6941168c3850d9adbaaf7994514c0af63b4095c1e6af692",
+      "height": 1,
+      "input_rgba_sha256": "9581cd6358577cbc133b3254d7591507e2e00828cd340549f44bde81c27704bb",
+      "name": "4096x1",
+      "reference_rgb_sha256": "844c180b0cf93a181abb5e4ce3766e770124a348feb471db6abd51df1a1263e8",
+      "width": 4096
+    },
+    {
+      "cli_receipt": {
+        "engine": {
+          "density_policy": "t832-stored-positive-zero-resolution-effective-96-dpi",
+          "encoded_sha256": "5ab91259eff692e4df382c084392ef8ee1776b565696f6109d264a7b569a0966",
+          "encoder_profile": "native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1",
+          "format": "jxr",
+          "helper_sha256": "529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c",
+          "pixel_profile": "jxr-rgb8-lossless-yuv444-spatial-qp0-no-overlap-zero-dpi-v1",
+          "preserving_save": false
+        },
+        "exit_code": 0,
+        "file": {
+          "acknowledged_state_id": null,
+          "binding_generation": "0",
+          "destination_id": "dest:54354a059c61d41243781617949b302d",
+          "durability": "confirmed",
+          "losses_acknowledged": [],
+          "observed_destination_sha256": "5ab91259eff692e4df382c084392ef8ee1776b565696f6109d264a7b569a0966",
+          "operation": "export",
+          "operation_id": "f13c9876-1745-436f-9141-ed8e924cd338",
+          "reasons": [],
+          "replacement": "replaced",
+          "requested_durability": "durable",
+          "retry": "no-automatic-retry",
+          "save_sequence": "1",
+          "schema": "paintcraft.file-operation/v1",
+          "source_lineage_adopted": false,
+          "source_sha256": "95e0f3c3baa38eb307443dc5db23380d65b6bea7d02a5025ff951b1e76a5cdf6",
+          "source_state_id": "6d7c0aa6-ed02-5774-9a29-d493c5b6260a",
+          "staged_sha256": "5ab91259eff692e4df382c084392ef8ee1776b565696f6109d264a7b569a0966",
+          "synthetic": false
+        },
+        "outcome": "success",
+        "schema": "paintcraft.file-command/v1",
+        "synthetic": false
+      },
+      "encoded_sha256": "5ab91259eff692e4df382c084392ef8ee1776b565696f6109d264a7b569a0966",
+      "height": 4096,
+      "input_rgba_sha256": "26ca189347890405359746bab4d3788dd55826f5fcb9cae6c4771cdee55a8d0d",
+      "name": "1x4096",
+      "reference_rgb_sha256": "869c9cd83e24a0ba80e2b0c721145ab0f62ccc59c74be83ea7f1791b7ff1ba59",
+      "width": 1
+    }
+  ],
+  "cli_sha256": "237961d02809293dda1d8c723811f21ac718b31fd7f6af917d34d962ad33abf1",
+  "helper_sha256": "529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c",
+  "reference_sha256": "8e3b71db2c53c5db5f988b8755946a30ac1070b7a6c0a8ffa6933d34d26b95ce",
+  "schema": 1,
+  "source_head": "30ccea1973a8fe8291162f1a418a47095c4e7b39"
+}

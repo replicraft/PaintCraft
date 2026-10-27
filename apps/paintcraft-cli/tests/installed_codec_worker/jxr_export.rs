@@ -338,3 +338,6 @@ fn installed_forged_export_contract_preserves_cli_destination_and_mcp_session() 
     assert_eq!(client.ok("inspect_document", json!({})), before);
     assert_eq!(fs::read(output).unwrap(), b"existing destination");
 }
+
+#[path = "jxr_export/portable.rs"]
+mod portable;
