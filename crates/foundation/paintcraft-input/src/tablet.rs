@@ -1,5 +1,6 @@
 //! Ordered, device-aware input independent of UI frames or a platform event loop.
 mod queue;
+pub mod receiver;
 mod routing;
 use crate::{Modifiers, PointerButton};
 pub use queue::{Admission, Queue};

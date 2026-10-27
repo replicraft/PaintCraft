@@ -37,6 +37,14 @@ impl Queue {
             frame: None,
         })
     }
+    pub fn pending_samples(&self) -> usize {
+        self.samples.len()
+    }
+    pub(super) fn discard_pending(&mut self) {
+        self.samples.clear();
+        self.clear_capture();
+        self.frame = None;
+    }
     pub fn storage_bytes(&self) -> usize {
         self.samples.capacity() * std::mem::size_of::<Sample>()
     }

@@ -20,6 +20,15 @@ impl Router {
             fingers: [None; 32],
         })
     }
+    pub fn storage_bytes(&self) -> usize {
+        self.queue.storage_bytes()
+    }
+    pub fn pending_samples(&self) -> usize {
+        self.queue.pending_samples()
+    }
+    pub(super) fn discard_pending(&mut self) {
+        self.queue.discard_pending();
+    }
     pub fn pen_active(&self) -> bool {
         self.queue.pen_active()
     }
@@ -44,9 +53,7 @@ impl Router {
             && sample.phase == Phase::Down
             && sample.identity.kind.is_pen()
         {
-            for finger in self.fingers.iter_mut().flatten() {
-                finger.1 = true;
-            }
+            self.fence_fingers();
         }
         Ok(admitted)
     }
@@ -54,7 +61,21 @@ impl Router {
     /// pressure. Once suppressed, a finger stays fenced through its complete
     /// release tail, including after the pen itself is lifted.
     pub fn finger(&mut self, id: u64, phase: Phase) -> Result<bool, Invalid> {
-        let fence = self.pen_active() || self.fingers.iter().flatten().any(|entry| entry.1);
+        self.finger_owned(id, phase, false)
+    }
+    pub(super) fn fence_fingers(&mut self) {
+        for finger in self.fingers.iter_mut().flatten() {
+            finger.1 = true;
+        }
+    }
+    pub(super) fn finger_owned(
+        &mut self,
+        id: u64,
+        phase: Phase,
+        pen_owns: bool,
+    ) -> Result<bool, Invalid> {
+        let fence =
+            pen_owns || self.pen_active() || self.fingers.iter().flatten().any(|entry| entry.1);
         if let Some(index) = self
             .fingers
             .iter()
