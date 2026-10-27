@@ -22,3 +22,6 @@ pub mod source;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod codec_helper;
+
+#[cfg(all(feature = "tablet", not(target_arch = "wasm32")))]
+pub mod tablet;

@@ -1,0 +1,28 @@
+[package]
+name = "paintcraft-tablet-native"
+description = "Scoped native tablet capture and reviewed OS FFI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-core.workspace = true
+paintcraft-input.workspace = true
+raw-window-handle.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { workspace = true }
+objc2-app-kit = { workspace = true, features = ["NSEvent", "NSView", "NSWindow", "NSResponder", "NSApplication", "block2"] }
+objc2-foundation = { workspace = true, features = ["NSNotification", "NSOperation", "NSGeometry", "block2"] }
+block2.workspace = true
+
+# Only small OS FFI modules may opt into unsafe code. Other workspace crates
+# retain forbid, and all packet/clock/capability logic here remains safe.
+[lints.rust]
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

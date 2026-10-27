@@ -42,6 +42,9 @@ paintcraft-runtime = { path = "crates/services/paintcraft-runtime" }
 paintcraft-formats = { path = "crates/services/paintcraft-formats" }
 paintcraft-platform = { path = "crates/services/paintcraft-platform" }
 
+# Reviewed native OS event boundary; core/platform/frontend code retains unsafe forbid.
+paintcraft-tablet-native = { path = "crates/adapters/paintcraft-tablet-native" }
+
 # Native format adapters with bounded, inert parsers.
 paintcraft-pdn = { path = "crates/adapters/pdn-lib" }
 paintcraft-paint = { path = "crates/adapters/paint-lib" }
@@ -97,6 +100,8 @@ wl-clipboard-rs = { version = "0.9.4", default-features = false }
 x11rb = { version = "0.13.2", default-features = false }
 rustix = { version = "1.1.5", default-features = false, features = ["std", "event", "fs"] }
 same-file = "1.0.6"
+# Native event-monitor blocks; same version already used by the window backend.
+block2 = "0.6.2"
 # Encoded macOS pasteboard reads, before decoder allocation; writes use arboard.
 objc2 = { version = "0.6.5", default-features = false, features = ["std"] }
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSPasteboard"] }

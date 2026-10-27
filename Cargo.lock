@@ -3495,6 +3495,7 @@ dependencies = [
  "objc2-app-kit 0.3.2",
  "objc2-foundation 0.3.2",
  "paintcraft-core",
+ "paintcraft-tablet-native",
  "pollster 0.4.0",
  "raw-window-handle",
  "rfd",
@@ -3551,6 +3552,19 @@ dependencies = [
  "paintcraft-core",
  "paintcraft-tools",
  "paintcraft-ui",
+]
+
+[[package]]
+name = "paintcraft-tablet-native"
+version = "0.1.0"
+dependencies = [
+ "block2 0.6.2",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "objc2-foundation 0.3.2",
+ "paintcraft-core",
+ "paintcraft-input",
+ "raw-window-handle",
 ]
 
 [[package]]
