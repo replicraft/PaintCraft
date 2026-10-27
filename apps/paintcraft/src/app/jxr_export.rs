@@ -439,3 +439,7 @@ fn stale() -> Error {
 #[cfg(test)]
 #[path = "jxr_export/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "jxr_export/installed_tests.rs"]
+mod installed_tests;
