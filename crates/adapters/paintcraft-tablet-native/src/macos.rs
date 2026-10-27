@@ -271,8 +271,10 @@ fn process(
     // native event pumping or host callback between the attachment check/read.
     let parent = unsafe { view.superview() };
     let hit_point = parent.map_or(point, |parent| parent.convertPoint_fromView(location, None));
-    let in_view = window.isKeyWindow()
-        && location.x >= layout.origin.x
+    // Client geometry is independent of key/focus status. An inactive client
+    // contact must still be receiver-routed, never relabelled as native chrome.
+    // The safe host applies captured focus permission separately.
+    let in_view = location.x >= layout.origin.x
         && location.y >= layout.origin.y
         && location.x < layout.origin.x + layout.size.width
         && location.y < layout.origin.y + layout.size.height

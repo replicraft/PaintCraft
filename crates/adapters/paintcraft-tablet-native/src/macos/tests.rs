@@ -297,3 +297,62 @@ fn malformed_unidentified_contact_is_fenced_without_inventing_position() {
     assert!(matches!(s.prepare(point(0, 2)), Action::Suppress));
     assert_eq!(packet(&mut s, point(1, 3)).raw.phase, Phase::Down);
 }
+
+#[test]
+fn inactive_client_contact_stays_receiver_owned_across_focus_transition() {
+    use paintcraft_input::tablet::{
+        Permissions, Transform,
+        receiver::{Delivery, Receiver, Route},
+    };
+    let mut s = state(0x400, DeviceKind::Pen);
+    let mut receiver = Receiver::new(16, 16).unwrap();
+    let transform = Transform {
+        owner: 1,
+        epoch: 1,
+        origin: (0.0, 0.0),
+        points_per_pixel: 1.0,
+    };
+    let mut permissions = Permissions {
+        owner: 1,
+        focused: false,
+        canvas_hit: true,
+        modal: false,
+        ime: false,
+    };
+    // in_view is geometric client membership, even for the inactive window.
+    let down = packet(&mut s, point(1, 1)).into_logical(1.0).unwrap();
+    assert_eq!(
+        receiver
+            .submit(down, transform, permissions, Delivery::ReceiverPointer)
+            .unwrap(),
+        Route::Suppressed
+    );
+    permissions.focused = true;
+    let held = packet(&mut s, point(1, 2)).into_logical(1.0).unwrap();
+    assert_eq!(
+        receiver
+            .submit(held, transform, permissions, Delivery::ReceiverPointer)
+            .unwrap(),
+        Route::Canvas
+    ); // The queue declines a Move with no accepted Down; no sample is emitted.
+    let up = packet(&mut s, point(0, 3)).into_logical(1.0).unwrap();
+    let _ = receiver.submit(up, transform, permissions, Delivery::ReceiverPointer);
+    assert!(receiver.take(1, |_| Ok(())).unwrap().samples.is_empty());
+    let new_down = packet(&mut s, point(1, 4)).into_logical(1.0).unwrap();
+    assert_eq!(
+        receiver
+            .submit(new_down, transform, permissions, Delivery::ReceiverPointer)
+            .unwrap(),
+        Route::Canvas
+    );
+    assert_eq!(receiver.take(2, |_| Ok(())).unwrap().samples.len(), 1);
+    // Actual titlebar geometry retains the native route regardless of focus.
+    let mut chrome = state(0x400, DeviceKind::Pen);
+    assert!(matches!(
+        chrome.prepare(Point {
+            in_view: false,
+            ..point(1, 1)
+        }),
+        Action::Native
+    ));
+}
