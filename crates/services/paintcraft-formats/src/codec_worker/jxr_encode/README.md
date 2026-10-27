@@ -1,9 +1,9 @@
 # JPEG XR fixed RGB8 fresh encoder
 
 The fixed opaque RGB8 writer, writer-compatible import and native parent
-preparation are implemented. Exact native Studio routes now have actual CLI/MCP
-fresh-copy proof through the optional qualified helper; actual Studio execution,
-default/release promotion and six-target runtime coverage remain pending.
+preparation are implemented. Exact native Studio, CLI and MCP routes now have
+actual fresh-copy proof through the optional qualified helper. Default/release
+promotion and six-target runtime coverage remain pending.
 Foreign preserving Save is not implemented.
 
 Current parent methods require the exact **nonprivate optional final** `qualified`
@@ -35,6 +35,30 @@ schema 3 refusal. Preserve those failed logs separately, not as passing runs.
 Receipts, artifact hashes and serial test logs are under
 `/private/tmp/paintcraft-jxr-cli-actual-proof`.
 
+The same optimized helper also completed the final native parent nine-case
+preparation/adoption proof, six existing codec paths and seventeen float baseline
+scenarios. The compatibility wrapper preserves an earlier intentionally stale
+manifest-pin refusal; after restoring the real manifest, a fresh sealed discovery
+is verified rather than treating the old pin as current.
+
+Native Studio's copied debug App
+`d3dbdeb36a7fb4f58921998bc2c5c502070ac940efef156d0e28b48210a61687`
+passed twenty-four headless English/Japanese cases with that release helper:
+fourteen export/guard cases, two actual fresh 4096×1 export/import/PCND round
+trips and eight legacy review cases. Four UI exports matched every RGB byte
+through C reference `8e3b71db2c53c5db5f988b8755946a30ac1070b7a6c0a8ffa6933d34d26b95ce`,
+with an explicit successful-exit requirement. The layered expected pixels come
+from the independent Fraction fixture, not the selected encoder or renderer.
+Tests use actual format/consent controls, supervised encoding, final guarded
+publication, captured source identities and PCND reopening. They cover cancel,
+drafts, frontend/tab changes, renamed/hardlinked sources and changed helper
+metadata while preserving the current document and existing destination.
+Native file-picker completion is a headless seam; OS dialogs were not automated.
+Two earlier App fixture failures remain separate: the C runner's zero stdin
+allowance and constructing an Editor with a path without App's real Open
+association. Only test setup changed. Source/binary/helper/C hashes and raw logs
+are retained in `docs/validation/jxr-native-ui-2026-10-26/closeout.json`.
+
 These local proofs do not establish Windows interoperability, all six release
 targets, broader ICC/alpha/depth/compression profiles or default promotion.
 Child/C case deadlines are 10 seconds; native parent qualification fixtures use
@@ -50,9 +74,9 @@ Child/C case deadlines are 10 seconds; native parent qualification fixtures use
   declaring `native-jxr-rgb8-lossless-worker-v1` in `qualified_export_variants`.
 - Encode request/reply: `PCENC001` / `PCJXR001`, schema 1, fixed 176/208-byte
   headers. These are not decoded-RGBA frames or extensions to `PCPIX002`.
-- Production decoder discovery still accepts only its exact V4–V7 contracts and
-  rejects this candidate. The default helper remains V7; `--jxr-encode` exists
-  only in the optional private build.
+- In this historical private snapshot, production discovery accepted only its
+  exact V4–V7 contracts and rejected the candidate. The default helper stayed V7;
+  encoder argv was private. Current qualified V8 is a different exact descriptor.
 
 Request geometry, packed stride, exact RGB length, output cap, owner/nonce and
 source hash are bound by a canonical domain-versioned digest. Reply validation
@@ -155,8 +179,10 @@ A separate legitimate shared-target default build retains exactly the V7 record,
 refuses `--jxr-writer-source`, and refuses encoder argv/new frames; both focused
 controls passed. Its SHA256 is
 `fef7e86f298c400484df5ae78c5c10fc41804841ce4e91836730e35e25b87ad5`.
-Immutable producer prefixes remain unchanged. None of this enables a public gate,
-changes default discovery, or proves original Windows application compatibility.
+Immutable private producer prefixes remain unchanged. Those private artifacts did
+not enable a public gate, alter default discovery or prove original Windows
+application compatibility; current public variants require the distinct qualified
+record described above.
 
 ## Explicit developer reproduction
 
@@ -185,7 +211,8 @@ reference. Set `PAINTCRAFT_JXR_WRITER_MATRIX` to the retained corrected producer
 root `/private/tmp/paintcraft-jxr-long-release-mgr_c7w6`; the parent pins three
 maximum/axis encoded and C-RGB hashes before using its `matrix-large` files. A public V7 helper must never be relabeled as the candidate.
 
-Next finish actual final-helper Studio qualification, native parent/legacy
-compatibility proof and the explicit default/release promotion decision. Windows
-WIC/Paint.NET and all six native release targets remain unproved. Local C differential evidence does
-not establish full JPEG XR or original-application compatibility.
+The actual local Studio and native parent/legacy proofs are complete for the
+qualified descriptor above. The explicit default/release promotion decision,
+Windows WIC/Paint.NET interoperability and all six native release target runtimes
+remain unfinished. Local C differential evidence does not establish full JPEG XR
+or original-application compatibility.

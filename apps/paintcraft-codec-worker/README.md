@@ -1,7 +1,7 @@
-# Native decoder isolation helper
+# Native codec isolation helper
 
 Complete native installations use this executable for explicitly qualified Studio
-JPEG XL, JPEG XR, HEIF and AVIF conversions. Desktop, CLI and MCP consumers share the
+JPEG XL, JPEG XR, HEIF, AVIF and HDR/EXR conversions. Desktop, CLI and MCP consumers share the
 same verified native dispatch, captured-source guards and resident document
 adoption. This does not enable generic image Open, Classic readers, HEIF writing
 or browser use of this executable. The separately qualified Studio browser JPEG
@@ -16,13 +16,15 @@ transport and qualification; it does not use a native helper manifest.
 | 2 | Metadata-free straight sRGB RGBA8 JPEG XL | `native-jxl-srgb8-worker-v1` |
 | 3 | Strict unsigned RGB8 JPEG XR, T.832 default-sRGB policy after refusing embedded color contexts | `native-jxr-srgb8-worker-v1` |
 | 4 | Explicitly declared sRGB8 HEIF color and optional straight alpha | `native-heif-srgb8-worker-v1` |
-| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5, V6 or V7 required |
-| 6 | Explicit BT.709/sRGB8 AVIF 4:4:4 or sited 4:2:0 with optional straight alpha | `native-avif-sdr-ycbcr8-worker-v1`, V6 or V7 required |
-| 7 | Explicit Radiance RGBE-to-SDR conversion with bound settings/report | `native-hdr-sdr8-worker-v1`, final V7 required |
-| 8 | Explicit OpenEXR-to-SDR conversion with bound settings/report | `native-exr-sdr8-worker-v1`, final V7 required |
+| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5, V6, V7 or qualified V8 required |
+| 6 | Explicit BT.709/sRGB8 AVIF 4:4:4 or sited 4:2:0 with optional straight alpha | `native-avif-sdr-ycbcr8-worker-v1`, V6, V7 or qualified V8 required |
+| 7 | Explicit Radiance RGBE-to-SDR conversion with bound settings/report | `native-hdr-sdr8-worker-v1`, final V7 or qualified V8 required |
+| 8 | Explicit OpenEXR-to-SDR conversion with bound settings/report | `native-exr-sdr8-worker-v1`, final V7 or qualified V8 required |
+| 9 | Fixed fresh-writer unsigned RGB8 JPEG XR long-header subset | `native-jxr-writer-rgb8-worker-v1`, optional qualified V8 only |
 
-All profiles are bounded to 4,194,304 pixels. A selected library compiling does
-not admit its other profiles or grant an encoder capability.
+The general decoder ceiling is 4,194,304 pixels; AVIF, HDR/EXR and writer-compatible
+JPEG XR have tighter profile limits. A selected library compiling does not admit
+its other profiles or grant an encoder capability.
 
 HEIF color requires matching explicit NCLX and coded VUI declarations: primaries
 1, transfer 13, full-range identity GBR 4:4:4, or matrix 1 YCbCr 4:4:4/4:2:0 at
@@ -52,8 +54,8 @@ not source-preserving HEIF saves.
 JXR requires `jxr-resolution-not-retained` consent, including the normative
 96-DPI default when resolution is absent or zero. Receipts distinguish raw source
 resolution bits from effective density and inferred defaults. ICC, metadata,
-alpha/deep precision and other unqualified JXR forms remain refused. No JPEG XR
-or HEIF writer is provided.
+alpha/deep precision and other unqualified JXR forms remain refused. HEIF writing
+remains unavailable. Optional qualified V8 adds the fixed JPEG XR writer below.
 
 Code5 AVIF requires explicit matching AV1/container declarations: profile-1 8-bit
 full-range identity GBR 4:4:4, primaries 1 and transfer 13. Its optional alpha is
@@ -94,12 +96,15 @@ the existing single-thread Rayon pool; no new renderer or thread pool is added.
 The trusted child must not delegate inherited pipes or spawn descendants: the
 supervisor controls its exact child, not an arbitrary process tree.
 
-Three finite native contracts are recognized. `BUILD_V4` qualifies JXL/JXR/HEIF;
-`BUILD_V5_AVIF` additionally requires the pinned static decoder token
-`AVIF_DAV1D154_ALLOC1_ASM0_8BIT1` and exact four-variant manifest. The private
-`BUILD_V6_AVIF_SDR` adds the reconstruction token and fifth variant described
-below. Identity AVIF accepts V5/V6/V7; SDR accepts V6/V7; other codecs accept
-all three verified contracts, with no retry after integrity failure. All include `STDIN_PARENT_LEASE1` and `JXR_PRIVATE_SOURCE1`; binary
+Finite native contracts are recognized explicitly. `BUILD_V4` qualifies JXL/JXR/HEIF;
+`BUILD_V5_AVIF` adds the pinned static decoder and exact four-import manifest;
+`BUILD_V6_AVIF_SDR` adds SDR reconstruction and the fifth import; final V7 adds
+the two explicit float conversions. Optional qualified V8 adds fixed JPEG XR
+encoding and its writer-compatible reader through a distinct schema 3 contract.
+Identity AVIF accepts V5/V6/V7/V8, SDR accepts V6/V7/V8, and float conversion
+accepts final V7/V8; writer-compatible JPEG XR requires qualified V8. These are
+finite verified records, with no version-prefix acceptance or integrity-error retry.
+All include `STDIN_PARENT_LEASE1` and `JXR_PRIVATE_SOURCE1`; binary
 protocol 2 is unchanged. The supervisor retains its
 sole stdin writer after the exact request. EOF, I/O failure or an extra byte makes
 the helper watchdog exit without allocation (status 76). This is parent-liveness
@@ -144,7 +149,8 @@ records without executing foreign binaries. macOS ad-hoc signing is reflected in
 the final manifest SHA; it is not Developer-ID signing or notarization.
 
 Schema 2 `qualified_import_variants` lists exactly three native variants for V4
-or four for V5, five for V6, or seven for final qualified V7.
+or four for V5, five for V6, or seven for final qualified V7. Optional qualified V8
+uses schema 3 with exactly eight imports and one qualified export.
 Standalone copied executables and helper-free installs fail closed. Packages
 containing the helper include `JPEGXR_LICENSE.txt`, reproducing the selected
 JPEG XR dependency's actual required Microsoft notice rather than relying on its
@@ -288,3 +294,44 @@ The final descriptor does not alter exposure, alpha, negative-value, tone-mappin
 Local final-descriptor qualification on Apple silicon passed the default worker matrix (40 tests, eight ignored; test-build helper `80aecb8e9db50085716a7de69f7ff840b016f5fa0d58978155f647bff40e840a`). A separate actual optimized source build and canonical archive/private-prefix installation produced helper `24a014c300a3b8050b50afa4e71d1391c2949446b12bae7583a2ca48017ce29d` and CLI `33dccc52d90d34be83c5f8f18b05c73588107c0f7a9314503a4beb44d657e1a8`. Against those installed optimized binaries, CLI/MCP passed all seventeen independent scenarios plus source/cancellation/rollback guards; native-parent preparation passed twelve exact RGBA/PCND cases and five refusals; legacy discovery passed all six existing operations and unknown/private/forged-manifest refusals. The worker test-build hash and distributed optimized-helper hash are recorded separately.
 
 Actual local ad-hoc signing of a separate optimized helper copy also passed canonical post-sign manifest verification. This does not establish a complete signed GUI bundle, DMG, MSI, Linux package integration or execution on the other five native targets. Those remain release-workflow/OS gates; no release or tag is implied by local qualification.
+
+
+## Optional qualified V8 JPEG XR fresh copies
+
+Normal builds and default packages still use V7. Explicit `jxr-codecs` builds add
+profile `native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`, an exact
+nonprivate V8 build record, and schema 3 with eight imports and one export.
+Private V8 records remain refused. `PCENC001` requests and `PCJXR001` replies
+are distinct from decoded RGBA frames; the existing supervisor, allocator cap
+and parent lease are reused.
+
+Exact native Studio `native-jxr-rgb8-lossless-worker-v1` enables the desktop
+**Export image** choice, CLI `export-jxr` and MCP `export_jxr`. The fixed lossless
+profile accepts an opaque RGB8 composite, at most 1,048,576 pixels and 65,536
+per side, with 64 MiB encoded output. It never supplies a matte or silently
+removes alpha. Actual flatten/hidden-color losses require review; source document,
+history, dirty state, title, source identities and native Save binding remain intact.
+The real encoded result and admission stay retained through picker/review and the
+final guarded staging publication. No portable/browser export choice is added.
+
+`native-jxr-writer-rgb8-worker-v1` imports the distinct bounded fresh long-header
+profile through the same sealed native coordinator. Classification happens before
+launch; it never retries another reader after failure. Existing short-header
+imports keep their established profile. Print-resolution loss still needs consent,
+including the normative 96-DPI interpretation of positive-zero stored fields.
+
+An immutable optimized Apple Silicon helper `529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c`
+passed independent original-C fresh/retained writer checks and actual CLI/MCP
+consumers. A debug headless App paired with that release helper passed twenty-four
+English/Japanese cases: fourteen export/guard cases, two actual fresh 4096×1
+export/import/PCND round trips and eight legacy JPEG XR review cases. Four UI
+exports matched every RGB byte through the independently pinned C decoder; its
+successful exit is required. Alias/stale owner/draft/tab/frontend/helper changes
+preserve sources and existing destinations. Native file-picker completion is a
+headless seam, not automated OS-dialog interaction. Earlier failed fixture runs
+remain recorded separately in `docs/validation/jxr-native-ui-2026-10-26`.
+
+This does not complete broader JPEG XR profiles, original Windows application
+interoperability, default/release promotion or all six native target runtimes.
+There is no generic Open, Classic/browser reader, preserving JPEG XR Save or
+16-bit editor claim. The exact registry variants remain preflight operations.
