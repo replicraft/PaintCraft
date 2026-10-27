@@ -111,8 +111,11 @@ fn post_admission_ui_displays_preview_and_losses_without_touching_source_in_en_a
         });
         h.run();
         assert!(
-            h.query_by_label(&translate(language, "Base image preview"))
-                .is_some()
+            h.query_by_role_and_label(
+                egui::Role::Image,
+                &translate(language, "Base image preview")
+            )
+            .is_some()
         );
         assert!(
             h.query_by_label(&translate(
@@ -297,5 +300,71 @@ fn source_owner_or_modal_change_retires_pending_work_and_preserves_foreign_modal
         assert!(Arc::ptr_eq(&snapshot, &h.state().editor.session.snapshot()));
         assert_eq!(ticket, h.state().editor.session.ticket());
         assert_eq!(name, h.state().name);
+    }
+}
+
+#[test]
+fn compact_review_keeps_footer_reachable_and_requires_a_fully_visible_preview() {
+    use egui_kittest::{
+        Harness,
+        kittest::{NodeT, Queryable},
+    };
+    for language in [Language::English, Language::Japanese] {
+        let mut h = Harness::builder()
+            .with_size(egui::vec2(390.0, 580.0))
+            .build_eframe(|cc| WebApp::new(&cc.egui_ctx));
+        let doc = paintcraft_document::new_document(
+            192,
+            192,
+            Some(paintcraft_core::types::Rgba([128, 188, 255, 127])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        h.state_mut().frontend = Frontend::Studio;
+        h.state_mut().editor = Editor::from_document(doc).unwrap();
+        h.state_mut().export_confirm = Some(ImageExport::Dds);
+        set_language(&h.ctx, language);
+        let settings = Settings {
+            encoding: controls::Encoding::Bc3,
+            transfer: controls::Transfer::Linear8,
+            mips: controls::Mips::Full,
+            filter: controls::Filter::BoxStored,
+            quality: controls::Quality::High,
+        };
+        let (header, bytes) = artifact(h.state().editor.session.document(), settings);
+        let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
+        let (mut review, _, _) = pending_review(h.state(), settings);
+        review.pending = None;
+        review.prepared = Some(prepared);
+        h.state_mut().dds.review = Some(review);
+        h.run();
+        let download = translate(language, "Download DDS");
+        for label in [download.clone(), translate(language, "Cancel")] {
+            assert!(
+                h.ctx
+                    .content_rect()
+                    .contains_rect(h.get_by_label(&label).rect()),
+                "{label}"
+            );
+        }
+        assert!(
+            h.state().dds.review.as_ref().unwrap().shown.is_none(),
+            "a clipped image does not count as a visible preview"
+        );
+        assert!(h.get_by_label(&download).accesskit_node().is_disabled());
+        h.get_by_role_and_label(
+            egui::Role::Image,
+            &translate(language, "Base image preview"),
+        )
+        .scroll_to_me();
+        h.run();
+        assert!(h.state().dds.review.as_ref().unwrap().shown.is_some());
+        let consent = translate(language, "I accept these export changes.");
+        h.get_by_label(&consent).scroll_to_me();
+        h.run();
+        h.get_by_label(&consent).click();
+        h.run();
+        assert!(!h.get_by_label(&download).accesskit_node().is_disabled());
     }
 }

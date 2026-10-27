@@ -15,16 +15,26 @@ impl WebApp {
             return;
         }
         let response = egui::Modal::new(egui::Id::unique("browser-dds-export")).show(ctx, |ui| {
-            ui.set_max_width(440.0);
+            ui.set_max_width((ctx.content_rect().width() - 32.0).clamp(1.0, 440.0));
             ui.heading(t!(ctx, "DDS texture"));
+            #[cfg(target_arch = "wasm32")]
+            let paused = self.dds.service.as_ref().is_some_and(bridge::quarantined);
+            #[cfg(not(target_arch = "wasm32"))]
+            let paused = false;
+            let changed = egui::ScrollArea::vertical()
+                .id_salt("dds-export-body")
+                .max_height((ctx.content_rect().height() - 96.0).max(1.0))
+                .show(ui, |ui| {
             ui.label(&review.filename);
             ui.label(t!(ctx, "This browser DDS profile allows up to 1,048,576 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
             let size = self.editor.session.document().canvas;
             let changed = controls::controls(ui, &mut review.settings, size.0, size.1);
             if let Some(texture) = &review.texture {
                 ui.label(t!(ctx, "Base image preview"));
-                ui.image(texture);
-                review.shown.get_or_insert(ctx.cumulative_frame_nr());
+                let image = ui.add(egui::Image::new(texture).alt_text(t!(ctx, "Base image preview")));
+                if ui.clip_rect().contains_rect(image.rect) {
+                    review.shown.get_or_insert(ctx.cumulative_frame_nr());
+                }
             } else if let Some(error) = &review.error {
                 let message = if error.code == ErrorCode::ResourceLimit {
                     "Not enough memory to export with these settings. Use a smaller image or fewer layers."
@@ -38,10 +48,6 @@ impl WebApp {
                 ui.spinner();
                 ui.label(t!(ctx, "Preparing DDS texture…"));
             }
-            #[cfg(target_arch = "wasm32")]
-            let paused = self.dds.service.as_ref().is_some_and(bridge::quarantined);
-            #[cfg(not(target_arch = "wasm32"))]
-            let paused = false;
             if paused {
                 ui.label(t!(ctx, PAUSED));
                 if ui.button(t!(ctx, "Download project")).clicked() {
@@ -64,6 +70,8 @@ impl WebApp {
             if review.prepared.as_ref().is_some_and(|p| !p.losses.is_empty()) {
                 ui.checkbox(&mut review.approved, t!(ctx, "I accept these export changes."));
             }
+            changed
+                }).inner;
             let consent = review.prepared.as_ref().is_some_and(|p| p.losses.is_empty() || review.approved);
             let ready = consent && !changed && !paused && review.prepared.is_some()
                 && review.shown.is_some_and(|f| f < ctx.cumulative_frame_nr());
