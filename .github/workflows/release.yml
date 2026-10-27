@@ -62,6 +62,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.publish-tag }}
         run: python scripts/packaging/verify_release_run.py --repo "$GITHUB_REPOSITORY" --run "$SOURCE_RUN" --tag "$RELEASE_TAG"
       - run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
+      - run: python -m unittest discover -s scripts/tests -p 'test_qualify_cli_helper.py'
       - run: python scripts/check_file_lengths.py
       - name: Generate complete changelog
         if: inputs.artifacts-run == ''
@@ -139,14 +140,23 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
+      - name: Resolve exact target helper rollout
+        id: helper-policy
+        run: python scripts/packaging/helper_policy.py --target ${{ matrix.target }} --github-output
       - name: Build release with GPU rendering
-        run: cargo build --locked --release -p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target ${{ matrix.target }} --features paintcraft-codec-worker/float-codecs
-      - name: Qualify the native decoder helper and installed consumers
-        env:
-          PAINTCRAFT_V7_HELPER: ${{ github.workspace }}/target/${{ matrix.target }}/release/paintcraft-codec-worker${{ runner.os == 'Windows' && '.exe' || '' }}
-        run: |
-          cargo test --locked --release -p paintcraft-codec-worker --features float-codecs --target ${{ matrix.target }} --tests -- --test-threads=1
-          python scripts/packaging/qualify_cli_helper.py --profile v7 --target ${{ matrix.target }} --helper "${{ env.PAINTCRAFT_V7_HELPER }}"
+        run: cargo build --locked --release -p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target ${{ matrix.target }} --features paintcraft-codec-worker/${{ steps.helper-policy.outputs.feature }}
+      - name: Qualify native worker controls
+        run: cargo test --locked --release -p paintcraft-codec-worker --features ${{ steps.helper-policy.outputs.feature }} --target ${{ matrix.target }} --tests -- --test-threads=1
+      - name: Freeze the exact installed-consumer CLI build recipe
+        run: cargo test --locked --release -p paintcraft-cli --target ${{ matrix.target }} --test installed_codec_worker --no-run --message-format=json
+      - name: Produce and install the exact qualification CLI archive
+        run: python scripts/packaging/helper_policy.py --target ${{ matrix.target }} --prepare-installation target/${{ matrix.target }}/release/paintcraft-cli${{ runner.os == 'Windows' && '.exe' || '' }} --output target/${{ matrix.target }}/helper-qualification
+      - name: Qualify V7 installed consumers on held targets
+        if: steps.helper-policy.outputs.selector == 'v7'
+        run: python scripts/packaging/qualify_cli_helper.py --profile v7 --target ${{ matrix.target }} --helper "${{ github.workspace }}/target/${{ matrix.target }}/release/paintcraft-codec-worker${{ runner.os == 'Windows' && '.exe' || '' }}"
+      - name: Qualify V8 installed consumers on the promoted target
+        if: steps.helper-policy.outputs.selector == 'v8'
+        run: python scripts/packaging/qualify_cli_helper.py --profile v8 --target ${{ matrix.target }} --installation target/${{ matrix.target }}/helper-qualification/prefix/bin
       - name: Test native clipboard transport and lifecycle
         if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib

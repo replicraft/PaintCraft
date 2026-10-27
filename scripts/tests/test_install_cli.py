@@ -40,7 +40,8 @@ class InstallTests(unittest.TestCase):
         if contract != "v4":
             prefix, suffix = ({"v5": (codec_worker.AVIF_BUILD_PREFIX, codec_worker.AVIF_BUILD_SUFFIX),
                                "v6": (codec_worker.AVIF_SDR_BUILD_PREFIX, codec_worker.AVIF_SDR_BUILD_SUFFIX),
-                               "v7": (codec_worker.FLOAT_BUILD_PREFIX, codec_worker.FLOAT_BUILD_SUFFIX)})[contract]
+                               "v7": (codec_worker.FLOAT_BUILD_PREFIX, codec_worker.FLOAT_BUILD_SUFFIX),
+                               "v8": (codec_worker.JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX)})[contract]
             helper.write_bytes(helper.read_bytes().replace(codec_worker.BUILD_PREFIX, prefix).replace(codec_worker.BUILD_SUFFIX, suffix))
         output = directory / "archives"
         archive = package_cli.package(self.version, target, binary, output)
@@ -89,7 +90,7 @@ class InstallTests(unittest.TestCase):
         for target in release.TARGETS:
             prefix = self.root / (target + "-finite-prefix")
             for number, (contract, profile) in enumerate([("v4", codec_worker.NATIVE_PROFILE), ("v5", codec_worker.AVIF_PROFILE),
-                                      ("v6", codec_worker.AVIF_SDR_PROFILE), ("v7", codec_worker.FLOAT_PROFILE), ("v4", codec_worker.NATIVE_PROFILE), ("v7", codec_worker.FLOAT_PROFILE), ("v5", codec_worker.AVIF_PROFILE)]):
+                                      ("v6", codec_worker.AVIF_SDR_PROFILE), ("v7", codec_worker.FLOAT_PROFILE), ("v8", codec_worker.JXR_PROFILE), ("v7", codec_worker.FLOAT_PROFILE), ("v4", codec_worker.NATIVE_PROFILE), ("v7", codec_worker.FLOAT_PROFILE), ("v5", codec_worker.AVIF_PROFILE)]):
                 with self.subTest(target=target, contract=contract):
                     archive, sums = self.archive(target, target + "-" + contract + "-" + str(number), contract)
                     destination = self.install(archive, sums, prefix, target)
@@ -308,33 +309,39 @@ class InstallTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "release contract"):
             codec_worker.verify_manifest(destination, future, self.target)
 
-    def test_source_build_packages_both_binaries_with_avif_and_exact_notices(self):
-        for contract in ["v5", "v6", "v7"]:
-            archive, sums = self.archive(stem="source-" + contract, contract=contract)
-            binary_dir = archive.parent.parent
-            target_directory = self.root / ("cargo-target-" + contract)
-            built = target_directory / self.target / "release"
-            built.mkdir(parents=True)
-            for name in (install.executable(self.target), codec_worker.filename(self.target)):
-                shutil.copy2(binary_dir / name, built / name)
-            temporary = self.root / ("source-output-" + contract)
-            temporary.mkdir()
-            metadata = subprocess.CompletedProcess([], 0, stdout=json.dumps({"target_directory": str(target_directory)}))
-            with patch.object(install.subprocess, "run", return_value=metadata) as run:
-                if contract != "v7":
-                    with self.assertRaisesRegex(ValueError, "complete qualified V7"):
-                        install.source_archive(temporary, self.target)
-                    self.assertEqual(list(temporary.iterdir()), [])
-                    continue
-                archive, sums, version = install.source_archive(temporary, self.target)
-            command = run.call_args_list[0].args[0]
-            self.assertIn("paintcraft-cli", command)
-            self.assertIn("paintcraft-codec-worker", command)
-            self.assertIn("paintcraft-codec-worker/float-codecs", command)
-            self.assertIn("--locked", command)
-            self.assertEqual(version, self.version)
-            destination = self.install(archive, sums, self.root / ("source-prefix-" + contract))
-            self.assertEqual({p.name for p in destination.iterdir()}, install.payload_names(self.target, codec_worker.FLOAT_PROFILE))
+    def test_source_build_requires_the_exact_target_rollout_profile(self):
+        import helper_policy
+        for target in release.TARGETS:
+            for contract in ("v5", "v6", "v7", "v8"):
+                with self.subTest(target=target, contract=contract):
+                    label = target + "-" + contract
+                    archive, sums = self.archive(target, "source-" + label, contract)
+                    binary_dir = archive.parent.parent
+                    target_directory = self.root / ("cargo-target-" + label)
+                    built = target_directory / target / "release"
+                    built.mkdir(parents=True)
+                    for name in (install.executable(target), codec_worker.filename(target)):
+                        shutil.copy2(binary_dir / name, built / name)
+                    temporary = self.root / ("source-output-" + label)
+                    temporary.mkdir()
+                    metadata = subprocess.CompletedProcess([], 0, stdout=json.dumps({"target_directory": str(target_directory)}))
+                    feature, expected_profile = helper_policy.selection(target)
+                    selected = "v8" if feature == "jxr-codecs" else "v7"
+                    with patch.object(install.subprocess, "run", return_value=metadata) as run:
+                        if contract != selected:
+                            with self.assertRaisesRegex(ValueError, "exact target rollout"):
+                                install.source_archive(temporary, target)
+                            self.assertEqual(list(temporary.iterdir()), [])
+                            continue
+                        archive, sums, version = install.source_archive(temporary, target)
+                    command = run.call_args_list[0].args[0]
+                    self.assertIn("paintcraft-cli", command)
+                    self.assertIn("paintcraft-codec-worker/" + feature, command)
+                    self.assertEqual(command[command.index("--target") + 1], target)
+                    self.assertIn("--locked", command)
+                    self.assertEqual(version, self.version)
+                    destination = self.install(archive, sums, self.root / ("source-prefix-" + label), target)
+                    self.assertEqual({p.name for p in destination.iterdir()}, install.payload_names(target, expected_profile))
 
     @unittest.skipUnless(os.name == "nt", "actual PowerShell wrapper")
     def test_real_powershell_wrapper_offline_install_keeps_complete_payload(self):

@@ -6,11 +6,24 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
-Normal helper builds enable `float-codecs` by default. Native release builds also
-explicitly request `paintcraft-codec-worker/float-codecs`; a V4 compatibility
-helper requires `--no-default-features`; V5 identity-only compatibility uses
-`--no-default-features --features avif-codec`; V6 uses
-`--no-default-features --features avif-sdr-codec`.
+Normal Cargo helper builds retain `float-codecs` (V7) by default. The explicit
+shipping policy in `scripts/packaging/helper_policy.py` selects qualified public
+V8 through `jxr-codecs` only for `aarch64-apple-darwin`; the other five native
+targets retain exact V7 through `float-codecs`. This staged choice applies to
+release builds and source CLI installation. The local macOS bundle builder pins
+an explicit Rust target (`--target`, then `CARGO_BUILD_TARGET`, then `rustc` host),
+passes it to Cargo and verifies both binary architectures and the exact helper
+profile before publication. Python/Rosetta CPU detection does not select the
+helper profile. Supplying `--binary` still permits a verified legacy bundle for
+rollback; the launcher follows the actual supplied binary architecture.
+
+A V4 compatibility helper requires `--no-default-features`; V5 identity-only
+compatibility uses `--no-default-features --features avif-codec`; V6 uses
+`--no-default-features --features avif-sdr-codec`. Do not change the global Cargo
+default while target holdbacks remain: adding `--features float-codecs` cannot
+remove a default `jxr-codecs` feature. A future default switch needs separate
+worker `--no-default-features` builds without disabling desktop GPU defaults.
+
 The pinned dav1d source is built statically with Meson 1.12.1 and Ninja 1.13.2;
 no installed decoder library is used. Windows builds select the native MSVC
 compiler; release Rust flags request `crt-static` and the C build matches with
@@ -20,12 +33,26 @@ CLI/MCP tests before packaging. These workflow changes still require execution
 on all six targets; local Apple-silicon checks do not qualify the other targets.
 
 Packaging reads the helper's embedded build record without executing it, then
-writes an exact manifest for V4, identity-only V5, complete V6 or final qualified V7. It refuses mixed,
+writes an exact manifest for V4, identity-only V5, complete V6, qualified V7 or
+nonprivate V8. It refuses mixed,
 stale or malformed records. Desktop and CLI packages include the helper,
 manifest, `JPEGXR_LICENSE.txt` and `DAV1D_LICENSE.txt`; final V7 also includes
-`HDR_EXR_LICENSES_V1.txt`. Portable archives keep
+`HDR_EXR_LICENSES_V1.txt`, as does V8. Portable archives keep
 these beside the executable. Linux system packages place notices under
 `/usr/share/licenses/paintcraft` and the manifest under `/usr/share/paintcraft`.
+
+The release workflow freezes the installed-test CLI recipe, creates a canonical
+CLI archive and installs it into a private prefix before qualification. Its finite
+selector always runs ordinary tests plus the six explicit AVIF/SDR/float cases.
+V8 also runs positive CLI/MCP export and own-output import against frozen files
+independently qualified by the pinned C decoder, plus forged-contract controls.
+V8 requires the complete exact schema3 installation and a byte-identical CLI to
+the test build; ambient fixture overrides are removed. Independent C-oracle JXR
+export tests run only with explicit `--oracle` and the pinned oracle executable;
+C-derived static expected pixels do not claim that C ran on another OS.
+The five held targets need their own actual native worker and installed-consumer
+gates before their policy entries can advance. Synthetic binary headers establish
+metadata/architecture validation, not native runtime qualification.
 
 ## Downloads
 

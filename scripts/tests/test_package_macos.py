@@ -2,6 +2,7 @@
 import contextlib
 import importlib.util
 import io
+import json
 import os
 import sys
 from pathlib import Path
@@ -94,13 +95,38 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), "original")
         self.assertEqual(list(self.root.glob(".paintcraft-package-*")), [])
 
-    def test_build_uses_reported_executable_path(self):
-        artifact = '{"reason":"compiler-artifact","target":{"name":"paintcraft"},"executable":"/custom target/paintcraft"}\n'
-        completed = subprocess.CompletedProcess([], 0, artifact, "")
-        with patch.object(PACK.subprocess, "run", return_value=completed) as run:
-            self.assertEqual(PACK.built_binary(False), Path("/custom target/paintcraft"))
-        self.assertIn("--release", run.call_args.args[0])
-        self.assertEqual(run.call_args.kwargs["cwd"], PACK.ROOT)
+    def test_build_pins_rust_target_and_verifies_reported_architecture_and_profile(self):
+        import codec_worker
+        for target, prefix, suffix in [
+            ("aarch64-apple-darwin", codec_worker.JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX),
+            ("x86_64-apple-darwin", codec_worker.FLOAT_BUILD_PREFIX, codec_worker.FLOAT_BUILD_SUFFIX),
+        ]:
+            with self.subTest(target=target):
+                directory = self.root / target
+                directory.mkdir()
+                binary = directory / "paintcraft"
+                executable(binary, target)
+                helper = directory / codec_worker.filename(target)
+                helper.write_bytes(helper.read_bytes().replace(codec_worker.BUILD_PREFIX, prefix)
+                                   .replace(codec_worker.BUILD_SUFFIX, suffix))
+                artifact = '{"reason":"compiler-artifact","target":{"name":"paintcraft"},"executable":' + json.dumps(str(binary)) + '}\n'
+                completed = subprocess.CompletedProcess([], 0, artifact, "")
+                with patch.object(PACK.subprocess, "run", return_value=completed) as run:
+                    self.assertEqual(PACK.built_binary(False, target), binary)
+                    command = run.call_args.args[0]
+                    self.assertIn("--release", command)
+                    self.assertIn("--locked", command)
+                    self.assertEqual(command[command.index("--target") + 1], target)
+                    expected = "jxr-codecs" if target.startswith("aarch64") else "float-codecs"
+                    self.assertIn("paintcraft-codec-worker/" + expected, command)
+                    helper.write_bytes(helper.read_bytes().replace(prefix, codec_worker.BUILD_PREFIX)
+                                       .replace(suffix, codec_worker.BUILD_SUFFIX))
+                    with self.assertRaisesRegex(ValueError, "exact target rollout"):
+                        PACK.built_binary(False, target)
+                    other = "x86_64-apple-darwin" if target.startswith("aarch64") else "aarch64-apple-darwin"
+                    executable(binary, other)
+                    with self.assertRaises(ValueError):
+                        PACK.built_binary(False, target)
 
     def test_install_and_registration_are_opt_in_and_never_launch(self):
         installed = self.root / "home/Applications/PaintCraft.app"

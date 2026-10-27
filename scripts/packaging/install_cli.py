@@ -16,6 +16,7 @@ import urllib.request
 import zipfile
 
 import codec_worker
+import helper_policy
 import package_cli
 import package_release as release
 
@@ -245,15 +246,14 @@ def install(archive, checksums, version, target, prefix):
 
 def source_archive(temporary, target):
     version = release.workspace_version()
+    feature, _ = helper_policy.selection(target)
     subprocess.run(["cargo", "build", "--locked", "--release", "--target", target,
                     "-p", "paintcraft-cli", "-p", "paintcraft-codec-worker",
-                    "--features", "paintcraft-codec-worker/float-codecs"], cwd=release.ROOT, check=True)
+                    "--features", "paintcraft-codec-worker/" + feature], cwd=release.ROOT, check=True)
     result = subprocess.run(["cargo", "metadata", "--format-version", "1", "--no-deps", "--locked"],
                             cwd=release.ROOT, check=True, capture_output=True, text=True)
     binary = Path(json.loads(result.stdout)["target_directory"]) / target / "release" / executable(target)
-    profile, _ = codec_worker.verify_build_record(binary.parent / codec_worker.filename(target), version)
-    if profile != codec_worker.FLOAT_PROFILE:
-        raise ValueError("Source install requires the complete qualified V7 HDR/EXR helper")
+    helper_policy.verify(binary, version, target)
     archive = package_cli.package(version, target, binary, temporary)
     sums = temporary / "SHA256SUMS.txt"
     sums.write_bytes(release.checksum_line(archive))
@@ -270,7 +270,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prefix", type=Path, default=default_prefix(), help="Owned installation prefix; all files are kept under its bin directory")
     parser.add_argument("--version", help="Published version; default is latest stable")
-    parser.add_argument("--source", action="store_true", help="Build this checkout's CLI and complete HDR/EXR-enabled helper (requires Rust, a C compiler, Meson and Ninja)")
+    parser.add_argument("--source", action="store_true", help="Build this checkout's CLI and exact target-qualified helper (requires Rust, a C compiler, Meson and Ninja)")
     parser.add_argument("--archive", type=Path, help="Install a previously downloaded complete archive")
     parser.add_argument("--checksums", type=Path, help="SHA256SUMS.txt for --archive")
     args = parser.parse_args(argv)

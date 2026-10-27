@@ -22,6 +22,8 @@ class SelectionTests(unittest.TestCase):
 
     def test_v8_adds_two_actual_consumer_controls_or_explicit_oracle(self):
         self.assertEqual(qualify.selectors("v8"), qualify.BASELINE + qualify.JXR)
+        self.assertIn("jxr_export::portable::installed_cli_mcp_match_c_qualified_goldens", qualify.selectors("v8"))
+        self.assertFalse(any("curate" in name for name in qualify.selectors("v8", True)))
         self.assertEqual(qualify.selectors("v8", True), qualify.BASELINE + qualify.JXR + qualify.ORACLES)
         with self.assertRaises(ValueError):
             qualify.selectors("v7", True)
@@ -31,8 +33,8 @@ class SelectionTests(unittest.TestCase):
     def test_every_exact_selector_resolves_to_one_real_ignored_test(self):
         directory = release.ROOT / "apps/paintcraft-cli/tests/installed_codec_worker"
         for name in qualify.selectors("v8", True):
-            module, function = name.split("::")
-            source = (directory / (module + ".rs")).read_text()
+            *modules, function = name.split("::")
+            source = directory.joinpath(*modules).with_suffix(".rs").read_text()
             matches = re.findall(r'#\[ignore[^\n]*\]\s*fn\s+' + re.escape(function) + r'\(', source)
             self.assertEqual(len(matches), 1, name)
 
@@ -78,7 +80,7 @@ class SelectionTests(unittest.TestCase):
     def test_release_uses_finite_selector_and_keeps_exact_v7_feature(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
         self.assertIn("qualify_cli_helper.py --profile v7", workflow)
-        self.assertIn("--features paintcraft-codec-worker/float-codecs", workflow)
+        self.assertIn("--features paintcraft-codec-worker/${{ steps.helper-policy.outputs.feature }}", workflow)
         self.assertNotIn("--include-ignored", workflow)
 
 

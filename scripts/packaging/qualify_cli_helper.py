@@ -18,6 +18,7 @@ BASELINE = (
     "float::actual_float_source_guards_cancel_and_rollback_preserve_prior_workspace",
 )
 JXR = (
+    "jxr_export::portable::installed_cli_mcp_match_c_qualified_goldens",
     "jxr_export::installed_forged_export_contract_preserves_cli_destination_and_mcp_session",
 )
 ORACLES = (

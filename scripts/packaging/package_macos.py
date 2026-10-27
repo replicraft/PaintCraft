@@ -12,6 +12,7 @@ import tempfile
 import tomllib
 
 import codec_worker
+import helper_policy
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "apps/paintcraft/resources/macos/Info.plist.in"
@@ -102,8 +103,10 @@ def publish_bundle(destination, prepare, replace=False):
     return destination
 
 
-def built_binary(debug):
-    command = ["cargo", "build", "-p", "paintcraft", "-p", "paintcraft-codec-worker", "--features", "paintcraft-codec-worker/float-codecs", "--message-format=json-render-diagnostics"]
+def built_binary(debug, target=None):
+    target = helper_policy.macos_target(target)
+    feature, _ = helper_policy.selection(target)
+    command = ["cargo", "build", "--locked", "-p", "paintcraft", "-p", "paintcraft-codec-worker", "--features", "paintcraft-codec-worker/" + feature, "--target", target, "--message-format=json-render-diagnostics"]
     if not debug:
         command.append("--release")
     process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
@@ -118,7 +121,10 @@ def built_binary(debug):
             executable = item.get("executable") or executable
     if executable is None:
         raise ValueError("Cargo did not report a PaintCraft executable")
-    return Path(executable)
+    binary = Path(executable)
+    version = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
+    helper_policy.verify(binary, version, target)
+    return binary
 
 
 def build_launcher(directory, target=None):
@@ -196,6 +202,8 @@ def register(bundle):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--target", choices=("aarch64-apple-darwin", "x86_64-apple-darwin"),
+                        help="Pin the Rust target; otherwise use CARGO_BUILD_TARGET or rustc host")
     parser.add_argument("--debug", action="store_true", help="build the debug profile instead of release")
     parser.add_argument("--binary", type=Path, help="package an existing native macOS executable instead of building")
     parser.add_argument("--output", type=Path, default=ROOT / "target/macos/PaintCraft.app")
@@ -211,11 +219,14 @@ def main(argv=None):
         if args.install:
             check_destination(install, args.replace)
         version = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
-        binary = args.binary.absolute() if args.binary else built_binary(args.debug)
+        binary = args.binary.absolute() if args.binary else built_binary(args.debug, args.target)
         if not binary.is_file():
             raise ValueError(f"Executable does not exist: {binary}")
+        actual_target, _ = codec_worker.prepare(binary, version, args.target)
+        if actual_target not in ("aarch64-apple-darwin", "x86_64-apple-darwin"):
+            raise ValueError("Bundle executable must have a supported macOS architecture")
         with tempfile.TemporaryDirectory(prefix="paintcraft-launcher-") as directory:
-            launcher = build_launcher(directory)
+            launcher = build_launcher(directory, actual_target)
             def prepare(stage):
                 populate_bundle(binary, stage, version, launcher)
                 sign_bundle(stage)
