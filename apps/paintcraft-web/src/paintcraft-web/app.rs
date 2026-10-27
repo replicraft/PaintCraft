@@ -3,6 +3,8 @@ use paintcraft_ui::t;
 mod brushes;
 #[cfg(test)]
 mod chrome_tests;
+#[cfg(target_arch = "wasm32")]
+mod codec_export_bridge;
 #[cfg(test)]
 #[path = "crop_tests.rs"]
 mod crop_tests;

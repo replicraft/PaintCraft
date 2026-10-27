@@ -222,6 +222,8 @@ fn pending_review(app: &WebApp, settings: Settings) -> (Review, Outcome<Prepared
                 settings,
                 result: result.clone(),
                 cancelled: cancelled.clone(),
+                #[cfg(target_arch = "wasm32")]
+                cancellation: Default::default(),
             }),
             prepared: None,
             texture: None,

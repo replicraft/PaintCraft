@@ -37,7 +37,7 @@ struct Prepared {
     lease: Option<bridge::Lease>,
 }
 impl Prepared {
-    #[cfg(any(target_arch = "wasm32", test))]
+    #[cfg(test)]
     fn bytes(&self) -> &[u8] {
         &self.response[self.encoded.clone()]
     }
@@ -48,6 +48,8 @@ struct Pending {
     settings: Settings,
     result: Outcome<Prepared>,
     cancelled: Rc<Cell<bool>>,
+    #[cfg(target_arch = "wasm32")]
+    cancellation: Rc<RefCell<Option<bridge::Cancellation>>>,
 }
 struct Review {
     owner: crate::importing::Owner,
@@ -107,8 +109,8 @@ impl State {
         {
             pending.cancelled.set(true);
             #[cfg(target_arch = "wasm32")]
-            if let Some(service) = &self.service {
-                bridge::cancel(service);
+            if let Some(ticket) = pending.cancellation.borrow().as_ref() {
+                ticket.cancel();
             }
         }
         self.review = None;
@@ -239,6 +241,8 @@ impl WebApp {
                 let target = result.clone();
                 let cancelled = Rc::new(Cell::new(false));
                 let stop = cancelled.clone();
+                let cancellation = Rc::new(RefCell::new(None));
+                let token = cancellation.clone();
                 let owner = review.owner.wire();
                 let nonce = uuid::Uuid::new_v4();
                 let ctx = ctx.clone();
@@ -249,7 +253,7 @@ impl WebApp {
                             "DDS export cancelled",
                         ))
                     } else {
-                        bridge::prepare(service, doc, plan, owner, nonce).await
+                        bridge::prepare(service, doc, plan, owner, nonce, token).await
                     };
                     *target.borrow_mut() = Some(value);
                     ctx.request_repaint();
@@ -258,6 +262,7 @@ impl WebApp {
                     settings: review.settings,
                     result,
                     cancelled,
+                    cancellation,
                 });
                 Ok(())
             }
