@@ -246,3 +246,6 @@ fn installed_helper(
 mod compatibility_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod qualified_tests;
