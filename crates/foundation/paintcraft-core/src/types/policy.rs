@@ -23,3 +23,12 @@ pub fn hex(bytes: &[u8]) -> String {
             s
         })
 }
+
+/// Resolved 8-bit coverage policies. Generic paint defaults remain unchanged.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MaskMode {
+    SourceOver,
+    Replace,
+    /// Attenuate destination alpha; retain its straight RGB even at alpha zero.
+    DestinationOut,
+}

@@ -36,7 +36,8 @@ impl Target for RasterTarget<'_> {
     fn skip_empty(&self, write: Write) -> bool {
         self.layer.tiles.is_empty()
             && write.mode == BlendMode::Replace
-            && write.samples == 16
+            && !write.destination_out
+            && write.samples == write.sample_scale
             && write.color == self.layer.default
     }
     fn skip_missing(&self, coord: TileCoord, write: Write) -> Result<bool> {

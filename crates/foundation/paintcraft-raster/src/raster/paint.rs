@@ -33,16 +33,23 @@ struct Write {
     color: Rgba,
     mode: BlendMode,
     samples: u8,
+    sample_scale: u8,
+    destination_out: bool,
 }
 impl Write {
     fn pixel(self, dst: Rgba) -> Rgba {
-        if self.mode == BlendMode::Replace && self.samples < 16 {
+        if self.destination_out {
+            let mut result = dst;
+            result.0[3] = ((u16::from(dst.a()) * u16::from(255 - self.samples) + 127) / 255) as u8;
+            return result;
+        }
+        if self.mode == BlendMode::Replace && self.samples < self.sample_scale {
             let mut out = self.color;
             for (out, (&src, &dst)) in out.0.iter_mut().zip(self.color.0.iter().zip(dst.0.iter())) {
                 *out = ((u16::from(src) * u16::from(self.samples)
-                    + u16::from(dst) * u16::from(16 - self.samples)
-                    + 8)
-                    / 16) as u8;
+                    + u16::from(dst) * u16::from(self.sample_scale - self.samples)
+                    + u16::from(self.sample_scale / 2))
+                    / u16::from(self.sample_scale)) as u8;
             }
             out
         } else {
@@ -50,7 +57,13 @@ impl Write {
         }
     }
     fn row(self, pixels: &mut [u8]) {
-        if self.mode == BlendMode::Replace && self.samples == 16
+        if self.destination_out {
+            for dst in pixels.as_chunks_mut::<4>().0 {
+                *dst = self.pixel(Rgba(*dst)).0;
+            }
+            return;
+        }
+        if self.mode == BlendMode::Replace && self.samples == self.sample_scale
             || self.mode == BlendMode::SourceOver && self.color.a() == 255
         {
             pixels.as_chunks_mut::<4>().0.fill(self.color.0);
@@ -60,10 +73,13 @@ impl Write {
             }
         } else {
             let samples = u16::from(self.samples);
+            let scale = u16::from(self.sample_scale);
             for dst in pixels.as_chunks_mut::<4>().0 {
                 for (dst, &src) in dst.iter_mut().zip(self.color.0.iter()) {
-                    *dst = ((u16::from(src) * samples + u16::from(*dst) * (16 - samples) + 8) / 16)
-                        as u8;
+                    *dst = ((u16::from(src) * samples
+                        + u16::from(*dst) * (scale - samples)
+                        + scale / 2)
+                        / scale) as u8;
                 }
             }
         }
@@ -132,6 +148,8 @@ impl PaintPlan {
             color,
             mode,
             samples: 16,
+            sample_scale: 16,
+            destination_out: false,
         })
     }
     /// Exact straight-channel 16-sample replacement coverage used by smooth erasing.
@@ -147,6 +165,37 @@ impl PaintPlan {
             color,
             mode: BlendMode::Replace,
             samples,
+            sample_scale: 16,
+            destination_out: false,
+        })
+    }
+    /// Exact straight-channel replacement using resolved 8-bit mask coverage.
+    /// Zero coverage is a no-op; transparent replacement interpolates straight channels.
+    pub fn mask_rect(&mut self, area: Rect, color: Rgba, coverage: u8) -> Result<()> {
+        if coverage == 0 {
+            return Ok(());
+        }
+        self.push(Write {
+            area,
+            color,
+            mode: BlendMode::Replace,
+            samples: coverage,
+            sample_scale: 255,
+            destination_out: false,
+        })
+    }
+    /// Destination-out alpha coverage. Preserve straight RGB, including fully erased hidden RGB.
+    pub fn erase_rect(&mut self, area: Rect, coverage: u8) -> Result<()> {
+        if coverage == 0 {
+            return Ok(());
+        }
+        self.push(Write {
+            area,
+            color: Rgba::TRANSPARENT,
+            mode: BlendMode::Replace,
+            samples: coverage,
+            sample_scale: 255,
+            destination_out: true,
         })
     }
     fn push(&mut self, write: Write) -> Result<()> {
@@ -159,6 +208,8 @@ impl PaintPlan {
             && previous.color == write.color
             && previous.mode == write.mode
             && previous.samples == write.samples
+            && previous.sample_scale == write.sample_scale
+            && previous.destination_out == write.destination_out
             && previous.area.y0 == write.area.y0
             && previous.area.y1 == write.area.y1
             && previous.area.x1 == write.area.x0
