@@ -4,6 +4,7 @@ mod dcx;
 mod floats;
 mod icns;
 mod icons;
+mod jxr;
 mod layered;
 mod native_codec;
 mod palettes;

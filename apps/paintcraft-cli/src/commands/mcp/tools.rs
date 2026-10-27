@@ -412,6 +412,7 @@ impl PaintingServer {
             + Self::icon_router()
             + Self::icns_router()
             + Self::dcx_router()
+            + Self::jxr_router()
             + Self::float_router()
             + Self::layered_router()
             + Self::palette_router()
