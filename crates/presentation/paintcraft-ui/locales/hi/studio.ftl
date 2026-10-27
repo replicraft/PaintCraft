@@ -422,3 +422,11 @@ version-2-compressed = संस्करण 2 (संपीड़ित)
 preparing-msp-picture-more = MSP चित्र तैयार किया जा रहा है…
 format-encoded-size-bytes-bytes = एन्कोड किया गया आकार: { $bytes } बाइट
 msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP के लिए अपारदर्शी काले या सफेद पिक्सेल आवश्यक हैं। कोई स्वचालित रूपांतरण नहीं किया जाता।
+
+# Advanced browser DDS export. Legacy default export is unchanged.
+this-browser-dds-profile-allows-up-to-1-048-576-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = ब्राउज़र में DDS निर्यात के लिए अधिकतम 1,048,576 कैनवास पिक्सेल और 8 परतें अनुमत हैं। इससे बड़ी या अधिक जटिल छवियाँ निर्यात नहीं की जा सकतीं।
+dds-export-failed-the-current-document-was-kept = DDS निर्यात विफल रहा; वर्तमान दस्तावेज़ सुरक्षित रखा गया है।
+codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-again = इस टैब में छवि रूपांतरण रुका हुआ है। अपना प्रोजेक्ट डाउनलोड करें, फिर दोबारा प्रयास करने के लिए पृष्ठ पुनः लोड करें।
+download-dds = DDS डाउनलोड करें
+dds-download-could-not-be-requested = DDS डाउनलोड शुरू नहीं किया जा सका।
+requesting-dds-download-more = DDS डाउनलोड शुरू किया जा रहा है…

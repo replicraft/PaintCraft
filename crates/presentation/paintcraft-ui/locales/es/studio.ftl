@@ -422,3 +422,11 @@ version-2-compressed = Versión 2 (comprimida)
 preparing-msp-picture-more = Preparando imagen MSP…
 format-encoded-size-bytes-bytes = Tamaño codificado: { $bytes } bytes
 msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP requiere píxeles negros o blancos opacos. No se aplica ninguna conversión automática.
+
+# Advanced browser DDS export. Legacy default export is unchanged.
+this-browser-dds-profile-allows-up-to-1-048-576-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = Esta exportación DDS en el navegador admite hasta 1.048.576 píxeles de lienzo y 8 capas. No se admiten imágenes más grandes o complejas.
+dds-export-failed-the-current-document-was-kept = La exportación DDS falló; se conservó el documento actual.
+codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-again = La conversión de imágenes está pausada en esta pestaña. Descarga tu proyecto y vuelve a cargar la página para intentarlo de nuevo.
+download-dds = Descargar DDS
+dds-download-could-not-be-requested = No se pudo solicitar la descarga DDS.
+requesting-dds-download-more = Solicitando la descarga DDS…
