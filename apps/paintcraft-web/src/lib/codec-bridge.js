@@ -34,6 +34,13 @@ export function createCodecService(applicationVersion) {
 			currentOwner: () => owner,
 			applicationVersion,
 		});
+		return job(
+			abort,
+			(source) => ticket.run(source),
+			() => ticket.release(),
+		);
+	}
+	function job(abort, run, releaseUnused) {
 		active = abort;
 		let used = false;
 		return Object.freeze({
@@ -46,11 +53,11 @@ export function createCodecService(applicationVersion) {
 				if (used)
 					throw refusal(
 						'InputSchema',
-						'Export admission already consumed',
+						'Codec admission already consumed',
 					);
 				used = true;
 				try {
-					return await ticket.run(source);
+					return await run(source);
 				} finally {
 					if (active === abort) active = null;
 				}
@@ -58,12 +65,41 @@ export function createCodecService(applicationVersion) {
 			release() {
 				if (!used) {
 					used = true;
-					ticket.release();
+					releaseUnused();
 					if (active === abort) active = null;
 				}
 			},
 		});
 	}
+	function beginDecodeFile(file, capturedOwner, pixels, nonce) {
+		if (codecWorkerBudget().quarantined)
+			throw refusal('ResourceLimit', 'Codec service needs a reload');
+		if (active)
+			throw refusal('ResourceLimit', 'A codec import is already active');
+		const captured = Object.freeze({ ...capturedOwner });
+		if (!owner || !matchesOwner(owner, ownerBytes(captured)))
+			throw refusal(
+				'ConflictStaleBase',
+				'Codec source belongs to a stale owner',
+			);
+		const abort = new AbortController();
+		return job(
+			abort,
+			() =>
+				decodeFileInWorker({
+					file,
+					owner: captured,
+					codec: 2,
+					nonce,
+					pixels,
+					signal: abort.signal,
+					currentOwner: () => owner,
+					applicationVersion,
+				}),
+			() => {},
+		);
+	}
+
 	return Object.freeze({
 		applicationVersion: () => applicationVersion,
 		protocolVersion: () => 2,
@@ -88,35 +124,21 @@ export function createCodecService(applicationVersion) {
 		beginMspExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitMspInWorker);
 		},
-		async decodeFile(file, capturedOwner, pixels = PIXELS_MAX, nonce) {
-			if (codecWorkerBudget().quarantined)
-				throw refusal('ResourceLimit', 'Codec service needs a reload');
-			if (active)
-				throw refusal(
-					'ResourceLimit',
-					'A codec import is already active',
-				);
-			const captured = ownerBytes(capturedOwner);
-			if (!owner || !matchesOwner(owner, captured))
-				throw refusal(
-					'ConflictStaleBase',
-					'Codec source belongs to a stale owner',
-				);
-			const abort = new AbortController();
-			active = abort;
+		beginDecodeFile(file, capturedOwner, pixels = PIXELS_MAX, nonce) {
+			return beginDecodeFile(file, capturedOwner, pixels, nonce);
+		},
+		decodeFile(file, capturedOwner, pixels = PIXELS_MAX, nonce) {
+			// Preserve the old always-Promise API, including synchronous guard
+			// failures, while using the same job lifetime as explicit tickets.
 			try {
-				return await decodeFileInWorker({
+				return beginDecodeFile(
 					file,
-					owner: capturedOwner,
-					codec: 2,
-					nonce,
+					capturedOwner,
 					pixels,
-					signal: abort.signal,
-					currentOwner: () => owner,
-					applicationVersion,
-				});
-			} finally {
-				active = null;
+					nonce,
+				).run();
+			} catch (error) {
+				return Promise.reject(error);
 			}
 		},
 	});
