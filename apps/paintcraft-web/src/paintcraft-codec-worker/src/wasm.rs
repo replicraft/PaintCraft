@@ -58,3 +58,12 @@ pub fn dds_export_protocol_version() -> u16 {
 pub fn dds_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
     super::dds::execute(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
 }
+
+#[wasm_bindgen]
+pub fn msp_export_protocol_version() -> u16 {
+    paintcraft_formats::msp::web_export::PROTOCOL_VERSION
+}
+#[wasm_bindgen]
+pub fn msp_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::msp::execute(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
+}
