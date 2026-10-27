@@ -15,6 +15,8 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Native printing on macOS.
 - Light and dark themes in seven languages.
 
+Click **Interface** in the top right to switch between **Classic** and **Studio** and try both. In Classic, choose a Windows 7, 10 or 11 skin in **Settings**.
+
 | Classic, Windows 11 | Studio |
 | --- | --- |
 | ![PaintCraft Classic, Windows 11](assets/repo/classic-windows-11.png) | ![PaintCraft Studio](assets/repo/studio.png) |
