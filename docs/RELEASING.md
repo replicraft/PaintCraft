@@ -275,3 +275,53 @@ release. The five held targets and global Cargo default remain V7. Remote CI,
 Developer-ID signing/notarization, original-application interoperability and actual
 OS file-dialog/Finder launching are not claimed. No tag, push, registration or
 user Applications installation was performed.
+
+
+## Native candidate qualification before widening rollout
+
+`native-codec-qualification.yml` is separate from shipping. It builds the fixed
+public V8 `jxr-codecs` candidate on the same six native runner/target pairs, using
+the pinned Rust/Meson/Ninja setup, Linux desktop dependencies and matching Windows
+static CRT. Its token has read-only repository contents access; checkout does not
+persist credentials. It has no publish, secret, release or automatic policy-edit
+step. Dispatch and scoped pull requests can run it after the source is available;
+no remote execution is implied by the workflow file or synthetic-header tests.
+
+The driver refuses cross-target or translated execution: OS/native-machine and
+Rust host must match the requested target. Windows uses the native-machine API
+even if Python itself is emulated; macOS rejects Rosetta. It builds worker tests
+with `--no-default-features --features jxr-codecs`, freezes the standalone CLI
+release installed-test recipe, then verifies the exact public record, schema 3,
+target, ordered import/export arrays and CLI SHA before executing candidate code.
+Candidate archive/private-prefix preparation deliberately does not call the
+shipping-policy verifier: the five held targets still require V7 for shipping.
+
+Each job runs the existing worker unit/integration controls, finite installed
+CLI/MCP baseline/portable/forged cases and the mandatory DDS CLI/MCP export
+integration target, platform helper guards, DDS backend/core
+admission and export preparation, and the 96 Normal/High frozen DDS specimens.
+Native App tests are headless: DDS import/export controls and source guards,
+JXR preparation/source guards, and eight real copied-helper legacy JXR reviews.
+Missing required targets/selectors or zero executed tests fail instead of
+producing an empty success. Every test step checks the actual execution summary.
+Portable expected JXR files were independently C-qualified; their use does not
+claim C ran on each runner. Explicit `--oracle` remains a separate pinned native
+C prerequisite for the extra C cases and the 24-case JXR App fixture.
+
+Processes execute serially with finite time and output budgets and process-tree
+cleanup. Success and failure receipts retain native identities, exact source,
+toolchain/flags, binary/manifest/notice hashes and bounded raw stdout/stderr.
+Ambient fixture/helper/oracle/golden-emission variables are removed. Evidence
+uploads run on failure too and never change the shipping map or global V7 default.
+
+For an authorized local run from clean committed source, use a fresh output path:
+
+```sh
+python scripts/packaging/qualify_native_codecs.py --target aarch64-apple-darwin --output /private/tmp/paintcraft-native-candidate-new
+```
+
+`--target-dir` may select a reusable dependency cache. A passing native job
+qualifies its recorded candidate artifact and test scope only. Promotion of a
+held target remains a separate reviewed source change after its actual native
+results; this workflow does not establish notarization, original-application
+interoperability, GUI dialogs or broader profiles.
