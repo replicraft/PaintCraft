@@ -5,10 +5,11 @@ use paintcraft_document::Document;
 use paintcraft_render::render_flat;
 
 use crate::image::{self, ImageFormat};
+pub mod dds;
 pub mod jxr;
 
 /// Loss codes a caller may acknowledge.
-pub const KNOWN_LOSSES: [&str; 9] = [
+pub const KNOWN_LOSSES: [&str; 12] = [
     "flatten",
     "hidden-rgb",
     "lossy-jpeg",
@@ -18,6 +19,9 @@ pub const KNOWN_LOSSES: [&str; 9] = [
     "palette-quantized",
     "alpha-binarized",
     "transparent-rgb-discarded",
+    crate::dds::BLOCK_COMPRESSION_LOSS,
+    crate::dds::MIP_HIDDEN_RGB_LOSS,
+    dds::LINEAR_QUANTIZATION_LOSS,
 ];
 
 #[derive(Debug)]
