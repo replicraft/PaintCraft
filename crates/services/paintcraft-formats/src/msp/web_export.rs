@@ -12,6 +12,8 @@ mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
+/// Exact opt-in Web Studio route; registry admission is qualified separately.
+pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v1";
 pub const PROTOCOL_VERSION: u16 = 1;
 pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v1";
 pub const PIXELS_MAX: u64 = 4_194_304;

@@ -136,6 +136,11 @@ mod browser {
                 .ok_or_else(|| JsValue::from_str("Editor not started"))?
                 .dds
                 .attach(value.clone());
+            self.runner
+                .app_mut::<super::WebApp>()
+                .ok_or_else(|| JsValue::from_str("Editor not started"))?
+                .msp
+                .attach(value.clone());
             *self.codec.borrow_mut() = Some(service);
             Ok(())
         }

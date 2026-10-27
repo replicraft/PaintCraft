@@ -752,3 +752,7 @@ mod jxl_tests;
 #[cfg(test)]
 #[path = "files/ora_tests.rs"]
 mod ora_tests;
+
+#[cfg(test)]
+#[path = "files/msp_tests.rs"]
+mod msp_tests;

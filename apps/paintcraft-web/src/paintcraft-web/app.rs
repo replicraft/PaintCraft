@@ -21,6 +21,7 @@ mod interfaces;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
 mod lasso_tests;
+mod msp_exporting;
 mod palettes;
 mod presentation;
 mod settings;
@@ -59,6 +60,8 @@ pub struct WebApp {
     export_confirm: Option<ImageExport>,
     pub(crate) dds: dds_exporting::State,
     dds_settings: paintcraft_ui::dds_export::Settings,
+    pub(crate) msp: msp_exporting::State,
+    msp_version: paintcraft_ui::msp_export::Version,
     icon_export: Option<icon_exporting::State>,
     icns_export: Option<icns_exporting::State>,
     palettes: palettes::State,
@@ -128,6 +131,8 @@ impl WebApp {
             export_confirm: None,
             dds: Default::default(),
             dds_settings: Default::default(),
+            msp: Default::default(),
+            msp_version: Default::default(),
             icon_export: None,
             icns_export: None,
             palettes: Default::default(),
