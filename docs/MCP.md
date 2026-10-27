@@ -419,7 +419,8 @@ filesystem or descendant-process sandbox.
 ICC, EXIF, orientation or other unqualified metadata. The qualified absent-color-
 context profile follows T.832's default sRGB rule. Dimensions are bounded to
 4,194,304 pixels; tiled, windowed and other unsupported forms are refused.
-The same-build helper and matching schema 2 manifest are required.
+The matching same-build helper contract is required; historical imports use
+schema 2 and the optional qualified V8 contract uses exact schema 3.
 
 Pass `"allow_losses": ["jxr-resolution-not-retained"]` to acknowledge that the
 new document does not retain physical pixel density. Consent is required even
@@ -432,7 +433,36 @@ consent leaves the current document unchanged.
 Imported pixels become an unsaved document with the same resident ownership,
 cancellation and captured-source alias protections as JPEG XL. This is explicit
 conversion, not preserving Save or normal image Open. Classic, browser import,
-alpha/deep precision and JPEG XR export remain unavailable.
+alpha/deep precision remain unavailable. Short headers retain this legacy route.
+Qualified long writer headers are selected structurally before launch through
+`native-jxr-writer-rgb8-worker-v1`; there is no decoder-error fallback.
+
+## Native JPEG XR fresh copies
+
+`export_jxr` writes a native Studio fresh copy through the optional qualified V8
+helper. Pass `path`, optional `overwrite` and `allow_losses`. The document must
+produce a wholly opaque composite; transparent output is refused instead of
+silently applying a matte. For example, a layered opaque document needs its
+actual `flatten` loss acknowledged:
+
+```json
+{"path":"/absolute/picture.jxr","allow_losses":["flatten"]}
+```
+
+The fixed lossless RGB8 writer supports at most 1,048,576 pixels, 65,536 per side
+and 64 MiB output. It emits effective 96 DPI through stored zero density fields.
+There are no quality, alpha or high-depth options. The result includes the exact
+encoder/pixel/density profiles, helper and output SHA256, and the staged save
+receipt. This operation preserves the active document, dirty flag and native
+save binding; it refuses captured source aliases, stale/cancelled operations and
+changed helper contracts before publication. Missing actual loss consent leaves
+the destination and session unchanged.
+
+Reading a qualified long writer file uses `import_image` with
+`allow_losses:["jxr-resolution-not-retained"]`, producing a new unsaved native
+document. Classic/browser conversion, ordinary Open and preserving JPEG XR Save
+remain unavailable. The optional helper and actual CLI/MCP path have local Apple
+Silicon proof; default/release promotion and all target runtimes remain pending.
 
 ## Native HEIC/HEIF import
 

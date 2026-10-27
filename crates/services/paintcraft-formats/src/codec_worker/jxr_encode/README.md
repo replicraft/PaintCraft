@@ -1,16 +1,44 @@
-# Private JPEG XR fresh encoder
+# JPEG XR fixed RGB8 fresh encoder
 
-The fixed opaque RGB8 writer and its native parent preparation are implemented
-with locally qualified seekcap2 encoding and the separate private jxrread1 import mode. Public export, Studio controls, CLI/MCP commands,
-foreign preserving Save and default/release promotion remain unavailable.
-The native import profile is a separate existing operation.
+The fixed opaque RGB8 writer, writer-compatible import and native parent
+preparation are implemented. Exact native Studio routes now have actual CLI/MCP
+fresh-copy proof through the optional qualified helper; actual Studio execution,
+default/release promotion and six-target runtime coverage remain pending.
+Foreign preserving Save is not implemented.
 
-Current parent methods now require the exact **nonprivate optional final**
-`qualified` descriptor (`native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`,
-marker `PAINTCRAFT_CODEC_WORKER_BUILD_V8_JXR_RGB8`). Frozen private evidence below
-is historical and is not accepted by these current parent methods. The optional
-`jxr-codecs` build selects the final record; default builds remain V7. Final
-producer/consumer qualification is pending, with no public gate/default change.
+Current parent methods require the exact **nonprivate optional final** `qualified`
+descriptor (`native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`, marker
+`PAINTCRAFT_CODEC_WORKER_BUILD_V8_JXR_RGB8`). Frozen private evidence below is
+historical and is not accepted by those methods. The optional `jxr-codecs` build
+selects the final record; default builds remain V7.
+
+## Current nonprivate evidence, 2026-10-26
+
+Immutable source `35e1480798cf3bbd6713e37e5bf5b8aa67f01ae6` produced optimized
+Apple Silicon helper
+`529ed471936258cba3ce1e72444c98bc5f9f0c2848b808552ca213dc3f2c716c`.
+Its exact schema 3 manifest has eight import variants and one export variant.
+Twenty-nine fresh encoder vectors matched untouched C JXRLib pixels; four
+output-cap controls and all 29 retained selected-reader/C comparisons passed.
+The raw source/build/record/notices and matrix receipt remains at
+`/private/tmp/paintcraft-jxr-public-v8-release-3dodezp_`.
+
+Actual canonical archive installation paired this helper with the current debug
+CLI (`237961d02809293dda1d8c723811f21ac718b31fd7f6af917d34d962ad33abf1`).
+Four CLI geometries passed every C RGB byte and PCND reopen. MCP proved fresh
+copy loss consent, unchanged dirty/native bindings, renamed/hardlinked source
+protection, cancellation and alpha refusal. Exact forged-schema refusal left
+both destination and MCP session unchanged. The first forged test failed an
+unlogged reason assertion; a later diagnostic run found a noncanonical fixture
+installation path. Canonicalizing only that test path exposed the intended
+schema 3 refusal. Preserve those failed logs separately, not as passing runs.
+Receipts, artifact hashes and serial test logs are under
+`/private/tmp/paintcraft-jxr-cli-actual-proof`.
+
+These local proofs do not establish Windows interoperability, all six release
+targets, broader ICC/alpha/depth/compression profiles or default promotion.
+Child/C case deadlines are 10 seconds; native parent qualification fixtures use
+20-second per-job deadlines. The requested allocation ceiling remains 256 MiB.
 
 ## Historical private candidate
 
@@ -157,7 +185,7 @@ reference. Set `PAINTCRAFT_JXR_WRITER_MATRIX` to the retained corrected producer
 root `/private/tmp/paintcraft-jxr-long-release-mgr_c7w6`; the parent pins three
 maximum/axis encoded and C-RGB hashes before using its `matrix-large` files. A public V7 helper must never be relabeled as the candidate.
 
-Next qualify final nonprivate descriptors and staged-copy consumers before
-public promotion. Windows WIC/Paint.NET and all
-six native release targets remain unproved. Local C differential evidence does
+Next finish actual final-helper Studio qualification, native parent/legacy
+compatibility proof and the explicit default/release promotion decision. Windows
+WIC/Paint.NET and all six native release targets remain unproved. Local C differential evidence does
 not establish full JPEG XR or original-application compatibility.
