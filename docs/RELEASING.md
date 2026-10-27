@@ -325,3 +325,17 @@ qualifies its recorded candidate artifact and test scope only. Promotion of a
 held target remains a separate reviewed source change after its actual native
 results; this workflow does not establish notarization, original-application
 interoperability, GUI dialogs or broader profiles.
+
+The complete local Mac ARM candidate run from clean committed source
+`4f36e74de7c9890022a92ab05561d66ca921b59b` passed 166 Rust test functions:
+54 worker, 18 installed CLI, three DDS CLI/MCP, 44 formats/admission, 29 platform,
+one DDS golden test covering 96 specimens, and 17 headless App tests. The latter
+include eight legacy JXR review scenarios. No C executable ran; the portable
+expected files retain their earlier independent C provenance. Exact source,
+artifact hashes, counts and raw output are local ignored evidence at
+`docs/validation/native-codec-qualification-2026-10-26/4f36e74d/closeout.json`.
+The failed d9 attempt remains separate: its record fixture incorrectly selected
+private V8 under public `jxr-codecs`; only exact feature-selected fixture
+expectations were corrected. This passing run qualifies its recorded Mac ARM
+candidate only. The other five native targets remain unqualified and held at V7,
+as does the global Cargo default; no remote workflow or promotion occurred.
