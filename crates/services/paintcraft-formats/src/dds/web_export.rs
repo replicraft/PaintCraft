@@ -1,6 +1,7 @@
 //! Source-bound advanced Web Studio DDS preparation. Hosts admit the exact route.
 //! Native codec protocols and the legacy default DDS writer are independent.
 use super::*;
+use crate::export::web_snapshot::{Limits, Plan as SnapshotPlan};
 use crate::{codec_worker::Owner, export, pcnd};
 use paintcraft_document::Document;
 use sha2::{Digest, Sha256};
@@ -44,108 +45,42 @@ fn failed(message: &str) -> Error {
 fn resource(message: &str) -> Error {
     Error::new(ErrorCode::ResourceLimit, message)
 }
+pub(crate) const SOURCE_LIMITS: Limits = Limits {
+    label: "Browser DDS",
+    side: 65536,
+    pixels: PIXELS_MAX,
+    layers: LAYERS_MAX,
+    layer_pixels: STAGED_LAYER_PIXELS_MAX,
+    resident: RESIDENT_BYTES_MAX,
+    metadata: 65536,
+    snapshot: SOURCE_BYTES_MAX,
+};
 #[derive(Clone, Debug)]
 pub struct SourcePlan {
-    pub(crate) document: Uuid,
-    pub(crate) state: Uuid,
-    pub(crate) size: (u32, u32),
+    source: SnapshotPlan,
     pub(crate) settings: [u8; 8],
-    pub(crate) source_flags: u8,
 }
 impl SourcePlan {
-    /// Inspect bounded immutable document data before reserving/serializing a
-    /// snapshot. The host must reserve RESERVATION_BYTES before snapshot().
+    /// Inspect immutable source before service admission/snapshot allocation.
     pub fn capture(doc: &Document, options: TextureOptions) -> Result<Self> {
-        if doc.canvas.0 == 0
-            || doc.canvas.1 == 0
-            || doc.canvas.0 > 65536
-            || doc.canvas.1 > 65536
-            || u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > PIXELS_MAX
-            || doc.layers.len() > LAYERS_MAX
-            || doc.roots.len() != doc.layers.len()
-        {
-            return Err(resource("Browser DDS document geometry/layer profile"));
-        }
-        let mut pixels = 0u64;
-        let mut resident = 0u64;
-        let mut metadata = doc.title.as_ref().map_or(0, |s| s.len() as u64);
-        for layer in doc.layers.values() {
-            pixels = pixels
-                .checked_add(u64::from(layer.raster.width()) * u64::from(layer.raster.height()))
-                .ok_or_else(|| resource("Browser DDS layer extent overflow"))?;
-            resident = resident
-                .checked_add(
-                    (layer.raster.resident_tiles() as u64)
-                        .checked_mul(paintcraft_raster::RasterLayer::TILE_BYTES as u64)
-                        .ok_or_else(|| resource("Browser DDS tile extent overflow"))?,
-                )
-                .ok_or_else(|| resource("Browser DDS resident overflow"))?;
-            metadata = metadata
-                .checked_add(layer.name.len() as u64 + 256)
-                .ok_or_else(|| resource("Browser DDS metadata overflow"))?;
-        }
-        if pixels > STAGED_LAYER_PIXELS_MAX || resident > RESIDENT_BYTES_MAX || metadata > 65536 {
-            return Err(resource("Browser DDS source workspace profile"));
-        }
+        let source = SnapshotPlan::capture(doc, SOURCE_LIMITS)?;
         let settings = encode_settings(options, doc.canvas)?;
-        let source_flags = u8::from(doc.roots.len() > 1)
-            | u8::from(doc.layers.values().any(|l| l.raster.has_hidden_rgb())) << 1;
-        Ok(Self {
-            document: doc.document_id,
-            state: doc.state_id,
-            size: doc.canvas,
-            settings,
-            source_flags,
-        })
+        Ok(Self { source, settings })
     }
     pub fn source_flags(&self) -> u8 {
-        self.source_flags
+        self.source.flags()
     }
     pub fn settings(&self) -> [u8; 8] {
         self.settings
     }
     pub fn size(&self) -> (u32, u32) {
-        self.size
+        self.source.size()
     }
-    /// Raw, uncompressed serialization is intentionally bounded. This is not
-    /// the DDS encoder. No compact/tile compression runs on the UI thread.
+    /// Caller retains RESERVATION_BYTES before raw serialization, never encoding.
     pub fn snapshot(&self, doc: &Document) -> Result<Vec<u8>> {
-        let fresh = Self::capture(doc, decode_settings(self.settings, self.size)?)?;
-        if fresh.document != self.document
-            || fresh.state != self.state
-            || fresh.size != self.size
-            || fresh.source_flags != self.source_flags
-        {
-            return Err(Error::new(
-                ErrorCode::ConflictStaleBase,
-                "Browser DDS snapshot changed",
-            ));
-        }
-        struct Sink(Vec<u8>);
-        impl std::io::Write for Sink {
-            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-                if self
-                    .0
-                    .len()
-                    .checked_add(bytes.len())
-                    .is_none_or(|n| n > SOURCE_BYTES_MAX)
-                {
-                    return Err(std::io::Error::other("snapshot allowance"));
-                }
-                self.0.extend_from_slice(bytes);
-                Ok(bytes.len())
-            }
-            fn flush(&mut self) -> std::io::Result<()> {
-                Ok(())
-            }
-        }
-        let mut bytes = Vec::new();
-        bytes
-            .try_reserve_exact(SOURCE_BYTES_MAX)
-            .map_err(|_| resource("Browser DDS snapshot allocation"))?;
-        let mut sink = Sink(bytes);
-        pcnd::write_to(doc, &mut sink).map_err(|_| resource("Browser DDS snapshot allowance"))?;
-        Ok(sink.0)
+        let options = decode_settings(self.settings, self.size())?;
+        self.source
+            .snapshot(doc, |size| encode_settings(options, size).map(|_| ()))
     }
 }
 pub fn encode_settings(mut options: TextureOptions, size: (u32, u32)) -> Result<[u8; 8]> {

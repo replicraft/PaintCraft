@@ -19,10 +19,10 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
         )?;
         let options = decode_settings(request.settings, request.size)?;
         let plan = SourcePlan::capture(&doc, options)?;
-        if plan.state != request.owner.state
-            || plan.size != request.size
+        if plan.source.state() != request.owner.state
+            || plan.size() != request.size
             || plan.settings != request.settings
-            || plan.source_flags != request.source_flags
+            || plan.source_flags() != request.source_flags
         {
             return Err(failed("Browser DDS snapshot disagrees with request"));
         }

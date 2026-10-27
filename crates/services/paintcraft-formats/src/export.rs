@@ -8,6 +8,7 @@ use crate::image::{self, ImageFormat};
 pub mod dds;
 pub mod jxr;
 pub mod msp;
+pub(crate) mod web_snapshot;
 
 /// Loss codes a caller may acknowledge.
 pub const KNOWN_LOSSES: [&str; 12] = [

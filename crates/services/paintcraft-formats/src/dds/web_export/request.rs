@@ -11,7 +11,7 @@ pub struct Header {
 }
 impl Header {
     pub fn capture(plan: &SourcePlan, source: &[u8], owner: Owner, nonce: Uuid) -> Result<Self> {
-        if owner.state != plan.state {
+        if owner.state != plan.source.state() {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
                 "Browser DDS source state changed",
@@ -20,12 +20,12 @@ impl Header {
         let header = Self {
             source_len: u32::try_from(source.len())
                 .map_err(|_| resource("Browser DDS source extent"))?,
-            size: plan.size,
+            size: plan.size(),
             owner,
             nonce,
             source_sha256: Sha256::digest(source).into(),
             settings: plan.settings,
-            source_flags: plan.source_flags,
+            source_flags: plan.source_flags(),
         };
         header.validate()?;
         Ok(header)
