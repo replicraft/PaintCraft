@@ -355,7 +355,14 @@ impl PaintingServer {
     #[tool(
         description = "Export a flattened image selected by filename extension. Requires explicit allow_losses acknowledgements when information would be lost. Does not clear project dirty state."
     )]
-    async fn export_image(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
+    async fn export_image(
+        &self,
+        Parameters(p): Parameters<Export>,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> CallToolResult {
+        let life = super::native_codec::RpcLife::new();
+        let dropped = life.0.clone();
+        let cancellation = context.ct.clone();
         self.work(move |s| {
             let path = PathBuf::from(p.path);
             s.protect_copy_sources(&path)?;
@@ -363,6 +370,21 @@ impl PaintingServer {
                 .ok_or_else(|| invalid("unsupported image extension"))?;
             if p.pcx_encoding.is_some() && format != ImageFormat::Pcx {
                 return Err(invalid("pcx_encoding requires PCX output"));
+            }
+            if let Some(options) = p.dds {
+                options.require_format(format)?;
+                let check = || {
+                    if cancellation.is_cancelled()
+                        || dropped.load(std::sync::atomic::Ordering::Acquire)
+                    {
+                        return Err(paintcraft_core::types::Error::new(
+                            paintcraft_core::types::ErrorCode::OperationCancelled,
+                            "DDS export request was cancelled",
+                        ));
+                    }
+                    Ok(())
+                };
+                return super::dds::export(s, &path, p.overwrite, options, &p.allow_losses, &check);
             }
             let family = Family::from_id(format.name())
                 .ok_or_else(|| invalid("unregistered image format"))?;
