@@ -518,3 +518,5 @@ convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chrom
 heif-image-item-names-are-not-retained-in-the-new-document = Os nomes dos itens de imagem HEIF não são mantidos no novo documento.
 
 avif-image-item-names-are-not-retained-in-the-new-document = Os nomes dos itens de imagem AVIF não serão mantidos no novo documento.
+
+input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = A entrada foi cancelada. Levante a caneta ou solte os botões do mouse e tente novamente.

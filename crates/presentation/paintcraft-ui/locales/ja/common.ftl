@@ -518,3 +518,5 @@ convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chrom
 heif-image-item-names-are-not-retained-in-the-new-document = HEIF の画像項目名は新しいドキュメントに保持されません。
 
 avif-image-item-names-are-not-retained-in-the-new-document = AVIF の画像項目名は新しいドキュメントに保持されません。
+
+input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = 入力をキャンセルしました。ペンを離すかマウスのボタンを放してから、もう一度お試しください。
