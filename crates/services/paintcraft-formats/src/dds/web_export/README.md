@@ -1,51 +1,83 @@
-# Provisional browser advanced DDS worker boundary
+# Bounded advanced browser DDS export
 
-This is a private preparation seam, not browser export admission. Native
-`PCDEC002` and the existing browser JXL decoder protocol remain unchanged. The
-legacy default browser DDS route is unchanged. UI/JS adoption and production
-browser qualification are still pending.
+These source-bound preparation helpers serve the exact
+`web-dds-texture-worker-v1` Studio flat-export variant. Hosts must admit that
+route before preparation. Native `PCDEC002` and browser JXL decoder2 remain
+unchanged; legacy/default browser DDS keeps its old route and capacity.
 
-The explicit provisional advanced profile admits a canvas of at most 1,048,576
-pixels, each dimension at most 65,536, at most eight flat layers, at most 2,097,152
-logical layer pixels, at most 12MiB of resident padded tiles and 64KiB of source
-metadata. All data is kept or the job is refused; no layer or mip is truncated.
-These limits are not a claim of the largest possible browser profile.
+The browser profile admits at most 4,194,304 canvas pixels, each dimension at
+most 65,536, eight layers, 8,388,608 logical layer pixels, 24 MiB of resident
+padded tiles and 64 KiB of source metadata. Data is kept or refused; no source
+layer or encoded mip is truncated. This is not the largest possible browser
+profile. Large thin populated rasters can exceed the padded-tile bound even
+when their canvas area fits.
 
-`SourcePlan::capture` checks immutable document data before snapshot allocation.
-The future caller must obtain the JS service reservation before `snapshot`.
-Snapshot serialization uses existing **raw** `pcnd::write_to` with a fixed 16MiB
-bounded sink; no compact/tile compression, rendering or DDS encoding runs there.
-The source SHA binds those complete bytes, including every layer and metadata.
+`SourcePlan::capture` inspects immutable document data before allocation. The
+host obtains the JS service reservation before `snapshot`, whose existing raw
+PCND writer uses a fixed 32 MiB sink. No rendering or encoding runs there. The
+SHA binds every byte, including all layers and metadata. The Worker reuses the
+PCND parser with caller layer/tile limits before pixel inflation. At most 96
+256×256 tiles are admitted; titles allow 4,096 characters/16 KiB and layer names
+1,024 characters each. Bounded records/strings fit within the conservative
+8 MiB parser-metadata allowance. Existing PCND wrappers retain their own policy.
 
-The worker uses the existing PCND parser with a caller layer bound. Root-count
-admission precedes per-layer names and record/raster allocation. Its staged tile
-bound charges whole padded tiles before inflation (12MiB / four bytes per pixel).
-Titles are limited to 4,096 characters/16KiB; accepted names to 1,024 characters,
-with at most eight names. Even a last invalid string can allocate at most 16KiB
-before refusal. With the tile inventory capped at 48 256×256 tiles, names,
-records, coordinates and parser scratch fit comfortably within the conservative
-8MiB parser-metadata allowance. The old PCND wrappers retain their 100,000-layer
-policy; this browser limit does not narrow them.
+The Worker calls the document DDS facade once. Its composite drops before
+actual encoded top-mip decoding reuses that RGBA allowance; no second render or
+encode supplies the preview. The nearest-sampled thumbnail is at most 192×192
+and retains encoded sample transfer. Main UI converts Linear8 thumbnail RGB to
+sRGB for display, preserving alpha. All generated mip bytes remain in the
+artifact. Preview omission is not an export loss; actual facade losses alone
+require fresh explicit consent.
 
-After source binding/profile checks, the worker calls the shared document DDS
-facade once. Its composite drops before actual top-mip decoding reuses that RGBA
-allowance. A nearest-sampled preview is at most 192×192. Preview samples remain
-in the output's declared transfer: the future main UI must apply its existing
-sRGB display encoding to Linear8 thumbnail RGB, preserving alpha. The response
-contains the entire DDS including generated mips; preview omission is not an
-export loss. Only the facade's actual losses are reported.
+The declared reservation is **640 MiB** of conservative logical payload slots.
+With S = 32 MiB raw input, E = 24 MiB + 4 KiB encoded output, and P = 192×192×4
+thumbnail bytes, the inventory is:
 
-The declared browser job reservation is 416MiB of logical payload allowances:
-256MiB for the entire Worker linear-memory ceiling, five 16MiB source/capture/
-request/digest-copy allowances, five `(8MiB + 4KiB)` encoded/result/Blob copy
-allowances, 12MiB of retained source tiles, plus bounded preview copies and
-metadata. This leaves more than 27MiB of declaration margin. The worker's own
-pre-render logical payload quote must fit 96MiB, including source bytes, source
-tiles, facade workspace, parser allowance and response/preview scratch. Neither
-number is aggregate browser RSS, a GPU bound, or an allocator/stack guarantee.
-The actual Worker module must still enforce its existing 256MiB memory maximum.
-Worst selected BC High/filter cases, actual allocation-copy measurements and
-real 1MP Wasm/browser boundaries remain required before profile promotion.
+`256 MiB + 5S + 5E + 24 MiB source tiles + 8P + 1 MiB metadata`.
+
+It totals 562.14453125 MiB and leaves 77.85546875 MiB margin. This includes the
+whole Worker linear ceiling, main Rust snapshot and JS/frozen/digest/request
+slots, result/digest/main Rust/Blob/handoff slots, and preview/upload payloads.
+Some slots deliberately do not coexist or already lie within the Worker cap;
+they are not discounted. This is not aggregate browser RSS, GPU memory, or an
+allocator/stack guarantee. The Worker separately refuses a conservative
+pre-render payload quote above 192 MiB, including input, tiles, facade workspace,
+parser allowance, response/preview and decode scratch. The module still declares
+the existing 256 MiB hard linear-memory maximum.
+
+The host retains complete request binding and response through one full Rust
+validation, actual visible preview, consent and Blob URL retirement. Settings
+edits retire preview/approval, drain a known old operation, discard its result
+and prepare the replacement. Unknown completion, active cancellation and stale
+service owner quarantine the declaration until realm teardown. A completed
+refusal releases; `terminate()` is not a join. Successful URL revocation proves
+URL retirement, not persistence or browser-memory reclamation.
+
+Local qualification used actual headless Chrome 156 on Apple Silicon. Real
+controller jobs exercised 2048×2048 BC1/BC2/BC3 High-effort Box filtering and
+full-chain RGBA8, with complete response identity to native Rust validation.
+An eight-layer source exercised 24 MiB padded tiles, 8,387,589 logical pixels,
+and maximum accepted title/name character counts. Its highest observed Worker
+linear-memory high-water was 117,833,728 bytes; the 256 MiB growth refusal was
+checked separately. These are bounded conformance/deadline observations, not
+throughput benchmarks or universal allocator peaks. The 1MP predecessor proof
+is retained separately.
+
+Production desktop and 390×740 mobile-viewport tests used real project pickers,
+Worker previews, consent, downloads and trusted touch controls. Whole BC1 Box
+bytes matched the independent frozen specimen and differed from Nearest.
+Linear8 bytes matched the validated reference. Before/after project copies
+were identical. Real 4MP Worker cancellation and public service-owner invalidation
+kept the charge quarantined, published no DDS and left project recovery usable.
+The public owner-protocol test is distinct from host tests replacing the editor
+document/title. Physical phones/tablets, other browser engines and hardware
+pressure input are separate qualification scopes.
+
+The optional `dds_web_qualification_inputs.rs` test emits fresh source/request/
+native reference specimens into an explicit new directory. It does not replace
+the independent compressed golden or promise a general BC color-error bound.
+Node `dds-profile.test.mjs` checks Rust/JS caps and the quote formula. Local
+browser receipts retain source patches, asset hashes, attempts and screenshots.
 
 ## Version-one byte layout
 
@@ -99,5 +131,5 @@ digests, exact thumbnail geometry, actual DDS header/complete-chain inventory
 and canonical loss/statistics constraints. The host does not independently
 re-render to prove the worker's quantization count. Canonical completed refusals
 carry no DDS, preview, loss or quantization data. Malformed/unknown completion
-is not a release acknowledgement: future JS integration must retain the existing
-fail-closed quarantine rules and must never treat `terminate()` as a join.
+is not a release acknowledgement: JS integration retains the existing
+fail-closed quarantine rules and never treats `terminate()` as a join.
