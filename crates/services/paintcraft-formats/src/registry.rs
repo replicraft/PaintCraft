@@ -260,6 +260,9 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
         Family::Jxr if operation == Operation::ImportConvert && platform == Platform::Native => {
             Some("jpegxr-pure-rs-isolated-rgb8")
         }
+        Family::Jxr if operation == Operation::ExportFlat && platform == Platform::Native => {
+            Some("jpegxr-pure-rs-isolated-rgb8-lossless")
+        }
         Family::Jxl if raster_operation && operation.is_write() => Some("zune-jpegxl"),
         Family::Jxl if raster_operation => Some("jxl-rs"),
         Family::Dds if raster_operation => Some("paintcraft-dds-rgba8"),
@@ -327,7 +330,16 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
-        && request.variant == Some(crate::codec_worker::NATIVE_JXR_IMPORT_VARIANT);
+        && matches!(
+            request.variant,
+            Some(crate::codec_worker::NATIVE_JXR_IMPORT_VARIANT)
+                | Some(crate::codec_worker::jxr_encode::qualified::WRITER_IMPORT_VARIANT)
+        );
+    let native_jxr_export = request.family == Family::Jxr
+        && request.operation == Operation::ExportFlat
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::codec_worker::jxr_encode::qualified::EXPORT_VARIANT);
     let native_heif_import = request.family == Family::Heif
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -415,6 +427,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxl_import
         && !web_jxl_import
         && !native_jxr_import
+        && !native_jxr_export
         && !native_heif_import
         && !native_avif_import
         && !native_float_import
@@ -438,6 +451,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxl_import
         && !web_jxl_import
         && !native_jxr_import
+        && !native_jxr_export
         && !native_heif_import
         && !native_avif_import
         && !native_float_import
