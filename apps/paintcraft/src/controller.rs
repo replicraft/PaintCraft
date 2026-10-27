@@ -34,6 +34,8 @@ mod selection;
 use paintcraft_tools::commands as raster_commands;
 pub(crate) use preview_cache::Stamp as PreviewStamp;
 pub(crate) use strokes::PreviewPreparation;
+#[path = "controller/native_publication.rs"]
+pub mod native_publication;
 #[path = "controller/pen.rs"]
 mod pen;
 #[path = "controller/residency.rs"]
@@ -107,6 +109,7 @@ pub struct Editor {
     preview_queue_revision: paintcraft_tools::PreviewRevision,
     preview_cache: preview_cache::Cache,
     pen_base: Option<paintcraft_editor::session::Ticket>,
+    native_publication: Option<native_publication::Witness>,
     path: Option<PathBuf>,
     destination: Option<crate::destination::Binding>,
     status: String,
@@ -179,6 +182,7 @@ impl Editor {
             preview_queue_revision: Default::default(),
             preview_cache: Default::default(),
             pen_base: None,
+            native_publication: None,
             destination: path
                 .as_ref()
                 .map(|_| crate::destination::Binding::authorized()),

@@ -369,16 +369,19 @@ impl Editor {
         self.preview_queue_revision.advance();
         self.publication_preview = None;
         let before_canvas = self.document().canvas;
+        let before = self.session.ticket();
         let result = match result {
             Ok(Completion::Pick(picked)) => self.accept_pick(*picked),
             Ok(Completion::Edit(prepared)) => self
                 .session
                 .publish_prepared(prepared, || Ok(()))
                 .map(|receipt| {
+                    self.record_native_publication(before, &receipt);
                     self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
                 }),
             Ok(Completion::PenEdit(prepared)) => {
                 prepared.publish(&mut self.session).map(|receipt| {
+                    self.record_native_publication(before, &receipt);
                     self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
                 })
             }

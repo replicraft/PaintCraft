@@ -54,8 +54,10 @@ impl Editor {
             return None;
         }
         let before_canvas = self.document().canvas;
+        let before = self.session.ticket();
         match self.session.apply(&batch) {
             Ok(r) => {
+                self.record_native_publication(before, &r);
                 self.accept_edit(&r, done, target_alias, before_canvas);
                 Some(r)
             }

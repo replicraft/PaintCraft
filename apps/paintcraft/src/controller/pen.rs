@@ -143,7 +143,12 @@ impl Editor {
                 .and_then(|preparation| {
                     prepare(stroke, preparation, ticket, clip, None, &|| Ok(()))
                 })
-                .and_then(|prepared| prepared.publish(&mut self.session));
+                .and_then(|prepared| {
+                    let before = self.session.ticket();
+                    let receipt = prepared.publish(&mut self.session)?;
+                    self.record_native_publication(before, &receipt);
+                    Ok(receipt)
+                });
             match result {
                 Ok(receipt) => self.accept_edit(&receipt, done, None, self.document().canvas),
                 Err(error) => self.status = format!("Pen stroke not prepared: {error}"),
