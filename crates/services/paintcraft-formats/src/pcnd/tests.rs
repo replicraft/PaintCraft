@@ -122,3 +122,45 @@ fn empty_documents_need_no_pixel_payload() {
     assert_eq!(bytes, write_compact(&doc).unwrap());
     assert!(read(&bytes).unwrap().same_semantics(&doc));
 }
+
+#[test]
+fn caller_layer_bound_refuses_before_records_without_narrowing_legacy_readers() {
+    let mut doc = new_document(1, 1, Some(Rgba([17, 51, 93, 255])), 0, POLICY).unwrap();
+    for _ in 0..8 {
+        let mut layer = doc.layers[&doc.roots[0]].clone();
+        layer.id = Uuid::new_v4();
+        doc.roots.push(layer.id);
+        doc.layers.insert(layer.id, layer);
+    }
+    let bytes = write(&doc).unwrap();
+    assert!(read(&bytes).unwrap().same_semantics(&doc));
+    assert!(read_with_limits(&bytes, 1, 0).unwrap().same_semantics(&doc));
+    assert!(
+        read_with_limits_checked(&bytes, 1, 0, &|| Ok(()))
+            .unwrap()
+            .same_semantics(&doc)
+    );
+    assert!(
+        read_with_layer_limit_checked(&bytes, 1, 0, 9, &|| Ok(()))
+            .unwrap()
+            .same_semantics(&doc)
+    );
+    let error = read_with_layer_limit_checked(&bytes, 1, 0, 8, &|| Ok(())).unwrap_err();
+    assert_eq!(error.code, ErrorCode::ResourceLimit);
+    assert!(error.message.contains("host layer limit"));
+    assert_eq!(
+        read_with_layer_limit_checked(&bytes, 1, 0, LAYER_COUNT_MAX + 1, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::InputSchema
+    );
+    assert_eq!(
+        read_with_layer_limit_checked(&bytes, 1, 0, 8, &|| Err(Error::new(
+            ErrorCode::OperationCancelled,
+            "cancel"
+        )))
+        .unwrap_err()
+        .code,
+        ErrorCode::OperationCancelled
+    );
+}

@@ -164,6 +164,15 @@ pub(super) fn read(
     staged_pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Document> {
+    read_with_layer_limit(bytes, canvas_pixels, staged_pixels, LAYER_COUNT_MAX, check)
+}
+pub(super) fn read_with_layer_limit(
+    bytes: &[u8],
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    layer_limit: usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
     let body = payload(bytes, check)?;
     header(bytes[4]).require_supported()?;
     let mut input = Input::new(body);
@@ -182,6 +191,12 @@ pub(super) fn read(
         _ => return Err(codec("invalid title flag")),
     };
     let count = input.number(LAYER_COUNT_MAX as u64)? as usize;
+    if count > layer_limit {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "PCND exceeds the host layer limit",
+        ));
+    }
     let mut roots = Vec::new();
     let mut records = Vec::new();
     let mut seen = HashSet::new();

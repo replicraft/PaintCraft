@@ -84,6 +84,25 @@ pub fn read_with_limits_checked(
     check()?;
     binary::read(bytes, canvas_pixels, staged_pixels, check)
 }
+/// The existing parser with an additional host-owned layer admission bound.
+/// Count admission precedes layer names, records and raster construction; legacy
+/// read wrappers retain the document-wide limit rather than inheriting this one.
+pub fn read_with_layer_limit_checked(
+    bytes: &[u8],
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    layer_limit: usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
+    check()?;
+    if layer_limit > LAYER_COUNT_MAX {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid host PCND layer limit",
+        ));
+    }
+    binary::read_with_layer_limit(bytes, canvas_pixels, staged_pixels, layer_limit, check)
+}
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod compact_tests;
 #[cfg(test)]
