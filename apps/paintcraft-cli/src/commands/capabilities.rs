@@ -249,6 +249,79 @@ pub fn run(a: Options, json: bool) -> Reply {
                     frontend_rows.push(value);
                 }
             }
+            if a.frontend
+                .is_none_or(|profile| matches!(profile, super::format_profile::Profile::Studio))
+            {
+                use paintcraft_formats::{
+                    dds,
+                    registry::{self, Family, Frontend, Operation, Platform, Request},
+                };
+                let mut request = Request::new(
+                    Frontend::Studio,
+                    Operation::ExportFlat,
+                    Family::Dds,
+                    Platform::Native,
+                );
+                request.extension = Some("dds");
+                request.variant = Some(dds::NATIVE_TEXTURE_EXPORT_VARIANT);
+                if registry::admission(request).available() {
+                    let mut value = row(
+                        "dds.texture2d.write",
+                        "frontend/studio",
+                        "fresh-write",
+                        "dds/rgba8-bc123-texture",
+                    );
+                    if let Value::Object(fields) = &mut value {
+                        fields.insert(
+                            "variant".into(),
+                            Value::str(dds::NATIVE_TEXTURE_EXPORT_VARIANT),
+                        );
+                        fields.insert("platform".into(), Value::str("native"));
+                        fields.insert("preflight_required".into(), Value::Bool(true));
+                        fields.insert("installation_preflight_required".into(), Value::Bool(false));
+                        fields.insert("external_helper_required".into(), Value::Bool(false));
+                        fields.insert("runtime_installation_verified".into(), Value::Bool(false));
+                        fields.insert("may_be_lossy".into(), Value::Bool(true));
+                        fields.insert("loss_policy".into(), Value::str("actual composite losses, BC compression, Box hidden RGB normalization, linear8 quantization require consent"));
+                        fields.insert(
+                            "compression_policy".into(),
+                            Value::str(dds::UNIFORM_LOSSY_POLICY),
+                        );
+                        fields.insert(
+                            "encodings".into(),
+                            Value::Array(["rgba8", "bc1", "bc2", "bc3"].map(Value::str).to_vec()),
+                        );
+                        fields.insert(
+                            "transfers".into(),
+                            Value::Array(["srgb", "linear8"].map(Value::str).to_vec()),
+                        );
+                        fields.insert(
+                            "mips".into(),
+                            Value::Array(["none", "full"].map(Value::str).to_vec()),
+                        );
+                        fields.insert(
+                            "filters".into(),
+                            Value::Array(["nearest", "box-stored"].map(Value::str).to_vec()),
+                        );
+                        fields.insert("levels_min".into(), Value::Int(1));
+                        fields.insert("levels_max".into(), Value::Int(17));
+                        fields.insert("levels_geometry_bounded".into(), Value::Bool(true));
+                        fields.insert("mips_levels_mutually_exclusive".into(), Value::Bool(true));
+                        fields.insert("alpha_constraints".into(), Value::str("bc1 requires opaque composite samples; rgba8/bc2/bc3 preserve straight alpha"));
+                        fields.insert("filter_policy".into(), Value::str("nearest samples base centers; box-stored uses alpha-weighted area samples in stored transfer space, directly from the base"));
+                        fields.insert(
+                            "efforts".into(),
+                            Value::Array(["normal", "high"].map(Value::str).to_vec()),
+                        );
+                        fields.insert("pixel_limit".into(), Value::Int(dds::PIXELS_MAX as i64));
+                        fields.insert(
+                            "encoded_bytes_limit".into(),
+                            Value::Int(dds::BYTES_MAX as i64),
+                        );
+                    }
+                    frontend_rows.push(value);
+                }
+            }
             let mut rows = vec![
                 row(
                     "csh.shapes.read",

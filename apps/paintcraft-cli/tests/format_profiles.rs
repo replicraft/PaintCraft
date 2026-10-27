@@ -612,3 +612,61 @@ fn capabilities_report_float_conversion_only_with_exact_v7_preflight() {
 
 #[path = "format_profiles/jxr.rs"]
 mod jxr;
+
+#[test]
+fn capabilities_report_explicit_dds_texture_without_replacing_default_rgba() {
+    use paintcraft_formats::dds;
+    use serde_json::Value;
+    for profile in [
+        None,
+        Some("studio"),
+        Some("classic-v7"),
+        Some("classic-v10"),
+        Some("classic-v11"),
+    ] {
+        let mut args = vec!["--json", "capabilities"];
+        if let Some(profile) = profile {
+            args.extend(["--frontend", profile]);
+        }
+        let output = run(&args);
+        assert!(output.status.success());
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+        let rows = value["capabilities"].as_array().unwrap();
+        let advanced = rows
+            .iter()
+            .find(|row| row["capability"] == "dds.texture2d.write");
+        assert_eq!(advanced.is_some(), matches!(profile, None | Some("studio")));
+        if let Some(row) = advanced {
+            assert_eq!(row["variant"], dds::NATIVE_TEXTURE_EXPORT_VARIANT);
+            assert_eq!(row["platform"], "native");
+            assert_eq!(row["operation"], "fresh-write");
+            assert_eq!(row["may_be_lossy"], true);
+            assert_eq!(row["preflight_required"], true);
+            assert_eq!(row["external_helper_required"], false);
+            assert_eq!(row["installation_preflight_required"], false);
+            assert_eq!(row["runtime_installation_verified"], false);
+            assert_eq!(row["release_qualified"], false);
+            assert_eq!(row["evidence"], "unverified");
+            assert_eq!(
+                row["encodings"],
+                serde_json::json!(["rgba8", "bc1", "bc2", "bc3"])
+            );
+            assert_eq!(row["filters"], serde_json::json!(["nearest", "box-stored"]));
+            assert_eq!(row["mips"], serde_json::json!(["none", "full"]));
+            assert_eq!(row["levels_min"], 1);
+            assert_eq!(row["levels_max"], 17);
+            assert_eq!(row["levels_geometry_bounded"], true);
+            assert_eq!(row["mips_levels_mutually_exclusive"], true);
+            assert_eq!(row["compression_policy"], dds::UNIFORM_LOSSY_POLICY);
+            assert_eq!(row["pixel_limit"], dds::PIXELS_MAX);
+        }
+        if profile == Some("studio") {
+            let old = rows
+                .iter()
+                .find(|row| row["capability"] == "dds.rgba8.write")
+                .unwrap();
+            assert_eq!(old["backend_id"], "paintcraft-dds-rgba8");
+            assert!(old.get("variant").is_none());
+        }
+    }
+}
