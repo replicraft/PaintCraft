@@ -1,5 +1,6 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
 mod floating;
+mod pen;
 mod resource_shape;
 mod sampled_brush;
 mod shape_mask;
@@ -27,6 +28,7 @@ pub(crate) struct Editor {
     resource_shape: Option<resource_shape::Captured>,
     pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
+    pen_base: Option<paintcraft_editor::session::Ticket>,
 }
 
 impl Editor {
@@ -62,6 +64,7 @@ impl Editor {
             tools,
             fonts: text::fonts(),
             floating_source: None,
+            pen_base: None,
             adopted_brush: None,
             resource_shape: None,
         })
@@ -225,6 +228,7 @@ impl Editor {
             }
             Action::ToolFailure(message) => Err(Error::new(ErrorCode::ResourceLimit, message)),
             Action::SampledStroke(stroke) => self.commit_sampled(stroke),
+            Action::PenStroke(stroke) => self.commit_pen(stroke),
             Action::ResourceShape(shape) => self.commit_resource_shape(shape),
             Action::Stroke(stroke) => {
                 self.commit(commands::stroke_operations(&stroke, &|| Ok(()))?)
@@ -346,6 +350,9 @@ impl Editor {
             Some(Preview::Contour(contour)) => vec![commands::contour(&contour)],
             Some(Preview::Path(stroke)) => commands::stroke_operations(&stroke, &|| Ok(()))?,
             Some(Preview::SampledStroke(stroke)) => self.sampled_operations(&stroke)?,
+            Some(Preview::PenStroke(stroke)) => stroke
+                .resolve_captured(self.session.document().canvas_rect(), &|| Ok(()))?
+                .operations(&|| Ok(()))?,
             Some(Preview::ResourceShape(shape)) => self.resource_shape_operations(shape)?,
             Some(Preview::Shape {
                 layer,
