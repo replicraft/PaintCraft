@@ -12,7 +12,9 @@ const SCALE: i64 = 4;
 pub const SCAN_ROWS_MAX: usize = 1_048_576;
 
 mod cache;
+mod pressure;
 pub use cache::PathCache;
+pub use pressure::{PressurePoint, pressure_path_checked};
 
 #[cfg(test)]
 mod tests;
@@ -143,22 +145,56 @@ fn scan_segment(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     let radius = f64::from(size) / 2.0;
+    scan_tapered_segment(a, b, (radius, radius), clip, rows, charged, check)
+}
+
+// Shared row scanner: the constant-radius caller retains its exact policy.
+// Pressure uses the convex hull of endpoint disks: the exact linear-radius sweep.
+fn scan_tapered_segment(
+    a: (f64, f64),
+    b: (f64, f64),
+    radii: (f64, f64),
+    clip: &Rect,
+    rows: &mut BTreeMap<i64, Vec<(i64, i64)>>,
+    charged: &mut usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
     check()?;
+    if radii == (0.0, 0.0) {
+        return Ok(());
+    }
     let (dx, dy) = (b.0 - a.0, b.1 - a.1);
     let length = dx.hypot(dy);
     let (nx, ny) = if length == 0.0 {
         (0.0, 0.0)
     } else {
-        (-dy / length * radius, dx / length * radius)
+        (-dy / length, dx / length)
+    };
+    // When one disk contains the other, it contains every interpolated disk.
+    // Otherwise the shared external tangents bound the exact swept envelope.
+    let connecting = length > (radii.0 - radii.1).abs();
+    let (positive, negative) = if radii.0 == radii.1 {
+        // Retain the existing constant-radius floating-point evaluation order.
+        ((nx, ny), (-nx, -ny))
+    } else if connecting {
+        let k = (radii.0 - radii.1) / length;
+        let side = (1.0 - k * k).max(0.0).sqrt();
+        let along = (dx / length * k, dy / length * k);
+        (
+            (along.0 + nx * side, along.1 + ny * side),
+            (along.0 - nx * side, along.1 - ny * side),
+        )
+    } else {
+        ((0.0, 0.0), (0.0, 0.0))
     };
     let quad = [
-        (a.0 + nx, a.1 + ny),
-        (b.0 + nx, b.1 + ny),
-        (b.0 - nx, b.1 - ny),
-        (a.0 - nx, a.1 - ny),
+        (a.0 + positive.0 * radii.0, a.1 + positive.1 * radii.0),
+        (b.0 + positive.0 * radii.1, b.1 + positive.1 * radii.1),
+        (b.0 + negative.0 * radii.1, b.1 + negative.1 * radii.1),
+        (a.0 + negative.0 * radii.0, a.1 + negative.1 * radii.0),
     ];
-    let first = (((a.1.min(b.1) - radius) * 4.0).floor() as i64).max(clip.y0 * SCALE);
-    let last = (((a.1.max(b.1) + radius) * 4.0).ceil() as i64).min(clip.y1 * SCALE);
+    let first = ((((a.1 - radii.0).min(b.1 - radii.1)) * 4.0).floor() as i64).max(clip.y0 * SCALE);
+    let last = ((((a.1 + radii.0).max(b.1 + radii.1)) * 4.0).ceil() as i64).min(clip.y1 * SCALE);
     *charged += (last - first).max(0) as usize;
     if *charged > SCAN_ROWS_MAX {
         return Err(Error::new(
@@ -172,8 +208,11 @@ fn scan_segment(
         }
         let sy = (y as f64 + 0.5) / 4.0;
         let (mut left, mut right) = (f64::INFINITY, f64::NEG_INFINITY);
-        // A capsule is the union of its endpoint disks and connecting quad.
-        for c in [a, b] {
+        // The swept disk envelope is its endpoint disks plus the tangent quad.
+        for (c, radius) in [(a, radii.0), (b, radii.1)] {
+            if radius == 0.0 {
+                continue;
+            }
             let q = radius * radius - (sy - c.1).powi(2);
             if q >= 0.0 {
                 let half = q.sqrt();
@@ -181,7 +220,7 @@ fn scan_segment(
                 right = right.max(c.0 + half);
             }
         }
-        if length != 0.0 {
+        if connecting {
             for i in 0..4 {
                 let (p, q) = (quad[i], quad[(i + 1) % 4]);
                 if p.1 != q.1 && sy >= p.1.min(q.1) && sy <= p.1.max(q.1) {
