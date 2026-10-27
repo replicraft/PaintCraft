@@ -10,7 +10,7 @@ pub struct V2WritePlan {
 /// Walk one row deterministically. Repeats of at least 3 bytes use (0,count,value),
 /// literals contain 1..255 bytes. Each packet stays inside this row and each step
 /// consumes source. The same walker prices output before any output allocation.
-fn packets(
+pub(super) fn packets(
     row: &[u8],
     check: &dyn Fn() -> Result<()>,
     mut emit: impl FnMut(&[u8]),

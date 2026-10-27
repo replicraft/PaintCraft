@@ -52,22 +52,39 @@ pub(super) fn pack_rgba_exact(
     let mut packed = buffer(row * height as usize)?;
     packed.resize(row * height as usize, 0);
     for y in 0..height as usize {
-        check()?;
-        for x in 0..width_usize {
-            let index = (y * width_usize + x) * 4;
-            let pixel = &rgba[index..index + 4];
-            if pixel != [0, 0, 0, 255] && pixel != [255, 255, 255, 255] {
-                return Err(unsupported(
-                    "MSP requires explicit opaque black/white conversion before export",
-                ));
-            }
-            if pixel[0] == 255 {
-                packed[y * row + x / 8] |= 0x80 >> (x % 8);
-            }
-        }
+        let rgba_row = &rgba[y * width_usize * 4..(y + 1) * width_usize * 4];
+        pack_row_rgba_exact(rgba_row, &mut packed[y * row..(y + 1) * row], check)?;
     }
     check()?;
     Ok(packed)
+}
+
+/// One canonical fresh packed row; shared by allocation-free counting and encode.
+/// The caller supplies exactly ceil(pixel_count/8) bytes. Unused tail bits zero.
+pub(super) fn pack_row_rgba_exact(
+    rgba: &[u8],
+    packed: &mut [u8],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    check()?;
+    if !rgba.len().is_multiple_of(4) || packed.len() != (rgba.len() / 4).div_ceil(8) {
+        return Err(bad("MSP packed row extent disagrees with RGBA"));
+    }
+    packed.fill(0);
+    for (x, pixel) in rgba.as_chunks::<4>().0.iter().enumerate() {
+        if x.is_multiple_of(4096) {
+            check()?;
+        }
+        if pixel != &[0, 0, 0, 255] && pixel != &[255, 255, 255, 255] {
+            return Err(unsupported(
+                "MSP requires explicit opaque black/white conversion before export",
+            ));
+        }
+        if pixel[0] == 255 {
+            packed[x / 8] |= 0x80 >> (x % 8);
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn header(width: u32, height: u32, magic: [u8; 4]) -> [u8; 32] {
