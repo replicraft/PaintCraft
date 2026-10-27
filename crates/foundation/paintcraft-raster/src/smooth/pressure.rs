@@ -22,6 +22,23 @@ pub fn pressure_path_checked(
     clip: &Rect,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<CoverageSpan>> {
+    let mut spans = Vec::new();
+    pressure_path_visit_checked(points, size, clip, check, &mut |span| {
+        spans.push(span);
+        Ok(())
+    })?;
+    Ok(spans)
+}
+
+/// Same geometry with fallible span delivery for callers admitting retained masks
+/// incrementally. Failure stops delivery; callers discard the private prefix.
+pub fn pressure_path_visit_checked(
+    points: &[PressurePoint],
+    size: u32,
+    clip: &Rect,
+    check: &dyn Fn() -> Result<()>,
+    emit: &mut dyn FnMut(CoverageSpan) -> Result<()>,
+) -> Result<()> {
     check()?;
     if points.is_empty() || points.len() > 65_536 {
         return Err(Error::new(
@@ -37,7 +54,7 @@ pub fn pressure_path_checked(
         }
     }
     if clip.x0 >= clip.x1 || clip.y0 >= clip.y1 {
-        return Ok(Vec::new());
+        return Ok(());
     }
     let local_clip = Rect {
         x0: 0,
@@ -83,13 +100,12 @@ pub fn pressure_path_checked(
         previous = position;
         radius = next_radius;
     }
-    let mut spans = resolve_rows(&mut rows, check)?;
-    for span in &mut spans {
+    visit_resolved_rows(&mut rows, check, &mut |mut span| {
         span.x0 += clip.x0;
         span.x1 += clip.x0;
         span.y += clip.y0;
-    }
-    Ok(spans)
+        emit(span)
+    })
 }
 
 #[cfg(test)]

@@ -14,7 +14,7 @@ pub const SCAN_ROWS_MAX: usize = 1_048_576;
 mod cache;
 mod pressure;
 pub use cache::PathCache;
-pub use pressure::{PressurePoint, pressure_path_checked};
+pub use pressure::{PressurePoint, pressure_path_checked, pressure_path_visit_checked};
 
 #[cfg(test)]
 mod tests;
@@ -246,6 +246,18 @@ fn resolve_rows(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<CoverageSpan>> {
     let mut out = Vec::new();
+    visit_resolved_rows(rows, check, &mut |span| {
+        out.push(span);
+        Ok(())
+    })?;
+    Ok(out)
+}
+
+fn visit_resolved_rows(
+    rows: &mut BTreeMap<i64, Vec<(i64, i64)>>,
+    check: &dyn Fn() -> Result<()>,
+    emit: &mut dyn FnMut(CoverageSpan) -> Result<()>,
+) -> Result<()> {
     let mut events: BTreeMap<i64, i32> = BTreeMap::new();
     let mut pixel_y = None;
     for (row_index, (&y, runs)) in rows.iter_mut().enumerate() {
@@ -255,7 +267,7 @@ fn resolve_rows(
         let py = y.div_euclid(SCALE);
         if pixel_y != Some(py) {
             if let Some(prev) = pixel_y {
-                resolve(prev, &events, &mut out);
+                resolve(prev, &events, emit)?;
             }
             events.clear();
             pixel_y = Some(py);
@@ -286,10 +298,9 @@ fn resolve_rows(
         runs.truncate(retained);
     }
     if let Some(y) = pixel_y {
-        resolve(y, &events, &mut out);
+        resolve(y, &events, emit)?;
     }
-    check()?;
-    Ok(out)
+    check()
 }
 
 fn add_samples(lo: i64, hi: i64, events: &mut BTreeMap<i64, i32>) {
@@ -309,7 +320,11 @@ fn add_samples(lo: i64, hi: i64, events: &mut BTreeMap<i64, i32>) {
     }
 }
 
-fn resolve(y: i64, events: &BTreeMap<i64, i32>, out: &mut Vec<CoverageSpan>) {
+fn resolve(
+    y: i64,
+    events: &BTreeMap<i64, i32>,
+    emit: &mut dyn FnMut(CoverageSpan) -> Result<()>,
+) -> Result<()> {
     let (mut count, mut previous) = (0, None);
     for (&x, &delta) in events {
         if let Some(start) = previous
@@ -317,14 +332,15 @@ fn resolve(y: i64, events: &BTreeMap<i64, i32>, out: &mut Vec<CoverageSpan>) {
             && start < x
         {
             debug_assert!(count <= 16);
-            out.push(CoverageSpan {
+            emit(CoverageSpan {
                 y,
                 x0: start,
                 x1: x - 1,
                 samples: count as u8,
-            });
+            })?;
         }
         count += delta;
         previous = Some(x);
     }
+    Ok(())
 }
