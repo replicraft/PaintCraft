@@ -20,7 +20,7 @@ transport and qualification; it does not use a native helper manifest.
 | 6 | Explicit BT.709/sRGB8 AVIF 4:4:4 or sited 4:2:0 with optional straight alpha | `native-avif-sdr-ycbcr8-worker-v1`, V6, V7 or qualified V8 required |
 | 7 | Explicit Radiance RGBE-to-SDR conversion with bound settings/report | `native-hdr-sdr8-worker-v1`, final V7 or qualified V8 required |
 | 8 | Explicit OpenEXR-to-SDR conversion with bound settings/report | `native-exr-sdr8-worker-v1`, final V7 or qualified V8 required |
-| 9 | Fixed fresh-writer unsigned RGB8 JPEG XR long-header subset | `native-jxr-writer-rgb8-worker-v1`, optional qualified V8 only |
+| 3, `--jxr-writer-source` | Fixed fresh-writer unsigned RGB8 JPEG XR long-header subset | `native-jxr-writer-rgb8-worker-v1`, qualified V8 only |
 
 The general decoder ceiling is 4,194,304 pixels; AVIF, HDR/EXR and writer-compatible
 JPEG XR have tighter profile limits. A selected library compiling does not admit
@@ -135,14 +135,18 @@ justifies charging a smaller ceiling. A response peak is a preparation snapshot,
 not process-exit RSS. There is no OS filesystem or network sandbox claim.
 
 Release builds compile desktop, CLI and helper together under the lockfile and
-explicitly enable `paintcraft-codec-worker/float-codecs`. Meson 1.12.1 and Ninja
+select the exact target policy: `jxr-codecs` on Apple-silicon macOS,
+`float-codecs` on the other five targets. The Cargo default remains V7. Meson 1.12.1 and Ninja
 1.13.2 build the pinned source without a system-library fallback. On Windows,
 Meson uses `b_vscrt=mt` exactly when Rust target features include `crt-static`;
 otherwise it uses `md`. Release flags select the static mode, while normal and
 source builds follow their actual Rust target configuration. Six-target
 execution remains unverified until CI runs.
-Portable archives place helper and manifest beside the application. macOS nests
-them in `Contents/MacOS`; Linux packages use `usr/bin` and
+Portable archives place helper and manifest beside the application. In the nested
+macOS editor bundle, `Contents/MacOS` contains the engine and helper executables;
+`Contents/Resources` contains the helper manifest and codec notices. Discovery
+selects this layout upfront and refuses an adjacent competing manifest, including
+one introduced after verification. Linux packages use `usr/bin` and
 `usr/share/paintcraft`. MSI installs helper and manifest beside the desktop
 executable. Packagers reject missing, stale, wrong-target or mismatched embedded
 records without executing foreign binaries. macOS ad-hoc signing is reflected in
@@ -199,7 +203,7 @@ Meson 1.12.1, Ninja 1.13.2 and Python 3.12 or newer:
 ```sh
 cargo build --locked -p paintcraft-cli -p paintcraft-codec-worker
 cargo test --locked -p paintcraft-codec-worker --tests
-cargo test --locked -p paintcraft-cli --test installed_codec_worker -- --include-ignored
+cargo test --locked -p paintcraft-cli --test installed_codec_worker
 ```
 
 The explicitly feature-free build retains V4 compatibility. Its installed tests
@@ -208,7 +212,7 @@ skip the four AVIF cases. V5 identity-only compatibility additionally enables
 
 ```sh
 cargo test --locked -p paintcraft-codec-worker --no-default-features --features avif-codec --tests
-cargo test --locked -p paintcraft-cli --test installed_codec_worker -- --include-ignored --skip avif_sdr::
+cargo test --locked -p paintcraft-cli --test installed_codec_worker avif:: -- --ignored --test-threads=1
 cargo test --locked -p paintcraft-codec-worker --no-default-features --tests
 cargo test --locked -p paintcraft-cli --test installed_codec_worker
 cargo build --locked -p paintcraft-codec-worker
@@ -217,7 +221,11 @@ cargo build --locked -p paintcraft-codec-worker
 The complete CLI source installer builds and installs both native binaries,
 manifest and notices with `sh scripts/packaging/install_cli.sh --source` (or
 `./scripts/packaging/install_cli.ps1 --source` on Windows). These local commands
-do not replace actual release execution on all six targets.
+select V8 only on `aarch64-apple-darwin`, retaining V7 on the other five targets.
+The finite `qualify_cli_helper.py` runner selects profile-appropriate tests, binds
+the installed V8 CLI to its exact release build and requires an explicit pinned
+C oracle for C-dependent cases. Local proof does not replace execution of the
+release workflow on all six native targets.
 
 ## SDR decoder qualification
 
@@ -236,7 +244,8 @@ native Job/adoption verifies that contract, source-bound assessment and actual
 reconstruction/name consent. Source-family selection validates captured bytes
 before admission and helper discovery; it never retries a decoder after failure.
 Packaging and private-prefix validators retain exact V4/V5/V6 compatibility and
-both decoder notices. Source installation requires the complete final V7 output.
+both decoder notices. Source installation selects exact V8 on Apple-silicon macOS and exact V7 on
+the other five native targets.
 V4 and V5 return a canonical unsupported response for code6. Browser and Classic
 reading remain unavailable; archive checks do not qualify six-target execution.
 
@@ -287,7 +296,7 @@ corrected fixture is separate from the production watchdog implementation.
 
 Normal builds now enable `float-codecs`, retaining the immutable V7 build record, PCDEC002 protocol 2 and manifest schema 2. The exact profile is `native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1`. Its ordered seven import variants are the V6 five followed by `native-hdr-sdr8-worker-v1` and `native-exr-sdr8-worker-v1`. Native gray remains an internal operation, not an eighth document import variant. Historical private V7 manifests are refused; no profile ordering admits unknown versions or retries integrity failures.
 
-Final V7 packages require JPEGXR, dav1d and `HDR_EXR_LICENSES_V1.txt` notices. Exact legacy V4/V5/V6 payloads retain their original two notices. CLI archive extraction bounds the manifest and metadata before validating the exact profile-dependent file set, then verifies executable records/hashes/notices before atomic installation. Source installation explicitly builds `float-codecs` and requires final V7. Compatibility-only V6 builds use `--no-default-features --features avif-sdr-codec`; V5 uses `--no-default-features --features avif-codec`, and V4 uses `--no-default-features`.
+Final V7 packages require JPEGXR, dav1d and `HDR_EXR_LICENSES_V1.txt` notices. Exact legacy V4/V5/V6 payloads retain their original two notices. CLI archive extraction bounds the manifest and metadata before validating the exact profile-dependent file set, then verifies executable records/hashes/notices before atomic installation. Source installation follows the exact target policy: Apple-silicon macOS requires qualified V8; the other five targets require final V7. Compatibility-only V6 builds use `--no-default-features --features avif-sdr-codec`; V5 uses `--no-default-features --features avif-codec`, and V4 uses `--no-default-features`.
 
 The final descriptor does not alter exposure, alpha, negative-value, tone-mapping, source-space or report semantics. Original private qualification logs are not final-distribution evidence. Final consumer/package proof and native OS release checks are recorded separately.
 
@@ -296,9 +305,10 @@ Local final-descriptor qualification on Apple silicon passed the default worker 
 Actual local ad-hoc signing of a separate optimized helper copy also passed canonical post-sign manifest verification. This does not establish a complete signed GUI bundle, DMG, MSI, Linux package integration or execution on the other five native targets. Those remain release-workflow/OS gates; no release or tag is implied by local qualification.
 
 
-## Optional qualified V8 JPEG XR fresh copies
+## Qualified V8 JPEG XR fresh copies and staged distribution
 
-Normal builds and default packages still use V7. Explicit `jxr-codecs` builds add
+Normal Cargo builds still use V7. Staged release builds and source installation select V8 only for
+Apple-silicon macOS; the other five targets remain on V7. `jxr-codecs` builds add
 profile `native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`, an exact
 nonprivate V8 build record, and schema 3 with eight imports and one export.
 Private V8 records remain refused. `PCENC001` requests and `PCJXR001` replies
@@ -331,7 +341,18 @@ preserve sources and existing destinations. Native file-picker completion is a
 headless seam, not automated OS-dialog interaction. Earlier failed fixture runs
 remain recorded separately in `docs/validation/jxr-native-ui-2026-10-26`.
 
+The fresh optimized source `a1c1663637814a351e094d462b4c9f8401d224bc` also passed
+all finite CLI selectors and explicit C cases, the same twenty-four optimized
+headless App cases in the real bundle layout, and signed-helper CLI portable
+cases. Actual ad-hoc signing and the canonical DMG/update-ZIP validator passed;
+the original nested signed helper executed a pinned frame without changing the
+bundle seal. The helper remains the qualified `529ed471…` producer, copied
+unchanged before signing; signed bytes are `cb17b763…`. Exact component/source
+hashes and preserved failures are in
+local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`.
+
 This does not complete broader JPEG XR profiles, original Windows application
-interoperability, default/release promotion or all six native target runtimes.
+interoperability, the other five native target runtimes, remote CI, Developer-ID
+signing or notarization. The global Cargo default remains V7.
 There is no generic Open, Classic/browser reader, preserving JPEG XR Save or
 16-bit editor claim. The exact registry variants remain preflight operations.

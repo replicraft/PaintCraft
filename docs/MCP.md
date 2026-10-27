@@ -451,8 +451,10 @@ generic Open or preserving Save.
 
 ## Native JPEG XR fresh copies
 
-`export_jxr` writes a native Studio fresh copy through the optional qualified V8
-helper. Pass `path`, optional `overwrite` and `allow_losses`. The document must
+`export_jxr` writes a native Studio fresh copy through qualified V8. Staged
+Apple-silicon macOS release builds and source installation select this helper; the other five
+native targets and global Cargo default retain V7 and require an explicitly
+qualified installation before this route is available. Pass `path`, optional `overwrite` and `allow_losses`. The document must
 produce a wholly opaque composite; transparent output is refused instead of
 silently applying a matte. For example, a layered opaque document needs its
 actual `flatten` loss acknowledged:
@@ -474,7 +476,10 @@ Reading a qualified long writer file uses `import_image` with
 `allow_losses:["jxr-resolution-not-retained"]`, producing a new unsaved native
 document. Classic/browser conversion, ordinary Open and preserving JPEG XR Save
 remain unavailable. The optional helper and actual CLI/MCP path have local Apple
-Silicon proof; default/release promotion and all target runtimes remain pending.
+Silicon proof, including the optimized staged source/bundle proof in
+local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`. The
+global Cargo default and five other native targets retain V7; their runtime
+qualification and remote CI remain pending.
 
 ## Native HEIC/HEIF import
 

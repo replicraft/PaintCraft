@@ -2,8 +2,9 @@
 
 The fixed opaque RGB8 writer, writer-compatible import and native parent
 preparation are implemented. Exact native Studio, CLI and MCP routes now have
-actual fresh-copy proof through the optional qualified helper. Default/release
-promotion and six-target runtime coverage remain pending.
+actual fresh-copy proof through the qualified helper. Staged release/source-installer
+selection is locally qualified on Apple-silicon macOS; the other five targets
+remain held at V7. The global Cargo default remains V7.
 Foreign preserving Save is not implemented.
 
 Current parent methods require the exact **nonprivate optional final** `qualified`
@@ -59,8 +60,8 @@ allowance and constructing an Editor with a path without App's real Open
 association. Only test setup changed. Source/binary/helper/C hashes and raw logs
 are retained in `docs/validation/jxr-native-ui-2026-10-26/closeout.json`.
 
-These local proofs do not establish Windows interoperability, all six release
-targets, broader ICC/alpha/depth/compression profiles or default promotion.
+These earlier local proofs did not establish Windows interoperability, all six
+release targets or broader ICC/alpha/depth/compression profiles.
 Child/C case deadlines are 10 seconds; native parent qualification fixtures use
 20-second per-job deadlines. The requested allocation ceiling remains 256 MiB.
 
@@ -211,8 +212,17 @@ reference. Set `PAINTCRAFT_JXR_WRITER_MATRIX` to the retained corrected producer
 root `/private/tmp/paintcraft-jxr-long-release-mgr_c7w6`; the parent pins three
 maximum/axis encoded and C-RGB hashes before using its `matrix-large` files. A public V7 helper must never be relabeled as the candidate.
 
-The actual local Studio and native parent/legacy proofs are complete for the
-qualified descriptor above. The explicit default/release promotion decision,
-Windows WIC/Paint.NET interoperability and all six native release target runtimes
-remain unfinished. Local C differential evidence does not establish full JPEG XR
-or original-application compatibility.
+The current staged Apple-silicon macOS proof uses immutable source
+`a1c1663637814a351e094d462b4c9f8401d224bc` for the optimized CLI, App and App
+lib-test executable, paired with the unchanged qualified `529ed471…` helper.
+Its signed derivative `cb17b763…` passed actual nested-bundle execution, the same
+24 App cases through the Resources manifest layout, and a new canonical
+CLI archive/private-prefix portable check. Full DMG/update-ZIP validation passed.
+Exact hashes, commands, logs and preserved failures are in
+local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`.
+
+The five other native targets remain held at V7, as does the global Cargo
+default. Remote CI execution, Developer-ID signing/notarization, Windows
+WIC/Paint.NET interoperability and broader required JPEG XR profiles remain
+unverified or unfinished. Local C evidence does not establish full JPEG XR or
+original-application compatibility.

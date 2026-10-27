@@ -44,7 +44,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving/public fresh writer; internal typed PDN3 writer and bounded native preparation are implemented, pending original-app qualification |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. Internal fresh writer and gated layered-copy preparation exist; public/preserving writes await Windows Paint qualification |
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. A separate explicit Studio Import variant converts exact neutral `auto` Normal groups to ordered editable leaves with group-structure/name/control loss consent. Isolated/default groups, nonneutral opacity, group offsets, unsupported blends/extensions, ZIP64 and resource variants are refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
-| JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`; optional qualified V8 adds upfront long-header `native-jxr-writer-rgb8-worker-v1`. Aliases: `.jxr`, `.wdp`, `.wmp` | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. The exact native Studio fresh-copy RGB8 writer and distinct long-header importer have actual headless English/Japanese Studio and CLI/MCP proof through the optional qualified V8 helper; default promotion and release-target runtime qualification are pending. No generic export, ordinary Open, Classic/browser read or preserving Save |
+| JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`; optional qualified V8 adds upfront long-header `native-jxr-writer-rgb8-worker-v1`. Aliases: `.jxr`, `.wdp`, `.wmp` | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. The exact native Studio fresh-copy RGB8 writer and distinct long-header importer have actual headless English/Japanese Studio and CLI/MCP proof through qualified V8; staged Apple-silicon macOS release/source-installer selection is locally qualified with optimized binaries, while the other five targets and global Cargo default retain V7. No generic export, ordinary Open, Classic/browser read or preserving Save |
 | HEIF/HEIC | Native Studio explicit Import, CLI and native MCP `import_image` for `native-heif-srgb8-worker-v1`, with `.heic`, `.heif` or `.hif` aliases | Direct-primary explicit sRGB8 color and optional straight8 alpha through the verified helper. YCbCr reconstruction and nonempty source item names require their actual loss consent. No ordinary Open, Classic/browser read, grid/ICC/HDR/deep color, preserving Save or HEIF writing |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping and high depth remain unavailable. Internal fresh RGB8 layered writer has independent raw-layer/profile proof; public writing remains disabled pending original-application qualification |
@@ -398,9 +398,19 @@ recorded: zero oracle stdin allowance, and constructing an Editor with a path
 without the real App Open association. The fixes affect only the test runner/setup.
 
 This is qualified local helper and Studio/CLI/MCP evidence, not completion of F12.
-Default/release promotion, all six target runtimes, original Windows interoperability
-and required ICC/alpha/depth/other compression profiles remain separate unfinished
-work. The normal helper still uses V7; this writer requires optional qualified V8.
+Staged release/source-installer selection now enables qualified V8 only on Apple-silicon
+macOS; five other native targets and the global Cargo default retain V7. Fresh
+immutable source `a1c1663637814a351e094d462b4c9f8401d224bc` produced the optimized
+CLI/App/lib-test artifacts. SHA-bound installed CLI baseline/portable/forged/C
+cases and the same 24 optimized App cases passed through the actual bundle
+Resources layout. Full ad-hoc signed DMG/update-ZIP validation, original nested
+signed-helper execution and a new signed-helper CLI archive/private-prefix
+portable run passed. The raw helper is the unchanged qualified `529ed471…`
+producer; its signed derivative is `cb17b763…`. See
+local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`.
+Remote CI, five held native runtimes, Developer-ID signing/notarization, original
+Windows interoperability and required ICC/alpha/depth/other compression
+profiles remain separate unverified or unfinished work.
 Raw receipts are in the ignored local validation records, including
 `docs/validation/jxr-native-ui-2026-10-26/closeout.json`; tracked installed-worker
 tests retain the reproducible assertions.
