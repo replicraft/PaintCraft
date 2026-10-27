@@ -3572,6 +3572,7 @@ dependencies = [
  "egui",
  "fluent-bundle",
  "paintcraft-core",
+ "paintcraft-input",
  "paintcraft-tools",
  "resvg",
  "unic-langid",

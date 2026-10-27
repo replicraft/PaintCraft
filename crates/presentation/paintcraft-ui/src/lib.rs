@@ -15,6 +15,7 @@ pub mod outbox;
 pub mod page_import;
 pub mod palette;
 pub mod pcx_export;
+pub mod pen_input;
 pub mod shape_assets;
 pub mod shape_placement;
 pub mod svg_import;
