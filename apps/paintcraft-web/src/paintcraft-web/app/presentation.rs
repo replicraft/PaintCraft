@@ -30,6 +30,9 @@ impl WebApp {
                 (adopted.tip().width(), adopted.tip().height()),
             )
         });
+        if self.welcome.open() {
+            ui.disable();
+        }
         let context = self.context();
         let chrome = egui::Panel::top("classic-chrome").show(ui, |ui| {
             let actions = if self.frontend == Frontend::Studio {
@@ -141,5 +144,6 @@ impl WebApp {
         self.show_form(&ctx);
         self.print_progress(&ctx);
         self.paste_dialog(&ctx);
+        self.show_welcome(&ctx);
     }
 }

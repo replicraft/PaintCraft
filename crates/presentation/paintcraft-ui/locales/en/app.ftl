@@ -185,3 +185,10 @@ preparing-the-document-or-waiting-for-the-print-dialog = Preparing the document 
 print-dialog-closed = Print dialog closed.
 printing-is-unavailable-or-the-browser-denied-the-request = Printing is unavailable or the browser denied the request.
 finish-text-composition-before-printing = Finish text composition before printing.
+
+welcome-to-paintcraft = Welcome to PaintCraft
+close-welcome-dialog = Close welcome dialog
+draw-and-paint-with-brushes-shapes-and-editable-text = Draw and paint with brushes, shapes, and editable text.
+try-classic-skins-or-the-studio-interface-with-layers-and-undo = Try Classic skins or the Studio interface, with layers and undo.
+open-pictures-and-save-your-editable-work-as-a-paintcraft-project = Open pictures and save your editable work as a PaintCraft project.
+click-interface-in-the-top-right-to-try-the-different-interfaces = Click Interface in the top right to try the different interfaces

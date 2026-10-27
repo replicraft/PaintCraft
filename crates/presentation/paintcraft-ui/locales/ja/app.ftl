@@ -185,3 +185,10 @@ preparing-the-document-or-waiting-for-the-print-dialog = ドキュメントを�
 print-dialog-closed = 印刷ダイアログを閉じました。
 printing-is-unavailable-or-the-browser-denied-the-request = 印刷を利用できないか、ブラウザーが要求を拒否しました。
 finish-text-composition-before-printing = 印刷する前に文字の変換を確定してください。
+
+welcome-to-paintcraft = PaintCraftへようこそ
+close-welcome-dialog = ようこそダイアログを閉じる
+draw-and-paint-with-brushes-shapes-and-editable-text = ブラシ、図形、編集可能なテキストで描画できます。
+try-classic-skins-or-the-studio-interface-with-layers-and-undo = レイヤーと元に戻す機能を備えたClassicスキンやStudioインターフェイスをお試しください。
+open-pictures-and-save-your-editable-work-as-a-paintcraft-project = 画像を開き、編集可能な作品をPaintCraftプロジェクトとして保存できます。
+click-interface-in-the-top-right-to-try-the-different-interfaces = 右上の「インターフェイス」をクリックすると、さまざまなインターフェイスを試せます

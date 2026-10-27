@@ -185,3 +185,10 @@ preparing-the-document-or-waiting-for-the-print-dialog = दस्तावे�
 print-dialog-closed = प्रिंट संवाद बंद हो गया।
 printing-is-unavailable-or-the-browser-denied-the-request = प्रिंट उपलब्ध नहीं है या ब्राउज़र ने अनुरोध अस्वीकार कर दिया।
 finish-text-composition-before-printing = प्रिंट करने से पहले पाठ लिखना पूरा करें।
+
+welcome-to-paintcraft = PaintCraft में आपका स्वागत है
+close-welcome-dialog = स्वागत संवाद बंद करें
+draw-and-paint-with-brushes-shapes-and-editable-text = ब्रश, आकृतियों और संपादन योग्य टेक्स्ट से चित्र बनाएँ और रंग भरें।
+try-classic-skins-or-the-studio-interface-with-layers-and-undo = लेयर और पूर्ववत सुविधा के साथ Classic स्किन या Studio इंटरफ़ेस आज़माएँ।
+open-pictures-and-save-your-editable-work-as-a-paintcraft-project = चित्र खोलें और अपने संपादन योग्य काम को PaintCraft प्रोजेक्ट के रूप में सहेजें।
+click-interface-in-the-top-right-to-try-the-different-interfaces = अलग-अलग इंटरफ़ेस आज़माने के लिए ऊपर दाईं ओर इंटरफ़ेस पर क्लिक करें

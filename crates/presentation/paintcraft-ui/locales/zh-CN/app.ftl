@@ -185,3 +185,10 @@ preparing-the-document-or-waiting-for-the-print-dialog = 正在准备文档或�
 print-dialog-closed = 打印对话框已关闭。
 printing-is-unavailable-or-the-browser-denied-the-request = 无法打印或浏览器拒绝了请求。
 finish-text-composition-before-printing = 请在打印前完成文字输入。
+
+welcome-to-paintcraft = 欢迎使用 PaintCraft
+close-welcome-dialog = 关闭欢迎对话框
+draw-and-paint-with-brushes-shapes-and-editable-text = 使用画笔、形状和可编辑文字绘画。
+try-classic-skins-or-the-studio-interface-with-layers-and-undo = 尝试 Classic 皮肤或 Studio 界面，使用图层和撤销功能。
+open-pictures-and-save-your-editable-work-as-a-paintcraft-project = 打开图片，并将可编辑的作品保存为 PaintCraft 项目。
+click-interface-in-the-top-right-to-try-the-different-interfaces = 点击右上角的“界面”，尝试不同的界面

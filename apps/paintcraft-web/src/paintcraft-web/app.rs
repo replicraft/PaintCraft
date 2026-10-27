@@ -23,6 +23,7 @@ mod presentation;
 mod settings;
 mod shapes;
 mod view;
+mod welcome;
 use crate::{
     canvas::Canvas,
     editor::{Editor, WHITE},
@@ -48,6 +49,7 @@ pub struct WebApp {
     name: String,
     pub(crate) zoom: f32,
     settings: bool,
+    welcome: welcome::State,
     applied_style: Option<(egui::Theme, ClassicVariant, Frontend)>,
     settings_draft: Option<settings::Draft>,
     preferences: crate::preferences::Preferences,
@@ -107,6 +109,7 @@ impl WebApp {
             name: "Untitled".into(),
             zoom: 1.0,
             settings: false,
+            welcome: welcome::State::load(),
             applied_style: None,
             settings_draft: None,
             text: crate::text_ui::TextUi {
@@ -171,7 +174,8 @@ impl WebApp {
             .collect()
     }
     pub(crate) fn blocked(&self) -> bool {
-        self.printing_pending()
+        self.welcome.open()
+            || self.printing_pending()
             || self.paste.modal()
             || self.settings
             || self.export_confirm.is_some()
@@ -245,6 +249,9 @@ impl WebApp {
     }
 
     pub(crate) fn edit(&mut self, action: Edit) {
+        if self.welcome.open() {
+            return;
+        }
         if self.paste.is_placing() {
             self.message = "Finish placing the pasted image before editing or saving.".into();
             return;
@@ -289,6 +296,9 @@ impl WebApp {
     }
 
     fn action(&mut self, ctx: &egui::Context, action: Action) {
+        if self.welcome.open() {
+            return;
+        }
         if self.paste.is_placing() {
             if action == Action::Undo {
                 self.cancel_paste(ctx);
@@ -549,6 +559,9 @@ impl WebApp {
     }
 
     pub(crate) fn keyboard_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
+        if self.welcome.open() {
+            return true;
+        }
         if self.paste_keyboard(ctx, event) {
             return true;
         }

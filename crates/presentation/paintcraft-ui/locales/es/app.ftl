@@ -185,3 +185,10 @@ preparing-the-document-or-waiting-for-the-print-dialog = Preparando el documento
 print-dialog-closed = Diálogo de impresión cerrado.
 printing-is-unavailable-or-the-browser-denied-the-request = La impresión no está disponible o el navegador rechazó la solicitud.
 finish-text-composition-before-printing = Termina de introducir el texto antes de imprimir.
+
+welcome-to-paintcraft = Te damos la bienvenida a PaintCraft
+close-welcome-dialog = Cerrar la bienvenida
+draw-and-paint-with-brushes-shapes-and-editable-text = Dibuja y pinta con pinceles, formas y texto editable.
+try-classic-skins-or-the-studio-interface-with-layers-and-undo = Prueba los aspectos de Classic o la interfaz Studio, con capas y deshacer.
+open-pictures-and-save-your-editable-work-as-a-paintcraft-project = Abre imágenes y guarda tu trabajo editable como un proyecto de PaintCraft.
+click-interface-in-the-top-right-to-try-the-different-interfaces = Haz clic en Interfaz arriba a la derecha para probar las distintas interfaces
