@@ -13,6 +13,7 @@ pub use mixed::{
 mod encode;
 pub use decode::{VerifiedSchema3DecoderHelper, discover_decoder, for_application_decoder};
 mod files;
+mod layout;
 pub use encode::{
     EncoderContract, VerifiedEncoderHelper, discover_encoder, for_application_encoder,
 };
@@ -83,12 +84,21 @@ pub struct VerifiedHelper {
     manifest: PathBuf,
     helper_pin: Pinned,
     manifest_pin: Pinned,
+    forbidden_adjacent: Option<PathBuf>,
 }
 impl VerifiedHelper {
     /// Reopen and hash the currently named files, checking their acquired file
     /// identities as well as bytes. A later path swap before spawn is still a
     /// race; installations must have the same trust as the running application.
     pub fn checked_executable(&self, check: &dyn Fn() -> Result<()>) -> Result<&Path> {
+        check()?;
+        if let Some(path) = &self.forbidden_adjacent
+            && layout::exists(path)?
+        {
+            return Err(changed(
+                "Adjacent manifest appeared in verified Mac application bundle",
+            ));
+        }
         self.helper_pin.revalidate(&self.executable, check)?;
         self.manifest_pin.revalidate(&self.manifest, check)?;
         check()?;
@@ -318,23 +328,8 @@ fn verify_selected<'a>(
         .parent()
         .ok_or_else(|| unavailable("Application has no installation directory"))?;
     let executable = directory.join(target.executable());
-    let adjacent = directory.join(MANIFEST_NAME);
-    let manifest = match fs::symlink_metadata(&adjacent) {
-        Ok(_) => adjacent,
-        Err(e)
-            if e.kind() == std::io::ErrorKind::NotFound
-                && target.linux()
-                && directory.file_name().is_some_and(|n| n == "bin") =>
-        {
-            directory
-                .parent()
-                .ok_or_else(|| unavailable("Linux helper installation prefix missing"))?
-                .join("share/paintcraft")
-                .join(MANIFEST_NAME)
-        }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => adjacent,
-        Err(e) => return Err(storage(e)),
-    };
+    let layout = layout::resolve(directory, target)?;
+    let manifest = layout.path;
     let (manifest_pin, bytes) = read_manifest(&manifest, MANIFEST_BYTES_MAX, check)?;
     let value = paintcraft_core::types::json::parse(&bytes)
         .map_err(|_| unavailable("Installed helper manifest is not strict JSON"))?;
@@ -385,6 +380,7 @@ fn verify_selected<'a>(
         manifest,
         helper_pin,
         manifest_pin,
+        forbidden_adjacent: layout.forbidden_adjacent,
     };
     result.checked_executable(check)?;
     Ok(result)

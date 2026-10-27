@@ -584,3 +584,5 @@ mod encoder;
 
 #[path = "tests/mixed.rs"]
 mod mixed;
+
+mod layout;
