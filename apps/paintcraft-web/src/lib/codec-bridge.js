@@ -37,6 +37,11 @@ export function createCodecService(applicationVersion) {
 		active = abort;
 		let used = false;
 		return Object.freeze({
+			// This handle belongs only to this admission. A GUI may still hold
+			// it after completion while another operation owns the service.
+			cancel() {
+				if (active === abort) abort.abort();
+			},
 			async run(source) {
 				if (used)
 					throw refusal(
