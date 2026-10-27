@@ -26,6 +26,8 @@ use ::dds::{
 use input::{Control, Input};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
+/// Explicit advanced fresh copies; generic default RGBA8 routes remain separate.
+pub const NATIVE_TEXTURE_EXPORT_VARIANT: &str = "native-dds-texture-v1";
 pub const BYTES_MAX: usize = 64 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
 const WORKSPACE_BYTES_MAX: usize = 8 << 20;

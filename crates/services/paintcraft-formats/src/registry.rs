@@ -340,6 +340,16 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
         && request.variant == Some(crate::codec_worker::jxr_encode::qualified::EXPORT_VARIANT);
+    let native_dds_texture_export = request.family == Family::Dds
+        && request.operation == Operation::ExportFlat
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::dds::NATIVE_TEXTURE_EXPORT_VARIANT)
+        && request.extension.is_some_and(|extension| {
+            extension
+                .trim_start_matches('.')
+                .eq_ignore_ascii_case("dds")
+        });
     let native_heif_import = request.family == Family::Heif
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -428,6 +438,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !web_jxl_import
         && !native_jxr_import
         && !native_jxr_export
+        && !native_dds_texture_export
         && !native_heif_import
         && !native_avif_import
         && !native_float_import
@@ -459,6 +470,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight
+        || native_dds_texture_export
         || native_jxr_import
         || native_heif_import
         || native_avif_import
