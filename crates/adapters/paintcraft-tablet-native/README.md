@@ -87,3 +87,48 @@ plus the public `NX_TABLET_CAPABILITY_*` constants in SDK `IOKit/hidsystem/IOLLE
 The existing locked objc2 bindings expose these public APIs. Platform/core/App
 keep `unsafe_code=forbid`; this crate denies unsafe by default and permits it only
 in its small OS FFI module. Pure state/tests restore deny inside that module.
+
+## Source-observed collector slice
+
+`install_records` is an additive AppKit acquisition API for the owned-loop
+prototype. It observes real ordinary mouse motion, button edges (native numbers
+0–31), wheel delta/unit/phase/momentum, key boundaries and tablet records through
+one local monitor. It never labels a mouse observation as a fabricated pen or
+mouse device ID. Genuine mouse/key events still pass unchanged to AppKit, and
+native chrome remains native. Keyboard characters and IME interpretation are
+not read or replaced. Installation requires idle native mouse buttons; it does
+not invent an initial Down midway through an existing contact.
+
+A checked per-installation ordinal is assigned under the delivery gate. Tablet
+record mode uses that same source ordinal for normalized sequence, retaining its
+actual clock and axes. The old `install` mode remains separate and unchanged.
+The safe `Collector` admits valid mixed pointer streams in this observed order;
+it does not attempt to recover order from translated GUI events. Aggregate mouse
+holds, all five common button identities, chrome initial contact and competing
+pen/button tails remain distinct. Wheel navigation exposes a `cancel_pen` flag.
+Magnify, smart-magnify, rotate and swipe emit explicit Navigation boundaries,
+retain original framework gesture delivery and are not relabelled as motion.
+Actual tablet cancellation is `PenRoute::Control`, which must reach the host
+receiver independently of ink admission. Keyboard/focus native boundaries and
+explicit framework IME/reentrant boundaries fence private pen tails; framework
+boundaries do not fabricate a native ordinal. The consumer must handle those
+controls before further private GUI/tool publication.
+
+Queue storage, pointer metadata and one maximum handoff are admitted through the
+caller's `SharedBudget`; both storage charges remain alive through their data.
+Record-sink refusals and panics mark failed delivery before a handoff can drain a
+partial enqueue. Overflow/order/epoch/clock failures are sticky and discard the
+unpublished collector prefix. Per-pen clock history remains across Up and handoff,
+separate from reusable contact slots. It is bounded to 64 identities for one
+installation; exhaustion refuses rather than evicting history or rebasing time.
+Handoff storage reconciles actual Vec capacity before draining any prefix.
+This is bounded logical input storage, not an RSS
+or complete GUI-framework allocation guarantee.
+
+Source-record tests exercise accepted mouse-release/pen-down and pen-release/
+mouse-down sequences, five-button chords, earlier-device priority, wheel units,
+zero pressure/axes, boundaries and failures. They do not install a live monitor.
+The final source→GUI merge, display/view capture, native execution, Windows
+history, XI2/Wayland acquisition and physical hardware qualification are still
+required. `install_records` and passing collector controls alone do not make the
+unactivated App host acquisition-ready. Default startup remains disabled.

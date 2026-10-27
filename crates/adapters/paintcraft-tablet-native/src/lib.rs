@@ -12,14 +12,14 @@ use capabilities::Report;
 pub use capabilities::{Axes, Backend, CapabilitySnapshot, Device};
 pub use collector::{Collected, CollectedFrame, Collector, MouseRoute, PenRoute};
 pub use packet::{Delivery, NativePacket, WindowPosition};
-pub use records::{
-    Boundary, CaptureEvent, CaptureRecord, MouseKind, MouseRecord, RecordFault, RecordSink,
-    WheelPhase,
-};
 #[cfg(target_os = "macos")]
 use paintcraft_core::types::{Error, ErrorCode, Result};
 #[cfg(target_os = "macos")]
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
+pub use records::{
+    Boundary, CaptureEvent, CaptureRecord, MouseKind, MouseRecord, RecordFault, RecordSink,
+    WheelPhase,
+};
 use std::sync::Arc;
 #[cfg(target_os = "macos")]
 use std::{any::Any, marker::PhantomData, rc::Rc};
@@ -29,6 +29,9 @@ pub type Wake = Arc<dyn Fn() + Send + Sync>;
 #[derive(Clone)]
 struct Emitter {
     sink: Sink,
+    records: Option<RecordSink>,
+    record_epoch: Arc<std::sync::atomic::AtomicU64>,
+    record_ordinal: Arc<std::sync::atomic::AtomicU64>,
     wake: Wake,
     report: Report,
     gate: delivery::Gate,
@@ -38,6 +41,9 @@ impl Emitter {
     fn new(sink: Sink, wake: Wake, report: Report) -> Self {
         Self {
             sink,
+            records: None,
+            record_epoch: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            record_ordinal: Arc::new(std::sync::atomic::AtomicU64::new(0)),
             wake,
             report,
             gate: delivery::Gate::new(),
@@ -47,16 +53,59 @@ impl Emitter {
         self.report.sample(packet.raw);
         // Lock order: delivery gate -> receiver ingress. The native state lock
         // is released before calling Sink; Wake runs after releasing the gate.
-        let owned = match self.gate.emit(|| (self.sink)(packet)) {
+        let emission = if self.records.is_some() {
+            self.gate
+                .emit_checked(|| self.record(CaptureEvent::Tablet(packet)))
+        } else {
+            self.gate.emit(|| (self.sink)(packet))
+        };
+        self.finish(emission)
+    }
+    fn finish(&self, emission: delivery::Emission) -> bool {
+        let owned = match emission {
             delivery::Emission::Delivered(owned) => owned,
             delivery::Emission::FailedNow => {
                 self.report.sink_failure();
+                true
+            }
+            delivery::Emission::FailedSource => {
+                self.report.source_failure();
                 true
             }
             delivery::Emission::Fenced => return true,
         };
         self.wake();
         owned
+    }
+    fn new_records(sink: RecordSink, wake: Wake, report: Report) -> Self {
+        let mut emitter = Self::new(Arc::new(|_| true), wake, report);
+        emitter.records = Some(sink);
+        emitter
+    }
+    fn record(&self, mut event: CaptureEvent) -> std::result::Result<bool, delivery::Failure> {
+        use std::sync::atomic::Ordering;
+        let ordinal = self
+            .record_ordinal
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
+            .map_err(|_| delivery::Failure::Source)?;
+        let installation = self.record_epoch.load(Ordering::Acquire);
+        if let CaptureEvent::Tablet(packet) = &mut event {
+            // Both values were adapter-assigned counters; the record mode uses
+            // the shared producer ordinal so widget records keep the same order.
+            packet.raw.sequence = ordinal;
+        }
+        self.records.as_ref().ok_or(delivery::Failure::Source)?(CaptureRecord {
+            installation,
+            ordinal,
+            event,
+        })
+        .map_err(|_| delivery::Failure::Sink)?;
+        Ok(true)
+    }
+    fn observe(&self, event: CaptureEvent) {
+        if self.records.is_some() {
+            self.finish(self.gate.emit_checked(|| self.record(event)));
+        }
     }
     fn wake(&self) {
         if self.report.wake_failed() {
@@ -128,8 +177,45 @@ where
             "AppKit window required",
         ));
     };
-    let report = Report::new(Backend::AppKit);
-    let emitter = Emitter::new(sink, wake, report.clone());
+    install_emitter(
+        window,
+        handle,
+        Emitter::new(sink, wake, Report::new(Backend::AppKit)),
+    )
+}
+/// Owned-loop acquisition mode. Genuine mouse events are observed and passed
+/// unchanged to AppKit; the owned host must suppress their GUI mirror explicitly.
+/// This API alone does not authenticate a join with framework receipt order.
+#[cfg(target_os = "macos")]
+pub fn install_records<W>(window: Arc<W>, sink: RecordSink, wake: Wake) -> Result<Installation>
+where
+    W: HasWindowHandle + HasDisplayHandle + Send + Sync + 'static,
+{
+    let raw = window.window_handle().map_err(|_| {
+        Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Native window handle unavailable",
+        )
+    })?;
+    let raw_window_handle::RawWindowHandle::AppKit(handle) = raw.as_raw() else {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "AppKit window required",
+        ));
+    };
+    install_emitter(
+        window,
+        handle,
+        Emitter::new_records(sink, wake, Report::new(Backend::AppKit)),
+    )
+}
+#[cfg(target_os = "macos")]
+fn install_emitter<W: Any + Send + Sync>(
+    window: Arc<W>,
+    handle: raw_window_handle::AppKitWindowHandle,
+    emitter: Emitter,
+) -> Result<Installation> {
+    let report = emitter.report.clone();
     let gate = emitter.gate.clone();
     let native = macos::Monitor::new(handle, emitter)?;
     report.installed(true);

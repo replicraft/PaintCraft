@@ -267,3 +267,135 @@ fn fatal_source_callback_reports_failure_and_wakes_without_faking_sink_cancellat
     }));
     assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 0);
 }
+
+#[test]
+fn one_record_emitter_and_collector_accept_real_priority_before_gui_batching() {
+    let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+    let collector = Arc::new(std::sync::Mutex::new(Collector::new(16, &budget).unwrap()));
+    let receive = collector.clone();
+    let emitter = Emitter::new_records(
+        Arc::new(move |record| receive.lock().unwrap().accept(record)),
+        Arc::new(|| {}),
+        Report::new(Backend::AppKit),
+    );
+    emitter
+        .record_epoch
+        .store(11, std::sync::atomic::Ordering::Release);
+    let mouse = |pressed| {
+        CaptureEvent::Mouse(MouseRecord {
+            kind: MouseKind::Button { number: 0, pressed },
+            position: WindowPosition::PhysicalPixels(20.0, 30.0),
+            client: true,
+            modifiers: Modifiers::default(),
+            time: sample().time,
+        })
+    };
+    emitter.observe(mouse(true));
+    let mut packet = NativePacket {
+        raw: sample(),
+        position: Some(WindowPosition::PhysicalPixels(20.0, 30.0)),
+        delivery: Delivery::ReceiverPointer,
+    };
+    assert!(emitter.emit(packet));
+    emitter.observe(mouse(false));
+    packet.raw.phase = Phase::Up;
+    packet.raw.buttons = Buttons(0);
+    emitter.emit(packet);
+    packet.raw.phase = Phase::Down;
+    packet.raw.buttons = Buttons(1);
+    emitter.emit(packet);
+    let frame = emitter
+        .gate
+        .with_delivery(|health| collector.lock().unwrap().take(health).unwrap());
+    assert!(!frame.failed);
+    let routes: Vec<_> = frame
+        .records
+        .iter()
+        .filter_map(|record| match record {
+            Collected::Tablet { route, .. } => Some(*route),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        routes,
+        [
+            PenRoute::Suppressed,
+            PenRoute::Suppressed,
+            PenRoute::Admitted
+        ]
+    );
+    assert!(matches!(
+        frame.records[0],
+        Collected::Mouse {
+            record: CaptureRecord { ordinal: 0, .. },
+            ..
+        }
+    ));
+}
+#[test]
+fn typed_record_sink_failure_discards_partial_collector_delivery_under_the_same_gate() {
+    let collector = Arc::new(std::sync::Mutex::new(
+        Collector::new(
+            8,
+            &paintcraft_core::types::resources::SharedBudget::new(1 << 20),
+        )
+        .unwrap(),
+    ));
+    let receive = collector.clone();
+    let emitter = Emitter::new_records(
+        Arc::new(move |record| {
+            receive.lock().unwrap().accept(record)?;
+            Err(RecordFault::Retired)
+        }),
+        Arc::new(|| {}),
+        Report::new(Backend::AppKit),
+    );
+    emitter
+        .record_epoch
+        .store(11, std::sync::atomic::Ordering::Release);
+    emitter.emit(NativePacket {
+        raw: sample(),
+        position: Some(WindowPosition::PhysicalPixels(1.0, 1.0)),
+        delivery: Delivery::ReceiverPointer,
+    });
+    let frame = emitter
+        .gate
+        .with_delivery(|health| collector.lock().unwrap().take(health).unwrap());
+    assert!(frame.failed);
+    assert!(frame.records.is_empty());
+    assert_eq!(emitter.report.snapshot().sink_failures, 1);
+}
+#[test]
+fn final_usable_record_ordinal_is_not_wrapped_or_misreported_as_sink_failure() {
+    let delivered = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let save = delivered.clone();
+    let emitter = Emitter::new_records(
+        Arc::new(move |record| {
+            save.lock().unwrap().push(record);
+            Ok(())
+        }),
+        Arc::new(|| {}),
+        Report::new(Backend::AppKit),
+    );
+    emitter
+        .record_ordinal
+        .store(u64::MAX - 1, std::sync::atomic::Ordering::Release);
+    emitter.observe(CaptureEvent::Boundary {
+        kind: Boundary::Keyboard,
+        time: None,
+    });
+    emitter.observe(CaptureEvent::Boundary {
+        kind: Boundary::Keyboard,
+        time: None,
+    });
+    let records = delivered.lock().unwrap();
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0].ordinal, u64::MAX - 1);
+    assert_eq!(
+        emitter.gate.with_delivery(|health| health),
+        DeliveryHealth::Failed
+    );
+    let report = emitter.report.snapshot();
+    assert_eq!(report.source_failures, 1);
+    assert_eq!(report.sink_failures, 0);
+}

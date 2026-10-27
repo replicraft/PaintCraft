@@ -8,7 +8,7 @@ use objc2::{
 };
 use objc2_app_kit::{
     NSApplicationDidResignActiveNotification, NSEvent, NSEventMask, NSEventModifierFlags,
-    NSEventSubtype, NSEventType, NSPointingDeviceType, NSView, NSWindow,
+    NSEventPhase, NSEventSubtype, NSEventType, NSPointingDeviceType, NSView, NSWindow,
     NSWindowDidResignKeyNotification, NSWindowWillCloseNotification,
 };
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSObjectProtocol};
@@ -63,6 +63,13 @@ impl Monitor {
                     "Tablet installation epoch exhausted",
                 )
             })?;
+        if emitter.records.is_some() && NSEvent::pressedMouseButtons() != 0 {
+            return Err(Error::new(
+                ErrorCode::TargetInvalid,
+                "Lift mouse buttons before starting ordered native capture",
+            ));
+        }
+        emitter.record_epoch.store(epoch, Ordering::Release);
         let state = Arc::new(Mutex::new(State::new(epoch)?));
         let closed = Arc::new(AtomicBool::new(false));
         let callback_state = state.clone();
@@ -95,7 +102,7 @@ impl Monitor {
                 event.as_ptr()
             }
         });
-        let mask = NSEventMask::TabletPoint
+        let mut mask = NSEventMask::TabletPoint
             | NSEventMask::TabletProximity
             | NSEventMask::LeftMouseDown
             | NSEventMask::LeftMouseUp
@@ -107,6 +114,18 @@ impl Monitor {
             | NSEventMask::OtherMouseUp
             | NSEventMask::OtherMouseDragged
             | NSEventMask::MouseMoved;
+        if emitter.records.is_some() {
+            mask |= NSEventMask::ScrollWheel
+                | NSEventMask::MouseEntered
+                | NSEventMask::MouseExited
+                | NSEventMask::Magnify
+                | NSEventMask::SmartMagnify
+                | NSEventMask::Rotate
+                | NSEventMask::Swipe
+                | NSEventMask::KeyDown
+                | NSEventMask::KeyUp
+                | NSEventMask::FlagsChanged;
+        }
         // SAFETY: block returns either AppKit's still-live input event or null.
         // AppKit copies the block and calls it only on the main thread.
         let token = unsafe { NSEvent::addLocalMonitorForEventsMatchingMask_handler(mask, &block) }
@@ -134,6 +153,14 @@ impl Monitor {
                 if closing {
                     closed.store(true, Ordering::Release);
                 }
+                emitter.observe(CaptureEvent::Boundary {
+                    kind: if closing {
+                        Boundary::WindowClosed
+                    } else {
+                        Boundary::FocusLost
+                    },
+                    time: None,
+                });
                 cancel(&state, &emitter);
             });
             // SAFETY: this notification block is Send+Sync (only Arc/Mutex,
@@ -193,21 +220,47 @@ fn process(
     mtm: MainThreadMarker,
 ) -> bool {
     let kind = event.r#type();
-    let proximity =
-        kind == NSEventType::TabletProximity || event.subtype() == NSEventSubtype::TabletProximity;
     let matches_window = event
         .window(mtm)
         .is_some_and(|w| std::ptr::eq(w.as_ref(), window));
-    // Local app-wide proximity metadata is observed even while this window is
-    // inactive. Point ownership remains restricted to the retained window.
+    if matches!(
+        kind,
+        NSEventType::KeyDown | NSEventType::KeyUp | NSEventType::FlagsChanged
+    ) {
+        if emitter.records.is_some() && (matches_window || window.isKeyWindow()) {
+            emitter.observe(CaptureEvent::Boundary {
+                kind: Boundary::Keyboard,
+                time: native_time(event, emitter),
+            });
+        }
+        return false; // No characters, key interpretation or IME are consumed.
+    }
+    let tablet_mouse = matches!(
+        kind,
+        NSEventType::LeftMouseDown
+            | NSEventType::LeftMouseUp
+            | NSEventType::LeftMouseDragged
+            | NSEventType::RightMouseDown
+            | NSEventType::RightMouseUp
+            | NSEventType::RightMouseDragged
+            | NSEventType::OtherMouseDown
+            | NSEventType::OtherMouseUp
+            | NSEventType::OtherMouseDragged
+            | NSEventType::MouseMoved
+    );
+    let proximity = kind == NSEventType::TabletProximity
+        || (tablet_mouse && event.subtype() == NSEventSubtype::TabletProximity);
+    let is_point = kind == NSEventType::TabletPoint
+        || (tablet_mouse && event.subtype() == NSEventSubtype::TabletPoint);
+    // Local app-wide proximity metadata remains observed while inactive.
     if !matches_window && !proximity {
         return false;
     }
-    let is_point =
-        kind == NSEventType::TabletPoint || event.subtype() == NSEventSubtype::TabletPoint;
-    // Tablet-only properties must never be queried on an ordinary mouse event.
     if !proximity && !is_point {
-        return false;
+        if emitter.records.is_some() {
+            observe_mouse(event, view, window, emitter);
+        }
+        return false; // Genuine mouse, native chrome and gestures stay native.
     }
     let device = event.deviceID() as u64;
     if proximity {
@@ -261,6 +314,150 @@ fn process(
     {
         return false;
     }
+    let (position, in_view) = geometry(event, view, window);
+    let Some(micros) = crate::clock::uptime_micros(event.timestamp()) else {
+        let (consume, packet) = state.lock().unwrap_or_else(|e| e.into_inner()).quarantine(
+            device,
+            event.buttonMask().0 & 7 != 0,
+            in_view,
+        );
+        if let Some(packet) = packet {
+            emitter.emit(packet);
+        }
+        return consume;
+    };
+    let flags = event.modifierFlags();
+    let native = event.buttonMask().0 as u16;
+    // AppKit's distinct tip/lower-side/upper-side bits match bits 1/2/4.
+    let buttons = native & 7;
+    let tilt = event.tilt();
+    let point = Point {
+        device,
+        in_view,
+        micros,
+        position,
+        buttons,
+        modifiers: Modifiers {
+            shift: flags.contains(NSEventModifierFlags::Shift),
+            control: flags.contains(NSEventModifierFlags::Control),
+            alt: flags.contains(NSEventModifierFlags::Option),
+            command: flags.contains(NSEventModifierFlags::Command),
+        },
+        pressure: event.pressure(),
+        tilt: (tilt.x as f32, tilt.y as f32),
+        rotation: event.rotation(),
+    };
+    dispatch(state, emitter, point)
+}
+fn native_time(event: &NSEvent, emitter: &Emitter) -> Option<paintcraft_input::tablet::Time> {
+    Some(paintcraft_input::tablet::Time {
+        epoch: emitter.record_epoch.load(Ordering::Acquire),
+        micros: crate::clock::uptime_micros(event.timestamp())?,
+        clock: paintcraft_input::tablet::Clock::AppKitUptime,
+    })
+}
+fn native_modifiers(event: &NSEvent) -> Modifiers {
+    let flags = event.modifierFlags();
+    Modifiers {
+        shift: flags.contains(NSEventModifierFlags::Shift),
+        control: flags.contains(NSEventModifierFlags::Control),
+        alt: flags.contains(NSEventModifierFlags::Option),
+        command: flags.contains(NSEventModifierFlags::Command),
+    }
+}
+fn observe_mouse(event: &NSEvent, view: &NSView, window: &NSWindow, emitter: &Emitter) {
+    if !view
+        .window()
+        .is_some_and(|w| std::ptr::eq(w.as_ref(), window))
+    {
+        return;
+    }
+    let event_type = event.r#type();
+    if let Some(boundary) = navigation_boundary(event_type, native_time(event, emitter)) {
+        emitter.observe(boundary);
+        return; // Preserve the original gesture for the framework; do not invent motion.
+    }
+    let kind = match event_type {
+        NSEventType::LeftMouseDown
+        | NSEventType::RightMouseDown
+        | NSEventType::OtherMouseDown
+        | NSEventType::LeftMouseUp
+        | NSEventType::RightMouseUp
+        | NSEventType::OtherMouseUp => {
+            let Ok(number) = u8::try_from(event.buttonNumber()) else {
+                emitter.source_failure();
+                return;
+            };
+            if number >= 32 {
+                emitter.source_failure();
+                return;
+            }
+            MouseKind::Button {
+                number,
+                pressed: matches!(
+                    event_type,
+                    NSEventType::LeftMouseDown
+                        | NSEventType::RightMouseDown
+                        | NSEventType::OtherMouseDown
+                ),
+            }
+        }
+        NSEventType::MouseExited => MouseKind::Leave,
+        NSEventType::ScrollWheel => {
+            let momentum = event.momentumPhase();
+            let phase = match momentum {
+                NSEventPhase::MayBegin | NSEventPhase::Began => WheelPhase::Start,
+                NSEventPhase::Ended | NSEventPhase::Cancelled => WheelPhase::End,
+                _ => match event.phase() {
+                    NSEventPhase::MayBegin | NSEventPhase::Began => WheelPhase::Start,
+                    NSEventPhase::Ended | NSEventPhase::Cancelled => WheelPhase::End,
+                    _ => WheelPhase::Move,
+                },
+            };
+            let bounds = view.bounds();
+            let scale = view.convertRectToBacking(bounds).size.width / bounds.size.width;
+            MouseKind::Wheel {
+                delta: (event.scrollingDeltaX(), event.scrollingDeltaY()),
+                precise: event.hasPreciseScrollingDeltas(),
+                physical_scale: scale,
+                phase,
+                momentum: momentum != NSEventPhase::None,
+            }
+        }
+        NSEventType::MouseMoved
+        | NSEventType::LeftMouseDragged
+        | NSEventType::RightMouseDragged
+        | NSEventType::OtherMouseDragged
+        | NSEventType::MouseEntered => MouseKind::Motion,
+        _ => return,
+    };
+    let Some(time) = native_time(event, emitter) else {
+        emitter.source_failure();
+        return;
+    };
+    let (position, client) = geometry(event, view, window);
+    emitter.observe(CaptureEvent::Mouse(MouseRecord {
+        kind,
+        position,
+        client,
+        modifiers: native_modifiers(event),
+        time,
+    }));
+}
+fn navigation_boundary(
+    kind: NSEventType,
+    time: Option<paintcraft_input::tablet::Time>,
+) -> Option<CaptureEvent> {
+    matches!(
+        kind,
+        NSEventType::Magnify | NSEventType::SmartMagnify | NSEventType::Rotate | NSEventType::Swipe
+    )
+    .then_some(CaptureEvent::Boundary {
+        kind: Boundary::Navigation,
+        time,
+    })
+}
+fn geometry(event: &NSEvent, view: &NSView, window: &NSWindow) -> (WindowPosition, bool) {
     let location = event.locationInWindow();
     let point = view.convertPoint_fromView(location, None);
     let view_bounds = view.bounds();
@@ -293,39 +490,7 @@ fn process(
     } else {
         bounds.origin.y + bounds.size.height - point.y
     };
-    let Some(micros) = crate::clock::uptime_micros(event.timestamp()) else {
-        let (consume, packet) = state.lock().unwrap_or_else(|e| e.into_inner()).quarantine(
-            device,
-            event.buttonMask().0 & 7 != 0,
-            in_view,
-        );
-        if let Some(packet) = packet {
-            emitter.emit(packet);
-        }
-        return consume;
-    };
-    let flags = event.modifierFlags();
-    let native = event.buttonMask().0 as u16;
-    // AppKit's distinct tip/lower-side/upper-side bits match bits 1/2/4.
-    let buttons = native & 7;
-    let tilt = event.tilt();
-    let point = Point {
-        device,
-        in_view,
-        micros,
-        position: WindowPosition::PhysicalPixels(x, y),
-        buttons,
-        modifiers: Modifiers {
-            shift: flags.contains(NSEventModifierFlags::Shift),
-            control: flags.contains(NSEventModifierFlags::Control),
-            alt: flags.contains(NSEventModifierFlags::Option),
-            command: flags.contains(NSEventModifierFlags::Command),
-        },
-        pressure: event.pressure(),
-        tilt: (tilt.x as f32, tilt.y as f32),
-        rotation: event.rotation(),
-    };
-    dispatch(state, emitter, point)
+    (WindowPosition::PhysicalPixels(x, y), in_view)
 }
 fn dispatch(state: &Mutex<State>, emitter: &Emitter, point: Point) -> bool {
     let action = state

@@ -356,3 +356,77 @@ fn inactive_client_contact_stays_receiver_owned_across_focus_transition() {
         Action::Native
     ));
 }
+
+#[test]
+fn native_gesture_mapping_fences_held_pen_before_up_without_inventing_mouse_motion() {
+    for kind in [
+        NSEventType::Magnify,
+        NSEventType::SmartMagnify,
+        NSEventType::Rotate,
+        NSEventType::Swipe,
+    ] {
+        let collector = Arc::new(Mutex::new(
+            Collector::new(
+                16,
+                &paintcraft_core::types::resources::SharedBudget::new(1 << 20),
+            )
+            .unwrap(),
+        ));
+        let receive = collector.clone();
+        let emitter = Emitter::new_records(
+            Arc::new(move |record| receive.lock().unwrap().accept(record)),
+            Arc::new(|| {}),
+            Report::new(Backend::AppKit),
+        );
+        emitter.record_epoch.store(19, Ordering::Release);
+        let mut source = state(0x400, DeviceKind::Pen);
+        emitter.emit(packet(&mut source, point(1, 1)));
+        let boundary = navigation_boundary(kind, None).unwrap();
+        assert_eq!(
+            boundary,
+            CaptureEvent::Boundary {
+                kind: Boundary::Navigation,
+                time: None
+            }
+        );
+        emitter.observe(boundary);
+        emitter.emit(packet(&mut source, point(1, 2)));
+        emitter.emit(packet(&mut source, point(0, 3)));
+        let frame = emitter
+            .gate
+            .with_delivery(|health| collector.lock().unwrap().take(health).unwrap());
+        assert!(matches!(
+            frame.records[1],
+            Collected::Boundary(CaptureRecord {
+                event: CaptureEvent::Boundary {
+                    kind: Boundary::Navigation,
+                    ..
+                },
+                ..
+            })
+        ));
+        let routes: Vec<_> = frame
+            .records
+            .iter()
+            .filter_map(|record| match record {
+                Collected::Tablet { route, .. } => Some(*route),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            routes,
+            [
+                PenRoute::Admitted,
+                PenRoute::Suppressed,
+                PenRoute::Suppressed
+            ]
+        );
+        assert!(
+            !frame
+                .records
+                .iter()
+                .any(|record| matches!(record, Collected::Mouse { .. }))
+        );
+    }
+    assert!(navigation_boundary(NSEventType::MouseEntered, None).is_none());
+}
