@@ -7,6 +7,7 @@ use paintcraft_render::render_flat;
 use crate::image::{self, ImageFormat};
 pub mod dds;
 pub mod jxr;
+pub mod msp;
 
 /// Loss codes a caller may acknowledge.
 pub const KNOWN_LOSSES: [&str; 12] = [
@@ -36,6 +37,8 @@ pub struct FlatOptions {
     pub format: ImageFormat,
     pub quality: u8,
     pub pcx_mode: crate::pcx::Mode,
+    /// None retains the default MSP1 route; explicit versions use guarded monochrome preparation.
+    pub msp_version: Option<crate::msp::Version>,
 }
 impl FlatOptions {
     pub fn new(format: ImageFormat, quality: u8) -> Self {
@@ -43,6 +46,7 @@ impl FlatOptions {
             format,
             quality,
             pcx_mode: crate::pcx::Mode::Rgb24,
+            msp_version: None,
         }
     }
 }
@@ -116,6 +120,7 @@ pub fn export_flat_options_with_check(
         format,
         quality: jpeg_quality,
         pcx_mode,
+        msp_version,
     } = options;
     check_loss_codes(allowed)?;
     if format != ImageFormat::Pcx && pcx_mode != crate::pcx::Mode::Rgb24 {
@@ -123,6 +128,27 @@ pub fn export_flat_options_with_check(
             ErrorCode::InputSchema,
             "PCX encoding options require PCX output",
         ));
+    }
+    if let Some(version) = msp_version {
+        if format != ImageFormat::Msp {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "MSP version options require MSP output",
+            ));
+        }
+        // Low-level callers own admission, as for the legacy flat facade. Hosts
+        // needing retained leases use the two-stage preparation API directly.
+        let prepared = msp::prepare_document_with(
+            doc,
+            version,
+            allowed,
+            |_, _| Ok(()),
+            |_| Ok(()),
+            |doc, _| render(doc),
+            check,
+        )?;
+        let (bytes, losses) = prepared.into_parts();
+        return Ok(FlatExport { bytes, losses });
     }
     let FlatComposite { rgba, mut losses } = prepare_composite(doc, render, check)?;
     losses.extend(
