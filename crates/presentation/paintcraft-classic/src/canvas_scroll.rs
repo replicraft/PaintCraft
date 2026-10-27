@@ -4,7 +4,14 @@ use paintcraft_ui::t;
 const RAIL: f32 = 14.0;
 const STEP: f32 = 40.0;
 
-pub(super) fn show<R>(ui: &mut Ui, id: Id, paint: impl FnOnce(&mut Ui) -> R) -> R {
+pub(super) fn show<R>(
+    ui: &mut Ui,
+    id: Id,
+    scope: Id,
+    size: Vec2,
+    clearance: f32,
+    paint: impl FnOnce(&mut Ui) -> R,
+) -> R {
     let viewport = ui.available_rect_before_wrap();
     let geometry_id = ui.scope_id().with(("canvas-scroll-inner", id));
     let pending_id = ui.scope_id().with(("canvas-scroll-request", id));
@@ -38,8 +45,77 @@ pub(super) fn show<R>(ui: &mut Ui, id: Id, paint: impl FnOnce(&mut Ui) -> R) -> 
             .unwrap_or_default();
         area = area.scroll_offset((offset - delta).max(Vec2::ZERO));
     }
-    let output = area.show(ui, paint);
+    let anchor_key = id.with("classic-anchor-request");
+    let anchor = ui
+        .data_mut(|data| {
+            let request = data.get_temp::<super::canvas::Anchor>(anchor_key);
+            data.remove::<super::canvas::Anchor>(anchor_key);
+            request
+        })
+        .filter(|request| request.scope == scope);
+    let layout_key = id.with("classic-anchor-layout");
+    let predicted = ui
+        .data(|data| data.get_temp::<(Vec2, Vec2)>(layout_key))
+        .map_or(viewport.size(), |(outer, inner)| {
+            viewport.size() - (outer - inner)
+        });
+    let predicted = predicted.max(Vec2::splat(1.0));
+    let mut anchored_position = None;
+    if let Some(request) = anchor {
+        let leading = ((predicted - size) * 0.5).max(Vec2::ZERO);
+        let leading = Vec2::new(leading.x.max(clearance), leading.y);
+        let maximum = (leading + size - predicted).max(Vec2::ZERO);
+        let position = request.offset(viewport.min, leading, maximum);
+        anchored_position = Some(position);
+        area = area.scroll_offset(position);
+    }
+    // Egui's physics uses last frame's bounds. A new zoom can place a
+    // valid anchor beyond that old maximum and spuriously seed inertia.
+    let kinetic = ui.spacing().scroll.kinetic;
+    if anchor.is_some() {
+        ui.spacing_mut().scroll.kinetic.rubber_band = false;
+        ui.spacing_mut().scroll.kinetic.decay_time = 0.0;
+    }
+    let output = if anchor.is_some() {
+        area.show_viewport(ui, |ui, view| {
+            // Updating an existing public scroll target makes the next begin
+            // retire its old animation at the explicitly selected offset.
+            ui.scroll_to_rect_animation(
+                Rect::from_center_size(viewport.min + view.size() * 0.5, Vec2::ZERO),
+                Some(egui::Align::Center),
+                egui::style::ScrollAnimation::none(),
+            );
+            paint(ui)
+        })
+    } else {
+        area.show(ui, paint)
+    };
+    if anchor.is_some() {
+        ui.spacing_mut().scroll.kinetic = kinetic;
+    }
     let inner = output.inner_rect;
+    ui.data_mut(|data| data.insert_temp(layout_key, (viewport.size(), inner.size())));
+    let position_agrees = anchored_position
+        .is_some_and(|position| (output.state.unclamped_offset() - position).length() < 1.0)
+        && output.state.velocity() == Vec2::ZERO;
+    if let Some(request) = anchor.and_then(|request| {
+        request.settle(
+            predicted,
+            inner.size(),
+            ui.ctx().cumulative_frame_nr(),
+            position_agrees,
+        )
+    }) {
+        ui.data_mut(|data| {
+            if data.get_temp::<super::canvas::Anchor>(anchor_key).is_none()
+                && data.get_temp::<Vec2>(pan_id).is_none()
+            {
+                data.insert_temp(anchor_key, request);
+            }
+        });
+        ui.ctx().request_repaint();
+    }
+
     ui.data_mut(|data| data.insert_temp(offset_id, output.state.clamped_offset()));
     if inner != previous {
         ui.data_mut(|data| data.insert_temp(geometry_id, inner));
