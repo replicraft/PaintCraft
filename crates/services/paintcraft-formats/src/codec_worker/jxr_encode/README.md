@@ -5,7 +5,14 @@ with locally qualified seekcap2 encoding and the separate private jxrread1 impor
 foreign preserving Save and default/release promotion remain unavailable.
 The native import profile is a separate existing operation.
 
-## Exact candidate
+Current parent methods now require the exact **nonprivate optional final**
+`qualified` descriptor (`native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`,
+marker `PAINTCRAFT_CODEC_WORKER_BUILD_V8_JXR_RGB8`). Frozen private evidence below
+is historical and is not accepted by these current parent methods. The optional
+`jxr-codecs` build selects the final record; default builds remain V7. Final
+producer/consumer qualification is pending, with no public gate/default change.
+
+## Historical private candidate
 
 - Feature: `paintcraft-codec-worker/jxr-encode`, explicitly including `float-codecs`.
 - Profile: `private-native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`.
@@ -125,10 +132,11 @@ changes default discovery, or proves original Windows application compatibility.
 
 ## Explicit developer reproduction
 
-Build into a separate private target directory to preserve the default helper:
+For the current optional final descriptor, build into a separate target directory
+to preserve the default helper:
 
 ```sh
-cargo test -p paintcraft-codec-worker --features jxr-encode \
+cargo test -p paintcraft-codec-worker --features jxr-codecs \
     --target-dir /absolute/private/target --test native_jxr_encode \
     --offline --locked --no-run
 ```
@@ -142,8 +150,8 @@ C executable. Its exact expected hash and original source provenance are in the
 oracle, not a shipped C encoder/decoder fallback.
 
 The parent fixture is explicitly ignored too:
-`codec_worker::native::jxr_encode::installed_tests::actual_private_installed_encoder_parent_lifetime_and_pixels`.
-It requires `PAINTCRAFT_JXR_ENCODE_HELPER` pointing to a hash-frozen private
+`codec_worker::native::jxr_encode::installed_tests::actual_qualified_installed_encoder_parent_lifetime_and_pixels`.
+It requires `PAINTCRAFT_JXR_ENCODE_HELPER` pointing to a hash-frozen final-profile
 producer with the exact adjacent schema 3 manifest, plus the same explicit C
 reference. Set `PAINTCRAFT_JXR_WRITER_MATRIX` to the retained corrected producer
 root `/private/tmp/paintcraft-jxr-long-release-mgr_c7w6`; the parent pins three
