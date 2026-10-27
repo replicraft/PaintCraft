@@ -7,7 +7,8 @@
 //! data or bound upstream allocation.
 mod import;
 pub use import::{
-    ImportAssessment, KNOWN_IMPORT_LOSSES, Resolution, assess_import, assess_writer_import,
+    ImportAssessment, KNOWN_IMPORT_LOSSES, NativeImportAssessment, Resolution, assess_import,
+    assess_native_import, assess_writer_import,
 };
 use paintcraft_core::types::{Error, ErrorCode, Result};
 

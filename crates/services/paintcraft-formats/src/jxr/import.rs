@@ -210,3 +210,43 @@ mod tests {
         );
     }
 }
+
+/// Native explicit-import selection from the exact captured bytes. This does not
+/// enable generic Open or authenticate the file's encoder origin.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum NativeImportAssessment {
+    Legacy(ImportAssessment),
+    WriterCompatible(ImportAssessment),
+}
+impl NativeImportAssessment {
+    pub fn assessment(&self) -> &ImportAssessment {
+        match self {
+            Self::Legacy(value) | Self::WriterCompatible(value) => value,
+        }
+    }
+    pub fn is_writer_compatible(&self) -> bool {
+        matches!(self, Self::WriterCompatible(_))
+    }
+}
+/// Classify structure before discovery/launch. Short headers retain established
+/// reader admission; long headers require the separately qualified subset.
+pub fn assess_native_import(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<NativeImportAssessment> {
+    let source = inspect_fresh_rgb8_checked(bytes, pixels, check)?;
+    // The common inspector has validated these exact fixed flag patterns and
+    // bounded the complete extent; this is selection, never error fallback.
+    match take(bytes, source.image_offset + 8, 4)? {
+        [0x11, 0x00, 0xc0, 0x71] => Ok(NativeImportAssessment::Legacy(ImportAssessment {
+            source,
+            resolution_x: Resolution::from_bits(source.resolution_x_bits),
+            resolution_y: Resolution::from_bits(source.resolution_y_bits),
+        })),
+        [0x11, 0x00, 0x40, 0x71] => Ok(NativeImportAssessment::WriterCompatible(
+            assess_writer_import(bytes, pixels, check)?,
+        )),
+        _ => Err(unsupported("JXR native import mode is not qualified")),
+    }
+}

@@ -258,3 +258,36 @@ fn private_writer_assessment_is_explicit_and_keeps_density_and_geometry_bounds()
         ErrorCode::OperationCancelled
     );
 }
+
+#[test]
+fn native_family_selection_preserves_short_admission_and_selects_long_without_fallback() {
+    for bytes in [
+        SMALL,
+        EDGE,
+        include_bytes!("../../tests/jxr-fixtures/rgb8-dpi96x144.jxr").as_slice(),
+    ] {
+        let selected = assess_native_import(bytes, PIXELS_MAX, &|| Ok(())).unwrap();
+        assert!(matches!(selected, NativeImportAssessment::Legacy(_)));
+        assert_eq!(
+            selected.assessment(),
+            &assess_import(bytes, PIXELS_MAX, &|| Ok(())).unwrap()
+        );
+    }
+    for bytes in [LONG_WIDE, LONG_TALL] {
+        let selected = assess_native_import(bytes, PIXELS_MAX, &|| Ok(())).unwrap();
+        assert!(selected.is_writer_compatible());
+        assert_eq!(
+            selected.assessment(),
+            &assess_writer_import(bytes, PIXELS_MAX, &|| Ok(())).unwrap()
+        );
+        let mut changed = bytes.to_vec();
+        let pos = field(&changed, 0xbc82);
+        set(&mut changed, pos + 8, 96f32.to_bits());
+        assert_eq!(
+            assess_native_import(&changed, PIXELS_MAX, &|| Ok(()))
+                .unwrap_err()
+                .code,
+            ErrorCode::CapabilityUnsupported
+        );
+    }
+}
