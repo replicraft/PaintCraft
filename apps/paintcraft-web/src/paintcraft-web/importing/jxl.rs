@@ -52,6 +52,8 @@ struct Prepared {
 struct Pending {
     owner: Owner,
     cancelled: Rc<Cell<bool>>,
+    #[cfg(target_arch = "wasm32")]
+    cancellation: Rc<RefCell<Option<bridge::Cancellation>>>,
     result: Rc<RefCell<Option<Result<Prepared>>>>,
 }
 #[derive(Debug, Default)]
@@ -72,10 +74,10 @@ impl State {
     fn cancel(&mut self) {
         if let Some(pending) = &self.pending {
             pending.cancelled.set(true);
-        }
-        #[cfg(target_arch = "wasm32")]
-        if let Some(service) = &self.service {
-            let _ = bridge::cancel(service);
+            #[cfg(target_arch = "wasm32")]
+            if let Some(ticket) = pending.cancellation.borrow().as_ref() {
+                ticket.cancel();
+            }
         }
     }
     fn refresh(&mut self) {
@@ -124,17 +126,20 @@ impl WebApp {
         let result = Rc::new(RefCell::new(None));
         let target = result.clone();
         let stop = cancelled.clone();
+        let cancellation = Rc::new(RefCell::new(None));
+        let token = cancellation.clone();
         let wire_owner = owner.wire();
         let nonce = Uuid::new_v4();
         let ctx = ctx.clone();
         wasm_bindgen_futures::spawn_local(async move {
-            let value = bridge::prepare(&service, source, wire_owner, nonce, stop).await;
+            let value = bridge::prepare(&service, source, wire_owner, nonce, stop, token).await;
             *target.borrow_mut() = Some(value);
             ctx.request_repaint();
         });
         self.jxl.pending = Some(Pending {
             owner,
             cancelled,
+            cancellation,
             result,
         });
     }

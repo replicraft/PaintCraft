@@ -167,6 +167,8 @@ fn completed_import_uses_normal_editor_preferences_and_project_copy_name() {
     app.jxl.pending = Some(Pending {
         owner,
         cancelled,
+        #[cfg(target_arch = "wasm32")]
+        cancellation: Default::default(),
         result,
     });
     app.poll_jxl(&context);
@@ -208,6 +210,8 @@ fn stale_completed_import_drops_private_document_without_replacing_newer_work() 
     app.jxl.pending = Some(Pending {
         owner,
         cancelled: Rc::new(Cell::new(false)),
+        #[cfg(target_arch = "wasm32")]
+        cancellation: Default::default(),
         result: Rc::new(RefCell::new(Some(Ok(Prepared {
             document,
             name: "old.jxl".into(),
@@ -252,4 +256,26 @@ fn downloaded_fixture_keeps_independent_samples() {
     for (index, pixel) in expected.into_iter().enumerate() {
         assert_eq!(raster.get((index % 3) as i64, (index / 3) as i64).0, pixel);
     }
+}
+
+#[test]
+fn prelaunch_cancel_marks_only_the_owned_pending_request_without_changing_the_document() {
+    let ctx = eframe::egui::Context::default();
+    let mut app = WebApp::new(&ctx);
+    let before = app.editor.session.snapshot();
+    let ticket = app.editor.session.ticket();
+    let cancelled = Rc::new(Cell::new(false));
+    let result = Rc::new(RefCell::new(None));
+    app.jxl.pending = Some(Pending {
+        owner: Owner::capture(&app),
+        cancelled: cancelled.clone(),
+        #[cfg(target_arch = "wasm32")]
+        cancellation: Default::default(),
+        result: result.clone(),
+    });
+    app.jxl.cancel();
+    assert!(cancelled.get());
+    assert!(result.borrow().is_none());
+    assert!(Arc::ptr_eq(&before, &app.editor.session.snapshot()));
+    assert_eq!(ticket, app.editor.session.ticket());
 }

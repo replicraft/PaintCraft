@@ -26,8 +26,23 @@ fn call(value: &JsValue, name: &str, args: &js_sys::Array) -> Result<JsValue> {
         .apply(value, args)
         .map_err(error)
 }
-pub(super) fn cancel(service: &JsValue) -> Result<()> {
-    call(service, "cancel", &js_sys::Array::new()).map(|_| ())
+#[derive(Debug)]
+pub(super) struct Cancellation(JsValue);
+impl Cancellation {
+    pub(super) fn cancel(&self) {
+        let _ = call(&self.0, "cancel", &js_sys::Array::new());
+    }
+}
+struct Admission {
+    value: JsValue,
+    used: bool,
+}
+impl Drop for Admission {
+    fn drop(&mut self) {
+        if !self.used {
+            let _ = call(&self.value, "release", &js_sys::Array::new());
+        }
+    }
 }
 pub(super) fn quarantined(service: &JsValue) -> Result<bool> {
     let budget = call(service, "budget", &js_sys::Array::new())?;
@@ -102,16 +117,29 @@ pub(super) async fn prepare(
     captured: wire::Owner,
     nonce: Uuid,
     cancelled: Rc<Cell<bool>>,
+    cancellation: Rc<RefCell<Option<Cancellation>>>,
 ) -> Result<Prepared> {
+    if cancelled.get() {
+        return Err(Error::new(
+            ErrorCode::OperationCancelled,
+            "Import cancelled",
+        ));
+    }
     let current = owner(captured)?;
     let args = js_sys::Array::new();
     args.push(&source.file);
     args.push(&current);
     args.push(&JsValue::from_f64(wire::PIXELS_MAX as f64));
     args.push(&nonce.to_string().into());
-    let promise = call(service, "decodeFile", &args)?
+    let mut admission = Admission {
+        value: call(service, "beginDecodeFile", &args)?,
+        used: false,
+    };
+    *cancellation.borrow_mut() = Some(Cancellation(admission.value.clone()));
+    let promise = call(&admission.value, "run", &js_sys::Array::new())?
         .dyn_into::<js_sys::Promise>()
         .map_err(error)?;
+    admission.used = true;
     let value = JsFuture::from(promise).await.map_err(error)?;
     let mut lease = Lease {
         value,
