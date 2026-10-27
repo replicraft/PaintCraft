@@ -7,6 +7,7 @@ mod encode_v2;
 mod rgba_plan;
 #[cfg(test)]
 mod tests;
+pub mod web_export;
 pub use decode::{decode, inspect};
 pub use encode::{encode_v1, encode_v1_rgba_exact};
 pub use encode_v2::{V2WritePlan, encode_v2, encode_v2_rgba_exact, preflight_v2};
