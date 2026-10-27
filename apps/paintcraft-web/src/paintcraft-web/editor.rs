@@ -19,6 +19,16 @@ pub(crate) const MAX_PIXELS: u64 = 4_194_304;
 pub(crate) const MAX_POINTS: usize = 8192;
 pub(crate) const WHITE: Rgba = Rgba([255; 4]);
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct PublicationWitness {
+    pub owner: Uuid,
+    pub before: paintcraft_editor::session::Ticket,
+    pub state: Uuid,
+    pub publication: u64,
+    pub history: Option<Uuid>,
+    pub committed: bool,
+}
+
 #[derive(Debug)]
 pub(crate) struct Editor {
     pub session: Session,
@@ -29,6 +39,7 @@ pub(crate) struct Editor {
     pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
     pen_base: Option<paintcraft_editor::session::Ticket>,
+    publication_witness: Option<PublicationWitness>,
 }
 
 impl Editor {
@@ -65,6 +76,7 @@ impl Editor {
             fonts: text::fonts(),
             floating_source: None,
             pen_base: None,
+            publication_witness: None,
             adopted_brush: None,
             resource_shape: None,
         })
@@ -90,10 +102,31 @@ impl Editor {
         ]))
     }
 
+    pub(crate) fn take_publication_witness(&mut self) -> Option<PublicationWitness> {
+        self.publication_witness.take()
+    }
+
+    fn record_publication(
+        &mut self,
+        before: paintcraft_editor::session::Ticket,
+        receipt: &paintcraft_editor::session::Receipt,
+    ) {
+        self.publication_witness = Some(PublicationWitness {
+            owner: self.session.owner_id(),
+            before,
+            state: receipt.state_id,
+            publication: receipt.publication_epoch,
+            history: receipt.history_id,
+            committed: receipt.committed,
+        });
+    }
+
     pub fn commit(&mut self, operations: Vec<Value>) -> Result<()> {
+        let before = self.session.ticket();
         let receipt = self.session.apply(&self.batch(operations)?)?;
         self.target = receipt.aliases.values().next().copied().or(self.target);
         self.retarget();
+        self.record_publication(before, &receipt);
         Ok(())
     }
 

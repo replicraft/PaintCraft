@@ -4,6 +4,10 @@ use paintcraft_core::types::resources::SharedBudget;
 use paintcraft_input::tablet::{Phase, Sample};
 use paintcraft_tools::pen_stroke::PenStroke;
 impl Editor {
+    pub(crate) fn cancel_pen_capture(&mut self) {
+        self.tools.cancel_gesture();
+        self.pen_base = None;
+    }
     pub(crate) fn pen_sample(&mut self, sample: Sample, budget: &SharedBudget) -> Result<bool> {
         if matches!(sample.phase, Phase::Cancel | Phase::Leave) {
             self.tools.cancel_gesture();
@@ -77,7 +81,9 @@ impl Editor {
             stroke.style().intent,
             || Ok(()),
         )?;
+        let before = self.session.ticket();
         let receipt = self.session.publish_prepared(prepared, || Ok(()))?;
+        self.record_publication(before, &receipt);
         if receipt.committed {
             self.retarget();
         }
