@@ -246,18 +246,32 @@ fn v7_refuses_malformed_request_response_owner_shapes_and_quota_declarations() {
     let bytes = load(env!("CARGO_BIN_EXE_paintcraft-codec-worker"));
     #[cfg(not(feature = "jxr-encode"))]
     let record = wire::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(feature = "jxr-encode")]
+    #[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
     let record = wire::jxr_encode::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
+    #[cfg(feature = "jxr-codecs")]
+    let record = wire::jxr_encode::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     assert_eq!(
         bytes.windows(record.len()).filter(|v| *v == record).count(),
         1
     );
+    let selected_marker = if cfg!(feature = "jxr-codecs") {
+        wire::jxr_encode::qualified::BUILD_RECORD_MARKER
+    } else if cfg!(feature = "jxr-encode") {
+        wire::jxr_encode::candidate::BUILD_RECORD_MARKER
+    } else {
+        wire::FLOAT_BUILD_RECORD_MARKER
+    };
     for marker in [
         wire::BUILD_RECORD_MARKER,
         wire::AVIF_BUILD_RECORD_MARKER,
         wire::AVIF_SDR_BUILD_RECORD_MARKER,
+        wire::FLOAT_BUILD_RECORD_MARKER,
+        wire::jxr_encode::candidate::BUILD_RECORD_MARKER,
+        wire::jxr_encode::qualified::BUILD_RECORD_MARKER,
     ] {
-        assert!(!bytes.windows(marker.len()).any(|v| v == marker));
+        if marker != selected_marker {
+            assert!(!bytes.windows(marker.len()).any(|v| v == marker));
+        }
     }
     assert_eq!(wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.len(), 5);
     assert_eq!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS.len(), 7);

@@ -294,14 +294,44 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
     );
     #[cfg(all(feature = "float-codecs", not(feature = "jxr-encode")))]
     let record_buffer = wire::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(feature = "jxr-encode")]
+    #[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
     let record_buffer =
         wire::jxr_encode::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
+    #[cfg(feature = "jxr-codecs")]
+    let record_buffer =
+        wire::jxr_encode::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     #[cfg(feature = "float-codecs")]
     let record = record_buffer.as_slice();
-    assert!(
+    assert_eq!(
         bytes
             .windows(record.len())
-            .any(|candidate| candidate == record)
+            .filter(|value| *value == record)
+            .count(),
+        1
     );
+    let selected = if cfg!(feature = "jxr-codecs") {
+        wire::jxr_encode::qualified::BUILD_RECORD_MARKER
+    } else if cfg!(feature = "jxr-encode") {
+        wire::jxr_encode::candidate::BUILD_RECORD_MARKER
+    } else if cfg!(feature = "float-codecs") {
+        wire::FLOAT_BUILD_RECORD_MARKER
+    } else if cfg!(feature = "avif-sdr-codec") {
+        wire::AVIF_SDR_BUILD_RECORD_MARKER
+    } else if cfg!(feature = "avif-codec") {
+        wire::AVIF_BUILD_RECORD_MARKER
+    } else {
+        wire::BUILD_RECORD_MARKER
+    };
+    for marker in [
+        wire::BUILD_RECORD_MARKER,
+        wire::AVIF_BUILD_RECORD_MARKER,
+        wire::AVIF_SDR_BUILD_RECORD_MARKER,
+        wire::FLOAT_BUILD_RECORD_MARKER,
+        wire::jxr_encode::candidate::BUILD_RECORD_MARKER,
+        wire::jxr_encode::qualified::BUILD_RECORD_MARKER,
+    ] {
+        if marker != selected {
+            assert!(!bytes.windows(marker.len()).any(|value| value == marker));
+        }
+    }
 }
