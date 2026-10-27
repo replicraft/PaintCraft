@@ -11,6 +11,8 @@ publish.workspace = true
 default = ["float-codecs"]
 # Private fresh-encode qualification only; never a default build capability.
 jxr-encode = ["float-codecs"]
+# Explicit final-descriptor qualification build; default remains V7.
+jxr-codecs = ["jxr-encode"]
 float-codecs = ["avif-sdr-codec", "paintcraft-formats/hdr-codec", "paintcraft-formats/exr-codec"]
 avif-codec = []
 avif-sdr-codec = ["avif-codec"]

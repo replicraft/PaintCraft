@@ -45,8 +45,10 @@ static BUILD_RECORD: &[u8] = concat!(
     "FLOAT_SETTINGS32_REPORT96_INPUT16777216_PIXELS1048576\0END_CODEC_WORKER_BUILD\0",
 )
 .as_bytes();
-#[cfg(feature = "jxr-encode")]
+#[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
 static BUILD_RECORD: &[u8] = paintcraft_formats::codec_worker::jxr_encode::candidate::BUILD_RECORD;
+#[cfg(feature = "jxr-codecs")]
+static BUILD_RECORD: &[u8] = paintcraft_formats::codec_worker::jxr_encode::qualified::BUILD_RECORD;
 fn main() {
     std::hint::black_box(BUILD_RECORD);
     let args: Vec<_> = std::env::args_os().skip(1).collect();

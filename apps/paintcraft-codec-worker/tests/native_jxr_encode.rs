@@ -2,6 +2,10 @@
 use paintcraft_core::types::ErrorCode;
 #[cfg(feature = "jxr-encode")]
 use paintcraft_core::types::Result;
+#[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
+use paintcraft_formats::codec_worker::jxr_encode::candidate as contract;
+#[cfg(all(feature = "jxr-encode", feature = "jxr-codecs"))]
+use paintcraft_formats::codec_worker::jxr_encode::qualified as contract;
 use paintcraft_formats::codec_worker::{self as decode, Owner, jxr_encode as wire};
 use paintcraft_runtime::process::{self, Limits};
 use std::{path::Path, process::Command, sync::Arc, time::Duration};
@@ -83,12 +87,16 @@ fn default_v7_refuses_encoder_argv_and_new_frame_without_changing_its_record() {
         bytes.windows(record.len()).filter(|p| *p == record).count(),
         1
     );
-    let private = wire::candidate::BUILD_RECORD_MARKER;
-    assert!(!bytes.windows(private.len()).any(|p| p == private));
+    for marker in [
+        wire::candidate::BUILD_RECORD_MARKER,
+        wire::qualified::BUILD_RECORD_MARKER,
+    ] {
+        assert!(!bytes.windows(marker.len()).any(|part| part == marker));
+    }
 }
 #[cfg(feature = "jxr-encode")]
 #[test]
-fn private_record_preserves_seven_imports_and_declares_writer_read_separately() {
+fn selected_record_preserves_seven_imports_and_declares_writer_read_separately() {
     const {
         assert!(cfg!(all(
             feature = "float-codecs",
@@ -97,24 +105,29 @@ fn private_record_preserves_seven_imports_and_declares_writer_read_separately() 
         )));
     }
     let bytes = std::fs::read(helper()).unwrap();
-    let record = wire::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    assert_eq!(record, wire::candidate::BUILD_RECORD);
+    let record = contract::build_record(env!("CARGO_PKG_VERSION")).unwrap();
+    assert_eq!(record, contract::BUILD_RECORD);
     assert_eq!(
         bytes.windows(record.len()).filter(|p| *p == record).count(),
         1
     );
     assert_eq!(
-        &wire::candidate::IMPORT_VARIANTS[..7],
+        &contract::IMPORT_VARIANTS[..7],
         decode::QUALIFIED_FLOAT_IMPORT_VARIANTS
     );
-    assert_eq!(wire::candidate::IMPORT_VARIANTS.len(), 8);
+    assert_eq!(contract::IMPORT_VARIANTS.len(), 8);
     assert_eq!(
-        wire::candidate::IMPORT_VARIANTS[7],
-        wire::candidate::WRITER_IMPORT_VARIANT
+        contract::IMPORT_VARIANTS[7],
+        contract::WRITER_IMPORT_VARIANT
     );
-    assert_eq!(
-        wire::candidate::EXPORT_VARIANTS,
-        [wire::candidate::EXPORT_VARIANT]
+    assert_eq!(contract::EXPORT_VARIANTS, [contract::EXPORT_VARIANT]);
+    #[cfg(feature = "jxr-codecs")]
+    let other_v8 = wire::candidate::BUILD_RECORD_MARKER;
+    #[cfg(not(feature = "jxr-codecs"))]
+    let other_v8 = wire::qualified::BUILD_RECORD_MARKER;
+    assert!(
+        !bytes.windows(other_v8.len()).any(|part| part == other_v8),
+        "the other V8 contract must not be embedded in the actual worker"
     );
     for marker in [
         decode::BUILD_RECORD_MARKER,

@@ -181,7 +181,10 @@ mod private {
         let source_receipt = fs::read_to_string(root.join("source-receipt.json")).unwrap();
         assert!(source_receipt.contains("3e2b65db389495d7c786c2884f832b8b2158f873"));
         let helper_bytes = fs::read(&helper).unwrap();
+        #[cfg(not(feature = "jxr-codecs"))]
         let record = wire::jxr_encode::candidate::BUILD_RECORD;
+        #[cfg(feature = "jxr-codecs")]
+        let record = wire::jxr_encode::qualified::BUILD_RECORD;
         assert_eq!(
             helper_bytes
                 .windows(record.len())
