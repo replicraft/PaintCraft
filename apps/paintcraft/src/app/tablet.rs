@@ -320,7 +320,15 @@ impl App {
             return;
         }
         if let Some((_, batch)) = &mut receiver.pending {
-            input.events.extend(batch.frame.ui.drain(..).map(ui_event));
+            // Preserve the shared ordered record until this GUI-only translation.
+            // Native cross-stream order is not inferred from its per-source ordinal.
+            input.events.extend(
+                batch
+                    .frame
+                    .ui
+                    .drain(..)
+                    .map(|record| ui_event(record.event)),
+            );
         }
     }
     pub(super) fn tablet_canvas_input(
