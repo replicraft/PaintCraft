@@ -88,6 +88,26 @@ pub fn encode_texture_checked(
         return Err(codec("DDS texture source length disagrees with geometry"));
     }
     admit(&plan)?;
+    encode_admitted_texture(plan, rgba, check)
+}
+/// Crate-internal move of the same caller-admitted plan. The document facade
+/// holds its admission across rendering and moves this plan, avoiding a second
+/// metadata allocation. Public clients must use encode_texture_checked.
+pub(crate) fn encode_admitted_texture(
+    plan: TexturePlan,
+    rgba: &[u8],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<EncodedTexture> {
+    check()?;
+    if rgba.len() as u64 != plan.source_bytes() {
+        return Err(codec("DDS texture source length disagrees with geometry"));
+    }
+    let first = plan
+        .levels
+        .first()
+        .ok_or_else(|| codec("DDS admitted plan has no levels"))?;
+    let (width, height) = (first.width, first.height);
+    let options = plan.options;
     let check_hidden = options.filter == MipFilter::BoxStored && plan.levels.len() > 1;
     let mut hidden_rgb_normalized = false;
     if options.alpha == SourceAlpha::Opaque || check_hidden {

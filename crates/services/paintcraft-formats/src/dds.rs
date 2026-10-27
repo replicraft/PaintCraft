@@ -12,6 +12,7 @@ pub use mip::{
     DecodedTopMip, MipInspection, MipLevel, OTHER_MIPS_LOSS, decode_top_mip_checked,
     inspect_top_mip_checked,
 };
+pub(crate) use texture_write::encode_admitted_texture;
 pub use texture_write::{
     BLOCK_COMPRESSION_LOSS, EncodedTexture, MIP_HIDDEN_RGB_LOSS, MipCount, MipFilter,
     TextureOptions, TexturePlan, TextureQuality, UNIFORM_LOSSY_POLICY, encode_texture_checked,
