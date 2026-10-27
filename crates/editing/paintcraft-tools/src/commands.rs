@@ -254,8 +254,28 @@ pub fn mask_operations(
     spans: &[paintcraft_core::types::text::MaskSpan],
     check: &impl Fn() -> Result<()>,
 ) -> Result<Vec<Value>> {
+    mask_operations_with_mode(
+        layer,
+        color,
+        spans,
+        paintcraft_core::types::policy::MaskMode::SourceOver,
+        check,
+    )
+}
+
+/// Resolved pressure/eraser geometry; replacement retains exact 8-bit coverage.
+/// The default publisher above keeps its existing source-over JSON unchanged.
+pub fn mask_operations_with_mode(
+    layer: Uuid,
+    color: Rgba,
+    spans: &[paintcraft_core::types::text::MaskSpan],
+    mode: paintcraft_core::types::policy::MaskMode,
+    check: &impl Fn() -> Result<()>,
+) -> Result<Vec<Value>> {
     check()?;
-    if spans.is_empty() || color.a() == 0 {
+    if spans.is_empty()
+        || (mode != paintcraft_core::types::policy::MaskMode::Replace && color.a() == 0)
+    {
         return Ok(Vec::new());
     }
     if spans.len() > 262_144 {
@@ -280,12 +300,25 @@ pub fn mask_operations(
         })
         .collect::<Result<Vec<_>>>()?;
     check()?;
-    Ok(vec![Value::object([
+    let mut operation = Value::object([
         ("op", Value::str("raster.mask_spans")),
         ("layer_ref", layer_ref(layer)),
         ("color", Value::str(color.to_hex())),
         ("spans", Value::Array(rows)),
-    ])])
+    ]);
+    if mode != paintcraft_core::types::policy::MaskMode::SourceOver
+        && let Value::Object(fields) = &mut operation
+    {
+        fields.insert(
+            "mode".into(),
+            Value::str(match mode {
+                paintcraft_core::types::policy::MaskMode::Replace => "replace",
+                paintcraft_core::types::policy::MaskMode::DestinationOut => "destination-out",
+                paintcraft_core::types::policy::MaskMode::SourceOver => unreachable!(),
+            }),
+        );
+    }
+    Ok(vec![operation])
 }
 
 fn rect_value(r: paintcraft_core::types::Rect) -> Value {

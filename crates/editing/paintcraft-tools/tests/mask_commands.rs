@@ -117,3 +117,77 @@ fn irregular_crop_uses_sampled_bounds_and_clips_to_the_canvas() {
         }
     }
 }
+
+#[test]
+fn resolved_mask_default_json_is_unchanged_and_transparent_replacement_is_not_dropped() {
+    use paintcraft_core::types::policy::MaskMode;
+    use paintcraft_core::types::text::MaskSpan;
+    let id = uuid::Uuid::from_u128(1);
+    let spans = [MaskSpan {
+        x0: 0,
+        y: 0,
+        x1: 1,
+        coverage: 127,
+    }];
+    let default = commands::mask_operations(id, Rgba([2, 3, 4, 255]), &spans, &|| Ok(())).unwrap();
+    let explicit = commands::mask_operations_with_mode(
+        id,
+        Rgba([2, 3, 4, 255]),
+        &spans,
+        MaskMode::SourceOver,
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(default, explicit);
+    assert!(default[0].get("mode").is_none());
+    assert!(
+        commands::mask_operations(id, Rgba::TRANSPARENT, &spans, &|| Ok(()))
+            .unwrap()
+            .is_empty()
+    );
+    let erase = commands::mask_operations_with_mode(
+        id,
+        Rgba::TRANSPARENT,
+        &spans,
+        MaskMode::Replace,
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(erase.len(), 1);
+    assert_eq!(erase[0].get("mode").unwrap().as_str(), Some("replace"));
+}
+
+#[test]
+fn destination_out_publisher_retains_opaque_eraser_coverage_and_drops_zero_alpha() {
+    use paintcraft_core::types::{policy::MaskMode, text::MaskSpan};
+    let id = uuid::Uuid::from_u128(1);
+    let spans = [MaskSpan {
+        x0: 0,
+        y: 0,
+        x1: 1,
+        coverage: 127,
+    }];
+    let erase = commands::mask_operations_with_mode(
+        id,
+        Rgba([0, 0, 0, 255]),
+        &spans,
+        MaskMode::DestinationOut,
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(
+        erase[0].get("mode").unwrap().as_str(),
+        Some("destination-out")
+    );
+    assert!(
+        commands::mask_operations_with_mode(
+            id,
+            Rgba::TRANSPARENT,
+            &spans,
+            MaskMode::DestinationOut,
+            &|| Ok(())
+        )
+        .unwrap()
+        .is_empty()
+    );
+}
