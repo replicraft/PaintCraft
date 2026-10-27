@@ -676,3 +676,40 @@ test('Rust nonce and raw response receipt bind handoff; integrity refusal keeps 
 	assert.ok(codecWorkerBudget().quarantined);
 	assert.ok(codecWorkerBudget().reservedBytes > 0);
 });
+
+test('legacy validated completion stays synchronous when an abort is queued by the message payload', async () => {
+	const { decodeInWorker, codecWorkerBudget } = await import(
+		`../src/lib/codec-worker.js?legacy-late-abort=${crypto.randomUUID()}`
+	);
+	const abort = new AbortController();
+	const result = await decodeInWorker({
+		source: new Uint8Array([1]),
+		owner,
+		codec: 2,
+		pixels: 1,
+		applicationVersion: manifest.version,
+		currentOwner: () => owner,
+		signal: abort.signal,
+		createWorker: () => ({
+			terminate() {},
+			postMessage(data) {
+				const header = new Uint8Array(data.bytes).subarray(0, 112);
+				const bytes = response({ header });
+				this.onmessage({
+					data: {
+						kind: 'result',
+						get bytes() {
+							queueMicrotask(() => abort.abort());
+							return bytes.buffer;
+						},
+					},
+				});
+			},
+		}),
+	});
+	assert.equal(abort.signal.aborted, true);
+	assert.equal(codecWorkerBudget().quarantined, false);
+	assert.equal(result.requiresRustValidation, false);
+	result.release();
+	assert.equal(codecWorkerBudget().reservedBytes, 0);
+});
