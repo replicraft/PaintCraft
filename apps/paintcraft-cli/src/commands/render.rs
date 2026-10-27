@@ -14,6 +14,9 @@ pub struct Options {
     /// PCX only: exact indexed colors or explicitly quantize to 256 colors.
     #[arg(long, value_enum)]
     pcx_encoding: Option<super::pcx_options::Encoding>,
+    /// MSP only: explicit raw V1 or row-RLE V2; no threshold or alpha conversion.
+    #[arg(long, value_enum)]
+    msp_version: Option<super::msp_options::Version>,
     #[command(flatten)]
     dds: super::dds_options::Options,
     /// CPU render workers (one preserves the serial reference path).
@@ -70,6 +73,16 @@ pub fn run(a: Options, json: bool) -> Reply {
                     ErrorCode::InputSchema,
                     "--pcx-encoding requires PCX output",
                 ));
+            }
+            if let Some(version) = a.msp_version {
+                version.require_format(format)?;
+                if a.dds.requested() {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        "DDS and MSP options cannot be combined",
+                    ));
+                }
+                return explicit_msp(&a, version);
             }
             if a.dds.requested() {
                 return advanced_dds(&a, format);
@@ -179,6 +192,54 @@ fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
     let (receipt, ok, summary, details) = dds_export::write_copy(
         &doc,
         a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+        dest,
+        a.output.overwrite,
+        &allowed,
+        Some(sha),
+        paintcraft_runtime::SharedBudget::new(512 << 20),
+        &protect,
+        &|| Ok(()),
+    )?;
+    Ok(Written {
+        engine: Some(details),
+        receipt,
+        ok,
+        summary,
+    })
+}
+
+fn explicit_msp(a: &Options, version: msp_options::Version) -> Result<Written> {
+    if a.render_workers != 1 || a.quality != 90 {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Explicit MSP version requires render-workers=1 and default generic quality",
+        ));
+    }
+    let dest = &a.output.output;
+    msp_export::admit(a.profile.frontend.into(), dest, version)?;
+    let allowed = a.losses.allowed()?;
+    let (bytes, sha, identity) = read_captured(&a.input, INPUT_MAX, "MSP source project")?;
+    guard(a.expect_input_sha256.as_deref(), &sha)?;
+    if a.profile.admit_open(&a.input, &bytes)? != paintcraft_formats::registry::Family::Pcnd {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "MSP render expects a PCND project",
+        ));
+    }
+    let doc = pcnd::read(&bytes)?;
+    drop(bytes);
+    let protect = |destination: &Path| {
+        if identity.matches_path(destination)? {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "MSP copy must not replace its captured source project",
+            ));
+        }
+        Ok(())
+    };
+    let (receipt, ok, summary, details) = msp_export::write_copy(
+        &doc,
+        version,
         dest,
         a.output.overwrite,
         &allowed,

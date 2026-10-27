@@ -308,6 +308,8 @@ pub mod import_float;
 pub mod inspect;
 pub mod inspect_float;
 pub mod inspect_icns;
+mod msp_export;
+mod msp_options;
 pub mod new;
 pub mod palette;
 pub mod paste_image;
