@@ -68,19 +68,22 @@ impl App {
             );
         }
     }
-
     pub(super) fn poll_dialog(&mut self, ctx: &egui::Context) {
         let Some(completion) = self.dialogs.as_mut().and_then(NativeDialogs::poll) else {
             return;
         };
         self.complete_dialog(ctx, completion);
     }
-
     pub(super) fn complete_dialog(
         &mut self,
         ctx: &egui::Context,
         completion: paintcraft_platform::dialogs::Completion,
     ) {
+        if completion.kind == Kind::Export && self.msp_export_picker {
+            self.msp_export_picker = false;
+            self.complete_msp_picker(completion.path);
+            return;
+        }
         if completion.kind == Kind::Export && self.dds_export_picker {
             self.dds_export_picker = false;
             self.complete_dds_picker(completion.path);

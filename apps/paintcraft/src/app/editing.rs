@@ -9,6 +9,7 @@ pub(super) enum FileRequest {
     ExportIcns,
     ExportJxr,
     ExportDds,
+    ExportMsp,
     Export(PathBuf, export_options::Settings),
 }
 #[derive(Debug)]
@@ -116,7 +117,8 @@ impl App {
             self.remember_published_canvas_size();
             let can_run_file = (self.confirm.is_none()
                 || self.jxr_waiting_for_edits()
-                || self.dds_waiting_for_edits())
+                || self.dds_waiting_for_edits()
+                || self.msp_waiting_for_edits())
                 && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
             if can_run_file && let Some(request) = self.deferred_files.front() {
                 if request.started {
@@ -127,6 +129,13 @@ impl App {
                 } else if self.editor.file_barrier_ready(request.barrier) {
                     let request = request.request.clone();
                     match request {
+                        FileRequest::ExportMsp => {
+                            self.deferred_files
+                                .front_mut()
+                                .expect("deferred MSP export")
+                                .started = true;
+                            self.capture_msp_export();
+                        }
                         FileRequest::ExportDds => {
                             self.deferred_files
                                 .front_mut()

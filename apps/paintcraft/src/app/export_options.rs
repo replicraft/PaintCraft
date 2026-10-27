@@ -50,6 +50,7 @@ pub(crate) struct Draft {
     jpeg_quality: u8,
     pcx_encoding: Encoding,
     dds: paintcraft_ui::dds_export::Settings,
+    msp_version: paintcraft_ui::msp_export::Version,
 }
 
 impl App {
@@ -92,6 +93,7 @@ impl App {
             jpeg_quality: 90,
             pcx_encoding: Encoding::Rgb24,
             dds: Default::default(),
+            msp_version: Default::default(),
         }));
     }
 
@@ -129,6 +131,11 @@ impl App {
             {
                 let size = self.editor.document().canvas;
                 paintcraft_ui::dds_export::controls(ui, &mut draft.dds, size.0, size.1);
+            }
+            if draft.format == Choice::Flat(ImageExport::Msp)
+                && self.experience() == Experience::Studio
+            {
+                paintcraft_ui::msp_export::controls(ui, &mut draft.msp_version);
             }
             if draft.format == Choice::Flat(ImageExport::Pcx) {
                 pcx_export::controls(ui, &mut draft.pcx_encoding);
@@ -193,11 +200,13 @@ impl App {
                         preview_ready,
                         egui::Button::new(t!(
                             ctx,
-                            if draft.format == Choice::Flat(ImageExport::Dds)
-                                && crate::dds_export::advanced(
-                                    draft.dds,
-                                    self.editor.document().canvas
-                                )
+                            if (draft.format == Choice::Flat(ImageExport::Msp)
+                                && self.experience() == Experience::Studio)
+                                || draft.format == Choice::Flat(ImageExport::Dds)
+                                    && crate::dds_export::advanced(
+                                        draft.dds,
+                                        self.editor.document().canvas
+                                    )
                             {
                                 "Preview export"
                             } else {
@@ -226,6 +235,10 @@ impl App {
                     .is_ok()
             {
                 self.begin_dds_export(draft.dds);
+            } else if draft.format == Choice::Flat(ImageExport::Msp)
+                && self.experience() == Experience::Studio
+            {
+                self.begin_msp_export(draft.msp_version);
             } else if draft.format == Choice::Jxr {
                 self.begin_jxr_export();
             } else if self.dialogs.is_some() {
@@ -309,7 +322,11 @@ mod tests {
             for format in ImageExport::ALL {
                 let mut app = App::new(None);
                 app.settings.experience = Experience::Studio;
+                app.settings.language = language;
                 app.editor = Editor::new_document(16, 12).unwrap();
+                if format == ImageExport::Msp {
+                    app.initialize_editing(app.context.clone());
+                }
                 let path = std::env::temp_dir()
                     .join(format!("paintcraft-export-dialog-{}.pcnd", Uuid::new_v4()));
                 app.path_text = path.to_string_lossy().into_owned();
@@ -318,18 +335,62 @@ mod tests {
                     draft.jpeg_quality = 43;
                 }
                 let mut harness = Harness::builder()
+                    .with_max_steps(if format == ImageExport::Msp { 40 } else { 4 })
                     .with_size(egui::vec2(800.0, 600.0))
                     .build_ui_state(
                         move |ui, app: &mut App| {
                             set_language(ui.ctx(), language);
-                            app.confirm_dialog(ui);
+                            if format == ImageExport::Msp {
+                                app.ui(ui);
+                            } else {
+                                app.confirm_dialog(ui);
+                            }
                         },
                         app,
                     );
                 harness.run();
                 harness
-                    .get_by_label(&translate(language, "Choose destination…"))
+                    .get_by_label(&translate(
+                        language,
+                        if format == ImageExport::Msp {
+                            "Preview export"
+                        } else {
+                            "Choose destination…"
+                        },
+                    ))
                     .click();
+                if format == ImageExport::Msp {
+                    // Follow the new native preparation through the same service
+                    // as the App; a spinner cannot settle in a dialog-only harness.
+                    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+                    loop {
+                        harness.step();
+                        if harness
+                            .state()
+                            .msp_export
+                            .as_ref()
+                            .is_some_and(|state| state.preparation_finished())
+                        {
+                            break;
+                        }
+                        assert!(
+                            std::time::Instant::now() < deadline,
+                            "MSP review did not prepare"
+                        );
+                        std::thread::sleep(std::time::Duration::from_millis(1));
+                    }
+                    harness.run();
+                    // Native MSP now owns an immutable preparation/review route.
+                    // Its actual V1/V2 saves are exercised in msp_export::tests.
+                    assert_eq!(harness.state().confirm, Some(Confirm::MspExport));
+                    assert!(harness.state().msp_export.is_some());
+                    harness.get_by_label(&translate(language, "Cancel")).click();
+                    harness.run();
+                    assert!(harness.state().confirm.is_none());
+                    assert!(!path.with_extension(format.extension()).exists());
+                    assert!(!harness.state().editor.is_dirty());
+                    continue;
+                }
                 harness.run();
                 let Some(Confirm::Export {
                     path: selected,

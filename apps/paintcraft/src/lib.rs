@@ -54,6 +54,8 @@ mod layer_panel;
 mod layer_thumbnails;
 #[path = "app/layers.rs"]
 mod layers;
+#[path = "app/msp_export.rs"]
+mod msp_export;
 #[cfg(target_os = "macos")]
 #[path = "app/native_menu.rs"]
 mod native_menu;
@@ -176,6 +178,7 @@ enum Confirm {
     IcnsExport,
     JxrExport,
     DdsExport,
+    MspExport,
     Palettes,
     Shapes,
     Brushes,
@@ -263,6 +266,8 @@ pub struct App {
     icns_export: Option<icns_export::State>,
     jxr_export: Option<jxr_export::State>,
     jxr_export_picker: bool,
+    msp_export: Option<msp_export::State>,
+    msp_export_picker: bool,
     dds_export: Option<dds_export::State>,
     dds_export_picker: bool,
     palettes: palettes::State,
@@ -409,6 +414,8 @@ impl App {
             icns_export: None,
             jxr_export: None,
             jxr_export_picker: false,
+            msp_export: None,
+            msp_export_picker: false,
             dds_export: None,
             dds_export_picker: false,
             palettes: Default::default(),
