@@ -54,7 +54,7 @@ pub(super) fn admit_count(bytes: &[u8], header: &Header, raw: u32) -> Result<()>
     }
     Ok(())
 }
-fn level_bytes(width: u32, height: u32, encoding: Encoding) -> Result<u64> {
+pub(super) fn level_bytes(width: u32, height: u32, encoding: Encoding) -> Result<u64> {
     let (w, h) = (u64::from(width), u64::from(height));
     let length = match encoding {
         Encoding::Rgba8 | Encoding::Bgra8 => w.checked_mul(h).and_then(|n| n.checked_mul(4)),
