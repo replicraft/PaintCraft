@@ -137,11 +137,33 @@ impl Installation {
         let manifest = directory.join("paintcraft-codec-worker.json");
         let value: serde_json::Value =
             serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
-        assert_eq!(value["profile"], wire::FLOAT_NATIVE_PROFILE);
-        assert_eq!(
-            value["qualified_import_variants"],
-            serde_json::json!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS)
-        );
+        if value["profile"].as_str() == Some(wire::jxr_encode::qualified::NATIVE_PROFILE) {
+            assert_eq!(value["schema_version"], 3);
+            assert_eq!(value["encode_protocol_version"], 1);
+            assert_eq!(
+                value["qualified_import_variants"],
+                serde_json::json!(wire::jxr_encode::qualified::IMPORT_VARIANTS)
+            );
+            assert_eq!(
+                value["qualified_export_variants"],
+                serde_json::json!(wire::jxr_encode::qualified::EXPORT_VARIANTS)
+            );
+            let bytes = fs::read(&helper).unwrap();
+            let record = wire::jxr_encode::qualified::BUILD_RECORD;
+            assert_eq!(
+                bytes
+                    .windows(record.len())
+                    .filter(|part| *part == record)
+                    .count(),
+                1
+            );
+        } else {
+            assert_eq!(value["profile"], wire::FLOAT_NATIVE_PROFILE);
+            assert_eq!(
+                value["qualified_import_variants"],
+                serde_json::json!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS)
+            );
+        }
         assert_eq!(
             value["sha256"],
             hex(&Sha256::digest(fs::read(&helper).unwrap()))
@@ -583,3 +605,6 @@ mod avif_sdr;
 
 #[path = "installed_codec_worker/float.rs"]
 mod float;
+
+#[path = "installed_codec_worker/jxr_export.rs"]
+mod jxr_export;
