@@ -444,3 +444,23 @@ fn held_ui_pen_and_barrel_fence_existing_new_and_stationary_finger_tails() {
         assert!(!r.finger(3, Phase::Down).unwrap());
     }
 }
+
+#[test]
+fn held_stream_suppresses_competing_pointer_even_without_new_source_records() {
+    for canvas in [false, true] {
+        let mut r = Receiver::new(32, 32).unwrap();
+        push(
+            &mut r,
+            raw(1, Phase::Down, Buttons::TIP),
+            permissions(canvas),
+        );
+        assert!(r.take(1, |_| Ok(())).unwrap().suppress_legacy_pointer);
+        let idle = r.take(2, |_| Ok(())).unwrap();
+        assert!(idle.samples.is_empty());
+        assert!(idle.ui.is_empty());
+        assert!(idle.suppress_legacy_pointer);
+        push(&mut r, raw(2, Phase::Up, 0), permissions(canvas));
+        assert!(r.take(3, |_| Ok(())).unwrap().suppress_legacy_pointer);
+        assert!(!r.take(4, |_| Ok(())).unwrap().suppress_legacy_pointer);
+    }
+}

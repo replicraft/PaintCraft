@@ -380,7 +380,7 @@ impl Receiver {
         Ok(Frame {
             samples,
             ui,
-            suppress_legacy_pointer: std::mem::take(&mut self.suppress),
+            suppress_legacy_pointer: std::mem::take(&mut self.suppress) || self.stream.is_some(),
             cancelled: std::mem::take(&mut self.cancelled),
         })
     }
