@@ -1,10 +1,12 @@
 # Tablet input status
 
 Tablet support is being implemented across native and browser frontends. Shared
-input and pressure-rendering foundations are implemented and tested. Dedicated
-frontend pen capture is not activated yet, and physical tablets, drivers and
-platform timing have not been qualified. A pen reaching the existing mouse path
-is not evidence of pressure or tilt support.
+input, pressure rendering and guarded editor controllers are implemented and
+tested. Desktop has an opt-in AppKit host foundation; normal startup does not
+activate it. Browser capture and the ordered native event-loop integration are
+still being connected. Physical tablets, drivers and platform timing have not
+been qualified. A pen reaching the existing mouse path is not evidence of
+pressure or tilt support.
 
 ## Implemented shared foundations
 
@@ -20,8 +22,12 @@ is not evidence of pressure or tilt support.
   and hovering barrel buttons are distinct; hovering alone must not start ink.
 - Shared receiver tests cover canvas versus widget ownership, held-button
   transitions, focus/modal/IME cancellation, palm release tails, once-per-frame
-  delivery and callback failure after a partial enqueue. Native and browser
-  attachment to this receiver remains in progress.
+  delivery and callback failure after a partial enqueue. Widget fallback records
+  retain source sequence separately from internal cancellation releases. A held
+  pen continues to suppress competing pointer input on frames with no new samples.
+- UI ownership survives same-workspace document publication and canvas view
+  changes. Canvas-owned input keeps exact document/transform guards. Changing
+  workspace, interface, focus, modal or IME state retires affected private input.
 
 The plain-round PaintCraft pressure policy rounds normalized pressure to Q16 and
 uses it to scale the captured diameter. Missing pressure uses the full diameter;
@@ -34,8 +40,9 @@ Preview and release can share immutable source samples and resolved mask storage
 The existing editor preparation and guarded publication path produces one history
 item with explicit Brush, Pencil or Erase intent. Tests compare prepared preview,
 publication, undo and redo pixels; cancellation, a foreign session and stale
-preparation preserve the current document and history. Native/browser controllers
-still need to adopt this handoff.
+preparation preserve the current document and history. Both desktop and browser
+editor controllers now use this handoff in headless controls. That establishes
+controller behavior; it does not establish production OS/browser acquisition.
 
 Three mask policies remain distinct:
 
@@ -47,7 +54,34 @@ Three mask policies remain distinct:
 
 Studio transparent pen erasing must use destination-out. Classic canvas-color
 pen erasing must retain its separate replacement policy and Erase history intent.
-The new policies are not a claim that the frontend pen eraser is already wired.
+Controller controls cover inverted-end erasing with the corresponding Classic
+and Studio policy. Production acquisition and physical eraser behavior remain
+unqualified.
+
+## Frontend integration status
+
+The desktop `with_native_tablet` opt-in connects AppKit capture, the bounded
+receiver, existing editing service and guarded publication. The AppKit adapter
+retains actual pressure/tilt/rotation availability, device/proximity identity,
+barrel buttons and native view/backing coordinates. Its delivery gate records
+callback failure before the host can drain a partial enqueue. Window focus and
+close cancel contacts; installation owns monitor removal and native lifetimes.
+See the [native boundary](../crates/adapters/paintcraft-tablet-native/README.md).
+
+This host remains disabled at normal startup. Mixing genuine mouse and pen
+records before a GUI frame still needs one proven acquisition order through the
+widget/tool consumer. Per-source sequence numbers or frame event positions cannot
+prove that order. The supported integration path is an owned
+`winit + egui-winit + egui-wgpu` event loop when eframe cannot expose the required
+boundary. Collector and prototype checks alone do not complete that integration.
+
+The browser editor controller has tests for changing-pressure pixels, identical
+preview/release output, one history item, undo/redo, cancellation, stale owners,
+workspace identity and inverted erasing. Plain-round pressure eligibility does
+not replace the existing nine brush-media policies: fallback controls compare
+those outputs against the ordinary pointer renderer. Trusted DOM acquisition,
+coalesced events, compatibility-mouse suppression and actual browser UI delivery
+remain a separate integration and qualification step.
 
 ## Resource and test scope
 
@@ -66,8 +100,10 @@ RSS, latency, throughput or physical-device results.
 Tracked controls include
 [receiver arbitration](../crates/foundation/paintcraft-input/src/tablet/receiver/tests.rs),
 [pressure geometry](../crates/foundation/paintcraft-raster/src/smooth/pressure.rs),
-[retained pen strokes](../crates/editing/paintcraft-tools/tests/pen_stroke.rs), and
-[editor handoff](../apps/paintcraft/tests/pen_mask_handoff.rs). They exercise
+[retained pen strokes](../crates/editing/paintcraft-tools/tests/pen_stroke.rs),
+[editor handoff](../apps/paintcraft/tests/pen_mask_handoff.rs),
+[desktop host](../apps/paintcraft/src/app/tablet/tests.rs), and
+[browser controller](../apps/paintcraft-web/src/paintcraft-web/editor/pen/tests.rs). They exercise
 synthetic samples in headless tests. Actual browser pen delivery and physical
 native traces are separate qualification steps.
 
@@ -75,9 +111,9 @@ native traces are separate qualification steps.
 
 | Area | Remaining work |
 | --- | --- |
-| Native capture | Scoped AppKit tablet/proximity, Windows pointer/history, XInput2 and Wayland tablet-v2 adapters, safe installation/removal, display conversion and delivery-health fencing. Native OS adapter work is a separate active slice from the shared/controller/browser work. |
+| Native capture | Complete ordered AppKit source-to-widget/tool integration; implement Windows pointer/history, XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
 | Browser capture | Dedicated pen identity and coalesced events, pointer capture/loss, cancellation, teardown/restart and real headless-browser delivery proof. Preserve ordinary mouse and finger navigation. |
-| Controller adoption | Ownership/IME/draft arbitration, actual pressure-changing pixels, shared preview/release, one undo item, eraser-end/button handling and source cancellation. |
+| Controller adoption | Complete production source-to-controller wiring and mixed-device ordering. Preserve the tested ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics at that boundary. |
 | Brush settings and dynamics | Appropriate captured pressure curves/opacity, persisted controls and capability feedback, and applicable tilt/twist behavior. Recording optional axes does not implement their tool dynamics. |
 | Other brush/media profiles | Preserve all existing nine media policies and sampled tips. The plain-round pressure path must not silently replace them; their pressure/dynamic integration remains required. |
 | Physical qualification | Real tablet/driver traces on each platform, high-rate acquisition, disconnect/focus/modal recovery and input/display timing. Synthetic pen events and mouse injection do not establish these results. |
