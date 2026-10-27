@@ -12,6 +12,9 @@ pub(crate) use import::ImportPending;
 mod jxr_export;
 pub(crate) use jxr_export::{JxrExportPending, PreparedJxrExport};
 
+#[path = "background/msp_export.rs"]
+mod msp_export;
+pub(crate) use msp_export::MspExportPending;
 #[path = "background/dds_export.rs"]
 mod dds_export;
 pub(crate) use dds_export::DdsExportPending;
@@ -25,6 +28,7 @@ pub(super) enum Completion {
     CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
     JxrExport(Box<PreparedJxrExport>),
     DdsExport(Box<crate::dds_export::worker::Prepared>),
+    MspExport(Box<crate::msp_export::worker::Prepared>),
     Pick(Box<picker::Picked>),
     Deferred(Box<retry::Deferred>),
     Navigation(PreparedNavigation),
@@ -385,7 +389,10 @@ impl Editor {
                 }),
             Ok(Completion::Deferred(_)) => unreachable!("deferred edits were retained above"),
             Ok(
-                Completion::CodecImport(_) | Completion::JxrExport(_) | Completion::DdsExport(_),
+                Completion::CodecImport(_)
+                | Completion::JxrExport(_)
+                | Completion::DdsExport(_)
+                | Completion::MspExport(_),
             ) => Err(Error::new(
                 ErrorCode::InvariantViolation,
                 "Codec import completion belongs to the application",
