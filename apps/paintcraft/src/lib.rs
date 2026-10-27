@@ -19,11 +19,15 @@ pub mod controller;
 mod cpu_rendering;
 #[path = "app/cursor.rs"]
 mod cursor;
+#[path = "app/dds_export.rs"]
+mod dds_export;
 mod destination;
 #[path = "app/editing.rs"]
 mod editing;
 #[path = "app/export_options.rs"]
 mod export_options;
+#[path = "app/export_sources.rs"]
+mod export_sources;
 #[path = "app/files.rs"]
 mod files;
 #[path = "app/format_admission.rs"]
@@ -171,6 +175,7 @@ enum Confirm {
     IconExport,
     IcnsExport,
     JxrExport,
+    DdsExport,
     Palettes,
     Shapes,
     Brushes,
@@ -258,6 +263,8 @@ pub struct App {
     icns_export: Option<icns_export::State>,
     jxr_export: Option<jxr_export::State>,
     jxr_export_picker: bool,
+    dds_export: Option<dds_export::State>,
+    dds_export_picker: bool,
     palettes: palettes::State,
     shapes: shapes::State,
     brushes: brushes::State,
@@ -402,6 +409,8 @@ impl App {
             icns_export: None,
             jxr_export: None,
             jxr_export_picker: false,
+            dds_export: None,
+            dds_export_picker: false,
             palettes: Default::default(),
             shapes: Default::default(),
             brushes: Default::default(),

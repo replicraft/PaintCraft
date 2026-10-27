@@ -49,6 +49,7 @@ pub(crate) struct Draft {
     format: Choice,
     jpeg_quality: u8,
     pcx_encoding: Encoding,
+    dds: paintcraft_ui::dds_export::Settings,
 }
 
 impl App {
@@ -90,6 +91,7 @@ impl App {
             format: Choice::Flat(format),
             jpeg_quality: 90,
             pcx_encoding: Encoding::Rgb24,
+            dds: Default::default(),
         }));
     }
 
@@ -121,6 +123,13 @@ impl App {
                     .labelled_by(label.id);
             });
             ui.label(t!(ctx, draft.format.description()));
+            if draft.format == Choice::Flat(ImageExport::Dds)
+                && crate::dds_export::admit(self.format_frontend(), Path::new("picture.dds"))
+                    .is_ok()
+            {
+                let size = self.editor.document().canvas;
+                paintcraft_ui::dds_export::controls(ui, &mut draft.dds, size.0, size.1);
+            }
             if draft.format == Choice::Flat(ImageExport::Pcx) {
                 pcx_export::controls(ui, &mut draft.pcx_encoding);
                 let editor = &self.editor;
@@ -182,7 +191,19 @@ impl App {
                 let accept = ui
                     .add_enabled(
                         preview_ready,
-                        egui::Button::new(t!(ctx, "Choose destination…")),
+                        egui::Button::new(t!(
+                            ctx,
+                            if draft.format == Choice::Flat(ImageExport::Dds)
+                                && crate::dds_export::advanced(
+                                    draft.dds,
+                                    self.editor.document().canvas
+                                )
+                            {
+                                "Preview export"
+                            } else {
+                                "Choose destination…"
+                            }
+                        )),
                     )
                     .clicked();
                 (cancel, accept)
@@ -199,7 +220,13 @@ impl App {
         } else if accept {
             self.confirm = None;
             self.pcx_preview.clear();
-            if draft.format == Choice::Jxr {
+            if draft.format == Choice::Flat(ImageExport::Dds)
+                && crate::dds_export::advanced(draft.dds, self.editor.document().canvas)
+                && crate::dds_export::admit(self.format_frontend(), Path::new("picture.dds"))
+                    .is_ok()
+            {
+                self.begin_dds_export(draft.dds);
+            } else if draft.format == Choice::Jxr {
                 self.begin_jxr_export();
             } else if self.dialogs.is_some() {
                 let suggested = self

@@ -8,6 +8,7 @@ pub(super) enum FileRequest {
     ExportIcons,
     ExportIcns,
     ExportJxr,
+    ExportDds,
     Export(PathBuf, export_options::Settings),
 }
 #[derive(Debug)]
@@ -113,7 +114,9 @@ impl App {
                 ctx.request_repaint();
             }
             self.remember_published_canvas_size();
-            let can_run_file = (self.confirm.is_none() || self.jxr_waiting_for_edits())
+            let can_run_file = (self.confirm.is_none()
+                || self.jxr_waiting_for_edits()
+                || self.dds_waiting_for_edits())
                 && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
             if can_run_file && let Some(request) = self.deferred_files.front() {
                 if request.started {
@@ -124,6 +127,13 @@ impl App {
                 } else if self.editor.file_barrier_ready(request.barrier) {
                     let request = request.request.clone();
                     match request {
+                        FileRequest::ExportDds => {
+                            self.deferred_files
+                                .front_mut()
+                                .expect("deferred DDS export")
+                                .started = true;
+                            self.capture_dds_export();
+                        }
                         FileRequest::ExportJxr => {
                             self.deferred_files
                                 .front_mut()

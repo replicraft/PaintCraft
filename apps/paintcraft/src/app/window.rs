@@ -35,6 +35,7 @@ impl App {
             }
             self.poll_edits(&ctx);
             self.poll_jxr_export(&ctx);
+            self.poll_dds_export(&ctx);
             if self.experience() != Experience::Classic
                 || !self.classic.layers
                 || self.document_count() == 0

@@ -81,6 +81,11 @@ impl App {
         ctx: &egui::Context,
         completion: paintcraft_platform::dialogs::Completion,
     ) {
+        if completion.kind == Kind::Export && self.dds_export_picker {
+            self.dds_export_picker = false;
+            self.complete_dds_picker(completion.path);
+            return;
+        }
         if completion.kind == Kind::Export && self.jxr_export_picker {
             self.jxr_export_picker = false;
             self.complete_jxr_picker(completion.path);

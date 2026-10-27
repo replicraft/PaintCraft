@@ -406,6 +406,10 @@ impl App {
             self.icns_export_dialog(&ctx);
             return;
         }
+        if confirm == Confirm::DdsExport {
+            self.dds_export_dialog(&ctx);
+            return;
+        }
         if confirm == Confirm::JxrExport {
             self.jxr_export_dialog(&ctx);
             return;
@@ -439,7 +443,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -537,6 +541,7 @@ impl App {
                     | Confirm::IcnsExport
                     | Confirm::IconExport
                     | Confirm::JxrExport
+                    | Confirm::DdsExport
                     | Confirm::Settings(_)
                     | Confirm::SwitchInterface(_)
                     | Confirm::Colors(_)
