@@ -607,6 +607,65 @@ CLI equivalents are `inspect-float` and `import-float`, with explicit
 same conversion with a preview. Classic, browser import, ordinary Open and
 preserving HDR/EXR Save remain unavailable.
 
+## Native DDS texture export
+
+`export_image` accepts optional nested `dds` settings for explicit native Studio
+texture copies. Omit `dds` to keep the existing single-level RGBA8 export;
+`"dds": {}` explicitly selects the advanced route with the same pixel defaults.
+DDS settings on other output extensions and unknown fields are refused.
+
+| Field | Accepted values and defaults |
+| --- | --- |
+| `encoding` | `rgba8` (default), `bc1`, `bc2`, `bc3`; BC1 requires every composite alpha to be opaque; BC2/3 use straight alpha |
+| `transfer` | `srgb` (default) or `linear8`, which performs real sRGB-to-linear8 conversion |
+| `mips` | `none` (default) or `full`; conflicts with `levels` |
+| `levels` | Explicit total count 1..17 including the base, further bounded by image geometry; conflicts with `mips` |
+| `filter` | `nearest` (default) or `box-stored`; Box requires generated lower levels |
+| `effort` | `normal` (default) or `high` for BC; RGBA8 rejects High |
+
+All generated levels derive from the base. Nearest selects base sample centers;
+Box averages area/alpha-weighted stored samples, not linear-light sRGB values.
+Selecting linear8 changes samples using the pinned deterministic transfer and
+quantization policy. It does not merely change a tag. BC compression is lossy;
+there is no universal maximum/RMS error guarantee. Actual loss codes are
+`dds-block-compression`, `dds-mip-hidden-rgb-normalized` and
+`dds-srgb-linear8-quantization`, plus common `flatten`/`hidden-rgb` when reported.
+Generating new mip levels alone is not a discarded-source-data loss.
+
+```json
+{"name":"export_image","arguments":{"path":"/absolute/path/texture.dds","dds":{"encoding":"bc3","transfer":"srgb","mips":"full","filter":"box-stored","effort":"high"},"allow_losses":["dds-block-compression"]}}
+```
+
+Include every additional actual loss reported for the current document; this
+example's one consent code suffices only when no other loss is present. The
+response retains the file-operation receipt under `save` and includes `export`
+metadata for encoding/alpha, transfer policy/quantized sample count, requested
+and generated levels, filter/effort, compression policy and encoded SHA-256.
+Limits are 4,194,304 base pixels, sides at most 65,536, 17 geometry-bounded
+levels and 64 MiB output. Unsupported alpha/texture forms, insufficient budget,
+missing consent, cancellation, source aliases or changed destination fingerprints
+refuse publication. The session, history, dirty flag and saved binding are
+unchanged on success as well as failure. This is a fresh flattened copy, not
+preserving DDS Save or an array/cubemap/volume writer.
+
+CLI equivalent:
+
+```sh
+paintcraft-cli render painting.pcnd --output texture.dds \
+  --dds-encoding bc3 --dds-transfer srgb --dds-mips full \
+  --dds-filter box-stored --dds-effort high --allow-loss dds-block-compression
+```
+
+Use `--dds-levels N` instead of `--dds-mips` for a bounded explicit count.
+The explicit DDS route requires `--render-workers 1` and the default generic
+`--quality`; `--dds-effort` controls BC effort. `--expect-input-sha256` binds the
+captured input project. Native Studio exposes these choices with a decoded base
+preview and loss review. Advanced browser DDS export remains pending. The
+public DDS importer still requires sRGB, so linear8 exports are not silently
+reopened as display-sRGB pictures. See the
+[DDS profile and evidence](FORMAT_INTEROPERABILITY.md#native-dds-texture-copies-2026-10-26)
+for qualification limits.
+
 ## DCX export
 
 `export_dcx` writes one document composite as a fresh `.dcx` copy. Choose an
