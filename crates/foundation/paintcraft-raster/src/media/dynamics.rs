@@ -2,8 +2,25 @@
 //! Maximum union is a stroke opacity cap, not accumulating per-stamp flow.
 use super::{BrushMedia, MaskSpan, Rect, Result, SharedBudget};
 
-/// All attempted dabs count, including invisible pressure/opacity samples.
-pub const DABS_MAX: usize = 65_536;
+/// Independent traversal allowance: dabs use constant scratch, not one retained
+/// record per dab. All attempts count, including invisible samples. Dense mask
+/// storage and pixel work remain separately capped at 4Mi pixels / 64Mi visits.
+pub const DABS_MAX: usize = 1_048_576;
+
+pub(super) fn spacing(size: u32, media: BrushMedia, before: Attributes, after: Attributes) -> f64 {
+    let width = f64::from(before.width.min(after.width)) / 65535.0;
+    let (divisor, minimum, maximum) = match media {
+        BrushMedia::CalligraphyPen => (32.0, 0.25, 4.0),
+        BrushMedia::CalligraphyBrush => (20.0, 0.35, 6.0),
+        _ => (8.0, 0.5, 8.0),
+    };
+    // The smaller endpoint bounds every linearly interpolated width. The nib's
+    // historical divisor accounts for its minor axis. Scale the old minimum too
+    // so a narrow tip cannot retain full-size gaps. A 1/16px floor bounds work
+    // below pixel resolution; budgets refuse excessive traversal explicitly.
+    // Full width reproduces the exact historical expression and dab phase.
+    (f64::from(size) * width / divisor).clamp((minimum * width).max(1.0 / 16.0), maximum)
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Attributes {
@@ -61,8 +78,8 @@ pub const fn supports_orientation(media: BrushMedia) -> bool {
     )
 }
 
-/// Q8 document positions; attributes are linearly interpolated at the existing
-/// media's bounded dab positions. Missing axes must be resolved by the captured
+/// Q8 document positions; attributes are linearly interpolated at width-aware
+/// bounded dab positions. Missing axes must be resolved by the captured
 /// source policy before this call. The mask scratch is admitted before allocation
 /// and its actual capacity is reconciled before writes. The caller must admit
 /// and retain emitted spans; an error discards its private prefix.

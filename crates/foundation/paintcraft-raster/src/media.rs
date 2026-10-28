@@ -287,7 +287,12 @@ fn visit(
             travelled += length;
             continue;
         }
-        let count = (length / spacing).ceil().max(1.0) as u64;
+        let segment_spacing = if budget.is_some() {
+            dynamics::spacing(size, media, before.attributes, after.attributes)
+        } else {
+            spacing
+        };
+        let count = (length / segment_spacing).ceil().max(1.0) as u64;
         let first = (lo * count as f64).floor() as u64;
         let last = (hi * count as f64).ceil() as u64;
         if last.saturating_sub(first) > DAB_PIXELS_MAX {

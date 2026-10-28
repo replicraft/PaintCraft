@@ -46,7 +46,7 @@ fn cancellation_keeps_priority_and_invisible_dabs_cannot_evade_the_work_bound() 
             ..Default::default()
         },
     ] {
-        let path = (0..2100)
+        let path = (0..33000)
             .map(|i| point(if i % 2 == 0 { 8 } else { 24 }, 16, attributes))
             .collect::<Vec<_>>();
         let budget = SharedBudget::new(1 << 20);
