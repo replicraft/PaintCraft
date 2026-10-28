@@ -11,6 +11,7 @@ pub struct PublicationGuard {
     canvas: egui::Rect,
     pixels_per_point: f64,
     canvas_samples: bool,
+    pen_epoch: Option<u64>,
 }
 impl PublicationGuard {
     /// Metadata only. Native hosts call this inside their sealed delivery check,
@@ -23,7 +24,9 @@ impl PublicationGuard {
         let Some(view) = state.view else {
             return false;
         };
-        self.cancel != u64::MAX
+        self.pen_epoch
+            .is_none_or(|epoch| epoch != u64::MAX && epoch == state.pen_epoch)
+            && self.cancel != u64::MAX
             && self.cancel == state.receiver.cancellation_epoch()
             && self.window != u64::MAX
             && self.window == state.window_epoch
@@ -47,19 +50,20 @@ impl Source {
         if !self.current_in(&state, batch, owner) {
             return None;
         }
-        self.guard_in(&state, owner, batch.binding.canvas_samples)
+        self.guard_in(&state, owner, batch.binding.canvas_samples, true)
     }
     /// Genuine source-observed GUI edges have no pen Batch. They still require
     /// the exact current document and installation/window lifetime at commit.
     pub fn ui_publication_guard(&self, owner: Owner) -> Option<PublicationGuard> {
         let state = self.0.lock().unwrap_or_else(|e| e.into_inner());
-        self.guard_in(&state, owner, false)
+        self.guard_in(&state, owner, false, false)
     }
     fn guard_in(
         &self,
         state: &State,
         owner: Owner,
         canvas_samples: bool,
+        pen_bound: bool,
     ) -> Option<PublicationGuard> {
         let view = state.view?;
         if view.owner != owner || !view.focused {
@@ -75,6 +79,7 @@ impl Source {
             canvas: view.canvas,
             pixels_per_point: view.pixels_per_point,
             canvas_samples,
+            pen_epoch: pen_bound.then_some(state.pen_epoch),
         })
     }
 }

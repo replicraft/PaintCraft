@@ -76,6 +76,7 @@ struct State {
     frames: BudgetScope,
     window_epoch: u64,
     canvas_epoch: u64,
+    pen_epoch: u64,
     native: native::Metadata,
 }
 /// Cloneable endpoint for native sinks/DOM listeners; it never touches egui Context.
@@ -96,6 +97,7 @@ struct Binding {
     cancel_epoch: u64,
     window_epoch: u64,
     canvas_epoch: u64,
+    pen_epoch: u64,
     acknowledged: Option<u64>,
     canvas_samples: bool,
     last_down: Option<u64>,
@@ -125,15 +127,20 @@ impl Source {
         let bytes = source_capacity * std::mem::size_of::<Sample>()
             + (ui_capacity + 3) * std::mem::size_of::<OrderedUiEvent>();
         let mut storage = budget.account(AllocationClass::PaintMetadata);
-        storage.resize((bytes + std::mem::size_of::<native::Metadata>()) as u64)?;
+        storage.resize(
+            (bytes + std::mem::size_of::<native::Metadata>() + std::mem::size_of::<u64>()) as u64,
+        )?;
         // Separate reservation for at most one full source/UI handoff. Acquiring
         // it now avoids callbacks into GUI/resource watchers under a native gate.
         let frames = budget
             .reserve_capacity(bytes as u64)?
             .scope(AllocationClass::PaintMetadata);
         let receiver = Receiver::new(source_capacity, ui_capacity).map_err(invalid)?;
-        storage
-            .resize((receiver.storage_bytes() + std::mem::size_of::<native::Metadata>()) as u64)?;
+        storage.resize(
+            (receiver.storage_bytes()
+                + std::mem::size_of::<native::Metadata>()
+                + std::mem::size_of::<u64>()) as u64,
+        )?;
         Ok(Self(Arc::new(Mutex::new(State {
             receiver,
             view: None,
@@ -141,6 +148,7 @@ impl Source {
             frames,
             window_epoch: 0,
             canvas_epoch: 0,
+            pen_epoch: 0,
             native: Default::default(),
         }))))
     }
@@ -205,16 +213,30 @@ impl Source {
             }
         };
         let position = raw.logical_position.take();
-        state.submit_native(delivery, raw, |_| Ok(position))
+        state.submit_native(delivery, raw, None, |_| Ok(position))
     }
     /// DOM/native intake can fence physical tails after host-side retirement.
     /// Reading this token neither drains input nor invokes GUI callbacks.
     pub fn cancellation_epoch(&self) -> u64 {
-        self.0
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+        let state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state
             .receiver
             .cancellation_epoch()
+            .saturating_add(state.pen_epoch)
+    }
+    /// Retire classified pen authority, including already-drained batches,
+    /// without changing genuine mouse GUI ownership or global publication guards.
+    /// Returns the GUI-reset decision for immediate host-side private-batch
+    /// retirement after releasing this lock. Hosts must discard their drained
+    /// pending pen batch without calling global Source.cancel a second time.
+    pub fn retire_pen(&self) -> bool {
+        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state.native.fence();
+        state.pen_epoch = state.pen_epoch.saturating_add(1);
+        if state.receiver.has_capture_or_samples() {
+            state.receiver.cancel_pen_only();
+        }
+        state.receiver.reset_gui_pointer_pending()
     }
     pub fn cancel(&self) {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
@@ -247,11 +269,12 @@ impl Source {
             .finger(id, phase)
     }
     pub fn mouse_capture(&self, held: bool) -> bool {
-        self.0
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .receiver
-            .mouse_capture(held)
+        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        let accepted = state.receiver.mouse_capture(held);
+        if held && accepted {
+            state.native.forget_button_edges();
+        }
+        accepted
     }
     /// Native hosts invoke this inside Installation::with_delivery, before editor
     /// work. A failed delivery discards even a fully queued but unpublished Up.
@@ -302,6 +325,7 @@ impl Source {
                 cancel_epoch: state.receiver.cancellation_epoch(),
                 window_epoch: state.window_epoch,
                 canvas_epoch: state.canvas_epoch,
+                pen_epoch: state.pen_epoch,
                 acknowledged: None,
                 canvas_samples,
                 last_down,
@@ -319,6 +343,8 @@ impl Source {
         if binding.source.as_ptr() != Arc::as_ptr(&self.0)
             || binding.cancel_epoch == u64::MAX
             || binding.cancel_epoch != state.receiver.cancellation_epoch()
+            || binding.pen_epoch == u64::MAX
+            || binding.pen_epoch != state.pen_epoch
             || binding.window_epoch == u64::MAX
             || binding.window_epoch != state.window_epoch
         {
@@ -434,6 +460,7 @@ pub struct Pass {
     frame: Option<u64>,
     suppress: bool,
     cancelled: bool,
+    reset_gui_pointer: bool,
 }
 impl Pass {
     pub fn begin(&mut self, frame: u64, input: &Frame) -> bool {
@@ -443,6 +470,7 @@ impl Pass {
         self.frame = Some(frame);
         self.suppress = input.suppress_legacy_pointer;
         self.cancelled = input.cancelled;
+        self.reset_gui_pointer = input.reset_gui_pointer;
         true
     }
     pub fn suppress_legacy_pointer(&self) -> bool {
@@ -451,7 +479,16 @@ impl Pass {
     pub fn cancelled(&self) -> bool {
         self.cancelled
     }
+    pub fn reset_gui_pointer(&self) -> bool {
+        self.reset_gui_pointer
+    }
 }
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod retirement_tests;
+
+#[cfg(test)]
+mod button_edge_tests;
