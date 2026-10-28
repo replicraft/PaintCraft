@@ -29,17 +29,8 @@ pub(super) unsafe extern "system" fn subclass(
         .try_borrow()
         .ok()
         .and_then(|t| t.as_ref().map(|t| t._window.clone()));
-    let control = match message {
-        WM_KEYDOWN | WM_KEYUP | WM_SYSKEYDOWN | WM_SYSKEYUP => Some(Boundary::Keyboard),
-        WM_IME_STARTCOMPOSITION | WM_IME_COMPOSITION | WM_IME_ENDCOMPOSITION => {
-            Some(Boundary::ImeReceipt)
-        }
-        _ => None,
-    };
-    if inner.hwnd.get() == hwnd.0 as usize
-        && let Some(boundary) = control
-    {
-        return unsafe { dispatch_control(&inner, hwnd, message, wparam, lparam, boundary) };
+    if inner.hwnd.get() == hwnd.0 as usize && native_ui::recognizes(message) {
+        return unsafe { native_ui::dispatch(&inner, hwnd, message, wparam, lparam) };
     }
     if matches!(
         message,
@@ -175,62 +166,5 @@ pub(super) unsafe extern "system" fn subclass(
         emitter.source_failure();
     }
     // Framework delivery remains unchanged; no current-scope/window-event join.
-    unsafe { DefSubclassProc(hwnd, message, wparam, lparam) }
-}
-
-/// Actual Keyboard/IME priority barrier. This does not authenticate a deferred
-/// framework keyboard payload; canonical native keyboard/text is a separate seam.
-unsafe fn dispatch_control(
-    inner: &Rc<Inner>,
-    hwnd: HWND,
-    message: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-    boundary: Boundary,
-) -> LRESULT {
-    if !inner.active.get() {
-        return unsafe { DefSubclassProc(hwnd, message, wparam, lparam) };
-    }
-    if inner.processing.replace(true) {
-        inner.reentered.set(true);
-        return unsafe { DefSubclassProc(hwnd, message, wparam, lparam) };
-    }
-    let acquired = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let (emitter, window, clock) = {
-            let mut target = inner.target.borrow_mut();
-            let target = target.as_mut()?;
-            target.fence();
-            (
-                target.emitter.clone(),
-                target._window.clone(),
-                Barrier::observe(),
-            )
-        };
-        let Ok(clock) = clock else {
-            emitter.source_failure();
-            return Some(window);
-        };
-        if let Some(target) = inner.target.borrow_mut().as_mut() {
-            target.barrier = clock;
-        }
-        super::super::batch::deliver(
-            &emitter,
-            &[CaptureEvent::Boundary {
-                kind: boundary,
-                time: None,
-            }],
-            false,
-            || !inner.reentered.replace(false) && inner.active.get(),
-        );
-        Some(window)
-    }));
-    inner.processing.set(false);
-    if acquired.is_err() {
-        let emitter = inner.target.borrow().as_ref().map(|t| t.emitter.clone());
-        if let Some(emitter) = emitter {
-            emitter.source_failure();
-        }
-    }
-    let _window = acquired.ok().flatten();
     unsafe { DefSubclassProc(hwnd, message, wparam, lparam) }
 }

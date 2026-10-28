@@ -47,6 +47,7 @@ mod control;
 mod devices;
 mod lifecycle;
 mod mouse;
+mod native_ui;
 mod pen_native;
 #[cfg(test)]
 mod tests;
@@ -86,6 +87,9 @@ impl From<&MSG> for NativeMessage {
 /// and consumes canonical records instead. Client PT_TOUCH is replaced by
 /// canonical Finger records. The owned host must map these to GUI touch before
 /// enabling this backend. Attaching replaces the builder's prior msg hook.
+/// Canonical keyboard/IME facts also replace framework mirrors. The current
+/// shared Collector/App UI consumer refuses them: startup must remain disabled
+/// until the ordered UI coordinator and native IME behavior are qualified.
 #[derive(Clone, Default)]
 pub struct Hook(Rc<Inner>);
 #[derive(Default)]
@@ -116,6 +120,7 @@ struct Target {
     emitter: Emitter,
     state: State,
     touch: super::touch::State,
+    ui: native_ui::Capture,
     barrier: Barrier,
     mouse_recovery: bool,
     storage: Storage,
@@ -245,6 +250,9 @@ impl Hook {
             if GetWindowThreadProcessId(hwnd, None) != GetCurrentThreadId() {
                 return Err(error("Windows acquisition requires the window thread"));
             }
+            if !IsWindowUnicode(hwnd).as_bool() {
+                return Err(error("Canonical Windows text requires a Unicode window"));
+            }
             if GetAwarenessFromDpiAwarenessContext(GetWindowDpiAwarenessContext(hwnd))
                 != DPI_AWARENESS_PER_MONITOR_AWARE
             {
@@ -281,12 +289,14 @@ impl Hook {
         }
         emitter.record_epoch.store(epoch, Ordering::Release);
         let gate = emitter.gate.clone();
+        let ui = native_ui::Capture::new(budget)?;
         // Admit and allocate retained fixed state before any native side effect.
         let target = Resident::new(budget, || Target {
             hwnd,
             emitter,
             state: State::new(epoch, frequency as u64),
             touch: super::touch::State::new(epoch, frequency as u64),
+            ui,
             barrier,
             mouse_recovery: false,
             storage,
@@ -577,6 +587,11 @@ fn dispatch_hook(inner: &Rc<Inner>, message: &MSG) -> bool {
         return false;
     }
     if matches!(message.message, WM_POINTERENTER | WM_POINTERLEAVE) {
+        return false;
+    }
+    // UI acquisition belongs to the scoped HWND callback. In particular, do
+    // not observe mouse-idle recovery here ahead of that message's UI facts.
+    if native_ui::recognizes(message.message) {
         return false;
     }
     ingress(inner, &NativeMessage::from(message))
