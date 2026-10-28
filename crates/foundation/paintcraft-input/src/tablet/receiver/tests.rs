@@ -499,9 +499,24 @@ fn ordered_ui_distinguishes_actual_zero_from_cancel_boundary_and_prices_one_reco
     );
     assert!(first.ui.iter().all(|record| record.sequence == Some(0)));
     r.cancel();
-    let mut fresh = raw(2, Phase::Down, Buttons::TIP);
-    fresh.provenance = Provenance::Coalesced;
-    push(&mut r, fresh, permissions(false));
+    let mut historical = raw(1, Phase::Down, Buttons::TIP);
+    historical.provenance = Provenance::Coalesced;
+    assert_eq!(
+        r.submit(
+            historical,
+            view(),
+            permissions(false),
+            Delivery::ReceiverPointer
+        )
+        .unwrap(),
+        Route::Suppressed
+    );
+    // A fresh actual edge follows cancellation; history cannot invent it.
+    push(
+        &mut r,
+        raw(2, Phase::Down, Buttons::TIP),
+        permissions(false),
+    );
     let next = r.take(2, |_| Ok(())).unwrap();
     assert!(next.cancelled);
     assert!(next.ui.iter().any(|record| record.sequence.is_none()));

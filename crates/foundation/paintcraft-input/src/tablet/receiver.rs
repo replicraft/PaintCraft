@@ -52,6 +52,9 @@ pub struct Frame {
     /// Hosts cancel private tools and clear captured GUI pointer state before
     /// feeding queued release records, so cancellation cannot become a UI click.
     pub cancelled: bool,
+    /// GUI reset is separate from private pen retirement. Pen-only cancellation
+    /// while genuine mouse owns capture must not release its widget buttons.
+    pub reset_gui_pointer: bool,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Target {
@@ -65,6 +68,7 @@ struct Stream {
     owner: u128,
     target: Target,
     contact: bool,
+    buttons: Buttons,
 }
 #[derive(Debug)]
 pub struct Receiver {
@@ -82,6 +86,7 @@ pub struct Receiver {
     mouse_capture: bool,
     failed: bool,
     cancelled: bool,
+    reset_gui_pointer: bool,
     suppress: bool,
     frame: Option<u64>,
     cancellation_epoch: u64,
@@ -110,6 +115,7 @@ impl Receiver {
             mouse_capture: false,
             failed: false,
             cancelled: false,
+            reset_gui_pointer: false,
             suppress: false,
             frame: None,
             cancellation_epoch: 0,
@@ -163,6 +169,11 @@ impl Receiver {
             }
             return Ok(Route::Suppressed);
         }
+        if raw.provenance == Provenance::Coalesced
+            && (self.stream.is_none() || !matches!(raw.phase, Phase::Move | Phase::Hover))
+        {
+            return Ok(Route::Suppressed);
+        }
         if !raw.identity.kind.is_pen() {
             return Err(Invalid::Owner);
         }
@@ -201,10 +212,16 @@ impl Receiver {
         let canvas = permissions.canvas_hit && !permissions.modal && !permissions.ime;
         // Eraser-end identity is not itself a contact/button press. Inverted
         // tools may advertise the eraser bit while hovering and after tip Up.
+        let effective_buttons = if raw.provenance == Provenance::Coalesced {
+            self.stream.map_or(Buttons(0), |stream| stream.buttons)
+        } else {
+            raw.buttons
+        };
         let contact = raw.phase == Phase::Down
             || (raw.phase != Phase::Up
-                && (self.stream.is_some_and(|s| s.contact) || raw.buttons.0 & Buttons::TIP != 0));
-        let held = contact || raw.buttons.0 & (Buttons::BARREL | Buttons::BARREL_UPPER) != 0;
+                && (self.stream.is_some_and(|s| s.contact)
+                    || effective_buttons.0 & Buttons::TIP != 0));
+        let held = contact || effective_buttons.0 & (Buttons::BARREL | Buttons::BARREL_UPPER) != 0;
         if self.stream.is_none() && (held || raw.phase == Phase::Down) {
             self.router.fence_fingers();
             self.stream = Some(Stream {
@@ -212,6 +229,7 @@ impl Receiver {
                 owner: permissions.owner,
                 target: if canvas { Target::Canvas } else { Target::Ui },
                 contact: false,
+                buttons: raw.buttons,
             });
         }
         if self.stream.is_some_and(|s| s.target == Target::Canvas)
@@ -223,10 +241,14 @@ impl Receiver {
                 owner: permissions.owner,
                 target: Target::Suppressed,
                 contact: false,
+                buttons: raw.buttons,
             });
         }
         let target = self.stream.map_or(Target::Ui, |s| s.target);
-        if let Some(stream) = &mut self.stream {
+        if raw.provenance == Provenance::Actual
+            && let Some(stream) = &mut self.stream
+        {
+            stream.buttons = raw.buttons;
             if raw.phase == Phase::Down {
                 stream.contact = true;
             }
@@ -257,7 +279,23 @@ impl Receiver {
             Target::Ui => {
                 self.suppress |= held || raw.phase == Phase::Up;
                 if delivery == Delivery::ReceiverPointer {
-                    self.ui_event(at, raw.buttons, raw.modifiers, contact, raw.sequence)?;
+                    if raw.provenance == Provenance::Coalesced {
+                        // Historical geometry may move an already-owned UI
+                        // contact, but only Actual records change its buttons.
+                        if self.ui.len() == self.ui_limit {
+                            self.cancel();
+                            return Err(Invalid::Capacity);
+                        }
+                        self.ui.push_back(OrderedUiEvent {
+                            sequence: Some(raw.sequence),
+                            event: UiEvent::Move {
+                                at,
+                                modifiers: raw.modifiers,
+                            },
+                        });
+                    } else {
+                        self.ui_event(at, raw.buttons, raw.modifiers, contact, raw.sequence)?;
+                    }
                     Route::Ui
                 } else {
                     Route::System
@@ -331,6 +369,23 @@ impl Receiver {
     /// last valid UI position. This does not fabricate a hardware source sample.
     pub fn cancel(&mut self) {
         self.cancellation_epoch = self.cancellation_epoch.saturating_add(1);
+        self.cancel_inner(true, true);
+    }
+    /// Source separately revokes its pen-only admission epoch. The global
+    /// cancellation token and genuine mouse ownership remain unchanged.
+    pub fn reset_gui_pointer_pending(&self) -> bool {
+        self.reset_gui_pointer
+    }
+    pub fn cancel_pen_only(&mut self) {
+        let hold = self.stream.is_some() || self.ui_primary || self.ui_secondary;
+        let ui_hold = self.ui_primary
+            || self.ui_secondary
+            || self.release_primary
+            || self.release_secondary
+            || self.stream.is_some_and(|s| s.target == Target::Ui);
+        self.cancel_inner(!self.mouse_capture && ui_hold, !self.mouse_capture && hold);
+    }
+    fn cancel_inner(&mut self, reset_gui: bool, suppress: bool) {
         self.router.cancel();
         // A cancellation retires every unpublished source record, including an
         // Up that already closed Queue ownership. The host first cancels its
@@ -338,7 +393,18 @@ impl Receiver {
         self.router.discard_pending();
         self.stream = None;
         self.cancelled = true;
-        self.suppress = true;
+        self.reset_gui_pointer |= reset_gui;
+        self.suppress = suppress || self.reset_gui_pointer;
+        if !self.reset_gui_pointer {
+            self.ui.clear();
+            self.ui_primary = false;
+            self.ui_secondary = false;
+            self.release_primary = false;
+            self.release_secondary = false;
+            self.release_position = None;
+            self.ui_position = None;
+            return;
+        }
         self.release_primary |= self.ui_primary;
         self.release_secondary |= self.ui_secondary;
         let position = self.ui_position.take().or(self.release_position);
@@ -425,6 +491,7 @@ impl Receiver {
             ui,
             suppress_legacy_pointer: std::mem::take(&mut self.suppress) || self.stream.is_some(),
             cancelled: std::mem::take(&mut self.cancelled),
+            reset_gui_pointer: std::mem::take(&mut self.reset_gui_pointer),
         })
     }
 }
