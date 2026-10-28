@@ -386,10 +386,20 @@ fn process(
             command: flags.contains(NSEventModifierFlags::Command),
         },
         pressure: event.pressure(),
-        tilt: (tilt.x as f32, tilt.y as f32),
+        tilt: document_tilt((tilt.x as f32, tilt.y as f32), view.isFlipped()),
         rotation: event.rotation(),
     };
     dispatch(state, emitter, point)
+}
+// Apple documents scaled tilt with positive Y towards the bottom;
+// the selected flipped winit view retains those raw values. For other views,
+// this follows Chromium 126's adapter policy (web_input_event_builders_mac.mm):
+// reverse Y only for an unflipped NSView. That branch is source-policy tested,
+// not physically qualified AppKit hardware semantics. Our shared quarter-turn
+// angular convention follows that Chromium conversion, rather than treating
+// the normalized components as Cartesian direction ratios.
+fn document_tilt((x, y): (f32, f32), flipped: bool) -> (f32, f32) {
+    (x, if flipped { y } else { -y })
 }
 fn native_time(event: &NSEvent, emitter: &Emitter) -> Option<paintcraft_input::tablet::Time> {
     Some(paintcraft_input::tablet::Time {

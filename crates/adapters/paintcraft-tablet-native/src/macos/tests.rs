@@ -462,3 +462,22 @@ fn idle_pen_in_proximity_keeps_its_first_normal_contact_after_focus_return() {
     assert_eq!(resumed.raw.identity, hover.raw.identity);
     assert_eq!(resumed.raw.tilt, hover.raw.tilt);
 }
+
+#[test]
+fn normalized_angular_tilt_uses_actual_view_basis_and_preserves_source_attributes() {
+    for (flipped, expected) in [(true, (0.25, -0.5)), (false, (0.25, 0.5))] {
+        let mut state = state(0x2580, DeviceKind::Pen);
+        let mut input = point(Buttons::TIP, 100);
+        input.tilt = document_tilt(input.tilt, flipped);
+        let sample = packet(&mut state, input).raw;
+        assert_eq!(
+            sample.tilt,
+            Some(paintcraft_input::tablet::Tilt::Normalized(
+                expected.0, expected.1
+            ))
+        );
+        assert_eq!(sample.twist_degrees, Some(315.0));
+        assert_eq!(sample.time.micros, 100);
+        assert_eq!(sample.provenance, Provenance::Actual);
+    }
+}
