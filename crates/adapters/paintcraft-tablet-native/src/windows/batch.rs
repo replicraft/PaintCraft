@@ -24,6 +24,29 @@ pub(super) fn deliver(
     emitter.finish(emission)
 }
 
+/// Deliver the real window-close control, then retire sealed publication
+/// authority before releasing that same transaction. A normal close is not a
+/// source failure. Sink refusal/panic still follows the usual failure path.
+pub(super) fn close(emitter: &Emitter) {
+    let mut accepted = false;
+    let emission = emitter.gate.emit_checked(|| {
+        let delivered = emitter.record(CaptureEvent::Boundary {
+            kind: crate::Boundary::WindowClosed,
+            time: None,
+        });
+        accepted = delivered.is_ok();
+        emitter.gate.fail();
+        delivered
+    });
+    if accepted && matches!(&emission, crate::delivery::Emission::Fenced) {
+        // Intentional retirement fences ordinary finish(). The accepted close
+        // still needs one wake so a queued host can discard its private work.
+        emitter.wake();
+    } else {
+        emitter.finish(emission);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -37,6 +60,58 @@ mod tests {
             kind: Boundary::Keyboard,
             time: None,
         }
+    }
+    #[test]
+    fn normal_close_retires_authority_before_concurrent_handoff_without_source_failure() {
+        let entered = Arc::new(std::sync::Barrier::new(2));
+        let release = Arc::new(std::sync::Barrier::new(2));
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let wakes = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let wake_count = wakes.clone();
+        let (a, b, records) = (entered.clone(), release.clone(), seen.clone());
+        let emitter = Emitter::new_records(
+            Arc::new(move |record| {
+                records.lock().unwrap().push(record.event);
+                a.wait();
+                b.wait();
+                Ok(())
+            }),
+            Arc::new(move || {
+                wake_count.fetch_add(1, Ordering::SeqCst);
+            }),
+            Report::new(Backend::WindowsPointer),
+        );
+        let check = emitter.gate.check();
+        assert!(check.authorize(|| true));
+        let source = emitter.clone();
+        let close_thread = std::thread::spawn(move || close(&source));
+        entered.wait();
+        let metadata_called = Arc::new(AtomicBool::new(false));
+        let called = metadata_called.clone();
+        let authorize = std::thread::spawn(move || {
+            check.authorize(|| {
+                called.store(true, Ordering::SeqCst);
+                true
+            })
+        });
+        release.wait();
+        close_thread.join().unwrap();
+        assert!(!authorize.join().unwrap());
+        assert!(!metadata_called.load(Ordering::SeqCst));
+        assert_eq!(emitter.report.snapshot().source_failures, 0);
+        assert_eq!(emitter.report.snapshot().sink_failures, 0);
+        assert_eq!(wakes.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            *seen.lock().unwrap(),
+            [CaptureEvent::Boundary {
+                kind: Boundary::WindowClosed,
+                time: None,
+            }]
+        );
+        assert!(deliver(&emitter, &[event()], true, || true));
+        assert_eq!(seen.lock().unwrap().len(), 1);
+        close(&emitter);
+        assert_eq!(wakes.load(Ordering::SeqCst), 1);
     }
     #[test]
     fn partial_sink_refusal_is_failed_before_a_handoff_can_observe_the_prefix() {
