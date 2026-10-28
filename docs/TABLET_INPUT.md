@@ -87,6 +87,8 @@ barrel buttons and native view/backing coordinates. Its delivery gate records
 callback failure before the host can drain a partial enqueue. Window focus and
 close cancel contacts; installation owns monitor removal and native lifetimes.
 See the [native boundary](../crates/adapters/paintcraft-tablet-native/README.md).
+The [Linux acquisition investigation](LINUX_TABLET_INTEGRATION.md) records the
+locked dependency options and the remaining queue-ordering requirements.
 
 The optional ordered App coordinator now projects native records into admitted
 pointer frames and processes one semantic edge or service poll per step. An
