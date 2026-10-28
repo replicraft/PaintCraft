@@ -8,6 +8,8 @@ pub(crate) mod dom;
 mod events;
 mod frame;
 mod gui;
+#[cfg(test)]
+mod overflow_host;
 use crate::WebApp;
 use acquisition::{Acquisition, MouseRecord};
 use eframe::egui::{self, Event};
@@ -237,11 +239,16 @@ impl WebApp {
         self.retire_pen_private(ctx);
     }
     fn retire_pen_private(&mut self, ctx: &egui::Context) {
+        self.retire_pen_private_scoped(ctx, true);
+    }
+    fn retire_pen_private_scoped(&mut self, ctx: &egui::Context, reset_gui_pointer: bool) {
         // Unconsumed input cannot destroy unrelated text/paste/shape drafts.
-        if self.pen.controller_owned || self.pen.legacy_canvas_owned {
+        if self.pen.controller_owned || (reset_gui_pointer && self.pen.legacy_canvas_owned) {
             self.editor.cancel_pen_capture();
         }
-        self.pen.legacy_canvas_owned = false;
+        if reset_gui_pointer || self.pen.controller_owned {
+            self.pen.legacy_canvas_owned = false;
+        }
         self.pen.pending = None;
         self.pen.retained = None;
         self.pen.retained_config = None;
@@ -249,8 +256,10 @@ impl WebApp {
         self.pen.gui_button = None;
         self.pen.fallback_button = None;
         self.pen.active_owner = None;
-        ctx.stop_dragging();
-        ctx.input_mut(|i| i.pointer = egui::PointerState::default());
+        if reset_gui_pointer {
+            ctx.stop_dragging();
+            ctx.input_mut(|i| i.pointer = egui::PointerState::default());
+        }
     }
     pub(crate) fn pen_raw_input(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
         let Some(source) = self.pen.source.clone() else {
@@ -368,7 +377,7 @@ impl WebApp {
         if batch.frame.cancelled {
             // A drained cancellation may already precede fresh valid Down data.
             // Do not feed it back into Source.cancel and fence that new stroke.
-            self.retire_pen_private(ctx);
+            self.retire_pen_private_scoped(ctx, batch.frame.reset_gui_pointer);
         }
         let contact = batch.frame.samples.iter().any(|s| s.phase == Phase::Down)
             || batch

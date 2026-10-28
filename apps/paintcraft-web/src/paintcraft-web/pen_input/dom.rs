@@ -10,7 +10,7 @@ use paintcraft_input::{
     Modifiers,
     tablet::{Invalid, Provenance, receiver::Route},
 };
-use paintcraft_ui::pen_input::Source;
+use paintcraft_ui::{pen_input::Source, t};
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
@@ -121,6 +121,7 @@ fn pointer(event: &PointerEvent, kind: Kind) -> Pointer {
         at: None,
         stamp: event.time_stamp(),
         buttons: event.buttons(),
+        button: event.button(),
         pressure: event.pressure(),
         tilt: (event.tilt_x() as f32, event.tilt_y() as f32),
         twist: event.twist() as f32,
@@ -146,14 +147,16 @@ fn submit(
     let epoch = source.cancellation_epoch();
     let mut state = normalizer.borrow_mut();
     state.observe_cancellation(epoch);
-    let fenced = state.contact_fenced(pointer.id);
-    let mut raw = state.sample(pointer, provenance)?;
+    let locked = state.restart_required();
+    let Some(mut packet) = state.intake(pointer, provenance)? else {
+        return Ok(Route::Suppressed);
+    };
     drop(state);
     acquisition
         .lock()
         .unwrap_or_else(|e| e.into_inner())
-        .pen(&mut raw)?;
-    let route = super::events::deliver(source, raw, fenced, |ppp| {
+        .pen(&mut packet.raw)?;
+    let result = super::events::deliver_locked_packet(source, packet, locked, |ppp| {
         let (left, top, right, bottom) = content_rect(canvas);
         if right <= left || bottom <= top {
             return Err(Invalid::Coordinates);
@@ -162,9 +165,15 @@ fn submit(
             (number(event, "clientX")? - left) * f64::from(canvas.width()) / (right - left) / ppp,
             (number(event, "clientY")? - top) * f64::from(canvas.height()) / (bottom - top) / ppp,
         )))
-    })?;
-    if route == Route::Suppressed && raw.buttons.0 != 0 {
-        normalizer.borrow_mut().deny_contact(raw.identity.pointer);
+    });
+    let route = result?;
+    if route == Route::Suppressed
+        && packet.raw.buttons.0 != 0
+        && packet.disposition != super::events::Disposition::Orphan
+    {
+        normalizer
+            .borrow_mut()
+            .deny_contact(packet.raw.identity.pointer);
     }
     Ok(route)
 }
@@ -204,12 +213,16 @@ pub(crate) fn install(
         .acquisition
         .clone()
         .ok_or_else(|| JsValue::from_str("Pointer order storage unavailable"))?;
+    let budget = app.pen.budget.clone();
     drop(app);
     let window = web_sys::window().ok_or_else(|| JsValue::from_str("Browser window missing"))?;
     let epoch = window
         .performance()
         .map_or(0, |p| p.time_origin().to_bits());
-    let normalizer = Rc::new(RefCell::new(Normalizer::new(epoch)));
+    let normalizer = Rc::new(RefCell::new(
+        Normalizer::admitted(epoch, &budget)
+            .map_err(|error| JsValue::from_str(&error.to_string()))?,
+    ));
     let compatibility = Rc::new(RefCell::new(Compatibility::default()));
     let captured = Rc::new(Cell::new(None));
     let ctx = runner
@@ -474,6 +487,7 @@ pub(crate) fn install(
                         trusted: event.is_trusted(),
                     });
                 }
+                let locked_before = normalizer.borrow().restart_required();
                 let result = (|| {
                     if kind == Kind::Move {
                         for value in coalesced(&event)?.iter() {
@@ -508,6 +522,10 @@ pub(crate) fn install(
                 })();
                 match result {
                     Ok(route) => {
+                        if kind == Kind::Down && normalizer.borrow().restart_required() {
+                            let ctx = runner.egui_ctx().clone();
+                            runner.app_mut::<WebApp>().message = t!(&ctx, "Pen input reached its contact limit. Save your work, then reload this page to restart pen input.");
+                        }
                         if event.buttons() != 0
                             && matches!(route, Route::Canvas | Route::Ui)
                             && captured.get().is_none()
@@ -526,12 +544,25 @@ pub(crate) fn install(
                         }
                     }
                     Err(error) => {
-                        source.cancel();
-                        normalizer.borrow_mut().clear();
+                        let restart_required = normalizer.borrow().restart_required();
                         let ctx = runner.egui_ctx().clone();
-                        runner
-                            .app_mut::<WebApp>()
-                            .pen_failure(&ctx, format!("{error:?}"));
+                        if !locked_before && restart_required && error == Invalid::Capacity {
+                            let reset = source.retire_pen();
+                            // The host may already own a drained batch. Retire
+                            // it now, outside Source's lock, before a later raw
+                            // hook could mistake it for a global skipped pass.
+                            runner.app_mut::<WebApp>().retire_pen_private_scoped(&ctx, reset);
+                        } else {
+                            // Acquisition/order failures retain the existing
+                            // global cancellation policy.
+                            source.cancel();
+                        }
+                        normalizer.borrow_mut().clear();
+                        let app = runner.app_mut::<WebApp>();
+                        app.pen_failure(&ctx, format!("{error:?}"));
+                        if restart_required {
+                            app.message = t!(&ctx, "Pen input reached its contact limit. Save your work, then reload this page to restart pen input.");
+                        }
                     }
                 }
                 runner.egui_ctx().request_repaint();
