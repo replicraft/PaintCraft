@@ -39,10 +39,14 @@ pub enum WheelPhase {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MouseKind {
     Motion,
+    /// Native tracking-area entry, not an actual motion or button observation.
+    Enter,
     Button {
         number: u8,
         pressed: bool,
     },
+    /// Native tracking-area exit. Its timestamp may precede an already delivered
+    /// physical event; producer ordinals retain dispatch order without sorting.
     Leave,
     Wheel {
         delta: (f64, f64),

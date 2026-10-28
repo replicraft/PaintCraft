@@ -58,6 +58,9 @@ pub struct Collector {
     mouse: u32,
     mouse_route: MouseRoute,
     mouse_uncertain: bool,
+    mouse_clock: Option<paintcraft_input::tablet::Clock>,
+    // Physical motion/button/wheel order only. AppKit tracking-area events can
+    // be delivered later with older native timestamps; retain those unchanged.
     mouse_time: Option<Time>,
     pens: [Option<Pen>; 64],
     // Clock lifetime survives contact-slot release; never silently rebase a
@@ -84,7 +87,9 @@ impl Collector {
         storage.resize(
             (bytes
                 + (std::mem::size_of::<[Option<Pen>; 64]>()
-                    + std::mem::size_of::<[Option<(Identity, Time)>; 64]>())) as u64,
+                    + std::mem::size_of::<[Option<(Identity, Time)>; 64]>()
+                    + std::mem::size_of::<Option<paintcraft_input::tablet::Clock>>()))
+                as u64,
         )?;
         let frames = budget
             .reserve_capacity(bytes as u64)?
@@ -96,7 +101,9 @@ impl Collector {
         storage.resize(
             (queue.capacity() * std::mem::size_of::<Collected>()
                 + (std::mem::size_of::<[Option<Pen>; 64]>()
-                    + std::mem::size_of::<[Option<(Identity, Time)>; 64]>())) as u64,
+                    + std::mem::size_of::<[Option<(Identity, Time)>; 64]>()
+                    + std::mem::size_of::<Option<paintcraft_input::tablet::Clock>>()))
+                as u64,
         )?;
         Ok(Self {
             queue,
@@ -106,6 +113,7 @@ impl Collector {
             mouse: 0,
             mouse_route: MouseRoute::Client,
             mouse_uncertain: false,
+            mouse_clock: None,
             mouse_time: None,
             pens: [None; 64],
             times: [None; 64],
@@ -167,10 +175,19 @@ impl Collector {
             }
             CaptureEvent::Mouse(mouse) => {
                 validate_mouse(mouse, record.installation)?;
-                if !ordered_time(self.mouse_time, mouse.time) {
+                if self
+                    .mouse_clock
+                    .is_some_and(|clock| clock != mouse.time.clock)
+                {
                     return Err(RecordFault::Invalid);
                 }
-                self.mouse_time = Some(mouse.time);
+                self.mouse_clock = Some(mouse.time.clock);
+                if !matches!(mouse.kind, MouseKind::Enter | MouseKind::Leave) {
+                    if !ordered_time(self.mouse_time, mouse.time) {
+                        return Err(RecordFault::Invalid);
+                    }
+                    self.mouse_time = Some(mouse.time);
+                }
                 let cancel_pen =
                     matches!(mouse.kind, MouseKind::Wheel { .. }) && self.owner.is_some();
                 let route = match mouse.kind {
@@ -432,3 +449,7 @@ mod tests;
 mod contracts;
 
 mod lifecycle;
+
+#[cfg(test)]
+#[path = "collector/tracking.rs"]
+mod tracking;

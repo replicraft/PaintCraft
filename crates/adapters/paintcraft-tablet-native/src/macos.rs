@@ -475,6 +475,7 @@ fn observe_mouse(event: &NSEvent, view: &NSView, window: &NSWindow, emitter: &Em
                 ),
             }
         }
+        NSEventType::MouseEntered => MouseKind::Enter,
         NSEventType::MouseExited => MouseKind::Leave,
         NSEventType::ScrollWheel => {
             let momentum = event.momentumPhase();
@@ -500,8 +501,7 @@ fn observe_mouse(event: &NSEvent, view: &NSView, window: &NSWindow, emitter: &Em
         NSEventType::MouseMoved
         | NSEventType::LeftMouseDragged
         | NSEventType::RightMouseDragged
-        | NSEventType::OtherMouseDragged
-        | NSEventType::MouseEntered => MouseKind::Motion,
+        | NSEventType::OtherMouseDragged => MouseKind::Motion,
         _ => return,
     };
     let Some(time) = native_time(event, emitter) else {
