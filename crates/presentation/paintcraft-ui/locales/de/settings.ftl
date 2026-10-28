@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = Erlaube den Zugriff auf installierte 
 installed-fonts-are-available = Installierte Schriftarten sind verfügbar.
 font-access-was-denied-or-is-unavailable-you-can-try-again = Der Schriftzugriff wurde verweigert oder ist nicht verfügbar. Versuche es erneut.
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = Die gewählte Schriftart konnte nicht geladen werden. Wähle eine andere oder lade die Seite neu.
+
+pen-and-tablet = Stift und Grafiktablett
+use-pressure-to-control-size = Größe durch Stiftdruck steuern
+pressure-response = Druckempfindlichkeit
+linear = Linearer Verlauf
+soft = Weich
+firm = Fest
+soft-needs-less-pressure-firm-needs-more-pressure = Weich benötigt weniger Druck; Fest benötigt mehr Druck.
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = Gilt für einfache runde Pinselstriche und Stiftradierer. Andere Pinsel behalten ihr bisheriges Verhalten.
+pens-without-reported-pressure-use-the-selected-size = Stifte ohne Druckdaten verwenden die ausgewählte Größe.
+changes-apply-to-new-strokes = Änderungen gelten für neue Striche.

@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = インストール済みフォント�
 installed-fonts-are-available = インストール済みフォントを使用できます。
 font-access-was-denied-or-is-unavailable-you-can-try-again = フォントへのアクセスが拒否されたか利用できません。もう一度お試しください。
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = 選択したフォントを読み込めませんでした。別のフォントを選ぶか、ページを再読み込みしてください。
+
+pen-and-tablet = ペンとタブレット
+use-pressure-to-control-size = 筆圧でサイズを調整する
+pressure-response = 筆圧の反応
+linear = リニア
+soft = ソフト
+firm = ハード
+soft-needs-less-pressure-firm-needs-more-pressure = ソフトは弱い筆圧で、ハードは強い筆圧で反応します。
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = 標準の丸ブラシとペンの消しゴムに適用されます。他のブラシの動作は変わりません。
+pens-without-reported-pressure-use-the-selected-size = 筆圧情報のないペンでは、選択したサイズを使用します。
+changes-apply-to-new-strokes = 変更は新しいストロークに適用されます。

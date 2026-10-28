@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = Permita o acesso para usar as fontes 
 installed-fonts-are-available = As fontes instaladas estão disponíveis.
 font-access-was-denied-or-is-unavailable-you-can-try-again = O acesso às fontes foi negado ou está indisponível. Tente novamente.
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = Não foi possível carregar a fonte selecionada. Escolha outra ou recarregue a página.
+
+pen-and-tablet = Caneta e mesa digitalizadora
+use-pressure-to-control-size = Controlar o tamanho pela pressão
+pressure-response = Resposta à pressão
+linear = Resposta linear
+soft = Suave
+firm = Firme
+soft-needs-less-pressure-firm-needs-more-pressure = Suave exige menos pressão; Firme exige mais pressão.
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = Aplica-se aos traços do pincel redondo simples e às borrachas da caneta. Os outros pincéis mantêm o comportamento atual.
+pens-without-reported-pressure-use-the-selected-size = Canetas sem dados de pressão usam o tamanho selecionado.
+changes-apply-to-new-strokes = As alterações se aplicam aos novos traços.

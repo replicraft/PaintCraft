@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = Permite el acceso para usar las fuent
 installed-fonts-are-available = Las fuentes instaladas están disponibles.
 font-access-was-denied-or-is-unavailable-you-can-try-again = Se denegó el acceso a las fuentes o no está disponible. Puedes intentarlo de nuevo.
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = No se pudo cargar la fuente seleccionada. Elige otra o recarga la página.
+
+pen-and-tablet = Lápiz y tableta
+use-pressure-to-control-size = Controlar el tamaño con la presión
+pressure-response = Respuesta a la presión
+linear = Lineal
+soft = Suave
+firm = Firme
+soft-needs-less-pressure-firm-needs-more-pressure = Suave requiere menos presión; Firme requiere más presión.
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = Se aplica a los trazos del pincel redondo sencillo y a los borradores del lápiz. Los demás pinceles conservan su comportamiento actual.
+pens-without-reported-pressure-use-the-selected-size = Los lápices sin datos de presión utilizan el tamaño seleccionado.
+changes-apply-to-new-strokes = Los cambios se aplican a los trazos nuevos.

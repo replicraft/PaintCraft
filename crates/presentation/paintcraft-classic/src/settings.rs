@@ -7,6 +7,7 @@ pub enum Page {
     Appearance,
     Interface,
     Canvas,
+    Pen,
     Text,
     About,
 }
@@ -153,6 +154,7 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         (Page::Appearance, "Appearance", Icon::Appearance),
         (Page::Interface, "User Interface", Icon::Interface),
         (Page::Canvas, "Canvas", Icon::CanvasSize),
+        (Page::Pen, "Pen and tablet", Icon::Pencil),
         (Page::Text, "Text preferences", Icon::Text),
         (Page::About, "About", Icon::About),
     ] {
@@ -177,7 +179,7 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
                     22.0,
                     ui.visuals().dark_mode,
                 ),
-                Page::Text => paintcraft_ui::icons::classic_tool_image(
+                Page::Pen | Page::Text => paintcraft_ui::icons::classic_tool_image(
                     ui.ctx(),
                     icon,
                     22.0,

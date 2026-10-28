@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = इंस्टॉल किए ग�
 installed-fonts-are-available = इंस्टॉल किए गए फ़ॉन्ट उपलब्ध हैं।
 font-access-was-denied-or-is-unavailable-you-can-try-again = फ़ॉन्ट तक पहुँच अस्वीकृत है या उपलब्ध नहीं है। फिर से प्रयास करें।
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = चुना गया फ़ॉन्ट लोड नहीं हुआ। दूसरा फ़ॉन्ट चुनें या पृष्ठ फिर से लोड करें।
+
+pen-and-tablet = पेन और टैबलेट
+use-pressure-to-control-size = दबाव से आकार नियंत्रित करें
+pressure-response = दबाव की प्रतिक्रिया
+linear = रैखिक
+soft = नरम
+firm = कड़ा
+soft-needs-less-pressure-firm-needs-more-pressure = नरम में कम दबाव लगता है; कड़ा में अधिक दबाव लगता है।
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = यह साधारण गोल ब्रश के स्ट्रोक और पेन के इरेज़र पर लागू होता है। अन्य ब्रश का मौजूदा व्यवहार बना रहता है।
+pens-without-reported-pressure-use-the-selected-size = दबाव की जानकारी न देने वाले पेन चुने गए आकार का उपयोग करते हैं।
+changes-apply-to-new-strokes = बदलाव नए स्ट्रोक पर लागू होते हैं।

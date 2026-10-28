@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = 请允许访问以使用已安装的�
 installed-fonts-are-available = 已安装的字体可用。
 font-access-was-denied-or-is-unavailable-you-can-try-again = 字体访问被拒绝或不可用。请重试。
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = 无法加载所选字体。请选择其他字体或重新加载页面。
+
+pen-and-tablet = 笔和数位板
+use-pressure-to-control-size = 通过压感控制大小
+pressure-response = 压感响应
+linear = 线性
+soft = 柔和
+firm = 强硬
+soft-needs-less-pressure-firm-needs-more-pressure = 柔和需要较小的压力；强硬需要较大的压力。
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = 适用于普通圆形画笔笔画和笔的橡皮擦。其他画笔保持现有行为。
+pens-without-reported-pressure-use-the-selected-size = 不提供压感数据的笔使用所选大小。
+changes-apply-to-new-strokes = 更改适用于新的笔画。

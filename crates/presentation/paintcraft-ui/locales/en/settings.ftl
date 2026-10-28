@@ -78,3 +78,14 @@ allow-font-access-to-use-installed-fonts = Allow font access to use installed fo
 installed-fonts-are-available = Installed fonts are available.
 font-access-was-denied-or-is-unavailable-you-can-try-again = Font access was denied or is unavailable. You can try again.
 the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = The selected font could not be loaded. Choose another font or reload to try again.
+
+pen-and-tablet = Pen and tablet
+use-pressure-to-control-size = Use pressure to control size
+pressure-response = Pressure response
+linear = Linear
+soft = Soft
+firm = Firm
+soft-needs-less-pressure-firm-needs-more-pressure = Soft needs less pressure; Firm needs more pressure.
+applies-to-plain-round-brush-strokes-and-pen-erasers-other-brushes-keep-their-existing-behavior = Applies to plain round brush strokes and pen erasers. Other brushes keep their existing behavior.
+pens-without-reported-pressure-use-the-selected-size = Pens without reported pressure use the selected size.
+changes-apply-to-new-strokes = Changes apply to new strokes.
