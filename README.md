@@ -7,6 +7,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Desktop, browser and command-line apps.
 - **MCP support:** let AI assistants paint, edit layers, preview images and save projects.
 - Nine brushes, pencil, eraser, fill and color picker.
+- Pressure-sensitive round strokes in the browser.
 - Shapes, curves and text.
 - Rectangular and free-form selections, copy and cut.
 - Paste images onto the canvas or into new layers (macOS and supported browsers).
@@ -41,7 +42,7 @@ cargo run --release -p paintcraft-cli -- mcp
 
 - **Classic and Studio:** open and export PNG, JPEG, BMP, still GIF and single-page TIFF.
 - **Studio:** also open and export TGA, still WebP and supported 2D DDS images.
-- **DDS export on desktop:** choose compression and generate smaller texture levels in Studio, CLI or MCP; Studio previews the result.
+- **DDS texture export:** choose compression and generate smaller texture levels in desktop/browser Studio, CLI or MCP; Studio previews the result.
 - **Studio exports:** lossless JPEG XL, lossy AVIF, QOI, PAM, farbfeld and PCX with optional 256-color palettes and a preview.
 - **JPEG XL import:** Studio on desktop and in your browser, CLI and MCP can import supported still pictures.
 - **JPEG XR pictures:** import supported pictures in desktop Studio, CLI and MCP; export lossless copies without transparency on Apple silicon Macs.
