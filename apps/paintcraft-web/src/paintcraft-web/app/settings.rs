@@ -17,6 +17,7 @@ impl WebApp {
             && self.preferences.show_tool_controls
     }
     pub(super) fn refresh_appearance(&mut self, ctx: &egui::Context) {
+        self.controls.options.pen = self.preferences.pen;
         let values = &self.preferences;
         let variant = self.variant;
         let preferred = values
@@ -85,6 +86,7 @@ impl WebApp {
             Response::Apply if draft.values.validate().is_ok() => {
                 self.settings = false;
                 self.preferences = draft.values;
+                self.controls.options.pen = self.preferences.pen;
                 set_language(ctx, self.preferences.language);
                 ctx.set_theme(
                     self.preferences
@@ -130,6 +132,9 @@ fn content(
                 .show(ui, |ui| match page {
                     Page::Appearance | Page::Interface => appearance(ui, &mut draft.values, classic),
                     Page::Canvas => canvas(ui, &mut draft.values),
+                    Page::Pen => card(ui, "Pen and tablet", |ui| {
+                        paintcraft_ui::pen_settings::show(ui, &mut draft.values.pen);
+                    }),
                     Page::Text => text(ui, draft, fonts),
                     Page::About => card(ui, "About", |ui| {
                         paintcraft_classic::settings::about(ui);

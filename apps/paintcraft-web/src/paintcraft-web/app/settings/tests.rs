@@ -28,6 +28,7 @@ fn settings_match_desktop_navigation_and_cancel_restores_theme_for_every_skin_an
             for label in [
                 "Appearance",
                 "Canvas",
+                "Pen and tablet",
                 "Text preferences",
                 "About",
                 "Apply",
@@ -230,4 +231,45 @@ fn mobile_brush_bars_can_be_hidden_after_apply_without_reserved_canvas_space() {
     h.run();
     assert!(h.state().zoom > previous);
     assert_eq!(h.state().editor.session.ticket(), ticket);
+}
+
+#[test]
+fn pen_settings_are_staged_for_each_interface_and_do_not_edit_the_document() {
+    use paintcraft_core::types::pen::{PressureCurve, Settings as PenSettings};
+    for frontend in [Frontend::Classic, Frontend::Studio] {
+        let mut h = super::super::chrome_tests::harness(frontend, ClassicVariant::V11, 1360.0);
+        let ticket = h.state().editor.session.ticket();
+        let before = h.state().editor.session.snapshot();
+        h.get_by_label("Settings…").click();
+        h.run();
+        h.get_by_label("Pen and tablet").click();
+        h.run();
+        h.get_by_label("Firm").click();
+        h.run();
+        h.get_by_label("Use pressure to control size").click();
+        h.run();
+        assert_eq!(h.state().preferences.pen, PenSettings::default());
+        assert_eq!(h.state().controls.options.pen, PenSettings::default());
+        h.get_by_label("Cancel").click();
+        h.run();
+        assert_eq!(h.state().preferences.pen, PenSettings::default());
+        h.get_by_label("Settings…").click();
+        h.run();
+        h.get_by_label("Pen and tablet").click();
+        h.run();
+        h.get_by_label("Firm").click();
+        h.run();
+        h.get_by_label("Use pressure to control size").click();
+        h.run();
+        h.get_by_label("Apply").click();
+        h.run();
+        let expected = h.state().preferences.pen;
+        assert!(!expected.size_pressure);
+        assert_eq!(expected.curve, PressureCurve::Firm);
+        assert_eq!(h.state().preferences.pen, expected);
+        assert_eq!(h.state().controls.options.pen, expected);
+        assert_eq!(h.state().editor.session.ticket(), ticket);
+        assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
+        assert!(!h.state().editor.session.is_dirty());
+    }
 }

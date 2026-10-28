@@ -2,9 +2,6 @@
 use paintcraft_ui::t;
 mod brushes;
 #[cfg(test)]
-#[path = "pen_input/tests.rs"]
-mod pen_input_tests;
-#[cfg(test)]
 mod chrome_tests;
 #[cfg(target_arch = "wasm32")]
 mod codec_export_bridge;
@@ -26,6 +23,9 @@ mod interfaces;
 mod lasso_tests;
 mod msp_exporting;
 mod palettes;
+#[cfg(test)]
+#[path = "pen_input/tests.rs"]
+mod pen_input_tests;
 mod presentation;
 mod settings;
 mod shapes;
@@ -107,7 +107,10 @@ impl WebApp {
             printer: Default::default(),
             controls: Controls {
                 tool: Tool::Brush,
-                options: ToolOptions::default(),
+                options: ToolOptions {
+                    pen: preferences.pen,
+                    ..Default::default()
+                },
                 primary: paintcraft_core::types::Rgba([0, 0, 0, 255]),
                 secondary: WHITE,
             },

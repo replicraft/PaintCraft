@@ -6,6 +6,9 @@ use paintcraft_core::types::{
     json::{self, Value},
 };
 use paintcraft_ui::i18n::Language;
+#[cfg(test)]
+#[path = "preferences/pen_tests.rs"]
+mod pen_tests;
 
 #[cfg(target_arch = "wasm32")]
 const KEY: &str = "paintcraft.web.preferences.v1";
@@ -24,6 +27,7 @@ pub(crate) struct Preferences {
     pub default_font: String,
     pub editable_until_save: bool,
     pub language: Language,
+    pub pen: paintcraft_core::types::pen::Settings,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -39,6 +43,7 @@ impl Default for Preferences {
             default_font: "Arial".into(),
             editable_until_save: false,
             language: Default::default(),
+            pen: Default::default(),
         }
     }
 }
@@ -117,6 +122,12 @@ impl Preferences {
             auto_hide_toolbar: flag("auto_hide_toolbar", false)?,
             show_tool_controls: flag("show_tool_controls", true)?,
             editable_until_save,
+            pen: value
+                .get("pen")
+                .map(paintcraft_core::types::pen::Settings::from_value)
+                .transpose()
+                .map_err(|error| error.to_string())?
+                .unwrap_or_default(),
             language,
             default_font,
             canvas,
@@ -137,6 +148,7 @@ impl Preferences {
             ("default_font", Value::str(&self.default_font)),
             ("editable_until_save", Value::Bool(self.editable_until_save)),
             ("language", Value::str(self.language.id())),
+            ("pen", self.pen.to_value()),
             ("skin", Value::str(self.variant.id())),
             (
                 "theme",
