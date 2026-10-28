@@ -33,8 +33,12 @@ struct Tool {
 pub(super) enum Action {
     Native,
     Suppress,
-    Unclassified { consume: bool },
+    Unclassified {
+        consume: bool,
+    },
     Dispatch(NativePacket),
+    /// Real known-device idle terminal, observed even while ink is fenced.
+    ObservedTerminal(NativePacket),
 }
 #[derive(Clone, Copy, Debug)]
 struct Unidentified {
@@ -127,9 +131,10 @@ impl State {
             tool.last_point = Some(point);
             tool.last_consumed = true;
             if point.buttons & 7 == 0 {
+                let packet = Self::packet(tool, point, self.epoch);
                 tool.fenced = false;
-                tool.contact = false;
                 tool.route = None;
+                return packet.map_or(Action::Suppress, Action::ObservedTerminal);
             }
             return Action::Suppress;
         }
@@ -149,9 +154,10 @@ impl State {
             }
             return Action::Native;
         }
-        let Some(sequence) = tool.sequence.checked_add(1) else {
-            return Action::Suppress;
-        };
+        Self::packet(tool, point, self.epoch).map_or(Action::Suppress, Action::Dispatch)
+    }
+    fn packet(tool: &mut Tool, point: Point, epoch: u64) -> Option<NativePacket> {
+        let sequence = tool.sequence.checked_add(1)?;
         let contact = point.buttons & Buttons::TIP != 0;
         let phase = match (tool.contact, contact) {
             (false, true) => Phase::Down,
@@ -175,7 +181,7 @@ impl State {
             identity: tool.identity,
             sequence,
             time: Time {
-                epoch: self.epoch,
+                epoch,
                 micros: point.micros,
                 clock: Clock::AppKitUptime,
             },
@@ -193,10 +199,10 @@ impl State {
         tool.last_point = Some(point);
         tool.last_raw = Some(raw);
         tool.contact = contact;
-        if !held {
+        if point.buttons & 7 == 0 {
             tool.route = None;
         }
-        Action::Dispatch(NativePacket {
+        Some(NativePacket {
             raw,
             position: Some(point.position),
             delivery: Delivery::ReceiverPointer,

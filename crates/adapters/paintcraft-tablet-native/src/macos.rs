@@ -9,8 +9,8 @@ use objc2::{
 use objc2_app_kit::{
     NSApplicationDidResignActiveNotification, NSEvent, NSEventMask, NSEventModifierFlags,
     NSEventPhase, NSEventSubtype, NSEventType, NSPointingDeviceType, NSView, NSWindow,
-    NSWindowDidBecomeKeyNotification, NSWindowDidResignKeyNotification,
-    NSWindowWillCloseNotification,
+    NSWindowDidBecomeKeyNotification, NSWindowDidChangeBackingPropertiesNotification,
+    NSWindowDidResignKeyNotification, NSWindowWillCloseNotification,
 };
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSObjectProtocol};
 use paintcraft_input::{Modifiers, tablet::DeviceKind};
@@ -221,6 +221,27 @@ impl Monitor {
                 )
             });
         }
+        let backing_state = state.clone();
+        let backing_emitter = emitter.clone();
+        let block = RcBlock::new(move |_event: NonNull<NSNotification>| {
+            // Retain the monitor and genuine device/proximity metadata. Only
+            // the captured GUI view and currently held tails become invalid.
+            backing_emitter.observe(CaptureEvent::Boundary {
+                kind: Boundary::ViewInvalidated,
+                time: None,
+            });
+            fence(&backing_state);
+        });
+        // SAFETY: scoped to this retained NSWindow; synchronous notification
+        // delivery uses only thread-safe state/callbacks, never borrowed UI.
+        observers.push(unsafe {
+            center.addObserverForName_object_queue_usingBlock(
+                Some(NSWindowDidChangeBackingPropertiesNotification),
+                Some(window.as_ref()),
+                None,
+                &block,
+            )
+        });
         Ok(Self {
             token,
             observers,
@@ -557,7 +578,7 @@ fn dispatch(state: &Mutex<State>, emitter: &Emitter, point: Point) -> bool {
             emitter.wake();
             consume
         }
-        Action::Dispatch(packet) => {
+        Action::Dispatch(packet) | Action::ObservedTerminal(packet) => {
             emitter.emit(packet);
             // All classified pen events use receiver UI fallback. Their native
             // mouse promotion must never reach legacy canvas tool dispatch.

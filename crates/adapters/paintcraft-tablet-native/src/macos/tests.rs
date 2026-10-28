@@ -99,7 +99,10 @@ fn focus_loss_cancels_once_and_fences_the_still_down_physical_tail() {
     assert_eq!(cancellations[0].position, None);
     assert!(s.cancel().into_iter().flatten().next().is_none());
     assert!(matches!(s.prepare(point(1, 2)), Action::Suppress));
-    assert!(matches!(s.prepare(point(0, 3)), Action::Suppress));
+    assert!(matches!(
+        s.prepare(point(0, 3)),
+        Action::ObservedTerminal(_)
+    ));
     assert_eq!(packet(&mut s, point(1, 4)).raw.phase, Phase::Down);
 }
 #[test]
@@ -146,7 +149,10 @@ fn malformed_first_contact_is_fenced_without_cancelling_an_unrelated_device() {
     assert!(matches!(s.prepare(point(1, 2)), Action::Suppress));
     other.micros = 2;
     assert_eq!(packet(&mut s, other).raw.phase, Phase::Move);
-    assert!(matches!(s.prepare(point(0, 3)), Action::Suppress));
+    assert!(matches!(
+        s.prepare(point(0, 3)),
+        Action::ObservedTerminal(_)
+    ));
     assert_eq!(packet(&mut s, point(1, 4)).raw.phase, Phase::Down);
 }
 
@@ -213,7 +219,10 @@ fn unidentified_client_tail_needs_real_metadata_and_complete_release_before_ink(
     assert!(s.proximity(7, 123, DeviceKind::Eraser, 0x400).0);
     assert!(matches!(s.prepare(point(1 | 4, 3)), Action::Suppress));
     assert!(matches!(s.prepare(point(4, 4)), Action::Suppress));
-    assert!(matches!(s.prepare(point(0, 5)), Action::Suppress));
+    assert!(matches!(
+        s.prepare(point(0, 5)),
+        Action::ObservedTerminal(_)
+    ));
     let mut duplicate = point(0, 5);
     duplicate.in_view = false;
     assert!(matches!(s.prepare(duplicate), Action::Suppress));
@@ -243,7 +252,10 @@ fn unidentified_native_chrome_keeps_route_across_metadata_and_view_crossing() {
     s.leave(7);
     assert!(s.proximity(7, 12, DeviceKind::Pen, 0x400).0);
     assert!(matches!(s.prepare(point(1, 5)), Action::Suppress));
-    assert!(matches!(s.prepare(point(0, 6)), Action::Suppress));
+    assert!(matches!(
+        s.prepare(point(0, 6)),
+        Action::ObservedTerminal(_)
+    ));
     assert_eq!(packet(&mut s, point(1, 7)).raw.phase, Phase::Down);
 }
 
@@ -294,7 +306,12 @@ fn malformed_unidentified_contact_is_fenced_without_inventing_position() {
     assert_eq!(s.quarantine(7, true, true), (true, None));
     assert!(s.proximity(7, 11, DeviceKind::Pen, 0).0);
     assert!(matches!(s.prepare(point(1, 1)), Action::Suppress));
-    assert!(matches!(s.prepare(point(0, 2)), Action::Suppress));
+    // Genuine proximity now exists: deliver only the actual idle terminal
+    // metadata, without reactivating the earlier quarantined contact.
+    assert!(matches!(
+        s.prepare(point(0, 2)),
+        Action::ObservedTerminal(_)
+    ));
     assert_eq!(packet(&mut s, point(1, 3)).raw.phase, Phase::Down);
 }
 
@@ -443,7 +460,10 @@ fn focus_cancellation_retains_genuine_proximity_for_resumed_contact() {
             .any(|p| p.raw.phase == Phase::Cancel)
     );
     // Keep the same monitor/State: no synthetic Enter or out/in ritual.
-    assert!(matches!(s.prepare(point(0, 2)), Action::Suppress));
+    assert!(matches!(
+        s.prepare(point(0, 2)),
+        Action::ObservedTerminal(_)
+    ));
     let resumed = packet(&mut s, point(Buttons::TIP, 3));
     assert_eq!(resumed.raw.phase, Phase::Down);
     assert_eq!(resumed.raw.identity, first.raw.identity);
@@ -480,4 +500,66 @@ fn normalized_angular_tilt_uses_actual_view_basis_and_preserves_source_attribute
         assert_eq!(sample.time.micros, 100);
         assert_eq!(sample.provenance, Provenance::Actual);
     }
+}
+
+#[test]
+fn backing_fence_keeps_known_device_and_delivers_actual_terminal_for_collector_recovery() {
+    let mut native = state(0x2580, DeviceKind::Eraser);
+    let mut collector = Collector::new(
+        8,
+        &paintcraft_core::types::resources::SharedBudget::new(1 << 20),
+    )
+    .unwrap();
+    let capture = |ordinal, mut packet: NativePacket| {
+        packet.raw.sequence = ordinal;
+        CaptureRecord {
+            installation: 19,
+            ordinal,
+            event: CaptureEvent::Tablet(packet),
+        }
+    };
+    let first = packet(&mut native, point(Buttons::TIP, 1));
+    collector.accept(capture(0, first)).unwrap();
+    collector
+        .accept(CaptureRecord {
+            installation: 19,
+            ordinal: 1,
+            event: CaptureEvent::Boundary {
+                kind: Boundary::ViewInvalidated,
+                time: None,
+            },
+        })
+        .unwrap();
+    // The backing observer drops internal cancellation packets and keeps State.
+    let _ = native.cancel();
+    assert!(matches!(
+        native.prepare(point(Buttons::TIP, 2)),
+        Action::Suppress
+    ));
+    let Action::ObservedTerminal(terminal) = native.prepare(point(0, 3)) else {
+        panic!("real terminal must be observable");
+    };
+    assert_eq!(terminal.raw.phase, paintcraft_input::tablet::Phase::Up);
+    assert_eq!(terminal.raw.provenance, Provenance::Actual);
+    assert_eq!(terminal.raw.time.micros, 3);
+    assert_eq!(terminal.raw.identity, first.raw.identity);
+    collector.accept(capture(2, terminal)).unwrap();
+    assert!(collector.pen_owner().is_none());
+    let resumed = packet(&mut native, point(Buttons::TIP, 4));
+    collector.accept(capture(3, resumed)).unwrap();
+    let frame = collector.take(DeliveryHealth::Ready).unwrap();
+    assert!(matches!(
+        frame.records[2],
+        Collected::Tablet {
+            route: PenRoute::Suppressed,
+            ..
+        }
+    ));
+    assert!(matches!(
+        frame.records[3],
+        Collected::Tablet {
+            route: PenRoute::Admitted,
+            ..
+        }
+    ));
 }

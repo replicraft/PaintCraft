@@ -25,10 +25,14 @@ use std::sync::Arc;
 use std::{any::Any, marker::PhantomData, rc::Rc};
 pub type Sink = Arc<dyn Fn(NativePacket) -> bool + Send + Sync>;
 pub type Wake = Arc<dyn Fn() + Send + Sync>;
+/// Context-free lifecycle control, serialized by the same delivery gate as Sink.
+pub type ControlSink = Arc<dyn Fn(Boundary) -> std::result::Result<(), RecordFault> + Send + Sync>;
 #[cfg(any(target_os = "macos", test))]
 #[derive(Clone)]
 struct Emitter {
     sink: Sink,
+    #[cfg(any(target_os = "macos", test))]
+    controls: Option<ControlSink>,
     records: Option<RecordSink>,
     record_epoch: Arc<std::sync::atomic::AtomicU64>,
     record_ordinal: Arc<std::sync::atomic::AtomicU64>,
@@ -41,6 +45,8 @@ impl Emitter {
     fn new(sink: Sink, wake: Wake, report: Report) -> Self {
         Self {
             sink,
+            #[cfg(any(target_os = "macos", test))]
+            controls: None,
             records: None,
             record_epoch: Arc::new(std::sync::atomic::AtomicU64::new(0)),
             record_ordinal: Arc::new(std::sync::atomic::AtomicU64::new(0)),
@@ -105,6 +111,20 @@ impl Emitter {
     fn observe(&self, event: CaptureEvent) {
         if self.records.is_some() {
             self.finish(self.gate.emit_checked(|| self.record(event)));
+        } else if let CaptureEvent::Boundary { kind, .. } = event {
+            if let Some(controls) = &self.controls {
+                self.finish(self.gate.emit_checked(|| {
+                    controls(kind)
+                        .map(|()| true)
+                        .map_err(|_| delivery::Failure::Sink)
+                }));
+            } else if kind == Boundary::ViewInvalidated {
+                // A packet-only client cannot safely keep using its old layout.
+                // Never silently lose invalidation with publication authority Ready.
+                self.source_failure();
+            }
+        } else {
+            self.source_failure();
         }
     }
     fn wake(&self) {
@@ -171,8 +191,36 @@ impl Installation {
         self.native.cancel();
     }
 }
+/// Packet-only compatibility API. A backing/layout invalidation fails delivery
+/// closed; clients retaining a GUI view should use install_with_controls.
 #[cfg(target_os = "macos")]
 pub fn install<W>(window: Arc<W>, sink: Sink, wake: Wake) -> Result<Installation>
+where
+    W: HasWindowHandle + HasDisplayHandle + Send + Sync + 'static,
+{
+    install_packets(window, sink, None, wake)
+}
+/// Retain the window and deliver native lifecycle changes before a later GUI
+/// scale/layout receipt. Controls must not call GUI APIs or pump native events.
+#[cfg(target_os = "macos")]
+pub fn install_with_controls<W>(
+    window: Arc<W>,
+    sink: Sink,
+    controls: ControlSink,
+    wake: Wake,
+) -> Result<Installation>
+where
+    W: HasWindowHandle + HasDisplayHandle + Send + Sync + 'static,
+{
+    install_packets(window, sink, Some(controls), wake)
+}
+#[cfg(target_os = "macos")]
+fn install_packets<W>(
+    window: Arc<W>,
+    sink: Sink,
+    controls: Option<ControlSink>,
+    wake: Wake,
+) -> Result<Installation>
 where
     W: HasWindowHandle + HasDisplayHandle + Send + Sync + 'static,
 {
@@ -188,11 +236,9 @@ where
             "AppKit window required",
         ));
     };
-    install_emitter(
-        window,
-        handle,
-        Emitter::new(sink, wake, Report::new(Backend::AppKit)),
-    )
+    let mut emitter = Emitter::new(sink, wake, Report::new(Backend::AppKit));
+    emitter.controls = controls;
+    install_emitter(window, handle, emitter)
 }
 /// Owned-loop acquisition mode. Genuine mouse events are observed and passed
 /// unchanged to AppKit; the owned host must suppress their GUI mirror explicitly.

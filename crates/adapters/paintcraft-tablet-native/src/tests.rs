@@ -399,3 +399,46 @@ fn final_usable_record_ordinal_is_not_wrapped_or_misreported_as_sink_failure() {
     assert_eq!(report.source_failures, 1);
     assert_eq!(report.sink_failures, 0);
 }
+
+#[test]
+fn packet_only_backing_invalidation_fails_closed_instead_of_losing_control() {
+    let emitter = Emitter::new(
+        Arc::new(|_| panic!("no fabricated pen packet")),
+        Arc::new(|| {}),
+        Report::new(Backend::AppKit),
+    );
+    let authority = emitter.gate.check();
+    emitter.observe(CaptureEvent::Boundary {
+        kind: Boundary::ViewInvalidated,
+        time: None,
+    });
+    assert_eq!(
+        emitter.gate.with_delivery(|health| health),
+        DeliveryHealth::Failed
+    );
+    assert!(!authority.authorize(|| true));
+    assert_eq!(emitter.report.snapshot().source_failures, 1);
+}
+#[test]
+fn typed_backing_control_is_delivered_under_gate_without_fabricated_pen_samples() {
+    let controls = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let captured = controls.clone();
+    let mut emitter = Emitter::new(
+        Arc::new(|_| panic!("no fabricated pen packet")),
+        Arc::new(|| {}),
+        Report::new(Backend::AppKit),
+    );
+    emitter.controls = Some(Arc::new(move |boundary| {
+        captured.lock().unwrap().push(boundary);
+        Ok(())
+    }));
+    emitter.observe(CaptureEvent::Boundary {
+        kind: Boundary::ViewInvalidated,
+        time: None,
+    });
+    assert_eq!(*controls.lock().unwrap(), [Boundary::ViewInvalidated]);
+    assert_eq!(
+        emitter.gate.with_delivery(|health| health),
+        DeliveryHealth::Ready
+    );
+}
