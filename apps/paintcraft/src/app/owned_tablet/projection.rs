@@ -179,14 +179,18 @@ impl Projection {
                     let CaptureEvent::Mouse(mouse) = record.event else {
                         return Err(RecordFault::Invalid);
                     };
-                    if let MouseKind::Button { number, pressed } = mouse.kind {
+                    if route != MouseRoute::Suppressed
+                        && let MouseKind::Button { number, pressed } = mouse.kind
+                    {
                         if pressed {
                             self.mouse |= 1 << number;
                         } else {
                             self.mouse &= !(1 << number);
                         }
-                        // This is actual acquisition order, before a later pen
-                        // callback; no GUI-frame bookkeeping can rewind it.
+                        // Only admitted physical holds own the receiver. The
+                        // collector retains rejected tails independently; a
+                        // later chord in one cannot acquire mouse authority.
+                        // Native chrome still retains its original ownership.
                         self.source.mouse_capture(self.mouse != 0);
                     }
                     if cancel_pen {

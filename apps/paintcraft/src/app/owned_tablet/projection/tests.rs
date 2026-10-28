@@ -58,6 +58,132 @@ fn pen(ordinal: u64, phase: Phase) -> CaptureRecord {
         }),
     }
 }
+fn mouse_button(ordinal: u64, number: u8, pressed: bool) -> CaptureRecord {
+    CaptureRecord {
+        installation: 7,
+        ordinal,
+        event: CaptureEvent::Mouse(paintcraft_platform::tablet::MouseRecord {
+            kind: MouseKind::Button { number, pressed },
+            position: WindowPosition::PhysicalPixels(20.0, 20.0),
+            client: true,
+            modifiers: Modifiers::default(),
+            time: Time {
+                epoch: 7,
+                micros: ordinal + 1,
+                clock: Clock::AppKitUptime,
+            },
+        }),
+    }
+}
+
+#[test]
+fn rejected_mouse_chord_after_pen_release_cannot_capture_the_next_pen() {
+    let budget = SharedBudget::new(1 << 20);
+    let mut projection = Projection::new(16, &budget).unwrap();
+    projection.publish(view()).unwrap();
+    projection.capture(pen(0, Phase::Down)).unwrap();
+    let held = projection.take(DeliveryHealth::Ready).unwrap();
+    projection.capture(mouse_button(1, 0, true)).unwrap();
+    projection.capture(pen(2, Phase::Up)).unwrap();
+    let completed = projection.take(DeliveryHealth::Ready).unwrap();
+    assert!(
+        !completed
+            .entries
+            .iter()
+            .any(|entry| matches!(entry.pointer, Pointer::Gui(_)))
+    );
+    // This second mouse button belongs to the same rejected physical tail.
+    // The pen has lifted, so the receiver alone cannot reject that chord.
+    projection.capture(mouse_button(3, 1, true)).unwrap();
+    projection.capture(pen(4, Phase::Down)).unwrap();
+    projection.capture(pen(5, Phase::Up)).unwrap();
+    let fresh = projection.take(DeliveryHealth::Ready).unwrap();
+    let batches: Vec<_> = fresh
+        .entries
+        .iter()
+        .filter_map(|entry| match &entry.pointer {
+            Pointer::Pen(batch) => Some(batch),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(batches.len(), 1);
+    assert_eq!(
+        batches[0]
+            .frame
+            .samples
+            .iter()
+            .map(|sample| sample.sequence)
+            .collect::<Vec<_>>(),
+        [4, 5]
+    );
+    assert!(fresh.pen_is_current(batches[0], view().owner));
+    projection.capture(mouse_button(6, 0, false)).unwrap();
+    projection.capture(mouse_button(7, 1, false)).unwrap();
+    assert!(
+        projection
+            .take(DeliveryHealth::Ready)
+            .unwrap()
+            .entries
+            .is_empty()
+    );
+    drop((held, completed, fresh, projection));
+    assert_eq!(budget.usage().reserved, 0);
+}
+
+#[test]
+fn admitted_mouse_chord_keeps_client_or_native_chrome_priority_until_all_buttons_lift() {
+    for client in [true, false] {
+        let budget = SharedBudget::new(1 << 20);
+        let mut projection = Projection::new(16, &budget).unwrap();
+        projection.publish(view()).unwrap();
+        let mouse = |ordinal, number, pressed| {
+            let mut record = mouse_button(ordinal, number, pressed);
+            let CaptureEvent::Mouse(event) = &mut record.event else {
+                unreachable!()
+            };
+            event.client = client;
+            record
+        };
+        projection.capture(mouse(0, 0, true)).unwrap();
+        projection.capture(mouse(1, 1, true)).unwrap();
+        projection.capture(pen(2, Phase::Down)).unwrap();
+        projection.capture(pen(3, Phase::Up)).unwrap();
+        let first = projection.take(DeliveryHealth::Ready).unwrap();
+        assert!(
+            !first
+                .entries
+                .iter()
+                .any(|entry| matches!(entry.pointer, Pointer::Pen(_)))
+        );
+        projection.capture(mouse(4, 0, false)).unwrap();
+        projection.capture(pen(5, Phase::Down)).unwrap();
+        projection.capture(pen(6, Phase::Up)).unwrap();
+        let partial = projection.take(DeliveryHealth::Ready).unwrap();
+        assert!(
+            !partial
+                .entries
+                .iter()
+                .any(|entry| matches!(entry.pointer, Pointer::Pen(_)))
+        );
+        projection.capture(mouse(7, 1, false)).unwrap();
+        projection.capture(pen(8, Phase::Down)).unwrap();
+        projection.capture(pen(9, Phase::Up)).unwrap();
+        let released = projection.take(DeliveryHealth::Ready).unwrap();
+        let samples: Vec<_> = released
+            .entries
+            .iter()
+            .filter_map(|entry| match &entry.pointer {
+                Pointer::Pen(batch) => Some(&batch.frame.samples),
+                _ => None,
+            })
+            .flatten()
+            .map(|sample| sample.sequence)
+            .collect();
+        assert_eq!(samples, [8, 9]);
+        drop((first, partial, released, projection));
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}
 fn invalidation(ordinal: u64) -> CaptureRecord {
     CaptureRecord {
         installation: 7,
