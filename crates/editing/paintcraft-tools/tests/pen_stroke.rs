@@ -45,6 +45,7 @@ fn style(mode: MaskMode) -> Style {
         mode,
         intent: MaskIntent::Brush,
         settings: Default::default(),
+        media: Default::default(),
     }
 }
 
