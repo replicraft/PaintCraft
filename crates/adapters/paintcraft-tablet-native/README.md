@@ -15,7 +15,11 @@ close, with zero reported failures. That establishes installation and startup,
 not physical pen, mixed-device or keyboard/IME qualification.
 
 Windows acquisition uses a public winit message hook and scoped HWND lifecycle
-observers. Native histories are validated before delivery; callback registration,
+observers. Its scoped HWND subclass also captures bounded raw key, character,
+focus, layout and IME observations before framework parsing. IMM composition
+data has one owned reader; actual result, preedit and cancellation remain distinct.
+The App consumer refuses these UI records until target binding and transactional
+widgets are integrated. Native histories are validated before delivery; callback registration,
 record clocks and publication checks share one installation identity. Fixed
 capture storage is admitted before native registration. Uncertain callback
 removal disables reinstall rather than freeing callable context. Normal close

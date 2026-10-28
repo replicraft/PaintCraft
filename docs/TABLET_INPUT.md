@@ -125,14 +125,22 @@ zero callback, sink, source or wake failures. An earlier failing run exposed
 out-of-order AppKit tracking timestamps; the corrected collector preserves those
 observations without advancing or rebasing the physical mouse clock. The failed
 traces are retained separately. This smoke test used no physical pen input or
-keyboard/IME injection. The executable and owned startup sources were recorded;
-it was not a frozen whole-workspace release qualification.
+keyboard/IME injection. AppKit tracking now accepts enter/exit observations only
+from a retained tracking area owned by the installed view, and removes that area
+during teardown. Other tracking areas cannot claim this capture path. The
+executable and owned startup sources were recorded; this was not a frozen
+whole-workspace release qualification.
 
 Canonical keyboard/IME order still requires qualification before default native
 activation. Per-source sequence numbers or frame event positions cannot prove
-that order. Windows pointer/history acquisition has cross-target SDK checks;
-Windows runtime and shared native touch adoption remain unfinished. Linux still
-needs an ordered acquisition integration.
+that order. Windows pointer/history acquisition has cross-target SDK checks.
+The Windows adapter also captures bounded raw keyboard, focus, layout and IME
+observations. IMM composition data is read once by the owned adapter. Cross-target
+SDK checks and a test-only decoder/target-lifetime model cover these records; the
+App projection explicitly refuses NativeUi records until actual editable-widget
+binding, transactional preedit and canonical ordering are integrated. These checks
+do not establish Windows runtime or IME behavior. Native touch adoption remains
+unfinished. Linux still needs an ordered acquisition integration.
 
 The [macOS text-input investigation](MACOS_TEXT_INPUT_INTEGRATION.md) records an
 isolated public AppKit API probe and the remaining keyboard/IME ownership gates.
@@ -143,8 +151,20 @@ contacts, preserves clocks across completed contacts, and reclaims them only on
 verified lifetime retirement. Confidence withdrawal produces a separate policy
 cancellation without changing the physical event phase. Historical transitions
 cannot hide a lost contact, and internal boundaries cannot invent finger input.
-The native App projection still explicitly refuses touch records: gesture and
-widget delivery are not enabled by these metadata controls.
+Physical capture ownership requires actual contact evidence: proximity, eraser
+identity, predictions and historical geometry alone cannot steal an active mouse
+or touch owner. Metadata-only observations remain distinct from denied contact
+tails.
+
+An explicit shared Source constructor now admits a bounded native-touch lifetime
+bank. Each contact pins its captured context and retains its resource account
+through outstanding batches, cancellation handoffs and publication guards. Typed
+continuation updates only the exact supplied pen or touch lifetime after an
+authored predecessor receipt. The ordinary Source constructor does not allocate
+this bank. The native App projection still explicitly refuses touch records:
+gesture and widget delivery are not enabled by these metadata controls. Precise
+active-contact retirement must preserve earlier completed work before consumers
+can adopt these scopes.
 
 The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
@@ -191,8 +211,8 @@ CDP did not deliver its requested inverted-eraser bit as an eraser event, so rea
 browser eraser-end delivery remains unqualified. Host/controller eraser controls
 are separate evidence. Web pressure can also be an API fallback value; these
 tests do not demonstrate a physical pressure sensor. Other browsers, physical
-devices, free/drop without explicit destroy, concurrent async starts/destroy,
-panic recovery and sustained input/display timing still require qualification.
+devices, panic recovery and sustained input/display timing still require
+qualification. Later lifecycle qualification is recorded below.
 
 ### Subsequent browser checks
 
@@ -216,6 +236,30 @@ own recorder and Playwright listeners were identified separately by script sourc
 The original product failure and the later failed listener-count assertion remain
 separate evidence. These are scoped Chrome/CDP results on recorded bundles, not
 physical hardware, cross-browser or full current-main release qualification.
+
+### Browser ownership and asynchronous startup checks
+
+The archived `d3b8c046` production bundle adds exclusive canvas ownership through
+asynchronous startup, cancellation and teardown. Destroying a pending runner
+retains its startup claim until late initialization has cleaned up; a second
+handle cannot attach to that canvas prematurely. Distinct canvases remain
+independent. Page callbacks retire with the public owner lifetime before a freed
+wrapper can be called again, including when the original page is still awaiting
+startup.
+
+Actual Chrome checks covered pending startup/destroy/retry, same-canvas refusal,
+distinct-canvas independence, freeing the original page owner before navigation,
+and freeing it during actual startup. Trusted pen input, saved project pixels and
+exact one-Undo restoration remained functional. Separate requested-GC checks used
+weak-only references without explicitly freeing secondary owners: collection
+aborted their owner lifetime, removed listeners, cancelled pending startup and
+allowed later canvas reuse after cleanup. These checks requested collection; they
+do not promise spontaneous collection timing or measure physical GPU reclamation.
+The original failures and the corrected bundle's evidence remain separate.
+
+These results qualify that immutable bundle, not a full current-main release.
+Native keyboard/IME integration, physical devices and cross-browser behavior
+remain separate work.
 
 ## Resource and test scope
 
@@ -248,13 +292,14 @@ delivery scope above and physical native traces remain distinct evidence.
 | Area | Remaining work |
 | --- | --- |
 | Native capture | Complete canonical AppKit keyboard/IME ordering; integrate and qualify Windows pointer/history and native touch, and implement ordered XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
-| Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, concurrent startup/drop/panic lifecycle cases, and sustained acquisition/display timing. Preserve the qualified mouse and palm behavior while extending finger navigation. |
+| Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, panic recovery and sustained acquisition/display timing. Extend the recorded startup/drop checks to other browsers. Preserve the qualified mouse and palm behavior while extending finger navigation. |
 | Controller adoption | Complete native production source-to-controller wiring and mixed-device ordering. Retain browser/native ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics. |
 | Brush settings and dynamics | Qualify the captured size, curve, opacity and textured-brush settings through production input; add device capability feedback and physical tilt/twist traces. Functional settings and headless pixel controls do not establish physical brush feel. |
 | Other brush/media profiles | Extend appropriate pressure/dynamics behavior to sampled and other unsupported tips while preserving each media policy. Qualify high-rate and long-stroke behavior through actual acquisition and rendering. |
 | Physical qualification | Real tablet/driver traces on each platform, high-rate acquisition, disconnect/focus/modal recovery and input/display timing. Synthetic pen events and mouse injection do not establish these results. |
 
-The workspace implementation specification remains authoritative: architecture
-`NATIVE_INPUT_INTEGRATION.md` and `INPUT_BRIDGE.md`, and features
-`BRUSH_DETAILS.md`, under `docs/temp/paintcraft-implementation-spec-v5-hyperfine`.
+The workspace implementation specification remains authoritative:
+[native input integration](temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/NATIVE_INPUT_INTEGRATION.md),
+[input bridge](temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/INPUT_BRIDGE.md)
+and [brush details](temp/paintcraft-implementation-spec-v5-hyperfine/docs/features/BRUSH_DETAILS.md).
 Comprehensive tablet acceptance is not complete.
