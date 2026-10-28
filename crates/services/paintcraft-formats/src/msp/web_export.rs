@@ -1,4 +1,4 @@
-//! Bounded opt-in browser MSP2 preparation; registry admission remains closed.
+//! Bounded opt-in browser MSP2 preparation for the exact Web Studio export route.
 //! The legacy MSP1 route and native codec protocols are independent.
 use super::{Error, ErrorCode, Result, RgbaLayout, Version};
 use crate::export::web_snapshot::{Limits, Plan as SnapshotPlan};

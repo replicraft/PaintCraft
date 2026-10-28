@@ -333,11 +333,15 @@ sources and stale destinations remain protected. Output limits are 16 MiB,
 positive dimensions up to 65,535 per side and 4,194,304 pixels. Fresh RGBA packing
 zeros unused tail bits; source header/device metadata is not preserved.
 
-The explicit MSP2 variant is available in native Studio, CLI and MCP. Native
-Studio offers a version chooser and actual encoded-output preview; its guarded
-fresh-copy route retains the prepared artifact through consent and publication.
-Browser UI version selection, ambiguous zero-length MSP2 rows and original
-Windows Paint compatibility remain unqualified. See the
+The explicit MSP2 variant is available in native/browser Studio, CLI and MCP.
+Studio offers a version chooser and actual encoded-output preview. Native copies
+retain the prepared artifact through consent and publication; browser MSP2 uses
+its separately bounded 4MP/8-layer isolated Worker, explicit actual-loss consent
+and retained download lifetime. MSP1 remains the default with its old bytes and
+capacity. Actual desktop/mobile-viewport Chrome proof covers browser preview,
+consent, whole-file golden download and unchanged project bytes; it does not
+establish physical-device or broader browser qualification. Ambiguous zero-length
+MSP2 rows and original Windows Paint compatibility remain unqualified. See the
 [base profile](../crates/services/paintcraft-formats/tests/msp-fixtures/README.md),
 [MSP2 backend evidence](../crates/services/paintcraft-formats/tests/msp2-writer-fixtures/README.md)
 and [actual version consumers](../apps/paintcraft-cli/tests/msp-version-fixtures/README.md).

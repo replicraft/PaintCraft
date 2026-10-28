@@ -1,8 +1,10 @@
-# Browser MSP2 boundary (not yet admitted)
+# Browser MSP2 export boundary
 
-This Rust boundary prepares explicit row-RLE MSP2 copies for a future Web Studio
-route. It does not change the legacy MSP1 exporter, browser registry, controller
-or UI. No production browser or original Windows Paint qualification is claimed.
+Web Studio can prepare an explicit compressed MSP2 copy through the existing
+isolated codec Worker. Choose Version 2, review the actual encoded preview and
+losses, and approve before downloading. The exact opt-in export variant requires
+preflight; default MSP1 retains its previous bytes, capacities and no-Worker route.
+Classic, ordinary Open and preserving MSP writes are unchanged.
 
 The source must be an immutable PCND snapshot of the captured document/state.
 Before serialization the caller retains a 512 MiB logical service reservation.
@@ -48,8 +50,11 @@ The full logical host quote is:
     = 511,442,944 bytes < 512 MiB
 
 Source slots cover serialization, retained request, bridge/JS copies and transfer
-staging; result slots cover worker/frame/JS/bridge/download staging. Later JS/UI
-adoption must prove these lifetimes and preserve this bound. The worker separately
+staging; result slots cover worker/frame/JS/bridge/download staging. Admission
+precedes serialization, and immutable owner/options/source/nonce binding survives
+Rust frame validation, preview, consent and tracked Blob URL download. The lease
+remains held until URL revocation acknowledgment; download initiation is not a
+filesystem-persistence acknowledgment. The worker separately
 checks a 160 MiB payload quote containing padded source, raw source, composite,
 exact packed/output, parser allowance, response and thumbnails before allocations.
 The existing 256 MiB Wasm ceiling remains separate. Neither quote measures RSS,
@@ -61,3 +66,33 @@ specified odd-width packet bytes, output digests/framing/header inventory, owner
 and version binding, and the complete shape-bound enumeration. Shared snapshot
 controls exercise different DDS/MSP side/tile/raw limits and unchanged raw PCND
 bytes. Existing DDS golden/linear/cap/refusal tests remain green after extraction.
+
+## Actual local production qualification
+
+A frozen production app and bundled lean Worker passed eight independent
+positive frames and three canonical policy refusals in headless Chrome 156 on
+Apple silicon macOS. Cases include the 4 MP canvas, both u16 skinny axes, the
+row-table bound, and two-layer raw PCND above 32 MiB. A fresh Chrome process with
+no prior codec Worker also completed the 4 MP/two-layer first-Worker case under
+the unchanged deadline. This does not establish cold OS-cache performance.
+
+Actual desktop and 390 × 740 mobile-viewport Studio controls exercised the
+version chooser, complete preview, loss consent and exact golden download.
+Project bytes, dirty state and title were unchanged. Real active-Worker cancel
+and protocol-owner invalidation produced no MSP download, retained quarantine
+and left project download usable. Rust host tests separately cover editor-owner,
+modal and options staleness; protocol-owner mutation is not an editor UI test.
+
+The result held 512 MiB through download initiation and returned to zero after
+URL retirement. Separate same-Wasm instrumentation observed at most 102,760,448
+bytes of linear memory; the 256 MiB hard-growth probe was refused. These are not
+RSS/GPU/browser-implementation measurements. Shared-bridge regressions also
+passed a small actual DDS golden/download lifetime case and JPEG XL import with
+all independent samples retained in a downloaded PCND.
+
+Evidence: `/private/tmp/paintcraft-msp2-web-proof-2026-10-27/` records the exact
+source composition, bundle hashes, native/Pillow reference, raw failures and
+production results. The native specimen executable's content hash is unavailable;
+its source, logs and every generated artifact remain identified. No physical
+mobile/tablet, original Windows Paint, maximal-capacity or broader codec claim
+is established by these local browser cases.

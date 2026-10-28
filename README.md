@@ -50,7 +50,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **HDR/EXR conversion:** preview supported pictures in native Studio; CLI and MCP offer the same exposure and tone settings for conversion to 8-bit images.
 - **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
 - **DCX export:** save a single-page copy through the native CLI or MCP.
-- **Historical MSP:** import monochrome Paint pictures in Studio, CLI and MCP; export exact opaque black-and-white MSP1 copies.
+- **Historical MSP:** import monochrome Paint pictures in Studio, CLI and MCP; export exact opaque black-and-white MSP1 or MSP2 copies.
 - **Icon export in Studio, CLI and MCP:** multi-size ICO/CUR files with PNG or bitmap entries and cursor hotspots.
 - **Apple icons:** import a chosen ICNS entry and export new icon sets with explicit sizes and Retina scale in Studio, CLI and MCP.
 - **Layered imports:** Studio imports OpenRaster (`.ora`) layers and converts supported groups into layers after a warning. It also opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio also imports a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
