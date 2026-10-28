@@ -63,3 +63,15 @@ fn pretranslation_ui_messages_do_not_observe_recovery_before_hwnd_acquisition() 
     };
     assert!(!dispatch_hook(&inner, &message));
 }
+
+#[test]
+fn key_release_source_refuses_repeat_and_previous_state_contradictions() {
+    for message in [WM_KEYUP, WM_SYSKEYUP] {
+        for repeat in [0u32, 2, 4096] {
+            let bits = repeat | (30 << 16) | (1 << 30) | (1 << 31);
+            assert!(keyboard::record(message, WPARAM(65), LPARAM(bits as isize)).is_err());
+        }
+        let missing_previous = 1u32 | (30 << 16) | (1 << 31);
+        assert!(keyboard::record(message, WPARAM(65), LPARAM(missing_previous as isize)).is_err());
+    }
+}

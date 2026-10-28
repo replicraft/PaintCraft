@@ -59,7 +59,7 @@ impl State {
                         || key.virtual_key > 0xfe
                         || key.repeat_count == 0
                         || key.keyboard_layout == 0
-                        || (!key.pressed && !key.was_down)
+                        || (!key.pressed && (!key.was_down || key.repeat_count != 1))
                     {
                         return Err(UiFault::Order);
                     }

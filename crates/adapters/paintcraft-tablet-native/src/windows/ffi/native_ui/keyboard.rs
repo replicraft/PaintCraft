@@ -6,7 +6,9 @@ pub(super) fn record(message: u32, wparam: WPARAM, lparam: LPARAM) -> Result<Nat
     Ok(match message {
         WM_KEYDOWN | WM_KEYUP | WM_SYSKEYDOWN | WM_SYSKEYUP => {
             let pressed = matches!(message, WM_KEYDOWN | WM_SYSKEYDOWN);
-            if pressed == (bits & (1 << 31) != 0) {
+            if pressed == (bits & (1 << 31) != 0)
+                || (!pressed && (repeat_count != 1 || bits & (1 << 30) == 0))
+            {
                 return Err(error("Native key transition contradicts message"));
             }
             NativeUi::WindowsKey(WindowsKey {

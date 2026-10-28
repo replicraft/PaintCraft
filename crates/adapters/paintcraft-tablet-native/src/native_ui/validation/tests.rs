@@ -293,3 +293,42 @@ fn dead_character_repeat_is_evidence_and_has_the_same_admission_limit() {
     );
     state.validate_callback(&[record(4096)], 1).unwrap();
 }
+
+#[test]
+fn key_release_repeat_refusal_preserves_the_whole_callback_state() {
+    for system_key in [false, true] {
+        let release = WindowsKey {
+            virtual_key: 65,
+            scan_code: 30,
+            extended: false,
+            pressed: false,
+            repeat_count: 1,
+            was_down: true,
+            system_key,
+            alt_context: system_key,
+            keyboard_layout: 1,
+            modifiers: Modifiers::default(),
+        };
+        for repeat_count in [0, 2, 4096] {
+            let mut state = State::default();
+            assert_eq!(
+                state.validate_callback(
+                    &[
+                        begin(),
+                        NativeUi::WindowsKey(WindowsKey {
+                            repeat_count,
+                            ..release
+                        })
+                    ],
+                    1,
+                ),
+                Err(UiFault::Order),
+            );
+            assert_eq!(state.composition(), Err(UiFault::Composition));
+            state
+                .validate_callback(&[begin(), NativeUi::WindowsKey(release)], 1)
+                .unwrap();
+            assert_eq!(state.composition(), Ok(1));
+        }
+    }
+}
