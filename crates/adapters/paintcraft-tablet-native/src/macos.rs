@@ -2,7 +2,7 @@
 use super::*;
 use block2::RcBlock;
 use objc2::{
-    MainThreadMarker,
+    MainThreadMarker, Message,
     rc::Retained,
     runtime::{AnyObject, ProtocolObject},
 };
@@ -22,6 +22,7 @@ use std::{
     },
 };
 mod state;
+mod tracking;
 use state::{Action, Point, State};
 pub(super) struct Monitor {
     token: Retained<AnyObject>,
@@ -31,6 +32,7 @@ pub(super) struct Monitor {
     state: Arc<Mutex<State>>,
     closed: Arc<AtomicBool>,
     emitter: Emitter,
+    tracking: Option<tracking::Tracking>,
 }
 impl Monitor {
     pub(super) fn new(
@@ -77,6 +79,11 @@ impl Monitor {
         let callback_closed = closed.clone();
         let callback_emitter = emitter.clone();
         let callback_window = window.clone();
+        let mut tracking = emitter
+            .records
+            .is_some()
+            .then(|| tracking::Tracking::new(&view));
+        let callback_area = tracking.as_ref().map(|t| t.area().retain());
         let block = RcBlock::new(move |event: NonNull<NSEvent>| -> *mut NSEvent {
             // SAFETY: AppKit provides a live event for this local-monitor call.
             let event_ref = unsafe { event.as_ref() };
@@ -91,6 +98,7 @@ impl Monitor {
                     &callback_state,
                     &callback_emitter,
                     mtm,
+                    callback_area.as_deref(),
                 );
                 // This is an explicit recovery observation, not a replacement
                 // for button edges or per-event queued mouse history.
@@ -240,6 +248,9 @@ impl Monitor {
                 &block,
             )
         });
+        if let Some(tracking) = &mut tracking {
+            tracking.attach();
+        }
         Ok(Self {
             token,
             observers,
@@ -248,6 +259,7 @@ impl Monitor {
             state,
             closed,
             emitter,
+            tracking,
         })
     }
     pub(super) fn cancel(&self) {
@@ -259,6 +271,8 @@ impl Monitor {
 impl Drop for Monitor {
     fn drop(&mut self) {
         self.closed.store(true, Ordering::Release);
+        // Retire the owned area while its native view and monitor remain alive.
+        self.tracking.take();
         // SAFETY: tokens come from these exact APIs, remain retained, and the
         // Installation guard is !Send so retirement runs on the creating thread.
         unsafe {
@@ -279,8 +293,14 @@ fn process(
     state: &Mutex<State>,
     emitter: &Emitter,
     mtm: MainThreadMarker,
+    tracking: Option<&objc2_app_kit::NSTrackingArea>,
 ) -> bool {
     let kind = event.r#type();
+    if matches!(kind, NSEventType::MouseEntered | NSEventType::MouseExited)
+        && !tracking::is_ours(event, tracking)
+    {
+        return false;
+    }
     let matches_window = event
         .window(mtm)
         .is_some_and(|w| std::ptr::eq(w.as_ref(), window));
