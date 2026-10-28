@@ -576,3 +576,68 @@ fn pen_only_retirement_does_not_abandon_a_paused_genuine_gui_navigation_job() {
     assert_eq!(host.app.editor.publications(), before + 1);
     assert_eq!(host.app.editor.undo_depth(), depth - 1);
 }
+
+#[test]
+fn actual_undo_widget_requires_the_exact_healthy_native_installation() {
+    for experience in [Experience::Classic, Experience::Studio] {
+        for matching in [true, false] {
+            let (mut host, ctx, undo, _) = setup(experience);
+            let source = paintcraft_tablet_native::TestInstallation::default();
+            let other = paintcraft_tablet_native::TestInstallation::default();
+            let epoch = source.source_epoch();
+            assert_ne!(epoch, other.source_epoch());
+            let before = host.app.editor.document_snapshot();
+            let depth = host.app.editor.undo_depth();
+            let ppp = host
+                .ingress
+                .lock()
+                .unwrap()
+                .view()
+                .unwrap()
+                .pixels_per_point;
+            host.bind_delivery(if matching {
+                source.delivery_check()
+            } else {
+                other.delivery_check()
+            });
+            for (ordinal, pressed) in [(0, true), (1, false)] {
+                host.capture_endpoint()(CaptureRecord {
+                    installation: epoch,
+                    ordinal,
+                    event: CaptureEvent::Mouse(MouseRecord {
+                        kind: MouseKind::Button { number: 0, pressed },
+                        position: WindowPosition::PhysicalPixels(
+                            f64::from(undo.x) * ppp,
+                            f64::from(undo.y) * ppp,
+                        ),
+                        client: true,
+                        modifiers: Modifiers::default(),
+                        time: Time {
+                            epoch,
+                            ..time(ordinal)
+                        },
+                    }),
+                })
+                .unwrap();
+            }
+            if matching {
+                finish(&mut host, &ctx);
+                assert_eq!(host.app.editor.undo_depth(), depth - 1);
+                assert_eq!(host.app.editor.redo_depth(), 1);
+                assert!(!host.app.editor.document().same_semantics(&before));
+            } else {
+                assert!(host.snapshot(DeliveryHealth::Ready).unwrap());
+                let mut result = host.step(&ctx, input()).unwrap();
+                result.output.textures_delta.clear();
+                assert_eq!(result.progress, Progress::Retired);
+                assert!(result.error.is_some());
+                assert_eq!(host.app.editor.undo_depth(), depth);
+                assert_eq!(host.app.editor.redo_depth(), 0);
+                assert!(host.app.editor.document().same_semantics(&before));
+            }
+            let check = source.delivery_check();
+            drop(source);
+            assert!(!check.authorize_installation(epoch, || panic!("retired fixture")));
+        }
+    }
+}

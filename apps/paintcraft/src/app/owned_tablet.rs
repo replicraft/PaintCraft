@@ -368,6 +368,21 @@ impl Host {
                 "Bind the actual native installation before ordered intake",
             ));
         }
+        if let Some(delivery) = &self.delivery {
+            // Copy only the producer identity under ingress, then release it
+            // before acquiring the delivery gate. No GUI work is authorized by
+            // a healthy handle belonging to a different native installation.
+            let installation = self
+                .ingress
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .source_epoch();
+            let current = match installation {
+                Some(epoch) => delivery.authorize_installation(epoch, || true),
+                None => delivery.authorize(|| true),
+            };
+            self.delivery_failed |= !current;
+        }
         if self.delivery_failed || health == DeliveryHealth::Failed {
             // Abandon matching queued/ready result before App::ui can poll it.
             // Unrelated pre-existing jobs have no matching source activation.

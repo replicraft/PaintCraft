@@ -7,6 +7,10 @@ rust-version.workspace = true
 license-file.workspace = true
 publish.workspace = true
 
+[features]
+# Headless integration controls only; normal application builds do not enable it.
+test-support = []
+
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-input.workspace = true

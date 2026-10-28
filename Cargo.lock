@@ -3438,6 +3438,7 @@ dependencies = [
  "paintcraft-render",
  "paintcraft-runtime",
  "paintcraft-studio",
+ "paintcraft-tablet-native",
  "paintcraft-tools",
  "paintcraft-ui",
  "pollster 0.4.0",

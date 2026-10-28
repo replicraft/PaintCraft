@@ -47,7 +47,9 @@ impl Scope {
     pub(crate) fn check(&self) -> Result<()> {
         let current = || self.source.is_current();
         let valid = match &self.delivery {
-            Some(delivery) => delivery.authorize(current),
+            Some(delivery) => {
+                delivery.authorize_installation(self.activation.source_epoch, current)
+            }
             // Headless controls exercise the real Source guard separately from
             // adapter gate controls. Runtime never has a synthetic Ready handle.
             #[cfg(test)]

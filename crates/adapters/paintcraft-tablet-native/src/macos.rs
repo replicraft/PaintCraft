@@ -18,12 +18,11 @@ use std::{
     ptr::NonNull,
     sync::{
         Mutex,
-        atomic::{AtomicBool, AtomicU64, Ordering},
+        atomic::{AtomicBool, Ordering},
     },
 };
 mod state;
 use state::{Action, Point, State};
-static EPOCH: AtomicU64 = AtomicU64::new(1);
 pub(super) struct Monitor {
     token: Retained<AnyObject>,
     observers: Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>,
@@ -56,14 +55,13 @@ impl Monitor {
                 "Tablet view has no window",
             )
         })?;
-        let epoch = EPOCH
-            .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
-            .map_err(|_| {
-                Error::new(
-                    ErrorCode::ResourceLimit,
-                    "Tablet installation epoch exhausted",
-                )
-            })?;
+        let epoch = emitter.gate.source_epoch();
+        if epoch == 0 {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "Tablet installation epoch exhausted",
+            ));
+        }
         if emitter.records.is_some() && NSEvent::pressedMouseButtons() != 0 {
             return Err(Error::new(
                 ErrorCode::TargetInvalid,

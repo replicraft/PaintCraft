@@ -1,4 +1,6 @@
 //! Atomic ingress transaction: never drain partially delivered input.
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
+use std::sync::atomic::AtomicU64;
 use std::sync::{
     Arc, Mutex,
     atomic::{AtomicBool, Ordering},
@@ -16,6 +18,7 @@ pub(crate) struct Gate(Arc<State>);
 #[derive(Debug)]
 struct State {
     transaction: Mutex<()>,
+    source_epoch: u64,
     failed: AtomicBool,
 }
 /// Sealed lifetime authority issued by an installed native adapter. Clones do
@@ -23,6 +26,18 @@ struct State {
 #[derive(Clone, Debug)]
 pub struct DeliveryCheck(Arc<State>);
 impl DeliveryCheck {
+    /// Authorize only records from this exact installed source. Invalid or
+    /// foreign installation identifiers never invoke the supplied check.
+    pub fn authorize_installation(
+        &self,
+        installation: u64,
+        current: impl FnOnce() -> bool,
+    ) -> bool {
+        if installation == 0 || installation == u64::MAX || installation != self.0.source_epoch {
+            return false;
+        }
+        self.authorize(current)
+    }
     /// Authorize only a short context-free metadata check. Lock order is delivery
     /// then receiver ingress. No GUI, editor mutation, event pumping or Sink call
     /// may run here. The final successful failure read is the publication
@@ -56,10 +71,23 @@ pub(crate) enum Emission {
 #[cfg(any(target_os = "macos", target_os = "windows", test))]
 impl Gate {
     pub(crate) fn new() -> Self {
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        Self::from_counter(&NEXT)
+    }
+    fn from_counter(counter: &AtomicU64) -> Self {
+        let epoch = counter
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| {
+                n.checked_add(1).filter(|next| *next != u64::MAX)
+            })
+            .unwrap_or(0);
         Self(Arc::new(State {
+            source_epoch: epoch,
             transaction: Mutex::new(()),
-            failed: AtomicBool::new(false),
+            failed: AtomicBool::new(epoch == 0),
         }))
+    }
+    pub(crate) fn source_epoch(&self) -> u64 {
+        self.0.source_epoch
     }
     #[cfg(any(target_os = "macos", test))]
     pub(crate) fn emit(&self, sink: impl FnOnce() -> bool) -> Emission {
@@ -147,5 +175,78 @@ mod tests {
             Emission::FailedNow
         ));
         assert!(!check.authorize(|| true));
+    }
+}
+
+#[cfg(test)]
+mod installation_tests {
+    use super::*;
+    #[test]
+    fn exact_live_installation_is_required_before_callback() {
+        let a = Gate::new();
+        let b = Gate::new();
+        let check = a.check();
+        assert_ne!(a.source_epoch(), b.source_epoch());
+        for wrong in [0, u64::MAX, b.source_epoch()] {
+            assert!(!check.authorize_installation(wrong, || panic!("foreign callback")));
+        }
+        assert!(check.authorize_installation(a.source_epoch(), || true));
+        a.fail();
+        assert!(!check.authorize_installation(a.source_epoch(), || panic!("retired callback")));
+    }
+    #[test]
+    fn exhausted_epoch_cannot_authorize_or_deliver() {
+        let counter = AtomicU64::new(u64::MAX - 1);
+        let gate = Gate::from_counter(&counter);
+        assert_eq!(gate.source_epoch(), 0);
+        assert_eq!(gate.with_delivery(|health| health), DeliveryHealth::Failed);
+        assert!(
+            !gate
+                .check()
+                .authorize_installation(0, || panic!("exhausted callback"))
+        );
+        assert!(matches!(
+            gate.emit(|| panic!("exhausted sink")),
+            Emission::Fenced
+        ));
+    }
+}
+
+/// Headless integration fixture, available only through the explicit dev feature.
+/// Owns the real delivery gate; dropping it retires every cloned check.
+#[cfg(all(
+    feature = "test-support",
+    any(target_os = "macos", target_os = "windows")
+))]
+#[derive(Debug)]
+pub struct TestInstallation(Gate);
+#[cfg(all(
+    feature = "test-support",
+    any(target_os = "macos", target_os = "windows")
+))]
+impl Default for TestInstallation {
+    fn default() -> Self {
+        Self(Gate::new())
+    }
+}
+#[cfg(all(
+    feature = "test-support",
+    any(target_os = "macos", target_os = "windows")
+))]
+impl TestInstallation {
+    pub fn source_epoch(&self) -> u64 {
+        self.0.source_epoch()
+    }
+    pub fn delivery_check(&self) -> DeliveryCheck {
+        self.0.check()
+    }
+}
+#[cfg(all(
+    feature = "test-support",
+    any(target_os = "macos", target_os = "windows")
+))]
+impl Drop for TestInstallation {
+    fn drop(&mut self) {
+        self.0.fail();
     }
 }

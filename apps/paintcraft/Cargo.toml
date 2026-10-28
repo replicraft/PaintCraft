@@ -40,6 +40,9 @@ egui-winit.workspace = true
 winit.workspace = true
 pollster.workspace = true
 
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+paintcraft-tablet-native = { workspace = true, features = ["test-support"] }
+
 [dev-dependencies]
 criterion.workspace = true
 pollster.workspace = true

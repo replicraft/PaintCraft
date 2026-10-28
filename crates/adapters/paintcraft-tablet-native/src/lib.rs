@@ -3,6 +3,11 @@ mod capabilities;
 #[cfg(any(target_os = "macos", test))]
 mod clock;
 mod delivery;
+#[cfg(all(
+    feature = "test-support",
+    any(target_os = "macos", target_os = "windows")
+))]
+pub use delivery::TestInstallation;
 pub use delivery::{DeliveryCheck, DeliveryHealth};
 mod collector;
 mod packet;
