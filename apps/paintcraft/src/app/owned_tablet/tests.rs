@@ -92,6 +92,7 @@ fn pen(host: &Host, sequence: u64, phase: Phase, at: (f64, f64)) {
         installation: 1,
         ordinal: sequence,
         event: CaptureEvent::Tablet(NativePacket {
+            button_edge: None,
             raw: RawSample {
                 identity: Identity {
                     device: 7,
@@ -557,4 +558,21 @@ fn replaying_acquired_backing_boundary_keeps_newer_completed_contact_and_cancels
             older.layers[&layer].raster.get(34, 18)
         );
     }
+}
+
+#[test]
+fn pen_only_retirement_does_not_abandon_a_paused_genuine_gui_navigation_job() {
+    let (mut host, ctx, undo, _) = setup(Experience::Studio);
+    let before = host.app.editor.publications();
+    let depth = host.app.editor.undo_depth();
+    let release = host.app.editing.clone().unwrap().pause();
+    mouse(&host, 0, true, undo);
+    mouse(&host, 1, false, undo);
+    assert_eq!(tick(&mut host, &ctx).unwrap(), Progress::Advanced);
+    assert_eq!(tick(&mut host, &ctx).unwrap(), Progress::WaitingForOwnEdit);
+    assert!(!host.ingress.lock().unwrap().source().retire_pen());
+    release.send(()).unwrap();
+    finish(&mut host, &ctx);
+    assert_eq!(host.app.editor.publications(), before + 1);
+    assert_eq!(host.app.editor.undo_depth(), depth - 1);
 }

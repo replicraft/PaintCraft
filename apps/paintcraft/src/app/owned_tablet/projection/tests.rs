@@ -30,6 +30,7 @@ fn pen(ordinal: u64, phase: Phase) -> CaptureRecord {
         installation: 7,
         ordinal,
         event: CaptureEvent::Tablet(paintcraft_platform::tablet::NativePacket {
+            button_edge: None,
             raw: RawSample {
                 identity: Identity {
                     device: 1,

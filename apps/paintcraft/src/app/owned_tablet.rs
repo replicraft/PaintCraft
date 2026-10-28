@@ -18,12 +18,12 @@ enum Origin {
     },
     Gui(u64),
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 struct Barrier {
     before: Owner,
     origin: Origin,
     activation: Activation,
-    cancellation_epoch: u64,
+    publication: paintcraft_ui::pen_input::PublicationGuard,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Progress {
@@ -82,7 +82,9 @@ impl Host {
         let mut references =
             budget.account(paintcraft_core::types::resources::AllocationClass::PaintMetadata);
         references.resize(
-            (2 * limit * std::mem::size_of::<usize>() + 4 * std::mem::size_of::<Scope>()) as u64,
+            (2 * limit * std::mem::size_of::<usize>()
+                + 4 * std::mem::size_of::<Scope>()
+                + 2 * std::mem::size_of::<Barrier>()) as u64,
         )?;
         Ok(Self {
             app,
@@ -167,7 +169,7 @@ impl Host {
             self.app.editor.abandon_native_activation(activation);
         }
     }
-    fn retire(&mut self) {
+    pub(crate) fn retire(&mut self) {
         self.cancel_own_work();
         self.pending = None;
         self.waiting = None;
@@ -421,14 +423,8 @@ impl Host {
             let result = self.publish_view();
             return Ok(self.completed(ctx, output, Progress::Retired, result));
         }
-        if let Some(barrier) = self.waiting {
-            let source_current = self
-                .ingress
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .source()
-                .cancellation_epoch()
-                == barrier.cancellation_epoch;
+        if let Some(barrier) = self.waiting.clone() {
+            let source_current = barrier.publication.is_current();
             if self.app.action_context().blocked
                 || self.app.ime_composing
                 || self.app.owned_owner() != barrier.before
@@ -495,12 +491,6 @@ impl Host {
             .unwrap_or_else(|e| e.into_inner())
             .source_epoch()
             .ok_or_else(|| stale("Missing native source installation"))?;
-        let cancellation_epoch = self
-            .ingress
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .source()
-            .cancellation_epoch();
         let source = self
             .ingress
             .lock()
@@ -540,7 +530,7 @@ impl Host {
                 {
                     origin = Some(Origin::Gui(sequence));
                 }
-                if batch.frame.cancelled {
+                if batch.frame.reset_gui_pointer {
                     ctx.input_mut(|i| i.pointer = Default::default());
                 }
                 input
@@ -571,6 +561,7 @@ impl Host {
         let activation = sequence
             .filter(|_| actionable)
             .map(|sequence| Activation::new(before.session, source_epoch, sequence));
+        let publication_scope = publication.clone();
         if let Some(activation) = activation {
             let Some(publication) = publication else {
                 self.retire();
@@ -589,7 +580,7 @@ impl Host {
                 before,
                 origin,
                 activation,
-                cancellation_epoch,
+                publication: publication_scope.expect("source publication guard"),
             };
             if self.app.editor.has_native_work(activation) {
                 self.own_work = Some(activation);

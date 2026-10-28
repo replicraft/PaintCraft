@@ -215,9 +215,12 @@ impl App {
                         native::Delivery::ReceiverPointer => Delivery::ReceiverPointer,
                         native::Delivery::SystemPointer => Delivery::SystemPointer,
                     };
-                    sink.submit_native(delivery, packet.raw, |scale| {
-                        packet.into_logical(scale).map(|raw| raw.logical_position)
-                    })
+                    sink.submit_native_with_button_edge(
+                        delivery,
+                        packet.raw,
+                        packet.button_edge,
+                        |scale| packet.into_logical(scale).map(|raw| raw.logical_position),
+                    )
                     .map_or(true, |route| route.consume())
                 }),
                 Arc::new(move |boundary| {
@@ -325,12 +328,19 @@ impl App {
             return;
         }
         if receiver.pass.cancelled() {
+            let cancel_editor = receiver.controller_owned
+                || receiver.fallback_button.is_some()
+                || receiver.pass.reset_gui_pointer();
             receiver.fallback_button = None;
             receiver.controller_owned = false;
             // Clear click/drag state before releases: cancelled UI contact is not
             // a click. No GUI/editor access occurs inside with_delivery.
-            ctx.input_mut(|state| state.pointer = Default::default());
-            self.editor.cancel_gesture();
+            if receiver.pass.reset_gui_pointer() {
+                ctx.input_mut(|state| state.pointer = Default::default());
+            }
+            if cancel_editor {
+                self.editor.cancel_gesture();
+            }
         }
         if receiver.pass.suppress_legacy_pointer() {
             input.events.retain(|event| !pointer_event(event));

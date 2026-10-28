@@ -153,9 +153,12 @@ impl Projection {
                     }
                     let route = self
                         .source
-                        .submit_native(Delivery::ReceiverPointer, packet.raw, |scale| {
-                            packet.into_logical(scale).map(|raw| raw.logical_position)
-                        })
+                        .submit_native_with_button_edge(
+                            Delivery::ReceiverPointer,
+                            packet.raw,
+                            packet.button_edge,
+                            |scale| packet.into_logical(scale).map(|raw| raw.logical_position),
+                        )
                         .map_err(|_| RecordFault::Invalid)?;
                     self.span_first.get_or_insert(record.ordinal);
                     // Keep a canvas contact together until its real terminal or
