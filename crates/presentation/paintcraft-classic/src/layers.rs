@@ -154,12 +154,18 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
             for row in rows {
                 ui.push_id(row.id, |ui| {
                     ui.horizontal(|ui| {
+                        let fallback_name =
+                            row.name.trim().is_empty().then(|| t!(ui.ctx(), "Layer"));
+                        let accessible_name = fallback_name.as_deref().unwrap_or(row.name);
                         let mut visible = row.visible;
                         let toggle = ui
                             .checkbox(&mut visible, t!(ui.ctx(), ""))
                             .on_hover_text(t!(ui.ctx(), "Visible"));
-                        let accessible =
-                            t!(ui.ctx(), "Show { $name }", &[("name", row.name.to_owned())]);
+                        let accessible = t!(
+                            ui.ctx(),
+                            "Show { $name }",
+                            &[("name", accessible_name.to_owned())]
+                        );
                         toggle.widget_info(|| {
                             egui::WidgetInfo::selected(
                                 egui::Role::CheckBox,
@@ -204,6 +210,16 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                             _ => row.name.to_owned(),
                         };
                         let response = painted.response.on_hover_text(hint);
+                        if row.name.trim().is_empty() {
+                            response.widget_info(|| {
+                                egui::WidgetInfo::selected(
+                                    egui::Role::Button,
+                                    ui.is_enabled(),
+                                    selected,
+                                    accessible_name,
+                                )
+                            });
+                        }
                         if response.clicked() {
                             actions.push(Action::Select(row.id));
                         }

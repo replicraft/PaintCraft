@@ -2,6 +2,10 @@
 use super::*;
 use paintcraft_ui::t;
 
+#[cfg(test)]
+#[path = "layer_panel/accessibility_tests.rs"]
+mod accessibility_tests;
+
 impl App {
     fn classic_layer_list(&mut self, ui: &mut egui::Ui) {
         use paintcraft_classic::layers::{Action as Intent, Layer};
@@ -96,12 +100,17 @@ impl App {
             });
             for row in self.editor.layers() {
                 ui.horizontal(|ui| {
+                    let fallback_name = row.name.trim().is_empty().then(|| t!(ui.ctx(), "Layer"));
+                    let accessible_name = fallback_name.as_deref().unwrap_or(row.name.as_str());
                     let mut visible = row.visible;
                     let toggle = ui
                         .checkbox(&mut visible, t!(ui.ctx(), ""))
                         .on_hover_text(t!(ui.ctx(), "Visible"));
-                    let accessible =
-                        t!(ui.ctx(), "Show { $name }", &[("name", row.name.to_owned())]);
+                    let accessible = t!(
+                        ui.ctx(),
+                        "Show { $name }",
+                        &[("name", accessible_name.to_owned())]
+                    );
                     toggle.widget_info(|| {
                         egui::WidgetInfo::selected(egui::Role::CheckBox, true, visible, &accessible)
                     });
@@ -114,10 +123,19 @@ impl App {
                             },
                         );
                     }
-                    if ui
-                        .selectable_label(target == Some(row.id), &row.name)
-                        .clicked()
-                    {
+                    let selected = target == Some(row.id);
+                    let response = ui.selectable_label(selected, &row.name);
+                    if row.name.trim().is_empty() {
+                        response.widget_info(|| {
+                            egui::WidgetInfo::selected(
+                                egui::Role::Button,
+                                ui.is_enabled(),
+                                selected,
+                                accessible_name,
+                            )
+                        });
+                    }
+                    if response.clicked() {
                         self.editor.set_target(row.id);
                     }
                 });
