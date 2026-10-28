@@ -462,3 +462,35 @@ fn whitespace_text_finishes_as_a_guarded_noop_and_preserves_the_redo_branch() {
     assert!(!editor.is_dirty());
     assert!(editor.status().contains("changed nothing"));
 }
+
+/// Tests can pause the actual successful preparation while its own Pending and
+/// resource lease remain live, independently of admission contention.
+#[derive(Debug)]
+pub(super) struct CompletionGate {
+    prepared: mpsc::SyncSender<()>,
+    release: mpsc::Receiver<()>,
+}
+impl Service {
+    pub(crate) fn pause_next_completion(&self) -> (mpsc::Receiver<()>, mpsc::Sender<()>) {
+        let (prepared, observe) = mpsc::sync_channel(1);
+        let (release, wait) = mpsc::channel();
+        let mut gate = self.completion_gate.lock().unwrap();
+        assert!(gate.is_none());
+        *gate = Some(CompletionGate {
+            prepared,
+            release: wait,
+        });
+        (observe, release)
+    }
+    pub(super) fn gate_completion(&self, task: dispatch::Task) -> dispatch::Task {
+        let Some(gate) = self.completion_gate.lock().unwrap().take() else {
+            return task;
+        };
+        Box::new(move |cancel| {
+            let result = task(cancel);
+            gate.prepared.send(()).unwrap();
+            gate.release.recv_timeout(Duration::from_secs(10)).unwrap();
+            result
+        })
+    }
+}

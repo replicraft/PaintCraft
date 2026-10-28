@@ -16,7 +16,7 @@ impl Editor {
             return None;
         }
         let action = match self.actions.front() {
-            Some(background::Queued::Edit(action)) => Some(action),
+            Some(background::Queued::Edit(queued)) => Some(&queued.action),
             Some(background::Queued::FileBarrier(_)) => None,
             None => self.outbox.pending().next(),
         }?;

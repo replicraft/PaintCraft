@@ -15,6 +15,7 @@ pub(super) struct Waiting {
     done: String,
     empty: &'static str,
     target_alias: Option<&'static str>,
+    pub(super) native_activation: Option<native_publication::Scope>,
 }
 impl std::fmt::Debug for Waiting {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -39,6 +40,7 @@ impl Editor {
                 done,
                 empty,
                 target_alias,
+                native_activation: self.native_activation.clone(),
             }),
             Err(error) => self.dispatch_failed(error),
         }
@@ -55,9 +57,11 @@ impl Editor {
             done,
             empty,
             target_alias,
+            native_activation,
         } = waiting;
         match service.submit_retained(task, done.clone(), empty, target_alias) {
-            Ok(pending) => {
+            Ok(mut pending) => {
+                pending.native_activation = native_activation;
                 self.status = format!("{done}…");
                 self.pending_edit = Some(pending);
             }
@@ -68,6 +72,7 @@ impl Editor {
                     done,
                     empty,
                     target_alias,
+                    native_activation,
                 });
                 self.status = "Waiting for editing worker capacity; Escape cancels the edit".into();
             }

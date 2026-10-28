@@ -39,7 +39,9 @@ impl Editor {
         if !matches!(action, Action::Text { .. } | Action::PickColor(_)) {
             self.commit_text();
         }
-        let accepted = self.outbox.push(token, action);
+        let accepted = self
+            .outbox
+            .push(token, action, self.native_activation.clone());
         if accepted {
             self.preview_queue_revision.advance();
         }

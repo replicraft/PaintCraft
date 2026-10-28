@@ -38,6 +38,8 @@ pub(super) enum Completion {
 #[derive(Clone, Debug)]
 pub(crate) struct Service {
     executor: Arc<Mutex<Executor<Completion>>>,
+    #[cfg(test)]
+    completion_gate: Arc<Mutex<Option<tests::CompletionGate>>>,
     context: egui::Context,
     pub(super) residency: paintcraft_runtime::SharedBudget,
     pub(super) metadata: paintcraft_runtime::SharedBudget,
@@ -49,6 +51,7 @@ pub(super) struct Pending {
     done: String,
     empty: &'static str,
     target_alias: Option<&'static str>,
+    pub(super) native_activation: Option<native_publication::Scope>,
 }
 impl Pending {
     pub(super) fn poll(&self) -> Option<Result<Completion>> {
@@ -111,6 +114,8 @@ impl Service {
                 budget,
             )?)),
             context,
+            #[cfg(test)]
+            completion_gate: Arc::new(Mutex::new(None)),
             residency: paintcraft_raster::Admission::new(0).residency_budget(),
             metadata: paintcraft_raster::Admission::new(0).paint_metadata_budget(),
         })
@@ -165,6 +170,8 @@ impl Service {
         empty: &'static str,
         target_alias: Option<&'static str>,
     ) -> std::result::Result<Pending, dispatch::Rejected> {
+        #[cfg(test)]
+        let task = self.gate_completion(task);
         let context = self.context.clone();
         let mut executor = match self.lock() {
             Ok(executor) => executor,
@@ -187,12 +194,16 @@ impl Service {
             done,
             empty,
             target_alias,
+            native_activation: None,
         })
     }
 }
+// Keep the admitted scope inline through the existing FIFO. Boxing would add
+// an unpriced infallible allocation for every accepted activation.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub(super) enum Queued {
-    Edit(Action),
+    Edit(native_publication::QueuedEdit),
     FileBarrier(Uuid),
 }
 
@@ -212,8 +223,7 @@ impl Editor {
     /// Place a snapshot boundary after all earlier accepted activations.
     /// Later activations wait until the file coordinator releases this boundary.
     pub(crate) fn queue_file_barrier(&mut self) -> Uuid {
-        self.actions
-            .extend(self.outbox.drain().into_iter().map(Queued::Edit));
+        self.drain_activations();
         let id = Uuid::new_v4();
         self.actions.push_back(Queued::FileBarrier(id));
         self.preview_queue_revision.advance();
@@ -361,6 +371,7 @@ impl Editor {
                     empty: pending.empty,
                     last_probe: std::time::Instant::now(),
                     target_alias: pending.target_alias,
+                    native_activation: pending.native_activation.clone(),
                 });
                 return;
             }
@@ -374,21 +385,56 @@ impl Editor {
             Ok(Completion::Pick(picked)) => self.accept_pick(*picked),
             Ok(Completion::Edit(prepared)) => self
                 .session
-                .publish_prepared(prepared, || Ok(()))
+                .publish_prepared(prepared, || {
+                    native_publication::check(pending.native_activation.as_ref())
+                })
                 .map(|receipt| {
                     self.record_native_publication(before, &receipt);
+                    self.record_native_job_activation(
+                        pending
+                            .native_activation
+                            .as_ref()
+                            .map(|scope| scope.activation),
+                    );
                     self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
                 }),
             Ok(Completion::PenEdit(prepared)) => {
-                prepared.publish(&mut self.session).map(|receipt| {
-                    self.record_native_publication(before, &receipt);
-                    self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
-                })
+                let completion = prepared.source_completion();
+                prepared
+                    .publish_with(&mut self.session, || {
+                        native_publication::check(pending.native_activation.as_ref())
+                    })
+                    .map(|receipt| {
+                        self.record_native_pen_publication(before, &receipt, completion);
+                        self.record_native_job_activation(
+                            pending
+                                .native_activation
+                                .as_ref()
+                                .map(|scope| scope.activation),
+                        );
+                        self.accept_edit(
+                            &receipt,
+                            &pending.done,
+                            pending.target_alias,
+                            before_canvas,
+                        );
+                    })
             }
             Ok(Completion::Navigation(prepared)) => self
                 .session
-                .publish_navigation(prepared, || Ok(()))
+                .publish_navigation(prepared, || {
+                    native_publication::check(pending.native_activation.as_ref())
+                })
                 .map(|navigation| {
+                    self.record_native_navigation(before, navigation.as_ref());
+                    if navigation.is_some() {
+                        self.record_native_job_activation(
+                            pending
+                                .native_activation
+                                .as_ref()
+                                .map(|scope| scope.activation),
+                        );
+                    }
                     self.status = if navigation.is_some() {
                         pending.done.clone()
                     } else {

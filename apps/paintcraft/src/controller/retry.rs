@@ -62,6 +62,7 @@ pub(super) struct Deferred {
 }
 #[derive(Debug)]
 pub(super) struct Waiting {
+    pub(super) native_activation: Option<native_publication::Scope>,
     pub(super) deferred: Deferred,
     pub(super) done: String,
     pub(super) last_probe: std::time::Instant,
@@ -250,7 +251,8 @@ impl Editor {
             waiting.target_alias,
         );
         match result {
-            Ok(pending) => {
+            Ok(mut pending) => {
+                pending.native_activation = waiting.native_activation.clone();
                 self.waiting_edit = None;
                 self.pending_edit = Some(pending);
                 self.status = "Retrying edit after memory capacity became available…".into();

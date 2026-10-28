@@ -24,7 +24,10 @@ impl Editor {
         self.actions
             .iter()
             .filter_map(|action| match action {
-                background::Queued::Edit(Action::Stroke(stroke)) => Some(stroke),
+                background::Queued::Edit(native_publication::QueuedEdit {
+                    action: Action::Stroke(stroke),
+                    ..
+                }) => Some(stroke),
                 _ => None,
             })
             .chain(self.outbox.pending().filter_map(|action| match action {
@@ -114,10 +117,15 @@ impl Editor {
         if self.file_barrier.is_some()
             || (self.has_inflight_edit()
                 && !matches!(self.publication_preview, Some(Preview::Path(_))))
-            || self
-                .actions
-                .iter()
-                .any(|action| !matches!(action, background::Queued::Edit(Action::Stroke(_))))
+            || self.actions.iter().any(|action| {
+                !matches!(
+                    action,
+                    background::Queued::Edit(native_publication::QueuedEdit {
+                        action: Action::Stroke(_),
+                        ..
+                    })
+                )
+            })
             || self
                 .outbox
                 .pending()
@@ -154,7 +162,11 @@ impl Editor {
         }
         let mut boundary = false;
         for action in &self.actions {
-            if let background::Queued::Edit(Action::Stroke(stroke)) = action {
+            if let background::Queued::Edit(native_publication::QueuedEdit {
+                action: Action::Stroke(stroke),
+                ..
+            }) = action
+            {
                 paths.push(stroke.clone());
             } else {
                 boundary = true;

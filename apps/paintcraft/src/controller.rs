@@ -70,7 +70,7 @@ use paintcraft_formats::recovery::{Checkpoint, Recovery, RecoveryToken};
 use paintcraft_formats::{pcnd, save};
 use uuid::Uuid;
 
-use paintcraft_ui::outbox::{Outbox, Token};
+use paintcraft_ui::outbox::Token;
 
 use paintcraft_tools::ToolState;
 pub use paintcraft_tools::{Action, Preview, ShapeStyle, Tool, ToolOptions};
@@ -95,7 +95,7 @@ pub struct Editor {
     floating_commit_on_release: bool,
     text_renderer: Option<crate::text::Shared>,
     target: Option<Uuid>,
-    outbox: Outbox<Action>,
+    outbox: native_publication::Activations,
     actions: std::collections::VecDeque<background::Queued>,
     file_barrier: Option<Uuid>,
     editing: Option<background::Service>,
@@ -110,6 +110,8 @@ pub struct Editor {
     preview_cache: preview_cache::Cache,
     pen_base: Option<paintcraft_editor::session::Ticket>,
     native_publication: Option<native_publication::Witness>,
+    native_navigation: Option<native_publication::NavigationWitness>,
+    native_activation: Option<native_publication::Scope>,
     path: Option<PathBuf>,
     destination: Option<crate::destination::Binding>,
     status: String,
@@ -168,7 +170,7 @@ impl Editor {
             floating_commit_on_release: true,
             text_renderer: None,
             target,
-            outbox: Outbox::default(),
+            outbox: native_publication::Activations::default(),
             actions: Default::default(),
             file_barrier: None,
             editing: None,
@@ -183,6 +185,8 @@ impl Editor {
             preview_cache: Default::default(),
             pen_base: None,
             native_publication: None,
+            native_navigation: None,
+            native_activation: None,
             destination: path
                 .as_ref()
                 .map(|_| crate::destination::Binding::authorized()),
@@ -430,7 +434,9 @@ impl Editor {
     }
     pub fn commit_text(&mut self) {
         if let Some((token, action)) = self.tools.commit_text()
-            && self.outbox.push(token, action)
+            && self
+                .outbox
+                .push(token, action, self.native_activation.clone())
         {
             self.preview_queue_revision.advance();
         }
@@ -492,12 +498,7 @@ impl Editor {
         if !self.outbox.is_empty() {
             self.preview_queue_revision.advance();
         }
-        self.actions.extend(
-            self.outbox
-                .drain()
-                .into_iter()
-                .map(background::Queued::Edit),
-        );
+        self.drain_activations();
         if self.file_barrier.is_some() {
             return self.publications() - before;
         }
@@ -517,7 +518,7 @@ impl Editor {
                 if self.publication_preview.is_none() {
                     self.publication_preview =
                         self.actions.front().and_then(|action| match action {
-                            background::Queued::Edit(action) => background::preview(action),
+                            background::Queued::Edit(queued) => background::preview(&queued.action),
                             _ => None,
                         });
                     if self.publication_preview.is_some() {
@@ -533,8 +534,8 @@ impl Editor {
             self.publication_preview = self
                 .editing
                 .as_ref()
-                .and_then(|_| background::preview(&action));
-            self.execute(action);
+                .and_then(|_| background::preview(&action.action));
+            self.execute_activation(action);
             if !self.has_inflight_edit() {
                 self.publication_preview = None;
             }
@@ -710,7 +711,12 @@ impl Editor {
                 if self.start_navigation(background::NavigationRequest::Undo) {
                     return;
                 }
-                self.status = match self.session.undo() {
+                let before = self.session.ticket();
+                let result = self.session.undo();
+                if let Ok(navigation) = &result {
+                    self.record_native_navigation(before, navigation.as_ref());
+                }
+                self.status = match result {
                     Ok(Some(_)) => "Undo".into(),
                     Ok(None) => "Nothing to undo".into(),
                     Err(error) => format!("Cannot undo: {error}"),
@@ -722,7 +728,12 @@ impl Editor {
                 if self.start_navigation(background::NavigationRequest::Redo) {
                     return;
                 }
-                self.status = match self.session.redo() {
+                let before = self.session.ticket();
+                let result = self.session.redo();
+                if let Ok(navigation) = &result {
+                    self.record_native_navigation(before, navigation.as_ref());
+                }
+                self.status = match result {
                     Ok(Some(_)) => "Redo".into(),
                     Ok(None) => "Nothing to redo".into(),
                     Err(error) => format!("Cannot redo: {error}"),

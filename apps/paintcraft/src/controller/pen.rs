@@ -12,9 +12,19 @@ pub(super) struct Prepared {
     mask: ResolvedPenStroke,
 }
 impl Prepared {
-    pub(super) fn publish(self, session: &mut Session) -> Result<Receipt> {
+    pub(super) fn source_completion(&self) -> Option<super::native_publication::ContactCompletion> {
+        self.source
+            .samples()
+            .last()
+            .and_then(super::native_publication::ContactCompletion::from_last)
+    }
+    pub(super) fn publish_with(
+        self,
+        session: &mut Session,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Receipt> {
         let Self { edit, source, mask } = self;
-        let result = session.publish_prepared(edit, || Ok(()));
+        let result = session.publish_prepared(edit, check);
         drop((source, mask));
         result
     }
@@ -145,8 +155,11 @@ impl Editor {
                 })
                 .and_then(|prepared| {
                     let before = self.session.ticket();
-                    let receipt = prepared.publish(&mut self.session)?;
-                    self.record_native_publication(before, &receipt);
+                    let completion = prepared.source_completion();
+                    let receipt = prepared.publish_with(&mut self.session, || {
+                        native_publication::check(self.native_activation.as_ref())
+                    })?;
+                    self.record_native_pen_publication(before, &receipt, completion);
                     Ok(receipt)
                 });
             match result {
