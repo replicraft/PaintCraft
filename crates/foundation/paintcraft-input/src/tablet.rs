@@ -98,6 +98,13 @@ impl PenButton {
         }
     }
 }
+/// Positive native confidence is distinct from an unavailable classification.
+/// Unspecified is neither an asserted palm nor permission to start a gesture.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FingerConfidence {
+    High,
+    Unspecified,
+}
 /// Actual observed button change, attached to its exact source identity. Never
 /// infer this from held bits, prediction, boundary or historical coalesced data.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

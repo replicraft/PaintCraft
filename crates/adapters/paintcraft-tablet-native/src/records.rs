@@ -87,6 +87,10 @@ pub enum CaptureEvent {
     /// pressure or invented axes. Unmapped terminal/control may lack position.
     /// Predictions cannot claim ownership or clear physical tail fences.
     Finger {
+        /// Exact source facts; primary is never a guessed first local contact.
+        confidence: paintcraft_input::tablet::FingerConfidence,
+        in_contact: bool,
+        primary: bool,
         identity: Identity,
         phase: Phase,
         time: Time,
