@@ -520,3 +520,4 @@ heif-image-item-names-are-not-retained-in-the-new-document = Los nombres de los 
 avif-image-item-names-are-not-retained-in-the-new-document = Los nombres de los elementos de imagen AVIF no se conservan en el documento nuevo.
 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = La entrada se canceló. Levanta el lápiz o suelta los botones del ratón y vuelve a intentarlo.
+pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = Se alcanzó el límite de contactos del lápiz. Guarda tu trabajo y vuelve a cargar esta página para reiniciar la entrada del lápiz.

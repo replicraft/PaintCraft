@@ -520,3 +520,4 @@ heif-image-item-names-are-not-retained-in-the-new-document = HEIF の画像項�
 avif-image-item-names-are-not-retained-in-the-new-document = AVIF の画像項目名は新しいドキュメントに保持されません。
 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = 入力をキャンセルしました。ペンを離すかマウスのボタンを放してから、もう一度お試しください。
+pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = ペン入力の接触数が上限に達しました。作業を保存してから、このページを再読み込みしてペン入力を再開してください。

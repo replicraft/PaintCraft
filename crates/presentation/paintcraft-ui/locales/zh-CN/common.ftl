@@ -520,3 +520,4 @@ heif-image-item-names-are-not-retained-in-the-new-document = 新文档不会保�
 avif-image-item-names-are-not-retained-in-the-new-document = 新文档不会保留 AVIF 图像项目名称。
 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = 输入已取消。请抬起笔或松开鼠标按钮，然后重试。
+pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = 笔输入已达到接触数量上限。请保存工作，然后重新加载此页面以重新启动笔输入。

@@ -520,3 +520,4 @@ heif-image-item-names-are-not-retained-in-the-new-document = Die Namen der HEIF-
 avif-image-item-names-are-not-retained-in-the-new-document = AVIF-Bildelementnamen werden im neuen Dokument nicht beibehalten.
 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = Die Eingabe wurde abgebrochen. Heben Sie den Stift an oder lassen Sie die Maustasten los und versuchen Sie es erneut.
+pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = Die Stifteingabe hat das Kontaktlimit erreicht. Speichern Sie Ihre Arbeit und laden Sie diese Seite neu, um die Stifteingabe neu zu starten.

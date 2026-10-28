@@ -520,3 +520,4 @@ heif-image-item-names-are-not-retained-in-the-new-document = नए दस्त
 avif-image-item-names-are-not-retained-in-the-new-document = नए दस्तावेज़ में AVIF छवि आइटमों के नाम नहीं रखे जाएंगे।
 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = इनपुट रद्द कर दिया गया। पेन उठाएँ या माउस के बटन छोड़ें, फिर दोबारा प्रयास करें।
+pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = पेन इनपुट की संपर्क सीमा पूरी हो गई है। अपना काम सहेजें, फिर पेन इनपुट फिर से शुरू करने के लिए इस पेज को दोबारा लोड करें।

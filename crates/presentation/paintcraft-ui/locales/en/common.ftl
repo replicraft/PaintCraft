@@ -520,3 +520,4 @@ heif-image-item-names-are-not-retained-in-the-new-document = HEIF image item nam
 avif-image-item-names-are-not-retained-in-the-new-document = AVIF image item names are not retained in the new document.
 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = Input was cancelled. Lift the pen or release the mouse buttons, then try again.
+pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = Pen input reached its contact limit. Save your work, then reload this page to restart pen input.
