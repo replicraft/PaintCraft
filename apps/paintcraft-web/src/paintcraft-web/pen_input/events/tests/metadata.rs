@@ -2,7 +2,7 @@ use super::*;
 use paintcraft_core::types::resources::SharedBudget;
 use paintcraft_ui::pen_input::{Owner, Source, View};
 
-fn view() -> View {
+pub(super) fn view() -> View {
     View {
         owner: Owner {
             session: 1,
@@ -27,7 +27,7 @@ fn view() -> View {
         ime: false,
     }
 }
-fn source() -> Source {
+pub(super) fn source() -> Source {
     Source::new(16, 16, &SharedBudget::new(1 << 20)).unwrap()
 }
 fn send(
@@ -38,13 +38,16 @@ fn send(
 ) -> Result<receiver::Route, Invalid> {
     normalizer.observe_cancellation(source.cancellation_epoch());
     event.at = None;
-    let fenced = normalizer.contact_fenced(event.id);
-    let raw = normalizer.sample(event, Provenance::Actual)?;
-    assert_eq!(raw.logical_position, None);
-    let result = deliver(source, raw, fenced, convert);
+    let packet = normalizer
+        .intake(event, Provenance::Actual)?
+        .expect("tracked metadata input");
+    assert_eq!(packet.raw.logical_position, None);
+    let result = deliver_packet(source, packet, convert);
     match result {
-        Ok(receiver::Route::Suppressed) if raw.buttons.0 != 0 => {
-            normalizer.deny_contact(raw.identity.pointer)
+        Ok(receiver::Route::Suppressed)
+            if packet.raw.buttons.0 != 0 && packet.disposition != Disposition::Orphan =>
+        {
+            normalizer.deny_contact(packet.raw.identity.pointer)
         }
         Err(_) => {
             source.cancel();
