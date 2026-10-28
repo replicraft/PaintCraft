@@ -1,6 +1,6 @@
 use super::*;
 use paintcraft_input::{Modifiers, tablet::*};
-fn time() -> Time {
+pub(super) fn time() -> Time {
     Time {
         epoch: 7,
         micros: 500,
@@ -20,7 +20,7 @@ fn mouse(ordinal: u64, kind: MouseKind) -> CaptureRecord {
         }),
     }
 }
-fn pen(ordinal: u64, phase: Phase, buttons: u16) -> CaptureRecord {
+pub(super) fn pen(ordinal: u64, phase: Phase, buttons: u16) -> CaptureRecord {
     CaptureRecord {
         installation: 7,
         ordinal,

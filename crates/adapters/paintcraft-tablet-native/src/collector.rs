@@ -31,6 +31,8 @@ pub enum Collected {
         route: PenRoute,
     },
     Boundary(CaptureRecord),
+    /// Verified source lifetime end; no source clock is reclaimed by Raw Leave.
+    IdentityRetired(CaptureRecord),
     /// Receipt-time barrier, deliberately without a fabricated native ordinal.
     FrameworkBoundary(Boundary),
 }
@@ -59,7 +61,7 @@ pub struct Collector {
     mouse_time: Option<Time>,
     pens: [Option<Pen>; 64],
     // Clock lifetime survives contact-slot release; never silently rebase a
-    // reused identity after Up. This bounded history resets only on reinstall.
+    // reused identity after Up. Reclaim only on a verified true lifetime end.
     times: [Option<(Identity, Time)>; 64],
     owner: Option<Identity>,
     failed: bool,
@@ -150,12 +152,11 @@ impl Collector {
             return Err(RecordFault::Capacity);
         }
         let output = match record.event {
-            CaptureEvent::Boundary {
-                kind: Boundary::ViewInvalidated,
-                ..
+            CaptureEvent::IdentityRetired { identity, time } => {
+                self.retire_identity(identity, time, record.installation)?;
+                Collected::IdentityRetired(record)
             }
-            | CaptureEvent::IdentityRetired { .. }
-            | CaptureEvent::Finger { .. } => {
+            CaptureEvent::Finger { .. } => {
                 // Typed contract is published before the consumer qualification
                 // slice. Never silently accept/drop or alias these semantics.
                 return Err(RecordFault::Unsupported);
@@ -339,10 +340,6 @@ impl Collector {
     /// Keyboard/IME callbacks without native provenance are explicit barriers,
     /// never joined by comparing clocks or guessing the last NSEvent identity.
     pub fn framework_boundary(&mut self, kind: Boundary) -> std::result::Result<(), RecordFault> {
-        if kind == Boundary::ViewInvalidated {
-            self.fault();
-            return Err(RecordFault::Unsupported);
-        }
         if kind == Boundary::PointerIdle {
             self.fault();
             return Err(RecordFault::Invalid);
@@ -433,3 +430,5 @@ mod tests;
 #[cfg(test)]
 #[path = "collector/contracts.rs"]
 mod contracts;
+
+mod lifecycle;
