@@ -19,6 +19,13 @@ impl Default for Metadata {
     }
 }
 impl Metadata {
+    fn idle(&self, identity: Identity) -> bool {
+        !self
+            .0
+            .iter()
+            .flatten()
+            .any(|c| c.identity == identity && (c.held || c.fenced))
+    }
     pub(super) fn fence(&mut self) {
         for contact in self.0.iter_mut().flatten() {
             contact.fenced |= contact.held;
@@ -92,6 +99,17 @@ impl Metadata {
     }
 }
 impl Source {
+    /// Additional idle check for a true lifetime-end record already verified by
+    /// the native Collector (installation, identity and ordered source clock).
+    /// This never cancels or changes admitted completed batches.
+    pub fn retire_native_identity(&self, identity: Identity) -> std::result::Result<(), Invalid> {
+        let state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        if state.native.idle(identity) && !state.receiver.captures_identity(identity) {
+            Ok(())
+        } else {
+            Err(Invalid::Owner)
+        }
+    }
     /// Observe a real native tail rejected by upstream first-device policy.
     /// This must still see its terminal while coordinate delivery is suppressed.
     pub fn suppress_native(&self, raw: RawSample) -> std::result::Result<Route, Invalid> {
@@ -141,6 +159,15 @@ impl State {
                 return Err(error);
             }
         };
+        if raw.phase == Phase::Leave
+            && matches!(raw.provenance, Provenance::Actual | Provenance::Coalesced)
+            && raw.buttons.0 & (Buttons::TIP | Buttons::BARREL | Buttons::BARREL_UPPER) == 0
+        {
+            // An idle range/window exit after real Up is not cancellation of a
+            // completed handoff. Only an actually held matching stream retires.
+            state.receiver.cancel_identity(raw.identity);
+            return Ok(Route::Suppressed);
+        }
         if !allowed {
             if raw.provenance == Provenance::Predicted {
                 return Ok(Route::Suppressed);

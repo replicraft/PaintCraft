@@ -150,3 +150,29 @@ fn upstream_policy_suppression_observes_actual_terminal_without_forwarding_coord
     assert_eq!(batch.frame.samples.len(), 1);
     assert_eq!(batch.frame.samples[0].sequence, 4);
 }
+
+#[test]
+fn actual_idle_leave_preserves_completed_up_but_held_leave_and_explicit_cancel_retire() {
+    for (completed, cancel) in [(true, false), (false, false), (true, true)] {
+        let source = source(&SharedBudget::new(1 << 20));
+        let identity = raw(1, Phase::Down).identity;
+        assert_eq!(send(&source, raw(1, Phase::Down)), Route::Canvas);
+        if completed {
+            assert_eq!(send(&source, raw(2, Phase::Up)), Route::Canvas);
+        }
+        if !completed {
+            assert!(source.retire_native_identity(identity).is_err());
+        }
+        let batch = source.take(1, view().owner, false).unwrap();
+        let mut end = raw(3, if cancel { Phase::Cancel } else { Phase::Leave });
+        end.buttons = Buttons(0);
+        assert_eq!(send(&source, end), Route::Suppressed);
+        assert_eq!(
+            source.batch_is_current(&batch, view().owner),
+            completed && !cancel
+        );
+        if !cancel {
+            assert!(source.retire_native_identity(identity).is_ok());
+        }
+    }
+}
