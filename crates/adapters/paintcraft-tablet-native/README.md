@@ -1,22 +1,27 @@
 # Native tablet capture boundary
 
-This active adapter contains a real AppKit event-monitor implementation and safe
-packet/delivery logic. It is exposed by `paintcraft-platform/tablet`; App startup
-is not hooked in this source group. It is an initial implementation slice, not a
-claim of comprehensive native tablet support or physical hardware qualification.
-Windows, XInput2 and Wayland acquisition remain required work.
+This adapter contains AppKit event-monitor capture, Windows pointer/history
+acquisition and shared packet/delivery logic. Normal desktop startup keeps native
+capture disabled. Linux acquisition, canonical native keyboard/IME ordering and
+physical hardware qualification remain unfinished. See the current
+[frontend status and opt-in startup instructions](../../../docs/TABLET_INPUT.md).
 
-The native App now has an **opt-in host foundation** (`with_native_tablet`) using
-the shared bounded receiver, actual pressure edit path and guarded legacy tool
-fallback. Default startup does not call it. It is **not acquisition-ready**:
-mixed genuine-mouse/pen ordering is still unresolved before the GUI frame. A
-physical mouse Down followed by pen Down before a frame can currently assign
-priority to the pen; translated widget records can also reorder a pen release
-and later mouse press. Raw-frame bookkeeping and passing headless host tests do
-not establish source-time chronology. Do not enable capture by default or claim
-native tablet support until a maintained ordered acquisition/GUI bridge passes
-those counterexamples, focus/IME/capture tests and the native input integration
-spike. No physical tablet or live monitor qualification is claimed here.
+The legacy `with_native_tablet` host is a separate integration path. Its
+frame-based genuine mouse/pen merge does not prove source-time chronology and
+must not be enabled as the default. The newer owned macOS loop uses
+`install_records` and source-observed mouse/pen ordering. An actual window
+startup/render/close smoke test retained native delivery health `Ready` before
+close, with zero reported failures. That establishes installation and startup,
+not physical pen, mixed-device or keyboard/IME qualification.
+
+Windows acquisition uses a public winit message hook and scoped HWND lifecycle
+observers. Native histories are validated before delivery; callback registration,
+record clocks and publication checks share one installation identity. Fixed
+capture storage is admitted before native registration. Uncertain callback
+removal disables reinstall rather than freeing callable context. Normal close
+retires publication authority atomically and wakes the host. Host model tests
+and x86-64/ARM64 SDK checks pass; the Windows owned-loop consumer, native touch
+consumer and actual Windows runtime remain unqualified.
 
 The AppKit monitor is scoped to the retained native view/window. It monitors
 local tablet/proximity events and documented tablet-subtype mouse events, not
@@ -128,10 +133,11 @@ or complete GUI-framework allocation guarantee.
 Source-record tests exercise accepted mouse-release/pen-down and pen-release/
 mouse-down sequences, five-button chords, earlier-device priority, wheel units,
 zero pressure/axes, boundaries and failures. They do not install a live monitor.
-The final source→GUI merge, display/view capture, native execution, Windows
-history, XI2/Wayland acquisition and physical hardware qualification are still
-required. `install_records` and passing collector controls alone do not make the
-unactivated App host acquisition-ready. Default startup remains disabled.
+The owned macOS integration now consumes source records and captures display/view
+state. Canonical keyboard/IME ordering, Windows consumer integration,
+XI2/Wayland acquisition and physical hardware qualification remain required.
+Passing collector controls do not establish those results. Default startup
+remains disabled.
 
 ### Focus recovery in the ordered collector
 
