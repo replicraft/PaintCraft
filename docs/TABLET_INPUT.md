@@ -134,6 +134,9 @@ that order. Windows pointer/history acquisition has cross-target SDK checks;
 Windows runtime and shared native touch adoption remain unfinished. Linux still
 needs an ordered acquisition integration.
 
+The [macOS text-input investigation](MACOS_TEXT_INPUT_INTEGRATION.md) records an
+isolated public AppKit API probe and the remaining keyboard/IME ownership gates.
+
 Native touch records now retain full device/pointer identity, actual confidence,
 contact state and the system primary flag. The bounded collector tracks 32
 contacts, preserves clocks across completed contacts, and reclaims them only on
