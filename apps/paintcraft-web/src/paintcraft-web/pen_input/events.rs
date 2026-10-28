@@ -2,6 +2,22 @@
 //! while barrel-only Down/Up is hovering and must never create ink.
 use paintcraft_input::{Modifiers, tablet::*};
 
+/// Same metadata-first handoff for DOM and headless handler controls. Fenced
+/// physical tails still reach the fixed metadata store so a real Up can retire
+/// their identity, while neither coordinates nor UI/ink are delivered.
+pub(super) fn deliver(
+    source: &paintcraft_ui::pen_input::Source,
+    raw: RawSample,
+    fenced: bool,
+    convert: impl FnOnce(f64) -> Result<Option<(f64, f64)>, Invalid>,
+) -> Result<receiver::Route, Invalid> {
+    if fenced {
+        source.suppress_native(raw)
+    } else {
+        source.submit_native(receiver::Delivery::ReceiverPointer, raw, convert)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Kind {
     Down,
@@ -13,7 +29,8 @@ pub(super) enum Kind {
 pub(super) struct Pointer {
     pub id: u64,
     pub kind: Kind,
-    pub at: (f64, f64),
+    /// Production intake defers geometry until Source has observed metadata.
+    pub at: Option<(f64, f64)>,
     pub stamp: f64,
     pub buttons: u16,
     pub pressure: f32,
@@ -99,11 +116,17 @@ impl Normalizer {
                 .flatten()
                 .any(|tool| tool.id == id && tool.tip)
     }
+    pub fn contact_fenced(&self, id: u64) -> bool {
+        self.tools
+            .iter()
+            .flatten()
+            .any(|tool| tool.id == id && tool.fenced)
+    }
     pub fn sample(&mut self, event: Pointer, provenance: Provenance) -> Result<RawSample, Invalid> {
         if provenance == Provenance::Predicted {
             return Err(Invalid::Lifecycle);
         }
-        if self.fenced(event) {
+        if event.at.is_some() && self.fenced(event) {
             return Err(Invalid::Lifecycle);
         }
         if !event.stamp.is_finite() || event.stamp < 0.0 || event.stamp >= u64::MAX as f64 / 1000.0
@@ -161,7 +184,7 @@ impl Normalizer {
                 clock: Clock::BrowserPerformance,
             },
             phase,
-            logical_position: Some(event.at),
+            logical_position: event.at,
             buttons: Buttons(event.buttons),
             modifiers: event.modifiers,
             pressure: Some(event.pressure),
@@ -170,14 +193,18 @@ impl Normalizer {
             contact: Some(event.contact),
             provenance,
         };
-        raw.at(Transform {
-            owner: 0,
-            epoch: 0,
-            origin: (0.0, 0.0),
-            points_per_pixel: 1.0,
-        })?;
+        if raw.logical_position.is_some() {
+            raw.at(Transform {
+                owner: 0,
+                epoch: 0,
+                origin: (0.0, 0.0),
+                points_per_pixel: 1.0,
+            })?;
+        }
         self.sequence = sequence;
-        self.tools[index] = if matches!(phase, Phase::Cancel | Phase::Leave) {
+        self.tools[index] = if matches!(phase, Phase::Cancel | Phase::Leave)
+            || (old.is_some_and(|tool| tool.fenced) && !held)
+        {
             None
         } else {
             Some(Tool {
@@ -185,7 +212,7 @@ impl Normalizer {
                 tip,
                 held,
                 inverted,
-                fenced: false,
+                fenced: old.is_some_and(|tool| tool.fenced),
             })
         };
         Ok(raw)
@@ -221,11 +248,12 @@ impl Compatibility {
 #[cfg(test)]
 mod tests {
     use super::*;
+    mod metadata;
     fn event(kind: Kind, buttons: u16) -> Pointer {
         Pointer {
             id: 4,
             kind,
-            at: (12.25, 19.75),
+            at: Some((12.25, 19.75)),
             stamp: 100.5,
             buttons,
             pressure: 0.25,
@@ -456,7 +484,7 @@ mod tests {
             // Escape/IME/owner/skip retirement all call the same Source.cancel.
             n.observe_cancellation(11);
             let mut over_toolbar = event(Kind::Move, buttons);
-            over_toolbar.at = (2.0, 2.0);
+            over_toolbar.at = Some((2.0, 2.0));
             assert!(n.fenced(over_toolbar));
             n.observe_cancellation(11); // Repeated GUI pass must not release tail.
             assert!(n.fenced(event(Kind::Up, Buttons::BARREL)));

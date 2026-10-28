@@ -8,10 +8,7 @@ use super::{
 use crate::WebApp;
 use paintcraft_input::{
     Modifiers,
-    tablet::{
-        Invalid, Provenance,
-        receiver::{Delivery, Route},
-    },
+    tablet::{Invalid, Provenance, receiver::Route},
 };
 use paintcraft_ui::pen_input::Source;
 use std::{
@@ -117,23 +114,11 @@ fn mouse_point(
         (event.client_y() as f32 - top as f32) / ctx.zoom_factor(),
     )
 }
-fn pointer(
-    event: &PointerEvent,
-    kind: Kind,
-    canvas: &HtmlCanvasElement,
-) -> Result<Pointer, Invalid> {
-    let (left, top, right, bottom) = content_rect(canvas);
-    if right <= left || bottom <= top {
-        return Err(Invalid::Coordinates);
-    }
-    let at = (
-        (number(event, "clientX")? - left) * f64::from(canvas.width()) / (right - left),
-        (number(event, "clientY")? - top) * f64::from(canvas.height()) / (bottom - top),
-    );
-    Ok(Pointer {
+fn pointer(event: &PointerEvent, kind: Kind) -> Pointer {
+    Pointer {
         id: event.pointer_id() as u32 as u64,
         kind,
-        at,
+        at: None,
         stamp: event.time_stamp(),
         buttons: event.buttons(),
         pressure: event.pressure(),
@@ -146,7 +131,7 @@ fn pointer(
             alt: event.alt_key(),
             command: event.meta_key(),
         },
-    })
+    }
 }
 fn submit(
     source: &Source,
@@ -157,23 +142,26 @@ fn submit(
     canvas: &HtmlCanvasElement,
     provenance: Provenance,
 ) -> Result<Route, Invalid> {
-    let pointer = pointer(event, kind, canvas)?;
+    let pointer = pointer(event, kind);
     let epoch = source.cancellation_epoch();
     let mut state = normalizer.borrow_mut();
     state.observe_cancellation(epoch);
-    if state.fenced(pointer) {
-        return Ok(Route::Suppressed);
-    }
+    let fenced = state.contact_fenced(pointer.id);
     let mut raw = state.sample(pointer, provenance)?;
     drop(state);
     acquisition
         .lock()
         .unwrap_or_else(|e| e.into_inner())
         .pen(&mut raw)?;
-    let physical = raw.logical_position.take().ok_or(Invalid::Coordinates)?;
-    let route = source.submit_with(Delivery::ReceiverPointer, |ppp| {
-        raw.logical_position = Some((physical.0 / ppp, physical.1 / ppp));
-        Ok(raw)
+    let route = super::events::deliver(source, raw, fenced, |ppp| {
+        let (left, top, right, bottom) = content_rect(canvas);
+        if right <= left || bottom <= top {
+            return Err(Invalid::Coordinates);
+        }
+        Ok(Some((
+            (number(event, "clientX")? - left) * f64::from(canvas.width()) / (right - left) / ppp,
+            (number(event, "clientY")? - top) * f64::from(canvas.height()) / (bottom - top) / ppp,
+        )))
     })?;
     if route == Route::Suppressed && raw.buttons.0 != 0 {
         normalizer.borrow_mut().deny_contact(raw.identity.pointer);

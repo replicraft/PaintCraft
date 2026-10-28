@@ -247,7 +247,24 @@ fn genuine_mouse_retains_capture_until_all_buttons_release() {
         source
             .submit_with(
                 paintcraft_input::tablet::receiver::Delivery::ReceiverPointer,
-                |_| Ok(sample)
+                |_| Ok(raw(&h, 2, Phase::Move, 0.5, Buttons::TIP))
+            )
+            .unwrap(),
+        paintcraft_input::tablet::receiver::Route::Suppressed
+    );
+    // Releasing the mouse cannot revive the pen's denied physical tail.
+    let mut terminal = raw(&h, 3, Phase::Up, 0.0, 0);
+    terminal.logical_position = None;
+    terminal.provenance = Provenance::Actual;
+    assert_eq!(
+        source.suppress_native(terminal).unwrap(),
+        paintcraft_input::tablet::receiver::Route::Suppressed
+    );
+    assert_eq!(
+        source
+            .submit_with(
+                paintcraft_input::tablet::receiver::Delivery::ReceiverPointer,
+                |_| Ok(raw(&h, 4, Phase::Down, 0.5, Buttons::TIP)),
             )
             .unwrap(),
         paintcraft_input::tablet::receiver::Route::Canvas
@@ -301,6 +318,15 @@ fn a_drained_cancellation_does_not_recancel_the_following_fresh_stroke() {
     submit(&mut h, down);
     let source = h.state().pen.source.clone().unwrap();
     source.cancel();
+    // Host cancellation retires ink, but only a real zero-button terminal
+    // retires this physical contact before its next actual Down.
+    let mut terminal = raw(&h, 2, Phase::Up, 0.0, 0);
+    terminal.logical_position = None;
+    terminal.provenance = Provenance::Actual;
+    assert_eq!(
+        source.suppress_native(terminal).unwrap(),
+        paintcraft_input::tablet::receiver::Route::Suppressed
+    );
     let fresh = raw(&h, 3, Phase::Down, 0.8, Buttons::TIP);
     submit(&mut h, fresh);
     assert!(h.state().editor.tools.pen_in_progress());
