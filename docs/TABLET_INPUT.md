@@ -36,6 +36,15 @@ with linearly changing radius, using common tangents or disk containment. A 4×4
 coverage grid unions the whole stroke before applying color opacity, so retracing
 a translucent stroke does not repeatedly blend its joins.
 
+Settings > Pen and tablet offers size-pressure control and Linear, Soft or Firm
+response in desktop and browser. Apply persists the choice; Cancel leaves the
+active policy unchanged. Old preferences retain the default linear size response,
+and malformed explicit policies are rejected. The Q16 curves are deterministic;
+disabling size pressure uses the selected diameter while preserving the original
+pressure and axes in the retained samples. Each stroke captures its policy at
+Down, so changing preferences cannot rewrite an existing preview or history item.
+These controls do not activate the unfinished native capture integration.
+
 Preview and release can share immutable source samples and resolved mask storage.
 The existing editor preparation and guarded publication path produces one history
 item with explicit Brush, Pencil or Erase intent. Tests compare prepared preview,
@@ -154,7 +163,7 @@ delivery scope above and physical native traces remain distinct evidence.
 | Native capture | Complete ordered AppKit source-to-widget/tool integration; implement Windows pointer/history, XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
 | Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, concurrent startup/drop/panic lifecycle cases, and sustained acquisition/display timing. Preserve the qualified mouse and palm behavior while extending finger navigation. |
 | Controller adoption | Complete native production source-to-controller wiring and mixed-device ordering. Retain browser/native ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics. |
-| Brush settings and dynamics | Appropriate captured pressure curves/opacity, persisted controls and capability feedback, and applicable tilt/twist behavior. Recording optional axes does not implement their tool dynamics. |
+| Brush settings and dynamics | Extend the captured width/curve preferences to appropriate opacity/media dynamics, capability feedback and applicable tilt/twist behavior. Recording optional axes does not implement their tool dynamics. |
 | Other brush/media profiles | Preserve all existing nine media policies and sampled tips. The plain-round pressure path must not silently replace them; their pressure/dynamic integration remains required. |
 | Physical qualification | Real tablet/driver traces on each platform, high-rate acquisition, disconnect/focus/modal recovery and input/display timing. Synthetic pen events and mouse injection do not establish these results. |
 
