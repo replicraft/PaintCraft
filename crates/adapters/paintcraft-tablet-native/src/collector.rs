@@ -176,6 +176,7 @@ impl Collector {
             return Err(RecordFault::Capacity);
         }
         let output = match record.event {
+            CaptureEvent::NativeUi(_) => return Err(RecordFault::Unsupported),
             CaptureEvent::IdentityRetired { identity, time } => {
                 self.retire_identity(identity, time, record.installation)?;
                 Collected::IdentityRetired(record)

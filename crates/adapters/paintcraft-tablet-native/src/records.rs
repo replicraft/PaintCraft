@@ -69,6 +69,8 @@ pub struct MouseRecord {
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CaptureEvent {
+    /// Canonical source-authored key/text/IME data; no framework receipt join.
+    NativeUi(crate::NativeUi),
     Tablet(NativePacket),
     Mouse(MouseRecord),
     Boundary {

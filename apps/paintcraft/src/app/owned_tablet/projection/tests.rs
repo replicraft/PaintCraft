@@ -336,3 +336,28 @@ fn validated_finger_metadata_still_refuses_unqualified_source_and_gui_delivery()
     assert!(projection.take(DeliveryHealth::Ready).is_err());
     assert!(projection.queue.is_empty());
 }
+
+#[test]
+fn unsupported_native_ui_discards_a_complete_queued_pen_prefix() {
+    let budget = SharedBudget::new(1 << 20);
+    let mut projection = Projection::new(16, &budget).unwrap();
+    projection.publish(view()).unwrap();
+    projection.capture(pen(0, Phase::Down)).unwrap();
+    projection.capture(pen(1, Phase::Up)).unwrap();
+    assert_eq!(
+        projection.capture(CaptureRecord {
+            installation: 7,
+            ordinal: 2,
+            event: CaptureEvent::NativeUi(paintcraft_platform::tablet::NativeUi::ImeBegin {
+                composition: 1
+            }),
+        }),
+        Err(RecordFault::Unsupported)
+    );
+    assert!(projection.queue.is_empty());
+    assert!(projection.take(DeliveryHealth::Ready).is_err());
+    assert_eq!(
+        projection.capture(pen(3, Phase::Down)),
+        Err(RecordFault::Retired)
+    );
+}

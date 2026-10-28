@@ -131,6 +131,11 @@ impl Projection {
         result
     }
     fn capture_inner(&mut self, record: CaptureRecord) -> std::result::Result<(), RecordFault> {
+        // Source facts are immutable, but ordered text-target binding and the
+        // complete first-party UI consumer are not yet qualified.
+        if matches!(record.event, CaptureEvent::NativeUi(_)) {
+            return Err(RecordFault::Unsupported);
+        }
         self.collector.accept(record)?;
         self.source_epoch = Some(record.installation);
         // Invoked inside the native emitter gate. A later failed emission makes

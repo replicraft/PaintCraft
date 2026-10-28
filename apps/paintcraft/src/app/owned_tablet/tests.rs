@@ -641,3 +641,28 @@ fn actual_undo_widget_requires_the_exact_healthy_native_installation() {
         }
     }
 }
+
+#[test]
+fn unsupported_native_text_preserves_the_actual_apps_document_and_history() {
+    for experience in [Experience::Classic, Experience::Studio] {
+        let (mut host, _ctx, _, older) = setup(experience);
+        let undo = host.app.editor.undo_depth();
+        let redo = host.app.editor.redo_depth();
+        pen(&host, 0, Phase::Down, (22.0, 18.0));
+        pen(&host, 1, Phase::Up, (22.0, 18.0));
+        assert_eq!(
+            host.capture_endpoint()(CaptureRecord {
+                installation: 1,
+                ordinal: 2,
+                event: CaptureEvent::NativeUi(paintcraft_platform::tablet::NativeUi::ImeBegin {
+                    composition: 1
+                }),
+            }),
+            Err(RecordFault::Unsupported)
+        );
+        assert!(host.snapshot(DeliveryHealth::Ready).is_err());
+        assert!(host.app.editor.document().same_semantics(&older));
+        assert_eq!(host.app.editor.undo_depth(), undo);
+        assert_eq!(host.app.editor.redo_depth(), redo);
+    }
+}

@@ -2,8 +2,9 @@
 pub use paintcraft_tablet_native::{
     Axes, Backend, Boundary, CapabilitySnapshot, CaptureEvent, CaptureRecord, Collected,
     CollectedFrame, Collector, ControlSink, Delivery, DeliveryCheck, DeliveryHealth, Device,
-    FingerRoute, MouseKind, MouseRecord, MouseRoute, NativePacket, PenRoute, RecordFault,
-    RecordSink, Sink, Wake, WheelPhase, WindowPosition,
+    FingerRoute, ImeComponent, MouseKind, MouseRecord, MouseRoute, NativePacket, NativeUi,
+    PenRoute, RecordFault, RecordSink, Sink, Wake, WheelPhase, WindowPosition, WindowsCharacter,
+    WindowsCharacterKind, WindowsKey,
 };
 // The first source group supplies the actual AppKit monitor. Other native
 // backends are being implemented separately; no fallback or support is implied.

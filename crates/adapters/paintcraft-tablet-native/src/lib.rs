@@ -10,8 +10,10 @@ mod delivery;
 pub use delivery::TestInstallation;
 pub use delivery::{DeliveryCheck, DeliveryHealth};
 mod collector;
+mod native_ui;
 mod packet;
 mod records;
+pub use native_ui::{ImeComponent, NativeUi, WindowsCharacter, WindowsCharacterKind, WindowsKey};
 #[cfg(any(target_os = "windows", test))]
 pub mod windows;
 #[cfg(any(target_os = "macos", target_os = "windows", test))]
