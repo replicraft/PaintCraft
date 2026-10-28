@@ -12,6 +12,7 @@ mod importing;
 mod layers;
 mod local_fonts;
 mod paste_ui;
+mod pen_input;
 mod preferences;
 mod printing;
 mod selection_ui;
@@ -61,6 +62,7 @@ mod browser {
     pub struct WebHandle {
         runner: eframe::WebRunner,
         codec: Rc<RefCell<Option<CodecService>>>,
+        pen: Rc<RefCell<Option<super::pen_input::dom::Guard>>>,
     }
 
     impl Default for WebHandle {
@@ -68,6 +70,7 @@ mod browser {
             Self {
                 runner: eframe::WebRunner::new(),
                 codec: Rc::new(RefCell::new(None)),
+                pen: Rc::new(RefCell::new(None)),
             }
         }
     }
@@ -86,13 +89,14 @@ mod browser {
         }
 
         pub async fn start(&self, canvas: web_sys::HtmlCanvasElement) -> Result<(), JsValue> {
+            self.pen.borrow_mut().take();
             if !paintcraft_ui::fonts::web_cjk_ready() {
                 return Err(JsValue::from_str("Browser fonts have not been loaded"));
             }
             let cancel_target: web_sys::EventTarget = canvas.clone().unchecked_into();
             self.runner
                 .start(
-                    canvas,
+                    canvas.clone(),
                     eframe::WebOptions::default(),
                     Box::new(|cc| Ok(Box::new(super::WebApp::new(&cc.egui_ctx)))),
                 )
@@ -106,6 +110,13 @@ mod browser {
             ) {
                 self.runner.destroy();
                 return Err(error);
+            }
+            match super::pen_input::dom::install(&self.runner, canvas) {
+                Ok(guard) => *self.pen.borrow_mut() = Some(guard),
+                Err(error) => {
+                    self.runner.destroy();
+                    return Err(error);
+                }
             }
             Ok(())
         }
@@ -168,6 +179,7 @@ mod browser {
         }
 
         pub fn destroy(&self) {
+            self.pen.borrow_mut().take();
             if let Some(service) = self.codec.borrow().as_ref() {
                 let _ = service.cancel();
             }
