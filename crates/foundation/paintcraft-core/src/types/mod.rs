@@ -26,6 +26,7 @@ pub mod orthogonal;
 pub mod picker;
 
 pub mod brush;
+pub mod pen;
 
 pub mod canvas;
 pub mod clipboard;
