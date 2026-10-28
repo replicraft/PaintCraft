@@ -15,6 +15,8 @@ mod clipboard;
 #[path = "app/colors.rs"]
 mod colors;
 pub mod controller;
+#[cfg(target_os = "macos")]
+pub mod desktop;
 #[path = "app/cpu_rendering.rs"]
 mod cpu_rendering;
 #[path = "app/cursor.rs"]

@@ -21,6 +21,18 @@ fn main() -> eframe::Result {
     {
         app = app.exit_after(n);
     }
+    let result = run(app);
+    if let Err(error) = &result {
+        startup::report_error(language, &error.to_string());
+    }
+    result
+}
+
+fn run(app: App) -> eframe::Result {
+    #[cfg(target_os = "macos")]
+    if std::env::var("PAINTCRAFT_NATIVE_TABLET").is_ok_and(|value| value == "1") {
+        return paintcraft::desktop::run(app).map_err(eframe::Error::AppCreation);
+    }
     let options = eframe::NativeOptions {
         renderer: eframe::Renderer::Wgpu,
         // eframe also uses the launch title for the macOS application menu.
@@ -35,7 +47,7 @@ fn main() -> eframe::Result {
             ),
         ..Default::default()
     };
-    let result = eframe::run_native(
+    eframe::run_native(
         "PaintCraft",
         options,
         Box::new(move |cc| {
@@ -44,9 +56,5 @@ fn main() -> eframe::Result {
                     .with_recovery(paintcraft_formats::recovery::default_dir()),
             ))
         }),
-    );
-    if let Err(error) = &result {
-        startup::report_error(language, &error.to_string());
-    }
-    result
+    )
 }
