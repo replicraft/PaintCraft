@@ -1,5 +1,5 @@
 //! Immutable actual pen samples and a single resolved-mask publication path.
-//! Named PaintCraft diameter policy; native device/driver parity is not implied.
+//! Named PaintCraft diameter/capped-dab policies; driver parity is not implied.
 //! Normalized pressure is rounded to nearest Q16 (ties upward); missing pressure
 //! uses full diameter. Resolved 4×4 coverage becomes rounded 8-bit mask coverage.
 use paintcraft_core::types::{
@@ -13,11 +13,12 @@ use paintcraft_input::tablet::{Phase, Provenance, Sample};
 use paintcraft_raster::smooth::{self, PressurePoint};
 use std::sync::Arc;
 use uuid::Uuid;
+mod dynamics;
 
 const SAMPLES_MAX: usize = 65_536;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-/// Captured plain-round style. Hosts must not convert other brush/media profiles
-/// to this policy implicitly; their existing semantics remain independent.
+/// Captured style. Textured media require explicit dynamics opt-in and retain
+/// their own kernel; width-only round strokes retain the smooth swept envelope.
 pub struct Style {
     pub layer: Uuid,
     pub diameter: u32,
@@ -25,6 +26,7 @@ pub struct Style {
     pub mode: MaskMode,
     pub intent: MaskIntent,
     pub settings: paintcraft_core::types::pen::Settings,
+    pub media: paintcraft_core::types::brush::BrushMedia,
 }
 #[derive(Debug)]
 struct Samples {
@@ -59,6 +61,8 @@ impl PenStroke {
         if !(1..=1024).contains(&style.diameter)
             || first.phase != Phase::Down
             || !first.identity.kind.is_pen()
+            || (style.media != paintcraft_core::types::brush::BrushMedia::Plain
+                && (!style.settings.media_dynamics || style.mode != MaskMode::SourceOver))
         {
             return Err(invalid("invalid pen stroke start or diameter"));
         }
@@ -146,6 +150,52 @@ impl PenStroke {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<ResolvedPenStroke> {
         check()?;
+        let mut account = budget.account(AllocationClass::PaintMetadata);
+        account.resize(span_bytes(0)?)?;
+        let mut values = Vec::new();
+        let mut pixels = 0u64;
+        let mut retain = |span: MaskSpan| {
+            check()?;
+            pixels = pixels
+                .checked_add((span.x1 - span.x0 + 1) as u64)
+                .ok_or_else(|| limit("pen mask pixel quote overflow"))?;
+            if values.len() == 262_144 || pixels > 16_777_216 {
+                return Err(limit("resolved pen mask allowance exceeded"));
+            }
+            if values.len() == values.capacity() {
+                let capacity = values.capacity().max(16).saturating_mul(2).min(262_144);
+                account.resize(span_bytes(capacity)?)?;
+                values
+                    .try_reserve_exact(capacity - values.len())
+                    .map_err(|_| limit("cannot retain pen mask"))?;
+                account.resize(span_bytes(values.capacity())?)?;
+            }
+            values.push(span);
+            Ok(())
+        };
+        if self.style.media != paintcraft_core::types::brush::BrushMedia::Plain
+            || self.style.settings.opacity_pressure
+        {
+            self.visit_dynamics(clip, budget, check, &mut retain)?;
+        } else {
+            self.visit_round(clip, budget, check, &mut retain)?;
+        }
+        check()?;
+        Ok(ResolvedPenStroke {
+            style: self.style,
+            spans: Arc::new(Spans {
+                values,
+                _account: account,
+            }),
+        })
+    }
+    fn visit_round(
+        &self,
+        clip: Rect,
+        budget: &SharedBudget,
+        check: &dyn Fn() -> Result<()>,
+        emit: &mut dyn FnMut(MaskSpan) -> Result<()>,
+    ) -> Result<()> {
         let count = self.samples.values.len();
         // Admit scanner scratch before mapping or geometry. Row ranges remain
         // live across the path, but the event tree exists for one pixel row only.
@@ -170,48 +220,20 @@ impl PenStroke {
                 }
             }
         }
-        let mut account = budget.account(AllocationClass::PaintMetadata);
-        account.resize(span_bytes(0)?)?;
-        let mut values = Vec::new();
-        let mut pixels = 0u64;
         smooth::pressure_path_visit_checked(
             &points,
             self.style.diameter,
             &clip,
             check,
             &mut |span| {
-                check()?;
-                pixels = pixels
-                    .checked_add((span.x1 - span.x0 + 1) as u64)
-                    .ok_or_else(|| limit("pen mask pixel quote overflow"))?;
-                if values.len() == 262_144 || pixels > 16_777_216 {
-                    return Err(limit("resolved pen mask allowance exceeded"));
-                }
-                if values.len() == values.capacity() {
-                    let capacity = values.capacity().max(16).saturating_mul(2).min(262_144);
-                    account.resize(span_bytes(capacity)?)?;
-                    values
-                        .try_reserve_exact(capacity - values.len())
-                        .map_err(|_| limit("cannot retain pen mask"))?;
-                    account.resize(span_bytes(values.capacity())?)?;
-                }
-                values.push(MaskSpan {
+                emit(MaskSpan {
                     x0: span.x0,
                     y: span.y,
                     x1: span.x1,
                     coverage: ((u16::from(span.samples) * 255 + 8) / 16) as u8,
-                });
-                Ok(())
+                })
             },
-        )?;
-        check()?;
-        Ok(ResolvedPenStroke {
-            style: self.style,
-            spans: Arc::new(Spans {
-                values,
-                _account: account,
-            }),
-        })
+        )
     }
     fn scan_quote(&self, clip: Rect, check: &dyn Fn() -> Result<()>) -> Result<usize> {
         check()?;

@@ -1,4 +1,4 @@
-//! Opt-in plain-round pressure route. Other media keep their existing renderer.
+//! Captured pressure route; textured media require explicit dynamics opt-in.
 use super::*;
 use paintcraft_core::types::{
     Error, ErrorCode, Result,
@@ -14,10 +14,23 @@ impl ToolState {
         // or substitutes a round tip for an ordinary selected square eraser.
         sample.identity.kind == DeviceKind::Eraser
             || (sample.identity.kind == DeviceKind::Pen
-                && sample.pressure.is_some()
+                && (sample.pressure.is_some()
+                    || (self.options.pen.media_dynamics
+                        && paintcraft_raster::media::dynamics::supports_orientation(
+                            self.options.media,
+                        )
+                        && match self.options.pen.orientation {
+                            paintcraft_core::types::pen::Orientation::Historical => false,
+                            paintcraft_core::types::pen::Orientation::Tilt => sample.tilt.is_some(),
+                            paintcraft_core::types::pen::Orientation::Twist => {
+                                sample.twist_degrees.is_some()
+                            }
+                        }))
                 && self.tool == Tool::Brush
-                && self.options.round
-                && self.options.media == paintcraft_core::types::brush::BrushMedia::Plain
+                && ((self.options.round
+                    && self.options.media == paintcraft_core::types::brush::BrushMedia::Plain)
+                    || (self.options.pen.media_dynamics
+                        && self.options.media != paintcraft_core::types::brush::BrushMedia::Plain))
                 && self.sampled_tip.is_none())
     }
     pub fn pen_in_progress(&self) -> bool {
@@ -85,6 +98,11 @@ impl ToolState {
                 mode,
                 intent,
                 settings: self.options.pen,
+                media: if inverted {
+                    Default::default()
+                } else {
+                    self.options.media
+                },
             },
             sample,
             budget,
