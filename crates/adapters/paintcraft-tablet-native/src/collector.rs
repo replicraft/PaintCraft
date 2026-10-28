@@ -150,6 +150,16 @@ impl Collector {
             return Err(RecordFault::Capacity);
         }
         let output = match record.event {
+            CaptureEvent::Boundary {
+                kind: Boundary::ViewInvalidated,
+                ..
+            }
+            | CaptureEvent::IdentityRetired { .. }
+            | CaptureEvent::Finger { .. } => {
+                // Typed contract is published before the consumer qualification
+                // slice. Never silently accept/drop or alias these semantics.
+                return Err(RecordFault::Unsupported);
+            }
             CaptureEvent::Boundary { kind, .. } => {
                 self.apply_boundary(kind);
                 Collected::Boundary(record)
@@ -329,6 +339,10 @@ impl Collector {
     /// Keyboard/IME callbacks without native provenance are explicit barriers,
     /// never joined by comparing clocks or guessing the last NSEvent identity.
     pub fn framework_boundary(&mut self, kind: Boundary) -> std::result::Result<(), RecordFault> {
+        if kind == Boundary::ViewInvalidated {
+            self.fault();
+            return Err(RecordFault::Unsupported);
+        }
         if kind == Boundary::PointerIdle {
             self.fault();
             return Err(RecordFault::Invalid);
@@ -415,3 +429,7 @@ fn validate_mouse(record: MouseRecord, epoch: u64) -> std::result::Result<(), Re
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "collector/contracts.rs"]
+mod contracts;
