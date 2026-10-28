@@ -3,7 +3,7 @@ mod capabilities;
 #[cfg(any(target_os = "macos", test))]
 mod clock;
 mod delivery;
-pub use delivery::DeliveryHealth;
+pub use delivery::{DeliveryCheck, DeliveryHealth};
 mod collector;
 mod packet;
 mod records;
@@ -135,6 +135,14 @@ pub struct Installation {
     _main_thread: PhantomData<Rc<()>>,
 }
 #[cfg(target_os = "macos")]
+impl Drop for Installation {
+    fn drop(&mut self) {
+        // Fail first, including reentrant Drop inside a callback; native fields
+        // then retire callbacks before the retained window is released.
+        self.gate.fail();
+    }
+}
+#[cfg(target_os = "macos")]
 impl std::fmt::Debug for Installation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Installation")
@@ -144,6 +152,9 @@ impl std::fmt::Debug for Installation {
 }
 #[cfg(target_os = "macos")]
 impl Installation {
+    pub fn delivery_check(&self) -> DeliveryCheck {
+        self.gate.check()
+    }
     pub fn capabilities(&self) -> CapabilitySnapshot {
         self.report.snapshot()
     }
