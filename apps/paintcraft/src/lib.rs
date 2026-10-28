@@ -59,6 +59,9 @@ mod msp_export;
 #[cfg(target_os = "macos")]
 #[path = "app/native_menu.rs"]
 mod native_menu;
+#[cfg(target_os = "macos")]
+#[path = "app/owned_tablet.rs"]
+pub mod owned_tablet;
 #[path = "app/palettes.rs"]
 mod palettes;
 #[path = "app/pan_tool.rs"]

@@ -24,6 +24,11 @@ pub(super) struct Receiver {
     controls: Option<egui::Rect>,
     fallback_button: Option<egui::PointerButton>,
     mouse: MouseCapture,
+    view_epoch: u64,
+    published_view: Option<CaptureView>,
+    defer_view: bool,
+    deferred_view: Option<CaptureView>,
+    own_service_wait: bool,
     // Retained logical allowance for added egui DTO slots, not framework/RSS.
     // All host batches/events retire before this charge.
     _gui_events: BudgetAccount,
@@ -36,7 +41,8 @@ impl Receiver {
     ) -> paintcraft_core::types::Result<Self> {
         let mut gui_events = budget.account(AllocationClass::PaintMetadata);
         gui_events.resize(
-            ((UI_RELEASE_SLOTS + SOURCE_SLOTS) * std::mem::size_of::<egui::Event>()) as u64,
+            (((UI_RELEASE_SLOTS + SOURCE_SLOTS) * std::mem::size_of::<egui::Event>())
+                + 2 * std::mem::size_of::<CaptureView>()) as u64,
         )?;
         Ok(Self {
             installation,
@@ -50,6 +56,11 @@ impl Receiver {
             controls: None,
             fallback_button: None,
             mouse: MouseCapture::default(),
+            view_epoch: 0,
+            published_view: None,
+            defer_view: false,
+            deferred_view: None,
+            own_service_wait: false,
             _gui_events: gui_events,
         })
     }
@@ -239,7 +250,11 @@ impl App {
         let rect = self.canvas_rect?;
         Some(Transform {
             owner: self.editor.session_owner_id().as_u128(),
-            epoch: self.editor.publications(),
+            // Document publication belongs to Owner, not coordinate geometry.
+            epoch: self
+                .tablet
+                .as_ref()
+                .map_or(0, |receiver| receiver.view_epoch),
             origin: (f64::from(rect.min.x), f64::from(rect.min.y)),
             points_per_pixel: f64::from(self.zoom),
         })
@@ -472,20 +487,61 @@ impl App {
                 }
             }
         });
-        let view = CaptureView {
+        let mut view = CaptureView {
             owner,
             transform,
             pixels_per_point: f64::from(ctx.pixels_per_point()),
             canvas: canvas.intersect(viewport),
             exclusions,
             focused: ctx.input(|i| i.focused),
-            blocked: blocked || overflow || self.editor.painting_blocked(),
+            blocked: blocked
+                || overflow
+                || (self.editor.painting_blocked() && !receiver.own_service_wait),
             ime: self.ime_composing,
         };
-        if receiver.source.publish(view).is_err() {
-            receiver.source.fault();
+        if receiver
+            .published_view
+            .is_some_and(|old| !same_navigation(old, view))
+        {
+            let Some(epoch) = receiver.view_epoch.checked_add(1) else {
+                receiver.source.fault();
+                return;
+            };
+            receiver.view_epoch = epoch;
+            view.transform.epoch = epoch;
+        }
+        // Only an unchanged, valid coordinate/window context can wait for the
+        // current edge's actual receipt. Known modal/focus/IME/PPP/navigation
+        // invalidation reaches Source immediately, before any continuation.
+        let can_defer = receiver.defer_view
+            && receiver.published_view.is_some_and(|old| {
+                same_navigation(old, view)
+                    && old.focused
+                    && view.focused
+                    && !old.blocked
+                    && !view.blocked
+                    && !old.ime
+                    && !view.ime
+            });
+        if can_defer {
+            receiver.deferred_view = Some(view);
+        } else {
+            if receiver.source.publish(view).is_err() {
+                receiver.source.fault();
+            }
+            receiver.published_view = Some(view);
+            receiver.deferred_view = None;
         }
     }
+}
+fn same_navigation(a: CaptureView, b: CaptureView) -> bool {
+    a.owner.session == b.owner.session
+        && a.owner.interface == b.owner.interface
+        && a.transform.owner == b.transform.owner
+        && a.transform.origin == b.transform.origin
+        && a.transform.points_per_pixel == b.transform.points_per_pixel
+        && a.canvas == b.canvas
+        && a.pixels_per_point == b.pixels_per_point
 }
 fn reserve_events(
     events: &mut Vec<egui::Event>,
@@ -546,3 +602,6 @@ fn fallback(sample: Sample, held: &mut Option<egui::PointerButton>, events: &mut
 #[cfg(test)]
 #[path = "tablet/tests.rs"]
 mod tests;
+
+#[path = "tablet/owned.rs"]
+mod owned;
