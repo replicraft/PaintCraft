@@ -235,7 +235,7 @@ fn mobile_brush_bars_can_be_hidden_after_apply_without_reserved_canvas_space() {
 
 #[test]
 fn pen_settings_are_staged_for_each_interface_and_do_not_edit_the_document() {
-    use paintcraft_core::types::pen::{PressureCurve, Settings as PenSettings};
+    use paintcraft_core::types::pen::{Orientation, PressureCurve, Settings as PenSettings};
     for frontend in [Frontend::Classic, Frontend::Studio] {
         let mut h = super::super::chrome_tests::harness(frontend, ClassicVariant::V11, 1360.0);
         let ticket = h.state().editor.session.ticket();
@@ -244,10 +244,18 @@ fn pen_settings_are_staged_for_each_interface_and_do_not_edit_the_document() {
         h.run();
         h.get_by_label("Pen and tablet").click();
         h.run();
-        h.get_by_label("Firm").click();
-        h.run();
-        h.get_by_label("Use pressure to control size").click();
-        h.run();
+        for label in [
+            "Firm",
+            "Use pressure to control opacity",
+            "Enable pen dynamics for textured brushes",
+            "Pen tilt",
+            "Use pressure to control size",
+        ] {
+            h.get_by_label(label).scroll_to_me();
+            h.run();
+            h.get_by_label(label).click();
+            h.run();
+        }
         assert_eq!(h.state().preferences.pen, PenSettings::default());
         assert_eq!(h.state().controls.options.pen, PenSettings::default());
         h.get_by_label("Cancel").click();
@@ -257,15 +265,26 @@ fn pen_settings_are_staged_for_each_interface_and_do_not_edit_the_document() {
         h.run();
         h.get_by_label("Pen and tablet").click();
         h.run();
-        h.get_by_label("Firm").click();
-        h.run();
-        h.get_by_label("Use pressure to control size").click();
-        h.run();
+        for label in [
+            "Firm",
+            "Use pressure to control opacity",
+            "Enable pen dynamics for textured brushes",
+            "Pen tilt",
+            "Use pressure to control size",
+        ] {
+            h.get_by_label(label).scroll_to_me();
+            h.run();
+            h.get_by_label(label).click();
+            h.run();
+        }
         h.get_by_label("Apply").click();
         h.run();
         let expected = h.state().preferences.pen;
         assert!(!expected.size_pressure);
         assert_eq!(expected.curve, PressureCurve::Firm);
+        assert!(expected.opacity_pressure);
+        assert!(expected.media_dynamics);
+        assert_eq!(expected.orientation, Orientation::Tilt);
         assert_eq!(h.state().preferences.pen, expected);
         assert_eq!(h.state().controls.options.pen, expected);
         assert_eq!(h.state().editor.session.ticket(), ticket);

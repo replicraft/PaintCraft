@@ -1,5 +1,5 @@
 use super::*;
-use paintcraft_core::types::pen::{PressureCurve, Settings as PenSettings};
+use paintcraft_core::types::pen::{Orientation, PressureCurve, Settings as PenSettings};
 
 #[test]
 fn pen_preferences_roundtrip_migrate_and_reject_invalid_explicit_policies() {
@@ -8,6 +8,9 @@ fn pen_preferences_roundtrip_migrate_and_reject_invalid_explicit_policies() {
             let mut prefs = Preferences::default();
             prefs.pen.curve = curve;
             prefs.pen.size_pressure = size_pressure;
+            prefs.pen.opacity_pressure = !size_pressure;
+            prefs.pen.media_dynamics = true;
+            prefs.pen.orientation = Orientation::Twist;
             assert_eq!(Preferences::parse(&prefs.bytes().unwrap()).unwrap(), prefs);
         }
     }

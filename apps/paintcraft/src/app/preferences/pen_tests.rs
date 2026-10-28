@@ -1,6 +1,6 @@
 use super::*;
 use egui_kittest::{Harness, kittest::Queryable};
-use paintcraft_core::types::pen::{PressureCurve, Settings as PenSettings};
+use paintcraft_core::types::pen::{Orientation, PressureCurve, Settings as PenSettings};
 
 #[test]
 fn desktop_pen_settings_are_staged_until_apply_without_document_changes() {
@@ -23,10 +23,18 @@ fn desktop_pen_settings_are_staged_until_apply_without_document_changes() {
         h.run();
         h.get_by_label("Pen and tablet").click();
         h.run();
-        h.get_by_label("Firm").click();
-        h.run();
-        h.get_by_label("Use pressure to control size").click();
-        h.run();
+        for label in [
+            "Firm",
+            "Use pressure to control opacity",
+            "Enable pen dynamics for textured brushes",
+            "Pen tilt",
+            "Use pressure to control size",
+        ] {
+            h.get_by_label(label).scroll_to_me();
+            h.run();
+            h.get_by_label(label).click();
+            h.run();
+        }
         assert_eq!(h.state().settings.pen, PenSettings::default());
         assert_eq!(h.state().editor.options.pen, PenSettings::default());
         h.get_by_label("Cancel").click();
@@ -37,15 +45,26 @@ fn desktop_pen_settings_are_staged_until_apply_without_document_changes() {
         h.run();
         h.get_by_label("Pen and tablet").click();
         h.run();
-        h.get_by_label("Firm").click();
-        h.run();
-        h.get_by_label("Use pressure to control size").click();
-        h.run();
+        for label in [
+            "Firm",
+            "Use pressure to control opacity",
+            "Enable pen dynamics for textured brushes",
+            "Pen tilt",
+            "Use pressure to control size",
+        ] {
+            h.get_by_label(label).scroll_to_me();
+            h.run();
+            h.get_by_label(label).click();
+            h.run();
+        }
         h.get_by_label("Apply").click();
         h.run();
         let expected = h.state().settings.pen;
         assert!(!expected.size_pressure);
         assert_eq!(expected.curve, PressureCurve::Firm);
+        assert!(expected.opacity_pressure);
+        assert!(expected.media_dynamics);
+        assert_eq!(expected.orientation, Orientation::Tilt);
         assert_eq!(h.state().settings.pen, expected);
         assert_eq!(h.state().editor.options.pen, expected);
         assert_eq!(h.state().editor.history_view().ticket, ticket);
