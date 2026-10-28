@@ -143,3 +143,38 @@ fn source_backing_changed_and_restored_before_samples_cannot_revive_old_batch_an
     drop(projection);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn tracking_entry_does_not_invent_motion_and_later_actual_motion_keeps_its_own_time() {
+    let budget = SharedBudget::new(1 << 20);
+    let mut projection = Projection::new(16, &budget).unwrap();
+    projection.publish(view()).unwrap();
+    for (ordinal, kind, micros) in [
+        (0, MouseKind::Enter, 1000),
+        (1, MouseKind::Enter, 999),
+        (2, MouseKind::Motion, 900),
+    ] {
+        projection
+            .capture(CaptureRecord {
+                installation: 7,
+                ordinal,
+                event: CaptureEvent::Mouse(paintcraft_platform::tablet::MouseRecord {
+                    kind,
+                    position: WindowPosition::PhysicalPixels(20.0, 40.0),
+                    client: true,
+                    modifiers: Modifiers::default(),
+                    time: Time {
+                        epoch: 7,
+                        micros,
+                        clock: Clock::AppKitUptime,
+                    },
+                }),
+            })
+            .unwrap();
+    }
+    let frame = projection.take(DeliveryHealth::Ready).unwrap();
+    assert_eq!(frame.entries.len(), 1);
+    assert_eq!(frame.entries[0].ordinal, Some(2));
+    assert!(matches!(frame.entries[0].pointer,
+        Pointer::Gui(egui::Event::PointerMoved(at)) if at == egui::pos2(10.0, 20.0)));
+}

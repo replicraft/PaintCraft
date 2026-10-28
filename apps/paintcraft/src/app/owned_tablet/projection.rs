@@ -198,12 +198,18 @@ impl Projection {
                     if route != MouseRoute::Client {
                         continue;
                     }
+                    // Match winit CursorEntered semantics: native tracking
+                    // metadata must not fabricate physical pointer motion.
+                    if mouse.kind == MouseKind::Enter {
+                        continue;
+                    }
                     let Some(view) = self.view else {
                         continue;
                     };
                     let at = position(mouse.position, view.pixels_per_point)?;
                     let m = modifiers(mouse.modifiers);
                     match mouse.kind {
+                        MouseKind::Enter => unreachable!("tracking entry handled above"),
                         MouseKind::Motion => self.push(
                             Some(record.ordinal),
                             Pointer::Gui(egui::Event::PointerMoved(at)),
