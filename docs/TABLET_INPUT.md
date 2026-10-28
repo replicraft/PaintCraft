@@ -2,11 +2,11 @@
 
 Tablet support is being implemented across native and browser frontends. Shared
 input, pressure rendering and guarded editor controllers are implemented and
-tested. Desktop has an opt-in AppKit host foundation; normal startup does not
-activate it. Browser capture and the ordered native event-loop integration are
-still being connected. Physical tablets, drivers and platform timing have not
-been qualified. A pen reaching the existing mouse path is not evidence of
-pressure or tilt support.
+tested. Browser startup now installs dedicated Pointer Events capture. Desktop
+has an opt-in AppKit host foundation; normal desktop startup does not activate it,
+and the ordered native event-loop integration remains in progress. Physical
+tablets, drivers and platform timing have not been qualified. A pen reaching the
+existing mouse path is not evidence of pressure or tilt support.
 
 ## Implemented shared foundations
 
@@ -79,9 +79,48 @@ The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
 workspace identity and inverted erasing. Plain-round pressure eligibility does
 not replace the existing nine brush-media policies: fallback controls compare
-those outputs against the ordinary pointer renderer. Trusted DOM acquisition,
-coalesced events, compatibility-mouse suppression and actual browser UI delivery
-remain a separate integration and qualification step.
+those outputs against the ordinary pointer renderer.
+
+Browser capture retains pen identity and coalesced samples, owns pointer capture,
+and orders genuine mouse and pen records at acquisition. It suppresses pen's
+compatibility mouse events without matching GUI events by position or count.
+The GUI hook classifies input; canvas replay uses the existing editor controller
+and checks captured document, view and permission ownership before publication.
+Focus loss, capture loss, resize, Escape and IME retire affected private work.
+Scoped abort signals remove capture listeners before public runner teardown.
+
+### Local browser qualification, 2026-10-27
+
+An immutable production bundle was exercised in headless Chrome 156 on an
+Apple-silicon Mac, through trusted CDP-emulated pen, mouse and touch delivery.
+Classic 11 and Studio checks covered:
+
+- First contact with focus on the page body or another ordinary input;
+  varying-pressure and constant-pressure strokes produced different saved pixels.
+- Coalesced input, identical held-preview/release screenshot regions, and exact
+  saved baseline pixels after one Undo.
+- Capture loss, Escape, resize and trusted window blur, followed by a fresh stroke
+  and exact Undo restoration in both interfaces.
+- Competing mouse/pen contacts in both ownership orders, held-button tails,
+  secondary-button capture across barrel release, and palm tails after pen Up.
+  Independent PCND reconstruction checked all 40 mixed-input saved projects.
+- Two serial public destroy/start cycles, listener counts returning to zero and
+  then their original baseline, and fresh trusted strokes after each restart.
+- A mobile-sized Studio MSP2 preview, consent and download regression: whole
+  encoded bytes matched the qualified golden, before/after project bytes matched,
+  and the result lease returned to zero after download.
+
+The original teardown run found capture listeners left registered. Its evidence
+is retained separately from the corrected bundle's passing restart and pressure
+regressions. These runs qualify the recorded production snapshot and its owned
+input source files; they do not establish a full current-main release build.
+
+CDP did not deliver its requested inverted-eraser bit as an eraser event, so real
+browser eraser-end delivery remains unqualified. Host/controller eraser controls
+are separate evidence. Web pressure can also be an API fallback value; these
+tests do not demonstrate a physical pressure sensor. Other browsers, physical
+devices, free/drop without explicit destroy, concurrent async starts/destroy,
+panic recovery and sustained input/display timing still require qualification.
 
 ## Resource and test scope
 
@@ -103,17 +142,18 @@ Tracked controls include
 [retained pen strokes](../crates/editing/paintcraft-tools/tests/pen_stroke.rs),
 [editor handoff](../apps/paintcraft/tests/pen_mask_handoff.rs),
 [desktop host](../apps/paintcraft/src/app/tablet/tests.rs), and
-[browser controller](../apps/paintcraft-web/src/paintcraft-web/editor/pen/tests.rs). They exercise
-synthetic samples in headless tests. Actual browser pen delivery and physical
-native traces are separate qualification steps.
+[browser controller](../apps/paintcraft-web/src/paintcraft-web/editor/pen/tests.rs), and
+[browser input host](../apps/paintcraft-web/src/paintcraft-web/pen_input/tests.rs).
+These controls exercise synthetic samples in headless tests. The actual browser
+delivery scope above and physical native traces remain distinct evidence.
 
 ## Remaining integration and qualification
 
 | Area | Remaining work |
 | --- | --- |
 | Native capture | Complete ordered AppKit source-to-widget/tool integration; implement Windows pointer/history, XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
-| Browser capture | Dedicated pen identity and coalesced events, pointer capture/loss, cancellation, teardown/restart and real headless-browser delivery proof. Preserve ordinary mouse and finger navigation. |
-| Controller adoption | Complete production source-to-controller wiring and mixed-device ordering. Preserve the tested ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics at that boundary. |
+| Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, concurrent startup/drop/panic lifecycle cases, and sustained acquisition/display timing. Preserve the qualified mouse and palm behavior while extending finger navigation. |
+| Controller adoption | Complete native production source-to-controller wiring and mixed-device ordering. Retain browser/native ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics. |
 | Brush settings and dynamics | Appropriate captured pressure curves/opacity, persisted controls and capability feedback, and applicable tilt/twist behavior. Recording optional axes does not implement their tool dynamics. |
 | Other brush/media profiles | Preserve all existing nine media policies and sampled tips. The plain-round pressure path must not silently replace them; their pressure/dynamic integration remains required. |
 | Physical qualification | Real tablet/driver traces on each platform, high-rate acquisition, disconnect/focus/modal recovery and input/display timing. Synthetic pen events and mouse injection do not establish these results. |
