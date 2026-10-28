@@ -556,3 +556,7 @@ mod asynchronous {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "native_publication/native_touch_tests.rs"]
+mod native_touch_tests;
