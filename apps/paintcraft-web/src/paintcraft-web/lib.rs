@@ -1,6 +1,8 @@
 //! Browser-owned UI state. Native filesystem, menus and workers stay in desktop.
 mod app;
 #[cfg(any(test, target_arch = "wasm32"))]
+mod browser_canvas;
+#[cfg(any(test, target_arch = "wasm32"))]
 mod browser_lifecycle;
 mod canvas;
 mod canvas_navigation;
@@ -37,6 +39,7 @@ mod text_tests;
 
 #[cfg(target_arch = "wasm32")]
 mod browser {
+    use super::browser_canvas::{ClaimedStart, Error as CanvasError, dom};
     use super::browser_lifecycle::{Lifecycle, Resources, StartError};
     use std::cell::RefCell;
     use wasm_bindgen::prelude::*;
@@ -69,6 +72,8 @@ mod browser {
         runner: eframe::WebRunner,
         codec: RefCell<Option<CodecService>>,
         pen: RefCell<Option<super::pen_input::dom::Guard>>,
+        canvas: RefCell<Option<dom::CanvasLease>>,
+        owner: JsValue,
     }
     impl Resources for BrowserResources {
         fn stop(&self) {
@@ -83,6 +88,8 @@ mod browser {
                 let _ = service.cancel();
             }
             self.runner.destroy();
+            let canvas = self.canvas.borrow_mut().take();
+            drop(canvas);
         }
     }
 
@@ -93,6 +100,8 @@ mod browser {
                     runner: eframe::WebRunner::new(),
                     codec: RefCell::new(None),
                     pen: RefCell::new(None),
+                    canvas: RefCell::new(None),
+                    owner: dom::owner(),
                 }),
             }
         }
@@ -121,8 +130,22 @@ mod browser {
                     "Browser fonts have not been loaded",
                 ));
             }
+            let claim = match dom::CanvasLease::acquire(
+                dom::Map,
+                canvas.clone(),
+                self.lifecycle.resources().owner.clone(),
+            ) {
+                Ok(claim) => claim,
+                Err(error) => {
+                    return js_sys::Promise::reject(&JsValue::from_str(match error {
+                        CanvasError::Busy => "Canvas is owned by another editor",
+                        CanvasError::Capacity => "Canvas ownership capacity exhausted",
+                        CanvasError::Storage => "Canvas ownership storage unavailable",
+                    }));
+                }
+            };
             let start = match self.lifecycle.begin() {
-                Ok(start) => start,
+                Ok(start) => ClaimedStart::new(start, claim),
                 Err(error) => {
                     return js_sys::Promise::reject(&JsValue::from_str(match error {
                         StartError::Busy => "Editor startup is still in progress",
@@ -158,7 +181,9 @@ mod browser {
                 )?;
                 *resources.pen.borrow_mut() =
                     Some(super::pen_input::dom::install(&resources.runner, canvas)?);
-                start.commit().map_err(|()| cancelled())?;
+                start
+                    .commit(|resources, claim| *resources.canvas.borrow_mut() = Some(claim))
+                    .map_err(|()| cancelled())?;
                 Ok(JsValue::UNDEFINED)
             })
         }
