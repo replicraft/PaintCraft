@@ -21,6 +21,12 @@ impl Route {
         self != Self::System
     }
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CaptureStatus {
+    pub pen: bool,
+    pub mouse: bool,
+    pub failed: bool,
+}
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum UiEvent {
     Move {
@@ -150,6 +156,14 @@ impl Receiver {
     }
     pub fn finger(&mut self, id: u64, phase: Phase) -> Result<bool, Invalid> {
         self.router.finger_owned(id, phase, self.stream.is_some())
+    }
+    /// Physical capture only: completed queued samples are not a new contact.
+    pub fn capture_status(&self) -> CaptureStatus {
+        CaptureStatus {
+            pen: self.stream.is_some(),
+            mouse: self.mouse_capture,
+            failed: self.failed,
+        }
     }
     /// The host samples transform and permissions under its captured-view lock.
     /// Native physical/surface coordinates must already be converted to GUI points.
