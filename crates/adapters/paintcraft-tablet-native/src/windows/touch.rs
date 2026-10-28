@@ -14,6 +14,8 @@ pub(super) struct Finger {
     /// None is unspecified, never a fabricated low/palm or high classification.
     pub confidence: Option<bool>,
     pub in_contact: bool,
+    /// Actual system-designated PRIMARY bit, never a first-local-contact guess.
+    pub primary: bool,
 }
 #[derive(Clone, Copy, Debug)]
 struct Contact {
@@ -224,6 +226,7 @@ impl State {
             },
             confidence: (info.flags & super::model::CONFIDENCE != 0).then_some(true),
             in_contact: held,
+            primary: info.flags & super::model::PRIMARY != 0,
             position: if terminal {
                 None
             } else {
@@ -361,6 +364,48 @@ mod confidence_controls {
             client: true,
             ..Info::default()
         }
+    }
+    #[test]
+    fn primary_release_does_not_promote_another_native_finger() {
+        let mut state = State::new(19, 1000);
+        let primary = state
+            .sample(
+                sample(DOWN | CONTACT | super::super::model::PRIMARY, 1),
+                Message::Down,
+                false,
+                1000,
+            )
+            .unwrap()
+            .1
+            .unwrap();
+        assert!(primary.primary);
+        let mut secondary = sample(DOWN | CONTACT, 2);
+        secondary.pointer = 7;
+        let finger = state
+            .sample(secondary, Message::Down, false, 1000)
+            .unwrap()
+            .1
+            .unwrap();
+        assert!(!finger.primary);
+        state
+            .sample(
+                sample(UP | super::super::model::PRIMARY, 3),
+                Message::Up,
+                false,
+                1000,
+            )
+            .unwrap();
+        secondary.flags = CONTACT | IN_RANGE;
+        secondary.performance = 4;
+        secondary.frame = 4;
+        let remaining = state
+            .sample(secondary, Message::Update, false, 1000)
+            .unwrap()
+            .1
+            .unwrap();
+        assert!(!remaining.primary);
+        assert!(remaining.in_contact);
+        assert_eq!(remaining.phase, Phase::Move);
     }
     #[test]
     fn absent_confidence_never_claims_palm_or_high_confidence_and_retains_real_phase() {

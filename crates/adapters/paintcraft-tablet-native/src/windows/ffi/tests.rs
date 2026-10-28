@@ -30,6 +30,7 @@ fn retained_callback_context_cannot_acquire_another_installations_authority() {
 fn copied_flag_meanings_match_the_selected_windows_sdk() {
     assert_eq!(model::IN_RANGE, POINTER_FLAG_INRANGE.0);
     assert_eq!(model::CONTACT, POINTER_FLAG_INCONTACT.0);
+    assert_eq!(model::PRIMARY, POINTER_FLAG_PRIMARY.0);
     assert_eq!(model::DOWN, POINTER_FLAG_DOWN.0);
     assert_eq!(model::UPDATE, POINTER_FLAG_UPDATE.0);
     assert_eq!(model::UP, POINTER_FLAG_UP.0);

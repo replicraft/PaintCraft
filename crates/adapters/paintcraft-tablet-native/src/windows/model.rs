@@ -10,6 +10,7 @@ use paintcraft_input::{
 // Windows SDK flags. The Windows binding control verifies these identities.
 pub(super) const IN_RANGE: u32 = 2;
 pub(super) const CONTACT: u32 = 4;
+pub(super) const PRIMARY: u32 = 0x2000;
 pub(super) const CONFIDENCE: u32 = 0x4000;
 pub(super) const CANCELED: u32 = 0x8000;
 pub(super) const DOWN: u32 = 0x10000;

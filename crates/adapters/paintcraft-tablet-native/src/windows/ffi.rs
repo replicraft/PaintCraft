@@ -482,6 +482,13 @@ fn process(target: &mut Target, message: &NativeMessage) -> Result<(bool, bool)>
             let owned = touch_native::acquire(target, id, phase, flags, native_chrome)?;
             for finger in &target.storage.fingers {
                 target.storage.events.push(CaptureEvent::Finger {
+                    confidence: if finger.confidence == Some(true) {
+                        paintcraft_input::tablet::FingerConfidence::High
+                    } else {
+                        paintcraft_input::tablet::FingerConfidence::Unspecified
+                    },
+                    in_contact: finger.in_contact,
+                    primary: finger.primary,
                     identity: finger.identity,
                     phase: finger.phase,
                     time: finger.time,
