@@ -179,3 +179,34 @@ fn tracking_entry_does_not_invent_motion_and_later_actual_motion_keeps_its_own_t
     assert!(matches!(frame.entries[0].pointer,
         Pointer::Gui(egui::Event::PointerMoved(at)) if at == egui::pos2(10.0, 20.0)));
 }
+#[test]
+fn validated_finger_metadata_still_refuses_unqualified_source_and_gui_delivery() {
+    let budget = SharedBudget::new(1 << 20);
+    let mut projection = Projection::new(16, &budget).unwrap();
+    projection.publish(view()).unwrap();
+    let record = CaptureRecord {
+        installation: 7,
+        ordinal: 0,
+        event: CaptureEvent::Finger {
+            identity: Identity {
+                device: 11,
+                pointer: 13,
+                kind: DeviceKind::Finger,
+            },
+            phase: Phase::Down,
+            time: Time {
+                epoch: 7,
+                micros: 1,
+                clock: Clock::WindowsPerformance,
+            },
+            provenance: Provenance::Actual,
+            position: Some(WindowPosition::PhysicalPixels(20.0, 20.0)),
+            confidence: paintcraft_input::tablet::FingerConfidence::High,
+            in_contact: true,
+            primary: true,
+        },
+    };
+    assert_eq!(projection.capture(record), Err(RecordFault::Unsupported));
+    assert!(projection.take(DeliveryHealth::Ready).is_err());
+    assert!(projection.queue.is_empty());
+}

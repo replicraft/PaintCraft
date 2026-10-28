@@ -295,6 +295,7 @@ impl Projection {
                         .retire_native_identity(identity)
                         .map_err(|_| RecordFault::Invalid)?;
                 }
+                Collected::Finger { .. } => return Err(RecordFault::Unsupported),
                 Collected::FrameworkBoundary(kind) => self.boundary(None, kind)?,
             }
         }

@@ -9,6 +9,7 @@ impl Collector {
     ) -> std::result::Result<(), RecordFault> {
         if time.epoch != epoch
             || self.owner == Some(identity)
+            || self.fingers.held(identity)
             || self
                 .pens
                 .iter()

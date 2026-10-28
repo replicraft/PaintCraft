@@ -1,8 +1,8 @@
-//! Touch remains explicit Unsupported until its canonical consumer qualifies.
+//! Collector metadata validation is distinct from Source/GUI authorization.
 use super::*;
 use paintcraft_input::{Modifiers, tablet::Clock};
 #[test]
-fn new_native_contracts_never_alias_old_boundary_or_drop_successfully() {
+fn finger_metadata_remains_distinct_from_boundary_and_gui_admission() {
     let time = Time {
         epoch: 7,
         micros: 500,
@@ -14,6 +14,9 @@ fn new_native_contracts_never_alias_old_boundary_or_drop_successfully() {
         kind: paintcraft_input::tablet::DeviceKind::Finger,
     };
     let event = CaptureEvent::Finger {
+        confidence: paintcraft_input::tablet::FingerConfidence::High,
+        in_contact: true,
+        primary: true,
         identity,
         phase: Phase::Down,
         time,
@@ -34,25 +37,21 @@ fn new_native_contracts_never_alias_old_boundary_or_drop_successfully() {
         }),
     })
     .unwrap();
-    assert_eq!(
-        c.accept(CaptureRecord {
-            installation: 7,
-            ordinal: 1,
-            event
-        }),
-        Err(RecordFault::Unsupported)
-    );
+    c.accept(CaptureRecord {
+        installation: 7,
+        ordinal: 1,
+        event,
+    })
+    .unwrap();
     let frame = c.take(DeliveryHealth::Ready).unwrap();
-    assert!(frame.failed);
-    assert!(frame.records.is_empty());
-    assert_eq!(
-        c.accept(CaptureRecord {
-            installation: 7,
-            ordinal: 2,
-            event
-        }),
-        Err(RecordFault::Retired)
-    );
+    assert!(!frame.failed);
+    assert!(matches!(
+        frame.records[1],
+        Collected::Finger {
+            route: FingerRoute::Eligible,
+            ..
+        }
+    ));
     let mut c = Collector::new(8, &SharedBudget::new(1 << 20)).unwrap();
     c.framework_boundary(Boundary::ViewInvalidated).unwrap();
     let frame = c.take(DeliveryHealth::Ready).unwrap();

@@ -13,6 +13,14 @@ pub enum MouseRoute {
     Suppressed,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FingerRoute {
+    /// Validated metadata only; this does not authorize GUI/gesture delivery.
+    Eligible,
+    Suppressed,
+    /// Retire an earlier eligible contact; the physical record is unchanged.
+    PolicyCancel,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PenRoute {
     Admitted,
     Suppressed,
@@ -29,6 +37,10 @@ pub enum Collected {
     Tablet {
         record: CaptureRecord,
         route: PenRoute,
+    },
+    Finger {
+        record: CaptureRecord,
+        route: FingerRoute,
     },
     Boundary(CaptureRecord),
     /// Verified source lifetime end; no source clock is reclaimed by Raw Leave.
@@ -63,6 +75,7 @@ pub struct Collector {
     // be delivered later with older native timestamps; retain those unchanged.
     mouse_time: Option<Time>,
     pens: [Option<Pen>; 64],
+    fingers: finger::Table,
     // Clock lifetime survives contact-slot release; never silently rebase a
     // reused identity after Up. Reclaim only on a verified true lifetime end.
     times: [Option<(Identity, Time)>; 64],
@@ -87,6 +100,7 @@ impl Collector {
         storage.resize(
             (bytes
                 + (std::mem::size_of::<[Option<Pen>; 64]>()
+                    + std::mem::size_of::<finger::Table>()
                     + std::mem::size_of::<[Option<(Identity, Time)>; 64]>()
                     + std::mem::size_of::<Option<paintcraft_input::tablet::Clock>>()))
                 as u64,
@@ -101,6 +115,7 @@ impl Collector {
         storage.resize(
             (queue.capacity() * std::mem::size_of::<Collected>()
                 + (std::mem::size_of::<[Option<Pen>; 64]>()
+                    + std::mem::size_of::<finger::Table>()
                     + std::mem::size_of::<[Option<(Identity, Time)>; 64]>()
                     + std::mem::size_of::<Option<paintcraft_input::tablet::Clock>>()))
                 as u64,
@@ -116,6 +131,7 @@ impl Collector {
             mouse_clock: None,
             mouse_time: None,
             pens: [None; 64],
+            fingers: finger::Table::default(),
             times: [None; 64],
             owner: None,
             failed: false,
@@ -165,9 +181,8 @@ impl Collector {
                 Collected::IdentityRetired(record)
             }
             CaptureEvent::Finger { .. } => {
-                // Typed contract is published before the consumer qualification
-                // slice. Never silently accept/drop or alias these semantics.
-                return Err(RecordFault::Unsupported);
+                let route = self.collect_finger(record)?;
+                Collected::Finger { record, route }
             }
             CaptureEvent::Boundary { kind, .. } => {
                 self.apply_boundary(kind);
@@ -373,6 +388,7 @@ impl Collector {
         Ok(())
     }
     fn fence_pens(&mut self) {
+        self.fingers.fence();
         for pen in self.pens.iter_mut().flatten() {
             pen.fenced |= pen.held;
         }
@@ -453,3 +469,5 @@ mod lifecycle;
 #[cfg(test)]
 #[path = "collector/tracking.rs"]
 mod tracking;
+
+mod finger;
