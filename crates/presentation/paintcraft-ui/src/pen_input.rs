@@ -10,6 +10,7 @@ use paintcraft_input::tablet::{
 };
 use std::sync::{Arc, Mutex};
 
+mod native;
 mod publication;
 pub use publication::PublicationGuard;
 
@@ -75,6 +76,7 @@ struct State {
     frames: BudgetScope,
     window_epoch: u64,
     canvas_epoch: u64,
+    native: native::Metadata,
 }
 /// Cloneable endpoint for native sinks/DOM listeners; it never touches egui Context.
 #[derive(Clone, Debug)]
@@ -123,14 +125,15 @@ impl Source {
         let bytes = source_capacity * std::mem::size_of::<Sample>()
             + (ui_capacity + 3) * std::mem::size_of::<OrderedUiEvent>();
         let mut storage = budget.account(AllocationClass::PaintMetadata);
-        storage.resize(bytes as u64)?;
+        storage.resize((bytes + std::mem::size_of::<native::Metadata>()) as u64)?;
         // Separate reservation for at most one full source/UI handoff. Acquiring
         // it now avoids callbacks into GUI/resource watchers under a native gate.
         let frames = budget
             .reserve_capacity(bytes as u64)?
             .scope(AllocationClass::PaintMetadata);
         let receiver = Receiver::new(source_capacity, ui_capacity).map_err(invalid)?;
-        storage.resize(receiver.storage_bytes() as u64)?;
+        storage
+            .resize((receiver.storage_bytes() + std::mem::size_of::<native::Metadata>()) as u64)?;
         Ok(Self(Arc::new(Mutex::new(State {
             receiver,
             view: None,
@@ -138,6 +141,7 @@ impl Source {
             frames,
             window_epoch: 0,
             canvas_epoch: 0,
+            native: Default::default(),
         }))))
     }
     /// Publish only a complete final layout. Changed owners/transforms retire
@@ -146,9 +150,11 @@ impl Source {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         if !view.valid() {
             if state.receiver.has_capture_or_samples() {
+                state.native.fence();
                 state.receiver.cancel();
             }
             state.window_epoch = state.window_epoch.saturating_add(1);
+            state.native.fence();
             state.view = None;
             return Err(Invalid::Coordinates);
         }
@@ -163,6 +169,7 @@ impl Source {
             old.owner != view.owner || old.transform != view.transform || old.canvas != view.canvas
         });
         if retire_all {
+            state.native.fence();
             state.window_epoch = state.window_epoch.saturating_add(1);
         }
         if retire_canvas {
@@ -171,13 +178,15 @@ impl Source {
         if (retire_all && state.receiver.has_capture_or_samples())
             || (retire_canvas && state.receiver.has_canvas_capture_or_samples())
         {
+            state.native.fence();
             state.receiver.cancel();
         }
         state.view = Some(view);
         Ok(())
     }
-    /// Convert OS physical/surface coordinates using this exact view's display
-    /// scale, then capture its transform under the same lock. No callback escapes.
+    /// Compatibility conversion for an already completed view. Acquisition
+    /// callers must use submit_native so metadata is observed while no view is
+    /// available. Missing view refuses explicitly instead of dropping a tail.
     pub fn submit_with(
         &self,
         delivery: Delivery,
@@ -185,23 +194,18 @@ impl Source {
     ) -> std::result::Result<Route, Invalid> {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         let Some(view) = state.view else {
-            return Ok(Route::Suppressed);
+            return Err(Invalid::Coordinates);
         };
-        let raw = match convert(view.pixels_per_point) {
+        let mut raw = match convert(view.pixels_per_point) {
             Ok(raw) => raw,
             Err(error) => {
+                state.native.fence();
                 state.receiver.cancel();
                 return Err(error);
             }
         };
-        // Receiver checks stream identity before accepting positionless lifecycle
-        // events. Only the explicit Source.cancel() operation is window-wide.
-        state.receiver.submit(
-            raw,
-            view.transform,
-            view.permissions(raw.logical_position),
-            delivery,
-        )
+        let position = raw.logical_position.take();
+        state.submit_native(delivery, raw, |_| Ok(position))
     }
     /// DOM/native intake can fence physical tails after host-side retirement.
     /// Reading this token neither drains input nor invokes GUI callbacks.
@@ -213,28 +217,26 @@ impl Source {
             .cancellation_epoch()
     }
     pub fn cancel(&self) {
-        self.0
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .receiver
-            .cancel();
+        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state.native.fence();
+        state.receiver.cancel();
     }
     /// Display/window layout changed before a completed GUI pass. New pen
     /// contacts wait for a fresh view instead of using the old scale/origin.
     pub fn invalidate_view(&self) {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         if state.receiver.has_capture_or_samples() {
+            state.native.fence();
             state.receiver.cancel();
         }
+        state.native.fence();
         state.window_epoch = state.window_epoch.saturating_add(1);
         state.view = None;
     }
     pub fn fault(&self) {
-        self.0
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .receiver
-            .fault();
+        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state.native.fence();
+        state.receiver.fault();
     }
     /// True means the contact/tail must be suppressed as a palm.
     pub fn finger(&self, id: u64, phase: Phase) -> std::result::Result<bool, Invalid> {
@@ -270,6 +272,7 @@ impl Source {
             }
             let canvas = state.receiver.has_canvas_capture_or_samples();
             if (different_session && state.receiver.has_capture_or_samples()) || canvas {
+                state.native.fence();
                 state.receiver.cancel();
             }
             if different_session || canvas {

@@ -313,6 +313,19 @@ impl Receiver {
         self.ui_modifiers = modifiers;
         Ok(())
     }
+    /// Retire only the matching classified stream, without fabricating a raw
+    /// terminal or cancelling a different device's contact.
+    pub fn cancel_identity(&mut self, identity: Identity) -> bool {
+        if self
+            .stream
+            .is_some_and(|stream| stream.identity == identity)
+        {
+            self.cancel();
+            true
+        } else {
+            false
+        }
+    }
     /// Focus/modal/capture loss cancels private ink and releases UI buttons at the
     /// last valid UI position. This does not fabricate a hardware source sample.
     pub fn cancel(&mut self) {

@@ -4,7 +4,7 @@ use paintcraft_input::{
     tablet::{Buttons, Clock, DeviceKind, Identity, Provenance, Time, receiver::UiEvent},
 };
 
-fn view() -> View {
+pub(super) fn view() -> View {
     View {
         owner: Owner {
             session: 1,
@@ -26,7 +26,7 @@ fn view() -> View {
         ime: false,
     }
 }
-fn raw(sequence: u64, phase: Phase) -> RawSample {
+pub(super) fn raw(sequence: u64, phase: Phase) -> RawSample {
     RawSample {
         identity: Identity {
             device: 1,
@@ -50,7 +50,7 @@ fn raw(sequence: u64, phase: Phase) -> RawSample {
         provenance: Provenance::Actual,
     }
 }
-fn source(budget: &SharedBudget) -> Source {
+pub(super) fn source(budget: &SharedBudget) -> Source {
     let source = Source::new(16, 16, budget).unwrap();
     source.publish(view()).unwrap();
     source
@@ -147,7 +147,7 @@ fn fresh_owner_at_drain_and_invalid_display_do_not_reinterpret_old_positions() {
     assert_eq!(source.publish(bad), Err(Invalid::Coordinates));
     assert_eq!(
         source.submit_with(Delivery::ReceiverPointer, |_| panic!("no valid view")),
-        Ok(Route::Suppressed)
+        Err(Invalid::Coordinates)
     );
 }
 
