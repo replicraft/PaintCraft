@@ -16,6 +16,8 @@ pub struct NativePacket {
     /// Native adapters leave logical_position empty. The host fills it under
     /// the same lock which captures the document owner and view transform.
     pub raw: RawSample,
+    /// Independent real side-button edge; absence is not proof of a transition.
+    pub button_edge: Option<paintcraft_input::tablet::PenButtonEdge>,
     pub position: Option<WindowPosition>,
     pub delivery: Delivery,
 }

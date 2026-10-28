@@ -203,6 +203,7 @@ impl State {
             tool.route = None;
         }
         Some(NativePacket {
+            button_edge: None,
             raw,
             position: Some(point.position),
             delivery: Delivery::ReceiverPointer,
@@ -325,6 +326,7 @@ impl State {
                 raw.twist_degrees = None;
                 raw.contact = None;
                 NativePacket {
+                    button_edge: None,
                     raw,
                     position: None,
                     delivery: Delivery::ReceiverPointer,

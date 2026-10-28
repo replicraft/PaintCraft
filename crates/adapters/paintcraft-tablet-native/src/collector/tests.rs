@@ -25,6 +25,7 @@ pub(super) fn pen(ordinal: u64, phase: Phase, buttons: u16) -> CaptureRecord {
         installation: 7,
         ordinal,
         event: CaptureEvent::Tablet(NativePacket {
+            button_edge: None,
             raw: RawSample {
                 identity: Identity {
                     device: 1,

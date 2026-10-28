@@ -45,6 +45,7 @@ fn physical_and_surface_positions_use_captured_gui_scale_without_changing_source
     ] {
         let original = sample();
         let logical = NativePacket {
+            button_edge: None,
             raw: original,
             position: Some(position),
             delivery: Delivery::ReceiverPointer,
@@ -71,6 +72,7 @@ fn lifecycle_has_no_invented_position_and_bad_or_double_scaling_is_refused() {
     let mut raw = sample();
     raw.phase = Phase::Cancel;
     let packet = NativePacket {
+        button_edge: None,
         raw,
         position: None,
         delivery: Delivery::SystemPointer,
@@ -94,6 +96,7 @@ fn lifecycle_has_no_invented_position_and_bad_or_double_scaling_is_refused() {
     ] {
         assert_eq!(
             NativePacket {
+                button_edge: None,
                 raw: sample(),
                 position: Some(position),
                 delivery: Delivery::SystemPointer
@@ -106,6 +109,7 @@ fn lifecycle_has_no_invented_position_and_bad_or_double_scaling_is_refused() {
     already.logical_position = Some((1., 1.));
     assert_eq!(
         NativePacket {
+            button_edge: None,
             raw: already,
             position: None,
             delivery: Delivery::SystemPointer
@@ -116,6 +120,7 @@ fn lifecycle_has_no_invented_position_and_bad_or_double_scaling_is_refused() {
     for ppp in [0., -1., f64::NAN, f64::INFINITY] {
         assert_eq!(
             NativePacket {
+                button_edge: None,
                 raw: sample(),
                 position: Some(WindowPosition::PhysicalPixels(1., 2.)),
                 delivery: Delivery::SystemPointer
@@ -146,6 +151,7 @@ fn advertised_axes_are_separate_from_observed_zero_and_callback_failures_are_con
         report.clone(),
     );
     assert!(emitter.emit(NativePacket {
+        button_edge: None,
         raw: sample(),
         position: None,
         delivery: Delivery::SystemPointer
@@ -156,6 +162,7 @@ fn advertised_axes_are_separate_from_observed_zero_and_callback_failures_are_con
     assert_eq!(snapshot.samples, 1);
     assert!(!snapshot.installed);
     assert!(emitter.emit(NativePacket {
+        button_edge: None,
         raw: sample(),
         position: None,
         delivery: Delivery::SystemPointer
@@ -188,6 +195,7 @@ fn failed_partial_enqueue_cannot_escape_a_concurrent_safe_handoff() {
     let gate = emitter.gate.clone();
     let emit = std::thread::spawn(move || {
         emitter.emit(NativePacket {
+            button_edge: None,
             raw: sample(),
             position: Some(WindowPosition::PhysicalPixels(1., 2.)),
             delivery: Delivery::ReceiverPointer,
@@ -225,6 +233,7 @@ fn wake_failure_does_not_invalidate_fully_delivered_input() {
         report.clone(),
     );
     assert!(!emitter.emit(NativePacket {
+        button_edge: None,
         raw: sample(),
         position: None,
         delivery: Delivery::ReceiverPointer
@@ -261,6 +270,7 @@ fn fatal_source_callback_reports_failure_and_wakes_without_faking_sink_cancellat
     assert_eq!(wakes.load(std::sync::atomic::Ordering::SeqCst), 1);
     assert_eq!(report.snapshot().source_failures, 1);
     assert!(emitter.emit(NativePacket {
+        button_edge: None,
         raw: sample(),
         position: None,
         delivery: Delivery::ReceiverPointer
@@ -292,6 +302,7 @@ fn one_record_emitter_and_collector_accept_real_priority_before_gui_batching() {
     };
     emitter.observe(mouse(true));
     let mut packet = NativePacket {
+        button_edge: None,
         raw: sample(),
         position: Some(WindowPosition::PhysicalPixels(20.0, 30.0)),
         delivery: Delivery::ReceiverPointer,
@@ -354,6 +365,7 @@ fn typed_record_sink_failure_discards_partial_collector_delivery_under_the_same_
         .record_epoch
         .store(11, std::sync::atomic::Ordering::Release);
     emitter.emit(NativePacket {
+        button_edge: None,
         raw: sample(),
         position: Some(WindowPosition::PhysicalPixels(1.0, 1.0)),
         delivery: Delivery::ReceiverPointer,
