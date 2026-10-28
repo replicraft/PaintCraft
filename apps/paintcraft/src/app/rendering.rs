@@ -25,22 +25,37 @@ impl App {
     }
 
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
-    pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
-        self.worker_budget = editing::native_worker_budget();
-        if let Err(error) = self.connect_budget_wakes(
+    pub fn with_native_services(self, cc: &eframe::CreationContext<'_>) -> Self {
+        self.with_native_window_services(
             &cc.egui_ctx,
-            paintcraft_raster::Admission::new(0).residency_budget(),
-        ) {
+            NativeDialogs::new(cc),
+            cc.wgpu_render_state.as_ref(),
+        )
+    }
+
+    /// Connect the same services for an owned native event loop. The caller
+    /// retains the real parent window used to construct `dialogs` until all
+    /// dialog requests and this application have been retired.
+    pub fn with_native_window_services(
+        mut self,
+        ctx: &egui::Context,
+        dialogs: NativeDialogs,
+        render_state: Option<&eframe::egui_wgpu::RenderState>,
+    ) -> Self {
+        self.worker_budget = editing::native_worker_budget();
+        if let Err(error) =
+            self.connect_budget_wakes(ctx, paintcraft_raster::Admission::new(0).residency_budget())
+        {
             self.editor.set_status(format!(
                 "Memory pressure notifications unavailable: {error}"
             ));
         }
-        self.dialogs = Some(NativeDialogs::new(cc));
-        self.initialize_editing(cc.egui_ctx.clone());
-        self.initialize_fonts(&cc.egui_ctx);
+        self.dialogs = Some(dialogs);
+        self.initialize_editing(ctx.clone());
+        self.initialize_fonts(ctx);
         #[cfg(target_os = "macos")]
-        self.initialize_native_menu(&cc.egui_ctx);
-        match saving::NativeSaving::new(cc.egui_ctx.clone()) {
+        self.initialize_native_menu(ctx);
+        match saving::NativeSaving::new(ctx.clone()) {
             Ok(saving) => self.saving = Some(saving),
             Err(error) => self
                 .editor
@@ -49,10 +64,10 @@ impl App {
         self.gpu_scaled_display =
             std::env::var("PAINTCRAFT_GPU_SCALED").is_ok_and(|value| value == "1");
         let submission_policy = std::env::var("PAINTCRAFT_GPU_BATCHING").unwrap_or_default();
-        if let Some(state) = &cc.wgpu_render_state {
+        if let Some(state) = render_state {
             let epoch = paintcraft_render::gpu::DeviceEpoch::default();
             let lost = epoch.clone();
-            let wake = cc.egui_ctx.clone();
+            let wake = ctx.clone();
             state.device.set_device_lost_callback(move |_, _| {
                 lost.retire();
                 wake.request_repaint();
