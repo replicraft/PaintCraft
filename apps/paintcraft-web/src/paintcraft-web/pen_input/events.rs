@@ -138,6 +138,29 @@ impl Normalizer {
     pub fn restart_required(&self) -> bool {
         self.restart_required
     }
+    /// An observed release outside the canvas only retires a known physical
+    /// identity. It cannot allocate a contact, map geometry or publish its Up.
+    pub fn outside_terminal(
+        &mut self,
+        mut event: Pointer,
+        trusted: bool,
+    ) -> Result<Option<RawSample>, Invalid> {
+        if !trusted
+            || event.kind != Kind::Up
+            || event.buttons != 0
+            || !self
+                .tools
+                .iter()
+                .chain(self.denied.iter())
+                .flatten()
+                .any(|tool| tool.id == event.id)
+        {
+            return Ok(None);
+        }
+        event.at = None;
+        self.normalize(event, Provenance::Actual)
+            .map(|packet| Some(packet.raw))
+    }
     /// Once storage is exhausted, unknown tails and pen-local parse failures
     /// are ignored, not repeatedly escalated into global mouse cancellation.
     /// Known valid records still carry their own real terminal to Source.

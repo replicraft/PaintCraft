@@ -321,6 +321,49 @@ pub(crate) fn install(
     options.set_capture(true);
     options.set_passive(false);
     options.set_signal(&guard.abort.signal());
+    {
+        let source = source.clone();
+        let normalizer = normalizer.clone();
+        let acquisition = acquisition.clone();
+        let compatibility = compatibility.clone();
+        let canvas = canvas.clone();
+        runner.add_event_listener_ex(
+            &window_target,
+            "pointerup",
+            &options,
+            move |event: PointerEvent, runner, _| {
+                // Canvas releases retain the existing publication path. Once
+                // capture is lost, an outside terminal is metadata only.
+                if event.pointer_type() != "pen" || event.target().as_ref() == Some(canvas.as_ref())
+                {
+                    return;
+                }
+                let mut normalizer = normalizer.borrow_mut();
+                normalizer.observe_cancellation(source.cancellation_epoch());
+                let Ok(Some(mut raw)) =
+                    normalizer.outside_terminal(pointer(&event, Kind::Up), event.is_trusted())
+                else {
+                    return;
+                };
+                drop(normalizer);
+                compatibility.borrow_mut().pen(Pair {
+                    kind: Kind::Up,
+                    stamp: event.time_stamp().to_bits(),
+                    buttons: 0,
+                    trusted: true,
+                });
+                if acquisition
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .pen(&mut raw)
+                    .is_ok()
+                {
+                    let _ = source.suppress_native(raw);
+                    runner.egui_ctx().request_repaint();
+                }
+            },
+        )?;
+    }
     for (name, kind) in [
         ("pointerdown", Kind::Down),
         ("pointermove", Kind::Move),

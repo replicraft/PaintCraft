@@ -2,6 +2,52 @@ use super::*;
 mod button_edges;
 mod metadata;
 mod overflow;
+
+#[test]
+fn outside_terminal_preserves_end_and_actual_provenance_without_admitting_unknown_contacts() {
+    for buttons in [Buttons::TIP, Buttons::ERASER, Buttons::BARREL] {
+        let mut n = Normalizer::new(3);
+        n.sample(event(Kind::Down, buttons), Provenance::Actual)
+            .unwrap();
+        n.clear();
+        let sequence = n.sequence;
+        let mut release = event(Kind::Up, 0);
+        assert!(n.outside_terminal(release, false).unwrap().is_none());
+        release.id += 1;
+        assert!(n.outside_terminal(release, true).unwrap().is_none());
+        release.id -= 1;
+        release.buttons = buttons;
+        assert!(n.outside_terminal(release, true).unwrap().is_none());
+        assert_eq!(n.sequence, sequence);
+        release.buttons = 0;
+        let raw = n.outside_terminal(release, true).unwrap().unwrap();
+        assert_eq!(raw.logical_position, None);
+        assert_eq!(raw.provenance, Provenance::Actual);
+        assert_eq!(raw.buttons, Buttons(0));
+        let pair = Pair {
+            kind: Kind::Up,
+            stamp: release.stamp.to_bits(),
+            buttons: 0,
+            trusted: true,
+        };
+        let mut compatibility = Compatibility::default();
+        compatibility.pen(pair);
+        assert!(compatibility.matches(pair));
+        assert!(!compatibility.matches(pair));
+        compatibility.pen(pair);
+        compatibility.mouse(); // Actual intervening mouse PointerEvent.
+        assert!(!compatibility.matches(pair));
+        assert_eq!(
+            raw.identity.kind,
+            if buttons == Buttons::ERASER {
+                DeviceKind::Eraser
+            } else {
+                DeviceKind::Pen
+            }
+        );
+        assert!(n.outside_terminal(release, true).unwrap().is_none());
+    }
+}
 fn event(kind: Kind, buttons: u16) -> Pointer {
     Pointer {
         id: 4,

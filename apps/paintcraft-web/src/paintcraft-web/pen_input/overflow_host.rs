@@ -1,6 +1,6 @@
 //! Actual App/egui cancellation versus genuine mouse publication controls.
 use super::*;
-use paintcraft_input::tablet::{Buttons, Provenance};
+use paintcraft_input::tablet::{Buttons, Provenance, receiver};
 struct Host {
     app: WebApp,
     ctx: egui::Context,
@@ -69,6 +69,70 @@ impl Host {
         }
         drop(intake);
     }
+}
+
+#[test]
+fn trusted_outside_terminal_retires_only_known_tail_and_fresh_same_pen_publishes_once() {
+    let mut h = Host::new();
+    let initial = h.app.editor.session.document().clone();
+    let source = h.app.pen.source.clone().unwrap();
+    let acquisition = h.app.pen.acquisition.clone().unwrap();
+    let mut n = events::Normalizer::new(7);
+    let point = h.point(0.4);
+    let send = |n: &mut events::Normalizer, kind, buttons, stamp| {
+        n.observe_cancellation(source.cancellation_epoch());
+        let mut event = pointer(100, kind, buttons);
+        event.stamp = stamp;
+        let mut packet = n.intake(event, Provenance::Actual).unwrap().unwrap();
+        acquisition.lock().unwrap().pen(&mut packet.raw).unwrap();
+        events::deliver_packet(&source, packet, |_| {
+            Ok(Some((f64::from(point.x), f64::from(point.y))))
+        })
+        .unwrap()
+    };
+    assert_eq!(
+        send(&mut n, events::Kind::Down, Buttons::TIP, 1.0),
+        receiver::Route::Canvas
+    );
+    h.step();
+    assert!(h.app.pen.controller_owned);
+    // The capture-loss handler cancels; no canvas Up arrives afterward.
+    n.clear();
+    source.cancel();
+    h.step();
+    assert_eq!(h.app.editor.session.undo_depth(), 0);
+    let mut terminal = pointer(100, events::Kind::Up, 0);
+    terminal.stamp = 2.0;
+    assert!(n.outside_terminal(terminal, false).unwrap().is_none());
+    let mut foreign = terminal;
+    foreign.id = 101;
+    assert!(n.outside_terminal(foreign, true).unwrap().is_none());
+    n.observe_cancellation(source.cancellation_epoch());
+    let mut raw = n.outside_terminal(terminal, true).unwrap().unwrap();
+    assert_eq!(raw.logical_position, None);
+    assert_eq!(raw.identity.kind, paintcraft_input::tablet::DeviceKind::Pen);
+    acquisition.lock().unwrap().pen(&mut raw).unwrap();
+    assert_eq!(
+        source.suppress_native(raw).unwrap(),
+        receiver::Route::Suppressed
+    );
+    h.step();
+    assert_eq!(h.app.editor.session.undo_depth(), 0);
+    assert!(h.app.editor.session.document().same_semantics(&initial));
+    assert_eq!(
+        send(&mut n, events::Kind::Down, Buttons::TIP, 3.0),
+        receiver::Route::Canvas
+    );
+    h.step();
+    assert_eq!(
+        send(&mut n, events::Kind::Up, 0, 4.0),
+        receiver::Route::Canvas
+    );
+    h.step();
+    assert_eq!(h.app.editor.session.undo_depth(), 1);
+    assert!(!h.app.editor.session.document().same_semantics(&initial));
+    h.app.editor.apply(paintcraft_tools::Action::Undo).unwrap();
+    assert!(h.app.editor.session.document().same_semantics(&initial));
 }
 
 #[test]
