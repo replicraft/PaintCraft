@@ -311,6 +311,59 @@ fn a_historical_barrel_edge_cannot_be_placed_before_other_retrieved_messages() {
     );
     assert!(output.is_empty());
 }
+
+#[test]
+fn historical_barrel_edges_while_tip_is_held_refuse_the_entire_history() {
+    for initially_pressed in [false, true] {
+        let mut state = State::new(19, 1000);
+        let mut down = info(DOWN | CONTACT, 1);
+        down.pen_flags = if initially_pressed { BARREL } else { 0 };
+        state.sample(down, Message::Down, false, 1000).unwrap();
+        let mut unchanged = info(UPDATE | CONTACT, 2);
+        unchanged.pen_flags = down.pen_flags;
+        let mut hidden_edge = info(UPDATE | CONTACT, 3);
+        hidden_edge.pen_flags = if initially_pressed { 0 } else { BARREL };
+        let mut current = hidden_edge;
+        current.frame = 4;
+        current.performance = 4;
+        current.ticks = 4;
+        let mut output = Vec::with_capacity(8);
+        assert!(
+            state
+                .history(
+                    &[current, hidden_edge, unchanged],
+                    Message::Update,
+                    1000,
+                    &mut output
+                )
+                .is_err()
+        );
+        assert!(output.is_empty());
+        // Even the preceding valid move must roll back: source time 2 remains
+        // admissible and the original physical barrel state is unchanged.
+        let resumed = packet(
+            state
+                .sample(unchanged, Message::Update, false, 1000)
+                .unwrap(),
+        );
+        assert_eq!(resumed.raw.phase, Phase::Move);
+        assert_eq!(
+            resumed.raw.buttons.0 & Buttons::BARREL != 0,
+            initially_pressed
+        );
+        // The same physical change in the actual current sample is admissible.
+        let actual = packet(
+            state
+                .sample(hidden_edge, Message::Update, false, 1000)
+                .unwrap(),
+        );
+        assert_eq!(
+            actual.raw.buttons.0 & Buttons::BARREL != 0,
+            !initially_pressed
+        );
+        assert_eq!(actual.button_edge, None);
+    }
+}
 #[test]
 fn actual_device_removal_releases_only_that_native_devices_local_metadata() {
     let mut state = State::new(19, 1000);
@@ -501,4 +554,26 @@ fn ambiguous_zero_pointer_timestamp_is_not_fabricated_as_tick_origin() {
     );
     // Generic actual MSG.time remains allowed to represent a real zero/wrap.
     assert_eq!(super::clock::ticks(0, 20, 19).unwrap().micros, 0);
+}
+
+#[test]
+fn coordinate_free_control_uses_known_idle_client_route_without_new_geometry_permission() {
+    let mut state = State::new(19, 1000);
+    state
+        .sample(info(UPDATE, 1), Message::Update, false, 1000)
+        .unwrap();
+    let mut control = info(CANCELED, 2);
+    control.client = false;
+    control.position = (90_000.0, -40_000.0);
+    control.button_change = 3; // SDK logical SECOND_DOWN proves no physical edge here.
+    let cancelled = packet(state.sample(control, Message::Update, false, 1000).unwrap());
+    assert_eq!(cancelled.raw.phase, Phase::Cancel);
+    assert_eq!(cancelled.position, None);
+    assert_eq!(cancelled.button_edge, None);
+    // An unobserved/native-only identity never obtains fresh client permission.
+    control.pointer = 88;
+    assert_eq!(
+        state.sample(control, Message::Update, false, 1000).unwrap(),
+        Output::Native
+    );
 }

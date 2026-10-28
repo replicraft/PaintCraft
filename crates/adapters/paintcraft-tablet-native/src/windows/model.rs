@@ -41,6 +41,8 @@ pub(super) struct Info {
     pub device: u64,
     pub pointer: u32,
     pub frame: u32,
+    /// Exact SDK logical button-change enum; not implicitly a physical barrel edge.
+    pub button_change: i32,
     pub flags: u32,
     pub pen_flags: u32,
     pub mask: u32,
@@ -61,6 +63,7 @@ struct Pointer {
     inverted: bool,
     recorded_ends: u8,
     contact: bool,
+    barrel: bool,
     down_seen: bool,
     held: bool,
     fenced: bool,
@@ -105,6 +108,7 @@ impl State {
         }
     }
 
+    #[cfg(test)]
     pub fn remove_device(&mut self, device: u64) {
         for pointer in &mut self.pointers {
             if pointer.is_some_and(|p| p.device == device) {
@@ -213,7 +217,11 @@ impl State {
         // Only positional moves may be coalesced behind the current MSG. A
         // barrel edge hidden in older history cannot be placed before unrelated
         // retrieved mouse/keyboard records by timestamp sorting.
-        if historical && old.map_or(held, |p| p.held != held || (p.contact != contact)) {
+        if historical
+            && old.map_or(held, |p| {
+                p.held != held || p.contact != contact || p.barrel != barrel
+            })
+        {
             return Err(Invalid::Lifecycle);
         }
         if old.is_some_and(|p| p.held && contact && p.inverted != reported_inverted) {
@@ -259,7 +267,9 @@ impl State {
         {
             return Err(Invalid::Lifecycle);
         }
-        let client = old.filter(|p| p.held).map_or(info.client, |p| p.client);
+        let client = old
+            .filter(|p| p.held || cancelled)
+            .map_or(info.client, |p| p.client);
         let fenced = old.is_some_and(|p| p.fenced) || cancelled;
         let raw = RawSample {
             identity: Identity {
@@ -349,6 +359,7 @@ impl State {
                 inverted,
                 recorded_ends,
                 contact,
+                barrel,
                 down_seen: phase == Phase::Down
                     || (phase != Phase::Up && old.is_some_and(|p| p.down_seen)),
                 held,
@@ -374,6 +385,9 @@ impl State {
                 ))
             },
             delivery: Delivery::ReceiverPointer,
+            // SDK ButtonChangeType is a logical pointer-button change, not
+            // evidence of an independently observed physical barrel edge.
+            button_edge: None,
         }))
     }
 }
