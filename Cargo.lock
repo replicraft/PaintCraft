@@ -3565,6 +3565,8 @@ dependencies = [
  "paintcraft-core",
  "paintcraft-input",
  "raw-window-handle",
+ "windows",
+ "winit",
 ]
 
 [[package]]

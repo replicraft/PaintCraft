@@ -110,6 +110,10 @@ objc2-foundation = { version = "0.3.2", default-features = false, features = ["s
 fontdb = { version = "0.23.0", default-features = false, features = ["std", "fs"] }
 rfd = "0.17.2"
 raw-window-handle = "0.6.2"
+# Owned native input loop and reviewed Windows pointer acquisition. Reuse the
+# versions already selected by eframe and the existing platform dependencies.
+winit = { version = "0.30.13", default-features = false, features = ["rwh_06"] }
+windows = { version = "0.62.2", default-features = false }
 # Native Windows executable icon and version metadata.
 winresource = "0.1.34"
 
