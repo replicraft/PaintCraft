@@ -66,6 +66,7 @@ mod browser {
     #[wasm_bindgen]
     pub struct WebHandle {
         lifecycle: Lifecycle<BrowserResources>,
+        owner_abort: web_sys::AbortController,
     }
 
     struct BrowserResources {
@@ -93,9 +94,26 @@ mod browser {
         }
     }
 
-    impl Default for WebHandle {
-        fn default() -> Self {
-            Self {
+    impl std::fmt::Debug for WebHandle {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("WebHandle").finish_non_exhaustive()
+        }
+    }
+
+    impl Drop for WebHandle {
+        fn drop(&mut self) {
+            // Host closures must stop referring to the public JS wrapper before
+            // its internal runner/resources begin their own teardown.
+            self.owner_abort.abort();
+        }
+    }
+
+    #[wasm_bindgen]
+    impl WebHandle {
+        #[wasm_bindgen(constructor)]
+        pub fn new() -> Result<Self, JsValue> {
+            let owner_abort = web_sys::AbortController::new()?;
+            Ok(Self {
                 lifecycle: Lifecycle::new(BrowserResources {
                     runner: eframe::WebRunner::new(),
                     codec: RefCell::new(None),
@@ -103,21 +121,14 @@ mod browser {
                     canvas: RefCell::new(None),
                     owner: dom::owner(),
                 }),
-            }
+                owner_abort,
+            })
         }
-    }
 
-    impl std::fmt::Debug for WebHandle {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.debug_struct("WebHandle").finish_non_exhaustive()
-        }
-    }
-
-    #[wasm_bindgen]
-    impl WebHandle {
-        #[wasm_bindgen(constructor)]
-        pub fn new() -> Self {
-            Self::default()
+        /// Read-only lifetime for host callbacks. Destroy permits a restart;
+        /// freeing this public owner aborts its host callbacks permanently.
+        pub fn owner_lifetime(&self) -> web_sys::AbortSignal {
+            self.owner_abort.signal()
         }
 
         /// Rejects concurrent initialization. After destroy, a pending GPU

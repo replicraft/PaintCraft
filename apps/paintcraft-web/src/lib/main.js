@@ -1,6 +1,8 @@
 import { createCodecService } from './codec-bridge.js';
+import { reportStartupFailure, startOwnedPage } from './page-lifetime.js';
 const status = document.getElementById('loading');
 let app;
+let lifetime;
 try {
 	const [{ WebHandle, install_cjk_fonts }, { loadCjkFonts }] =
 		await Promise.all([
@@ -10,21 +12,15 @@ try {
 	const fonts = await loadCjkFonts();
 	install_cjk_fonts(fonts[0], fonts[1]);
 	app = new WebHandle();
+	lifetime = app.owner_lifetime();
 	window.paintcraft = app;
-	await app.start(document.getElementById('paintcraft'));
-	app.install_codec_service(createCodecService(app.application_version()));
-	status.hidden = true;
-	window.addEventListener('beforeunload', (event) => {
-		if (app.is_dirty()) {
-			event.preventDefault();
-			event.returnValue = '';
-		}
-	});
-	window.addEventListener('pagehide', (event) => {
-		if (!event.persisted) app.destroy();
+	await startOwnedPage({
+		app,
+		canvas: document.getElementById('paintcraft'),
+		lifetime,
+		createService: createCodecService,
+		status,
 	});
 } catch (error) {
-	app?.destroy();
-	status.textContent = `PaintCraft could not start. PaintCraft needs WebAssembly and WebGPU or WebGL. ${error}`;
-	console.error(error);
+	reportStartupFailure(app, lifetime, status, error);
 }
