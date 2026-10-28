@@ -3,9 +3,10 @@
 Tablet support is being implemented across native and browser frontends. Shared
 input, pressure rendering and guarded editor controllers are implemented and
 tested. Browser startup now installs dedicated Pointer Events capture. Desktop
-has an opt-in AppKit host foundation; normal desktop startup does not activate it,
-and the ordered native event-loop integration remains in progress. Physical
-tablets, drivers and platform timing have not been qualified. A pen reaching the
+has an experimental owned AppKit event loop; normal desktop startup does not
+activate it. Canonical keyboard/IME ordering and physical input qualification
+remain in progress. Physical tablets, drivers and platform timing have not been
+qualified. A pen reaching the
 existing mouse path is not evidence of pressure or tilt support.
 
 ## Implemented shared foundations
@@ -106,12 +107,32 @@ preparation and completed results to check failure, focus, modal and IME loss,
 invalid framework input, exact Undo ordering and recovery. They also cover
 unchanged legacy paint queues and floating workflows.
 
-These hosts remain disabled at normal startup. Genuine OS mouse/pen delivery
-still needs the actual owned-loop integration and canonical keyboard/IME order.
-Per-source sequence numbers or frame event positions cannot prove that order.
-The supported integration path is an owned
-`winit + egui-winit + egui-wgpu` event loop when eframe cannot expose the required
-boundary. Headless App/service checks do not establish native-window execution.
+Normal startup keeps native capture disabled. On macOS, the experimental owned
+`winit + egui-winit + egui-wgpu` path can be started explicitly:
+
+```sh
+PAINTCRAFT_NATIVE_TABLET=1 cargo run -p paintcraft
+```
+
+It uses the existing document, dialog, recovery and GPU services. Native failure
+retires the capture installation and returns to ordinary mouse input while
+preserving the document and saving. `PAINTCRAFT_NATIVE_TRACE=1` adds input-origin
+and delivery-health diagnostics without logging text or document pixels.
+
+An actual local macOS window opened, rendered and closed through this path.
+Its pre-close snapshot reported native delivery `Ready`, capture installed and
+zero callback, sink, source or wake failures. An earlier failing run exposed
+out-of-order AppKit tracking timestamps; the corrected collector preserves those
+observations without advancing or rebasing the physical mouse clock. The failed
+traces are retained separately. This smoke test used no physical pen input or
+keyboard/IME injection. The executable and owned startup sources were recorded;
+it was not a frozen whole-workspace release qualification.
+
+Canonical keyboard/IME order still requires qualification before default native
+activation. Per-source sequence numbers or frame event positions cannot prove
+that order. Windows pointer/history acquisition has cross-target SDK checks;
+Windows runtime and shared native touch adoption remain unfinished. Linux still
+needs an ordered acquisition integration.
 
 The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
@@ -191,7 +212,7 @@ delivery scope above and physical native traces remain distinct evidence.
 
 | Area | Remaining work |
 | --- | --- |
-| Native capture | Complete ordered AppKit source-to-widget/tool integration; implement Windows pointer/history, XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
+| Native capture | Complete canonical AppKit keyboard/IME ordering; integrate and qualify Windows pointer/history and native touch, and implement ordered XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
 | Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, concurrent startup/drop/panic lifecycle cases, and sustained acquisition/display timing. Preserve the qualified mouse and palm behavior while extending finger navigation. |
 | Controller adoption | Complete native production source-to-controller wiring and mixed-device ordering. Retain browser/native ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics. |
 | Brush settings and dynamics | Qualify the captured size, curve, opacity and textured-brush settings through production input; add device capability feedback and physical tilt/twist traces. Functional settings and headless pixel controls do not establish physical brush feel. |
