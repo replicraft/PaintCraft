@@ -3,6 +3,8 @@ use paintcraft_core::types::brush::BrushMedia;
 use paintcraft_input::{Modifiers, PointerButton, tablet::*};
 use paintcraft_tools::Tool;
 
+mod media;
+
 fn sample(sequence: u64, phase: Phase, pressure: Option<f32>) -> Sample {
     Sample {
         identity: Identity {
