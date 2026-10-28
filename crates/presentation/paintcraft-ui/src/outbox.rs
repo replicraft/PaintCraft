@@ -60,6 +60,11 @@ impl<A> Outbox<A> {
         self.pending.drain(..).map(|(_, a)| a).collect()
     }
 
+    /// Retire selected pending activations while retaining token deduplication.
+    pub fn retain(&mut self, mut keep: impl FnMut(&A) -> bool) {
+        self.pending.retain(|(_, action)| keep(action));
+    }
+
     /// Whether this activation is still in the deduplication window.
     pub fn has_seen(&self, token: Token) -> bool {
         self.seen.contains(&token)

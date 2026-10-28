@@ -10,6 +10,9 @@ use paintcraft_input::tablet::{
 };
 use std::sync::{Arc, Mutex};
 
+mod publication;
+pub use publication::PublicationGuard;
+
 /// Exact host ownership, including state publication and interface changes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Owner {
@@ -96,8 +99,10 @@ struct Binding {
     last_down: Option<u64>,
 }
 /// The trusted host fills this only after an earlier acquisition-tagged contact completion
-/// actually committed exactly one editor receipt. Current context is checked
-/// again; this is never an authorization to rebase unrelated GUI publications.
+/// actually completed exactly one typed editor publication or history-navigation
+/// result. The host must bind that actual result to the exact initiating edge and
+/// clean service barrier; changed tickets alone are insufficient. Current context
+/// is checked again, never authorizing unrelated GUI publications.
 #[derive(Clone, Copy, Debug)]
 pub struct Predecessor {
     pub before: Owner,
@@ -340,8 +345,9 @@ impl Source {
             && captured.transform == view.transform
             && captured.canvas == view.canvas
     }
-    /// Accept one proven earlier contact completion before a later admitted pen
-    /// Down. The opaque batch, exact view and one receipt step are all required.
+    /// Accept one proven earlier source edge before a later admitted pen Down.
+    /// The opaque batch, exact view and actual typed publication/navigation
+    /// result bound to that initiating edge are all required.
     pub fn acknowledge_predecessor(
         &self,
         batch: &mut Batch,

@@ -687,3 +687,40 @@ fn any_foreign_stale_or_cancelled_member_rejects_without_partial_rebase() {
         assert!(!source.batch_is_current(&valid, proof.after));
     }
 }
+
+#[test]
+fn cancellation_or_changed_then_restored_view_revokes_retained_publication() {
+    let budget = SharedBudget::new(1 << 20);
+    let source = source(&budget);
+    source
+        .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(1, Phase::Down)))
+        .unwrap();
+    source
+        .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(2, Phase::Up)))
+        .unwrap();
+    let batch = source.take(1, view().owner, false).unwrap();
+    let guard = source.publication_guard(&batch, view().owner).unwrap();
+    assert!(guard.is_current());
+    source.cancel();
+    source.publish(view()).unwrap();
+    assert!(!guard.is_current());
+    let fresh = source.ui_publication_guard(view().owner).unwrap();
+    let mut changed = view();
+    changed.pixels_per_point = 3.0;
+    source.publish(changed).unwrap();
+    source.publish(view()).unwrap();
+    assert!(!fresh.is_current());
+}
+#[test]
+fn guard_does_not_retain_retired_source_or_authorize_foreign_document() {
+    let budget = SharedBudget::new(1 << 20);
+    let source = source(&budget);
+    let guard = source.ui_publication_guard(view().owner).unwrap();
+    let mut changed = view();
+    changed.owner.publication += 1;
+    source.publish(changed).unwrap();
+    assert!(!guard.is_current());
+    let guard = source.ui_publication_guard(changed.owner).unwrap();
+    drop(source);
+    assert!(!guard.is_current());
+}
