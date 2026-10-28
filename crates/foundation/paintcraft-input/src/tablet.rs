@@ -84,6 +84,28 @@ pub struct Identity {
     pub pointer: u64,
     pub kind: DeviceKind,
 }
+/// A side-button identity, independent of tip contact and eraser identity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PenButton {
+    Barrel,
+    UpperBarrel,
+}
+impl PenButton {
+    pub const fn mask(self) -> u16 {
+        match self {
+            Self::Barrel => Buttons::BARREL,
+            Self::UpperBarrel => Buttons::BARREL_UPPER,
+        }
+    }
+}
+/// Actual observed button change, attached to its exact source identity. Never
+/// infer this from held bits, prediction, boundary or historical coalesced data.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PenButtonEdge {
+    pub identity: Identity,
+    pub button: PenButton,
+    pub pressed: bool,
+}
 /// View captured at ingestion. A delayed sample never consults today's zoom/DPI.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Transform {
