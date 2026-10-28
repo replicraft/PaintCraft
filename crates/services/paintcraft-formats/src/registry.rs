@@ -360,6 +360,14 @@ pub fn admission(request: Request<'_>) -> Decision {
                 .trim_start_matches('.')
                 .eq_ignore_ascii_case("dds")
         });
+    let web_msp2_export = request.family == Family::Msp
+        && request.operation == Operation::ExportFlat
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Web
+        && request.variant == Some(crate::msp::web_export::EXPORT_VARIANT)
+        && request
+            .extension
+            .is_some_and(|value| value.trim_start_matches('.').eq_ignore_ascii_case("msp"));
     let native_msp2_export = request.family == Family::Msp
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
@@ -456,6 +464,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !web_jxl_import
         && !native_jxr_import
         && !native_jxr_export
+        && !web_msp2_export
         && !native_msp2_export
         && !native_dds_texture_export
         && !web_dds_texture_export
@@ -490,6 +499,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight
+        || web_msp2_export
         || native_msp2_export
         || native_dds_texture_export
         || web_dds_texture_export
