@@ -28,6 +28,13 @@ struct Contact {
     eligible: bool,
 }
 impl TouchNavigation {
+    pub(crate) fn retire_for_pen(&mut self, ctx: &egui::Context) {
+        self.retire_owner(ctx);
+        // The shared pen receiver now fences these palm tails. Navigation keeps
+        // terminal bookkeeping but cannot disable the replacement pen owner.
+        self.owned = false;
+        self.block_ui = false;
+    }
     pub(crate) fn retire_owner(&mut self, ctx: &egui::Context) {
         let held = !self.contacts.is_empty() || self.latched || self.overflow;
         for contact in &mut self.contacts {
