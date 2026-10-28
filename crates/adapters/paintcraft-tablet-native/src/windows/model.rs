@@ -186,15 +186,20 @@ impl State {
             .or_else(|| self.pointers.iter().position(Option::is_none))
             .ok_or(Invalid::Capacity)?;
         let old = self.pointers[index];
+        // POINTER_INFO permits a zero timestamp field. Without independent
+        // presence evidence, refuse ambiguous pointer zero conservatively; do
+        // not substitute receipt time or change the selected clock domain.
         let time = match old.map(|p| p.time.clock) {
             Some(Clock::WindowsPerformance) => {
                 super::clock::performance(info.performance, self.frequency, self.epoch)
             }
-            Some(Clock::WindowsTicks) => super::clock::ticks(info.ticks, now_millis, self.epoch),
+            Some(Clock::WindowsTicks) if info.ticks != 0 => {
+                super::clock::ticks(info.ticks, now_millis, self.epoch)
+            }
             None if info.performance != 0 => {
                 super::clock::performance(info.performance, self.frequency, self.epoch)
             }
-            None => super::clock::ticks(info.ticks, now_millis, self.epoch),
+            None if info.ticks != 0 => super::clock::ticks(info.ticks, now_millis, self.epoch),
             _ => None,
         }
         .ok_or(Invalid::Clock)?;

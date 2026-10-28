@@ -470,3 +470,35 @@ fn actual_cancel_and_fenced_release_preserve_valid_source_axes_without_creating_
     invalid.pressure = 1025;
     assert!(state.sample(invalid, Message::Update, false, 1000).is_err());
 }
+
+#[test]
+fn ambiguous_zero_pointer_timestamp_is_not_fabricated_as_tick_origin() {
+    use paintcraft_input::tablet::{Clock, Invalid};
+    let mut state = State::new(19, 1000);
+    let mut missing = info(UPDATE, 1);
+    missing.performance = 0;
+    missing.ticks = 0;
+    assert_eq!(
+        state.sample(missing, Message::Update, false, 1000),
+        Err(Invalid::Clock)
+    );
+    let mut tick = info(UPDATE, 1);
+    tick.performance = 0;
+    tick.ticks = 17;
+    assert_eq!(
+        packet(state.sample(tick, Message::Update, false, 1000).unwrap())
+            .raw
+            .time
+            .clock,
+        Clock::WindowsTicks
+    );
+    // A selected native tick domain cannot silently substitute another clock
+    // when its own timestamp field is unspecified/ambiguous zero.
+    missing.performance = 99;
+    assert_eq!(
+        state.sample(missing, Message::Update, false, 1000),
+        Err(Invalid::Clock)
+    );
+    // Generic actual MSG.time remains allowed to represent a real zero/wrap.
+    assert_eq!(super::clock::ticks(0, 20, 19).unwrap().micros, 0);
+}
