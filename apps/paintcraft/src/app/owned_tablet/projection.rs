@@ -142,16 +142,19 @@ impl Projection {
         for collected in &frame.records {
             match *collected {
                 Collected::Tablet { record, route } => {
-                    if route == PenRoute::Suppressed {
-                        continue;
-                    }
                     let CaptureEvent::Tablet(packet) = record.event else {
                         return Err(RecordFault::Invalid);
                     };
+                    if route == PenRoute::Suppressed {
+                        self.source
+                            .suppress_native(packet.raw)
+                            .map_err(|_| RecordFault::Invalid)?;
+                        continue;
+                    }
                     let route = self
                         .source
-                        .submit_with(Delivery::ReceiverPointer, |scale| {
-                            packet.into_logical(scale)
+                        .submit_native(Delivery::ReceiverPointer, packet.raw, |scale| {
+                            packet.into_logical(scale).map(|raw| raw.logical_position)
                         })
                         .map_err(|_| RecordFault::Invalid)?;
                     self.span_first.get_or_insert(record.ordinal);
@@ -275,6 +278,14 @@ impl Projection {
                         self.boundary(Some(record.ordinal), kind)?;
                     }
                 }
+                Collected::IdentityRetired(record) => {
+                    let CaptureEvent::IdentityRetired { identity, .. } = record.event else {
+                        return Err(RecordFault::Invalid);
+                    };
+                    self.source
+                        .retire_native_identity(identity)
+                        .map_err(|_| RecordFault::Invalid)?;
+                }
                 Collected::FrameworkBoundary(kind) => self.boundary(None, kind)?,
             }
         }
@@ -310,6 +321,13 @@ impl Projection {
         ordinal: Option<u64>,
         kind: Boundary,
     ) -> std::result::Result<(), RecordFault> {
+        if kind == Boundary::ViewInvalidated {
+            self.source.invalidate_view();
+            self.view = None;
+            self.span_first = None;
+            self.epoch = self.epoch.checked_add(1).ok_or(RecordFault::Retired)?;
+            return self.push(ordinal, Pointer::Cancel { reset_gui: true });
+        }
         self.source.cancel();
         self.span_first = None;
         let window_retired = matches!(
@@ -518,3 +536,7 @@ pub fn ui_event(event: UiEvent) -> egui::Event {
         UiEvent::Gone => egui::Event::PointerGone,
     }
 }
+
+#[cfg(test)]
+#[path = "projection/tests.rs"]
+mod tests;

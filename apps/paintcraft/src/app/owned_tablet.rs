@@ -499,6 +499,7 @@ impl Host {
             Pointer::Gui(_) => source.ui_publication_guard(before),
             Pointer::Cancel { .. } => None,
         };
+        let actionable = !matches!(&entry.pointer, Pointer::Cancel { .. });
         let pointer = std::mem::replace(&mut entry.pointer, Pointer::Cancel { reset_gui: false });
         self.cursor += 1;
         self.app.editor.take_native_publication(); // clear before the exact edge
@@ -555,8 +556,9 @@ impl Host {
             Some(Origin::Pen { sequence, .. }) | Some(Origin::Gui(sequence)) => Some(sequence),
             None => ordinal,
         };
-        let activation =
-            sequence.map(|sequence| Activation::new(before.session, source_epoch, sequence));
+        let activation = sequence
+            .filter(|_| actionable)
+            .map(|sequence| Activation::new(before.session, source_epoch, sequence));
         if let Some(activation) = activation {
             let Some(publication) = publication else {
                 self.retire();

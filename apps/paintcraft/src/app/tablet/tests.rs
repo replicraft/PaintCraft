@@ -272,9 +272,21 @@ fn genuine_mouse_multibutton_capture_stays_owned_until_last_release() {
         paintcraft_input::tablet::receiver::Route::Suppressed
     );
     assert!(mouse.retain(source, &event(egui::PointerButton::Secondary, false)));
+    // Ending the genuine mouse hold cannot reactivate a pen tail that began
+    // while mouse-owned. A repeated generic Down is not native recontact proof.
+    for (sequence, phase, buttons) in [(2, Phase::Down, 1), (3, Phase::Up, 0)] {
+        assert_eq!(
+            source
+                .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(
+                    sequence, phase, buttons
+                )))
+                .unwrap(),
+            paintcraft_input::tablet::receiver::Route::Suppressed
+        );
+    }
     assert_eq!(
         source
-            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(2, Phase::Down, 1)))
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(4, Phase::Down, 1)))
             .unwrap(),
         paintcraft_input::tablet::receiver::Route::Canvas
     );

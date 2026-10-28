@@ -196,6 +196,7 @@ impl App {
             let source = Source::new(SOURCE_SLOTS, UI_SLOTS, &self.worker_budget)?;
             let mut receiver = Receiver::new(source.clone(), None, &self.worker_budget)?;
             let sink = source.clone();
+            let controls = source.clone();
             let wake = cc.egui_ctx.clone();
             let window = cc.winit_window().cloned().ok_or_else(|| {
                 paintcraft_core::types::Error::new(
@@ -203,15 +204,25 @@ impl App {
                     "Native tablet window unavailable",
                 )
             })?;
-            let installation = native::install(
+            let installation = native::install_with_controls(
                 window,
                 Arc::new(move |packet| {
                     let delivery = match packet.delivery {
                         native::Delivery::ReceiverPointer => Delivery::ReceiverPointer,
                         native::Delivery::SystemPointer => Delivery::SystemPointer,
                     };
-                    sink.submit_with(delivery, |scale| packet.into_logical(scale))
-                        .map_or(true, |route| route.consume())
+                    sink.submit_native(delivery, packet.raw, |scale| {
+                        packet.into_logical(scale).map(|raw| raw.logical_position)
+                    })
+                    .map_or(true, |route| route.consume())
+                }),
+                Arc::new(move |boundary| {
+                    if boundary == native::Boundary::ViewInvalidated {
+                        controls.invalidate_view();
+                    } else {
+                        controls.cancel();
+                    }
+                    Ok(())
                 }),
                 Arc::new(move || wake.request_repaint()),
             )?;

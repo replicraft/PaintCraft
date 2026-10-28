@@ -492,3 +492,26 @@ fn prepared_owned_pen_result_cannot_publish_after_failure_focus_modal_or_ime_ret
         assert_no_resurrection(&mut host, &ctx, before, depth);
     }
 }
+
+#[test]
+fn typed_backing_cancel_is_not_mistaken_for_an_authored_activation() {
+    let (mut host, ctx, _, _) = setup(Experience::Studio);
+    let before = host.app.editor.publications();
+    host.capture_endpoint()(CaptureRecord {
+        installation: 1,
+        ordinal: 0,
+        event: CaptureEvent::Boundary {
+            kind: paintcraft_platform::tablet::Boundary::ViewInvalidated,
+            time: None,
+        },
+    })
+    .unwrap();
+    assert!(host.ingress.lock().unwrap().view().is_none());
+    assert_eq!(tick(&mut host, &ctx).unwrap(), Progress::Advanced);
+    finish(&mut host, &ctx);
+    assert_eq!(host.app.editor.publications(), before);
+    pen(&host, 1, Phase::Down, (20.0, 18.0));
+    pen(&host, 2, Phase::Up, (20.0, 18.0));
+    finish(&mut host, &ctx);
+    assert_eq!(host.app.editor.publications(), before + 1);
+}
