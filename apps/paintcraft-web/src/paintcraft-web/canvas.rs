@@ -147,6 +147,10 @@ impl WebApp {
         let size = Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom;
         let paint = |ui: &mut egui::Ui, response: egui::Response, painter: egui::Painter| {
             self.canvas.rect = Some(response.rect);
+            self.pen.region = Some((
+                ui.clip_rect().intersect(viewport).intersect(response.rect),
+                ui.layer_id(),
+            ));
             self.canvas
                 .touch
                 .viewport(ui.clip_rect().intersect(viewport), ui.layer_id());
@@ -358,7 +362,7 @@ impl WebApp {
     }
 
     fn canvas_input(&mut self, ui: &egui::Ui, response: &egui::Response) {
-        if self.canvas.touch.suppress {
+        if self.canvas.touch.suppress && !self.pen_canvas_owned() {
             return;
         }
         if self.paste.is_placing() {
@@ -414,7 +418,8 @@ impl WebApp {
             let p = (pos - rect.min) / zoom;
             ((p.x * 256.0).floor() as i64, (p.y * 256.0).floor() as i64)
         };
-        let events = self.canvas_events(ui.ctx());
+        let legacy = self.canvas_events(ui.ctx());
+        let events = self.pen_canvas_events(legacy, ui.ctx());
         if !ui.input(|i| i.focused) {
             self.editor.cancel_floating();
             self.editor.tools.cancel_gesture();
@@ -424,6 +429,16 @@ impl WebApp {
             .tools
             .constrain_shape(ui.input(|i| i.modifiers.shift));
         for event in events {
+            let (event, mouse_sequence) = match event {
+                crate::pen_input::CanvasEvent::Legacy(event) => (event, None),
+                crate::pen_input::CanvasEvent::Mouse { sequence, event } => (event, Some(sequence)),
+                crate::pen_input::CanvasEvent::Pen(index) => {
+                    let Some(event) = self.pen_canvas_sample(index, ui.ctx()) else {
+                        continue;
+                    };
+                    (event, self.pen_sample_sequence(index))
+                }
+            };
             if self.keyboard_event(ui.ctx(), &event) {
                 continue;
             }
@@ -546,14 +561,24 @@ impl WebApp {
                                     .tools
                                     .pointer_down_subpixel(layer, point(pos), button);
                             }
+                            if self.editor.tools.pointer_is_down() {
+                                self.pen.legacy_canvas_owned = true;
+                            }
                             self.editor.tools.constrain_shape(modifiers.shift);
                         }
                     } else if !pressed && self.editor.tools.gesture_button() == Some(button) {
                         self.move_selection_pointer(point(pos));
                         self.editor.tools.constrain_shape(modifiers.shift);
                         if let Some((_, action)) = self.editor.tools.pointer_up_button(button) {
+                            let before = self.pen_predecessor_owner();
+                            self.editor.take_publication_witness();
                             self.edit(action);
+                            let receipt = self.editor.take_publication_witness();
+                            if let Some(sequence) = mouse_sequence {
+                                self.pen_contact_predecessor(before, sequence, receipt, ui.ctx());
+                            }
                         }
+                        self.pen.legacy_canvas_owned = false;
                         if let Some(hint) = self.editor.tools.shape_hint() {
                             self.message = hint.into();
                         }

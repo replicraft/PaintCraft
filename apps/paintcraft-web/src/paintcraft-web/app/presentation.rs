@@ -148,5 +148,6 @@ impl WebApp {
         self.print_progress(&ctx);
         self.paste_dialog(&ctx);
         self.show_welcome(&ctx);
+        self.finish_pen_view(&ctx);
     }
 }

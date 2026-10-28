@@ -2,6 +2,9 @@
 use paintcraft_ui::t;
 mod brushes;
 #[cfg(test)]
+#[path = "pen_input/tests.rs"]
+mod pen_input_tests;
+#[cfg(test)]
 mod chrome_tests;
 #[cfg(target_arch = "wasm32")]
 mod codec_export_bridge;
@@ -48,6 +51,7 @@ pub struct WebApp {
     pub(crate) controls: Controls,
     pub(crate) editor: Editor,
     pub(crate) canvas: Canvas,
+    pub(crate) pen: crate::pen_input::State,
     pub(crate) workspace: Workspace,
     pub(crate) variant: ClassicVariant,
     name: String,
@@ -109,6 +113,7 @@ impl WebApp {
             },
             editor: Editor::new(width, height).expect("validated startup canvas is admitted"),
             canvas: Canvas::default(),
+            pen: crate::pen_input::State::new(ctx),
             workspace: Workspace {
                 custom_colors: preferences.custom_colors,
                 ..Workspace::default()
@@ -757,6 +762,9 @@ impl WebApp {
 }
 
 impl eframe::App for WebApp {
+    fn raw_input_hook(&mut self, ctx: &egui::Context, input: &mut egui::RawInput) {
+        self.pen_raw_input(ctx, input);
+    }
     #[cfg(target_arch = "wasm32")]
     fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
         Some(self)
