@@ -29,21 +29,32 @@ existing mouse path is not evidence of pressure or tilt support.
   changes. Canvas-owned input keeps exact document/transform guards. Changing
   workspace, interface, focus, modal or IME state retires affected private input.
 
-The plain-round PaintCraft pressure policy rounds normalized pressure to Q16 and
+The default plain-round pressure policy rounds normalized pressure to Q16 and
 uses it to scale the captured diameter. Missing pressure uses the full diameter;
 zero contributes no endpoint disk. The geometry is the actual swept round tip
 with linearly changing radius, using common tangents or disk containment. A 4×4
 coverage grid unions the whole stroke before applying color opacity, so retracing
 a translucent stroke does not repeatedly blend its joins.
 
-Settings > Pen and tablet offers size-pressure control and Linear, Soft or Firm
-response in desktop and browser. Apply persists the choice; Cancel leaves the
-active policy unchanged. Old preferences retain the default linear size response,
-and malformed explicit policies are rejected. The Q16 curves are deterministic;
-disabling size pressure uses the selected diameter while preserving the original
-pressure and axes in the retained samples. Each stroke captures its policy at
-Down, so changing preferences cannot rewrite an existing preview or history item.
-These controls do not activate the unfinished native capture integration.
+Settings > Pen and tablet offers pressure-controlled size and opacity, Linear,
+Soft or Firm response, optional textured-brush dynamics, and default, tilt or
+twist nib direction in desktop and browser. Apply persists the choices; Cancel
+leaves the active policy unchanged. Old preferences retain linear size response
+with opacity and textured dynamics disabled. Malformed explicit policies are
+rejected. The Q16 curves are deterministic; disabling size pressure uses the
+selected diameter while preserving original pressure and axes in retained samples.
+Each stroke captures its policy at Down, so changing preferences cannot rewrite
+an existing preview or history item. These controls do not activate the unfinished
+native capture integration.
+
+Optional pressure opacity uses capped dabs: overlapping parts of one stroke do
+not repeatedly build up opacity. Enabled media dynamics preserve each existing
+brush's tip, texture and paint-load behavior. Tilt or twist can orient calligraphy
+and marker tips; absent or ambiguous axes use their historical direction.
+Sampled tips retain their existing behavior. Headless raster, tool and browser
+editor tests cover media pressure, preview/release equality and one-step Undo;
+physical brush feel and the newly expanded settings in production browser input
+still need qualification.
 
 Preview and release can share immutable source samples and resolved mask storage.
 The existing editor preparation and guarded publication path produces one history
@@ -102,9 +113,10 @@ boundary. Headless App/service checks do not establish native-window execution.
 
 The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
-workspace identity and inverted erasing. Plain-round pressure eligibility does
-not replace the existing nine brush-media policies: fallback controls compare
-those outputs against the ordinary pointer renderer.
+workspace identity and inverted erasing. Default pressure eligibility does not
+replace the existing nine brush-media policies: fallback controls compare those
+outputs against the ordinary pointer renderer. Optional media-dynamics controls
+also check each profile through preview, publication, Undo and Redo.
 
 Browser capture retains pen identity and coalesced samples, owns pointer capture,
 and orders genuine mouse and pen records at acquisition. It suppresses pen's
@@ -180,8 +192,8 @@ delivery scope above and physical native traces remain distinct evidence.
 | Native capture | Complete ordered AppKit source-to-widget/tool integration; implement Windows pointer/history, XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
 | Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, concurrent startup/drop/panic lifecycle cases, and sustained acquisition/display timing. Preserve the qualified mouse and palm behavior while extending finger navigation. |
 | Controller adoption | Complete native production source-to-controller wiring and mixed-device ordering. Retain browser/native ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics. |
-| Brush settings and dynamics | Extend the captured width/curve preferences to appropriate opacity/media dynamics, capability feedback and applicable tilt/twist behavior. Recording optional axes does not implement their tool dynamics. |
-| Other brush/media profiles | Preserve all existing nine media policies and sampled tips. The plain-round pressure path must not silently replace them; their pressure/dynamic integration remains required. |
+| Brush settings and dynamics | Qualify the captured size, curve, opacity and textured-brush settings through production input; add device capability feedback and physical tilt/twist traces. Functional settings and headless pixel controls do not establish physical brush feel. |
+| Other brush/media profiles | Extend appropriate pressure/dynamics behavior to sampled and other unsupported tips while preserving each media policy. Qualify high-rate and long-stroke behavior through actual acquisition and rendering. |
 | Physical qualification | Real tablet/driver traces on each platform, high-rate acquisition, disconnect/focus/modal recovery and input/display timing. Synthetic pen events and mouse injection do not establish these results. |
 
 The workspace implementation specification remains authoritative: architecture
