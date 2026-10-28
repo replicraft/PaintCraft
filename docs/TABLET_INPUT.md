@@ -77,12 +77,28 @@ callback failure before the host can drain a partial enqueue. Window focus and
 close cancel contacts; installation owns monitor removal and native lifetimes.
 See the [native boundary](../crates/adapters/paintcraft-tablet-native/README.md).
 
-This host remains disabled at normal startup. Mixing genuine mouse and pen
-records before a GUI frame still needs one proven acquisition order through the
-widget/tool consumer. Per-source sequence numbers or frame event positions cannot
-prove that order. The supported integration path is an owned
+The optional ordered App coordinator now projects native records into admitted
+pointer frames and processes one semantic edge or service poll per step. An
+accepted action retains its exact source scope through the outbox, FIFO, worker
+admission and retry. Actual authored receipts and history-navigation results stay
+distinct. Neither a changed document ticket nor an unrelated completion can
+authorize later captured input.
+
+Prepared publication checks both revocable Source ownership and a sealed native
+installation authority. Its final metadata authorization defines the ordering
+point; editor mutation follows outside delivery/ingress locks. Retirement removes
+only the matching queued or prepared work, retaining unrelated edits and worker
+resource leases until retirement. Headless App/service controls pause real
+preparation and completed results to check failure, focus, modal and IME loss,
+invalid framework input, exact Undo ordering and recovery. They also cover
+unchanged legacy paint queues and floating workflows.
+
+These hosts remain disabled at normal startup. Genuine OS mouse/pen delivery
+still needs the actual owned-loop integration and canonical keyboard/IME order.
+Per-source sequence numbers or frame event positions cannot prove that order.
+The supported integration path is an owned
 `winit + egui-winit + egui-wgpu` event loop when eframe cannot expose the required
-boundary. Collector and prototype checks alone do not complete that integration.
+boundary. Headless App/service checks do not establish native-window execution.
 
 The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
@@ -150,7 +166,8 @@ Tracked controls include
 [pressure geometry](../crates/foundation/paintcraft-raster/src/smooth/pressure.rs),
 [retained pen strokes](../crates/editing/paintcraft-tools/tests/pen_stroke.rs),
 [editor handoff](../apps/paintcraft/tests/pen_mask_handoff.rs),
-[desktop host](../apps/paintcraft/src/app/tablet/tests.rs), and
+[desktop host](../apps/paintcraft/src/app/tablet/tests.rs),
+[ordered native App](../apps/paintcraft/src/app/owned_tablet/tests.rs),
 [browser controller](../apps/paintcraft-web/src/paintcraft-web/editor/pen/tests.rs), and
 [browser input host](../apps/paintcraft-web/src/paintcraft-web/pen_input/tests.rs).
 These controls exercise synthetic samples in headless tests. The actual browser
