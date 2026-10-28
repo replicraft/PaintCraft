@@ -625,3 +625,65 @@ fn host_retirement_epoch_is_observable_after_the_entire_contact_left_the_queue()
     assert_eq!(source.cancellation_epoch(), before + 1);
     assert!(!source.batch_is_current(&batch, view().owner));
 }
+
+#[test]
+fn multiple_native_batches_continue_atomically_after_the_same_proven_receipt() {
+    let budget = SharedBudget::new(1_000_000);
+    let source = source(&budget);
+    push(&source, 2, Phase::Down);
+    push(&source, 3, Phase::Up);
+    let mut first = source.take(1, view().owner, false).unwrap();
+    push(&source, 4, Phase::Down);
+    push(&source, 5, Phase::Up);
+    let mut second = source.take(2, view().owner, false).unwrap();
+    let proof = predecessor();
+    source
+        .acknowledge_predecessors(&mut [&mut first, &mut second], proof)
+        .unwrap();
+    assert!(source.batch_is_current(&first, proof.after));
+    assert!(source.batch_is_current(&second, proof.after));
+    assert!(!source.batch_is_current(&first, proof.before));
+    assert_eq!(
+        source.acknowledge_predecessors(&mut [], proof),
+        Err(Invalid::Order)
+    );
+}
+#[test]
+fn any_foreign_stale_or_cancelled_member_rejects_without_partial_rebase() {
+    for mode in 0..3 {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        push(&source, 2, Phase::Down);
+        push(&source, 3, Phase::Up);
+        let mut invalid = source.take(1, view().owner, false).unwrap();
+        match mode {
+            0 => {
+                let foreign = super::tests::source(&budget);
+                push(&foreign, 2, Phase::Down);
+                push(&foreign, 3, Phase::Up);
+                invalid = foreign.take(1, view().owner, false).unwrap();
+            }
+            1 => {
+                let mut changed = view();
+                changed.transform.origin.0 += 1.0;
+                source.publish(changed).unwrap();
+                source.publish(view()).unwrap();
+            }
+            _ => {
+                source.cancel();
+                source.publish(view()).unwrap();
+            }
+        }
+        push(&source, 4, Phase::Down);
+        push(&source, 5, Phase::Up);
+        let mut valid = source.take(2, view().owner, false).unwrap();
+        let proof = predecessor();
+        assert!(source.batch_is_current(&valid, proof.before));
+        assert_eq!(
+            source.acknowledge_predecessors(&mut [&mut valid, &mut invalid], proof),
+            Err(Invalid::Owner)
+        );
+        assert!(source.batch_is_current(&valid, proof.before));
+        assert!(!source.batch_is_current(&valid, proof.after));
+    }
+}

@@ -347,8 +347,25 @@ impl Source {
         batch: &mut Batch,
         proof: Predecessor,
     ) -> std::result::Result<(), Invalid> {
+        self.acknowledge_predecessors(&mut [batch], proof)
+    }
+    /// Atomically continue multiple separately admitted native batches after the
+    /// same proven predecessor. No binding or Source view changes on rejection.
+    /// Callers supply already admitted storage; no allocation or GUI work occurs
+    /// under the ingress lock. The single-batch API uses this exact path.
+    pub fn acknowledge_predecessors(
+        &self,
+        batches: &mut [&mut Batch],
+        proof: Predecessor,
+    ) -> std::result::Result<(), Invalid> {
+        if batches.is_empty() {
+            return Err(Invalid::Order);
+        }
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
-        if !self.current_in(&state, batch, proof.before) {
+        if batches
+            .iter()
+            .any(|batch| !self.current_in(&state, batch, proof.before))
+        {
             return Err(Invalid::Owner);
         }
         let Some(mut view) = state.view else {
@@ -366,24 +383,28 @@ impl Source {
         {
             return Err(Invalid::Owner);
         }
-        if batch
-            .binding
-            .acknowledged
-            .is_some_and(|old| proof.sequence <= old)
-            || !batch
+        if batches.iter().any(|batch| {
+            batch
                 .binding
-                .last_down
-                .is_some_and(|sequence| sequence > proof.sequence)
-        {
+                .acknowledged
+                .is_some_and(|old| proof.sequence <= old)
+                || !batch
+                    .binding
+                    .last_down
+                    .is_some_and(|sequence| sequence > proof.sequence)
+        }) {
             return Err(Invalid::Order);
         }
+        // Validation completes for every opaque admission before mutation.
         view.owner = proof.after;
         state.view = Some(view);
-        batch.binding.owner = proof.after;
-        if let Some(captured) = &mut batch.binding.view {
-            captured.owner = proof.after;
+        for batch in batches {
+            batch.binding.owner = proof.after;
+            if let Some(captured) = &mut batch.binding.view {
+                captured.owner = proof.after;
+            }
+            batch.binding.acknowledged = Some(proof.sequence);
         }
-        batch.binding.acknowledged = Some(proof.sequence);
         Ok(())
     }
 }
