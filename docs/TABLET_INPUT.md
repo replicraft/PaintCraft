@@ -134,6 +134,15 @@ that order. Windows pointer/history acquisition has cross-target SDK checks;
 Windows runtime and shared native touch adoption remain unfinished. Linux still
 needs an ordered acquisition integration.
 
+Native touch records now retain full device/pointer identity, actual confidence,
+contact state and the system primary flag. The bounded collector tracks 32
+contacts, preserves clocks across completed contacts, and reclaims them only on
+verified lifetime retirement. Confidence withdrawal produces a separate policy
+cancellation without changing the physical event phase. Historical transitions
+cannot hide a lost contact, and internal boundaries cannot invent finger input.
+The native App projection still explicitly refuses touch records: gesture and
+widget delivery are not enabled by these metadata controls.
+
 The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
 workspace identity and inverted erasing. Default pressure eligibility does not
@@ -181,6 +190,29 @@ are separate evidence. Web pressure can also be an API fallback value; these
 tests do not demonstrate a physical pressure sensor. Other browsers, physical
 devices, free/drop without explicit destroy, concurrent async starts/destroy,
 panic recovery and sustained input/display timing still require qualification.
+
+### Subsequent browser checks
+
+The archived `d7678f16` bundle also passed actual GUI checks for all five pen
+preferences: Cancel retained the original policy, Apply persisted the selected
+values, and reopening settings showed those values. Classic and Studio each
+recovered after a real pen release while the canvas layout had zero width.
+Independent decoding of eight saved projects confirmed cancellation and exact
+one-Undo restoration, followed by a working stroke from the same pen identity.
+
+That bundle exposed a separate outside-canvas release failure after capture loss.
+The corrected archived `e1b23b0b` bundle observes only trusted terminal metadata
+for an already known pen. Both interfaces then accepted the next actual contact
+from that same identity. Six saved projects independently confirmed changed
+pixels and exact one-Undo restoration; cancellation was checked through screenshot
+regions and separate host document controls, with no cancelled-project download
+claimed. Product listeners on both the window and canvas retired through two
+public destroy/start cycles and returned to their original counts. The harness's
+own recorder and Playwright listeners were identified separately by script source.
+
+The original product failure and the later failed listener-count assertion remain
+separate evidence. These are scoped Chrome/CDP results on recorded bundles, not
+physical hardware, cross-browser or full current-main release qualification.
 
 ## Resource and test scope
 
