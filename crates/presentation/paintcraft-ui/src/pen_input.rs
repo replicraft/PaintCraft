@@ -10,7 +10,14 @@ use paintcraft_input::tablet::{
 };
 use std::sync::{Arc, Mutex};
 
+mod continuation;
+pub use continuation::Continuation;
 mod native;
+mod native_touch;
+pub use native_touch::{
+    NativeFingerAdmission, NativeFingerMetadata, NativeTouchBatch, NativeTouchCancellation,
+    NativeTouchOutcome, NativeTouchTarget,
+};
 mod publication;
 pub use publication::PublicationGuard;
 
@@ -78,6 +85,7 @@ struct State {
     canvas_epoch: u64,
     pen_epoch: u64,
     native: native::Metadata,
+    native_touch: native_touch::Resident,
 }
 /// Cloneable endpoint for native sinks/DOM listeners; it never touches egui Context.
 #[derive(Clone, Debug)]
@@ -97,7 +105,8 @@ struct Binding {
     cancel_epoch: u64,
     window_epoch: u64,
     canvas_epoch: u64,
-    pen_epoch: u64,
+    pen_epoch: Option<u64>,
+    native_touch: Option<native_touch::Lease>,
     acknowledged: Option<u64>,
     canvas_samples: bool,
     last_down: Option<u64>,
@@ -121,6 +130,23 @@ pub struct Predecessor {
 }
 impl Source {
     pub fn new(source_capacity: usize, ui_capacity: usize, budget: &SharedBudget) -> Result<Self> {
+        Self::construct(source_capacity, ui_capacity, budget, false)
+    }
+    /// Explicit native-touch candidate configuration. Default/browser sources
+    /// retain the original quote and allocate no native bank or native frames.
+    pub fn new_native_touch(
+        source_capacity: usize,
+        ui_capacity: usize,
+        budget: &SharedBudget,
+    ) -> Result<Self> {
+        Self::construct(source_capacity, ui_capacity, budget, true)
+    }
+    fn construct(
+        source_capacity: usize,
+        ui_capacity: usize,
+        budget: &SharedBudget,
+        native_touch: bool,
+    ) -> Result<Self> {
         if !(2..=65_537).contains(&source_capacity) || !(1..=196_608).contains(&ui_capacity) {
             return Err(invalid(Invalid::Capacity));
         }
@@ -135,6 +161,11 @@ impl Source {
         let frames = budget
             .reserve_capacity(bytes as u64)?
             .scope(AllocationClass::PaintMetadata);
+        let native_touch = if native_touch {
+            native_touch::Resident::new(budget, source_capacity)?
+        } else {
+            native_touch::Resident::default()
+        };
         let receiver = Receiver::new(source_capacity, ui_capacity).map_err(invalid)?;
         storage.resize(
             (receiver.storage_bytes()
@@ -150,6 +181,7 @@ impl Source {
             canvas_epoch: 0,
             pen_epoch: 0,
             native: Default::default(),
+            native_touch,
         }))))
     }
     /// Publish only a complete final layout. Changed owners/transforms retire
@@ -157,6 +189,7 @@ impl Source {
     pub fn publish(&self, view: View) -> std::result::Result<(), Invalid> {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         if !view.valid() {
+            state.native_touch.fence_all();
             if state.receiver.has_capture_or_samples() {
                 state.native.fence();
                 state.receiver.cancel();
@@ -177,10 +210,12 @@ impl Source {
             old.owner != view.owner || old.transform != view.transform || old.canvas != view.canvas
         });
         if retire_all {
+            state.native_touch.fence_all();
             state.native.fence();
             state.window_epoch = state.window_epoch.saturating_add(1);
         }
         if retire_canvas {
+            state.native_touch.fence_canvas();
             state.canvas_epoch = state.canvas_epoch.saturating_add(1);
         }
         if (retire_all && state.receiver.has_capture_or_samples())
@@ -240,6 +275,7 @@ impl Source {
     }
     pub fn cancel(&self) {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state.native_touch.fence_all();
         state.native.fence();
         state.receiver.cancel();
     }
@@ -247,6 +283,7 @@ impl Source {
     /// contacts wait for a fresh view instead of using the old scale/origin.
     pub fn invalidate_view(&self) {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state.native_touch.fence_all();
         if state.receiver.has_capture_or_samples() {
             state.native.fence();
             state.receiver.cancel();
@@ -257,6 +294,7 @@ impl Source {
     }
     pub fn fault(&self) {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        state.native_touch.fence_all();
         state.native.fence();
         state.receiver.fault();
     }
@@ -270,6 +308,9 @@ impl Source {
     }
     pub fn mouse_capture(&self, held: bool) -> bool {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        if held && state.native_touch.active() {
+            return false;
+        }
         let accepted = state.receiver.mouse_capture(held);
         if held && accepted {
             state.native.forget_button_edges();
@@ -281,6 +322,7 @@ impl Source {
     pub fn take(&self, frame: u64, owner: Owner, delivery_failed: bool) -> Result<Batch> {
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         if delivery_failed {
+            state.native_touch.fence_all();
             state.receiver.fault();
         }
         if state.view.is_some_and(|view| view.owner != owner) {
@@ -291,7 +333,10 @@ impl Source {
             // independent of what remains in the ingress queue.
             state.canvas_epoch = state.canvas_epoch.saturating_add(1);
             if different_session {
+                state.native_touch.fence_all();
                 state.window_epoch = state.window_epoch.saturating_add(1);
+            } else {
+                state.native_touch.fence_canvas();
             }
             let canvas = state.receiver.has_canvas_capture_or_samples();
             if (different_session && state.receiver.has_capture_or_samples()) || canvas {
@@ -325,7 +370,8 @@ impl Source {
                 cancel_epoch: state.receiver.cancellation_epoch(),
                 window_epoch: state.window_epoch,
                 canvas_epoch: state.canvas_epoch,
-                pen_epoch: state.pen_epoch,
+                pen_epoch: Some(state.pen_epoch),
+                native_touch: None,
                 acknowledged: None,
                 canvas_samples,
                 last_down,
@@ -339,12 +385,19 @@ impl Source {
         self.current_in(&state, batch, live_owner)
     }
     fn current_in(&self, state: &State, batch: &Batch, live_owner: Owner) -> bool {
-        let binding = &batch.binding;
+        self.current_binding(state, &batch.binding, live_owner)
+    }
+    fn current_binding(&self, state: &State, binding: &Binding, live_owner: Owner) -> bool {
         if binding.source.as_ptr() != Arc::as_ptr(&self.0)
             || binding.cancel_epoch == u64::MAX
             || binding.cancel_epoch != state.receiver.cancellation_epoch()
-            || binding.pen_epoch == u64::MAX
-            || binding.pen_epoch != state.pen_epoch
+            || binding
+                .pen_epoch
+                .is_some_and(|epoch| epoch == u64::MAX || epoch != state.pen_epoch)
+            || binding
+                .native_touch
+                .as_ref()
+                .is_some_and(|lease| !lease.current())
             || binding.window_epoch == u64::MAX
             || binding.window_epoch != state.window_epoch
         {
@@ -373,74 +426,6 @@ impl Source {
             && !view.ime
             && captured.transform == view.transform
             && captured.canvas == view.canvas
-    }
-    /// Accept one proven earlier source edge before a later admitted pen Down.
-    /// The opaque batch, exact view and actual typed publication/navigation
-    /// result bound to that initiating edge are all required.
-    pub fn acknowledge_predecessor(
-        &self,
-        batch: &mut Batch,
-        proof: Predecessor,
-    ) -> std::result::Result<(), Invalid> {
-        self.acknowledge_predecessors(&mut [batch], proof)
-    }
-    /// Atomically continue multiple separately admitted native batches after the
-    /// same proven predecessor. No binding or Source view changes on rejection.
-    /// Callers supply already admitted storage; no allocation or GUI work occurs
-    /// under the ingress lock. The single-batch API uses this exact path.
-    pub fn acknowledge_predecessors(
-        &self,
-        batches: &mut [&mut Batch],
-        proof: Predecessor,
-    ) -> std::result::Result<(), Invalid> {
-        if batches.is_empty() {
-            return Err(Invalid::Order);
-        }
-        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
-        if batches
-            .iter()
-            .any(|batch| !self.current_in(&state, batch, proof.before))
-        {
-            return Err(Invalid::Owner);
-        }
-        let Some(mut view) = state.view else {
-            return Err(Invalid::Owner);
-        };
-        if proof.before.session != proof.after.session
-            || proof.before.interface != proof.after.interface
-            || proof.before.publication.checked_add(1) != Some(proof.after.publication)
-            || !proof.focused
-            || proof.modal
-            || proof.ime
-            || proof.transform != view.transform
-            || proof.canvas != view.canvas
-            || proof.pixels_per_point != view.pixels_per_point
-        {
-            return Err(Invalid::Owner);
-        }
-        if batches.iter().any(|batch| {
-            batch
-                .binding
-                .acknowledged
-                .is_some_and(|old| proof.sequence <= old)
-                || !batch
-                    .binding
-                    .last_down
-                    .is_some_and(|sequence| sequence > proof.sequence)
-        }) {
-            return Err(Invalid::Order);
-        }
-        // Validation completes for every opaque admission before mutation.
-        view.owner = proof.after;
-        state.view = Some(view);
-        for batch in batches {
-            batch.binding.owner = proof.after;
-            if let Some(captured) = &mut batch.binding.view {
-                captured.owner = proof.after;
-            }
-            batch.binding.acknowledged = Some(proof.sequence);
-        }
-        Ok(())
     }
 }
 fn invalid(reason: Invalid) -> Error {

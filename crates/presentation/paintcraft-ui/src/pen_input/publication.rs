@@ -12,6 +12,7 @@ pub struct PublicationGuard {
     pixels_per_point: f64,
     canvas_samples: bool,
     pen_epoch: Option<u64>,
+    pub(super) native_touch: Option<native_touch::Lease>,
 }
 impl PublicationGuard {
     /// Metadata only. Native hosts call this inside their sealed delivery check,
@@ -26,6 +27,10 @@ impl PublicationGuard {
         };
         self.pen_epoch
             .is_none_or(|epoch| epoch != u64::MAX && epoch == state.pen_epoch)
+            && self
+                .native_touch
+                .as_ref()
+                .is_none_or(native_touch::Lease::current)
             && self.cancel != u64::MAX
             && self.cancel == state.receiver.cancellation_epoch()
             && self.window != u64::MAX
@@ -58,7 +63,7 @@ impl Source {
         let state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         self.guard_in(&state, owner, false, false)
     }
-    fn guard_in(
+    pub(super) fn guard_in(
         &self,
         state: &State,
         owner: Owner,
@@ -80,6 +85,7 @@ impl Source {
             pixels_per_point: view.pixels_per_point,
             canvas_samples,
             pen_epoch: pen_bound.then_some(state.pen_epoch),
+            native_touch: None,
         })
     }
 }

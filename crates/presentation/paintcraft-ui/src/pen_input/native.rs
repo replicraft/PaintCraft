@@ -263,6 +263,10 @@ impl State {
         convert: impl FnOnce(f64) -> std::result::Result<Option<(f64, f64)>, Invalid>,
     ) -> std::result::Result<Route, Invalid> {
         let state = self;
+        if state.native_touch.active() {
+            state.native.observe(raw, false, edge)?;
+            return Ok(Route::Suppressed);
+        }
         let view = state.view;
         let allowed = match state
             .native
