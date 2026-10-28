@@ -84,6 +84,7 @@ impl ToolState {
                 color,
                 mode,
                 intent,
+                settings: self.options.pen,
             },
             sample,
             budget,

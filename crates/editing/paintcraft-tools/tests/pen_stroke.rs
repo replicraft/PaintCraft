@@ -44,7 +44,78 @@ fn style(mode: MaskMode) -> Style {
         color: Rgba([23, 59, 151, 191]),
         mode,
         intent: MaskIntent::Brush,
+        settings: Default::default(),
     }
+}
+
+#[test]
+fn captured_curves_match_explicit_remapped_geometry_and_never_change_source_samples() {
+    use paintcraft_core::types::pen::PressureCurve;
+    let budget = SharedBudget::new(32 << 20);
+    let clip = Rect::new(0, 0, 64, 32).unwrap();
+    let source = [
+        sample(1, Phase::Down, Some(0.25)),
+        sample(2, Phase::Move, Some(0.8)),
+        sample(3, Phase::Up, Some(0.1)),
+    ];
+    let mut masks = Vec::new();
+    for curve in PressureCurve::ALL {
+        let mut captured = style(MaskMode::SourceOver);
+        captured.settings.curve = curve;
+        let mut stroke = PenStroke::begin(captured, source[0], &budget).unwrap();
+        for point in &source[1..] {
+            stroke.append(*point).unwrap();
+        }
+        let mut reference = None;
+        for mut point in source {
+            let q = (f64::from(point.pressure.unwrap()) * 65535.0).round() as u16;
+            // Mapping to a Q16-representable input exercises the existing linear
+            // raster path as the independent reference, including the quote.
+            point.pressure = Some(f32::from(curve.map(q)) / 65535.0);
+            if let Some(stroke) = &mut reference {
+                PenStroke::append(stroke, point).unwrap();
+            } else {
+                reference =
+                    Some(PenStroke::begin(style(MaskMode::SourceOver), point, &budget).unwrap());
+            }
+        }
+        let preview = stroke.clone().resolve(clip, &budget, &|| Ok(())).unwrap();
+        let released = stroke.resolve(clip, &budget, &|| Ok(())).unwrap();
+        let expected = reference
+            .unwrap()
+            .resolve(clip, &budget, &|| Ok(()))
+            .unwrap();
+        assert_eq!(preview.spans(), released.spans());
+        assert_eq!(released.spans(), expected.spans());
+        assert_eq!(stroke.samples(), &source);
+        masks.push(released.spans().to_vec());
+    }
+    assert_ne!(masks[0], masks[1]);
+    assert_ne!(masks[0], masks[2]);
+}
+
+#[test]
+fn disabling_size_pressure_matches_missing_width_without_losing_raw_zero_or_axes() {
+    let budget = SharedBudget::new(16 << 20);
+    let mut captured = style(MaskMode::SourceOver);
+    captured.settings.size_pressure = false;
+    let mut disabled =
+        PenStroke::begin(captured, sample(1, Phase::Down, Some(0.0)), &budget).unwrap();
+    disabled.append(sample(2, Phase::Up, Some(0.4))).unwrap();
+    let mut constant = PenStroke::begin(
+        style(MaskMode::SourceOver),
+        sample(1, Phase::Down, None),
+        &budget,
+    )
+    .unwrap();
+    constant.append(sample(2, Phase::Up, None)).unwrap();
+    let clip = Rect::new(0, 0, 32, 32).unwrap();
+    assert_eq!(
+        disabled.resolve(clip, &budget, &|| Ok(())).unwrap().spans(),
+        constant.resolve(clip, &budget, &|| Ok(())).unwrap().spans()
+    );
+    assert_eq!(disabled.samples()[0].pressure, Some(0.0));
+    assert_eq!(disabled.samples()[0].twist_degrees, Some(41.0));
 }
 #[test]
 fn immutable_sample_prefix_and_style_survive_pressure_rotation_and_button_changes() {

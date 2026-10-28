@@ -137,6 +137,8 @@ pub struct ToolOptions {
     pub eraser_color: Rgba,
     /// Capped Brush opacity in percent, 0..=100; captured at pointer-down.
     pub brush_opacity: u8,
+    /// Captured PaintCraft pressure policy; never inferred from device axes.
+    pub pen: paintcraft_core::types::pen::Settings,
     pub style: ShapeStyle,
     /// Fill tolerance, 0..=255 per channel.
     pub tolerance: u8,
@@ -158,6 +160,7 @@ impl Default for ToolOptions {
             media: Default::default(),
             eraser_color: Rgba::TRANSPARENT,
             brush_opacity: 100,
+            pen: Default::default(),
             style: ShapeStyle::Outline,
             tolerance: 0,
             text_scale: 2,

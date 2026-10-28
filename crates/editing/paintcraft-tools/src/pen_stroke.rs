@@ -24,6 +24,7 @@ pub struct Style {
     pub color: Rgba,
     pub mode: MaskMode,
     pub intent: MaskIntent,
+    pub settings: paintcraft_core::types::pen::Settings,
 }
 #[derive(Debug)]
 struct Samples {
@@ -84,7 +85,7 @@ impl PenStroke {
         sample
             .validate()
             .map_err(|_| invalid("invalid pen source sample"))?;
-        mapped_point(&sample)?;
+        mapped_point(&sample, self.style.settings)?;
         if matches!(
             sample.provenance,
             Provenance::Predicted | Provenance::Boundary
@@ -160,7 +161,7 @@ impl PenStroke {
         for chunk in self.samples.values.chunks(256) {
             check()?;
             for sample in chunk {
-                let point = mapped_point(sample)?;
+                let point = mapped_point(sample, self.style.settings)?;
                 if points
                     .last()
                     .is_none_or(|last| !same_geometry(*last, point))
@@ -247,7 +248,7 @@ impl PenStroke {
             if index.is_multiple_of(256) {
                 check()?;
             }
-            let point = mapped_point(sample)?;
+            let point = mapped_point(sample, self.style.settings)?;
             if previous.is_some_and(|p| same_geometry(p, point)) {
                 continue;
             }
@@ -292,7 +293,10 @@ impl PenStroke {
 fn same_geometry(a: PressurePoint, b: PressurePoint) -> bool {
     a.at == b.at && a.pressure.unwrap_or(65535) == b.pressure.unwrap_or(65535)
 }
-fn mapped_point(sample: &Sample) -> Result<PressurePoint> {
+fn mapped_point(
+    sample: &Sample,
+    settings: paintcraft_core::types::pen::Settings,
+) -> Result<PressurePoint> {
     let at = sample
         .q8()
         .map_err(|_| invalid("pen coordinates exceed fixed-point range"))?;
@@ -302,9 +306,11 @@ fn mapped_point(sample: &Sample) -> Result<PressurePoint> {
     }
     Ok(PressurePoint {
         at,
-        pressure: sample
-            .pressure
-            .map(|p| (f64::from(p) * 65535.0).round() as u16),
+        pressure: settings.width(
+            sample
+                .pressure
+                .map(|p| (f64::from(p) * 65535.0).round() as u16),
+        ),
     })
 }
 fn sample_bytes(capacity: usize) -> Result<u64> {

@@ -40,6 +40,7 @@ fn pressure_profile_is_explicit_and_captures_opacity_color_and_source_button() {
     tools.secondary = Rgba([11, 22, 33, 150]);
     tools.options.brush_opacity = 40;
     tools.options.size = 12;
+    tools.options.pen.curve = paintcraft_core::types::pen::PressureCurve::Firm;
     let mut down = sample(1, Phase::Down, Some(0.2));
     down.buttons = Buttons(Buttons::TIP | Buttons::BARREL_UPPER);
     assert!(
@@ -52,9 +53,12 @@ fn pressure_profile_is_explicit_and_captures_opacity_color_and_source_button() {
     };
     assert_eq!(prefix.style().color, Rgba([11, 22, 33, 60]));
     assert_eq!(prefix.style().diameter, 12);
+    assert_eq!(prefix.style().settings, tools.options.pen);
     tools.color = Rgba([255; 4]);
     tools.options.size = 1;
     tools.options.brush_opacity = 1;
+    tools.options.pen.size_pressure = false;
+    tools.options.pen.curve = paintcraft_core::types::pen::PressureCurve::Soft;
     assert!(tools.pointer_up_button(PointerButton::Secondary).is_none());
     assert!(tools.pen_in_progress());
     let Some((_, Action::PenStroke(released))) =
