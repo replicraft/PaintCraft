@@ -5,6 +5,9 @@
 use paintcraft_platform::tablet::{ImeComponent, NativeUi, WindowsCharacterKind};
 
 mod decode;
+#[cfg(test)]
+mod key_tests;
+mod keys;
 mod targets;
 #[cfg(test)]
 mod tests;
