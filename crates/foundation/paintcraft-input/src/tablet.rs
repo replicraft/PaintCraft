@@ -55,7 +55,12 @@ pub struct Time {
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Tilt {
+    /// Canonical projected tilt: +X right, +Y down, each in ±90 degrees.
+    /// These are plane angles, not an already-computed azimuth vector.
     Degrees(f32, f32),
+    /// The same projected angles as fractions of a quarter-turn (multiply
+    /// each component by 90 degrees). Adapters must normalize the source/view
+    /// basis before delivery; raw API values alone do not qualify hardware axes.
     Normalized(f32, f32),
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

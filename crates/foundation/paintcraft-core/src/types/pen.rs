@@ -43,18 +43,51 @@ impl PressureCurve {
     }
 }
 
+/// Explicit orientation of applicable calligraphy/marker nibs only. Missing
+/// axes (including an upright tilt with no azimuth) retain historical rotation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Orientation {
+    #[default]
+    Historical,
+    Tilt,
+    Twist,
+}
+impl Orientation {
+    pub const ALL: [Self; 3] = [Self::Historical, Self::Tilt, Self::Twist];
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Historical => "historical",
+            Self::Tilt => "tilt",
+            Self::Twist => "twist",
+        }
+    }
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL
+            .into_iter()
+            .find(|orientation| orientation.id() == id)
+    }
+}
+
 /// Preferences are copied into the stroke at Down. Changing these settings
 /// later must not modify a captured preview, replay, or history item.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Settings {
     pub size_pressure: bool,
     pub curve: PressureCurve,
+    /// Modulate maximum dab coverage, not accumulating per-stamp flow.
+    pub opacity_pressure: bool,
+    /// Opt selected textured media into attributed dabs, preserving its tip.
+    pub media_dynamics: bool,
+    pub orientation: Orientation,
 }
 impl Default for Settings {
     fn default() -> Self {
         Self {
             size_pressure: true,
             curve: PressureCurve::Linear,
+            opacity_pressure: false,
+            media_dynamics: false,
+            orientation: Orientation::Historical,
         }
     }
 }
@@ -72,6 +105,9 @@ impl Settings {
         Value::object([
             ("size_pressure", Value::Bool(self.size_pressure)),
             ("curve", Value::str(self.curve.id())),
+            ("opacity_pressure", Value::Bool(self.opacity_pressure)),
+            ("media_dynamics", Value::Bool(self.media_dynamics)),
+            ("orientation", Value::str(self.orientation.id())),
         ])
     }
     /// Hosts may default an absent preferences field, but an explicit malformed
@@ -79,7 +115,12 @@ impl Settings {
     pub fn from_value(value: &Value) -> Result<Self> {
         let invalid = || Error::new(ErrorCode::InputSchema, "invalid pen settings");
         let object = value.as_object().ok_or_else(invalid)?;
-        if object.len() != 2 {
+        if object.keys().any(|key| {
+            !matches!(
+                key.as_str(),
+                "size_pressure" | "curve" | "opacity_pressure" | "media_dynamics" | "orientation"
+            )
+        }) {
             return Err(invalid());
         }
         Ok(Self {
@@ -87,6 +128,21 @@ impl Settings {
                 .get("size_pressure")
                 .and_then(Value::as_bool)
                 .ok_or_else(invalid)?,
+            opacity_pressure: match object.get("opacity_pressure") {
+                Some(value) => value.as_bool().ok_or_else(invalid)?,
+                None => false,
+            },
+            media_dynamics: match object.get("media_dynamics") {
+                Some(value) => value.as_bool().ok_or_else(invalid)?,
+                None => false,
+            },
+            orientation: match object.get("orientation") {
+                Some(value) => value
+                    .as_str()
+                    .and_then(Orientation::from_id)
+                    .ok_or_else(invalid)?,
+                None => Orientation::Historical,
+            },
             curve: object
                 .get("curve")
                 .and_then(Value::as_str)
@@ -129,6 +185,7 @@ mod tests {
                 let settings = Settings {
                     size_pressure,
                     curve,
+                    ..Default::default()
                 };
                 assert_eq!(
                     Settings::from_value(&settings.to_value()).unwrap(),
@@ -147,6 +204,45 @@ mod tests {
                 ]))
                 .is_err()
             );
+        }
+    }
+
+    #[test]
+    fn old_preferences_default_new_dynamics_without_accepting_malformed_explicit_fields() {
+        let old = Value::object([
+            ("size_pressure", Value::Bool(true)),
+            ("curve", Value::str("linear")),
+        ]);
+        assert_eq!(Settings::from_value(&old).unwrap(), Settings::default());
+        for orientation in Orientation::ALL {
+            for opacity_pressure in [true, false] {
+                for media_dynamics in [true, false] {
+                    let settings = Settings {
+                        orientation,
+                        opacity_pressure,
+                        media_dynamics,
+                        ..Default::default()
+                    };
+                    assert_eq!(
+                        Settings::from_value(&settings.to_value()).unwrap(),
+                        settings
+                    );
+                }
+            }
+        }
+        for (key, value) in [
+            ("orientation", Value::str("device-default")),
+            ("orientation", Value::Null),
+            ("opacity_pressure", Value::Int(1)),
+            ("media_dynamics", Value::str("true")),
+            ("future_unknown", Value::Bool(true)),
+        ] {
+            let mut invalid = old.clone();
+            let Value::Object(object) = &mut invalid else {
+                unreachable!()
+            };
+            object.insert(key.into(), value);
+            assert!(Settings::from_value(&invalid).is_err(), "{key}");
         }
     }
 }
