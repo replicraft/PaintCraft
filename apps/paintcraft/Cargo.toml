@@ -35,6 +35,11 @@ sha2.workspace = true
 same-file.workspace = true
 uuid.workspace = true
 
+[target.'cfg(target_os = "macos")'.dependencies]
+egui-winit.workspace = true
+winit.workspace = true
+pollster.workspace = true
+
 [dev-dependencies]
 criterion.workspace = true
 pollster.workspace = true
