@@ -9,6 +9,9 @@ use paintcraft_ui::pen_input::{Owner, Predecessor};
 use std::sync::{Arc, Mutex};
 #[path = "owned_tablet/projection.rs"]
 pub mod projection;
+#[cfg(test)]
+#[path = "owned_tablet/native_ui/mod.rs"]
+mod native_ui;
 use projection::{Frame, Pointer, Projection};
 #[derive(Clone, Copy, Debug)]
 enum Origin {
