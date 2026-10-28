@@ -12,7 +12,9 @@ pub use delivery::{DeliveryCheck, DeliveryHealth};
 mod collector;
 mod packet;
 mod records;
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "windows", test))]
+pub mod windows;
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 use capabilities::Report;
 pub use capabilities::{Axes, Backend, CapabilitySnapshot, Device};
 pub use collector::{Collected, CollectedFrame, Collector, MouseRoute, PenRoute};
@@ -32,9 +34,10 @@ pub type Sink = Arc<dyn Fn(NativePacket) -> bool + Send + Sync>;
 pub type Wake = Arc<dyn Fn() + Send + Sync>;
 /// Context-free lifecycle control, serialized by the same delivery gate as Sink.
 pub type ControlSink = Arc<dyn Fn(Boundary) -> std::result::Result<(), RecordFault> + Send + Sync>;
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 #[derive(Clone)]
 struct Emitter {
+    #[cfg(any(target_os = "macos", test))]
     sink: Sink,
     #[cfg(any(target_os = "macos", test))]
     controls: Option<ControlSink>,
@@ -45,10 +48,13 @@ struct Emitter {
     report: Report,
     gate: delivery::Gate,
 }
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 impl Emitter {
     fn new(sink: Sink, wake: Wake, report: Report) -> Self {
+        #[cfg(target_os = "windows")]
+        let _ = &sink;
         Self {
+            #[cfg(any(target_os = "macos", test))]
             sink,
             #[cfg(any(target_os = "macos", test))]
             controls: None,
@@ -60,6 +66,7 @@ impl Emitter {
             gate: delivery::Gate::new(),
         }
     }
+    #[cfg(any(target_os = "macos", test))]
     fn emit(&self, packet: NativePacket) -> bool {
         self.report.sample(packet.raw);
         // Lock order: delivery gate -> receiver ingress. The native state lock
@@ -113,6 +120,7 @@ impl Emitter {
         .map_err(|_| delivery::Failure::Sink)?;
         Ok(true)
     }
+    #[cfg(any(target_os = "macos", test))]
     fn observe(&self, event: CaptureEvent) {
         if self.records.is_some() {
             self.finish(self.gate.emit_checked(|| self.record(event)));

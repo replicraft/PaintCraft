@@ -1,8 +1,8 @@
 //! Installation and native advertisements are not physical qualification.
 use paintcraft_input::tablet::DeviceKind;
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 use paintcraft_input::tablet::RawSample;
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 use std::sync::{Arc, Mutex};
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Backend {
@@ -39,31 +39,59 @@ pub struct CapabilitySnapshot {
     pub unclassified_points: u64,
     pub rejected_devices: u64,
 }
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 #[derive(Clone, Debug)]
-pub(crate) struct Report(Arc<Mutex<CapabilitySnapshot>>);
-#[cfg(any(target_os = "macos", test))]
+pub(crate) struct Report(
+    Arc<Mutex<CapabilitySnapshot>>,
+    #[cfg(target_os = "windows")]
+    Arc<Mutex<Option<paintcraft_core::types::resources::BudgetAccount>>>,
+);
+#[cfg(any(target_os = "macos", target_os = "windows", test))]
 impl Report {
     pub(crate) fn new(backend: Backend) -> Self {
-        Self(Arc::new(Mutex::new(CapabilitySnapshot {
-            backend,
-            installed: false,
-            devices: Vec::new(),
-            samples: 0,
-            callback_failures: 0,
-            sink_failures: 0,
-            source_failures: 0,
-            wake_failures: 0,
-            unclassified_points: 0,
-            rejected_devices: 0,
-        })))
+        Self(
+            Arc::new(Mutex::new(CapabilitySnapshot {
+                backend,
+                installed: false,
+                devices: Vec::new(),
+                samples: 0,
+                callback_failures: 0,
+                sink_failures: 0,
+                source_failures: 0,
+                wake_failures: 0,
+                unclassified_points: 0,
+                rejected_devices: 0,
+            })),
+            #[cfg(target_os = "windows")]
+            Arc::new(Mutex::new(None)),
+        )
     }
     pub(crate) fn snapshot(&self) -> CapabilitySnapshot {
         self.0.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     pub(crate) fn installed(&self, value: bool) {
         self.0.lock().unwrap_or_else(|e| e.into_inner()).installed = value;
+    }
+    #[cfg(target_os = "windows")]
+    pub(crate) fn reserve_devices(
+        &self,
+        budget: &paintcraft_core::types::resources::SharedBudget,
+    ) -> paintcraft_core::types::Result<()> {
+        use paintcraft_core::types::{Error, ErrorCode, resources::AllocationClass};
+        let mut account = budget.account(AllocationClass::PaintMetadata);
+        account.resize((64 * size_of::<Device>()) as u64)?;
+        let mut devices = Vec::new();
+        devices.try_reserve_exact(64).map_err(|_| {
+            Error::new(
+                ErrorCode::ResourceLimit,
+                "Windows report allocation refused",
+            )
+        })?;
+        account.resize((devices.capacity() * size_of::<Device>()) as u64)?;
+        self.0.lock().unwrap_or_else(|e| e.into_inner()).devices = devices;
+        *self.1.lock().unwrap_or_else(|e| e.into_inner()) = Some(account);
+        Ok(())
     }
     pub(crate) fn device(&self, device: Device) -> bool {
         let mut report = self.0.lock().unwrap_or_else(|e| e.into_inner());
@@ -100,7 +128,7 @@ impl Report {
             .wake_failures
             != 0
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     pub(crate) fn unclassified(&self) {
         let mut r = self.0.lock().unwrap_or_else(|e| e.into_inner());
         r.unclassified_points = r.unclassified_points.saturating_add(1);
