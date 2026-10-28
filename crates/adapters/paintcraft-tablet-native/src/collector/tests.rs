@@ -291,7 +291,7 @@ fn precise_wheel_retains_actual_unit_momentum_phase_and_fences_pen() {
     c.accept(pen(2, Phase::Move, 1)).unwrap();
     let frame = c.take(DeliveryHealth::Ready).unwrap();
     assert!(
-        matches!(frame.records[1], Collected::Mouse { record, cancel_pen: true, route: MouseRoute::Client } if record == wheel)
+        matches!(frame.records[1], Collected::Mouse { record, cancel_pen: true, route: MouseRoute::Client, .. } if record == wheel)
     );
     assert_eq!(routes(&frame), [PenRoute::Admitted, PenRoute::Suppressed]);
 }

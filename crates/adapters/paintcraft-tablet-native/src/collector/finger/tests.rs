@@ -76,14 +76,17 @@ fn unspecified_is_unknown_and_withdrawal_is_separate_from_physical_move() {
     if let CaptureEvent::Finger { confidence, .. } = &mut unknown.event {
         *confidence = FingerConfidence::Unspecified;
     }
-    assert_eq!(route(&mut c, unknown), FingerRoute::Suppressed);
+    assert_eq!(
+        route(&mut c, unknown),
+        FingerRoute::Denied(FingerDenial::UnspecifiedConfidence)
+    );
     assert_eq!(
         route(&mut c, finger(1, 1, Phase::Move)),
-        FingerRoute::Suppressed
+        FingerRoute::Denied(FingerDenial::UnspecifiedConfidence)
     );
     assert_eq!(
         route(&mut c, finger(2, 1, Phase::Up)),
-        FingerRoute::Suppressed
+        FingerRoute::Denied(FingerDenial::UnspecifiedConfidence)
     );
     assert_eq!(
         route(&mut c, finger(3, 1, Phase::Down)),
@@ -108,11 +111,11 @@ fn unspecified_is_unknown_and_withdrawal_is_separate_from_physical_move() {
     assert_eq!(phase, Phase::Move);
     assert_eq!(
         route(&mut c, finger(5, 1, Phase::Move)),
-        FingerRoute::Suppressed
+        FingerRoute::Denied(FingerDenial::UnspecifiedConfidence)
     );
     assert_eq!(
         route(&mut c, finger(6, 1, Phase::Up)),
-        FingerRoute::Suppressed
+        FingerRoute::Denied(FingerDenial::UnspecifiedConfidence)
     );
     assert_eq!(
         route(&mut c, finger(7, 1, Phase::Down)),
@@ -147,7 +150,7 @@ fn contact_enter_does_not_invent_down_and_metadata_only_terminal_clears_own_hold
     if let CaptureEvent::Finger { in_contact, .. } = &mut enter.event {
         *in_contact = true;
     }
-    assert_eq!(route(&mut c, enter), FingerRoute::Suppressed);
+    assert_eq!(route(&mut c, enter), FingerRoute::MetadataOnly);
     assert_eq!(
         route(&mut c, finger(1, 1, Phase::Down)),
         FingerRoute::Eligible
@@ -181,7 +184,7 @@ fn prediction_has_no_lifecycle_or_clock_authority_and_history_is_geometry_only()
         time.epoch = 999;
         *provenance = Provenance::Predicted;
     }
-    assert_eq!(route(&mut c, prediction), FingerRoute::Suppressed);
+    assert_eq!(route(&mut c, prediction), FingerRoute::MetadataOnly);
     let mut history = finger(2, 1, Phase::Move);
     if let CaptureEvent::Finger { provenance, .. } = &mut history.event {
         *provenance = Provenance::Coalesced;
@@ -358,7 +361,10 @@ fn internal_boundary_cannot_begin_end_or_change_native_finger_authority() {
     if let CaptureEvent::Finger { position, .. } = &mut up.event {
         *position = None;
     }
-    assert_eq!(route(&mut c, up), FingerRoute::Suppressed);
+    assert_eq!(
+        route(&mut c, up),
+        FingerRoute::Denied(FingerDenial::RetiredContext)
+    );
     assert_eq!(
         route(&mut c, finger(3, 1, Phase::Down)),
         FingerRoute::Eligible

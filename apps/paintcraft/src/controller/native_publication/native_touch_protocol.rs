@@ -37,7 +37,7 @@ fn collector_unknown_noncontact_history_stays_metadata_only_in_source() {
     let [
         Collected::Finger {
             record,
-            route: FingerRoute::Suppressed,
+            route: FingerRoute::MetadataOnly,
         },
     ] = frame.records.as_slice()
     else {

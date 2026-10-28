@@ -180,6 +180,7 @@ impl Projection {
                     record,
                     route,
                     cancel_pen,
+                    ..
                 } => {
                     let CaptureEvent::Mouse(mouse) = record.event else {
                         return Err(RecordFault::Invalid);

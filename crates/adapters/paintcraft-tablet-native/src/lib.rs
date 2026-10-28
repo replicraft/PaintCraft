@@ -19,7 +19,10 @@ pub mod windows;
 #[cfg(any(target_os = "macos", target_os = "windows", test))]
 use capabilities::Report;
 pub use capabilities::{Axes, Backend, CapabilitySnapshot, Device};
-pub use collector::{Collected, CollectedFrame, Collector, FingerRoute, MouseRoute, PenRoute};
+pub use collector::{
+    CaptureClass, Collected, CollectedFrame, Collector, FingerDenial, FingerRoute, MouseRoute,
+    PenRoute,
+};
 pub use packet::{Delivery, NativePacket, WindowPosition};
 #[cfg(target_os = "macos")]
 use paintcraft_core::types::{Error, ErrorCode, Result};

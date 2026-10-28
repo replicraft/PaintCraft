@@ -16,7 +16,10 @@ pub enum MouseRoute {
 pub enum FingerRoute {
     /// Validated metadata only; this does not authorize GUI/gesture delivery.
     Eligible,
-    Suppressed,
+    /// Harmless lifecycle/geometry without a qualified gesture. Candidate only,
+    /// never a strong denial of a later real source Down.
+    MetadataOnly,
+    Denied(FingerDenial),
     /// Retire an earlier eligible contact; the physical record is unchanged.
     PolicyCancel,
 }
@@ -33,6 +36,9 @@ pub enum Collected {
         record: CaptureRecord,
         route: MouseRoute,
         cancel_pen: bool,
+        /// Actual qualified held class at this navigation edge, never completed
+        /// older work and never permission to reset arbitrary GUI state.
+        retire_capture: Option<CaptureClass>,
     },
     Tablet {
         record: CaptureRecord,
@@ -53,6 +59,8 @@ struct Pen {
     identity: Identity,
     held: bool,
     fenced: bool,
+    orphan: bool,
+    start: Option<u64>,
 }
 /// A drained payload retains its separately reserved logical storage allowance.
 #[derive(Debug)]
@@ -79,6 +87,7 @@ pub struct Collector {
     // Clock lifetime survives contact-slot release; never silently rebase a
     // reused identity after Up. Reclaim only on a verified true lifetime end.
     times: [Option<(Identity, Time)>; 64],
+    idle: [Option<capture::Idle>; 64],
     owner: Option<Identity>,
     failed: bool,
     closed: bool,
@@ -102,6 +111,7 @@ impl Collector {
                 + (std::mem::size_of::<[Option<Pen>; 64]>()
                     + std::mem::size_of::<finger::Table>()
                     + std::mem::size_of::<[Option<(Identity, Time)>; 64]>()
+                    + std::mem::size_of::<[Option<capture::Idle>; 64]>()
                     + std::mem::size_of::<Option<paintcraft_input::tablet::Clock>>()))
                 as u64,
         )?;
@@ -117,6 +127,7 @@ impl Collector {
                 + (std::mem::size_of::<[Option<Pen>; 64]>()
                     + std::mem::size_of::<finger::Table>()
                     + std::mem::size_of::<[Option<(Identity, Time)>; 64]>()
+                    + std::mem::size_of::<[Option<capture::Idle>; 64]>()
                     + std::mem::size_of::<Option<paintcraft_input::tablet::Clock>>()))
                 as u64,
         )?;
@@ -133,6 +144,7 @@ impl Collector {
             pens: [None; 64],
             fingers: finger::Table::default(),
             times: [None; 64],
+            idle: [None; 64],
             owner: None,
             failed: false,
             closed: false,
@@ -204,8 +216,15 @@ impl Collector {
                     }
                     self.mouse_time = Some(mouse.time);
                 }
-                let cancel_pen =
-                    matches!(mouse.kind, MouseKind::Wheel { .. }) && self.owner.is_some();
+                let retire_capture = if matches!(mouse.kind, MouseKind::Wheel { .. }) {
+                    match self.capture_class() {
+                        class @ (CaptureClass::Pen(_) | CaptureClass::Touch) => Some(class),
+                        _ => None,
+                    }
+                } else {
+                    None
+                };
+                let cancel_pen = matches!(retire_capture, Some(CaptureClass::Pen(_)));
                 let route = match mouse.kind {
                     MouseKind::Button { number, pressed } => {
                         let bit = 1u32
@@ -213,7 +232,10 @@ impl Collector {
                             .ok_or(RecordFault::Invalid)?;
                         if pressed {
                             if self.mouse == 0 {
-                                self.mouse_route = if self.mouse_uncertain || self.owner.is_some() {
+                                self.mouse_route = if self.mouse_uncertain
+                                    || self.owner.is_some()
+                                    || self.fingers.active()
+                                {
                                     MouseRoute::Suppressed
                                 } else if mouse.client {
                                     MouseRoute::Client
@@ -230,7 +252,8 @@ impl Collector {
                     MouseKind::Wheel { .. } => {
                         // Navigation is a source-time boundary. The host applies
                         // the wheel after cancelling private pen/UI state.
-                        if self.owner.is_some() {
+                        self.idle = [None; 64];
+                        if retire_capture.is_some() {
                             self.fence_pens();
                         }
                         if mouse.client {
@@ -241,14 +264,21 @@ impl Collector {
                     }
                     _ if self.mouse_uncertain => MouseRoute::Suppressed,
                     _ if self.mouse != 0 => self.mouse_route,
-                    _ if self.owner.is_some() => MouseRoute::Suppressed,
+                    _ if self.owner.is_some() || self.fingers.active() => MouseRoute::Suppressed,
                     _ if mouse.client => MouseRoute::Client,
                     _ => MouseRoute::NativeChrome,
                 };
+                if matches!(mouse.kind, MouseKind::Button { pressed: true, .. })
+                    && route != MouseRoute::Suppressed
+                {
+                    self.idle = [None; 64];
+                    self.fence_orphans();
+                }
                 Collected::Mouse {
                     record,
                     route,
                     cancel_pen,
+                    retire_capture,
                 }
             }
             CaptureEvent::Tablet(packet) => {
@@ -285,6 +315,8 @@ impl Collector {
                     identity: packet.raw.identity,
                     held: false,
                     fenced: false,
+                    orphan: false,
+                    start: None,
                 });
                 let clock_slot = self
                     .times
@@ -299,18 +331,23 @@ impl Collector {
                     return Err(RecordFault::Invalid);
                 }
                 self.times[clock_slot] = Some((packet.raw.identity, packet.raw.time));
-                let terminal = packet.raw.buttons.0
-                    & (Buttons::TIP | Buttons::BARREL | Buttons::BARREL_UPPER)
-                    == 0
+                let qualifies = self.pen_qualifies(packet, clock_slot, pen)?;
+                let terminal = packet.raw.provenance == Provenance::Actual
+                    && packet.raw.buttons.0
+                        & (Buttons::TIP | Buttons::BARREL | Buttons::BARREL_UPPER)
+                        == 0
                     && matches!(packet.raw.phase, Phase::Up | Phase::Hover | Phase::Leave);
                 let held = packet.raw.phase == Phase::Down
                     || (!terminal && pen.held)
                     || packet.raw.buttons.0
                         & (Buttons::TIP | Buttons::BARREL | Buttons::BARREL_UPPER)
                         != 0;
-                let cancelled = matches!(packet.raw.phase, Phase::Cancel | Phase::Leave);
+                let cancelled = packet.raw.provenance != Provenance::Coalesced
+                    && matches!(packet.raw.phase, Phase::Cancel | Phase::Leave);
                 if cancelled {
                     pen.fenced |= pen.held;
+                    pen.start = None;
+                    pen.orphan = false;
                     if self.owner == Some(pen.identity) {
                         self.owner = None;
                     }
@@ -318,7 +355,9 @@ impl Collector {
                 let competing_mouse = self.mouse_uncertain
                     || (self.mouse != 0 && self.mouse_route != MouseRoute::Suppressed);
                 if held
-                    && (competing_mouse || self.owner.is_some_and(|owner| owner != pen.identity))
+                    && (competing_mouse
+                        || self.fingers.active()
+                        || self.owner.is_some_and(|owner| owner != pen.identity))
                 {
                     pen.fenced = true;
                 }
@@ -329,13 +368,28 @@ impl Collector {
                 } else {
                     PenRoute::Admitted
                 };
-                if route == PenRoute::Admitted && held {
+                if route == PenRoute::Admitted && held && qualifies {
+                    if pen.start.is_none() {
+                        self.fence_orphans();
+                    }
+                    pen.start.get_or_insert(record.ordinal);
+                    pen.orphan = false;
                     self.owner = Some(pen.identity);
+                } else if held
+                    && !pen.fenced
+                    && pen.start.is_none()
+                    && (packet.raw.phase == Phase::Move
+                        || packet.raw.buttons.0 & (Buttons::BARREL | Buttons::BARREL_UPPER) != 0)
+                {
+                    pen.orphan = true;
                 }
+                self.observe_pen_idle(packet.raw, clock_slot, held);
                 pen.held = held;
                 if terminal {
                     pen.held = false;
                     pen.fenced = false;
+                    pen.orphan = false;
+                    pen.start = None;
                     if self.owner == Some(pen.identity) {
                         self.owner = None;
                     }
@@ -389,9 +443,12 @@ impl Collector {
         Ok(())
     }
     fn fence_pens(&mut self) {
+        self.idle = [None; 64];
         self.fingers.fence();
         for pen in self.pens.iter_mut().flatten() {
             pen.fenced |= pen.held;
+            pen.orphan = false;
+            pen.start = None;
         }
         self.owner = None;
     }
@@ -472,3 +529,6 @@ mod lifecycle;
 mod tracking;
 
 mod finger;
+
+mod capture;
+pub use capture::{CaptureClass, FingerDenial};

@@ -27,6 +27,7 @@ impl Collector {
             return Err(RecordFault::Invalid);
         }
         self.times[index] = None;
+        self.idle[index] = None;
         Ok(())
     }
 }

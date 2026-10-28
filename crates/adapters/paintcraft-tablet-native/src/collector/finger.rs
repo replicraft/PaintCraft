@@ -6,7 +6,7 @@ struct Contact {
     identity: Identity,
     held: bool,
     eligible: bool,
-    fenced: bool,
+    denial: Option<FingerDenial>,
     primary: bool,
 }
 #[derive(Debug, Default)]
@@ -16,11 +16,19 @@ impl Table {
         self.0
             .iter()
             .flatten()
-            .any(|c| c.identity == identity && (c.held || c.fenced))
+            .any(|c| c.identity == identity && (c.held || c.denial.is_some()))
+    }
+    pub(super) fn active(&self) -> bool {
+        self.0
+            .iter()
+            .flatten()
+            .any(|c| c.held && c.eligible && c.denial.is_none())
     }
     pub(super) fn fence(&mut self) {
         for c in self.0.iter_mut().flatten() {
-            c.fenced |= c.held;
+            if c.held {
+                c.denial.get_or_insert(FingerDenial::RetiredContext);
+            }
             c.eligible = false;
         }
     }
@@ -46,7 +54,7 @@ impl Collector {
         // Predictions cannot poison actual ownership or clear physical tails,
         // including malformed predictions whose identity/clock is unavailable.
         if provenance == Provenance::Predicted {
-            return Ok(FingerRoute::Suppressed);
+            return Ok(FingerRoute::MetadataOnly);
         }
         // Native touch lifecycle is always source-authored Actual. Internal
         // cancellation boundaries are separate CaptureEvent::Boundary records,
@@ -95,11 +103,13 @@ impl Collector {
                 return Err(RecordFault::Invalid);
             }
             self.observe_finger_clock(identity, time)?;
-            return Ok(if previous.is_some_and(|c| c.eligible && !c.fenced) {
-                FingerRoute::Eligible
-            } else {
-                FingerRoute::Suppressed
-            });
+            return Ok(
+                if previous.is_some_and(|c| c.eligible && c.denial.is_none()) {
+                    FingerRoute::Eligible
+                } else {
+                    FingerRoute::MetadataOnly
+                },
+            );
         }
         if (matches!(phase, Phase::Down | Phase::Move) && !in_contact)
             || (matches!(phase, Phase::Up | Phase::Hover) && in_contact)
@@ -121,7 +131,7 @@ impl Collector {
             identity,
             held: false,
             eligible: false,
-            fenced: false,
+            denial: None,
             primary,
         });
         let lost_authority = contact.eligible
@@ -131,28 +141,49 @@ impl Collector {
                 || (terminal && phase != Phase::Up));
         let route = if lost_authority {
             contact.eligible = false;
-            contact.fenced |= in_contact;
+            if in_contact {
+                contact.denial = Some(if confidence != FingerConfidence::High {
+                    FingerDenial::UnspecifiedConfidence
+                } else if contact.primary != primary {
+                    FingerDenial::PrimaryChanged
+                } else {
+                    FingerDenial::RetiredContext
+                });
+            }
             FingerRoute::PolicyCancel
+        } else if let Some(denial) = contact.denial {
+            FingerRoute::Denied(denial)
         } else if phase == Phase::Down {
-            if contact.eligible || contact.fenced {
+            if contact.eligible {
                 return Err(RecordFault::Invalid);
             }
-            contact.fenced = confidence != FingerConfidence::High;
-            contact.eligible = !contact.fenced;
-            if contact.eligible {
-                FingerRoute::Eligible
+            let denial = if confidence != FingerConfidence::High {
+                Some(FingerDenial::UnspecifiedConfidence)
             } else {
-                FingerRoute::Suppressed
+                self.competing_finger_denial()
+            };
+            contact.denial = denial;
+            contact.eligible = denial.is_none();
+            if let Some(denial) = denial {
+                FingerRoute::Denied(denial)
+            } else {
+                self.fence_orphans();
+                self.idle = [None; 64];
+                FingerRoute::Eligible
             }
-        } else if contact.eligible && !contact.fenced {
+        } else if contact.eligible {
             FingerRoute::Eligible
+        } else if in_contact && phase != Phase::Enter {
+            let denial = self
+                .competing_finger_denial()
+                .unwrap_or(FingerDenial::OrphanContact);
+            contact.denial = Some(denial);
+            FingerRoute::Denied(denial)
         } else {
-            // Enter can report physical contact before its actual Down edge.
-            // It does not authorize a gesture or invent a Down.
-            if in_contact && phase != Phase::Enter {
-                contact.fenced = true;
-            }
-            FingerRoute::Suppressed
+            // Metadata-only Enter (including INCONTACT) never invents Down or
+            // strongly denies a later real Down. Unknown hover is likewise not
+            // a captured gesture. Source still validates these candidates.
+            FingerRoute::MetadataOnly
         };
         contact.held = in_contact;
         contact.primary = primary;
@@ -160,7 +191,7 @@ impl Collector {
             if let Some(i) = index {
                 self.fingers.0[i] = None;
             }
-        } else if in_contact || contact.fenced || contact.eligible {
+        } else if in_contact || contact.denial.is_some() || contact.eligible {
             let i = index
                 .or_else(|| self.fingers.0.iter().position(Option::is_none))
                 .ok_or(RecordFault::Capacity)?;
