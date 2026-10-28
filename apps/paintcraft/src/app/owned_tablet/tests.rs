@@ -275,7 +275,10 @@ fn next_contact_acquired_during_own_wait_keeps_partial_down_preview_and_real_up(
     release.send(()).unwrap();
     finish(&mut host, &ctx);
     assert_eq!(host.app.editor.publications(), before + 1);
-    assert!(host.snapshot(DeliveryHealth::Ready).unwrap());
+    // The pump now drains already-acquired input before reporting Idle, so the
+    // partial contact is already private/live after finishing the prior barrier.
+    assert!(host.app.editor.gesture_in_progress());
+    assert!(!host.snapshot(DeliveryHealth::Ready).unwrap());
     finish(&mut host, &ctx);
     assert!(host.app.editor.gesture_in_progress());
     assert_eq!(host.app.editor.publications(), before + 1);
@@ -514,4 +517,44 @@ fn typed_backing_cancel_is_not_mistaken_for_an_authored_activation() {
     pen(&host, 2, Phase::Up, (20.0, 18.0));
     finish(&mut host, &ctx);
     assert_eq!(host.app.editor.publications(), before + 1);
+}
+
+#[test]
+fn replaying_acquired_backing_boundary_keeps_newer_completed_contact_and_cancels_old_preview() {
+    for experience in [Experience::Classic, Experience::Studio] {
+        let (mut host, ctx, _, older) = setup(experience);
+        let before = host.app.editor.publications();
+        let depth = host.app.editor.undo_depth();
+        pen(&host, 0, Phase::Down, (20.0, 18.0));
+        assert_eq!(tick(&mut host, &ctx).unwrap(), Progress::Advanced);
+        assert_eq!(host.app.editor.publications(), before);
+        let view = host.ingress.lock().unwrap().view().unwrap();
+        host.capture_endpoint()(CaptureRecord {
+            installation: 1,
+            ordinal: 1,
+            event: CaptureEvent::Boundary {
+                kind: paintcraft_platform::tablet::Boundary::ViewInvalidated,
+                time: None,
+            },
+        })
+        .unwrap();
+        // A completed fresh layout may be followed by several real source
+        // records before the GUI replays its already-acquired cancellation.
+        host.ingress.lock().unwrap().publish(view).unwrap();
+        pen(&host, 2, Phase::Up, (20.0, 18.0));
+        pen(&host, 3, Phase::Down, (34.0, 18.0));
+        pen(&host, 4, Phase::Up, (34.0, 18.0));
+        finish(&mut host, &ctx);
+        assert_eq!(host.app.editor.publications(), before + 1);
+        assert_eq!(host.app.editor.undo_depth(), depth + 1);
+        let layer = older.roots[0];
+        assert_eq!(
+            host.app.editor.document().layers[&layer].raster.get(20, 18),
+            older.layers[&layer].raster.get(20, 18)
+        );
+        assert_ne!(
+            host.app.editor.document().layers[&layer].raster.get(34, 18),
+            older.layers[&layer].raster.get(34, 18)
+        );
+    }
 }

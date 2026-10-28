@@ -64,7 +64,7 @@ impl Receiver {
             _gui_events: gui_events,
         })
     }
-    fn retire(&mut self) -> bool {
+    fn retire_presentation(&mut self) -> bool {
         let cancel_editor = self.controller_owned
             || self.fallback_button.is_some()
             || self
@@ -75,6 +75,10 @@ impl Receiver {
         self.retained = None;
         self.controller_owned = false;
         self.fallback_button = None;
+        cancel_editor
+    }
+    fn retire(&mut self) -> bool {
+        let cancel_editor = self.retire_presentation();
         self.source.cancel();
         if let Some(native) = &self.installation {
             native.cancel();

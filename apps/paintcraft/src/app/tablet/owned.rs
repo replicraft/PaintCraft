@@ -68,6 +68,18 @@ impl App {
         receiver.own_service_wait = false;
         receiver.deferred_view.take().or(receiver.published_view)
     }
+    /// Acquisition already retired Source at its ordered boundary. Replaying
+    /// that boundary must not invalidate newer admitted batches behind it.
+    pub(crate) fn retire_owned_presentation(&mut self) {
+        if let Some(receiver) = &mut self.tablet {
+            let owned = receiver.retire_presentation();
+            receiver.defer_view = false;
+            receiver.own_service_wait = false;
+            if owned {
+                self.editor.cancel_gesture();
+            }
+        }
+    }
     pub(crate) fn retire_owned_tablet(&mut self) {
         if let Some(receiver) = &mut self.tablet {
             let owned = receiver.retire();

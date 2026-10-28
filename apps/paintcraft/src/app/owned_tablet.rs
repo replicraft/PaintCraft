@@ -135,6 +135,18 @@ impl Host {
                 .fault();
             return Ok(false);
         }
+        if self.waiting.is_none()
+            && self
+                .pending
+                .as_ref()
+                .is_some_and(|frame| self.cursor == frame.entries.len())
+        {
+            // The preceding semantic edge consumed this snapshot. Retire its
+            // storage before observing newly acquired records; otherwise Idle
+            // could be reported while a newer boundary/contact waits ingress.
+            self.pending = None;
+            self.cursor = 0;
+        }
         if self.pending.is_some() {
             return Ok(false);
         }
@@ -545,7 +557,7 @@ impl Host {
                 self.app.begin_owned_edge(Some(batch), origin.is_some())?;
             }
             Pointer::Cancel { reset_gui } => {
-                self.app.retire_owned_tablet();
+                self.app.retire_owned_presentation();
                 if reset_gui {
                     ctx.input_mut(|i| i.pointer = Default::default());
                 }
