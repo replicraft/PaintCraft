@@ -4,6 +4,9 @@
 //! moved aside (not deleted), defaults are used, and the reason is reported.
 
 mod colors;
+#[cfg(test)]
+#[path = "settings/pen_tests.rs"]
+mod pen_tests;
 mod studio;
 mod text;
 pub use paintcraft_classic::canvas_size::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
@@ -31,6 +34,7 @@ pub struct Settings {
     pub appearance: Appearance,
     pub language: Language,
     pub text: paintcraft_classic::TextOptions,
+    pub pen: paintcraft_core::types::pen::Settings,
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
     pub canvas: CanvasDefaults,
@@ -51,6 +55,7 @@ impl Default for Settings {
             appearance: Appearance::default(),
             language: Default::default(),
             text: Default::default(),
+            pen: Default::default(),
             classic_variant: None,
             canvas: Default::default(),
             custom_colors: Default::default(),
@@ -176,6 +181,12 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
             Some(_) => return Err("invalid Classic status bar preference".into()),
         },
         text: text::parse(v.get("text"))?,
+        pen: v
+            .get("pen")
+            .map(paintcraft_core::types::pen::Settings::from_value)
+            .transpose()
+            .map_err(|error| error.to_string())?
+            .unwrap_or_default(),
         custom_colors: colors::parse(v.get("custom_colors"))?,
         canvas,
         classic_variant,
@@ -240,6 +251,7 @@ impl Settings {
                 Value::Bool(self.classic_toolbar_auto_hide),
             ),
             ("text", text::value(&self.text)),
+            ("pen", self.pen.to_value()),
             (
                 "experience",
                 Value::str(match self.experience {

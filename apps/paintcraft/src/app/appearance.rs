@@ -36,6 +36,7 @@ impl App {
         .then_some(ClassicVariant::DEFAULT);
         settings.studio_layout.restore_visibility(&mut self.studio);
         self.settings = settings;
+        self.editor.options.pen = self.settings.pen;
         let opened = self.recent.entries.clone();
         self.recent = recent::History::load(dir.clone());
         for path in opened.iter().rev() {
@@ -126,6 +127,7 @@ impl App {
     /// Presentation presets. These are look-and-feel starting points, not captured
     /// reproductions of the original applications.
     pub(super) fn apply_style(&mut self, ctx: &egui::Context) {
+        self.editor.options.pen = self.settings.pen;
         let v = self.variant();
         let experience = self.experience();
         let appearance = self.settings.appearance;

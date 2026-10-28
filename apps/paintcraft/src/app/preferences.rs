@@ -3,6 +3,9 @@ use super::*;
 use paintcraft_classic::settings::{Page, Response, card};
 use paintcraft_ui::i18n::picker;
 use paintcraft_ui::t;
+#[cfg(test)]
+#[path = "preferences/pen_tests.rs"]
+mod pen_tests;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SettingsDraft {
@@ -50,6 +53,7 @@ impl App {
                 let experience = draft.values.experience;
                 draft.values.experience = self.experience();
                 self.settings = draft.values;
+                self.editor.options.pen = self.settings.pen;
                 self.confirm = None;
                 self.choose_experience(experience);
                 self.persist_settings();
@@ -88,6 +92,9 @@ fn content(
                         ui.label(t!(ui.ctx(), "Move small images halfway offscreen and large image edges to the viewport center."));
                     }),
                     Page::Canvas => canvas(ui, &mut draft.values.canvas, classic),
+                    Page::Pen => card(ui, "Pen and tablet", |ui| {
+                        paintcraft_ui::pen_settings::show(ui, &mut draft.values.pen);
+                    }),
                     Page::Text => card(ui, "Text editing", |ui| {
                         ui.label(t!(ui.ctx(), "Default font"));
                         paintcraft_classic::font_family(ui, &mut draft.values.text.family, fonts, &mut draft.font_search, false);
