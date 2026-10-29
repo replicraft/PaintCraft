@@ -1,10 +1,14 @@
 """Finite CI selection protects baseline coverage without implicit oracle prerequisites."""
 from pathlib import Path
+import contextlib
+import io
 import re
 import json
 import tempfile
 import sys
 import unittest
+from unittest.mock import patch
+import subprocess
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packaging"))
 import qualify_cli_helper as qualify
@@ -30,9 +34,17 @@ class SelectionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             qualify.selectors("private-v8")
 
+    def test_integer_profiles_keep_baselines_and_exact_writer_roles(self):
+        self.assertEqual(qualify.selectors("v9"), qualify.BASELINE + qualify.INTEGER_JXL)
+        self.assertEqual(qualify.selectors("v10"), qualify.BASELINE + qualify.JXR + qualify.INTEGER_JXL)
+        for profile in ("v9", "v10"):
+            with self.assertRaises(ValueError):
+                qualify.selectors(profile, True)
+
     def test_every_exact_selector_resolves_to_one_real_ignored_test(self):
         directory = release.ROOT / "apps/paintcraft-cli/tests/installed_codec_worker"
-        for name in qualify.selectors("v8", True):
+        names = set(qualify.selectors("v8", True) + qualify.selectors("v9") + qualify.selectors("v10"))
+        for name in names:
             *modules, function = name.split("::")
             source = directory.joinpath(*modules).with_suffix(".rs").read_text()
             matches = re.findall(r'#\[ignore[^\n]*\]\s*fn\s+' + re.escape(function) + r'\(', source)
@@ -40,7 +52,7 @@ class SelectionTests(unittest.TestCase):
 
     def test_inherited_fixture_bindings_cannot_override_selected_mode(self):
         inherited = {f"PAINTCRAFT_{family}_{kind}": "stale"
-                     for family in ("QUALIFIED", "JXR", "V4", "V5", "V6", "V7", "V8")
+                     for family in ("QUALIFIED", "JXR", "JXL_INTEGER", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
                      for kind in ("HELPER", "INSTALLATION", "REFERENCE")}
         inherited.update({"PATH": "/toolchain", "RUSTUP_TOOLCHAIN": "pinned"})
         clean = qualify.fixture_environment(inherited)
@@ -76,6 +88,35 @@ class SelectionTests(unittest.TestCase):
         command = qualify.build_command("aarch64-apple-darwin")
         self.assertIn("--no-run", command)
         self.assertIn("--release", command)
+
+    def test_missing_duplicate_or_zero_test_success_cannot_qualify(self):
+        for profile in ("v7", "v8", "v9", "v10"):
+            names = list(qualify.selectors(profile))
+            qualify.require_selected_tests(names, profile)
+            for bad in (names[:-1], names + [names[-1]]):
+                with self.assertRaises(ValueError):
+                    qualify.require_selected_tests(bad, profile)
+        command = ["test", "selected", "--exact", "--ignored", "--test-threads=1"]
+        for stdout in ("running 0 tests\ntest result: ok. 0 passed;", "no summary",
+                       "test result: ok. 2 passed;"):
+            result = subprocess.CompletedProcess(command, 0, stdout, "")
+            with patch.object(qualify.subprocess, "run", return_value=result), \
+                 contextlib.redirect_stdout(io.StringIO()), self.assertRaises(ValueError):
+                qualify.execute_tests(command, {})
+        for current, stdout in ((command, "test result: ok. 1 passed;"),
+                                (["test", "--test-threads=1"], "test result: ok. 8 passed;")):
+            result = subprocess.CompletedProcess(current, 0, stdout, "")
+            with patch.object(qualify.subprocess, "run", return_value=result), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                qualify.execute_tests(current, {"PATH": "pinned"})
+        output, errors = io.StringIO(), io.StringIO()
+        failed = subprocess.CompletedProcess(command, 1, "actual failed test\n", "failure detail\n")
+        with patch.object(qualify.subprocess, "run", return_value=failed), \
+             contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors), \
+             self.assertRaises(subprocess.CalledProcessError):
+            qualify.execute_tests(command, {})
+        self.assertIn("actual failed test", output.getvalue())
+        self.assertIn("failure detail", errors.getvalue())
 
     def test_release_uses_finite_selector_and_keeps_exact_v7_feature(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()

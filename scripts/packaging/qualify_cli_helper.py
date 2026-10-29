@@ -3,8 +3,10 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
+import sys
 
 import codec_worker
 import package_release as release
@@ -25,12 +27,18 @@ ORACLES = (
     "jxr_export::installed_cli_fresh_copies_source_guards_and_own_output_read_are_real",
     "jxr_export::installed_mcp_fresh_copy_preserves_dirty_native_binding_and_real_alias_guards",
 )
+INTEGER_JXL = (
+    "jxl_integer::actual_cli_and_mcp_integer_jxl_consent_pixels_receipts_and_guards",
+)
+PROFILES = {"v7": codec_worker.FLOAT_PROFILE, "v8": codec_worker.JXR_PROFILE,
+            "v9": codec_worker.JXL_INTEGER_PROFILE, "v10": codec_worker.JXL_INTEGER_JXR_PROFILE}
 
 
 def selectors(profile, oracle=False):
-    if profile not in ("v7", "v8") or (oracle and profile != "v8"):
+    if profile not in PROFILES or (oracle and profile != "v8"):
         raise ValueError("Oracle export qualification requires exact public V8")
-    return BASELINE + (JXR if profile == "v8" else ()) + (ORACLES if oracle else ())
+    return (BASELINE + (JXR if profile in ("v8", "v10") else ())
+            + (INTEGER_JXL if profile in ("v9", "v10") else ()) + (ORACLES if oracle else ()))
 
 
 def build_command(target):
@@ -70,17 +78,34 @@ def commands(test_binary, profile, oracle=False):
     ]
 
 
+def require_selected_tests(names, profile, oracle=False):
+    for name in selectors(profile, oracle):
+        if names.count(name) != 1:
+            raise ValueError(f"Missing or ambiguous required CLI test: {name}")
+
+
+def execute_tests(command, environment):
+    result = subprocess.run(command, cwd=release.ROOT, env=environment, check=False,
+                            capture_output=True, text=True)
+    print(result.stdout, end="")
+    print(result.stderr, end="", file=sys.stderr)
+    result.check_returncode()
+    counts = re.findall(r"test result: ok\. (\d+) passed;", result.stdout)
+    if not counts or int(counts[-1]) == 0 or ("--exact" in command and int(counts[-1]) != 1):
+        raise ValueError("Required executed CLI test count missing")
+
+
 def fixture_environment(inherited):
     # A selected helper must never be superseded by an ambient fixture override.
     owned = {f"PAINTCRAFT_{family}_{kind}"
-             for family in ("QUALIFIED", "JXR", "V4", "V5", "V6", "V7", "V8")
+             for family in ("QUALIFIED", "JXR", "JXL_INTEGER", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
              for kind in ("HELPER", "INSTALLATION", "REFERENCE")}
     return {key: value for key, value in inherited.items() if key not in owned}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", choices=("v7", "v8"), required=True)
+    parser.add_argument("--profile", choices=tuple(PROFILES), required=True)
     parser.add_argument("--target", choices=release.TARGETS, required=True)
     parser.add_argument("--helper", type=Path)
     parser.add_argument("--installation", type=Path)
@@ -88,23 +113,28 @@ def main():
     args = parser.parse_args()
     environment = fixture_environment(os.environ)
     version = release.workspace_version()
-    if args.profile == "v8":
+    if args.oracle and args.profile != "v8":
+        parser.error("The separate original-C fixture currently requires public V8")
+    if args.profile != "v7":
         if args.installation is None or args.helper is not None:
-            parser.error("V8 requires --installation, not a helper-only payload")
+            parser.error("This profile requires --installation, not a helper-only payload")
         directory = args.installation.resolve(strict=True)
         codec_worker.verify_installed_manifest(directory, version, args.target)
         metadata = codec_worker.read_manifest(directory)
-        if metadata["profile"] != codec_worker.JXR_PROFILE:
-            parser.error("V8 requires the exact nonprivate schema3 installation")
+        if metadata["profile"] != PROFILES[args.profile]:
+            parser.error("Installation differs from the exact selected public profile")
         helper = directory / codec_worker.filename(args.target)
         environment["PAINTCRAFT_QUALIFIED_INSTALLATION"] = str(directory)
-        environment["PAINTCRAFT_JXR_INSTALLATION"] = str(directory)
+        if args.profile in ("v8", "v10"):
+            environment["PAINTCRAFT_JXR_INSTALLATION"] = str(directory)
+        if args.profile in ("v9", "v10"):
+            environment["PAINTCRAFT_JXL_INTEGER_HELPER"] = str(helper)
     else:
         if args.helper is None or args.installation is not None or args.oracle is not None:
             parser.error("V7 requires --helper and does not run JXR export/oracle cases")
         helper = args.helper.resolve(strict=True)
     actual, _ = codec_worker.verify_build_record(helper, version)
-    expected = codec_worker.JXR_PROFILE if args.profile == "v8" else codec_worker.FLOAT_PROFILE
+    expected = PROFILES[args.profile]
     if actual != expected:
         parser.error("Helper record differs from selected exact qualification profile")
     environment["PAINTCRAFT_QUALIFIED_HELPER"] = str(helper)
@@ -118,12 +148,16 @@ def main():
     # Build exactly once. Every selection below uses the frozen executable.
     print(result.stderr, end="")
     test_binary, cli = built_artifacts(result.stdout)
-    if args.profile == "v8":
+    if args.profile != "v7":
         bind_cli(directory / ("paintcraft-cli.exe" if "windows" in args.target else "paintcraft-cli"), cli)
     print(f"qualification_cli_sha256={hashlib.sha256(cli.read_bytes()).hexdigest()}")
     print(f"qualification_test_sha256={hashlib.sha256(test_binary.read_bytes()).hexdigest()}")
+    listing = subprocess.run([test_binary, "--list"], cwd=release.ROOT, env=environment,
+                             check=True, capture_output=True, text=True)
+    names = [line.removesuffix(": test") for line in listing.stdout.splitlines() if line.endswith(": test")]
+    require_selected_tests(names, args.profile, bool(args.oracle))
     for command in commands(test_binary, args.profile, bool(args.oracle)):
-        subprocess.run(command, cwd=release.ROOT, env=environment, check=True)
+        execute_tests(command, environment)
 
 
 if __name__ == "__main__":
