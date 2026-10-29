@@ -73,3 +73,12 @@ pub fn msp_export_protocol_version() -> u16 {
 pub fn msp_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
     super::msp::execute(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
 }
+
+#[wasm_bindgen]
+pub fn tiff_page_protocol_version() -> u16 {
+    paintcraft_formats::tiff_pages::browser_wire::VERSION
+}
+#[wasm_bindgen]
+pub fn tiff_page_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::tiff::execute(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
+}

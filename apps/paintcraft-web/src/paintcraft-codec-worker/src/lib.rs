@@ -8,3 +8,6 @@ mod dds;
 
 #[cfg(any(test, target_arch = "wasm32"))]
 mod msp;
+
+#[cfg(any(test, target_arch = "wasm32"))]
+mod tiff;
