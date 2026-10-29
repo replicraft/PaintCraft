@@ -20,7 +20,7 @@ mod gif;
 #[cfg(test)]
 mod raster_tests;
 mod tga;
-mod tiff;
+pub(crate) mod tiff;
 mod webp;
 
 /// Untrusted-decode pixel budget (the pack's soft limit).
@@ -373,8 +373,18 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
 fn decode_pixels(
     decoder: impl ImageDecoder,
     format: ImageFormat,
+    losses: Vec<String>,
+    pixels: u64,
+) -> Result<Decoded> {
+    decode_pixels_metadata(decoder, format, losses, pixels, true)
+}
+
+fn decode_pixels_metadata(
+    decoder: impl ImageDecoder,
+    format: ImageFormat,
     mut losses: Vec<String>,
     pixels: u64,
+    read_metadata: bool,
 ) -> Result<Decoded> {
     let mut decoder = decoder;
     let (width, height) = decoder.dimensions();
@@ -403,10 +413,13 @@ fn decode_pixels(
     if depth16 {
         losses.insert(0, "depth-16-reduced-to-8".to_owned());
     }
-    if decoder.icc_profile().map_err(image_error)?.is_some() {
+    if read_metadata
+        && decoder.icc_profile().map_err(image_error)?.is_some()
+        && !losses.iter().any(|loss| loss == "icc-profile-ignored")
+    {
         losses.push("icc-profile-ignored".to_owned());
     }
-    if decoder.exif_metadata().map_err(image_error)?.is_some() {
+    if read_metadata && decoder.exif_metadata().map_err(image_error)?.is_some() {
         losses.push("exif-metadata-ignored".to_owned());
     }
     let image = DynamicImage::from_decoder(decoder).map_err(image_error)?;
@@ -429,6 +442,22 @@ fn decode_pixels(
         rgba,
         losses,
     })
+}
+
+/// The selected TIFF view retains original absolute file offsets. Its caller
+/// has already inventoried the complete source and admitted this exact IFD.
+pub(crate) fn decode_tiff_selected(
+    reader: impl std::io::BufRead + std::io::Seek,
+    pixels: u64,
+    losses: Vec<String>,
+) -> Result<Decoded> {
+    let mut decoder = ::image::codecs::tiff::TiffDecoder::new(reader).map_err(image_error)?;
+    decoder
+        .set_limits(decode_limits(pixels))
+        .map_err(image_error)?;
+    // Complete preflight owns bounded original ICC/metadata omissions; the
+    // optional facade metadata lookup is unnecessary for this selected view.
+    decode_pixels_metadata(decoder, ImageFormat::Tiff, losses, pixels, false)
 }
 
 fn external_format(format: ImageFormat) -> Result<::image::ImageFormat> {

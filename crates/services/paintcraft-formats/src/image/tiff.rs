@@ -42,11 +42,30 @@ impl Directory<'_> {
 }
 
 pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
+    admit_directory(bytes, pixels, None, &|| Ok(()))
+}
+
+pub(crate) fn admit_page(
+    bytes: &[u8],
+    offset: usize,
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<String>> {
+    admit_directory(bytes, pixels, Some(offset), check)
+}
+
+fn admit_directory(
+    bytes: &[u8],
+    pixels: u64,
+    selected: Option<usize>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<String>> {
+    check()?;
     let directory = Directory {
         bytes,
         little: bytes.starts_with(b"II"),
     };
-    let offset = directory.long(4)? as usize;
+    let offset = selected.unwrap_or(directory.long(4)? as usize);
     if offset < 8 {
         return Err(codec("TIFF directory overlaps header"));
     }
@@ -60,7 +79,7 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
     let end = offset
         .checked_add(2 + count * 12)
         .ok_or_else(|| codec("TIFF directory overflow"))?;
-    if directory.long(end)? != 0 {
+    if selected.is_none() && directory.long(end)? != 0 {
         return Err(unsupported(
             "multipage TIFF requires explicit page import; still-image decoding refuses additional pages",
         ));
@@ -68,9 +87,10 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
     let (mut width, mut height) = (None, None);
     let (mut photometric, mut channels, mut alpha) = (None, None, false);
     let mut metadata = 0usize;
-    let mut losses = Vec::new();
+    let mut losses: Vec<String> = Vec::new();
     let mut seen = [0u64; 1024];
     for index in 0..count {
+        check()?;
         let at = offset + 2 + index * 12;
         let (tag, kind, n) = (
             directory.word(at)?,
@@ -200,7 +220,14 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
                     "nested TIFF metadata/directories are not qualified",
                 ));
             }
-            34675 => {} // ImageDecoder reports the bounded ICC loss.
+            // Facade metadata lookup may swallow an error after reducing its
+            // value-buffer limit to image bytes. The original tag was already
+            // bounded here, so its omission always needs explicit consent.
+            34675 => {
+                if !losses.iter().any(|v| v == "icc-profile-ignored") {
+                    losses.push("icc-profile-ignored".into());
+                }
+            }
             259 | 266 | 273 | 278 | 279 | 317 | 322..=325 => {}
             _ => {
                 if !losses.iter().any(|v| v == "tiff-metadata-ignored") {
@@ -230,7 +257,11 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
             "TIFF exceeds the pixel budget",
         ));
     }
-    Ok(losses)
+    Ok(["tiff-metadata-ignored", "icc-profile-ignored"]
+        .into_iter()
+        .filter(|code| losses.iter().any(|loss| loss == code))
+        .map(str::to_owned)
+        .collect())
 }
 
 pub(super) fn encode(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
