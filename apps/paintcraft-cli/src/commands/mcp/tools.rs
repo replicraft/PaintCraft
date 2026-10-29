@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_captured, read_conversion_source, save,
+    image, new_document, read_captured, read_conversion_source, save,
 };
 use super::{
     PaintingServer,
@@ -376,7 +376,7 @@ impl PaintingServer {
             .await
     }
     #[tool(
-        description = "Export a flattened image selected by filename extension. Requires explicit allow_losses acknowledgements when information would be lost. Does not clear project dirty state."
+        description = "Export a flattened image selected by filename extension. Retained source metadata requires source_metadata=omit; allow_losses acknowledges other losses. Does not clear project dirty state."
     )]
     async fn export_image(
         &self,
@@ -391,6 +391,8 @@ impl PaintingServer {
             s.protect_copy_sources(&path)?;
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
+            let metadata_intent: export::metadata_policy::Intent =
+                p.source_metadata.unwrap_or_default().into();
             let jpeg_matte = p
                 .jpeg_matte
                 .as_deref()
@@ -418,7 +420,19 @@ impl PaintingServer {
                     }
                     Ok(())
                 };
-                return super::msp::export(s, &path, p.overwrite, version, &p.allow_losses, &check);
+                return if metadata_intent == export::metadata_policy::Intent::Refuse {
+                    super::msp::export(s, &path, p.overwrite, version, &p.allow_losses, &check)
+                } else {
+                    super::msp::export_with_metadata_policy(
+                        s,
+                        &path,
+                        p.overwrite,
+                        version,
+                        &p.allow_losses,
+                        &check,
+                        metadata_intent,
+                    )
+                };
             }
             if let Some(options) = p.dds {
                 options.require_format(format)?;
@@ -433,7 +447,19 @@ impl PaintingServer {
                     }
                     Ok(())
                 };
-                return super::dds::export(s, &path, p.overwrite, options, &p.allow_losses, &check);
+                return if metadata_intent == export::metadata_policy::Intent::Refuse {
+                    super::dds::export(s, &path, p.overwrite, options, &p.allow_losses, &check)
+                } else {
+                    super::dds::export_with_metadata_policy(
+                        s,
+                        &path,
+                        p.overwrite,
+                        options,
+                        &p.allow_losses,
+                        &check,
+                        metadata_intent,
+                    )
+                };
             }
             let family = Family::from_id(format.name())
                 .ok_or_else(|| invalid("unregistered image format"))?;
@@ -442,6 +468,14 @@ impl PaintingServer {
             let doc = s.session()?.document();
             let mut options = export::FlatOptions::new(format, 90);
             options.jpeg_matte = jpeg_matte;
+            options.source_metadata = export::metadata_policy::Policy::capture(
+                doc,
+                export::metadata_policy::Target::new(
+                    family,
+                    paintcraft_formats::registry::Operation::ExportFlat,
+                ),
+                metadata_intent,
+            )?;
             options.pcx_mode = p.pcx_encoding.unwrap_or_default().into();
             let check = || {
                 if cancellation.is_cancelled() || dropped.load(std::sync::atomic::Ordering::Acquire)
@@ -464,7 +498,7 @@ impl PaintingServer {
                 operation: "export",
                 source_state: doc.state_id,
                 source_sha256: None,
-                losses_acknowledged: p.allow_losses,
+                losses_acknowledged: flat.losses,
                 destination: &path,
             };
             check()?;

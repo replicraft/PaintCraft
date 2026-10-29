@@ -14,6 +14,9 @@ pub struct Options {
     /// JPEG only: RGB hexadecimal alpha backdrop (RRGGBB); default is white.
     #[arg(long)]
     jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
+    /// Explicitly omit retained source metadata from this foreign copy.
+    #[arg(long, default_value = "refuse")]
+    source_metadata: export::metadata_policy::Intent,
     /// PCX only: exact indexed colors or explicitly quantize to 256 colors.
     #[arg(long, value_enum)]
     pcx_encoding: Option<super::pcx_options::Encoding>,
@@ -125,6 +128,14 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ));
             }
             let doc = super::source_metadata::read(&bytes)?;
+            options.source_metadata = export::metadata_policy::Policy::capture(
+                &doc,
+                export::metadata_policy::Target::new(
+                    family,
+                    paintcraft_formats::registry::Operation::ExportFlat,
+                ),
+                a.source_metadata,
+            )?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = if a.render_workers == 1 {
                 export::export_flat_options(&doc, options, &allowed)?
@@ -199,17 +210,42 @@ fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
         }
         Ok(())
     };
-    let (receipt, ok, summary, details) = dds_export::write_copy(
+    let policy = export::metadata_policy::Policy::capture(
         &doc,
-        a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
-        dest,
-        a.output.overwrite,
-        &allowed,
-        Some(sha),
-        paintcraft_runtime::SharedBudget::new(512 << 20),
-        &protect,
-        &|| Ok(()),
+        export::metadata_policy::Target::new(
+            paintcraft_formats::registry::Family::Dds,
+            paintcraft_formats::registry::Operation::ExportFlat,
+        ),
+        a.source_metadata,
     )?;
+    let (receipt, ok, summary, details) =
+        if a.source_metadata == export::metadata_policy::Intent::Refuse {
+            dds_export::write_copy(
+                &doc,
+                a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+                dest,
+                a.output.overwrite,
+                &allowed,
+                Some(sha),
+                paintcraft_runtime::SharedBudget::new(512 << 20),
+                &protect,
+                &|| Ok(()),
+            )?
+        } else {
+            dds_export::write_copy_with_metadata_policy(
+                &doc,
+                a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+                dest,
+                a.output.overwrite,
+                &allowed,
+                Some(sha),
+                paintcraft_runtime::SharedBudget::new(512 << 20),
+                &protect,
+                &|| Ok(()),
+                policy,
+            )?
+        };
+
     Ok(Written {
         engine: Some(details),
         receipt,
@@ -247,17 +283,42 @@ fn explicit_msp(a: &Options, version: msp_options::Version) -> Result<Written> {
         }
         Ok(())
     };
-    let (receipt, ok, summary, details) = msp_export::write_copy(
+    let policy = export::metadata_policy::Policy::capture(
         &doc,
-        version,
-        dest,
-        a.output.overwrite,
-        &allowed,
-        Some(sha),
-        paintcraft_runtime::SharedBudget::new(512 << 20),
-        &protect,
-        &|| Ok(()),
+        export::metadata_policy::Target::new(
+            paintcraft_formats::registry::Family::Msp,
+            paintcraft_formats::registry::Operation::ExportFlat,
+        ),
+        a.source_metadata,
     )?;
+    let (receipt, ok, summary, details) =
+        if a.source_metadata == export::metadata_policy::Intent::Refuse {
+            msp_export::write_copy(
+                &doc,
+                version,
+                dest,
+                a.output.overwrite,
+                &allowed,
+                Some(sha),
+                paintcraft_runtime::SharedBudget::new(512 << 20),
+                &protect,
+                &|| Ok(()),
+            )?
+        } else {
+            msp_export::write_copy_with_metadata_policy(
+                &doc,
+                version,
+                dest,
+                a.output.overwrite,
+                &allowed,
+                Some(sha),
+                paintcraft_runtime::SharedBudget::new(512 << 20),
+                &protect,
+                &|| Ok(()),
+                policy,
+            )?
+        };
+
     Ok(Written {
         engine: Some(details),
         receipt,

@@ -41,9 +41,26 @@ pub struct Save {
     #[serde(default)]
     pub overwrite: bool,
 }
+#[derive(Clone, Copy, Debug, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum SourceMetadata {
+    #[default]
+    Refuse,
+    Omit,
+}
+impl From<SourceMetadata> for paintcraft_formats::export::metadata_policy::Intent {
+    fn from(value: SourceMetadata) -> Self {
+        match value {
+            SourceMetadata::Refuse => Self::Refuse,
+            SourceMetadata::Omit => Self::Omit,
+        }
+    }
+}
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Export {
+    /// Explicitly "omit" retained source metadata from this copy, or "refuse" (default).
+    pub source_metadata: Option<SourceMetadata>,
     /// JPEG only: six RGB hexadecimal digits for the alpha backdrop; default white.
     pub jpeg_matte: Option<String>,
     /// Extension selects the image codec, for example .png or .jpg.

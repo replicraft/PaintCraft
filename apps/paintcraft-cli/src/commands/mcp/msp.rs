@@ -15,6 +15,25 @@ pub(super) fn export(
     allowed: &[String],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<CallToolResult> {
+    export_with_metadata_policy(
+        state,
+        path,
+        overwrite,
+        version,
+        allowed,
+        check,
+        paintcraft_formats::export::metadata_policy::Intent::Refuse,
+    )
+}
+pub(super) fn export_with_metadata_policy(
+    state: &State,
+    path: &Path,
+    overwrite: bool,
+    version: msp_options::Version,
+    allowed: &[String],
+    check: &dyn Fn() -> Result<()>,
+    intent: paintcraft_formats::export::metadata_policy::Intent,
+) -> Result<CallToolResult> {
     check()?;
     msp_export::admit(Frontend::Studio, path, version)?;
     let doc = state
@@ -23,7 +42,15 @@ pub(super) fn export(
         .ok_or_else(|| invalid("create or open a document first"))?
         .document();
     let protect = |destination: &Path| state.protect_copy_sources(destination);
-    let (receipt, ok, _, details) = msp_export::write_copy(
+    let policy = paintcraft_formats::export::metadata_policy::Policy::capture(
+        doc,
+        paintcraft_formats::export::metadata_policy::Target::new(
+            paintcraft_formats::registry::Family::Msp,
+            paintcraft_formats::registry::Operation::ExportFlat,
+        ),
+        intent,
+    )?;
+    let (receipt, ok, _, details) = msp_export::write_copy_with_metadata_policy(
         doc,
         version,
         path,
@@ -33,6 +60,7 @@ pub(super) fn export(
         super::native_codec::preparation_budget(),
         &protect,
         check,
+        policy,
     )?;
     let value =
         paintcraft_core::types::json::Value::object([("export", details), ("save", receipt)]);
