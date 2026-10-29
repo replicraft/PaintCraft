@@ -4,6 +4,10 @@ import hashlib
 import json
 import re
 import unittest
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packaging"))
 
 import codec_worker as codec
 import package_release as release

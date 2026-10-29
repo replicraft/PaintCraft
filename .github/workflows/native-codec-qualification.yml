@@ -16,6 +16,7 @@ on:
       - 'scripts/tests/test_qualify_cli_helper.py'
       - 'scripts/tests/test_package_jxl_integer_contract.py'
       - 'scripts/tests/test_integer_qualification_flow.py'
+      - 'scripts/tests/test_native_candidate_contracts.py'
       - 'apps/paintcraft-codec-worker/**'
       - 'apps/paintcraft-cli/**'
       - 'apps/paintcraft/**'
@@ -100,11 +101,7 @@ jobs:
         shell: pwsh
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
       - name: Check candidate orchestration contracts
-        run: |
-          python -m unittest discover -s scripts/tests -p 'test_package_native_qualification.py'
-          python -m unittest discover -s scripts/tests -p 'test_qualify_cli_helper.py'
-          python -m unittest discover -s scripts/tests -p 'test_package_jxl_integer_contract.py'
-          python -m unittest discover -s scripts/tests -p 'test_integer_qualification_flow.py'
+        run: python -m unittest discover -s scripts/tests -p 'test_native_candidate_contracts.py'
       - name: Build and execute the selected native public candidate
         run: python scripts/packaging/qualify_native_codecs.py --target ${{ matrix.target }} --candidate ${{ matrix.candidate }} --output "${{ runner.temp }}/paintcraft-native-qualification-${{ matrix.target }}-${{ matrix.candidate }}-${{ github.run_id }}-${{ github.run_attempt }}"
       - name: Retain success and failure evidence
