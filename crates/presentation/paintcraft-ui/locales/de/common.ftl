@@ -524,7 +524,6 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = Die native Stifteingabe wurde beendet. Sie können die Maus weiterverwenden und Ihre Arbeit speichern.
 
 only-the-selected-tiff-page-will-be-imported = Nur die ausgewählte TIFF-Seite wird importiert.
-png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG-Farbangaben werden weder beibehalten noch für das Farbmanagement verwendet.
 bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP-Farbangaben werden weder beibehalten noch für das Farbmanagement verwendet.
 bmp-metadata-will-not-be-retained = BMP-Metadaten werden nicht beibehalten.
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = Die Auflösungsmetadaten des Bildes werden nicht beibehalten; die Pixelabmessungen bleiben unverändert.
@@ -537,3 +536,4 @@ exact-original-icc-profile-bytes-will-be-kept-as-source-information-keeping-the-
 original-image-resolution-will-be-kept-as-source-information-not-used-as-active-print-settings = Die ursprüngliche Bildauflösung bleibt als Quellinformation erhalten und wird nicht als aktive Druckeinstellung verwendet.
 original-source-metadata-is-omitted-from-this-exported-copy = In dieser exportierten Kopie werden die ursprünglichen Quelldaten weggelassen.
 some-png-metadata-will-not-be-retained = Einige PNG-Metadaten bleiben nicht erhalten.
+other-png-color-declarations-will-not-be-retained-or-used-for-color-management = Andere PNG-Farbangaben bleiben nicht erhalten und werden nicht für das Farbmanagement verwendet.

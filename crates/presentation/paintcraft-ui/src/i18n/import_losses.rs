@@ -24,7 +24,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
             "This JPEG does not declare its CMYK convention. Conventional CMYK will be assumed."
         }
         "png-color-metadata-ignored" => {
-            "PNG color declarations will not be retained or used for color management."
+            "Other PNG color declarations will not be retained or used for color management."
         }
         "bmp-color-metadata-ignored" => {
             "BMP color declarations will not be retained or used for color management."

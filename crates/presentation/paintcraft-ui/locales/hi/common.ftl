@@ -524,7 +524,6 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = नेटिव पेन इनपुट बंद हो गया है। आप माउस का उपयोग जारी रख सकते हैं और अपना काम सहेज सकते हैं।
 
 only-the-selected-tiff-page-will-be-imported = केवल चुना गया TIFF पृष्ठ आयात किया जाएगा।
-png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG के रंग संबंधी विवरण सुरक्षित नहीं रखे जाएँगे और रंग प्रबंधन के लिए इस्तेमाल नहीं किए जाएँगे।
 bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP के रंग संबंधी विवरण सुरक्षित नहीं रखे जाएँगे और रंग प्रबंधन के लिए इस्तेमाल नहीं किए जाएँगे।
 bmp-metadata-will-not-be-retained = BMP का मेटाडेटा सुरक्षित नहीं रखा जाएगा।
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = चित्र की रेज़ॉल्यूशन संबंधी जानकारी सुरक्षित नहीं रखी जाएगी; पिक्सेल में माप नहीं बदलेंगे।
@@ -537,3 +536,4 @@ exact-original-icc-profile-bytes-will-be-kept-as-source-information-keeping-the-
 original-image-resolution-will-be-kept-as-source-information-not-used-as-active-print-settings = मूल छवि रिज़ॉल्यूशन को स्रोत जानकारी के रूप में रखा जाएगा, सक्रिय प्रिंट सेटिंग के रूप में उपयोग नहीं किया जाएगा।
 original-source-metadata-is-omitted-from-this-exported-copy = इस निर्यात की गई प्रति में मूल स्रोत मेटाडेटा शामिल नहीं है।
 some-png-metadata-will-not-be-retained = कुछ PNG मेटाडेटा नहीं रखा जाएगा।
+other-png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG की अन्य रंग घोषणाएँ नहीं रखी जाएँगी और रंग प्रबंधन के लिए उपयोग नहीं होंगी।
