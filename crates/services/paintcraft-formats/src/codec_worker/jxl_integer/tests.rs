@@ -50,6 +50,20 @@ fn response(request: &Request, value: Report, rgba: &[u8]) -> Vec<u8> {
     out
 }
 #[test]
+fn integer_requests_remain_captured_and_bound_on_native_and_wasm() {
+    let captured = request(Codec::JxlIntegerRgba8);
+    let header = Header::decode(&captured.header.encode()).unwrap();
+    assert_eq!(header, captured.header);
+    header.verify_source(captured.source.as_slice()).unwrap();
+    let mut changed = captured.source.as_ref().clone();
+    changed[0] ^= 1;
+    assert!(header.verify_source(&changed).is_err());
+    let mut owner = captured.header.owner;
+    owner.frontend = 0;
+    assert!(Request::capture_for(Codec::JxlIntegerRgba8, captured.source, owner, 4).is_err());
+}
+
+#[test]
 fn typed_reports_bind_both_depths_all_fields_and_actual_output() {
     let request = request(Codec::JxlIntegerRgba8);
     let rgba = [7, 8, 9, 0, 10, 11, 12, 128];

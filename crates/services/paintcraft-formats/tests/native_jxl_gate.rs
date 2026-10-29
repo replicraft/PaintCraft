@@ -95,6 +95,15 @@ fn browser_jxl_requires_its_own_exact_studio_import_variant() {
 #[test]
 fn integer_jxl_requires_explicit_native_studio_conversion_and_preflight() {
     use paintcraft_formats::codec_worker::jxl_integer::contracts::IMPORT_VARIANT;
+    assert_integer_conversion_gate(IMPORT_VARIANT, Platform::Native);
+}
+
+#[test]
+fn integer_jxl_browser_variant_requires_web_studio_conversion_and_preflight() {
+    assert_integer_conversion_gate(registry::WEB_JXL_INTEGER_IMPORT_VARIANT, Platform::Web);
+}
+
+fn assert_integer_conversion_gate(variant: &str, admitted_platform: Platform) {
     for frontend in [
         Frontend::Studio,
         Frontend::ClassicV7,
@@ -112,10 +121,10 @@ fn integer_jxl_requires_explicit_native_studio_conversion_and_preflight() {
             ] {
                 let mut request = Request::new(frontend, operation, Family::Jxl, platform);
                 request.extension = Some("jxl");
-                request.variant = Some(IMPORT_VARIANT);
+                request.variant = Some(variant);
                 let actual = registry::admission(request);
                 let expected = frontend == Frontend::Studio
-                    && platform == Platform::Native
+                    && platform == admitted_platform
                     && operation == Operation::ImportConvert;
                 assert_eq!(actual.available(), expected, "{request:?}");
                 if expected {

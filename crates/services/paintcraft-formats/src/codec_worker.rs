@@ -191,7 +191,7 @@ impl Codec {
             6 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSdr8),
             7 if !cfg!(target_arch = "wasm32") => Ok(Self::HdrSdr8),
             8 if !cfg!(target_arch = "wasm32") => Ok(Self::ExrSdr8),
-            9 if !cfg!(target_arch = "wasm32") => Ok(Self::JxlIntegerRgba8),
+            9 => Ok(Self::JxlIntegerRgba8),
             _ => Err(unsupported("worker codec request is not supported")),
         }
     }
@@ -236,7 +236,6 @@ impl Request {
                     | Codec::AvifSdr8
                     | Codec::HdrSdr8
                     | Codec::ExrSdr8
-                    | Codec::JxlIntegerRgba8
             )
         {
             return Err(unsupported("Requested codec worker is native-only"));
@@ -356,7 +355,6 @@ impl Header {
                     | Codec::AvifSdr8
                     | Codec::HdrSdr8
                     | Codec::ExrSdr8
-                    | Codec::JxlIntegerRgba8
             )
         {
             return Err(unsupported("Requested codec worker is native-only"));

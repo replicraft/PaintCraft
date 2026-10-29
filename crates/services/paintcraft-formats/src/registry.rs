@@ -9,6 +9,7 @@ mod svg;
 pub use policy::STUDIO_STOCK;
 pub use svg::admit_import_svg;
 pub const WEB_JXL_IMPORT_VARIANT: &str = "web-jxl-srgb8-worker-quarantine-v1";
+pub const WEB_JXL_INTEGER_IMPORT_VARIANT: &str = "web-jxl-integer-srgb8-worker-quarantine-v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Frontend {
@@ -415,6 +416,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
         && request.variant == Some(WEB_JXL_IMPORT_VARIANT);
+    let web_jxl_integer_import = request.family == Family::Jxl
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Web
+        && request.variant == Some(WEB_JXL_INTEGER_IMPORT_VARIANT);
     let neutral_ora_copy = request.family == Family::Ora
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -470,6 +476,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxl_import
         && !native_jxl_integer_import
         && !web_jxl_import
+        && !web_jxl_integer_import
         && !native_jxr_import
         && !native_jxr_export
         && !web_msp2_export
@@ -499,6 +506,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxl_import
         && !native_jxl_integer_import
         && !web_jxl_import
+        && !web_jxl_integer_import
         && !native_jxr_import
         && !native_jxr_export
         && !native_heif_import
@@ -514,6 +522,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         || web_dds_texture_export
         || native_jxr_import
         || native_jxl_integer_import
+        || web_jxl_integer_import
         || native_heif_import
         || native_avif_import
         || native_float_import
