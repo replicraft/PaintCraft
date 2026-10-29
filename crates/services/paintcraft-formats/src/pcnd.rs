@@ -1,5 +1,6 @@
 //! PCND's initial binary format: bounded flat raster documents and inline tiles.
 use paintcraft_core::types::policy::STAGED_PIXELS_MAX;
+use paintcraft_core::types::resources::SharedBudget;
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba};
 use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
 use paintcraft_raster::{Admission, RasterLayer, TILE_EDGE};
@@ -9,6 +10,7 @@ use uuid::Uuid;
 
 pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
+pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
 const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
 mod binary;
@@ -58,11 +60,51 @@ pub struct Header {
 }
 impl Header {
     pub fn require_supported(&self) -> Result<()> {
-        if self.container_version != 1 || self.document_schema != "paintcraft.document/v1" {
+        if !matches!(
+            (self.container_version, self.document_schema.as_str()),
+            (1, "paintcraft.document/v1") | (2, "paintcraft.document/v2")
+        ) {
             return Err(unsupported("unknown native document version"));
+        }
+        if self.required_features.iter().any(|feature| {
+            !SUPPORTED_FEATURES.contains(&feature.as_str())
+                && !(self.container_version == 2 && feature == SOURCE_METADATA_FEATURE)
+        }) {
+            return Err(unsupported("unknown native document required feature"));
         }
         Ok(())
     }
+}
+/// The attachment byte limit is additional to the existing aggregate PCND
+/// metadata ceiling. The caller retains ownership of this budget realm.
+#[derive(Clone, Copy, Debug)]
+pub struct MetadataAdmission<'a> {
+    pub bytes: u64,
+    pub budget: &'a SharedBudget,
+}
+pub fn read_with_metadata_admission_checked(
+    bytes: &[u8],
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    layer_limit: usize,
+    metadata: MetadataAdmission<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
+    check()?;
+    if layer_limit > LAYER_COUNT_MAX {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid host PCND layer limit",
+        ));
+    }
+    binary::read_with_metadata(
+        bytes,
+        canvas_pixels,
+        staged_pixels,
+        layer_limit,
+        metadata,
+        check,
+    )
 }
 /// Validate framing and integrity before assessing a version. Unknown versions
 /// remain explicitly unsupported; they are never opened with current semantics.
@@ -105,5 +147,10 @@ pub fn read_with_layer_limit_checked(
 }
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod compact_tests;
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod source_metadata_history_tests;
+#[cfg(test)]
+mod source_metadata_tests;
 #[cfg(test)]
 mod tests;

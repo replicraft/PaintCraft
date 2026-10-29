@@ -32,7 +32,8 @@ def string(value):
 
 
 def canonical(document):
-    result = bytearray(MAGIC)
+    attachment = document.get('source_metadata')
+    result = bytearray(MAGIC if attachment is None else b'PCND\x02\r\n\x1a')
     result += uuid.UUID(document['document_id']).bytes
     result += uuid.UUID(document['state_id']).bytes
     for dimension in document['canvas']:
@@ -41,6 +42,8 @@ def canonical(document):
     result.append(int(title is not None))
     if title is not None:
         result += string(title)
+    if attachment is not None:
+        result += attachment
     result += integer(len(document['layers']))
     for layer in document['layers']:
         result += uuid.UUID(layer['id']).bytes + string(layer['name'])

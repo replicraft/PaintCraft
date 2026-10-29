@@ -2,6 +2,7 @@
 //! The whole stream is integrity checked by a trailing SHA-256 before tile inflation.
 use super::*;
 use std::io::Write;
+mod source_metadata;
 mod wire;
 use wire::{Input, Output};
 
@@ -37,7 +38,11 @@ fn write_encoded(
         return Err(codec("invalid canvas dimensions"));
     }
     let mut output = Output::new(sink);
-    output.bytes(MAGIC)?;
+    let mut magic = *MAGIC;
+    if doc.source_metadata.is_some() {
+        magic[4] = 2;
+    }
+    output.bytes(&magic)?;
     output.bytes(doc.document_id.as_bytes())?;
     output.bytes(doc.state_id.as_bytes())?;
     output.number(u64::from(doc.canvas.0))?;
@@ -51,6 +56,9 @@ fn write_encoded(
             output.bytes(&[1])?;
             output.string(title)?;
         }
+    }
+    if let Some(source) = &doc.source_metadata {
+        source_metadata::write(source, &mut output, check)?;
     }
     if doc.roots.len() > LAYER_COUNT_MAX || doc.roots.len() != doc.layers.len() {
         return Err(codec("invalid flat document roots"));
@@ -138,11 +146,15 @@ pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
     Ok(header(bytes[4]))
 }
 fn header(version: u8) -> Header {
-    let known = version == 1;
+    let known = matches!(version, 1 | 2);
     Header {
         container_version: i64::from(version),
         document_schema: if known {
-            "paintcraft.document/v1"
+            if version == 1 {
+                "paintcraft.document/v1"
+            } else {
+                "paintcraft.document/v2"
+            }
         } else {
             "unknown"
         }
@@ -151,6 +163,7 @@ fn header(version: u8) -> Header {
             SUPPORTED_FEATURES
                 .iter()
                 .map(|feature| (*feature).into())
+                .chain((version == 2).then_some(SOURCE_METADATA_FEATURE.to_owned()))
                 .collect()
         } else {
             Vec::new()
@@ -173,6 +186,27 @@ pub(super) fn read_with_layer_limit(
     layer_limit: usize,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Document> {
+    let budget = SharedBudget::new(paintcraft_document::source_metadata::BYTES_MAX + 4096);
+    read_with_metadata(
+        bytes,
+        canvas_pixels,
+        staged_pixels,
+        layer_limit,
+        MetadataAdmission {
+            bytes: paintcraft_document::source_metadata::BYTES_MAX,
+            budget: &budget,
+        },
+        check,
+    )
+}
+pub(super) fn read_with_metadata(
+    bytes: &[u8],
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    layer_limit: usize,
+    metadata_admission: MetadataAdmission<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
     let body = payload(bytes, check)?;
     header(bytes[4]).require_supported()?;
     let mut input = Input::new(body);
@@ -189,6 +223,25 @@ pub(super) fn read_with_layer_limit(
         0 => None,
         1 => Some(input.string(4096)?),
         _ => return Err(codec("invalid title flag")),
+    };
+    let source_metadata = if bytes[4] == 2 {
+        let consumed = bytes.len() - 32 - input.remaining();
+        let remaining = (DOCUMENT_MAX as usize)
+            .checked_sub(consumed)
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorCode::ResourceLimit,
+                    "PCND aggregate metadata allowance",
+                )
+            })?;
+        Some(source_metadata::read(
+            &mut input,
+            metadata_admission.bytes.min(remaining as u64),
+            metadata_admission.budget,
+            check,
+        )?)
+    } else {
+        None
     };
     let count = input.number(LAYER_COUNT_MAX as u64)? as usize;
     if count > layer_limit {
@@ -333,11 +386,11 @@ pub(super) fn read_with_layer_limit(
     }
     check()?;
     Ok(Document {
+        source_metadata,
         document_id,
         state_id,
         canvas,
         title,
-        source_metadata: None,
         roots,
         layers,
     })

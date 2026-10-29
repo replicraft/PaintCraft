@@ -1,0 +1,27 @@
+{
+  "schema": "paintcraft.pcnd2-reference/v1",
+  "author": "Independent Python serialization, not Rust codec output",
+  "profile_sha256": "384b832de3412066743b52a75ee906b6fb9fb8d9e09e936fc2c43223815c6e0a",
+  "fixtures": [
+    {
+      "file": "rgb-profile.pcnd",
+      "bytes": 3322,
+      "sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1"
+    },
+    {
+      "file": "resolution-only.pcnd",
+      "bytes": 298,
+      "sha256": "e3569169a04c958dbb2c4e45e3a804eeff4fadb9eeecca0d27cc2cd5bbe466d9"
+    },
+    {
+      "file": "orientation-only.pcnd",
+      "bytes": 298,
+      "sha256": "9d47ad14c26112b4d197567da5ee6b575b953b9ffadedc2e72e047abd60d68fd"
+    },
+    {
+      "file": "legacy-v1.pcnd",
+      "bytes": 165,
+      "sha256": "35114ca131f0c2d7939fd4c35c4e7c0f05a41b4472db78d8affb603a22c13673"
+    }
+  ]
+}
