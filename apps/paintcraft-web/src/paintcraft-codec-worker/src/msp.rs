@@ -41,7 +41,7 @@ mod tests {
             }
             web_export::Frame::Refused(error) => panic!("{error:?}"),
         }
-        for magic in [b"PCDDSQ01", b"PCDEC002"] {
+        for magic in [b"PCDDSQ02", b"PCDDSQ01", b"PCDEC002"] {
             request[..8].copy_from_slice(magic);
             assert!(execute(&request).is_err());
         }

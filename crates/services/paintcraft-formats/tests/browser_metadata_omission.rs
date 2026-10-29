@@ -78,7 +78,7 @@ macro_rules! qualify {
                 };
                 let header =
                     service::Header::capture(&plan, &source, owner, uuid::Uuid::new_v4()).unwrap();
-                assert_eq!(header.metadata.omit_intent(), true);
+                assert!(header.metadata.omit_intent());
                 assert_eq!(header.metadata.omitted(), attached);
                 let request = |h: &service::Header| {
                     let mut bytes = h.encode().to_vec();

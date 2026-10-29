@@ -188,7 +188,13 @@ fn full_source_hash_and_distinct_operation_prevent_payload_slice_or_decoder_fall
     request.extend_from_slice(SOURCE);
     request[wire::REQUEST_HEADER] ^= 1;
     assert!(execute(&request).is_err());
-    for magic in [b"PCDEC002", b"PCDDSQ01", b"PCMSPQ01"] {
+    for magic in [
+        b"PCDEC002",
+        b"PCDDSQ02",
+        b"PCDDSQ01",
+        b"PCMSPQ02",
+        b"PCMSPQ01",
+    ] {
         request[..8].copy_from_slice(magic);
         assert!(execute(&request).is_err());
     }

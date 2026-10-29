@@ -39,7 +39,13 @@ fn typed_whole_source_request_never_reuses_decoder_or_owner_page_fields() {
         value.verify_source(&[31; 128]).unwrap();
         assert!(value.verify_source(&[32; 128]).is_err());
         assert!(value.verify_source(&[31; 127]).is_err());
-        for magic in [b"PCDEC002", b"PCDDSQ01", b"PCMSPQ01"] {
+        for magic in [
+            b"PCDEC002",
+            b"PCDDSQ02",
+            b"PCDDSQ01",
+            b"PCMSPQ02",
+            b"PCMSPQ01",
+        ] {
             let mut bad = bytes;
             bad[..8].copy_from_slice(magic);
             assert!(Header::decode(&bad).is_err());
