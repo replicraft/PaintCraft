@@ -6,6 +6,7 @@ use paintcraft_formats::codec_worker::native::PreparedJxrEncode;
 pub(crate) struct PreparedJxrExport {
     pub(crate) encoded: PreparedJxrEncode,
     pub(crate) losses: Vec<String>,
+    pub(crate) preview: Option<egui::ColorImage>,
 }
 #[derive(Debug)]
 pub(crate) struct JxrExportPending(Pending);

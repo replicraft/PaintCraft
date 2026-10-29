@@ -164,3 +164,73 @@ fn late_canceled_picker_is_not_reinterpreted_as_generic_export_and_portable_inve
         }
     }
 }
+
+#[test]
+fn destination_callback_without_a_decoded_prior_frame_cannot_mint_publication_authority() {
+    let mut app = App::new(None);
+    app.settings.experience = Experience::Studio;
+    app.initialize_editing(app.context.clone());
+    let attachment = paintcraft_formats::pcnd::read(include_bytes!("../../../../../crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/rgb-profile.pcnd")).unwrap().source_metadata;
+    let document = paintcraft_document::new_document(
+        2,
+        2,
+        Some(Rgba([255; 4])),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap()
+    .with_source_metadata_checked(attachment, &|| Ok(()))
+    .unwrap();
+    app.editor = Editor::with_document(document, None);
+    let original = app.editor.document_snapshot();
+    let ticket = app.editor.history_view().ticket;
+    let frozen = export_options::Frozen::capture(&app).unwrap();
+    app.begin_jxr_export_frozen(frozen, Intent::Refuse);
+    assert!(app.jxr_export.is_some());
+    assert!(!app.jxr_export.as_ref().unwrap().reviewed);
+    assert!(app.jxr_export.as_ref().unwrap().texture.is_none());
+    let target = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../docs/validation/native-advanced-metadata")
+        .join(format!("unreviewed-{}.jxr", Uuid::new_v4()));
+    app.complete_jxr_picker(Some(target.clone()));
+    assert!(app.jxr_export.is_none());
+    assert!(!target.exists());
+    assert!(Arc::ptr_eq(&original, &app.editor.document_snapshot()));
+    assert_eq!(ticket, app.editor.history_view().ticket);
+    assert_eq!(app.worker_budget.usage().reserved, 0);
+}
+
+#[test]
+fn clipped_jxr_preview_needs_one_complete_visible_frame_before_destination_credit() {
+    let ctx = egui::Context::default();
+    let texture = ctx.load_texture(
+        "jxr-visible-frame-control",
+        egui::ColorImage::new([32, 32], vec![egui::Color32::WHITE; 32 * 32]),
+        egui::TextureOptions::NEAREST,
+    );
+    let mut shown = None;
+    for (clipped, expected) in [(true, false), (true, false), (false, false), (false, true)] {
+        let mut observed = Vec::new();
+        let mut output = ctx.run_ui(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(400., 300.),
+                )),
+                ..Default::default()
+            },
+            |ui| {
+                if clipped {
+                    ui.set_clip_rect(egui::Rect::from_min_size(
+                        ui.min_rect().min,
+                        egui::vec2(400., 40.),
+                    ));
+                }
+                observed.push(show_decoded_preview(ui, &texture, &mut shown));
+            },
+        );
+        output.textures_delta.clear();
+        assert!(!observed.is_empty());
+        assert!(observed.iter().all(|ready| *ready == expected));
+    }
+}

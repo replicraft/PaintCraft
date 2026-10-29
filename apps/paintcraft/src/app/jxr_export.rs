@@ -23,7 +23,6 @@ struct Capture {
     path_text: String,
     sources: Sources,
 }
-#[derive(Debug)]
 pub(super) struct State {
     tab: Uuid,
     frozen: Option<export_options::Frozen>,
@@ -32,7 +31,19 @@ pub(super) struct State {
     capture: Option<Capture>,
     pending: Option<controller::background::JxrExportPending>,
     prepared: Option<Prepared>,
+    texture: Option<egui::TextureHandle>,
+    shown: Option<u64>,
+    reviewed: bool,
     destination: Option<(PathBuf, Option<save::Expectation>)>,
+}
+impl std::fmt::Debug for State {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("JxrExportState")
+            .field("tab", &self.tab)
+            .field("capture", &self.capture)
+            .field("pending", &self.pending)
+            .finish_non_exhaustive()
+    }
 }
 impl State {
     fn current(&self, app: &App) -> bool {
@@ -71,6 +82,9 @@ impl State {
     fn retire_preparation(&mut self) {
         self.pending = None;
         self.prepared = None;
+        self.texture = None;
+        self.shown = None;
+        self.reviewed = false;
         self.destination = None;
         self.metadata_policy = Policy::Refuse;
     }
@@ -146,6 +160,9 @@ impl App {
                 capture: None,
                 pending: None,
                 prepared: None,
+                texture: None,
+                shown: None,
+                reviewed: false,
                 destination: None,
             });
             self.confirm = Some(Confirm::JxrExport);
@@ -265,19 +282,34 @@ impl App {
                 }
             }
         }
-        let choose =
-            state.prepared.is_some() && state.destination.is_none() && !self.jxr_export_picker;
+        if let Some(prepared) = &mut state.prepared
+            && let Some(image) = prepared.preview.take()
+        {
+            state.texture =
+                Some(ctx.load_texture("jxr-export-preview", image, egui::TextureOptions::NEAREST));
+            state.shown = None;
+        }
         let pending =
             state.pending.is_some() || (state.prepared.is_none() && state.metadata_ready());
         self.jxr_export = Some(state);
-        if choose {
-            self.choose_jxr_destination(ctx);
-        }
         if pending {
             ctx.request_repaint_after(Duration::from_millis(16));
         }
     }
     fn choose_jxr_destination(&mut self, ctx: &egui::Context) {
+        let ready = self.jxr_export.as_ref().is_some_and(|s| {
+            s.current(self)
+                && s.metadata_ready()
+                && s.prepared.is_some()
+                && s.texture.is_some()
+                && s.shown
+                    .is_some_and(|frame| frame < ctx.cumulative_frame_nr())
+        });
+        if !ready {
+            self.export_jxr_error(stale());
+            return;
+        }
+        self.jxr_export.as_mut().unwrap().reviewed = true;
         let suggested = Path::new(&self.path_text).with_extension("jxr");
         if let Some(dialogs) = &mut self.dialogs {
             if dialogs.pending() {
@@ -310,7 +342,11 @@ impl App {
             return;
         };
         let result = (|| {
-            if !state.current(self) {
+            if !state.current(self)
+                || !state.reviewed
+                || state.texture.is_none()
+                || state.shown.is_none()
+            {
                 return Err(stale());
             }
             admit(self.format_frontend(), &path)?;
@@ -374,13 +410,30 @@ impl App {
                             &mut state.omit_source_metadata,
                         );
                     }
-                    if state.metadata_ready() {
+                    if let Some(texture) = &state.texture {
+                        show_decoded_preview(ui, texture, &mut state.shown);
+                    } else if state.metadata_ready() {
                         ui.spinner();
                         ui.label(t!(ctx, "Preparing JPEG XR picture…"));
                     }
-                    ui.button(t!(ctx, "Cancel")).clicked()
+                    let ready = state.metadata_ready()
+                        && state.texture.is_some()
+                        && state
+                            .shown
+                            .is_some_and(|frame| frame < ctx.cumulative_frame_nr());
+                    ui.horizontal(|ui| {
+                        (
+                            ui.button(t!(ctx, "Cancel")).clicked(),
+                            ui.add_enabled(
+                                ready,
+                                egui::Button::new(t!(ctx, "Choose destination…")),
+                            )
+                            .clicked(),
+                        )
+                    })
+                    .inner
                 });
-            if ctx.current_pass_index() == 0 && (response.inner || response.should_close()) {
+            if ctx.current_pass_index() == 0 && (response.inner.0 || response.should_close()) {
                 self.confirm = None;
                 return;
             }
@@ -388,7 +441,11 @@ impl App {
                 state.retire_preparation();
                 ctx.request_repaint();
             }
+            let choose = response.inner.1 && ctx.current_pass_index() == 0;
             self.jxr_export = Some(state);
+            if choose {
+                self.choose_jxr_destination(ctx);
+            }
             return;
         };
         let Some(prepared) = &state.prepared else {
@@ -449,7 +506,11 @@ impl App {
         };
         self.confirm = None;
         let result = (|| {
-            if !state.current(self) {
+            if !state.current(self)
+                || !state.reviewed
+                || state.texture.is_none()
+                || state.shown.is_none()
+            {
                 return Err(stale());
             }
             let capture = state.capture.as_ref().ok_or_else(stale)?;
@@ -527,6 +588,20 @@ impl App {
         self.editor.set_status(format!("Cannot export: {detail}"));
     }
 }
+/// Credit only a fully clipped-in image, and only on a later rendered frame.
+fn show_decoded_preview(
+    ui: &mut egui::Ui,
+    texture: &egui::TextureHandle,
+    shown: &mut Option<u64>,
+) -> bool {
+    ui.label(t!(ui.ctx(), "Export preview"));
+    let rect = ui.image(texture).rect;
+    if ui.is_rect_visible(rect) && ui.clip_rect().contains_rect(rect) {
+        shown.get_or_insert(ui.ctx().cumulative_frame_nr());
+    }
+    shown.is_some_and(|frame| frame < ui.ctx().cumulative_frame_nr())
+}
+
 fn stale() -> Error {
     Error::new(
         ErrorCode::ConflictStaleBase,

@@ -254,8 +254,9 @@ impl App {
                         preview_ready,
                         egui::Button::new(t!(
                             ctx,
-                            if (draft.format == Choice::Flat(ImageExport::Msp)
-                                && self.experience() == Experience::Studio)
+                            if draft.format == Choice::Jxr
+                                || (draft.format == Choice::Flat(ImageExport::Msp)
+                                    && self.experience() == Experience::Studio)
                                 || draft.format == Choice::Flat(ImageExport::Dds)
                                     && crate::dds_export::advanced(
                                         draft.dds,
