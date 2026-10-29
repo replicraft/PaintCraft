@@ -3,6 +3,7 @@ use egui_kittest::{
     Harness,
     kittest::{NodeT, Queryable},
 };
+use std::sync::Arc;
 
 #[test]
 fn browser_icon_dialog_requires_consent_and_preserves_project_name_and_history() {

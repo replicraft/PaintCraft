@@ -4,6 +4,7 @@ use egui_kittest::{
     kittest::{NodeT, Queryable},
 };
 use paintcraft_ui::i18n::{Language, format_message, translate};
+use std::sync::Arc;
 fn label(lang: Language, kind: widget::Kind) -> String {
     format_message(
         lang,
