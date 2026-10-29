@@ -31,14 +31,14 @@ fn label(lang: Language, kind: widget::Kind) -> String {
 fn stage(app: &mut App, ctx: &egui::Context) {
     let mut state = app.icns_export.take().unwrap();
     state.draft.config.kinds = vec![widget::Kind::Retina16];
-    let config = state.draft.config.clone();
-    let doc = app.editor.export_snapshot().unwrap();
-    state.cache.update(ctx, config.clone(), || {
-        icns::prepare_document(&doc, &specs(&config), icons::Filter::Nearest, &|| Ok(()))
-            .map_err(|e| e.to_string())
-    });
+    state.draft.config.filter = preview::Filter::Nearest;
+    state.prepare(ctx);
     let prepared = state.cache.value().unwrap();
-    state.bytes = Some(prepared.encode(prepared.losses(), &|| Ok(())).unwrap());
+    state.bytes = Some(
+        prepared
+            .encode(&other_losses(prepared.losses()), &|| Ok(()))
+            .unwrap(),
+    );
     state.draft.accepted = true;
     app.icns_export = Some(state);
 }

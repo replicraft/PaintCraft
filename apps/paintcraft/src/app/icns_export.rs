@@ -1,5 +1,6 @@
 //! Studio asset export retains private previews through a parented native picker.
 use super::*;
+use export_options::{AssetCopy, other_losses};
 use paintcraft_core::types::{Error, ErrorCode};
 use paintcraft_formats::{
     icns, icons,
@@ -11,8 +12,9 @@ pub(super) struct State {
     owner: Uuid,
     source: Arc<paintcraft_document::Document>,
     stamp: controller::PreviewStamp,
+    copy: AssetCopy<widget::Config>,
     draft: widget::Draft,
-    cache: preview::Cache<widget::Config, icns::Prepared>,
+    cache: preview::Cache<(widget::Config, bool), icns::Prepared>,
     bytes: Option<Vec<u8>>,
     destination: Option<(PathBuf, Option<save::Expectation>)>,
 }
@@ -22,6 +24,45 @@ impl State {
             && app.active_tab_id() == self.owner
             && Arc::ptr_eq(&self.source, &app.editor.document_snapshot())
             && self.stamp == app.editor.preview_stamp()
+            && self.copy.current(app)
+    }
+    fn target(&self) -> export::metadata_policy::Target {
+        export::metadata_policy::Target::new(Family::Icns, Operation::ExportAsset)
+    }
+    fn prepare(&mut self, ctx: &egui::Context) {
+        if !self.copy.ready() {
+            self.copy.retire();
+            self.cache = Default::default();
+            self.bytes = None;
+            self.draft.accepted = false;
+            return;
+        }
+        let config = self.draft.config.clone();
+        let target = self.target();
+        if self
+            .cache
+            .update(ctx, (config.clone(), self.copy.omit), || {
+                let policy = self
+                    .copy
+                    .prepare(config.clone(), target)
+                    .map_err(|e| e.to_string())?;
+                icns::prepare_document_with_metadata_policy(
+                    &self.copy.frozen.document,
+                    &specs(&config),
+                    if config.filter == preview::Filter::Nearest {
+                        icons::Filter::Nearest
+                    } else {
+                        icons::Filter::Lanczos3
+                    },
+                    &|| Ok(()),
+                    policy,
+                )
+                .map_err(|e| e.to_string())
+            })
+        {
+            self.draft.accepted = false;
+            self.bytes = None;
+        }
     }
 }
 fn specs(config: &widget::Config) -> Vec<icns::IconType> {
@@ -74,10 +115,18 @@ impl App {
         self.capture_icns_export();
     }
     pub(super) fn capture_icns_export(&mut self) {
+        let copy = match AssetCopy::capture(self) {
+            Ok(copy) => copy,
+            Err(error) => {
+                self.editor.set_status(format!("Cannot export: {error}"));
+                return;
+            }
+        };
         self.icns_export = Some(State {
             owner: self.active_tab_id(),
             source: self.editor.document_snapshot(),
             stamp: self.editor.preview_stamp(),
+            copy,
             draft: Default::default(),
             cache: Default::default(),
             bytes: None,
@@ -129,26 +178,9 @@ impl App {
                 .max_height((ctx.content_rect().height() - 150.0).clamp(160.0, 620.0))
                 .show(ui, |ui| {
                     widget::controls(ui, &mut state.draft);
+                    state.copy.controls(ui);
                     let config = state.draft.config.clone();
-                    if state.cache.update(ctx, config.clone(), || {
-                        let doc = self
-                            .editor
-                            .export_snapshot()
-                            .map_err(|error| error.to_string())?;
-                        icns::prepare_document(
-                            &doc,
-                            &specs(&config),
-                            if config.filter == preview::Filter::Nearest {
-                                icons::Filter::Nearest
-                            } else {
-                                icons::Filter::Lanczos3
-                            },
-                            &|| Ok(()),
-                        )
-                        .map_err(|error| error.to_string())
-                    }) {
-                        state.draft.accepted = false;
-                    }
+                    state.prepare(ctx);
                     let ready = config.valid()
                         && state.cache.show_bounded(
                             ui,
@@ -158,7 +190,11 @@ impl App {
                             frame,
                         );
                     let consent = state.cache.value().is_some_and(|prepared| {
-                        preview::consent(ui, prepared.losses(), &mut state.draft.accepted)
+                        preview::consent(
+                            ui,
+                            &other_losses(prepared.losses()),
+                            &mut state.draft.accepted,
+                        )
                     });
                     ui.label(t!(
                         ctx,
@@ -199,15 +235,21 @@ impl App {
             self.confirm = None;
             return;
         }
+        if let Err(error) = state.copy.validate(&state.draft.config, state.target()) {
+            self.editor.set_status(format!("Cannot export: {error}"));
+            self.icns_export = Some(state);
+            return;
+        }
         let Some(prepared) = state.cache.value() else {
             self.icns_export = Some(state);
             return;
         };
-        if !prepared.losses().is_empty() && !state.draft.accepted {
+        let losses = other_losses(prepared.losses());
+        if !losses.is_empty() && !state.draft.accepted {
             self.icns_export = Some(state);
             return;
         }
-        match prepared.encode(prepared.losses(), &|| Ok(())) {
+        match prepared.encode(&losses, &|| Ok(())) {
             Ok(bytes) => state.bytes = Some(bytes),
             Err(error) => {
                 self.editor.set_status(format!("Cannot export: {error}"));
@@ -250,6 +292,7 @@ impl App {
                     "document changed during icon destination selection",
                 ));
             }
+            state.copy.validate(&state.draft.config, state.target())?;
             self.guard_export_destination(&path)?;
             let mut request = Request::new(
                 self.format_frontend(),
@@ -309,6 +352,11 @@ impl App {
                 .set_status(t!(ctx, "The document changed; choose the image again."));
             return;
         }
+        let target = state.target();
+        if let Err(error) = state.copy.validate(&state.draft.config, target) {
+            self.editor.set_status(format!("Cannot export: {error}"));
+            return;
+        }
         let Some((path, expected)) = state.destination else {
             return;
         };
@@ -328,7 +376,14 @@ impl App {
                 std::io::Write::write_all(sink, &bytes)
                     .map_err(|_| Error::new(ErrorCode::StorageFailed, "cannot stage icon output"))
             },
-            |_| self.guard_export_destination(&path),
+            |outcome| {
+                state.copy.validate(&state.draft.config, target)?;
+                self.guard_export_destination(&path)?;
+                if let Some(resolved) = outcome.resolved_destination() {
+                    self.guard_export_destination(resolved)?;
+                }
+                Ok(())
+            },
         );
         self.editor.set_status(if outcome.is_success() {
             format!("Exported {}", path.display())
@@ -340,3 +395,7 @@ impl App {
 #[cfg(test)]
 #[path = "icns_export/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "icns_export/metadata_tests.rs"]
+mod metadata_tests;

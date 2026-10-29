@@ -11,6 +11,9 @@ mod frozen;
 mod saving;
 use export::metadata_policy::{Intent, Policy, Target};
 pub(crate) use frozen::Frozen;
+#[path = "export_options/asset_copy.rs"]
+mod asset_copy;
+pub(crate) use asset_copy::{AssetCopy, other_losses};
 #[cfg(test)]
 #[path = "export_options/palette_tests.rs"]
 mod palette_tests;

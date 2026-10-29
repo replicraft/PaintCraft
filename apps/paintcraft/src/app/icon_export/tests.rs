@@ -31,21 +31,14 @@ fn app(path: &Path) -> App {
 }
 fn stage_bytes(app: &mut App, ctx: &egui::Context) {
     let mut state = app.icon_export.take().unwrap();
-    let config = state.draft.config.clone();
-    let doc = app.editor.export_snapshot().unwrap();
-    state.cache.update(ctx, config.clone(), || {
-        icons::prepare_document(
-            &doc,
-            kind(&config),
-            &specs(&config),
-            icons::Filter::Nearest,
-            icons::WriteLimits::default(),
-            &|| Ok(()),
-        )
-        .map_err(|error| error.to_string())
-    });
+    state.draft.config.filter = widget::Filter::Nearest;
+    state.prepare(ctx);
     let prepared = state.cache.value().unwrap();
-    state.bytes = Some(prepared.encode(prepared.losses(), &|| Ok(())).unwrap());
+    state.bytes = Some(
+        prepared
+            .encode(&other_losses(prepared.losses()), &|| Ok(()))
+            .unwrap(),
+    );
     state.draft.accepted = true;
     app.icon_export = Some(state);
 }
