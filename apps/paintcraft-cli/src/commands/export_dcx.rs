@@ -24,6 +24,8 @@ impl From<Mode> for pcx::Mode {
 #[derive(Debug, clap::Args)]
 pub struct Options {
     input: PathBuf,
+    #[command(flatten)]
+    metadata: super::export_metadata::Options,
     /// Explicit one-page PCX encoding; quantization and alpha conversion need actual loss consent.
     #[arg(long, value_enum)]
     pcx_mode: Mode,
@@ -72,10 +74,42 @@ pub(super) fn write_copy(
     protect: &dyn Fn() -> Result<()>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<(Value, bool, String)> {
+    write_copy_with_metadata_policy(
+        doc,
+        mode,
+        dest,
+        overwrite,
+        allowed,
+        source_sha,
+        protect,
+        check,
+        export::metadata_policy::Policy::default(),
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub(super) fn write_copy_with_metadata_policy(
+    doc: &Document,
+    mode: Mode,
+    dest: &Path,
+    overwrite: bool,
+    allowed: &[String],
+    source_sha: Option<String>,
+    protect: &dyn Fn() -> Result<()>,
+    check: &dyn Fn() -> Result<()>,
+    policy: export::metadata_policy::Policy,
+) -> Result<(Value, bool, String)> {
     check()?;
     protect()?;
     let limits = dcx::DocumentLimits::default();
-    let prepared = dcx::prepare_document(doc, mode.into(), allowed, limits, check)?;
+    let prepared = dcx::prepare_document_with_metadata_policy(
+        doc,
+        mode.into(),
+        allowed,
+        limits,
+        check,
+        |doc| paintcraft_render::render_cancellable(doc, check),
+        policy,
+    )?;
     let context = Context {
         operation: "export",
         source_state: doc.state_id,
@@ -132,16 +166,35 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ));
             }
             let doc = super::source_metadata::read(&bytes)?;
-            let (receipt, ok, summary) = write_copy(
-                &doc,
-                a.pcx_mode,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                &protect,
-                &|| Ok(()),
-            )?;
+            let policy = a
+                .metadata
+                .capture(&doc, super::export_metadata::CopyFormat::Dcx)?;
+            let (receipt, ok, summary) =
+                if a.metadata.intent == export::metadata_policy::Intent::Refuse {
+                    write_copy(
+                        &doc,
+                        a.pcx_mode,
+                        dest,
+                        a.output.overwrite,
+                        &allowed,
+                        Some(sha),
+                        &protect,
+                        &|| Ok(()),
+                    )?
+                } else {
+                    write_copy_with_metadata_policy(
+                        &doc,
+                        a.pcx_mode,
+                        dest,
+                        a.output.overwrite,
+                        &allowed,
+                        Some(sha),
+                        &protect,
+                        &|| Ok(()),
+                        policy,
+                    )?
+                };
+
             Ok(Written {
                 engine: None,
                 receipt,

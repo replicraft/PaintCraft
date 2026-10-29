@@ -18,6 +18,8 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct Export {
+    /// Explicitly omit original source metadata from this copy; default refuse.
+    source_metadata: Option<super::params::SourceMetadata>,
     path: String,
     /// Explicit RGB24, exact indexed, or requested quantization policy.
     pcx_mode: Mode,
@@ -60,16 +62,35 @@ impl PaintingServer {
                 .as_ref()
                 .ok_or_else(|| invalid("create or open a document first"))?
                 .document();
-            let (receipt, ok, _) = export_dcx::write_copy(
-                doc,
-                p.pcx_mode,
-                &path,
-                p.overwrite,
-                &p.allow_losses,
-                None,
-                &protect,
-                &check,
-            )?;
+            let intent: paintcraft_formats::export::metadata_policy::Intent =
+                p.source_metadata.unwrap_or_default().into();
+            let policy = super::super::export_metadata::CopyFormat::Dcx.capture(doc, intent)?;
+            let (receipt, ok, _) =
+                if intent == paintcraft_formats::export::metadata_policy::Intent::Refuse {
+                    export_dcx::write_copy(
+                        doc,
+                        p.pcx_mode,
+                        &path,
+                        p.overwrite,
+                        &p.allow_losses,
+                        None,
+                        &protect,
+                        &check,
+                    )?
+                } else {
+                    export_dcx::write_copy_with_metadata_policy(
+                        doc,
+                        p.pcx_mode,
+                        &path,
+                        p.overwrite,
+                        &p.allow_losses,
+                        None,
+                        &protect,
+                        &check,
+                        policy,
+                    )?
+                };
+
             let content = vec![ContentBlock::text(core_json(&receipt)?.to_string())];
             Ok(if ok {
                 CallToolResult::success(content)
