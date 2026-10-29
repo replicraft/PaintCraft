@@ -15,7 +15,14 @@ const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
 mod binary;
 mod compression;
+mod preflight;
 mod runs;
+
+/// Check that the current snapshot fits canonical PCND metadata admission.
+/// This does not promise future layer/title growth remains within that limit.
+pub fn check_metadata_admission(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
+    preflight::check(doc, check)
+}
 
 /// Deterministic raw encoding for portable conformance and content comparisons.
 /// The header and document semantics are identical to normal compressed saves.

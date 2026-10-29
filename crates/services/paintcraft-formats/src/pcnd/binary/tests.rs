@@ -187,7 +187,7 @@ fn portable_encoder_reads_identically_and_compresses_run_descriptors() {
     let mut portable = Vec::new();
     write_encoded(
         &doc,
-        &mut portable,
+        Output::new(&mut portable),
         &|| Ok(()),
         compression::Encoder::portable(),
     )

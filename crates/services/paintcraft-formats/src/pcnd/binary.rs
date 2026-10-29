@@ -13,7 +13,12 @@ pub(super) fn write(
     sink: impl Write,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
-    write_encoded(doc, sink, check, compression::Encoder::new(true)?)
+    write_encoded(
+        doc,
+        Output::new(sink),
+        check,
+        compression::Encoder::new(true)?,
+    )
 }
 
 pub(super) fn write_raw(
@@ -21,12 +26,26 @@ pub(super) fn write_raw(
     sink: impl Write,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
-    write_encoded(doc, sink, check, compression::Encoder::new(false)?)
+    write_encoded(
+        doc,
+        Output::new(sink),
+        check,
+        compression::Encoder::new(false)?,
+    )
+}
+
+pub(super) fn preflight_metadata(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
+    write_encoded(
+        doc,
+        Output::metadata_counter(std::io::sink()),
+        check,
+        compression::Encoder::new(false)?,
+    )
 }
 
 fn write_encoded(
     doc: &Document,
-    sink: impl Write,
+    mut output: Output<impl Write>,
     check: &dyn Fn() -> Result<()>,
     mut encoder: compression::Encoder,
 ) -> Result<()> {
@@ -37,7 +56,6 @@ fn write_encoded(
     {
         return Err(codec("invalid canvas dimensions"));
     }
-    let mut output = Output::new(sink);
     let mut magic = *MAGIC;
     if doc.source_metadata.is_some() {
         magic[4] = 2;

@@ -5,6 +5,7 @@ pub(super) struct Output<W> {
     sink: W,
     hash: Sha256,
     metadata: usize,
+    metadata_only: bool,
 }
 impl<W: Write> Output<W> {
     pub fn new(sink: W) -> Self {
@@ -12,6 +13,13 @@ impl<W: Write> Output<W> {
             sink,
             hash: Sha256::new(),
             metadata: 0,
+            metadata_only: false,
+        }
+    }
+    pub fn metadata_counter(sink: W) -> Self {
+        Self {
+            metadata_only: true,
+            ..Self::new(sink)
         }
     }
     pub fn bytes(&mut self, bytes: &[u8]) -> Result<()> {
@@ -28,6 +36,9 @@ impl<W: Write> Output<W> {
         self.payload(bytes)
     }
     pub fn payload(&mut self, bytes: &[u8]) -> Result<()> {
+        if self.metadata_only {
+            return Ok(());
+        }
         self.sink
             .write_all(bytes)
             .map_err(|_| Error::new(ErrorCode::StorageFailed, "cannot write native project"))?;
@@ -59,6 +70,9 @@ impl<W: Write> Output<W> {
         self.bytes(value.as_bytes())
     }
     pub fn finish(mut self) -> Result<()> {
+        if self.metadata_only {
+            return Ok(());
+        }
         self.sink
             .write_all(&self.hash.finalize())
             .map_err(|_| Error::new(ErrorCode::StorageFailed, "cannot finish native project"))
