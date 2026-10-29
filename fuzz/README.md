@@ -14,7 +14,7 @@ returned invariant errors remain findings through the existing classifier.
 
 | Target | Actual entrypoints and admitted work |
 | --- | --- |
-| `raster` | Restricted PNG/JPEG/GIF/BMP/TIFF signature dispatch through `image::decode_with_pixel_limit`; checks output extent and declared conversion losses |
+| `raster` | Restricted PNG/JPEG/GIF/BMP/TIFF dispatch through `image::decode_with_pixel_limit`; PNG additionally exercises admitted original-profile/resolution retention, matching samples, source identity, notice inventory and lease release |
 | `tiff_pages` | Full-source inventory, first and last eligible page (at most two), sealed assessment round trip and exact source/page/descriptor/output/loss binding |
 | `icons` | Full directory preflight and first/last explicit entry (at most two), including indexed XOR samples hidden by AND masks |
 
@@ -23,6 +23,22 @@ TIFF API uses the existing 4,096-checkpoint allowance. The stock raster and icon
 public APIs do not expose an interruptible decoder callback; these bounds are
 not hard time, allocation/RSS, cancellation-latency, or sandbox guarantees.
 The harness introduces no new product format limits or decoder dependencies.
+
+The extra PNG path has a separate 16 KiB semantic-metadata and charged-storage
+allowance. Valid sources with larger profiles can therefore be rejected by this
+target even when ordinary decoding succeeds. Its callback checks do not make the
+selected opaque PNG pixel call interruptible. Both accepted captures and refused
+captures must release their metadata charge. The reviewed 29-source manifest and
+historical streams remain unchanged; new runs bind the updated harness source.
+
+The retention follow-up passed 15 Rust controls, strict checks with all optional
+wrappers enabled, and linked all eleven wrappers plus replay. The separate
+6,168 / 7,453 / 3,598 raw-PCND / 3,598 checksum-aware streams retain their previous
+counts. A stable libFuzzer smoke retained all 44 original seed copies (17 stock
+raster sources plus 27 retained-PNG fixtures) through 2,000 runs. This build has
+no sanitizer or coverage instrumentation; the smoke is not coverage-guided or
+ASan qualification. Source identities and outputs are retained locally under
+`docs/validation/png-retention-fuzz/`.
 
 `stock-seeds.json` separately binds 29 exact source lengths/hashes. The parent
 fixture directories retain independent PNG/JPEG/GIF/BMP/TIFF oracle provenance.

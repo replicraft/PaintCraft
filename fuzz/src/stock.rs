@@ -2,6 +2,7 @@
 use crate::{PIXELS_MAX, Target};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_formats::{icons, image, tiff_pages};
+mod png;
 
 fn invariant(message: &str) -> Error {
     Error::new(ErrorCode::InvariantViolation, message)
@@ -40,6 +41,9 @@ pub(crate) fn exercise(target: Target, bytes: &[u8], check: &dyn Fn() -> Result<
                 .any(|loss| !image::KNOWN_IMPORT_LOSSES.contains(&loss.as_str()))
             {
                 return Err(invariant("stock decoder emitted unknown conversion loss"));
+            }
+            if decoded.format == image::ImageFormat::Png {
+                png::exercise(bytes, &decoded, check)?;
             }
         }
         Target::TiffPages => {
