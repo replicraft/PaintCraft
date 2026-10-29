@@ -120,6 +120,10 @@ fn preview_requires_hidden_clip_and_previous_frame_guards_and_releases_charge() 
 }
 #[test]
 fn real_png_bmp_pixels_and_translated_consent_work_in_all_frontends() {
+    // A separate live process-realm charge must not affect this review's exact
+    // release assertion, including when other import tests run concurrently.
+    let global = paintcraft_raster::Admission::new(0).paint_metadata_budget();
+    let unrelated = global.reserve(280).unwrap();
     for (experience, variant) in [
         (Experience::Classic, ClassicVariant::V7),
         (Experience::Classic, ClassicVariant::V10),
@@ -138,6 +142,7 @@ fn real_png_bmp_pixels_and_translated_consent_work_in_all_frontends() {
                 assert_eq!((image.width, image.height), canvas);
                 assert_eq!(image.rgba, pixels);
                 let mut app = App::new(None);
+                app.source_metadata_budget = SharedBudget::new(SIDE * SIDE * 8);
                 app.settings.experience = experience;
                 app.settings.classic_variant = Some(variant);
                 app.stage_import(image, PathBuf::from(name), "ab".repeat(32), true)
@@ -159,6 +164,7 @@ fn real_png_bmp_pixels_and_translated_consent_work_in_all_frontends() {
                     .unwrap()
                     ._copy
                     .budget();
+                assert_eq!(budget.usage().limit, SIDE * SIDE * 8);
                 assert!(budget.usage().reserved > 0);
                 assert!(
                     h.get_by_role_and_label(egui::Role::Button, &translate(language, "Open image"))
@@ -183,11 +189,16 @@ fn real_png_bmp_pixels_and_translated_consent_work_in_all_frontends() {
             }
         }
     }
+    assert!(global.usage().reserved >= 280);
+    drop(unrelated);
 }
 #[test]
 fn cancel_and_stale_owner_drop_only_private_review_charges() {
+    let global = paintcraft_raster::Admission::new(0).paint_metadata_budget();
+    let unrelated = global.reserve(280).unwrap();
     for cancel in [false, true] {
         let mut app = App::new(None);
+        app.source_metadata_budget = SharedBudget::new(SIDE * SIDE * 8);
         let before = app.editor.document_snapshot();
         let ticket = app.editor.render_key();
         let bound = app.bound.clone();
@@ -209,6 +220,7 @@ fn cancel_and_stale_owner_drop_only_private_review_charges() {
             .unwrap()
             ._copy
             .budget();
+        assert_eq!(budget.usage().limit, SIDE * SIDE * 8);
         if cancel {
             app.resolve_import(&ctx, false);
         } else {
@@ -226,6 +238,8 @@ fn cancel_and_stale_owner_drop_only_private_review_charges() {
         assert_eq!(app.imported_source, source);
         assert_eq!(budget.usage().reserved, 0);
     }
+    assert!(global.usage().reserved >= 280);
+    drop(unrelated);
 }
 
 #[test]
