@@ -94,6 +94,54 @@ fn invalid_avif_host_build_contract_cannot_launch_or_adopt() {
 
 #[test]
 fn sdr_job_does_not_dispatch_without_an_exact_installed_v6_contract() {
+    let root =
+        std::env::temp_dir().join(format!("paintcraft-missing-sdr-install-{}", Uuid::new_v4()));
+    std::fs::create_dir(&root).unwrap();
+    let current = std::env::current_exe().unwrap();
+    let child = root.join(current.file_name().unwrap());
+    std::fs::copy(&current, &child).unwrap();
+    // Normalize only the isolated Linux debug fixture, retaining real limits.
+    #[cfg(all(target_os = "linux", debug_assertions))]
+    {
+        let output = std::process::Command::new("strip")
+            .arg("--strip-debug")
+            .arg(&child)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    let entries: Vec<_> = std::fs::read_dir(&root).unwrap().collect();
+    assert_eq!(
+        entries.len(),
+        1,
+        "missing-installation fixture contains only its executable"
+    );
+    let output = std::process::Command::new(&child)
+        .args([
+            "--exact",
+            "codec_worker::native::tests::fixture_missing_sdr_installation",
+            "--ignored",
+            "--nocapture",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "copied executable bytes={}: {} {}",
+        std::fs::metadata(&child).unwrap().len(),
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+#[ignore = "isolated missing-installation fixture invoked by parent"]
+fn fixture_missing_sdr_installation() {
     let root = std::env::temp_dir().join(format!("paintcraft-private-sdr-job-{}", Uuid::new_v4()));
     std::fs::create_dir(&root).unwrap();
     let path = root.join("source.avif");
@@ -134,7 +182,11 @@ fn sdr_job_does_not_dispatch_without_an_exact_installed_v6_contract() {
                 ErrorCode::ConflictStaleBase
             } else {
                 ErrorCode::CapabilityUnsupported
-            }
+            },
+            "{error:?}; executable bytes={}",
+            std::fs::metadata(std::env::current_exe().unwrap())
+                .unwrap()
+                .len()
         );
         assert_eq!(std::fs::read(&path).unwrap(), b"source");
     }
