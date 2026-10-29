@@ -1,4 +1,6 @@
 //! Actual opt-in V7 float process qualification, never a public import route.
+#[path = "support/build_record.rs"]
+mod build_record;
 #[cfg(feature = "float-codecs")]
 use paintcraft_core::types::{
     Error,
@@ -250,57 +252,7 @@ fn v7_refuses_malformed_request_response_owner_shapes_and_quota_declarations() {
     let record = wire::jxr_encode::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     #[cfg(feature = "jxr-codecs")]
     let record = wire::jxr_encode::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    assert_eq!(
-        bytes.windows(record.len()).filter(|v| *v == record).count(),
-        1
-    );
-    let selected_marker = if cfg!(feature = "jxr-codecs") {
-        wire::jxr_encode::qualified::BUILD_RECORD_MARKER
-    } else if cfg!(feature = "jxr-encode") {
-        wire::jxr_encode::candidate::BUILD_RECORD_MARKER
-    } else {
-        wire::FLOAT_BUILD_RECORD_MARKER
-    };
-    for marker in [
-        wire::BUILD_RECORD_MARKER,
-        wire::AVIF_BUILD_RECORD_MARKER,
-        wire::AVIF_SDR_BUILD_RECORD_MARKER,
-        wire::FLOAT_BUILD_RECORD_MARKER,
-        wire::jxr_encode::candidate::BUILD_RECORD_MARKER,
-        wire::jxr_encode::qualified::BUILD_RECORD_MARKER,
-    ] {
-        if marker != selected_marker {
-            // Debug linkers can retain a bare marker literal from a library
-            // object without retaining a second embedded build declaration.
-            // Shipping artifacts must satisfy the stricter marker check too.
-            let version = env!("CARGO_PKG_VERSION");
-            let other = if marker == wire::BUILD_RECORD_MARKER {
-                wire::native_build_record(version).unwrap()
-            } else if marker == wire::AVIF_BUILD_RECORD_MARKER {
-                wire::native_avif_build_record(version).unwrap()
-            } else if marker == wire::AVIF_SDR_BUILD_RECORD_MARKER {
-                wire::native_avif_sdr_build_record(version).unwrap()
-            } else if marker == wire::FLOAT_BUILD_RECORD_MARKER {
-                wire::native_float_build_record(version).unwrap()
-            } else if marker == wire::jxr_encode::candidate::BUILD_RECORD_MARKER {
-                wire::jxr_encode::candidate::build_record(version).unwrap()
-            } else {
-                wire::jxr_encode::qualified::build_record(version).unwrap()
-            };
-            assert!(
-                !bytes.windows(other.len()).any(|v| v == other),
-                "unexpected complete worker declaration: {}",
-                String::from_utf8_lossy(marker)
-            );
-            if !cfg!(debug_assertions) {
-                assert!(
-                    !bytes.windows(marker.len()).any(|v| v == marker),
-                    "unexpected shipping worker marker: {}",
-                    String::from_utf8_lossy(marker)
-                );
-            }
-        }
-    }
+    build_record::assert_one(&bytes, &record);
     assert_eq!(wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.len(), 5);
     assert_eq!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS.len(), 7);
 }

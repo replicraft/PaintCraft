@@ -1,4 +1,6 @@
 //! Actual opt-in V6/code6 child producer; no frontend admission or Job adoption.
+#[path = "support/build_record.rs"]
+mod build_record;
 use paintcraft_core::types::{ErrorCode, Result};
 use paintcraft_formats::codec_worker::{self as wire, Codec, Owner, Request};
 use paintcraft_runtime::process::{self, Limits};
@@ -64,11 +66,7 @@ fn v4_and_v5_helpers_cannot_claim_the_opt_in_sdr_producer() {
         ErrorCode::CapabilityUnsupported
     );
     let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();
-    assert!(
-        !bytes
-            .windows(wire::AVIF_SDR_BUILD_RECORD_MARKER.len())
-            .any(|value| value == wire::AVIF_SDR_BUILD_RECORD_MARKER)
-    );
+    build_record::assert_one(&bytes, &build_record::selected());
 }
 #[cfg(feature = "avif-sdr-codec")]
 #[test]
@@ -205,16 +203,7 @@ fn actual_v6_producer_preserves_source_budget_and_cancellation_boundaries() {
 fn actual_v6_build_record_is_unique_and_does_not_claim_legacy_profiles() {
     let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();
     let expected = wire::native_avif_sdr_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    assert_eq!(
-        bytes
-            .windows(expected.len())
-            .filter(|value| *value == expected)
-            .count(),
-        1
-    );
-    for marker in [wire::BUILD_RECORD_MARKER, wire::AVIF_BUILD_RECORD_MARKER] {
-        assert!(!bytes.windows(marker.len()).any(|value| value == marker));
-    }
+    build_record::assert_one(&bytes, &expected);
     assert_eq!(wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.len(), 5);
     assert!(
         wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.contains(&wire::NATIVE_AVIF_SDR_IMPORT_VARIANT)

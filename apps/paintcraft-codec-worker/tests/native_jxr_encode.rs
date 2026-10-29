@@ -1,4 +1,6 @@
 //! Optional private encode operation; default helpers must keep refusing it.
+#[path = "support/build_record.rs"]
+mod build_record;
 use paintcraft_core::types::ErrorCode;
 #[cfg(feature = "jxr-encode")]
 use paintcraft_core::types::Result;
@@ -83,16 +85,7 @@ fn default_v7_refuses_encoder_argv_and_new_frame_without_changing_its_record() {
     }
     let bytes = std::fs::read(helper()).unwrap();
     let record = decode::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    assert_eq!(
-        bytes.windows(record.len()).filter(|p| *p == record).count(),
-        1
-    );
-    for marker in [
-        wire::candidate::BUILD_RECORD_MARKER,
-        wire::qualified::BUILD_RECORD_MARKER,
-    ] {
-        assert!(!bytes.windows(marker.len()).any(|part| part == marker));
-    }
+    build_record::assert_one(&bytes, &record);
 }
 #[cfg(feature = "jxr-encode")]
 #[test]
@@ -107,10 +100,7 @@ fn selected_record_preserves_seven_imports_and_declares_writer_read_separately()
     let bytes = std::fs::read(helper()).unwrap();
     let record = contract::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     assert_eq!(record, contract::BUILD_RECORD);
-    assert_eq!(
-        bytes.windows(record.len()).filter(|p| *p == record).count(),
-        1
-    );
+    build_record::assert_one(&bytes, &record);
     assert_eq!(
         &contract::IMPORT_VARIANTS[..7],
         decode::QUALIFIED_FLOAT_IMPORT_VARIANTS
@@ -121,22 +111,6 @@ fn selected_record_preserves_seven_imports_and_declares_writer_read_separately()
         contract::WRITER_IMPORT_VARIANT
     );
     assert_eq!(contract::EXPORT_VARIANTS, [contract::EXPORT_VARIANT]);
-    #[cfg(feature = "jxr-codecs")]
-    let other_v8 = wire::candidate::BUILD_RECORD_MARKER;
-    #[cfg(not(feature = "jxr-codecs"))]
-    let other_v8 = wire::qualified::BUILD_RECORD_MARKER;
-    assert!(
-        !bytes.windows(other_v8.len()).any(|part| part == other_v8),
-        "the other V8 contract must not be embedded in the actual worker"
-    );
-    for marker in [
-        decode::BUILD_RECORD_MARKER,
-        decode::AVIF_BUILD_RECORD_MARKER,
-        decode::AVIF_SDR_BUILD_RECORD_MARKER,
-        decode::FLOAT_BUILD_RECORD_MARKER,
-    ] {
-        assert!(!bytes.windows(marker.len()).any(|p| p == marker));
-    }
 }
 #[cfg(feature = "jxr-encode")]
 #[test]

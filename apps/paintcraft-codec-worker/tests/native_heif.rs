@@ -1,4 +1,6 @@
 //! Actual subprocess qualification, without GUI initialization or document writes.
+#[path = "support/build_record.rs"]
+mod build_record;
 use paintcraft_core::types::{Error, ErrorCode};
 use paintcraft_formats::{
     codec_worker::{self as wire, Owner, Request},
@@ -302,36 +304,5 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
         wire::jxr_encode::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     #[cfg(feature = "float-codecs")]
     let record = record_buffer.as_slice();
-    assert_eq!(
-        bytes
-            .windows(record.len())
-            .filter(|value| *value == record)
-            .count(),
-        1
-    );
-    let selected = if cfg!(feature = "jxr-codecs") {
-        wire::jxr_encode::qualified::BUILD_RECORD_MARKER
-    } else if cfg!(feature = "jxr-encode") {
-        wire::jxr_encode::candidate::BUILD_RECORD_MARKER
-    } else if cfg!(feature = "float-codecs") {
-        wire::FLOAT_BUILD_RECORD_MARKER
-    } else if cfg!(feature = "avif-sdr-codec") {
-        wire::AVIF_SDR_BUILD_RECORD_MARKER
-    } else if cfg!(feature = "avif-codec") {
-        wire::AVIF_BUILD_RECORD_MARKER
-    } else {
-        wire::BUILD_RECORD_MARKER
-    };
-    for marker in [
-        wire::BUILD_RECORD_MARKER,
-        wire::AVIF_BUILD_RECORD_MARKER,
-        wire::AVIF_SDR_BUILD_RECORD_MARKER,
-        wire::FLOAT_BUILD_RECORD_MARKER,
-        wire::jxr_encode::candidate::BUILD_RECORD_MARKER,
-        wire::jxr_encode::qualified::BUILD_RECORD_MARKER,
-    ] {
-        if marker != selected {
-            assert!(!bytes.windows(marker.len()).any(|value| value == marker));
-        }
-    }
+    build_record::assert_one(&bytes, record);
 }
