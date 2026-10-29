@@ -47,6 +47,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: ${{ inputs.publish-tag || github.ref }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
@@ -232,6 +233,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.publish-tag || github.ref }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
@@ -265,6 +268,11 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.publish-tag || github.ref }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
       - uses: actions/download-artifact@v8
         with:
           name: paintcraft-release-${{ needs.version.outputs.version }}
