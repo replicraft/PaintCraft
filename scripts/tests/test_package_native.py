@@ -154,7 +154,7 @@ class NativePackageTests(unittest.TestCase):
         self.assertTrue((self.output / "fixture.dmg.sha256").exists())
         self.assertTrue((self.output / "fixture-update.zip.sha256").exists())
         self.assertEqual(sum(command[0].endswith("codesign") for command in calls), 4)
-        self.assertTrue(calls[0][-1].endswith("/MacOS/paintcraft-codec-worker"))
+        self.assertEqual(Path(calls[0][-1]).parts[-2:], ("MacOS", "paintcraft-codec-worker"))
         with zipfile.ZipFile(self.output / "fixture-update.zip") as archive:
             directory = "PaintCraft.app/Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/"
             helper = archive.read(directory + "paintcraft-codec-worker")
