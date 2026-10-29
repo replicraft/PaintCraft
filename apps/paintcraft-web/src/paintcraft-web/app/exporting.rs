@@ -1,5 +1,7 @@
 //! Browser export options and bounded palette preview ownership.
 use super::*;
+#[cfg(test)]
+mod matte_tests;
 impl WebApp {
     pub(super) fn export_dialog(&mut self, ctx: &egui::Context) {
         if self.dds.reviewing() {
@@ -43,8 +45,9 @@ impl WebApp {
                 ui.label(t!(ui.ctx(), "Image dimensions: { $width } × { $height } px", &[("width", width.to_string()), ("height", height.to_string())]));
                 if let Some(label) = format.quality_label() {
                     ui.add(egui::Slider::new(&mut self.export_quality, 1..=100).text(t!(ui.ctx(), label)));
-                    ui.label(t!(ui.ctx(), if format == ImageExport::Avif {"AVIF uses lossy compression for colors and transparency, even at quality 100."} else {"Higher quality creates a larger file. Transparent pixels are placed on white."}));
+                    ui.label(t!(ui.ctx(), if format == ImageExport::Avif {"AVIF uses lossy compression for colors and transparency, even at quality 100."} else {"Higher quality creates a larger file."}));
                 }
+                if format == ImageExport::Jpeg { paintcraft_ui::jpeg_export::controls(ui, &mut self.export_jpeg_matte); }
                 ui.label(t!(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
                 ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));
                 if format == ImageExport::Jpeg { ui.label(t!(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }

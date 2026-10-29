@@ -87,6 +87,9 @@ impl WebApp {
                     crate::files::ExportOptions {
                         format,
                         jpeg_quality: self.export_quality,
+                        jpeg_matte: (format == Some(ImageExport::Jpeg)).then(|| {
+                            paintcraft_formats::image::JpegMatte::new(self.export_jpeg_matte)
+                        }),
                         pcx_encoding: self.export_pcx_encoding,
                         frontend: self.format_profile(),
                     },

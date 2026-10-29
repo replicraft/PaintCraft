@@ -211,3 +211,7 @@ text-could-not-fit-the-draft-no-text-was-changed = Der Text passt nicht in den E
 image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = Der Bildimport ist für diesen Tab angehalten. Lade dein Projekt herunter und diesen Tab neu, um es erneut zu versuchen.
 
 image-import-failed-the-current-document-was-kept = Der Bildimport ist fehlgeschlagen; das aktuelle Dokument wurde beibehalten.
+
+jpeg-background-color = JPEG-Hintergrundfarbe
+transparent-pixels-use-the-selected-background-color = Transparente Pixel verwenden die ausgewählte Hintergrundfarbe.
+higher-quality-creates-a-larger-file = Eine höhere Qualität erzeugt eine größere Datei.

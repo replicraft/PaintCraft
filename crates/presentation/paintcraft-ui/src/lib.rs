@@ -12,6 +12,7 @@ pub mod icns_import;
 pub mod icon_export;
 pub mod icons;
 pub mod import_preview;
+pub mod jpeg_export;
 pub mod msp_export;
 pub mod outbox;
 pub mod page_import;

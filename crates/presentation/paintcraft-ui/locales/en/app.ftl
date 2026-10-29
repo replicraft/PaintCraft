@@ -211,3 +211,7 @@ text-could-not-fit-the-draft-no-text-was-changed = Text could not fit the draft;
 image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = Image importing is paused for this tab. Download your project, then reload this tab to try again.
 
 image-import-failed-the-current-document-was-kept = Image import failed; the current document was kept.
+
+jpeg-background-color = JPEG background color
+transparent-pixels-use-the-selected-background-color = Transparent pixels use the selected background color.
+higher-quality-creates-a-larger-file = Higher quality creates a larger file.

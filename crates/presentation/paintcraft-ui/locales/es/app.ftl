@@ -211,3 +211,7 @@ text-could-not-fit-the-draft-no-text-was-changed = El texto no cabe en el borrad
 image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = La importación de imágenes está en pausa en esta pestaña. Descarga tu proyecto y vuelve a cargar la pestaña para intentarlo de nuevo.
 
 image-import-failed-the-current-document-was-kept = La importación de la imagen falló; se conservó el documento actual.
+
+jpeg-background-color = Color de fondo de JPEG
+transparent-pixels-use-the-selected-background-color = Los píxeles transparentes usan el color de fondo seleccionado.
+higher-quality-creates-a-larger-file = Una calidad mayor genera un archivo más grande.

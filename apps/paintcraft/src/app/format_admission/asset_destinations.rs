@@ -124,6 +124,7 @@ fn confirmed_image_export_does_not_replace_a_loaded_resource_through_a_symlink()
             format,
             losses,
             jpeg_quality,
+            jpeg_matte,
             pcx_encoding,
             ..
         }) = app.confirm.take()
@@ -134,6 +135,7 @@ fn confirmed_image_export_does_not_replace_a_loaded_resource_through_a_symlink()
                 &losses,
                 export_options::Settings {
                     jpeg_quality,
+                    jpeg_matte,
                     pcx_encoding,
                 },
             );

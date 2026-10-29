@@ -12,16 +12,21 @@ mod palette_tests;
 #[cfg(test)]
 #[path = "export_options/jxl_tests.rs"]
 mod jxl_tests;
+#[cfg(test)]
+#[path = "export_options/matte_tests.rs"]
+mod matte_tests;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Settings {
     pub jpeg_quality: u8,
+    pub jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
     pub pcx_encoding: Encoding,
 }
 impl Default for Settings {
     fn default() -> Self {
         Self {
             jpeg_quality: 90,
+            jpeg_matte: None,
             pcx_encoding: Encoding::Rgb24,
         }
     }
@@ -29,6 +34,7 @@ impl Default for Settings {
 impl Settings {
     pub(crate) fn options(self, format: ImageFormat) -> export::FlatOptions {
         let mut options = export::FlatOptions::new(format, self.jpeg_quality);
+        options.jpeg_matte = self.jpeg_matte;
         if format == ImageFormat::Pcx {
             options.pcx_mode = mode(self.pcx_encoding);
         }
@@ -48,6 +54,7 @@ pub(crate) struct Draft {
     owner: Uuid,
     format: Choice,
     jpeg_quality: u8,
+    jpeg_matte: [u8; 3],
     pcx_encoding: Encoding,
     dds: paintcraft_ui::dds_export::Settings,
     msp_version: paintcraft_ui::msp_export::Version,
@@ -91,6 +98,7 @@ impl App {
             owner: self.active_tab_id(),
             format: Choice::Flat(format),
             jpeg_quality: 90,
+            jpeg_matte: [255; 3],
             pcx_encoding: Encoding::Rgb24,
             dds: Default::default(),
             msp_version: Default::default(),
@@ -175,8 +183,11 @@ impl App {
                 ui.label(t!(ctx, if draft.format == Choice::Flat(ImageExport::Avif) {
                     "AVIF uses lossy compression for colors and transparency, even at quality 100."
                 } else {
-                    "Higher quality creates a larger file. Transparent pixels are placed on white."
+                    "Higher quality creates a larger file."
                 }));
+            }
+            if draft.format == Choice::Flat(ImageExport::Jpeg) {
+                paintcraft_ui::jpeg_export::controls(ui, &mut draft.jpeg_matte);
             }
             let canvas = self.editor.document().canvas;
             ui.add_space(8.0);
@@ -248,6 +259,8 @@ impl App {
                     .unwrap_or_else(|| Path::new(&self.path_text))
                     .with_extension(draft.format.extension());
                 self.export_dialog_quality = Some(draft.jpeg_quality);
+                self.export_dialog_matte = (draft.format == Choice::Flat(ImageExport::Jpeg))
+                    .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte));
                 self.export_dialog_pcx = Some(draft.pcx_encoding);
                 self.request_dialog_suggested(ctx, Kind::Export, Some(suggested));
             } else {
@@ -258,6 +271,8 @@ impl App {
                     destination,
                     Settings {
                         jpeg_quality: draft.jpeg_quality,
+                        jpeg_matte: (draft.format == Choice::Flat(ImageExport::Jpeg))
+                            .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte)),
                         pcx_encoding: draft.pcx_encoding,
                     },
                 );

@@ -210,6 +210,7 @@ enum Confirm {
         format: ImageFormat,
         losses: Vec<String>,
         jpeg_quality: u8,
+        jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
         pcx_encoding: paintcraft_ui::pcx_export::Encoding,
         source: controller::PreviewStamp,
         exists: bool,
@@ -295,6 +296,7 @@ pub struct App {
     dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
     dialog_source: Option<(Arc<paintcraft_document::Document>, (Uuid, u64))>,
     export_dialog_quality: Option<u8>,
+    export_dialog_matte: Option<paintcraft_formats::image::JpegMatte>,
     export_dialog_pcx: Option<paintcraft_ui::pcx_export::Encoding>,
     export_dialog_stamp: Option<controller::PreviewStamp>,
     pcx_preview: paintcraft_ui::pcx_export::Cache<(
@@ -444,6 +446,7 @@ impl App {
             dialog_frontend: None,
             dialog_source: None,
             export_dialog_quality: None,
+            export_dialog_matte: None,
             export_dialog_pcx: None,
             export_dialog_stamp: None,
             pcx_preview: Default::default(),

@@ -211,3 +211,7 @@ text-could-not-fit-the-draft-no-text-was-changed = テキストが上限を超�
 image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = このタブでは画像の読み込みが一時停止されています。プロジェクトをダウンロードしてから、このタブを再読み込みしてお試しください。
 
 image-import-failed-the-current-document-was-kept = 画像を読み込めませんでした。現在のドキュメントは保持されています。
+
+jpeg-background-color = JPEG の背景色
+transparent-pixels-use-the-selected-background-color = 透明なピクセルには選択した背景色を使用します。
+higher-quality-creates-a-larger-file = 画質を高くするとファイルサイズが大きくなります。

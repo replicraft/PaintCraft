@@ -211,3 +211,7 @@ text-could-not-fit-the-draft-no-text-was-changed = टेक्स्ट ड्�
 image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = इस टैब में चित्र आयात रुका हुआ है। अपना प्रोजेक्ट डाउनलोड करें, फिर दोबारा प्रयास करने के लिए इस टैब को फिर से लोड करें।
 
 image-import-failed-the-current-document-was-kept = चित्र आयात विफल रहा; वर्तमान दस्तावेज़ सुरक्षित रखा गया।
+
+jpeg-background-color = JPEG पृष्ठभूमि का रंग
+transparent-pixels-use-the-selected-background-color = पारदर्शी पिक्सेल चुने गए पृष्ठभूमि रंग का उपयोग करते हैं।
+higher-quality-creates-a-larger-file = उच्च गुणवत्ता से फ़ाइल का आकार बढ़ता है।

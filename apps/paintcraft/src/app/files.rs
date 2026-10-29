@@ -133,6 +133,11 @@ impl App {
         } else {
             90
         };
+        let jpeg_matte = if completion.kind == Kind::Export {
+            self.export_dialog_matte.take()
+        } else {
+            None
+        };
         let pcx_encoding = if completion.kind == Kind::Export {
             self.export_dialog_pcx.take().unwrap_or_default()
         } else {
@@ -206,6 +211,7 @@ impl App {
                 path,
                 export_options::Settings {
                     jpeg_quality,
+                    jpeg_matte,
                     pcx_encoding,
                 },
             ),
@@ -575,6 +581,7 @@ impl App {
                     format,
                     losses: plan.losses,
                     jpeg_quality: settings.jpeg_quality,
+                    jpeg_matte: settings.jpeg_matte,
                     pcx_encoding: settings.pcx_encoding,
                     source: self.editor.preview_stamp(),
                 })

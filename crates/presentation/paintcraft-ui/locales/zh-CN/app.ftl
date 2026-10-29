@@ -211,3 +211,7 @@ text-could-not-fit-the-draft-no-text-was-changed = 文本超出草稿容量，�
 image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = 此标签页的图像导入已暂停。请下载项目，然后重新加载此标签页以重试。
 
 image-import-failed-the-current-document-was-kept = 图像导入失败；当前文档已保留。
+
+jpeg-background-color = JPEG 背景颜色
+transparent-pixels-use-the-selected-background-color = 透明像素使用所选的背景颜色。
+higher-quality-creates-a-larger-file = 更高的质量会生成更大的文件。

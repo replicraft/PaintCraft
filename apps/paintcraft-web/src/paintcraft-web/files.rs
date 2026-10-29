@@ -48,6 +48,7 @@ pub(crate) enum Outcome {
 pub(crate) struct ExportOptions {
     pub format: Option<ImageExport>,
     pub jpeg_quality: u8,
+    pub jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
     pub pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pub frontend: Frontend,
 }
@@ -253,12 +254,13 @@ impl Files {
         if self.busy {
             return;
         }
-        let bytes = match encode_options_for_profile(
+        let bytes = match flat_export::encode(
             document,
             options.format,
             options.jpeg_quality,
             options.frontend,
             options.pcx_encoding,
+            options.jpeg_matte,
         ) {
             Ok(bytes) => bytes,
             Err(error) => {
@@ -385,7 +387,7 @@ fn encode_quality(
     encode_quality_for_profile(document, format, jpeg_quality, Frontend::Studio)
 }
 
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 fn encode_options_for_profile(
     document: &Document,
     format: Option<ImageExport>,
@@ -393,51 +395,7 @@ fn encode_options_for_profile(
     frontend: Frontend,
     pcx_encoding: paintcraft_ui::pcx_export::Encoding,
 ) -> Result<Vec<u8>> {
-    if let Some(format) = format {
-        let format = match format {
-            ImageExport::Png => image::ImageFormat::Png,
-            ImageExport::Jpeg => image::ImageFormat::Jpeg,
-            ImageExport::Bmp => image::ImageFormat::Bmp,
-            ImageExport::Gif => image::ImageFormat::Gif,
-            ImageExport::Tiff => image::ImageFormat::Tiff,
-            ImageExport::Tga => image::ImageFormat::Tga,
-            ImageExport::Webp => image::ImageFormat::WebP,
-            ImageExport::Jxl => image::ImageFormat::Jxl,
-            ImageExport::Dds => image::ImageFormat::Dds,
-            ImageExport::Avif => image::ImageFormat::Avif,
-            ImageExport::Qoi => image::ImageFormat::Qoi,
-            ImageExport::Pam => image::ImageFormat::Pnm,
-            ImageExport::Farbfeld => image::ImageFormat::Farbfeld,
-            ImageExport::Pcx => image::ImageFormat::Pcx,
-            ImageExport::Msp => image::ImageFormat::Msp,
-        };
-        // The captured frontend determines admission before rendering or encoding.
-        use paintcraft_formats::registry::{self, Operation, Request};
-        let family = Family::from_id(format.name()).ok_or_else(|| {
-            Error::new(
-                ErrorCode::CapabilityUnsupported,
-                "Unregistered export format",
-            )
-        })?;
-        let request = Request::new(frontend, Operation::ExportFlat, family, Platform::Web);
-        let decision = registry::admission(request);
-        if !decision.available() {
-            decision.require_allowed(request)?;
-        }
-        let mut options = paintcraft_formats::export::FlatOptions::new(format, jpeg_quality);
-        if format == image::ImageFormat::Pcx {
-            options.pcx_mode = pcx_mode(pcx_encoding);
-        }
-        return Ok(paintcraft_formats::export::export_flat_options(
-            document,
-            options,
-            &paintcraft_formats::export::KNOWN_LOSSES.map(str::to_owned),
-        )?
-        .bytes);
-    }
-    let mut writer = Limited(Vec::new());
-    pcnd::write_compact_to(document, &mut writer)?;
-    Ok(writer.0)
+    flat_export::encode(document, format, jpeg_quality, frontend, pcx_encoding, None)
 }
 
 #[cfg(any(target_arch = "wasm32", test))]
@@ -781,3 +739,8 @@ mod jpeg_tests;
 #[cfg(test)]
 #[path = "files/bmp_rle_tests.rs"]
 mod bmp_rle_tests;
+
+#[cfg(any(target_arch = "wasm32", test))]
+mod flat_export;
+#[cfg(test)]
+mod matte_tests;

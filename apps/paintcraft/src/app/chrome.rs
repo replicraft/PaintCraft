@@ -576,6 +576,7 @@ impl App {
                         format,
                         losses,
                         jpeg_quality,
+                        jpeg_matte,
                         pcx_encoding,
                         source,
                         ..
@@ -590,6 +591,7 @@ impl App {
                                 &losses,
                                 export_options::Settings {
                                     jpeg_quality,
+                                    jpeg_matte,
                                     pcx_encoding,
                                 },
                             )
