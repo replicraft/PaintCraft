@@ -10,29 +10,40 @@ impl App {
     ) -> Result<()> {
         self.guard_asset_adoption(&path, Some(&identity))?;
         let sha256: [u8; 32] = Sha256::digest(&bytes).into();
-        let (image, raster_key, source_metadata) = if paintcraft_formats::registry::sniff(&bytes)
-            == Some(paintcraft_formats::registry::Family::Png)
-        {
-            let budget = self.source_metadata_budget();
-            let prepared = image::png_retention::decode(
-                &bytes,
-                image::DECODE_PIXELS_MAX,
-                paintcraft_formats::pcnd::MetadataAdmission {
+        use paintcraft_formats::registry::Family;
+        let family = paintcraft_formats::registry::sniff(&bytes);
+        let (image, raster_key, source_metadata) =
+            if matches!(family, Some(Family::Png | Family::Bmp)) {
+                let budget = self.source_metadata_budget();
+                let admission = paintcraft_formats::pcnd::MetadataAdmission {
                     bytes: paintcraft_document::source_metadata::BYTES_MAX,
                     budget: &budget,
-                },
-                &|| Ok(()),
-            )?;
-            (
-                prepared.image,
-                Some(prepared.document_key),
-                prepared.attachment,
-            )
-        } else {
-            let image = image::decode(&bytes)?;
-            let key = image::document_conversion_key(&bytes, &image, &|| Ok(()))?;
-            (image, key, None)
-        };
+                };
+                let prepared = if family == Some(Family::Bmp) {
+                    image::bmp_retention::decode(
+                        &bytes,
+                        image::DECODE_PIXELS_MAX,
+                        admission,
+                        &|| Ok(()),
+                    )?
+                } else {
+                    image::png_retention::decode(
+                        &bytes,
+                        image::DECODE_PIXELS_MAX,
+                        admission,
+                        &|| Ok(()),
+                    )?
+                };
+                (
+                    prepared.image,
+                    Some(prepared.document_key),
+                    prepared.attachment,
+                )
+            } else {
+                let image = image::decode(&bytes)?;
+                let key = image::document_conversion_key(&bytes, &image, &|| Ok(()))?;
+                (image, key, None)
+            };
         identity.verify_bytes(&path, bytes.len() as u64, &sha256, &|| Ok(()))?;
         let guard = crate::destination::SourceGuard {
             path: path.clone(),

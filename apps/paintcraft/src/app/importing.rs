@@ -363,3 +363,7 @@ mod bmp_rle_tests;
 #[cfg(test)]
 #[path = "importing/png_metadata_tests.rs"]
 mod png_metadata_tests;
+
+#[cfg(test)]
+#[path = "importing/bmp_metadata_tests.rs"]
+mod bmp_metadata_tests;
