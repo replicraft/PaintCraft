@@ -11,6 +11,7 @@ mod sampled_gesture;
 pub use floating::{FloatingOptions, FloatingSelection};
 pub mod navigation;
 pub use contracts::*;
+mod framework_force;
 mod geometry;
 mod path_admission;
 mod pen_gesture;
@@ -260,14 +261,7 @@ impl ToolState {
     pub fn gesture_button(&self) -> Option<PointerButton> {
         self.pen
             .as_ref()
-            .and_then(|p| p.1.samples().first())
-            .map(|s| {
-                if s.identity.kind == paintcraft_input::tablet::DeviceKind::Eraser {
-                    PointerButton::Primary
-                } else {
-                    s.buttons.ink_button()
-                }
-            })
+            .and_then(|p| p.1.gesture_button())
             .or_else(|| {
                 self.floating_selection()
                     .filter(|floating| floating.pointer_is_down())

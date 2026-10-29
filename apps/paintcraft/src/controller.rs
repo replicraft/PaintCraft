@@ -34,6 +34,9 @@ mod selection;
 use paintcraft_tools::commands as raster_commands;
 pub(crate) use preview_cache::Stamp as PreviewStamp;
 pub(crate) use strokes::PreviewPreparation;
+#[cfg(any(target_os = "windows", test))]
+#[path = "controller/framework_force.rs"]
+mod framework_force;
 #[path = "controller/native_publication.rs"]
 pub mod native_publication;
 #[path = "controller/pen.rs"]

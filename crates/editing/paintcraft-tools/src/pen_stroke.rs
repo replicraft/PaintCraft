@@ -1,4 +1,5 @@
-//! Immutable actual pen samples and a single resolved-mask publication path.
+//! Classified pen samples or explicit framework force points, with one shared
+//! resolved-mask publication path. Framework points never become native samples.
 //! Named PaintCraft diameter/capped-dab policies; driver parity is not implied.
 //! Normalized pressure is rounded to nearest Q16 (ties upward); missing pressure
 //! uses full diameter. Resolved 4×4 coverage becomes rounded 8-bit mask coverage.
@@ -14,6 +15,8 @@ use paintcraft_raster::smooth::{self, PressurePoint};
 use std::sync::Arc;
 use uuid::Uuid;
 mod dynamics;
+mod framework;
+pub use framework::FrameworkPoint;
 
 const SAMPLES_MAX: usize = 65_536;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,6 +42,7 @@ struct Samples {
 pub struct PenStroke {
     style: Style,
     samples: Arc<Samples>,
+    framework: Option<Arc<framework::FrameworkSamples>>,
 }
 #[derive(Debug)]
 struct Spans {
@@ -68,6 +72,7 @@ impl PenStroke {
         }
         let mut stroke = Self {
             style,
+            framework: None,
             samples: Arc::new(Samples {
                 values: Vec::new(),
                 account: budget.account(AllocationClass::PaintMetadata),
@@ -83,9 +88,14 @@ impl PenStroke {
         &self.samples.values
     }
     pub fn declared_bytes(&self) -> u64 {
-        self.samples.account.bytes()
+        self.samples.account.bytes() + self.framework.as_ref().map_or(0, |f| f.account.bytes())
     }
     pub fn append(&mut self, sample: Sample) -> Result<()> {
+        if self.framework.is_some() {
+            return Err(invalid(
+                "native sample cannot enter framework force capture",
+            ));
+        }
         sample
             .validate()
             .map_err(|_| invalid("invalid pen source sample"))?;
@@ -176,7 +186,11 @@ impl PenStroke {
         if self.style.media != paintcraft_core::types::brush::BrushMedia::Plain
             || self.style.settings.opacity_pressure
         {
-            self.visit_dynamics(clip, budget, check, &mut retain)?;
+            if self.framework.is_some() {
+                self.visit_framework_opacity(clip, budget, check, &mut retain)?;
+            } else {
+                self.visit_dynamics(clip, budget, check, &mut retain)?;
+            }
         } else {
             self.visit_round(clip, budget, check, &mut retain)?;
         }
@@ -196,7 +210,7 @@ impl PenStroke {
         check: &dyn Fn() -> Result<()>,
         emit: &mut dyn FnMut(MaskSpan) -> Result<()>,
     ) -> Result<()> {
-        let count = self.samples.values.len();
+        let count = self.point_count();
         // Admit scanner scratch before mapping or geometry. Row ranges remain
         // live across the path, but the event tree exists for one pixel row only.
         // Output mask capacity is admitted incrementally by the same resolver.
@@ -208,16 +222,16 @@ impl PenStroke {
         points
             .try_reserve_exact(count)
             .map_err(|_| limit("cannot map pen samples"))?;
-        for chunk in self.samples.values.chunks(256) {
-            check()?;
-            for sample in chunk {
-                let point = mapped_point(sample, self.style.settings)?;
-                if points
-                    .last()
-                    .is_none_or(|last| !same_geometry(*last, point))
-                {
-                    points.push(point);
-                }
+        for index in 0..count {
+            if index.is_multiple_of(256) {
+                check()?;
+            }
+            let point = self.point(index)?;
+            if points
+                .last()
+                .is_none_or(|last| !same_geometry(*last, point))
+            {
+                points.push(point);
             }
         }
         smooth::pressure_path_visit_checked(
@@ -245,9 +259,7 @@ impl PenStroke {
             return Err(invalid("invalid pen clip coordinates"));
         }
         let mapped_bytes = self
-            .samples
-            .values
-            .len()
+            .point_count()
             .checked_mul(std::mem::size_of::<PressurePoint>())
             .ok_or_else(|| limit("pen map quote overflow"))?;
         if clip.width() <= 0 || clip.height() <= 0 {
@@ -266,11 +278,11 @@ impl PenStroke {
         let (mut previous, mut first) = (None, None);
         let (mut rows, mut geometry) = (0usize, 0usize);
         let (mut top, mut bottom) = (f64::INFINITY, f64::NEG_INFINITY);
-        for (index, sample) in self.samples.values.iter().enumerate() {
+        for index in 0..self.point_count() {
             if index.is_multiple_of(256) {
                 check()?;
             }
-            let point = mapped_point(sample, self.style.settings)?;
+            let point = self.point(index)?;
             if previous.is_some_and(|p| same_geometry(p, point)) {
                 continue;
             }
@@ -373,7 +385,10 @@ impl ResolvedPenStroke {
 
 impl PartialEq for PenStroke {
     fn eq(&self, other: &Self) -> bool {
-        self.style == other.style && self.samples.values == other.samples.values
+        self.style == other.style
+            && self.samples.values == other.samples.values
+            && self.framework.as_ref().map(|f| &f.values)
+                == other.framework.as_ref().map(|f| &f.values)
     }
 }
 impl PenStroke {
