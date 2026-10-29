@@ -30,11 +30,8 @@ fn fixture_installed_opaque_metadata_omission_preserves_project_and_matches_c_go
         h.get_by_label(&translate(language, "JPEG XR picture"))
             .click();
         h.run();
-        h.get_by_role_and_label(
-            egui::Role::Button,
-            &translate(language, "Choose destination…"),
-        )
-        .click();
+        h.get_by_role_and_label(egui::Role::Button, &translate(language, "Preview export"))
+            .click();
         h.run();
         let state = h.state().jxr_export.as_ref().unwrap();
         assert!(state.pending.is_none());
@@ -55,8 +52,19 @@ fn fixture_installed_opaque_metadata_omission_preserves_project_and_matches_c_go
         )
         .click();
         h.step();
+        wait_preview(&mut h, language);
+        h.get_by_role_and_label(
+            egui::Role::Button,
+            &translate(language, "Choose destination…"),
+        )
+        .click();
+        h.step();
         wait_review(&mut h, language);
         let state = h.state().jxr_export.as_ref().unwrap();
+        preview_refusals::assert_bound_preview_refusals(
+            &state.prepared.as_ref().unwrap().encoded,
+            state.capture.as_ref().unwrap().owner,
+        );
         assert_eq!(
             state
                 .prepared

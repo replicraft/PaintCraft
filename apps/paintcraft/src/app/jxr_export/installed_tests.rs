@@ -119,6 +119,34 @@ fn retire(app: &App) {
         std::thread::sleep(Duration::from_millis(1));
     }
 }
+fn wait_preview(h: &mut Harness<App>, language: Language) {
+    let until = Instant::now() + Duration::from_secs(15);
+    loop {
+        h.step();
+        let state = h
+            .state()
+            .jxr_export
+            .as_ref()
+            .unwrap_or_else(|| panic!("{}", h.state().editor.status()));
+        if state.texture.is_some()
+            && state.shown.is_some()
+            && !h
+                .get_by_role_and_label(
+                    egui::Role::Button,
+                    &translate(language, "Choose destination…"),
+                )
+                .accesskit_node()
+                .is_disabled()
+        {
+            break;
+        }
+        assert!(Instant::now() < until, "{}", h.state().editor.status());
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    h.run();
+    h.get_by_label(&translate(language, "Export preview"));
+    assert!(!h.state().jxr_export.as_ref().unwrap().reviewed);
+}
 fn wait_review(h: &mut Harness<App>, language: Language) {
     let until = Instant::now() + Duration::from_secs(15);
     loop {
@@ -156,6 +184,10 @@ fn choose(h: &mut Harness<App>, language: Language, path: &Path) {
         language,
         "Save a lossless JPEG XR picture. The picture must be entirely opaque.",
     ));
+    h.get_by_role_and_label(egui::Role::Button, &translate(language, "Preview export"))
+        .click();
+    h.step();
+    wait_preview(h, language);
     h.get_by_role_and_label(
         egui::Role::Button,
         &translate(language, "Choose destination…"),
@@ -328,3 +360,6 @@ fn copied_public_v8_runs_native_studio_export_and_own_reader() {
 
 #[path = "metadata_installed.rs"]
 mod metadata;
+
+#[path = "preview_refusals.rs"]
+mod preview_refusals;

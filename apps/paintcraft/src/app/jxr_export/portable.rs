@@ -1,6 +1,6 @@
 //! Actual installed App workflow against immutable separately C-qualified bytes.
-//! Export uses the existing source view/text confirmation; imported output has
-//! its actual decoded preview. This does not claim an encoded-export thumbnail.
+//! Export and import both require actual decoded pixels in their visible preview.
+//! Export additionally checks the decoded RGB seal against its original input.
 use super::*;
 use paintcraft_core::types::json::{self, Value};
 use sha2::{Digest, Sha256};
@@ -296,6 +296,6 @@ fn fixture_installed_app_writer_matches_c_qualified_goldens() {
         "missing executed import fixture"
     );
     println!(
-        "Portable App gate completed14export guard+8fresh golden+8legacy import scenarios; encoded-export thumbnail is outside this fixture"
+        "Portable App gate completed14export guard+8fresh golden+8legacy import scenarios; actual decoded export preview and prior-visible-frame gate verified"
     );
 }
