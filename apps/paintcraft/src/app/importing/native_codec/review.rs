@@ -9,6 +9,7 @@ pub(super) struct Review {
     shown: Option<u64>,
     consent: bool,
     pub(super) float_digest: Option<[u8; 32]>,
+    pub(super) jxl_digest: Option<[u8; 32]>,
 }
 impl Review {
     pub(super) fn new(
@@ -18,6 +19,9 @@ impl Review {
     ) -> Result<Self> {
         let mut review = Self::from_document(ctx, prepared.document(), budget)?;
         review.float_digest = prepared.float_assessment().map(|value| value.digest());
+        if prepared.jxl_integer_assessment().is_some() {
+            review.jxl_digest = Some(prepared.jxl_integer_assessment_digest()?);
+        }
         Ok(review)
     }
     fn from_document(
@@ -65,6 +69,7 @@ impl Review {
             shown: None,
             consent: false,
             float_digest: None,
+            jxl_digest: None,
         })
     }
     pub(super) fn show(&mut self, ui: &mut egui::Ui, prepared: &PreparedImport) -> bool {

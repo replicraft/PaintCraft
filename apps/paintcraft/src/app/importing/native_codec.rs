@@ -109,6 +109,37 @@ fn admit_jxr_profile(
         decision => decision.require_allowed(request),
     }
 }
+fn admit_jxl_profile(
+    frontend: registry::Frontend,
+    extension: Option<&str>,
+    codec: wire::Codec,
+) -> Result<()> {
+    let variant = match codec {
+        wire::Codec::JxlRgba8 => wire::NATIVE_JXL_IMPORT_VARIANT,
+        wire::Codec::JxlIntegerRgba8 => wire::jxl_integer::contracts::IMPORT_VARIANT,
+        _ => {
+            return Err(Error::new(
+                ErrorCode::InvariantViolation,
+                "Unexpected selected JXL codec",
+            ));
+        }
+    };
+    let mut request = Request::new(
+        frontend,
+        Operation::ImportConvert,
+        Family::Jxl,
+        Platform::Native,
+    );
+    request.extension = extension;
+    request.variant = Some(variant);
+    match registry::admission(request) {
+        registry::Decision::Allowed
+        | registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent) => {
+            Ok(())
+        }
+        other => other.require_allowed(request),
+    }
+}
 impl App {
     pub(crate) fn stage_native_jxl(&mut self, path: PathBuf) -> Result<()> {
         self.stage_native_jxl_with_launch(path, Box::new(launch))
@@ -239,7 +270,16 @@ impl App {
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
             };
-            if family == Family::Jxr {
+            if family == Family::Jxl {
+                job.prepare_jxl_family(
+                    residency,
+                    lease,
+                    &check,
+                    &|| Ok(captured),
+                    |selected| admit_jxl_profile(frontend, extension.as_deref(), selected),
+                    launch,
+                )
+            } else if family == Family::Jxr {
                 job.prepare_jxr_family(
                     residency,
                     lease,
@@ -462,6 +502,22 @@ impl App {
                             Error::new(ErrorCode::InputSchema, "Float preview consent is missing")
                         })?;
                     prepared.adopt_float(digest, &losses, &|| Ok(()), &|| Ok(owner(self)))?
+                } else if prepared.jxl_integer_assessment().is_some() {
+                    let digest = if prepared.losses().is_empty() {
+                        prepared.jxl_integer_assessment_digest()?
+                    } else {
+                        source
+                            .review
+                            .as_ref()
+                            .and_then(|review| review.jxl_digest)
+                            .ok_or_else(|| {
+                                Error::new(
+                                    ErrorCode::InputSchema,
+                                    "Integer JXL preview consent is missing",
+                                )
+                            })?
+                    };
+                    prepared.adopt_jxl_integer(digest, &losses, &|| Ok(()), &|| Ok(owner(self)))?
                 } else {
                     prepared.adopt_with_losses(&losses, &|| Ok(()), &|| Ok(owner(self)))?
                 };
@@ -522,3 +578,7 @@ mod fixture_manifest;
 
 #[path = "native_codec/float.rs"]
 mod float;
+
+#[cfg(test)]
+#[path = "native_codec/jxl_integer_installed_tests.rs"]
+mod jxl_integer_installed_tests;
