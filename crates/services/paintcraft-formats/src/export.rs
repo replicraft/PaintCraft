@@ -8,6 +8,8 @@ use crate::image::{self, ImageFormat};
 pub mod dds;
 pub mod jxr;
 pub mod metadata_policy;
+mod source_metadata_wire;
+pub use source_metadata_wire::SourceMetadataContext;
 pub mod msp;
 pub(crate) mod web_snapshot;
 

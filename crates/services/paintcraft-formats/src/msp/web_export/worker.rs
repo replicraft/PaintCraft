@@ -9,14 +9,33 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
     let result = (|| {
         let source = &bytes[REQUEST_HEADER..];
         request.check_source(source)?;
-        let doc = pcnd::read_with_layer_limit_checked(
+        // Price retained profile/control payload before the reader can allocate.
+        request.metadata.check_capture_quote(
+            source.len() as u64 + RESIDENT_BYTES_MAX + SOURCE_LIMITS.metadata,
+            WORKER_PAYLOAD_BYTES_MAX,
+        )?;
+        let metadata_budget = paintcraft_core::types::resources::SharedBudget::new(
+            request.metadata.retained_charge(),
+        );
+        let doc = pcnd::read_with_metadata_admission_checked(
             source,
             PIXELS_MAX,
             RESIDENT_BYTES_MAX / 4,
             LAYERS_MAX,
+            pcnd::MetadataAdmission {
+                bytes: u64::from(request.metadata.wire_bytes()),
+                budget: &metadata_budget,
+            },
             check,
         )?;
-        let plan = SourcePlan::capture(&doc)?;
+        let policy = request.metadata.validate_document(
+            &doc,
+            export::metadata_policy::Target::new(
+                crate::registry::Family::Msp,
+                crate::registry::Operation::ExportFlat,
+            ),
+        )?;
+        let plan = SourcePlan::capture_with_metadata_policy(&doc, policy)?;
         if plan.source.state() != request.owner.state
             || plan.size() != request.size
             || plan.source_flags() != request.source_flags
@@ -24,7 +43,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             return Err(failed("Browser MSP2 snapshot disagrees with request"));
         }
         let first_quote = std::cell::Cell::new(0u64);
-        let artifact = export::msp::prepare_document_with(
+        let artifact = export::msp::prepare_document_with_metadata_policy(
             &doc,
             Version::RowRleV2,
             &LOSSES.map(str::to_owned),
@@ -32,6 +51,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
                 let quote = export::msp::render_reservation_bytes(layout)?
                     .checked_add(resident)
                     .and_then(|n| n.checked_add(source.len() as u64))
+                    .and_then(|n| n.checked_add(request.metadata.retained_charge()))
                     // Existing parser metadata ceiling, framing/thumbnail and
                     // miscellaneous bounded codec/facade metadata payload.
                     .and_then(|n| {
@@ -62,6 +82,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             },
             |doc, check| paintcraft_render::render_cancellable(doc, check),
             check,
+            policy,
         )?;
         // Composite is freed. Actual encoded pixels reuse that RGBA allowance;
         // packed decode reuses the already-admitted packed encoding allowance.

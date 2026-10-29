@@ -90,7 +90,7 @@ fn build(
         .try_reserve_exact(length)
         .map_err(|_| resource("Browser MSP2 response allocation"))?;
     bytes.resize(RESPONSE_HEADER, 0);
-    bytes[..8].copy_from_slice(b"PCMSPR01");
+    bytes[..8].copy_from_slice(b"PCMSPR02");
     bytes[8..10].copy_from_slice(&PROTOCOL_VERSION.to_be_bytes());
     bytes[10] = status;
     bytes[12..16].copy_from_slice(&request.size.0.to_be_bytes());
@@ -110,6 +110,7 @@ fn build(
     bytes[199..199 + version.len()].copy_from_slice(version.as_bytes());
     bytes[263..265].copy_from_slice(&(detail.len() as u16).to_be_bytes());
     bytes[265] = request.source_flags;
+    bytes[288..352].copy_from_slice(&request.metadata.encode());
     bytes.extend_from_slice(encoded);
     bytes.extend_from_slice(preview);
     bytes.extend_from_slice(detail.as_bytes());
@@ -130,11 +131,11 @@ pub fn decode_response<'a>(
     }
     if bytes.len() < RESPONSE_HEADER
         || bytes.len() > RESPONSE_BYTES_MAX
-        || &bytes[..8] != b"PCMSPR01"
+        || &bytes[..8] != b"PCMSPR02"
         || bytes[8..10] != PROTOCOL_VERSION.to_be_bytes()
         || bytes[10] > 5
         || bytes[11] != 0
-        || bytes[266..RESPONSE_HEADER].iter().any(|b| *b != 0)
+        || bytes[266..288].iter().any(|b| *b != 0)
     {
         return Err(failed("Browser MSP2 response framing/reserved fields"));
     }
@@ -158,6 +159,7 @@ pub fn decode_response<'a>(
         || bytes[122..129].iter().any(|b| *b != 0)
         || bytes[194..198].iter().any(|b| *b != 0)
         || bytes[265] != request.source_flags
+        || bytes[288..352] != request.metadata.encode()
         || version_len == 0
         || version_len > 64
         || bytes[199..199 + version_len] != *version.as_bytes()
@@ -198,7 +200,9 @@ pub fn decode_response<'a>(
     if detail != 0
         || encoded == 0
         || size != preview_size(request.size)
-        || mask != request.source_flags
+        || mask > 7
+        || (mask & 3) != request.source_flags
+        || (mask & 4 != 0) != request.metadata.omitted()
     {
         return Err(failed("Browser MSP2 output profile"));
     }

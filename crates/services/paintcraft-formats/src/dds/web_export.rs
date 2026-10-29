@@ -12,8 +12,8 @@ mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
-pub const PROTOCOL_VERSION: u16 = 1;
-pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v1";
+pub const PROTOCOL_VERSION: u16 = 2;
+pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v2";
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
 pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
@@ -22,19 +22,22 @@ pub const SOURCE_BYTES_MAX: usize = 32 << 20;
 pub const ENCODED_BYTES_MAX: usize = (24 << 20) + 4096;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
-pub const REQUEST_HEADER: usize = 128;
-pub const RESPONSE_HEADER: usize = 288;
+pub const REQUEST_HEADER: usize = 192;
+pub const RESPONSE_HEADER: usize = 352;
 pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Declares known copies and the entire 256MiB Worker linear-memory ceiling.
 /// This is logical payload admission, not aggregate browser/GPU/allocator RSS.
 pub const RESERVATION_BYTES: u64 = 640 << 20;
-pub const LOSSES: [&str; 5] = [
+/// Existing isolated preparation workspace ceiling, including retained source facts.
+pub const WORKER_PAYLOAD_BYTES_MAX: u64 = 192 << 20;
+pub const LOSSES: [&str; 6] = [
     "flatten",
     "hidden-rgb",
     BLOCK_COMPRESSION_LOSS,
     MIP_HIDDEN_RGB_LOSS,
     export::dds::LINEAR_QUANTIZATION_LOSS,
+    export::metadata_policy::OMITTED_REASON,
 ];
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::InputSchema, message)
@@ -63,9 +66,30 @@ pub struct SourcePlan {
 impl SourcePlan {
     /// Inspect immutable source before service admission/snapshot allocation.
     pub fn capture(doc: &Document, options: TextureOptions) -> Result<Self> {
-        let source = SnapshotPlan::capture(doc, SOURCE_LIMITS)?;
+        Self::capture_with_metadata_policy(doc, options, export::metadata_policy::Policy::default())
+    }
+    pub fn capture_with_metadata_policy(
+        doc: &Document,
+        options: TextureOptions,
+        policy: export::metadata_policy::Policy,
+    ) -> Result<Self> {
+        let source = SnapshotPlan::capture_with_metadata_policy(
+            doc,
+            SOURCE_LIMITS,
+            policy,
+            export::metadata_policy::Target::new(
+                crate::registry::Family::Dds,
+                crate::registry::Operation::ExportFlat,
+            ),
+        )?;
         let settings = encode_settings(options, doc.canvas)?;
         Ok(Self { source, settings })
+    }
+    pub fn metadata_context(&self) -> export::SourceMetadataContext {
+        self.source.metadata_context()
+    }
+    pub fn validate_metadata_policy(&self, doc: &Document) -> Result<()> {
+        self.source.validate_policy(doc)
     }
     pub fn source_flags(&self) -> u8 {
         self.source.flags()

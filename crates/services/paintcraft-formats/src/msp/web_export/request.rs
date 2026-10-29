@@ -7,6 +7,7 @@ pub struct Header {
     pub nonce: Uuid,
     pub source_sha256: [u8; 32],
     pub source_flags: u8,
+    pub metadata: export::SourceMetadataContext,
 }
 impl Header {
     pub fn capture(plan: &SourcePlan, source: &[u8], owner: Owner, nonce: Uuid) -> Result<Self> {
@@ -24,6 +25,7 @@ impl Header {
             nonce,
             source_sha256: Sha256::digest(source).into(),
             source_flags: plan.source_flags(),
+            metadata: plan.metadata_context(),
         };
         header.validate()?;
         Ok(header)
@@ -42,6 +44,14 @@ impl Header {
         {
             return Err(resource("Browser MSP2 request profile"));
         }
+        if self.metadata.target()
+            != export::metadata_policy::Target::new(
+                crate::registry::Family::Msp,
+                crate::registry::Operation::ExportFlat,
+            )
+        {
+            return Err(invalid("Browser MSP metadata target mismatch"));
+        }
         if self.source_flags > 3 {
             return Err(invalid("Browser MSP2 source flags"));
         }
@@ -50,7 +60,7 @@ impl Header {
     }
     pub fn encode(&self) -> [u8; REQUEST_HEADER] {
         let mut bytes = [0; REQUEST_HEADER];
-        bytes[..8].copy_from_slice(b"PCMSPQ01");
+        bytes[..8].copy_from_slice(b"PCMSPQ02");
         bytes[8..10].copy_from_slice(&PROTOCOL_VERSION.to_be_bytes());
         bytes[12..16].copy_from_slice(&self.source_len.to_be_bytes());
         bytes[16..20].copy_from_slice(&self.size.0.to_be_bytes());
@@ -60,15 +70,16 @@ impl Header {
         bytes[81..113].copy_from_slice(&self.source_sha256);
         bytes[113] = 2;
         bytes[114] = self.source_flags;
+        bytes[128..192].copy_from_slice(&self.metadata.encode());
         bytes
     }
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != REQUEST_HEADER
-            || &bytes[..8] != b"PCMSPQ01"
+            || &bytes[..8] != b"PCMSPQ02"
             || bytes[8..10] != PROTOCOL_VERSION.to_be_bytes()
             || bytes[10..12] != [0, 0]
             || bytes[113] != 2
-            || bytes[115..].iter().any(|b| *b != 0)
+            || bytes[115..128].iter().any(|b| *b != 0)
         {
             return Err(invalid("Browser MSP2 request framing/reserved fields"));
         }
@@ -82,6 +93,7 @@ impl Header {
             nonce: Uuid::from_bytes(bytes[65..81].try_into().unwrap()),
             source_sha256: bytes[81..113].try_into().unwrap(),
             source_flags: bytes[114],
+            metadata: export::SourceMetadataContext::decode(&bytes[128..192])?,
         };
         header.validate()?;
         Ok(header)

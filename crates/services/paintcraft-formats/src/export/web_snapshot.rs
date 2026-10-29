@@ -1,5 +1,9 @@
 //! Shared source inventory/raw serialization for admitted browser export jobs.
 //! No codec settings, rendering, scheduling or public reader policy lives here.
+use super::{
+    SourceMetadataContext,
+    metadata_policy::{Policy, Target},
+};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 use uuid::Uuid;
@@ -22,10 +26,31 @@ pub(crate) struct Plan {
     size: (u32, u32),
     flags: u8,
     limits: Limits,
+    policy: Policy,
+    target: Target,
+    context: SourceMetadataContext,
 }
 impl Plan {
+    #[cfg(test)]
     pub fn capture(doc: &Document, limits: Limits) -> Result<Self> {
-        crate::export::require_metadata_policy(doc)?;
+        // These inventory-only tests have no metadata and grant no copy intent.
+        Self::capture_with_metadata_policy(
+            doc,
+            limits,
+            Policy::default(),
+            Target::new(
+                crate::registry::Family::Dds,
+                crate::registry::Operation::ExportFlat,
+            ),
+        )
+    }
+    pub fn capture_with_metadata_policy(
+        doc: &Document,
+        limits: Limits,
+        policy: Policy,
+        target: Target,
+    ) -> Result<Self> {
+        let context = SourceMetadataContext::capture(doc, policy, target)?;
         let resource = |detail| {
             Error::new(
                 ErrorCode::ResourceLimit,
@@ -70,7 +95,23 @@ impl Plan {
             flags: u8::from(doc.roots.len() > 1)
                 | u8::from(doc.layers.values().any(|l| l.raster.has_hidden_rgb())) << 1,
             limits,
+            policy,
+            target,
+            context,
         })
+    }
+    pub fn metadata_context(&self) -> SourceMetadataContext {
+        self.context
+    }
+    pub fn validate_policy(&self, doc: &Document) -> Result<()> {
+        self.policy.validate(doc, self.target)?;
+        if SourceMetadataContext::capture(doc, self.policy, self.target)? != self.context {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Browser export source metadata changed",
+            ));
+        }
+        Ok(())
     }
     pub fn state(&self) -> Uuid {
         self.state
@@ -89,7 +130,8 @@ impl Plan {
         doc: &Document,
         check_layout: impl FnOnce((u32, u32)) -> Result<()>,
     ) -> Result<Vec<u8>> {
-        let fresh = Self::capture(doc, self.limits)?;
+        self.validate_policy(doc)?;
+        let fresh = Self::capture_with_metadata_policy(doc, self.limits, self.policy, self.target)?;
         check_layout(doc.canvas)?;
         if fresh.document != self.document
             || fresh.state != self.state

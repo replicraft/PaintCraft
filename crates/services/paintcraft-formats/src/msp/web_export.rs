@@ -13,9 +13,9 @@ pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
 /// Exact opt-in Web Studio route; registry admission is qualified separately.
-pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v1";
-pub const PROTOCOL_VERSION: u16 = 1;
-pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v1";
+pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v2";
+pub const PROTOCOL_VERSION: u16 = 2;
+pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v2";
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
 pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
@@ -24,14 +24,18 @@ pub const SOURCE_BYTES_MAX: usize = (32 << 20) + (128 << 10);
 pub const ENCODED_BYTES_MAX: usize = 1 << 20;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
-pub const REQUEST_HEADER: usize = 128;
-pub const RESPONSE_HEADER: usize = 288;
+pub const REQUEST_HEADER: usize = 192;
+pub const RESPONSE_HEADER: usize = 352;
 pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Logical copies plus the full 256MiB Worker ceiling; not browser/GPU/RSS.
 pub const RESERVATION_BYTES: u64 = 512 << 20;
 pub const WORKER_PAYLOAD_BYTES_MAX: u64 = 160 << 20;
-pub const LOSSES: [&str; 2] = ["flatten", "hidden-rgb"];
+pub const LOSSES: [&str; 3] = [
+    "flatten",
+    "hidden-rgb",
+    export::metadata_policy::OMITTED_REASON,
+];
 pub(crate) const SOURCE_LIMITS: Limits = Limits {
     label: "Browser MSP2",
     side: 65535,
@@ -57,12 +61,32 @@ pub struct SourcePlan {
 }
 impl SourcePlan {
     pub fn capture(doc: &Document) -> Result<Self> {
-        let source = SnapshotPlan::capture(doc, SOURCE_LIMITS)?;
+        Self::capture_with_metadata_policy(doc, export::metadata_policy::Policy::default())
+    }
+    pub fn capture_with_metadata_policy(
+        doc: &Document,
+        policy: export::metadata_policy::Policy,
+    ) -> Result<Self> {
+        let source = SnapshotPlan::capture_with_metadata_policy(
+            doc,
+            SOURCE_LIMITS,
+            policy,
+            export::metadata_policy::Target::new(
+                crate::registry::Family::Msp,
+                crate::registry::Operation::ExportFlat,
+            ),
+        )?;
         RgbaLayout::new(Version::RowRleV2, doc.canvas.0, doc.canvas.1)?;
         Ok(Self { source })
     }
     pub fn size(&self) -> (u32, u32) {
         self.source.size()
+    }
+    pub fn metadata_context(&self) -> export::SourceMetadataContext {
+        self.source.metadata_context()
+    }
+    pub fn validate_metadata_policy(&self, doc: &Document) -> Result<()> {
+        self.source.validate_policy(doc)
     }
     pub fn source_flags(&self) -> u8 {
         self.source.flags()

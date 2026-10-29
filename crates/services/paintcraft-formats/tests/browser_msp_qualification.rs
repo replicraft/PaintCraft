@@ -140,7 +140,16 @@ fn emit_owned_browser_msp_specimens() {
                 wire::SourcePlan::capture(&doc).unwrap_err().code,
                 ErrorCode::ResourceLimit
             );
+            // Deliberately bypass SourcePlan only for this over-layer negative.
+            // Context describes the actual document and absence of metadata;
+            // it grants no omission authority or layer-admission exception.
+            let mut context = [0u8; 64];
+            context[..16].copy_from_slice(doc.document_id.as_bytes());
+            context[49] = 2; // Actual MSP endpoint.
+            context[50] = 1; // ExportFlat.
             wire::Header {
+                metadata: paintcraft_formats::export::SourceMetadataContext::decode(&context)
+                    .unwrap(),
                 source_len: source.len() as u32,
                 size: doc.canvas,
                 owner,
