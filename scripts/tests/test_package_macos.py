@@ -126,7 +126,7 @@ class BundleTests(unittest.TestCase):
         import codec_worker
         for target, prefix, suffix in [
             ("aarch64-apple-darwin", codec_worker.JXL_INTEGER_JXR_BUILD_PREFIX, codec_worker.JXL_INTEGER_JXR_BUILD_SUFFIX),
-            ("x86_64-apple-darwin", codec_worker.JXL_INTEGER_BUILD_PREFIX, codec_worker.JXL_INTEGER_BUILD_SUFFIX),
+            ("x86_64-apple-darwin", codec_worker.JXL_INTEGER_JXR_BUILD_PREFIX, codec_worker.JXL_INTEGER_JXR_BUILD_SUFFIX),
         ]:
             with self.subTest(target=target):
                 directory = self.root / target
@@ -144,8 +144,13 @@ class BundleTests(unittest.TestCase):
                     self.assertIn("--release", command)
                     self.assertIn("--locked", command)
                     self.assertEqual(command[command.index("--target") + 1], target)
-                    expected = "jxr-codecs,jxl-integer-codec" if target.startswith("aarch64") else "jxl-integer-codec"
-                    self.assertIn("paintcraft-codec-worker/" + expected, command)
+                    self.assertIn("paintcraft-codec-worker/jxr-codecs,jxl-integer-codec", command)
+                    current_helper = helper.read_bytes()
+                    helper.write_bytes(current_helper.replace(prefix, codec_worker.JXL_INTEGER_BUILD_PREFIX)
+                                       .replace(suffix, codec_worker.JXL_INTEGER_BUILD_SUFFIX))
+                    with self.assertRaisesRegex(ValueError, "exact target rollout"):
+                        PACK.built_binary(False, target)
+                    helper.write_bytes(current_helper)
                     helper.write_bytes(helper.read_bytes().replace(prefix, codec_worker.BUILD_PREFIX)
                                        .replace(suffix, codec_worker.BUILD_SUFFIX))
                     with self.assertRaisesRegex(ValueError, "exact target rollout"):
