@@ -77,7 +77,19 @@ pixel admission precedes index scanning.
 Bitmap ICO payloads validate actual XOR palette indices, including masked
 pixels, before invoking the selected decoder. This prevents undeclared indices
 from reaching its unchecked palette lookup. Padding bits are not pixels. These
-changes do not add BMP16 or arbitrary icon variants.
+changes do not add arbitrary icon variants.
+
+Opaque BMP16 imports separately support implicit RGB555 and explicit RGB555 or
+RGB565 bitfields in 40, 108 and 124-byte headers. Components expand to nearest
+full-range RGB8, alpha is opaque, unused RGB555 bit 15 is ignored, and original
+mask declarations remain source facts. This is packed 16-bit color, not 16-bit
+component precision. Other masks and BMP16 alpha remain refused. Eighteen
+authored specimens cover every 5/6-bit component value, row direction and odd
+padding. Exact rational pixels and independent FFmpeg output are both retained;
+FFmpeg differs by at most one RGB level. Actual desktop, host web, CLI and stdio
+MCP imports save byte-identical PCNDs for all 18 cases. This does not establish
+new browser-runtime or original-application behavior. Evidence is under
+`docs/validation/bmp16/`.
 
 ## Visible loss review
 

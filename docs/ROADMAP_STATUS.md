@@ -16,7 +16,9 @@ visible preview and explicit consent, with full host suites and actual offscreen
 screenshots. Defined partial still-GIF composition also retains palette samples
 and validates end markers. JPEG device-color conversion and all eight EXIF
 orientations, strict BMP RLE4/RLE8, icon palette bounds and all eight TIFF
-orientations now have independent pixel fixtures and consumer checks. TIFF
+orientations now have independent pixel fixtures and consumer checks. Opaque
+BMP16 RGB555/RGB565 additionally passes all four consumers against 18 independent
+fixture profiles with matching saved PCNDs. TIFF
 version 2 additionally passed actual production-browser Worker, consent and
 PCND save/reopen checks. Full metadata/index retention, color management,
 six-target stock-codec and physical qualification remain open.
