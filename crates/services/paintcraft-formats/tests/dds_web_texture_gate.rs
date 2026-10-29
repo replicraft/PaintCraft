@@ -25,7 +25,7 @@ fn web_texture_gate_is_exact_and_requires_preflight() {
                 ] {
                     for extension in [None, Some("dds"), Some("DDS"), Some(".dds"), Some("png")] {
                         let mut request = Request::new(frontend, operation, *family, platform);
-                        request.variant = Some("web-dds-texture-worker-v1");
+                        request.variant = Some(paintcraft_formats::dds::web_export::EXPORT_VARIANT);
                         request.extension = extension;
                         let expected = *family == Family::Dds
                             && frontend == Frontend::Studio
@@ -66,7 +66,8 @@ fn unrelated_variants_refuse_while_absent_options_keep_the_legacy_route() {
     request.extension = Some("dds");
     for variant in [
         "native-dds-texture-v1",
-        "web-dds-texture-worker-v2",
+        "web-dds-texture-worker-v1",
+        "web-dds-texture-worker-v3",
         "dds-guessed",
     ] {
         request.variant = Some(variant);

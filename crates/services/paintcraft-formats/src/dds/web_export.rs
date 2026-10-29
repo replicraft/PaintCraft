@@ -12,6 +12,7 @@ mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
+pub const EXPORT_VARIANT: &str = "web-dds-texture-worker-v2";
 pub const PROTOCOL_VERSION: u16 = 2;
 pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v2";
 pub const PIXELS_MAX: u64 = 4_194_304;

@@ -207,7 +207,7 @@ fn options(settings: Settings) -> dds::TextureOptions {
         },
     }
 }
-// This named variant remains denied until the separate production qualification.
+// Admit the exact metadata-bound browser contract before caller-owned preflight.
 pub(super) fn admit() -> Result<()> {
     use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform, Request};
     let mut request = Request::new(
@@ -217,7 +217,7 @@ pub(super) fn admit() -> Result<()> {
         Platform::Web,
     );
     request.extension = Some("dds");
-    request.variant = Some("web-dds-texture-worker-v1");
+    request.variant = Some(wire::EXPORT_VARIANT);
     match registry::admission(request) {
         registry::Decision::Allowed
         | registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent) => {

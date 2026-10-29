@@ -365,7 +365,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
-        && request.variant == Some("web-dds-texture-worker-v1")
+        && request.variant == Some(crate::dds::web_export::EXPORT_VARIANT)
         && request.extension.is_some_and(|extension| {
             extension
                 .trim_start_matches('.')

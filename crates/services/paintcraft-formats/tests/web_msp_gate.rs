@@ -65,8 +65,10 @@ fn generic_msp1_keeps_its_old_route_and_misspelled_worker_variants_are_denied() 
     r.family = Family::Msp;
     for variant in [
         "web-msp2-row-rle-worker-v0",
+        "web-msp2-row-rle-worker-v1",
         "native-msp2-row-rle-v1",
         "web-dds-texture-worker-v1",
+        "web-dds-texture-worker-v2",
     ] {
         r.variant = Some(variant);
         assert!(!registry::admission(r).available());
