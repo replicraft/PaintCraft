@@ -12,6 +12,13 @@ tiles store only their valid rows and columns. Hidden RGB under zero alpha is
 preserved, along with document/state IDs, layer order, names, origins, visibility,
 opacity and the optional document title.
 
+Version 2 additionally retains one immutable original-source attachment, including
+exact ICC bytes and original resolution/orientation facts. It does not assign
+that profile to working pixels. Documents without an attachment keep their exact
+version-one representation and the sizes below. This storage foundation does
+not yet attach metadata through ordinary image imports or implement color-managed
+editing; those remain separate integration work.
+
 ## Measured sizes
 
 Actual serialized 1000 × 486 test documents, in bytes:
@@ -75,7 +82,7 @@ being interruptible midway through a call; no cancellation-latency claim is made
 
 `write` and `write_to` emit deterministic raw binary blocks for portable reference
 fixtures. `write_compact`, `write_compact_to` and the checked variant emit the same
-initial version-1 format with adaptive lossless tile compression. Every normal
+version-1 or source-attached version-2 format with adaptive lossless tile compression. Every normal
 application save selects compact output. The reader accepts only this binary
 format; the unused ZIP codec and the prototype JSON/ZIP reader/writer are removed.
 
@@ -94,6 +101,15 @@ specimen and conformance digest tests use the initial binary layout.
 Raw measurements and production browser evidence are retained in ignored
 `docs/validation/ui-storage-polish-2026-10-24/`. Broader format conformance and
 representative performance studies remain roadmap work.
+
+The metadata foundation adds independent Python-serialized version-two fixtures,
+exact ICC/header/digest checks, host admission and cancellation controls, canvas
+edit/Undo/Redo save/reopen tests, and real cold-history spill/restoration checks.
+Shared snapshots retain one immutable resource charge; original source facts
+survive canvas changes. Foreign exports that cannot retain the attachment refuse
+until explicit omission/privacy policy is connected. Raw previews and independent
+palette/shape asset exports do not discard the project's retained attachment.
+See [the version-two layout and accounting limits](PCND_FORMAT.md#version-2-source-attachment).
 
 ## Production browser check
 

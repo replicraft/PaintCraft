@@ -1,9 +1,10 @@
 # PCND format
 
-This is PaintCraft's initial native project format, version 1. It describes flat
-raster documents with the `paintcraft.core/default-v1` compositing policy. All
-production readers, normal saves and raw conformance fixtures use this binary
-layout. The unreleased ZIP prototype is not a supported format.
+PCND describes flat raster documents with the `paintcraft.core/default-v1`
+compositing policy. Documents without retained source metadata use the initial
+version 1 layout. Version 2 adds one immutable original-source attachment; its
+raster semantics and tile encodings remain the same. The unreleased ZIP prototype
+is not a supported format.
 
 This adopted contract supersedes the ZIP proposal in the original implementation
 reference pack. Historical prototype benchmark artifacts retain their original
@@ -19,12 +20,13 @@ The stream consists of:
 
 | Field | Representation |
 |---|---|
-| Magic and version | Eight bytes: `50 43 4e 44 01 0d 0a 1a` |
+| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01 or 02 |
 | Document ID | 16 bytes |
 | State ID | 16 bytes |
 | Canvas width, height | Two positive integers, each at most 1,048,576 |
 | Title presence | One byte, exactly 0 or 1 |
 | Title, if present | UTF-8 string, at most 4,096 characters and 16,384 bytes |
+| Source attachment | Present exactly in version 2, as specified below |
 | Root layer count | Integer bounded by the editor's layer-count policy |
 | Layers | The following layer records, in root order |
 | Integrity digest | 32 bytes of SHA-256 over every preceding byte |
@@ -69,6 +71,69 @@ reader must be explicitly admitted. Empty title and absent title remain distinct
 Unreferenced layers, duplicate IDs, invalid flags and trailing body bytes are
 rejected. Total serialized metadata is capped at 8 MiB, and the whole decoded tile
 plan must fit the caller's admission budget before any tile is inflated.
+
+## Version 2 source attachment
+
+Version 2 has schema `paintcraft.document/v2` and requires `source-metadata.v1`
+in addition to the version-one raster, finite-canvas and flat-layer features.
+Readers that only support version 1 must refuse it. Version 1 output remains
+byte-identical when no attachment is present. A version 2 stream cannot omit its
+attachment, and unknown versions remain unsupported.
+
+The attachment starts immediately after the title. Its fixed 192-byte header
+uses big-endian integers, followed by the exact original ICC payload when present.
+All reserved bytes are zero; absent fields require their associated bytes to be
+zero. These framing rules are independent of the little-endian tile encodings.
+
+| Header offsets | Field |
+|---|---|
+| 0..8, 8..10 | ASCII `PCSMETA1`, u16 version 1 |
+| 10, 11 | Source format tag; selection-present flag |
+| 12..20, 20..52 | Original source byte count and SHA-256 |
+| 52..56 | Source selection index, zero when absent |
+| 56..72 | Four u32 values: original width/height, conversion output width/height |
+| 72, 73 | Original orientation, zero when absent; materialization policy |
+| 74, 75 | Resolution-present flag and normalized unit |
+| 76..108 | X and Y resolution: each signed i64 numerator, unsigned u64 denominator |
+| 108, 109, 110, 111 | Original resolution-unit-present flag, ICC-present flag, original sample-model tag, reserved zero |
+| 112..120, 120..152 | Exact ICC payload length and SHA-256, zero when absent |
+| 152..184 | Attachment SHA-256 |
+| 184..188, 188..192 | Original resolution-unit u32, reserved zero |
+
+All presence flags are exactly 0 or 1. Source format tags are PNG 1, JPEG 2,
+GIF 3, BMP 4, TIFF 5, WebP 6, JXL 7, AVIF 8, HEIF 9, JXR 10 and other 11.
+Sample models are unknown 0, gray 1, RGB 2, CMYK 3, YCbCr 4, YCCK 5 and indexed 6.
+Orientation policy is unchanged 0 or EXIF-materialized-v1 1. Resolution units
+are unspecified 0, inch 1, centimetre 2 and metre 3. Other enum values are invalid.
+Original source extent is positive, and all dimensions obey the canvas side
+limit. Source facts are claims captured by an importer, not authenticated by the
+attachment digest.
+
+The attachment digest hashes this header with bytes 152..184 zeroed, followed by
+the exact ICC payload. It detects mismatches rather than authenticating source
+claims. ICC interpretation is structural header/tag-bound validation; it does not
+activate a working profile or demonstrate a color transform. Original CMYK and
+other sample-model facts remain separate from the current RGBA8 pixels.
+
+Materialized orientation requires a source tag in 1..8. Conversion geometry swaps
+axes for tags 5..8; retaining the tag never instructs the renderer to rotate again.
+These dimensions describe the original conversion, so later canvas resizing does
+not overwrite them. Signed or unknown resolution declarations remain provenance;
+nonpositive values are not exposed as physical DPI. Nonzero denominators and
+unit/declaration framing are validated.
+
+The fixed header and ICC payload count toward the existing aggregate 8 MiB
+semantic metadata limit. Caller-owned admission can impose a lower attachment
+allowance. Already-read prelude/title bytes reduce the remaining allowance before
+profile capture. Profiles retain an ownership lease across shared snapshots and
+history; this is logical resource accounting, not allocator or RSS interception.
+Default reader wrappers bound each read, rather than aggregate application tabs.
+
+The independent Python writer in `scripts/pcnd_source_metadata_reference.py`
+serializes three version-two specimens directly; Rust reads and raw writes agree
+byte-for-byte. Their existing version-one specimen is unchanged. See
+`crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/` for the source
+facts, original profile identity and exact scope.
 
 The writer streams the header, metadata and tile payloads into a hashing sink,
 then writes the digest. It never publishes a partially failed sink as a saved

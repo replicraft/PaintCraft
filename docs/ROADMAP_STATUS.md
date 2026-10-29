@@ -23,6 +23,16 @@ version 2 additionally passed actual production-browser Worker, consent and
 PCND save/reopen checks. Full metadata/index retention, color management,
 six-target stock-codec and physical qualification remain open.
 
+[Original-source metadata storage](SOURCE_METADATA.md) now retains immutable ICC
+bytes, exact signed resolution and orientation facts through history and PCND2.
+Independent Python serialization matches raw output, and real canvas edits,
+Undo/Redo, cold spill/restoration, admission and export refusal controls pass.
+This is a storage foundation: ordinary image importers do not yet attach those
+facts, original ICC is not activated for working pixels, and aggregate host
+resource admission, explicit export privacy choices, palette/index retention and
+color-managed conversion remain unfinished. Documents without attachments keep
+their exact PCND1 representation.
+
 [PaintCraft 0.1.1 release validation](releases/v0.1.1-validation.md) now records
 successful native desktop/CLI builds, finite helper and installed-consumer checks,
 and packaging on Windows, macOS and Linux for x64 and ARM64. All 24 downloads and

@@ -33,6 +33,10 @@ Dated V7/V8 evidence below retains its original artifact and qualification scope
 Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XR, HEIF, AVIF and HDR/EXR conversions therefore do not imply browser readers; JPEG XL has its own explicitly qualified browser import. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
 
 - PCND is the native layered project format and the preserving Save destination.
+  Its [source metadata foundation](SOURCE_METADATA.md) retains explicit immutable
+  attachments in PCND2, with byte-compatible PCND1 for documents without them.
+  Ordinary raster importer adoption, output privacy choices and CMS remain open;
+  incompatible foreign exports refuse attached metadata instead of dropping it.
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
 - Studio also opens TGA, still WebP and admitted 2D DDS top-mip images with loss review when lower levels are omitted, and opens the admitted historical PDN subset as a converted copy.
 - Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, historical monochrome MSP, selected DCX pages, OpenRaster layers with a limited neutral-group conversion and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
