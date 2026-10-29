@@ -83,7 +83,10 @@ impl Source {
     pub fn proposed_losses(&self) -> Vec<String> {
         match self {
             Self::Jpeg(s) => s.losses(),
-            Self::Bmp(s) => s.losses().into_iter().map(str::to_owned).collect(),
+            Self::Bmp(s) => image::bmp_retention::required_acknowledgements(
+                s,
+                s.losses().into_iter().map(str::to_owned).collect(),
+            ),
             Self::Png(s) => {
                 let mut result = Vec::new();
                 if s.bit_depth == 16 {

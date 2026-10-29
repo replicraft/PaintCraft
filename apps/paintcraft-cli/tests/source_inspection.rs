@@ -79,7 +79,7 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
         .unwrap();
     assert_eq!(tool["annotations"]["readOnlyHint"], true);
     assert_eq!(tool["annotations"]["destructiveHint"], false);
-    let cases: [(&str, &str, &[&str]); 11] = [
+    let cases: [(&str, &str, &[&str]); 14] = [
         (
             "raster-metadata-fixtures/indexed4-trns.png",
             "png",
@@ -107,7 +107,10 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
         (
             "bmp-rle-fixtures/rle8-padding.bmp",
             "bmp",
-            &["palette-indices-expanded", "resolution-metadata-ignored"],
+            &[
+                "palette-indices-expanded",
+                "resolution-source-retained-inactive",
+            ],
         ),
         (
             "bmp-rle-fixtures/rle4-size-zero.bmp",
@@ -119,12 +122,33 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
             "bmp",
             &[
                 "palette-indices-expanded",
-                "icc-profile-ignored",
+                "icc-source-retained-unapplied",
                 "bmp-color-metadata-ignored",
             ],
         ),
         ("bmp16-fixtures/masks565-v40-bottom.bmp", "bmp", &[]),
         ("bmp16-fixtures/rgb555-v40-top.bmp", "bmp", &[]),
+        (
+            "bmp-retention-fixtures/rgb24-v124-density-extremes.bmp",
+            "bmp",
+            &[
+                "bmp-color-metadata-ignored",
+                "resolution-source-retained-inactive",
+            ],
+        ),
+        (
+            "bmp-retention-fixtures/rgb24-v124-profile-only.bmp",
+            "bmp",
+            &[
+                "bmp-color-metadata-ignored",
+                "icc-source-retained-unapplied",
+            ],
+        ),
+        (
+            "bmp-retention-fixtures/rgb24-v40-no-metadata.bmp",
+            "bmp",
+            &[],
+        ),
         (
             "jpeg-fixtures/unmarked-cmyk-orientation-6-II.jpg",
             "jpeg",
@@ -167,6 +191,35 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
                 assert!(
                     policy.is_null(),
                     "No attachment is proposed without ICC/pHYs"
+                );
+            }
+        } else if format == "bmp" {
+            assert_eq!(
+                cli["proposed_conversion"]["identity_profile"],
+                "bmp-source-profile-resolution-rgba8-v1"
+            );
+            let policy = &cli["proposed_conversion"]["source_attachment_policy"];
+            let icc = !cli["facts"]["icc"].is_null();
+            let density =
+                cli["facts"]["resolution_raw"][0] != 0 || cli["facts"]["resolution_raw"][1] != 0;
+            if icc || density {
+                assert_eq!(policy["icc_profile_bytes"], icc);
+                assert_eq!(policy["resolution_values"], density);
+                assert_eq!(policy["requires_attachment_admission"], true);
+                assert_eq!(policy["requires_final_import_validation"], true);
+                assert_eq!(policy["color_management_applied"], false);
+                assert_eq!(policy["active_print_settings"], false);
+            } else {
+                assert!(
+                    policy.is_null(),
+                    "Zero density and absent ICC do not propose fake metadata"
+                );
+            }
+            if name.contains("density-extremes") {
+                assert_eq!(cli["facts"]["resolution_raw"], json!([i32::MIN, i32::MAX]));
+                assert!(
+                    cli["facts"]["resolution"].is_null(),
+                    "Signed source density is not positive physical DPI"
                 );
             }
         } else {

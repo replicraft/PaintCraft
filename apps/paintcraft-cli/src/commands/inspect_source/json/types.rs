@@ -159,7 +159,7 @@ pub(super) struct Limits {
 pub(super) struct SourceAttachmentPolicy {
     /// Proposed exact original bytes, never an applied working profile.
     pub icc_profile_bytes: bool,
-    /// Proposed original pHYs values, never active print settings.
+    /// Proposed original source density values, never active print settings.
     pub resolution_values: bool,
     pub color_management_applied: bool,
     pub active_print_settings: bool,

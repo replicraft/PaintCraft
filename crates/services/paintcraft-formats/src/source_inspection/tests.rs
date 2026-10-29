@@ -126,6 +126,27 @@ fn known_header_losses_match_actual_conversion_and_metadata_limits_only_lower_de
                 descriptor.icc.is_some()
             );
             retained.image
+        } else if let Source::Bmp(descriptor) = &source {
+            let budget = paintcraft_core::types::resources::SharedBudget::new(
+                paintcraft_document::source_metadata::BYTES_MAX,
+            );
+            let retained = image::bmp_retention::decode(
+                &bytes,
+                image::DECODE_PIXELS_MAX,
+                crate::pcnd::MetadataAdmission {
+                    bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                    budget: &budget,
+                },
+                &|| Ok(()),
+            )
+            .unwrap();
+            let legacy = image::decode(&bytes).unwrap();
+            assert_eq!(legacy.rgba, retained.image.rgba, "{name}");
+            assert_eq!(
+                legacy.losses.iter().any(|s| s == "icc-profile-ignored"),
+                descriptor.icc.is_some()
+            );
+            retained.image
         } else {
             image::decode(&bytes).unwrap()
         };
@@ -165,6 +186,60 @@ fn known_header_losses_match_actual_conversion_and_metadata_limits_only_lower_de
             "{name}"
         );
     }
+}
+
+#[test]
+fn bmp_signed_density_and_original_profile_proposals_are_not_pixel_validity_or_authority() {
+    let manifest = fixture("bmp-retention-fixtures/oracle.json");
+    for row in paintcraft_core::types::json::parse(&manifest)
+        .unwrap()
+        .get("fixtures")
+        .unwrap()
+        .as_array()
+        .unwrap()
+    {
+        let name = row.get("file").unwrap().as_str().unwrap();
+        let bytes = fixture(&format!("bmp-retention-fixtures/{name}"));
+        let inspected = inspect(&bytes, Limits::default(), &|| Ok(())).unwrap();
+        let budget = paintcraft_core::types::resources::SharedBudget::new(
+            paintcraft_document::source_metadata::BYTES_MAX,
+        );
+        let actual = image::bmp_retention::decode(
+            &bytes,
+            image::DECODE_PIXELS_MAX,
+            crate::pcnd::MetadataAdmission {
+                bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                budget: &budget,
+            },
+            &|| Ok(()),
+        )
+        .unwrap();
+        assert_eq!(inspected.proposed_losses(), actual.image.losses, "{name}");
+    }
+    let mut bytes = fixture("bmp-retention-fixtures/indexed8-v124-profile-reserved.bmp");
+    let at = u32::from_le_bytes(bytes[10..14].try_into().unwrap()) as usize;
+    bytes[at] = 2;
+    let source = inspect(&bytes, Limits::default(), &|| Ok(())).unwrap();
+    assert!(
+        source
+            .proposed_losses()
+            .iter()
+            .any(|s| s == image::bmp_retention::ICC_RETAINED_UNAPPLIED)
+    );
+    let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+    assert!(
+        image::bmp_retention::decode(
+            &bytes,
+            image::DECODE_PIXELS_MAX,
+            crate::pcnd::MetadataAdmission {
+                bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                budget: &budget
+            },
+            &|| Ok(())
+        )
+        .is_err()
+    );
+    assert_eq!(budget.usage().reserved, 0);
 }
 #[test]
 fn source_inspection_is_not_a_pixel_validity_or_import_authorization_proof() {

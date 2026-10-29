@@ -252,7 +252,7 @@ pub(super) fn report(source: &Source, limits: Limits) -> Result<Value> {
         ),
         Source::Bmp(_) => (
             "stored bitmap rows normalized to top-down; no EXIF transform",
-            None,
+            Some(paintcraft_formats::image::bmp_retention::IDENTITY_PROFILE),
             "expand-to-rgba8",
         ),
     };
@@ -295,6 +295,16 @@ pub(super) fn report(source: &Source, limits: Limits) -> Result<Value> {
                     Some(dto::SourceAttachmentPolicy {
                         icc_profile_bytes: source.icc.is_some(),
                         resolution_values: source.resolution.is_some(),
+                        color_management_applied: false,
+                        active_print_settings: false,
+                        requires_attachment_admission: true,
+                        requires_final_import_validation: true,
+                    })
+                }
+                Source::Bmp(source) if source.icc.is_some() || source.resolution_raw != [0, 0] => {
+                    Some(dto::SourceAttachmentPolicy {
+                        icc_profile_bytes: source.icc.is_some(),
+                        resolution_values: source.resolution_raw != [0, 0],
                         color_management_applied: false,
                         active_print_settings: false,
                         requires_attachment_admission: true,
