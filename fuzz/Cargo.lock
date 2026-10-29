@@ -895,6 +895,7 @@ dependencies = [
  "crc32fast",
  "dds",
  "flate2",
+ "gif",
  "icns",
  "ico",
  "image",
@@ -908,6 +909,7 @@ dependencies = [
  "paintcraft-raster",
  "paintcraft-render",
  "pcx",
+ "png",
  "qoi",
  "quick-xml",
  "resvg",
@@ -918,6 +920,7 @@ dependencies = [
  "zerocopy",
  "zstd",
  "zune-core",
+ "zune-jpeg",
  "zune-jpegxl",
 ]
 

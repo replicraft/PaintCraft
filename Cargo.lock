@@ -3590,6 +3590,7 @@ dependencies = [
  "zerocopy",
  "zstd",
  "zune-core",
+ "zune-jpeg",
  "zune-jpegxl",
 ]
 

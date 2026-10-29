@@ -18,6 +18,7 @@ pub use extended::ENCODE_PIXELS_MAX as EXTENDED_ENCODE_PIXELS_MAX;
 pub(crate) use extended::inspect_pcx;
 pub mod bmp_metadata;
 mod gif;
+pub mod jpeg;
 mod png_indexed;
 pub mod png_metadata;
 pub mod raster_source_metadata;
@@ -32,7 +33,7 @@ pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
 /// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 22] = [
+pub const KNOWN_IMPORT_LOSSES: [&str; 25] = [
     "dib-alpha-unspecified",
     "dib-alpha-mode-unspecified",
     "dib-metadata-ignored",
@@ -44,6 +45,9 @@ pub const KNOWN_IMPORT_LOSSES: [&str; 22] = [
     "bmp-color-metadata-ignored",
     "bmp-metadata-ignored",
     "resolution-metadata-ignored",
+    "jpeg-metadata-ignored",
+    "jpeg-cmyk-to-rgb",
+    "jpeg-color-model-assumed",
     "animation-first-frame-only",
     "palette-indices-expanded",
     "gif-metadata-ignored",
@@ -345,6 +349,16 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
     }
     if format == ImageFormat::Gif {
         return gif::decode(bytes, pixels);
+    }
+    if format == ImageFormat::Jpeg {
+        let converted = jpeg::decode(bytes, pixels, &|| Ok(()))?;
+        return Ok(Decoded {
+            format,
+            width: converted.width,
+            height: converted.height,
+            rgba: converted.rgba,
+            losses: converted.losses,
+        });
     }
     if format == ImageFormat::Png {
         let source = png_metadata::inspect(bytes, pixels, &|| Ok(()))?;

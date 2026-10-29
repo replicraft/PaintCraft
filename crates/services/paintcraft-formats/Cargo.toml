@@ -42,6 +42,7 @@ dds.workspace = true
 jxl.workspace = true
 zune-jpegxl.workspace = true
 zune-core.workspace = true
+zune-jpeg.workspace = true
 ruzstd.workspace = true
 lz4_flex.workspace = true
 zerocopy.workspace = true
