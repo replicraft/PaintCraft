@@ -30,6 +30,7 @@ pub struct AdoptedImport {
     pub avif_assessment: Option<crate::avif::ImportAssessment>,
     pub float_assessment: Option<Arc<crate::float_import::WorkerAssessment>>,
     pub avif_sdr_assessment: Option<crate::avif::sdr::ImportAssessment>,
+    pub jxl_integer_assessment: Option<crate::codec_worker::jxl_integer::Report>,
 }
 #[derive(Debug)]
 pub(super) enum PreparedProfile {
@@ -38,6 +39,7 @@ pub(super) enum PreparedProfile {
         assessment: Arc<crate::float_import::WorkerAssessment>,
     },
     Jxl,
+    JxlInteger(crate::codec_worker::jxl_integer::Report),
     Jxr(crate::jxr::ImportAssessment),
     JxrWriter(crate::jxr::ImportAssessment),
     Heif(crate::heif::ImportAssessment),
@@ -57,15 +59,19 @@ impl Selection {
 impl PreparedProfile {
     fn jxr(&self) -> Option<&crate::jxr::ImportAssessment> {
         match self {
-            Self::Jxl | Self::Heif(_) | Self::Avif(_) | Self::AvifSdr(_) | Self::Float { .. } => {
-                None
-            }
+            Self::Jxl
+            | Self::JxlInteger(_)
+            | Self::Heif(_)
+            | Self::Avif(_)
+            | Self::AvifSdr(_)
+            | Self::Float { .. } => None,
             Self::Jxr(assessment) | Self::JxrWriter(assessment) => Some(assessment),
         }
     }
     fn losses(&self) -> &[&'static str] {
         match self {
             Self::Jxl => &[],
+            Self::JxlInteger(report) => report.losses(),
             Self::Float { assessment, .. } => assessment.assessment().losses(),
             Self::Jxr(assessment) | Self::JxrWriter(assessment) => assessment.losses(),
             Self::Heif(assessment) => assessment.losses(),
@@ -76,6 +82,7 @@ impl PreparedProfile {
     fn require_losses(&self, allowed: &[String]) -> Result<()> {
         match self {
             Self::Jxl => {}
+            Self::JxlInteger(report) => jxl_integer::require_losses(report, allowed)?,
             Self::Float { assessment, .. } => assessment.assessment().require_losses(allowed)?,
             Self::Jxr(assessment) | Self::JxrWriter(assessment) => {
                 assessment.require_losses(allowed)?
@@ -201,6 +208,7 @@ impl Job {
         if !matches!(
             self.codec,
             Codec::JxlRgba8
+                | Codec::JxlIntegerRgba8
                 | Codec::JxrRgb8
                 | Codec::HeifSrgb8
                 | Codec::AvifSrgb8
@@ -238,6 +246,13 @@ impl Job {
                 };
                 let profile = match request.header.codec {
                     Codec::JxlRgba8 => PreparedProfile::Jxl,
+                    Codec::JxlIntegerRgba8 => {
+                        let report = frame
+                            .jxl_report
+                            .ok_or_else(|| invalid("Integer JXL result lacks its assessment"))?;
+                        report.validate_payload(request.header, frame.width, frame.height, rgba)?;
+                        PreparedProfile::JxlInteger(report)
+                    }
                     Codec::JxrRgb8 => {
                         let assessment = match selected {
                             Selection::Jxr(value) => value.assessment().clone(),
@@ -417,6 +432,9 @@ impl PreparedImport {
     pub fn decoder_profile(&self) -> &'static str {
         match self.profile {
             PreparedProfile::Jxl => NATIVE_JXL_IMPORT_VARIANT,
+            PreparedProfile::JxlInteger(_) => {
+                crate::codec_worker::jxl_integer::contracts::IMPORT_VARIANT
+            }
             PreparedProfile::Float {
                 codec: Codec::HdrSdr8,
                 ..
@@ -454,9 +472,9 @@ impl PreparedImport {
         host_check: &dyn Fn() -> Result<()>,
         current_owner: &dyn Fn() -> Result<Owner>,
     ) -> Result<AdoptedImport> {
-        if self.float_assessment().is_some() {
+        if self.float_assessment().is_some() || self.jxl_integer_assessment().is_some() {
             return Err(unsupported(
-                "Float adoption requires assessment digest and losses",
+                "Assessed import adoption requires its assessment digest and losses",
             ));
         }
         self.adopt_checked(allowed, host_check, current_owner)
@@ -488,9 +506,12 @@ impl PreparedImport {
             PreparedProfile::Float { assessment, .. } => Some(assessment.clone()),
             _ => None,
         };
+        let jxl_integer_assessment = self.jxl_integer_assessment().copied();
         let (jxr_assessment, heif_assessment, avif_assessment, avif_sdr_assessment) =
             match self.profile {
-                PreparedProfile::Jxl | PreparedProfile::Float { .. } => (None, None, None, None),
+                PreparedProfile::Jxl
+                | PreparedProfile::JxlInteger(_)
+                | PreparedProfile::Float { .. } => (None, None, None, None),
                 PreparedProfile::Jxr(assessment) | PreparedProfile::JxrWriter(assessment) => {
                     (Some(assessment), None, None, None)
                 }
@@ -508,6 +529,7 @@ impl PreparedImport {
             avif_assessment,
             avif_sdr_assessment,
             float_assessment,
+            jxl_integer_assessment,
         })
     }
 }
@@ -515,6 +537,7 @@ impl PreparedImport {
 mod family_tests;
 #[cfg(test)]
 mod heif_tests;
+mod jxl_integer;
 #[cfg(test)]
 mod sdr_installed_tests;
 #[cfg(test)]
