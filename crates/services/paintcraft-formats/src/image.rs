@@ -17,6 +17,7 @@ mod specialist;
 pub use extended::ENCODE_PIXELS_MAX as EXTENDED_ENCODE_PIXELS_MAX;
 pub(crate) use extended::inspect_pcx;
 pub mod bmp_metadata;
+pub mod bmp_retention;
 mod bmp_rle;
 mod gif;
 mod identity;
@@ -31,6 +32,7 @@ pub mod png_retention;
 pub mod raster_source_metadata;
 #[cfg(test)]
 mod raster_tests;
+mod retained_raster;
 mod tga;
 pub(crate) mod tiff;
 mod webp;
