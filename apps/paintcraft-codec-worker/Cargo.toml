@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-codec-worker"
-description = "Single-request isolated native decoder helper"
+description = "Single-request isolated native image codec helper"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,12 +8,12 @@ license-file.workspace = true
 publish.workspace = true
 
 [features]
-default = ["jxl-integer-codec"]
+default = ["jxr-codecs", "jxl-integer-codec"]
 # Qualified unsigned 8/16-bit JPEG XL import, including the float-codec baseline.
 jxl-integer-codec = ["float-codecs"]
-# Private fresh-encode qualification only; never a default build capability.
+# Encode implementation; jxr-codecs selects the public writer contract.
 jxr-encode = ["float-codecs"]
-# Target-selected JPEG XR writer inventory; enabled only on Apple-silicon macOS.
+# Qualified JPEG XR writer inventory on all six supported native targets.
 jxr-codecs = ["jxr-encode"]
 float-codecs = ["avif-sdr-codec", "paintcraft-formats/hdr-codec", "paintcraft-formats/exr-codec"]
 avif-codec = []

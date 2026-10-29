@@ -17,16 +17,14 @@ import package_release as release
 
 
 class PolicyTests(unittest.TestCase):
-    def test_all_targets_enable_integer_jxl_and_only_mac_arm_keeps_the_jxr_writer(self):
+    def test_all_six_qualified_targets_and_default_enable_integer_jxl_and_jxr_writer(self):
         manifest = tomllib.loads((release.ROOT / "apps/paintcraft-codec-worker/Cargo.toml").read_text())
-        self.assertEqual(manifest["features"]["default"], ["jxl-integer-codec"])
+        self.assertEqual(manifest["features"]["default"], ["jxr-codecs", "jxl-integer-codec"])
         self.assertEqual(set(policy.ROLLOUT), set(release.TARGETS))
         for target in release.TARGETS:
-            expected = (("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE)
-                        if target == "aarch64-apple-darwin"
-                        else ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE))
+            expected = ("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE)
             self.assertEqual(policy.selection(target), expected)
-            self.assertEqual(policy.selector(target), "v10" if target == "aarch64-apple-darwin" else "v9")
+            self.assertEqual(policy.selector(target), "v10")
         with self.assertRaises(ValueError):
             policy.selection("unknown-or-private")
 

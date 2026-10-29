@@ -7,15 +7,16 @@ import subprocess
 import codec_worker
 import package_release as release
 
-# Integer JPEG XL is qualified on all six targets. Keep JPEG XR writing on
-# Apple-silicon macOS, preserving the existing writer rollout boundary.
+# Integer JPEG XL and the installed JPEG XR writer are qualified on all six
+# targets. Keep this finite table explicit so new targets require qualification.
+V10_SELECTION = ("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE)
 ROLLOUT = {
-    "x86_64-pc-windows-msvc": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
-    "aarch64-pc-windows-msvc": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
-    "aarch64-apple-darwin": ("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE),
-    "x86_64-apple-darwin": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
-    "x86_64-unknown-linux-gnu": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
-    "aarch64-unknown-linux-gnu": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
+    "x86_64-pc-windows-msvc": V10_SELECTION,
+    "aarch64-pc-windows-msvc": V10_SELECTION,
+    "aarch64-apple-darwin": V10_SELECTION,
+    "x86_64-apple-darwin": V10_SELECTION,
+    "x86_64-unknown-linux-gnu": V10_SELECTION,
+    "aarch64-unknown-linux-gnu": V10_SELECTION,
 }
 
 
