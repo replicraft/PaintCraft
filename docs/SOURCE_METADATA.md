@@ -67,7 +67,7 @@ prelude/title bytes before admitting/copying the profile, and accept a lower
 caller-owned `pcnd::MetadataAdmission` limit/budget. Failure during later layer
 admission releases the attachment lease.
 
-Legacy read wrappers create a per-read bounded realm. Application PCND loads and
+Legacy PCND read wrappers create a per-read bounded realm. Application PCND loads and
 PNG imports instead pass their host's shared resource realm. Browser pending
 loads, parked interfaces and retained snapshots share one 64 MiB logical metadata
 allowance; import previews use that allowance too. This is accounting for these
@@ -137,3 +137,18 @@ downloads, title and clean state. The first ICO attempt exposed incorrect
 forwarding of the metadata receipt as an ordinary loss code; that failure is
 retained separately, and the corrected flow has an actual encoding regression.
 These checks cover local Chrome, not other browsers or physical devices.
+
+Native recovery discovery, checkpoint validation and claims now use the caller's
+shared attachment allowance; legacy recovery wrappers use the process default.
+Quota failures and cancellation preserve recovery offers and files. A future
+PCND version is retained without falling back to an older snapshot of that
+session; genuine corruption retains the existing fallback behavior. Cleanup is
+deferred until validation and the final cancellation check succeed. Discovery
+failure does not prevent protecting the current document with its own autosave.
+
+Recovery also preserves pre-existing private text and gestures until claim and
+capacity admission succeed. Later edits invalidate asynchronous adoption. A
+successful Studio recovery finalizes the old document's text once, retaining
+Undo, before parking it in its tab. The two causal denial regressions and 40
+local desktop controls, 42 recovery-format controls and strict lint checks pass.
+These checks do not qualify power-loss behavior on every filesystem or target.
