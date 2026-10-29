@@ -67,6 +67,37 @@ Available tools:
 - `inspect_shapes`: inspect a CSH custom shape library, including exact bounds and ordered path records.
 - `export_shapes`: write a fresh CSH resource copy without editing or adopting the open document.
 
+### JPEG background colors
+
+JPEG exports composite transparency over an explicit RGB background. White is
+the default. Desktop and web export dialogs expose the background color picker;
+CLI uses `--jpeg-matte RRGGBB`, and MCP uses `jpeg_matte`. A leading `#` is also
+accepted. The value must contain exactly six RGB hexadecimal digits and is valid
+only for JPEG output.
+
+```sh
+paintcraft-cli render source.pcnd -o picture.jpg --quality 90 --jpeg-matte 20A0E0 --allow-loss flatten,hidden-rgb,lossy-jpeg,alpha-discarded
+```
+
+```json
+{"name":"export_image","arguments":{"path":"/absolute/path/picture.jpg","jpeg_matte":"20A0E0","allow_losses":["flatten","hidden-rgb","lossy-jpeg","alpha-discarded"]}}
+```
+
+These examples assume an existing project without a retained source attachment.
+The background option preserves existing conversion-loss requirements. Failed
+format, color or consent checks preserve the destination and painting. MCP checks
+request cancellation during rendering, RGB preparation, staged writes and the
+existing post-stage publication barrier. Opaque JPEG compression is checked
+before and after the call; this does not provide instantaneous preemption or
+filesystem compare-and-swap.
+
+Local tests cover all alpha values, unchanged white defaults, seven-language UI
+controls, real CLI/MCP exports and cancellation. Actual Chrome numeric RGB edits
+and downloads match independently decoded CLI output, with the project bytes,
+title and dirty state unchanged. Receipts and excluded calibration attempts are
+under `docs/validation/jpeg-matte/`; this does not qualify every browser or JPEG
+profile.
+
 ### Read-only picture inspection
 
 `inspect_source` works without an open document. It returns

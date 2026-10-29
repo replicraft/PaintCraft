@@ -33,6 +33,13 @@ resource admission, explicit export privacy choices, palette/index retention and
 color-managed conversion remain unfinished. Documents without attachments keep
 their exact PCND1 representation.
 
+JPEG export now has an explicit RGB background through desktop/browser controls,
+CLI and MCP, preserving white by default and existing loss consent. Exact alpha
+preparation, independent JPEG decoding and real Chrome numeric color edits and
+downloads pass. MCP request cancellation reaches rendering, RGB preparation,
+staged writes and the existing publication checkpoint. Opaque codec preemption
+and arbitrary-browser qualification remain separate; see [JPEG export controls](MCP.md#jpeg-background-colors).
+
 [PaintCraft 0.1.1 release validation](releases/v0.1.1-validation.md) now records
 successful native desktop/CLI builds, finite helper and installed-consumer checks,
 and packaging on Windows, macOS and Linux for x64 and ARM64. All 24 downloads and
