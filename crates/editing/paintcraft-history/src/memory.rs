@@ -7,6 +7,9 @@ pub struct MemoryUsage {
     /// Unique declared mask storage retained by hot or cold selection snapshots.
     /// Masks currently stay resident when raster history is packed or spilled.
     pub selection_bytes: u64,
+    /// Unique conservative source attachment storage retained by hot/cold
+    /// snapshots; exact ICC payloads remain resident during tile spilling.
+    pub source_metadata_bytes: u64,
     /// Known decoded allocations held beyond hot entries/raw payloads. This can
     /// include the active restored document and external render/save readers.
     pub leased_decoded_bytes: u64,
@@ -24,11 +27,16 @@ impl MemoryUsage {
     pub fn retained_weight(self) -> u64 {
         self.decoded_bytes - self.leased_decoded_bytes
             + self.selection_bytes
+            + self.source_metadata_bytes
             + self.encoded_bytes
             + self.metadata_weight
     }
     pub fn known_weight(self) -> u64 {
-        self.decoded_bytes + self.selection_bytes + self.encoded_bytes + self.metadata_weight
+        self.decoded_bytes
+            + self.selection_bytes
+            + self.source_metadata_bytes
+            + self.encoded_bytes
+            + self.metadata_weight
     }
 }
 impl History {
@@ -38,6 +46,7 @@ impl History {
         let mut docs = HashSet::new();
         let mut blobs = HashSet::new();
         let mut masks = HashSet::new();
+        let mut source_metadata = HashSet::new();
         let mut usage = MemoryUsage {
             metadata_weight: (self.entries.capacity() * size_of::<Entry>()
                 + self.memo.capacity()
@@ -46,6 +55,15 @@ impl History {
             ..Default::default()
         };
         for entry in &self.entries {
+            let attachment = match &entry.storage {
+                Storage::Hot(snapshot) => snapshot.document.source_metadata.as_ref(),
+                Storage::Cold(packed) => packed.source_metadata(),
+            };
+            if let Some((identity, bytes)) = attachment.map(|m| m.storage_usage())
+                && source_metadata.insert(identity)
+            {
+                usage.source_metadata_bytes += bytes;
+            }
             let selection = match &entry.storage {
                 Storage::Hot(snapshot) => &snapshot.selection,
                 Storage::Cold(packed) => &packed.selection,

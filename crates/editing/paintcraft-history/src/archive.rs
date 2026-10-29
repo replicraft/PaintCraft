@@ -25,6 +25,7 @@ pub(crate) struct Packed {
     roots: Vec<Uuid>,
     layers: Vec<SavedLayer>,
     title: Option<String>,
+    source_metadata: Option<paintcraft_document::SourceMetadata>,
     pub selection: Selection,
     pub history_id: Option<Uuid>,
     decoded_doc: Mutex<Weak<Document>>,
@@ -59,6 +60,9 @@ impl Transfer<'_> {
     }
 }
 impl Packed {
+    pub(crate) fn source_metadata(&self) -> Option<&paintcraft_document::SourceMetadata> {
+        self.source_metadata.as_ref()
+    }
     pub fn transferred(
         &self,
         work: &mut Transfer<'_>,
@@ -112,6 +116,7 @@ impl Packed {
             roots: self.roots.clone(),
             layers,
             title: self.title.clone(),
+            source_metadata: self.source_metadata.clone(),
             selection: self.selection.clone(),
             history_id: self.history_id,
             decoded_doc: Mutex::new(
@@ -204,6 +209,7 @@ impl Packed {
             roots: doc.roots.clone(),
             layers,
             title: doc.title.clone(),
+            source_metadata: doc.source_metadata.clone(),
             selection: snapshot.selection.clone(),
             history_id: snapshot.history_id,
             decoded_doc: Mutex::new(Arc::downgrade(&snapshot.document)),
@@ -257,6 +263,7 @@ impl Packed {
             roots: self.roots.clone(),
             layers,
             title: self.title.clone(),
+            source_metadata: self.source_metadata.clone(),
         });
         check()?;
         *self.decoded_doc.lock().unwrap_or_else(|p| p.into_inner()) = Arc::downgrade(&document);

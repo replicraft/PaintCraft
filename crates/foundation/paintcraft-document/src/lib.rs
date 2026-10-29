@@ -16,7 +16,9 @@ pub use paintcraft_core::types::policy::COORD_ABS_MAX;
 pub use paintcraft_core::types::policy::LAYER_COUNT_MAX;
 pub use paintcraft_core::types::policy::POLICY;
 mod conversion_identity;
+pub mod source_metadata;
 pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
+pub use source_metadata::SourceMetadata;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Layer {
@@ -51,6 +53,8 @@ pub struct Document {
     pub roots: Vec<Uuid>,
     pub layers: HashMap<Uuid, Layer>,
     pub title: Option<String>,
+    /// Original single-source provenance; never an active working profile.
+    pub source_metadata: Option<SourceMetadata>,
 }
 
 impl Document {
@@ -73,10 +77,37 @@ impl Document {
             && self.canvas == other.canvas
             && self.roots == other.roots
             && self.title == other.title
+            && self.source_metadata == other.source_metadata
             && self
                 .roots
                 .iter()
                 .all(|id| self.layers[id] == other.layers[id])
+    }
+
+    /// A semantic attachment change creates a private new state. The original
+    /// document identity remains stable; history can restore either snapshot.
+    pub fn with_source_metadata_checked(
+        &self,
+        metadata: Option<SourceMetadata>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        check()?;
+        if self.source_metadata == metadata {
+            return Ok(self.clone());
+        }
+        let digest = metadata
+            .as_ref()
+            .map_or_else(|| "none".to_owned(), |m| hex(&m.digest()));
+        let mut document = self.clone();
+        document.state_id = deterministic_id(&[
+            "state",
+            "source-metadata-v1",
+            &self.state_id.to_string(),
+            &digest,
+        ]);
+        document.source_metadata = metadata;
+        check()?;
+        Ok(document)
     }
 }
 
@@ -140,6 +171,7 @@ pub fn new_document(
         roots,
         layers,
         title: None,
+        source_metadata: None,
     })
 }
 
@@ -217,6 +249,7 @@ fn imported_document(
         roots: vec![id],
         layers: HashMap::from([(id, layer)]),
         title: None,
+        source_metadata: None,
     }
 }
 

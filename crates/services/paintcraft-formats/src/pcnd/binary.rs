@@ -337,6 +337,7 @@ pub(super) fn read_with_layer_limit(
         state_id,
         canvas,
         title,
+        source_metadata: None,
         roots,
         layers,
     })

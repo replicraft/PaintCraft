@@ -55,6 +55,7 @@ pub fn render_layer(
     isolated.visible = true;
     isolated.opacity = 255;
     let isolated = Document {
+        source_metadata: None,
         document_id: doc.document_id,
         state_id: doc.state_id,
         canvas: doc.canvas,

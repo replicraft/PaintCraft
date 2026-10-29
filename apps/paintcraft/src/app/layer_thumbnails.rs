@@ -166,6 +166,7 @@ impl LayerThumbnails {
         }
         // Pin only the requested layer, not every raster in an old document.
         let source = paintcraft_document::Document {
+            source_metadata: None,
             document_id: doc.document_id,
             state_id: doc.state_id,
             canvas: doc.canvas,

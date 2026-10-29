@@ -130,6 +130,7 @@ pub fn decode_paint(
     check()?;
     Ok(Converted {
         document: Document {
+            source_metadata: None,
             document_id: identity("document", ""),
             state_id: identity("state", ""),
             canvas: (decoded.width, decoded.height),
@@ -229,6 +230,7 @@ pub fn decode_pdn(
     check()?;
     Ok(Converted {
         document: Document {
+            source_metadata: None,
             document_id: identity("document", ""),
             state_id: identity("state", ""),
             canvas: (source.width, source.height),

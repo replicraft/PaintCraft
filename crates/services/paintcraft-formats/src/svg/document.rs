@@ -51,6 +51,7 @@ impl Raster {
         };
         check()?;
         Ok(Document {
+            source_metadata: None,
             document_id: identity("document"),
             state_id: identity("state"),
             canvas: (self.width, self.height),

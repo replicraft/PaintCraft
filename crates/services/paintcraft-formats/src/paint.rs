@@ -138,7 +138,13 @@ pub fn preflight(
         roots: _,
         layers: _,
         title: _,
+        source_metadata: _,
     } = doc;
+    if doc.source_metadata.is_some() {
+        return Err(unsupported(
+            "Source metadata preservation is not qualified for this foreign writer",
+        ));
+    }
     check()?;
     if doc.roots.is_empty() || doc.roots.len() > 64 || doc.layers.len() != doc.roots.len() {
         return Err(unsupported(

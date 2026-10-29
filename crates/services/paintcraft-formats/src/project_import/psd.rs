@@ -63,6 +63,7 @@ pub fn decode_psd(
     check()?;
     Ok(Converted {
         document: Document {
+            source_metadata: None,
             document_id: identity("document", ""),
             state_id: identity("state", ""),
             canvas: (source.width, source.height),

@@ -90,7 +90,13 @@ pub fn preflight(
         roots: _,
         layers: _,
         title: _,
+        source_metadata: _,
     } = doc;
+    if doc.source_metadata.is_some() {
+        return Err(unsupported(
+            "Source metadata preservation is not qualified for this foreign writer",
+        ));
+    }
     check()?;
     let composite_pixels = dimension(doc.canvas.0, doc.canvas.1, version, limits.pixels)?;
     if doc.roots.is_empty() {

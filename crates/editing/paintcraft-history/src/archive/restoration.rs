@@ -101,6 +101,7 @@ mod tests {
             canvas: doc.canvas,
             roots: doc.roots,
             title: doc.title,
+            source_metadata: doc.source_metadata,
             selection: Selection::Inactive,
             history_id: None,
             decoded_doc: Mutex::new(Weak::new()),
