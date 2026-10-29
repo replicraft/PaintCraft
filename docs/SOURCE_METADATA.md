@@ -112,3 +112,18 @@ Worker copies with 12 real request-tamper/admission refusals. These preserve exa
 project bytes, title and dirty state; output pixels have independent decoders.
 Other browser engines, broader source variants and cross-platform qualification
 remain separate gates.
+
+Studio's native ICO, CUR and ICNS copies capture one private document before
+preparation. Retained source metadata requires its own explicit omission choice;
+revocation retires the prepared preview and original policy. Destination review
+and publication validate that original policy against the same document and
+format. Other actual losses still require their separate acknowledgment. Private
+text is rendered once into the export copy while the editable document, history
+and source attachment remain intact.
+
+Native controls pass in all seven supported languages, with literal decoded pixel
+checks for ICO/CUR/ICNS and exact CUR hotspots. Additional controls cover revoked
+choices, changed settings, later text edits, cancellation, source aliases and
+changed destinations. The shared icon preview requires a complete visible image
+in a prior frame; a partly clipped image does not establish review. These are
+local host/UI and filesystem checks, not physical GUI or six-target qualification.
