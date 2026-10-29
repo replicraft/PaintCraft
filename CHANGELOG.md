@@ -645,6 +645,7 @@
 - bound copied cancellation fixture debug images (5ea4544)
 - strip debug data from all private Linux codec fixtures (018befd)
 - normalize debug-only installed codec fixtures (8511f19)
+- isolate missing codec installation fixture (171e90c)
 
 
 ### Performance
