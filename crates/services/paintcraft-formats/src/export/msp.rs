@@ -53,6 +53,7 @@ pub fn prepare_document_with(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<PreparedMsp> {
     check()?;
+    crate::export::require_metadata_policy(doc)?;
     check_loss_codes(allowed)?;
     let layout = RgbaLayout::new(version, doc.canvas.0, doc.canvas.1)?;
     render_reservation_bytes(layout)?;

@@ -52,6 +52,7 @@ pub fn prepare_document(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Prepared> {
     check()?;
+    crate::export::require_metadata_policy(doc)?;
     if kinds.is_empty() || kinds.len() > IconType::WRITABLE.len() {
         return Err(Error::new(
             ErrorCode::InputSchema,

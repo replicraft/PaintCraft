@@ -126,6 +126,7 @@ pub fn prepare_document(
     limits: WriteLimits,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Prepared> {
+    crate::export::require_metadata_policy(doc)?;
     if specs.is_empty() || specs.len() > limits.entries.min(ENTRIES_MAX) {
         return Err(resource("icon output entry count outside writer budget"));
     }

@@ -10,6 +10,18 @@ pub mod jxr;
 pub mod msp;
 pub(crate) mod web_snapshot;
 
+/// Retained original-source facts require a captured privacy/retention decision.
+/// Until that decision is wired, enumerating all loss names grants no authority.
+pub fn require_metadata_policy(doc: &Document) -> Result<()> {
+    if doc.source_metadata.is_some() {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Flat export requires an explicit source metadata retention or privacy omission policy",
+        ));
+    }
+    Ok(())
+}
+
 /// Loss codes a caller may acknowledge.
 pub const KNOWN_LOSSES: [&str; 12] = [
     "flatten",
@@ -117,6 +129,7 @@ pub fn export_flat_options_with_check(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<FlatExport> {
     check()?;
+    require_metadata_policy(doc)?;
     let FlatOptions {
         format,
         quality: jpeg_quality,

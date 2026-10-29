@@ -76,6 +76,7 @@ pub fn prepare_document_with(
     render: impl FnOnce(&Document) -> Result<Vec<u8>>,
 ) -> Result<PreparedDocument> {
     check()?;
+    crate::export::require_metadata_policy(doc)?;
     export::check_loss_codes(allowed)?;
     let (width, height) = doc.canvas;
     let pixels = u64::from(width) * u64::from(height);

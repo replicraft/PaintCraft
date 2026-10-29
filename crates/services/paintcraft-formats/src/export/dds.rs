@@ -70,7 +70,8 @@ pub fn prepare_document(
 /// caches or other caller-owned scratch must be priced separately by the caller.
 ///
 /// The renderer must produce native default-v1 straight RGBA8 encoded sRGB.
-/// There is no ICC/alternate-precision metadata in Document to assign implicitly.
+/// Retained source metadata is provenance, not an active color assignment.
+/// Attached metadata requires an explicit export policy before this route can run.
 /// Linear output is a real conversion into 8-bit linear-light sRGB primaries,
 /// not retagging. Only the private composite is changed; Document is immutable.
 /// Source/destination/owner/cancellation guards at publication remain host-owned.
@@ -83,6 +84,7 @@ pub fn prepare_document_with(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<PreparedDds> {
     check()?;
+    crate::export::require_metadata_policy(doc)?;
     check_loss_codes(allowed)?;
     let plan = TexturePlan::new(doc.canvas.0, doc.canvas.1, options)?;
     preparation_reservation_bytes(&plan)?;

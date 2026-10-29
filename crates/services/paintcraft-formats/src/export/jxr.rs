@@ -38,6 +38,7 @@ pub fn prepare_opaque_rgb_checked(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<OpaqueRgb> {
     check()?;
+    crate::export::require_metadata_policy(doc)?;
     check_loss_codes(allowed)?;
     let layout = Layout::new(doc.canvas.0, doc.canvas.1, encoded_cap)?;
     let rgba_bytes = u64::from(layout.width())

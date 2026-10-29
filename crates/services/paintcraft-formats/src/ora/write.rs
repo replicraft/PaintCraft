@@ -8,6 +8,7 @@ pub const TITLE_LOSS: &str = "ora-document-title-not-exported";
 
 /// Validate every representable property before writing even the ZIP header.
 pub fn preflight(doc: &Document, limits: &Limits) -> Result<Vec<String>> {
+    crate::export::require_metadata_policy(doc)?;
     dimensions(doc.canvas.0, doc.canvas.1, limits)?;
     if doc.roots.is_empty() || doc.roots.len() != doc.layers.len() {
         return Err(malformed("ORA requires a nonempty valid flat layer stack"));

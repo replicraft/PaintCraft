@@ -25,6 +25,7 @@ pub(crate) struct Plan {
 }
 impl Plan {
     pub fn capture(doc: &Document, limits: Limits) -> Result<Self> {
+        crate::export::require_metadata_policy(doc)?;
         let resource = |detail| {
             Error::new(
                 ErrorCode::ResourceLimit,
