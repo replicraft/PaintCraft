@@ -507,6 +507,7 @@
 - translate canvas composition status messages (eca65d9)
 - keep unfinished IME text out of layer renames (0e28d90)
 - scope native host helpers to supported platforms (b0cd93b)
+- synchronize parser harness with release package versions (d38eb79)
 
 
 ### Maintenance
