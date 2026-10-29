@@ -38,6 +38,14 @@ checks also pass. Broader TIFF precision/profile/page editing, physical and
 cross-browser qualification, foreign preserving Save and format-pack delivery
 gates remain unfinished.
 
+[Converted raster identities](CONVERSION_IDENTITY.md) now distinguish selected
+DCX pages across desktop/browser Studio, CLI and MCP, and native HDR/EXR settings,
+while retaining the original source hashes and adoption guards. Actual local
+float-helper and frontend tests reproduce the prior collisions and verify
+stable distinct results. The new native identity gate still needs its own
+six-target candidate results; this correctness fix does not complete the format
+or performance roadmap.
+
 [Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well
