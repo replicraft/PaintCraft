@@ -10,7 +10,9 @@ The source must be an immutable PCND snapshot of the captured document/state.
 Before serialization the caller retains a 512 MiB logical service reservation.
 The inventory admits positive u16 canvas sides, at most 4,194,304 canvas pixels,
 eight layers, 8,388,608 aggregate logical layer pixels, 64 MiB of padded source
-tiles and 64 KiB of source metadata. The raw snapshot cap is 32 MiB + 128 KiB;
+tiles and 64 KiB of title/layer/control metadata. A source attachment stays in
+the real PCND2 snapshot under its existing 8 MiB wire allowance and separate
+charged admission. The raw snapshot cap is 32 MiB + 128 KiB;
 PCND writes clipped edge samples rather than charging every padded tile as raw
 samples. Existing DDS limits remain separate (including its 65,536 side cap).
 
@@ -18,19 +20,31 @@ The existing PCND reader checks the eight-layer limit before allocating layer
 metadata. The existing MSP facade admits before its single composite, then counts
 and admits exact packed/output buffers before encoding. Only opaque exact black
 and white are accepted: there is no threshold, dither or matte. Actual losses are
-`flatten` and `hidden-rgb`. The actual encoded bitmap supplies the nearest-sample
+`flatten` and `hidden-rgb`, plus `source-metadata-omitted` only after a typed
+explicit choice against the exact immutable copy. The actual encoded bitmap supplies the nearest-sample
 thumbnail, bounded to 192 × 192; the freed composite slot is reused for decoding.
 Cancellation checkpoints remain in the parser, renderer, counting/encoding and
 preview loops. A completed, bound refusal has no output. Malformed framing or
 binding is an error, not proof that a worker completed safely.
 
-The request is 128 bytes plus raw PCND, with magic `PCMSPQ01`, protocol 1,
+The version-two request is 192 bytes plus raw PCND, with magic `PCMSPQ02`, protocol 2,
 source length/geometry, Owner (session/state/epoch/frontend), nonce and raw SHA.
 Byte 113 is explicit version 2; byte 114 is the common source loss flags; bytes
-115–127 are reserved zero. The response is 288 bytes plus MSP, preview and optional
-refusal detail, with magic `PCMSPR01`. It binds all request identity fields and
+115–127 are reserved zero. The response is 352 bytes plus MSP, preview and optional
+refusal detail, with magic `PCMSPR02`. It binds all request identity fields and
 application version. Byte 121 is version 2, bytes 122–128 are zero, byte 193 is
 the actual loss mask, bytes 194–197 are zero, and byte 265 repeats source flags.
+Bytes128–191 carry the same 64-byte source context specified in the
+[DDS wire layout](../../dds/web_export/README.md#source-metadata-context-and-copy-authorization):
+actual document UUID, optional attachment digest, presence/explicit omission,
+actual MSP target2/flat-operation1, zero reserved byte, wire extent and retained
+charge. Response bytes288–351 echo it exactly. Metadata-none requires zero
+digest/extent/charge; explicit intent may still be echoed without claiming loss.
+The Worker quotes and admits attachment storage before reading PCND2, validates
+the actual decoded document, and never strips the snapshot to bypass policy.
+Bit4 of the actual loss mask denotes real metadata omission; the existing two
+source flags keep their meanings. Old version-one frames are refused.
+
 Both payload digests, complete MSP row table/packet inventory, exact fresh header,
 geometry and opaque black/white thumbnail are validated before host acceptance.
 The thumbnail digest binds worker output; it is not a host re-render proof.
@@ -47,7 +61,8 @@ The full logical host quote is:
     256 MiB worker ceiling + 64 MiB retained source
     + 5 × (32 MiB + 128 KiB) source slots + 5 × 1 MiB result slots
     + 8 × (192 × 192 × 4) preview bytes + 1 MiB metadata
-    = 511,442,944 bytes < 512 MiB
+    = 511,442,944 bytes, plus at most 8 MiB + 64 KiB retained source attachment
+    = 519,897,088 bytes < 512 MiB
 
 Source slots cover serialization, retained request, bridge/JS copies and transfer
 staging; result slots cover worker/frame/JS/bridge/download staging. Admission
@@ -67,7 +82,12 @@ and version binding, and the complete shape-bound enumeration. Shared snapshot
 controls exercise different DDS/MSP side/tile/raw limits and unchanged raw PCND
 bytes. Existing DDS golden/linear/cap/refusal tests remain green after extraction.
 
-## Actual local production qualification
+## Historical version-one local production qualification
+
+These receipts remain valid for the prior protocol/resource profile. The new
+`web-msp2-row-rle-worker-v2` metadata-bound route still needs its actual version-two
+production browser qualification; local Worker/context and Node controls are
+reported separately.
 
 A frozen production app and bundled lean Worker passed eight independent
 positive frames and three canonical policy refusals in headless Chrome 156 on
@@ -96,3 +116,15 @@ production results. The native specimen executable's content hash is unavailable
 its source, logs and every generated artifact remain identified. No physical
 mobile/tablet, original Windows Paint, maximal-capacity or broader codec claim
 is established by these local browser cases.
+
+
+## Explicit metadata choice
+
+The old `SourcePlan::capture` remains refusal-safe for attachment-bearing inputs.
+`capture_with_metadata_policy` validates the actual MSP flat-export target before
+serialization. Default or “allow all” loss names grant no metadata omission.
+The host keeps the original Policy with the actual Frozen copy through await,
+visible preview and download; live owner/Frozen checks guard later editor changes.
+Unchecking the separate metadata choice revokes earlier preparation/approval.
+Only unrelated losses need the existing additional export-changes checkbox.
+PCND and preserving-save paths do not accept this omission policy.
