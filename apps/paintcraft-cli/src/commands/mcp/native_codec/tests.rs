@@ -84,10 +84,11 @@ fn copied_installed_real_helper_cancellation_preserves_mcp_session_and_retires_c
 fn normalize_copied_test_image(path: &std::path::Path) {
     let before = fs::metadata(path).unwrap().len();
     // The real installed-helper verifier bounds both application and helper at
-    // 256MiB. Linux debug test ELF files can exceed it solely through DWARF;
-    // normalize only these private copies, never weaken the production bound.
+    // 256MiB and includes verification in the operation deadline. Linux DWARF
+    // can exceed either fixture allowance; strip it from both private copies
+    // before contract extraction/hashing, preserving the real verifier limits.
     #[cfg(target_os = "linux")]
-    if before > 256 << 20 {
+    {
         let output = Command::new("strip")
             .arg("--strip-debug")
             .arg(path)
