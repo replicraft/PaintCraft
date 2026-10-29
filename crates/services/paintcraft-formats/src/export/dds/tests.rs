@@ -41,7 +41,7 @@ fn same_plan_one_admission_one_render_and_old_default_bytes() {
                     .values()
                     .map(|l| l.raster.resident_tiles() as u64
                         * paintcraft_raster::RasterLayer::TILE_BYTES as u64)
-                    .sum()
+                    .sum::<u64>()
             );
             inventory.set(plan.levels().as_ptr() as usize);
             Ok(())
