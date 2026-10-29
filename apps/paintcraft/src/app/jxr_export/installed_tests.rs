@@ -8,6 +8,13 @@ use paintcraft_ui::i18n::{Language, translate};
 use std::{fs, time::Instant};
 #[path = "installed_cases.rs"]
 mod cases;
+#[path = "portable.rs"]
+mod portable;
+#[derive(Clone, Copy)]
+enum Oracle {
+    C,
+    Portable,
+}
 const ORA: &[u8] = include_bytes!(
     "../../../../../crates/services/paintcraft-formats/tests/ora-group-fixtures/flat.ora"
 );

@@ -3,6 +3,9 @@ use super::*;
 #[test]
 #[ignore = "copied real public V8 installation only"]
 fn fixture_real_export_review_and_guards() {
+    export_review_and_guards(Oracle::C);
+}
+pub(super) fn export_review_and_guards(oracle: Oracle) {
     let root = directory();
     let manifest = resources_manifest_path();
     let original_manifest = fs::read(&manifest).unwrap();
@@ -14,10 +17,17 @@ fn fixture_real_export_review_and_guards() {
     for language in [Language::English, Language::Japanese] {
         for case in 0..7 {
             let source = root.join(format!("layered-{language:?}-{case}.pcnd"));
-            let converted =
-                paintcraft_formats::project_import::decode_ora(ORA, 256, &|| Ok(())).unwrap();
-            assert_eq!(converted.document.canvas, (3, 2));
-            let mut app = app(language, &source, converted.document);
+            let document = match oracle {
+                Oracle::C => {
+                    let converted =
+                        paintcraft_formats::project_import::decode_ora(ORA, 256, &|| Ok(()))
+                            .unwrap();
+                    assert_eq!(converted.document.canvas, (3, 2));
+                    converted.document
+                }
+                Oracle::Portable => portable::guard_document(),
+            };
+            let mut app = app(language, &source, document);
             let target = root.join(format!("output-{language:?}-{case}.jxr"));
             fs::write(&target, b"existing destination").unwrap();
             app.path_text = target.with_extension("pcnd").to_string_lossy().into_owned();
@@ -65,7 +75,10 @@ fn fixture_real_export_review_and_guards() {
                         .click();
                     h.run();
                     assert!(h.state().jxr_export.is_none());
-                    reference(&target, 3, 2, EXPECTED);
+                    match oracle {
+                        Oracle::C => reference(&target, 3, 2, EXPECTED),
+                        Oracle::Portable => portable::verify_output(&target, 4, 3),
+                    }
                     before.unchanged(h.state());
                 }
                 1 => {
