@@ -16,6 +16,7 @@ pub struct Activation {
     sequence: u64,
 }
 impl Activation {
+    #[cfg(any(target_os = "macos", test))]
     pub(crate) fn new(session: u128, source_epoch: u64, sequence: u64) -> Self {
         Self {
             session,
@@ -33,6 +34,7 @@ pub(crate) struct Scope {
     delivery: Option<paintcraft_platform::tablet::DeliveryCheck>,
 }
 impl Scope {
+    #[cfg(any(target_os = "macos", test))]
     pub(crate) fn new(
         activation: Activation,
         source: paintcraft_ui::pen_input::PublicationGuard,
@@ -164,12 +166,17 @@ impl NavigationWitness {
     }
 }
 impl Editor {
+    #[cfg(any(target_os = "macos", test))]
     pub(crate) fn begin_native_activation(&mut self, activation: Scope) {
         self.native_activation = Some(activation);
     }
+    #[cfg(any(target_os = "macos", test))]
     pub(crate) fn end_native_activation(&mut self) {
         self.native_activation = None;
     }
+    // The owned native host currently runs only on macOS. Portable publication
+    // guards/results remain compiled on every platform independently of it.
+    #[cfg(target_os = "macos")]
     pub(crate) fn has_native_work(&self, activation: Activation) -> bool {
         self.outbox.has(activation) || self.actions.iter().any(|queued| matches!(queued,
             background::Queued::Edit(edit) if edit.scope.as_ref().is_some_and(|s| s.activation == activation))) || self.pending_edit.as_ref().is_some_and(|p| {
@@ -188,6 +195,7 @@ impl Editor {
     }
     /// Abandon only this precisely sourced job, including an already-ready
     /// result. Pending::drop retains the executor lease until worker retirement.
+    #[cfg(target_os = "macos")]
     pub(crate) fn abandon_native_activation(&mut self, activation: Activation) {
         let queued = self.outbox.has(activation) || self.actions.iter().any(|queued| matches!(queued,
             background::Queued::Edit(edit) if edit.scope.as_ref().is_some_and(|s| s.activation == activation)));

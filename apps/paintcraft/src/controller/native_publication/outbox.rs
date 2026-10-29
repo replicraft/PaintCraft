@@ -28,6 +28,7 @@ impl Activations {
     pub(in crate::controller) fn pending(&self) -> impl ExactSizeIterator<Item = &Action> {
         self.0.pending().map(|queued| &queued.action)
     }
+    #[cfg(target_os = "macos")]
     pub(in crate::controller) fn has(&self, activation: Activation) -> bool {
         self.0.pending().any(|queued| {
             queued
@@ -36,6 +37,7 @@ impl Activations {
                 .is_some_and(|s| s.activation == activation)
         })
     }
+    #[cfg(target_os = "macos")]
     pub(in crate::controller) fn retire(&mut self, activation: Activation) {
         self.0.retain(|queued| {
             queued

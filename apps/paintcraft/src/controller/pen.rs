@@ -1,7 +1,9 @@
 //! Captured plain-round pen ink uses the existing edit service and publication.
 use super::*;
+#[cfg(any(target_os = "macos", test))]
 use paintcraft_core::types::{Error, ErrorCode, resources::SharedBudget};
 use paintcraft_editor::session::{Preparation, PreparedEdit, Receipt, Ticket};
+#[cfg(any(target_os = "macos", test))]
 use paintcraft_input::tablet::{Phase, Sample};
 use paintcraft_tools::pen_stroke::{PenStroke, ResolvedPenStroke};
 
@@ -62,6 +64,7 @@ impl Editor {
     }
     /// True means the dedicated pressure path owns this sample. False preserves
     /// the established source-specific tool route; callers must not relabel media.
+    #[cfg(any(target_os = "macos", test))]
     pub(crate) fn pen_sample(&mut self, sample: Sample, budget: &SharedBudget) -> Result<bool> {
         if matches!(sample.phase, Phase::Cancel | Phase::Leave) {
             self.cancel_gesture();

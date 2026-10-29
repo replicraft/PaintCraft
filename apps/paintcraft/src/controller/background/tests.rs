@@ -471,6 +471,7 @@ pub(super) struct CompletionGate {
     release: mpsc::Receiver<()>,
 }
 impl Service {
+    #[cfg(target_os = "macos")]
     pub(crate) fn pause_next_completion(&self) -> (mpsc::Receiver<()>, mpsc::Sender<()>) {
         let (prepared, observe) = mpsc::sync_channel(1);
         let (release, wait) = mpsc::channel();
