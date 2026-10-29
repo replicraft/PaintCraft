@@ -85,9 +85,9 @@ bytes. Existing DDS golden/linear/cap/refusal tests remain green after extractio
 ## Historical version-one local production qualification
 
 These receipts remain valid for the prior protocol/resource profile. The new
-`web-msp2-row-rle-worker-v2` metadata-bound route still needs its actual version-two
-production browser qualification; local Worker/context and Node controls are
-reported separately.
+`web-msp2-row-rle-worker-v2` metadata-bound route has a separate representative
+production-browser qualification described below; local Worker/context and Node
+controls are reported separately.
 
 A frozen production app and bundled lean Worker passed eight independent
 positive frames and three canonical policy refusals in headless Chrome 156 on
@@ -117,6 +117,22 @@ its source, logs and every generated artifact remain identified. No physical
 mobile/tablet, original Windows Paint, maximal-capacity or broader codec claim
 is established by these local browser cases.
 
+
+## Version-two metadata qualification
+
+The current production Studio build passed a real opaque 4×4 PCND2 row-RLE flow
+with retained original source metadata. Chrome 156 on Apple silicon exercised
+explicit omission, visible encoded preview, revocation/recheck with a new nonce,
+Cancel, reopen and download. Pillow 12 independently decoded every expected
+pixel. Original attachment/project bytes, title and dirty state stayed unchanged.
+
+Six fresh realms altered actual request digest, extent, intent, target, version
+or retained-memory admission. All refused without image/preview output; the
+understated charge returned the typed resource-limit result. Exact executed
+drivers, original inputs, oracle wheel and the shared 25-asset production build
+are bound by `docs/validation/metadata-omission/advanced-browser-final-freeze.json`,
+SHA256 `1072302286a9edb882b22ea60059071059f379c2ec0a920652c89c33faaf2e7f`.
+This does not qualify every historical MSP variant, browser or physical device.
 
 ## Explicit metadata choice
 

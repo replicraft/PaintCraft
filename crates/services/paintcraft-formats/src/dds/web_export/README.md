@@ -60,7 +60,7 @@ URL retirement, not persistence or browser-memory reclamation.
 ## Historical version-one qualification
 
 The following receipts qualify the previous protocol and resource profile. They
-remain historical; version-two metadata-bound production browser proof is pending.
+remain historical. Version-two metadata-bound checks are recorded separately below.
 
 Local qualification used actual headless Chrome 156 on Apple Silicon. Real
 controller jobs exercised 2048×2048 BC1/BC2/BC3 High-effort Box filtering and
@@ -87,6 +87,28 @@ native reference specimens into an explicit new directory. It does not replace
 the independent compressed golden or promise a general BC color-error bound.
 Node `dds-profile.test.mjs` checks Rust/JS caps and the quote formula. Local
 browser receipts retain source patches, asset hashes, attempts and screenshots.
+
+## Version-two metadata qualification
+
+The current production build passed a real Studio flow from an independent
+9×7 PNG with original ICC/pHYs retained in PCND2. Chrome 156 on Apple silicon
+exercised RGBA8 sRGB output with a full nearest mip chain, explicit omission,
+visible preview, revocation/recheck with a fresh nonce, Cancel and download.
+Pillow 12 independently decoded exact top-level source pixels. Project bytes,
+title and dirty state stayed unchanged.
+
+Six fresh browser realms additionally altered the real outgoing request's
+digest, extent, intent, target, version or retained-memory charge. Each refused
+without encoded/preview output and preserved the project. Understated admission
+returned the exact typed resource-limit result. Actual Worker termination is
+recorded without treating it as proof of physical memory reclamation.
+
+The local receipt is
+`docs/validation/metadata-omission/advanced-browser-final-freeze.json`, SHA256
+`1072302286a9edb882b22ea60059071059f379c2ec0a920652c89c33faaf2e7f`.
+It preserves executed drivers, input/oracle provenance and all 25 production
+asset identities, shared with the independent generic PNG privacy proof. This
+qualifies the stated case, not every DDS model, browser or physical device.
 
 ## Version-two byte layout
 

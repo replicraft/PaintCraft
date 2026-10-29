@@ -106,5 +106,9 @@ original-application interoperability or color-managed conversion. PNG samples
 additionally have 27 independently authored and FFmpeg-checked fixtures covering
 sample models, depth, transparency, Adam7 and hidden RGB. Native, CLI, MCP and
 browser host tests exercise import/adoption, project round trips, source guards,
-consent, cancellation and resource release. Actual production-browser and
-cross-platform qualification remain separate gates.
+consent, cancellation and resource release. Production Chrome additionally
+passes one real PNG retention/save/reopen/privacy flow and representative DDS/MSP
+Worker copies with 12 real request-tamper/admission refusals. These preserve exact
+project bytes, title and dirty state; output pixels have independent decoders.
+Other browser engines, broader source variants and cross-platform qualification
+remain separate gates.

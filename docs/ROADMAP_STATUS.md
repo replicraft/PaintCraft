@@ -35,8 +35,10 @@ leave the project unchanged. Other source attachments, palette/index retention
 and color-managed conversion remain unfinished. Original ICC is not activated
 for working pixels. Documents without attachments keep their exact PCND1
 representation; initial import also checks the current snapshot against PCND's
-actual metadata save limit. Advanced Worker export qualification remains a
-separate pending gate.
+actual metadata save limit. Representative DDS/MSP browser Worker flows also
+pass consent, revocation, cancellation and independent output checks, plus 12
+real tampered-request/admission cases. Broader format, browser and native target
+qualification remains separate work.
 
 JPEG export now has an explicit RGB background through desktop/browser controls,
 CLI and MCP, preserving white by default and existing loss consent. Exact alpha
