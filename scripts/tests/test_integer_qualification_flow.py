@@ -167,13 +167,67 @@ class Scenario:
                                 (scenario.mutation == "zero-float-identity" and FLOAT_IDENTITY in argv)):
                             count = 0
                         value = f"running {count} tests\ntest result: ok. {count} passed; 0 failed;\n"
+                copied = scenario.output / "app-installation"
+                if name == "float-document-identity" and scenario.mutation == "fixture-output":
+                    (copied / "generated-fixture-output.pcnd").write_bytes(b"owned output")
+                if name == "app-integer-jxl" and (scenario.mutation or "").startswith("residue-"):
+                    selected = {
+                        "residue-helper": scenario.helper.name,
+                        "residue-manifest": codec_worker.MANIFEST,
+                        "residue-notice": codec_worker.NOTICES[0],
+                        "residue-oversize": scenario.helper.name,
+                        "residue-symlink": scenario.helper.name,
+                        "residue-directory": codec_worker.NOTICES[0],
+                        "residue-app-size": Path(scenario.app["executable"]).name,
+                        "residue-formats": Path(scenario.formats["executable"]).name,
+                    }[scenario.mutation]
+                    changed = copied / selected
+                    if scenario.mutation in ("residue-oversize", "residue-app-size"):
+                        with changed.open("r+b") as stream:
+                            stream.truncate(qualification.EXECUTABLE_MAX + 123)
+                    elif scenario.mutation == "residue-symlink":
+                        changed.unlink()
+                        changed.symlink_to(scenario.helper)
+                    elif scenario.mutation == "residue-directory":
+                        changed.unlink()
+                        changed.mkdir()
+                    else:
+                        raw = bytearray(changed.read_bytes())
+                        raw[-1] ^= 1
+                        changed.write_bytes(raw)
                 path.write_text(value, encoding="utf-8")
                 return path
         return FakeRunner()
 
     def execute(self):
+        copy_file = qualification.shutil.copy2
+        copy_tree = qualification.shutil.copytree
+        copied = self.output / "app-installation"
+
+        def corrupt(path):
+            raw = bytearray(path.read_bytes())
+            raw[-1] ^= 1
+            path.write_bytes(raw)
+
+        def copying_file(source, destination, *args, **kwargs):
+            result = copy_file(source, destination, *args, **kwargs)
+            target = Path(destination)
+            if target.parent == copied:
+                expected = (self.app if self.mutation == "corrupt-app-copy" else self.formats)
+                if self.mutation in ("corrupt-app-copy", "corrupt-formats-copy") and target.name == Path(expected["executable"]).name:
+                    corrupt(target)
+            return result
+
+        def copying_tree(source, destination, *args, **kwargs):
+            result = copy_tree(source, destination, *args, **kwargs)
+            if Path(destination) == copied and self.mutation == "corrupt-payload-copy":
+                corrupt(copied / self.helper.name)
+            return result
+
         # A leaked call cannot launch even a header-only test image or real Cargo.
-        with patch.object(qualification, "Runner", self.runner), \
+        with patch.object(qualification.shutil, "copy2", copying_file), \
+             patch.object(qualification.shutil, "copytree", copying_tree), \
+             patch.object(qualification, "Runner", self.runner), \
              patch.object(qualification.host, "identify", return_value={
                  "target": self.target, "scope": "synthetic test only"}), \
              patch("subprocess.run", side_effect=AssertionError("Synthetic flow launched a process")), \
@@ -282,6 +336,55 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                     self.assertEqual(Path(identity[1][0]).parent, flow.output / "app-installation")
                     self.assertEqual(receipt["phases"]["float_conversion_identity"], FLOAT_IDENTITY)
         self.assertEqual(helper_policy.ROLLOUT, policy)
+
+    def test_copied_payload_and_cargo_artifacts_match_before_execution(self):
+        for candidate in ("v9", "v10"):
+            for target in release.TARGETS:
+                for mutation in ("corrupt-payload-copy", "corrupt-app-copy", "corrupt-formats-copy"):
+                    with self.subTest(candidate=candidate, target=target, mutation=mutation):
+                        flow = self.scenario(candidate, target, mutation=mutation)
+                        self.assert_failed(flow, "Copied qualification payload bytes differ",
+                                           forbidden="float-document-identity")
+                        self.assertNotIn("source-final", flow.phases())
+
+    def test_copied_payload_residue_refuses_before_qualification(self):
+        for candidate in ("v9", "v10"):
+            for target in release.TARGETS:
+                for mutation in ("residue-helper", "residue-manifest", "residue-notice",
+                                 "residue-oversize", "residue-symlink", "residue-directory",
+                                 "residue-app-size", "residue-formats"):
+                    with self.subTest(candidate=candidate, target=target, mutation=mutation):
+                        flow = self.scenario(candidate, target, mutation=mutation)
+                        message = ("bounded regular file" if mutation in
+                                   ("residue-oversize", "residue-symlink", "residue-directory", "residue-app-size")
+                                   else "Copied qualification payload bytes differ")
+                        self.assert_failed(flow, message, forbidden="source-final")
+                        self.assertIn("app-integer-jxl", flow.phases())
+
+    def test_generated_fixture_outputs_do_not_change_original_payload_inventory(self):
+        for candidate in ("v9", "v10"):
+            flow = self.scenario(candidate, mutation="fixture-output")
+            flow.execute()
+            self.assertEqual(flow.receipt()["status"], "passed")
+            self.assertTrue(flow.receipt()["phases"]["copied_payload_preflight"])
+            self.assertTrue(flow.receipt()["phases"]["copied_payload_postflight"])
+
+    def test_size_and_file_kind_refusal_happens_before_digest_reads(self):
+        for kind in ("oversize", "different-size", "symlink", "directory"):
+            with self.subTest(kind=kind):
+                path = self.root / kind
+                if kind == "directory":
+                    path.mkdir()
+                elif kind == "symlink":
+                    target = self.root / "symlink-target"
+                    target.write_bytes(b"four")
+                    path.symlink_to(target)
+                else:
+                    with path.open("wb") as stream:
+                        stream.truncate(qualification.EXECUTABLE_MAX + 1 if kind == "oversize" else 5)
+                with patch.object(qualification, "digest", side_effect=AssertionError("unbounded read")):
+                    with self.assertRaisesRegex(ValueError, "bounded regular file|size differs"):
+                        qualification.verify_copied_file(path, 4, "0" * 64)
 
     def test_float_identity_gate_cannot_be_missing_or_execute_zero_tests(self):
         self.assertEqual(qualification.FLOAT_IDENTITY, FLOAT_IDENTITY)

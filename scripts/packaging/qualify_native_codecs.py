@@ -74,6 +74,30 @@ def bounded_binary(path, target):
     release.validate_binary(target, path)
 
 
+def payload_size(path):
+    """Refuse changed file kinds and oversized payloads before reading bytes."""
+    facts = binary_facts(path)
+    if facts["symlink"] or not facts["regular"] or not 0 < facts["bytes"] <= EXECUTABLE_MAX:
+        raise ValueError("Qualification payload must be a bounded regular file: " + str(path))
+    return facts["bytes"]
+
+
+def verify_copied_file(path, expected_size, expected_sha256):
+    if payload_size(path) != expected_size:
+        raise ValueError("Copied qualification payload size differs: " + str(path))
+    if digest(path) != expected_sha256:
+        raise ValueError("Copied qualification payload bytes differ: " + str(path))
+
+
+def verify_copied_installation(directory, files, sizes, version, target):
+    # Generated fixture outputs may coexist; every original payload remains bound.
+    if files.keys() != sizes.keys():
+        raise ValueError("Copied qualification payload inventory differs")
+    for name, expected in files.items():
+        verify_copied_file(directory / name, sizes[name], expected)
+    codec_worker.verify_installed_manifest(directory, version, target)
+
+
 def app_build_command(base, target):
     args = list(base)
     # Linux embeds release line-table DWARF in the large App test executable.
@@ -234,6 +258,7 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
         receipt["candidate"] = {"installation": str(installed), "cli_sha256": digest(cli),
                                 "cli_test_sha256": digest(cli_test),
                                 "manifest": codec_worker.read_manifest(installed),
+                                "file_bytes": {p.name: payload_size(p) for p in installed.iterdir()},
                                 "files": {p.name: digest(p) for p in installed.iterdir()}}
         save()
         fixture_env = dict(env, PAINTCRAFT_QUALIFIED_HELPER=str(installed / helper.name),
@@ -310,11 +335,18 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
             receipt["phases"][prefix] = group(runner, f"app-{index}", app, prefix, anames, release.ROOT, env)
         copied = output / "app-installation"
         shutil.copytree(installed, copied)
+        verify_copied_installation(copied, receipt["candidate"]["files"],
+                                   receipt["candidate"]["file_bytes"], release.workspace_version(), target)
+        receipt["phases"]["copied_payload_preflight"] = True
         app_copy = copied / app.name
         shutil.copy2(app, app_copy)
+        original = receipt["executables"][str(app)]
+        verify_copied_file(app_copy, original["bytes"], original["sha256"])
         remember(app_copy)
         formats_copy = copied / formats.name
         shutil.copy2(formats, formats_copy)
+        original = receipt["executables"][str(formats)]
+        verify_copied_file(formats_copy, original["bytes"], original["sha256"])
         remember(formats_copy)
         exact(runner, "float-document-identity", formats_copy, FLOAT_IDENTITY, fnames,
               release.ROOT, fixture_env, ignored=True)
@@ -333,12 +365,15 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
             exact(runner, "app-jxr-with-C", app_copy,
                   "jxr_export::installed_tests::copied_public_v8_runs_native_studio_export_and_own_reader",
                   anames, release.ROOT, dict(fixture_env, PAINTCRAFT_JXR_PUBLIC_HELPER=str(copied / helper.name)), ignored=True)
-        codec_worker.verify_installed_manifest(installed, release.workspace_version(), target)
-        if receipt["candidate"]["files"] != {p.name: digest(p) for p in installed.iterdir()}:
+        verify_copied_installation(copied, receipt["candidate"]["files"],
+                                   receipt["candidate"]["file_bytes"], release.workspace_version(), target)
+        receipt["phases"]["copied_payload_postflight"] = True
+        if set(receipt["candidate"]["files"]) != {p.name for p in installed.iterdir()}:
             raise ValueError("Qualified installation changed during tests")
+        verify_copied_installation(installed, receipt["candidate"]["files"],
+                                   receipt["candidate"]["file_bytes"], release.workspace_version(), target)
         for path, identity in receipt["executables"].items():
-            if digest(path) != identity["sha256"]:
-                raise ValueError("Executed artifact changed during qualification")
+            verify_copied_file(Path(path), identity["bytes"], identity["sha256"])
         if policy != helper_policy.ROLLOUT:
             raise ValueError("Qualification must not alter shipping policy")
         final = runner.run("source-final", ["git", "rev-parse", "HEAD"], cwd=release.ROOT, env=env, timeout=30).read_text().strip()
