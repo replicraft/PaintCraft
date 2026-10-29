@@ -6,12 +6,18 @@
 //! sample limit and Main5 constraints bound geometry, not total scratch/ICC
 //! memory. Hostile-input process confinement remains required for qualification.
 mod container;
+mod convert;
 mod decode;
 mod encode;
 mod execution;
+mod worker_profile;
 
+pub use convert::{
+    Assessment16, Converted16, DEPTH16_LOSS, DEPTH16_POLICY, convert_rgba16_checked,
+};
 pub use decode::{
-    decode_checked, decode_with_pixel_limit, decode_worker_rgba8_checked, inspect_checked,
+    decode_checked, decode_with_pixel_limit, decode_worker_integer_checked,
+    decode_worker_rgba8_checked, decode_worker_rgba16_checked, inspect_checked,
 };
 pub use encode::{encode_rgba8, encode_rgba8_checked, encode_rgba16, encode_rgba16_checked};
 use paintcraft_core::types::{Error, ErrorCode, Result};

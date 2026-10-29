@@ -116,7 +116,7 @@ pub fn decode_checked(
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Decoded> {
-    decode_profile(bytes, pixels, check, false)
+    decode_profile(bytes, pixels, check, Profile::General)
 }
 /// Narrow native helper profile. Invoke only inside the fixed-heap, killable
 /// codec worker: upstream header/ICC scratch may allocate before BasicInfo.
@@ -127,13 +127,37 @@ pub fn decode_worker_rgba8_checked(
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Decoded> {
-    decode_profile(bytes, pixels, check, true)
+    decode_profile(bytes, pixels, check, Profile::Worker(Some(8)))
+}
+/// Exact 16-bit counterpart of the narrow worker profile. This retains all
+/// integer samples; it does not admit them into the 8-bit document model.
+/// Invoke only inside the fixed-heap, killable codec worker, as with RGBA8.
+pub fn decode_worker_rgba16_checked(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Decoded> {
+    decode_profile(bytes, pixels, check, Profile::Worker(Some(16)))
+}
+/// One-pass 8-or-16-bit strict isolated profile. The returned sample variant
+/// establishes the retained precision; callers must explicitly convert RGBA16.
+pub fn decode_worker_integer_checked(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Decoded> {
+    decode_profile(bytes, pixels, check, Profile::Worker(None))
+}
+#[derive(Clone, Copy)]
+enum Profile {
+    General,
+    Worker(Option<u32>),
 }
 fn decode_profile(
     bytes: &[u8],
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
-    worker_rgba8: bool,
+    profile: Profile,
 ) -> Result<Decoded> {
     let metadata = container::inspect(bytes, check)?;
     let execution = Execution::new(check);
@@ -175,8 +199,8 @@ fn decode_profile(
                 }
                 let inspected = header(&decoder, metadata, pixels)?;
                 admit_profile(&decoder, &inspected)?;
-                if worker_rgba8
-                    && (inspected.bits_per_sample != 8
+                if let Profile::Worker(depth) = profile
+                    && (depth.is_some_and(|depth| inspected.bits_per_sample != depth)
                         || metadata
                         || decoder.basic_info().is_some_and(|basic| {
                             basic.orientation != Orientation::Identity
@@ -185,9 +209,23 @@ fn decode_profile(
                         })
                         || !matches!(decoder.embedded_color_profile(), Some(JxlColorProfile::Simple(encoding)) if *encoding == JxlColorEncoding::srgb(false)))
                 {
-                    return Err(unsupported(
-                        "Isolated JPEG XL profile requires 8-bit sRGB without discarded container metadata",
-                    ));
+                    return Err(unsupported(match depth {
+                        Some(8) => {
+                            "Isolated JPEG XL profile requires 8-bit sRGB without discarded container metadata"
+                        }
+                        Some(16) => {
+                            "Isolated JPEG XL profile requires 16-bit sRGB without discarded container metadata"
+                        }
+                        _ => {
+                            "Isolated JPEG XL profile requires 8/16-bit sRGB without discarded container metadata"
+                        }
+                    }));
+                }
+                if matches!(profile, Profile::Worker(_)) {
+                    worker_profile::admit_channels(
+                        inspected.bits_per_sample,
+                        &decoder.basic_info().unwrap().extra_channels,
+                    )?;
                 }
                 let count =
                     admit_size(inspected.width as usize, inspected.height as usize, pixels)?;

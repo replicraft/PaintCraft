@@ -1,0 +1,50 @@
+{
+  "encoder": "libjxl0.12.0 from previously SHA-verified owned oracle extraction",
+  "verification": "JxlDecoderGetBasicInfo+JxlDecoderGetExtraChannelInfo on encoded bytes",
+  "fixtures": [
+    {
+      "file": "color8-alpha16.jxl",
+      "sha256": "10cd17935737884bf58ff2de740160d63cd354077c04de45e4a484ed0150840f",
+      "width": 2,
+      "height": 2,
+      "color_depth": 8,
+      "alpha_depth": 16,
+      "alpha_exponent_bits": 0,
+      "dim_shift": 0,
+      "name_length": 0
+    },
+    {
+      "file": "color16-alpha8.jxl",
+      "sha256": "df42b6b59b48cb404ca08645f9f65e3436b83e76e20109ea9ae08b5665d3076a",
+      "width": 2,
+      "height": 2,
+      "color_depth": 16,
+      "alpha_depth": 8,
+      "alpha_exponent_bits": 0,
+      "dim_shift": 0,
+      "name_length": 0
+    },
+    {
+      "file": "alpha-named.jxl",
+      "sha256": "dea185f8e2c53293744ac73e2bcb462ee93d3ae2d433a1aba64a948cc4e25575",
+      "width": 2,
+      "height": 2,
+      "color_depth": 16,
+      "alpha_depth": 16,
+      "alpha_exponent_bits": 0,
+      "dim_shift": 0,
+      "name_length": 8
+    },
+    {
+      "file": "alpha-float.jxl",
+      "sha256": "14823dee0b04f708c68056dc49363eb98cee09c169259bfacfcd684cb4c0eaad",
+      "width": 2,
+      "height": 2,
+      "color_depth": 16,
+      "alpha_depth": 16,
+      "alpha_exponent_bits": 5,
+      "dim_shift": 0,
+      "name_length": 0
+    }
+  ]
+}

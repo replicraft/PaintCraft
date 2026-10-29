@@ -1,0 +1,9 @@
+# Independent alpha source profiles
+
+These first-party 2x2 fixtures were encoded with the existing independent libjxl 0.12.0 oracle and verified with its `JxlDecoderGetBasicInfo` and `JxlDecoderGetExtraChannelInfo` APIs. `generate.c` records exact source input and header configuration; `oracle.json` pins encoded hashes and independently observed alpha/color precision, dimension shift and name length. Sources and fixture bytes use the repository license. No libjxl library is shipped or linked into PaintCraft.
+
+The four sources exercise mixed color8/alpha16, mixed color16/alpha8, float16 alpha on integer16 color, and a nonempty alpha name. Alpha is straight, orientation is identity, transfer is sRGB and original-profile lossless encoding is requested. These are strict-worker refusal fixtures, not advertised editable formats. The general decoder retains its historical behavior.
+
+The generator supports an additional dim_shift argument for research. libjxl0.12.0 refused dimension-shift1 output in the retained probes, both interleaved and separate alpha buffer attempts. No successful independent dimension-shift fixture is claimed; the source-fact gate also has an explicit constructed metadata control for that condition. Failed probes and native decoder logs are retained in private validation evidence.
+
+Build the generator against the previously qualified oracle headers/library. Its arguments are output path, color bits, alpha bits, alpha exponent bits, dimension shift and named-alpha flag. The original oracle source, bottle hash and tool identity are recorded in the parent fixture README. The first two and named fixtures use interleaved UINT16 input. Float alpha uses separate FLOAT alpha samples. Round-trip numerical fidelity is not inferred from header-only verification; the fixture role is admission refusal.
