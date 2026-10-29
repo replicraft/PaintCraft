@@ -37,19 +37,16 @@ fn layer_info(doc: &Document) -> Value {
 
 /// `paintcraft.open-assessment/v1`
 fn assessment(sha: &str, m: &pcnd::Header, mode: &str, reasons: &[String]) -> Value {
-    let known = m.container_version == 1 && m.document_schema == "paintcraft.document/v1";
+    let profile = match (m.require_supported().is_ok(), m.container_version) {
+        (true, 1) => "paintcraft.native/binary1-document1",
+        (true, 2) => "paintcraft.native/binary2-document2-source-metadata1",
+        _ => "paintcraft.native/unrecognized",
+    };
     Value::object([
         ("schema", Value::str("paintcraft.open-assessment/v1")),
         ("assessment_only", Value::Bool(true)),
         ("source_sha256", Value::str(sha)),
-        (
-            "profile",
-            Value::str(if known {
-                "paintcraft.native/binary1-document1"
-            } else {
-                "paintcraft.native/unrecognized"
-            }),
-        ),
+        ("profile", Value::str(profile)),
         ("container_version", Value::Int(m.container_version)),
         ("document_schema", Value::str(&m.document_schema)),
         (
