@@ -135,13 +135,19 @@ justifies charging a smaller ceiling. A response peak is a preparation snapshot,
 not process-exit RSS. There is no OS filesystem or network sandbox claim.
 
 Release builds compile desktop, CLI and helper together under the lockfile and
-select the exact target policy: `jxr-codecs` on Apple-silicon macOS,
-`float-codecs` on the other five targets. The Cargo default remains V7. Meson 1.12.1 and Ninja
+select the exact target policy: `jxr-codecs,jxl-integer-codec` (V10) on
+Apple-silicon macOS and `jxl-integer-codec` (V9) on the other five targets.
+Normal helper builds also default to `jxl-integer-codec`, retaining the float
+baseline without enabling the JPEG XR writer globally. Meson 1.12.1 and Ninja
 1.13.2 build the pinned source without a system-library fallback. On Windows,
 Meson uses `b_vscrt=mt` exactly when Rust target features include `crt-static`;
 otherwise it uses `md`. Release flags select the static mode, while normal and
-source builds follow their actual Rust target configuration. Six-target
-execution remains unverified until CI runs.
+source builds follow their actual Rust target configuration. The optimized
+[six-target candidate run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
+at `025099c8` passed all 12 V9/V10 roles. The source/default promotion has
+separate normal macOS ARM debug producer/install evidence: 40 actual CLI/MCP
+tests passed. This does not qualify a new full desktop release, signing or
+notarization, and the published 0.1.1 V7/V8 artifacts and tag stay unchanged.
 Portable archives place helper and manifest beside the application. In the nested
 macOS editor bundle, `Contents/MacOS` contains the engine and helper executables;
 `Contents/Resources` contains the helper manifest and codec notices. Discovery
@@ -154,7 +160,10 @@ the final manifest SHA; it is not Developer-ID signing or notarization.
 
 Schema 2 `qualified_import_variants` lists exactly three native variants for V4
 or four for V5, five for V6, or seven for final qualified V7. Optional qualified V8
-uses schema 3 with exactly eight imports and one qualified export.
+uses schema 3 with exactly eight imports and one qualified export. V9 adds
+integer JPEG XL to the V7 inventory, yielding eight imports under schema 2; V10
+adds it to the V8 inventory, yielding nine imports and the same single export
+under schema 3. These are exact finite contracts, not version-order fallbacks.
 Standalone copied executables and helper-free installs fail closed. Packages
 containing the helper include `JPEGXR_LICENSE.txt`, reproducing the selected
 JPEG XR dependency's actual required Microsoft notice rather than relying on its
@@ -197,7 +206,8 @@ those gray diagnostic samples sRGB.
 
 ## Build and compatibility checks
 
-Normal builds include the final V7 HDR/EXR conversion helper and its legacy decoders and require the native C compiler,
+Normal builds include the V9 integer JPEG XL helper, its inherited HDR/EXR
+conversion and legacy readers, and require the native C compiler,
 Meson 1.12.1, Ninja 1.13.2 and Python 3.12 or newer:
 
 ```sh
@@ -221,9 +231,10 @@ cargo build --locked -p paintcraft-codec-worker
 The complete CLI source installer builds and installs both native binaries,
 manifest and notices with `sh scripts/packaging/install_cli.sh --source` (or
 `./scripts/packaging/install_cli.ps1 --source` on Windows). These local commands
-select V8 only on `aarch64-apple-darwin`, retaining V7 on the other five targets.
-The finite `qualify_cli_helper.py` runner selects profile-appropriate tests, binds
-the installed V8 CLI to its exact release build and requires an explicit pinned
+select V10 only on `aarch64-apple-darwin`, and V9 on the other five targets.
+The finite `qualify_cli_helper.py` runner uses the policy selector `v9` or `v10`,
+selects profile-appropriate tests, binds the installed CLI to its exact release
+build and requires an explicit pinned
 C oracle for C-dependent cases. Local proof does not replace execution of the
 release workflow on all six native targets.
 
@@ -275,7 +286,7 @@ Qualification commands (serial execution avoids conflating concurrent latency
 with codec correctness):
 
 ```sh
-cargo test -p paintcraft-codec-worker --features float-codecs --offline --locked -- --test-threads=1
+cargo test -p paintcraft-codec-worker --no-default-features --features float-codecs --offline --locked -- --test-threads=1
 cargo test -p paintcraft-codec-worker --no-default-features --offline --locked --test native_float --test native_avif --test native_avif_sdr --test native_heif -- --test-threads=1
 cargo test -p paintcraft-codec-worker --no-default-features --features avif-codec --offline --locked --test native_float --test native_avif --test native_avif_sdr --test native_heif -- --test-threads=1
 ```
@@ -294,9 +305,9 @@ corrected fixture is separate from the production watchdog implementation.
 
 ## Final V7 qualification descriptor and distribution
 
-Normal builds now enable `float-codecs`, retaining the immutable V7 build record, PCDEC002 protocol 2 and manifest schema 2. The exact profile is `native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1`. Its ordered seven import variants are the V6 five followed by `native-hdr-sdr8-worker-v1` and `native-exr-sdr8-worker-v1`. Native gray remains an internal operation, not an eighth document import variant. Historical private V7 manifests are refused; no profile ordering admits unknown versions or retries integrity failures.
+The historical final V7 build enabled `float-codecs`, retaining the immutable V7 build record, PCDEC002 protocol 2 and manifest schema 2. The exact profile is `native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1`. Its ordered seven import variants are the V6 five followed by `native-hdr-sdr8-worker-v1` and `native-exr-sdr8-worker-v1`. Native gray remains an internal operation, not an eighth document import variant. Historical private V7 manifests are refused; no profile ordering admits unknown versions or retries integrity failures.
 
-Final V7 packages require JPEGXR, dav1d and `HDR_EXR_LICENSES_V1.txt` notices. Exact legacy V4/V5/V6 payloads retain their original two notices. CLI archive extraction bounds the manifest and metadata before validating the exact profile-dependent file set, then verifies executable records/hashes/notices before atomic installation. Source installation follows the exact target policy: Apple-silicon macOS requires qualified V8; the other five targets require final V7. Compatibility-only V6 builds use `--no-default-features --features avif-sdr-codec`; V5 uses `--no-default-features --features avif-codec`, and V4 uses `--no-default-features`.
+Final V7 packages require JPEGXR, dav1d and `HDR_EXR_LICENSES_V1.txt` notices. Exact legacy V4/V5/V6 payloads retain their original two notices. CLI archive extraction bounds the manifest and metadata before validating the exact profile-dependent file set, then verifies executable records/hashes/notices before atomic installation. The published 0.1.1 rollout selected V8 on Apple-silicon macOS and V7 elsewhere. Current source installation instead requires V10/V9 as described above. Historical V7 builds require `--no-default-features --features float-codecs`; V8 requires `--no-default-features --features jxr-codecs`. Compatibility-only V6 builds use `--no-default-features --features avif-sdr-codec`; V5 uses `--no-default-features --features avif-codec`, and V4 uses `--no-default-features`.
 
 The final descriptor does not alter exposure, alpha, negative-value, tone-mapping, source-space or report semantics. Original private qualification logs are not final-distribution evidence. Final consumer/package proof and native OS release checks are recorded separately.
 
@@ -307,8 +318,10 @@ Actual local ad-hoc signing of a separate optimized helper copy also passed cano
 
 ## Qualified V8 JPEG XR fresh copies and staged distribution
 
-Normal Cargo builds still use V7. Staged release builds and source installation select V8 only for
-Apple-silicon macOS; the other five targets remain on V7. `jxr-codecs` builds add
+The published 0.1.1 staged rollout selected V8 only for Apple-silicon macOS and
+V7 elsewhere. The current V10/V9 selection above supersedes that source policy,
+without modifying those downloads. Historical `--no-default-features --features
+jxr-codecs` builds add
 profile `native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1`, an exact
 nonprivate V8 build record, and schema 3 with eight imports and one export.
 Private V8 records remain refused. `PCENC001` requests and `PCJXR001` replies
@@ -351,8 +364,12 @@ unchanged before signing; signed bytes are `cb17b763…`. Exact component/source
 hashes and preserved failures are in
 local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`.
 
-This does not complete broader JPEG XR profiles, original Windows application
-interoperability, the other five native target runtimes, remote CI, Developer-ID
-signing or notarization. The global Cargo default remains V7.
+This local historical proof did not qualify other native targets or remote CI.
+The later V9/V10 candidate CI now supplies six-target worker and CLI/MCP
+runtime/package evidence, including the fixed writer goldens. Actual fresh-writer
+native App qualification on the other five targets is still underway, so this
+first source promotion retains the Apple Silicon writer selection. Broader JPEG
+XR profiles, original Windows application interoperability, Developer-ID signing
+and notarization remain separate gates.
 There is no generic Open, Classic/browser reader, preserving JPEG XR Save or
 16-bit editor claim. The exact registry variants remain preflight operations.

@@ -469,8 +469,8 @@ Qualified long writer headers are selected structurally before launch through
 
 `paintcraft-cli --json capabilities --frontend studio` distinguishes `jxr.rgb8.import` (established
 short headers), `jxr.writer-rgb8.import` (the explicit long-header subset), and
-`jxr.rgb8.lossless.write` (fresh copies). The last two require the exact public V8
-profile; historical private helpers are refused. Every native codec row lists
+`jxr.rgb8.lossless.write` (fresh copies). The last two require an exact public V8 or V10
+writer profile; historical private helpers are refused. Every native codec row lists
 its finite `accepted_helper_profiles`, including compatible public V8 imports.
 The historical `required_helper_profile` field is explanatory; the finite array
 defines accepted alternatives rather than a version-order rule. Discovery keeps
@@ -481,10 +481,12 @@ generic Open or preserving Save.
 
 ## Native JPEG XR fresh copies
 
-`export_jxr` writes a native Studio fresh copy through qualified V8. Staged
-Apple-silicon macOS release builds and source installation select this helper; the other five
-native targets and global Cargo default retain V7 and require an explicitly
-qualified installation before this route is available. Pass `path`, optional `overwrite` and `allow_losses`. The document must
+`export_jxr` writes a native Studio fresh copy through an exact qualified
+V8/V10 writer installation. Current source and next shipping builds select V10
+on Apple Silicon and V9 without the writer on the other five targets. Normal
+helper builds also default to V9. The wider actual fresh-writer App gate is
+underway; the published 0.1.1 V7/V8 downloads stay unchanged. Pass `path`, optional
+`overwrite` and `allow_losses`. The document must
 produce a wholly opaque composite; transparent output is refused instead of
 silently applying a matte. For example, a layered opaque document needs its
 actual `flatten` loss acknowledged:
@@ -508,8 +510,13 @@ document. Classic/browser conversion, ordinary Open and preserving JPEG XR Save
 remain unavailable. The optional helper and actual CLI/MCP path have local Apple
 Silicon proof, including the optimized staged source/bundle proof in
 local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`. The
-global Cargo default and five other native targets retain V7; their runtime
-qualification and remote CI remain pending.
+current source policy selects V10 on Apple Silicon and V9 on the other five
+targets, with integer JPEG XL enabled in normal helper builds. All six targets
+passed V9/V10 candidate runtime/package checks at `025099c8`; normal macOS ARM
+debug V9/V10 archives also passed all 40 installed CLI/MCP test functions.
+JPEG XR writing remains selected only on Apple Silicon while the other targets
+await the actual fresh-writer native App gate. Published 0.1.1 V7/V8 downloads
+and the tag are unchanged; this does not claim a new packaged release.
 
 ## Native HEIC/HEIF import
 

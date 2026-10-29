@@ -12,6 +12,23 @@ previously unexecuted six-target installation slice for those exact artifacts,
 not the broader original-file, reference-application, GUI/device or format gates.
 Later profiles and relevant backend changes require their own qualification.
 
+As of 2026-10-29, the [V9/V10 candidate workflow](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
+at `025099c8` passed all 12 jobs across the six native targets. Current source
+and next shipping policy select V9 on Windows x64/ARM64, macOS Intel and Linux
+x64/ARM64, and V10 on Apple Silicon macOS. The global helper default enables
+integer JPEG XL. The V9/V10 inventories retain their qualified AVIF/float and
+strict legacy import baselines. Separate normal macOS ARM debug default/selected
+builds and actual producer-installed CLI/MCP checks passed 40 test functions.
+This source-policy promotion does not change published 0.1.1 downloads or the
+tag, and it does not claim new complete installers, signing or notarization.
+
+The first promotion retains JPEG XR writing on Apple Silicon. All six V10
+candidate jobs now exercise its fixed RGB8 worker and independent precomputed
+C-qualified CLI/MCP goldens. Actual fresh-writer native App qualification for
+the other five targets is underway; the legacy-import App gates do not replace
+it. Broader profiles and original-application interoperability remain open.
+Dated V7/V8 evidence below retains its original artifact and qualification scope.
+
 ## Available workflows
 
 Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XR, HEIF, AVIF and HDR/EXR conversions therefore do not imply browser readers; JPEG XL has its own explicitly qualified browser import. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
@@ -54,7 +71,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving/public fresh writer; internal typed PDN3 writer and bounded native preparation are implemented, pending original-app qualification |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. Internal fresh writer and gated layered-copy preparation exist; public/preserving writes await Windows Paint qualification |
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. A separate explicit Studio Import variant converts exact neutral `auto` Normal groups to ordered editable leaves with group-structure/name/control loss consent. Isolated/default groups, nonneutral opacity, group offsets, unsupported blends/extensions, ZIP64 and resource variants are refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
-| JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`; optional qualified V8 adds upfront long-header `native-jxr-writer-rgb8-worker-v1`. Aliases: `.jxr`, `.wdp`, `.wmp` | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. The exact native Studio fresh-copy RGB8 writer and distinct long-header importer have actual headless English/Japanese Studio and CLI/MCP proof through qualified V8; staged Apple-silicon macOS release/source-installer selection is locally qualified with optimized binaries, while the other five targets and global Cargo default retain V7. No generic export, ordinary Open, Classic/browser read or preserving Save |
+| JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`; target-selected V10 retains the qualified V8 upfront long-header `native-jxr-writer-rgb8-worker-v1`. Aliases: `.jxr`, `.wdp`, `.wmp` | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. The exact native Studio fresh-copy RGB8 writer and distinct long-header importer have actual headless English/Japanese Studio and CLI/MCP proof through qualified V8; current source selection is V10 on Apple-silicon macOS and V9 elsewhere, with the writer still selected only on Apple Silicon pending the wider actual fresh-writer App gate. No generic export, ordinary Open, Classic/browser read or preserving Save |
 | HEIF/HEIC | Native Studio explicit Import, CLI and native MCP `import_image` for `native-heif-srgb8-worker-v1`, with `.heic`, `.heif` or `.hif` aliases | Direct-primary explicit sRGB8 color and optional straight8 alpha through the verified helper. YCbCr reconstruction and nonempty source item names require their actual loss consent. No ordinary Open, Classic/browser read, grid/ICC/HDR/deep color, preserving Save or HEIF writing |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping and high depth remain unavailable. Internal fresh RGB8 layered writer has independent raw-layer/profile proof; public writing remains disabled pending original-application qualification |
@@ -167,7 +184,7 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 
 1. **Extend isolated-reader qualification across supported platforms.** The narrow browser JPEG XL consumer now has actual production picker, adoption, PCND reopen and failure evidence below. Version 0.1.1 now has [executed six-target helper and installed-consumer coverage](releases/v0.1.1-validation.md) for its finite native profiles; additional native profiles, interactive execution and cross-browser qualification remain separate work. Browser quarantine is a logical failure policy, not a synchronous Worker-stop or aggregate physical-memory guarantee.
 2. **Close the finite qualified stock profiles, then remaining required integrations.** Native identity sRGB8 and explicit SDR YCbCr AVIF profiles now have independently checked decoder/consumer routes, not full stock parity. V6 adds full/limited-range 4:4:4 and qualified 4:2:0 with reconstruction consent; unknown siting, HDR, grids, transforms and browser execution remain separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
-3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; editable group semantics and original-application qualification remain. Neutral pass-through group conversion is a limited import profile, not hierarchy preservation. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. Separately, JPEG XR has an isolated fixed-RGB8 writer, native parent preparation and actual Studio/CLI/MCP fresh-copy consumers with independent C evidence. Public V8 release execution is now recorded on Apple Silicon; the other five targets remain on executed V7. Default promotion, broader writer profiles and original-application qualification remain pending.
+3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; editable group semantics and original-application qualification remain. Neutral pass-through group conversion is a limited import profile, not hierarchy preservation. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. Separately, JPEG XR has an isolated fixed-RGB8 writer, native parent preparation and actual Studio/CLI/MCP fresh-copy consumers with independent C evidence. Published 0.1.1 V8 release execution is recorded on Apple Silicon and V7 elsewhere. Current V10/V9 source promotion adds integer JPEG XL after all 12 candidate jobs passed. Wider fresh-writer native App proof, broader writer profiles and original-application qualification remain pending.
 4. **Extend qualified HDR/EXR conversion and distribution evidence.** Native isolated conversion, actual Studio preview/adoption and CLI/MCP inspection/import now work for the bounded profiles below. The final V7 helper uses selected image HDR and pinned `exr` 1.74.2 with Rayon disabled; standalone in-process qualification adapters are not the product isolation boundary. Explicit settings, digest-bound actual losses and the retained-linear-alpha compositing limitation remain required. Broader Radiance orientations/XYZE, EXR tiled/deep/multipart or differing windows, additional compression/color profiles and high-depth editing remain unsupported; their implementation and qualification cannot be inferred from the narrow route. The finite worker and installed CLI/MCP fixture cases now have native execution on all six v0.1.1 release targets; broader original-file/reference matrices and interactive frontend/device execution remain unfinished. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. JP2 remains deferred F7 work, not an implemented conversion or an initial-release dependency.
 5. **Complete remaining required profiles without widening labels.** Narrow subsets do not close the pack's broader format requirements. DDS now has top-mip imports with omission consent and native/browser RGBA8/BC1/BC2/BC3 fresh exports with explicit generated-mip policy. This does not close the whole texture gate: cross-browser/device qualification, further encoding/alpha/swizzle/filter profiles and release/reference evidence remain. The current array/face policy is explicit refusal of arrays, cubes and volumes. Custom stored mips are not represented in Document; exports derive new levels from the base and never claim to preserve or update stale source mips. `TEXTURE_ICON_VECTOR.md` conditions additional BC families on encoder/profile qualification; compiling broad container support does not enable them. Additional JXL/JXR profiles still need their specified implementation and evidence. Track DCX multi-page consumers, broader browser MSP2/device qualification, original historical-app evidence, the remaining TIFF precision/page/profile requirements beyond the explicit selected-page copy, ABR dynamics/pattern behavior, ASE color adoption and CSH path variants against their individual contracts; being unimplemented is not a basis for calling a requirement optional. Explicitly future animation/multipage editing remains distinct from current single-image conversion. Foreign preserving Save remains a separate gate throughout.
 6. **Keep optional F7 imports distinct from initial-format parity.** JP2, RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
@@ -346,7 +363,7 @@ platform or real-device latency. Broader JPEG XR profiles remain separate work.
 
 The original optional `jxr-encode` helper feature implemented a fixed opaque RGB8 lossless
 writer through the reviewed selected-library RGB8 factory and capped seekable
-sink. It includes `float-codecs` but does not change the default V7 build.
+sink. It included `float-codecs` without changing the then-default V7 build.
 `--jxr-encode` exists only in the private V8 candidate, with distinct `PCENC001`
 and `PCJXR001` frames. Its historical exact schema 3 manifest and private encoder verifier
 are separate from production decoder discovery, which still rejects this candidate.
@@ -387,16 +404,16 @@ Only that typed quota condition becomes `ResourceLimit`; generic IO and callback
 failures remain `CodecFailed`. Global heap exit 75 remains `ResourceLimit`.
 
 The historical limitations above do not describe the later optimized matrix or
-current CLI/MCP consumers. Broader alpha/quality/depth profiles, Windows
-application interoperability and execution on all six release targets remain
-unproved. See the [writer developer record](../crates/services/paintcraft-formats/src/codec_worker/jxr_encode/README.md).
+current CLI/MCP consumers. Broader alpha/quality/depth profiles and Windows application interoperability
+remain unproved. The later V10 candidate run now supplies six-target fixed
+writer runtime evidence; the actual fresh-writer App gate remains separate. See the [writer developer record](../crates/services/paintcraft-formats/src/codec_worker/jxr_encode/README.md).
 
 ### Qualified JPEG XR fresh-copy consumers, 2026-10-26
 
 The optional `jxr-codecs` producer now has an exact nonprivate V8 build record,
 profile `native-v8-jxr-rgb8-lossless-seekcap2-jxrread1-parent-lease1` and schema 3
 manifest declaring eight imports and one export. Private V8 records are refused;
-V4–V7 decoder contracts and the default V7 build remain unchanged. Canonical
+V4–V7 decoder contracts and the then-default V7 build remained unchanged. Canonical
 packaging verifies this descriptor without executing cross-target binaries and
 retains the same JPEG XR, dav1d and HDR/EXR notices.
 
@@ -459,8 +476,9 @@ recorded: zero oracle stdin allowance, and constructing an Editor with a path
 without the real App Open association. The fixes affect only the test runner/setup.
 
 This is qualified local helper and Studio/CLI/MCP evidence, not completion of F12.
-Staged release/source-installer selection now enables qualified V8 only on Apple-silicon
-macOS; five other native targets and the global Cargo default retain V7. Fresh
+At that historical staged proof, release/source selection enabled V8 only on
+Apple-silicon macOS and V7 elsewhere. The current V10/V9 source selection is
+described above; published 0.1.1 downloads remain unchanged. Fresh
 immutable source `a1c1663637814a351e094d462b4c9f8401d224bc` produced the optimized
 CLI/App/lib-test artifacts. SHA-bound installed CLI baseline/portable/forged/C
 cases and the same 24 optimized App cases passed through the actual bundle

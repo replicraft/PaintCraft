@@ -6,11 +6,14 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
-Normal Cargo helper builds retain `float-codecs` (V7) by default. The explicit
-shipping policy in `scripts/packaging/helper_policy.py` selects qualified public
-V8 through `jxr-codecs` only for `aarch64-apple-darwin`; the other five native
-targets retain exact V7 through `float-codecs`. This staged choice applies to
-release builds and source CLI installation. The local macOS bundle builder pins
+Normal Cargo helper builds enable `jxl-integer-codec` (V9) by default. The
+explicit shipping policy in `scripts/packaging/helper_policy.py` selects V10
+through `jxr-codecs,jxl-integer-codec` for `aarch64-apple-darwin`, and V9 through
+`jxl-integer-codec` for the other five native targets. This first promotion makes
+integer JPEG XL available in normal builds while retaining the Apple Silicon
+JPEG XR writer selection. It applies to next release builds and source CLI
+installation; the published 0.1.1 V7/V8 downloads and tag remain unchanged.
+The local macOS bundle builder pins
 an explicit Rust target (`--target`, then `CARGO_BUILD_TARGET`, then `rustc` host),
 passes it to Cargo and verifies both binary architectures and the exact helper
 profile before publication. Python/Rosetta CPU detection does not select the
@@ -19,25 +22,34 @@ rollback; the launcher follows the actual supplied binary architecture.
 
 A V4 compatibility helper requires `--no-default-features`; V5 identity-only
 compatibility uses `--no-default-features --features avif-codec`; V6 uses
-`--no-default-features --features avif-sdr-codec`. Do not change the global Cargo
-default while target holdbacks remain: adding `--features float-codecs` cannot
-remove a default `jxr-codecs` feature. A future default switch needs separate
-worker `--no-default-features` builds without disabling desktop GPU defaults.
+`--no-default-features --features avif-sdr-codec`. Historical V7 requires
+`--no-default-features --features float-codecs`, V8 requires
+`--no-default-features --features jxr-codecs`, and private writer qualification
+requires `--no-default-features --features jxr-encode`. Cargo features are
+additive: specifying an older feature does not remove the integer-family
+default. Apply compatibility flags to the helper without disabling desktop GPU
+defaults.
 
 The pinned dav1d source is built statically with Meson 1.12.1 and Ninja 1.13.2;
 no installed decoder library is used. Windows builds select the native MSVC
 compiler; release Rust flags request `crt-static` and the C build matches with
 Meson `b_vscrt=mt`. Normal/source builds without that target feature use `md`,
 so the Rust and C runtime choices agree. Each runner executes actual helper and installed
-CLI/MCP tests before packaging. These workflow changes still require execution
-on all six targets; local Apple-silicon checks do not qualify the other targets.
+CLI/MCP tests before packaging. The optimized
+[six-target V9/V10 candidate run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
+at `025099c8` passed all 12 jobs. Separate normal macOS ARM debug builds verified
+the default V9 and target-selected V10 records, real archive/install operations
+and 40 actual installed CLI/MCP tests. These qualify their exact scopes; a new
+complete release still needs its own native packaging/publication checks. The
+other five targets' actual fresh-writer App gate is underway and does not yet
+widen the JPEG XR shipping selection.
 
 Packaging reads the helper's embedded build record without executing it, then
 writes an exact manifest for V4, identity-only V5, complete V6, qualified V7 or
-nonprivate V8. It refuses mixed,
+nonprivate V8, integer-family V9 or writer/integer-family V10. It refuses mixed,
 stale or malformed records. Desktop and CLI packages include the helper,
 manifest, `JPEGXR_LICENSE.txt` and `DAV1D_LICENSE.txt`; final V7 also includes
-`HDR_EXR_LICENSES_V1.txt`, as does V8. Portable archives keep
+`HDR_EXR_LICENSES_V1.txt`, as do V8/V9/V10. Portable archives keep
 these beside the executable. macOS bundles keep only the engine/helper Mach-O
 executables in the nested editor’s `Contents/MacOS`; its manifest and notices
 reside in `Contents/Resources`. The fixed bundle resolver refuses competing
@@ -241,7 +253,7 @@ private prefixes; synthetic archive checks for six targets do not qualify native
 execution on the other systems.
 
 
-Final V7 uses the exact nonprivate seven-variant qualification descriptor and the unchanged V7 record/protocol/schema. Its required notices add `HDR_EXR_LICENSES_V1.txt`; legacy V4/V5/V6 archive and installation payload sets remain unchanged. Private V7 manifests are unsupported. Source installation requires exact V8 on Apple-silicon macOS and exact V7 on the other five targets. Preserve explicit `--no-default-features` when building historical V4/V5/V6 compatibility helpers.
+Final V7 uses the exact nonprivate seven-variant qualification descriptor and the unchanged V7 record/protocol/schema. Its required notices add `HDR_EXR_LICENSES_V1.txt`; legacy V4/V5/V6 archive and installation payload sets remain unchanged. Private V7 manifests are unsupported. The 0.1.1 rollout required V8 on Apple-silicon macOS and V7 elsewhere; current source installation requires exact V10/V9 respectively. Preserve explicit `--no-default-features` when building historical V4 through V8 compatibility helpers.
 
 A local copied-helper or private-prefix proof does not establish native execution on the other five targets, MSI installation/repair, Linux package integration, signed macOS bundle behavior, or original-application file events. Require the actual native release workflow and its platform validators before claiming those results. Signing rewrites Mach-O bytes; regenerate and canonically verify the helper manifest after signing, before sealing the enclosing applications.
 
@@ -270,10 +282,11 @@ fixed that failure without weakening the seal or omitting licenses.
 Exact artifacts, commands, component/source hashes and raw logs are in
 local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`.
 
-This locally qualifies the staged Apple-silicon macOS build, not a published
-release. The five held targets and global Cargo default remain V7. Remote CI,
-Developer-ID signing/notarization, original-application interoperability and actual
-OS file-dialog/Finder launching are not claimed. No tag, push, registration or
+This historical proof locally qualified the staged Apple-silicon macOS build.
+The subsequent 0.1.1 V7/V8 release is recorded separately. Current V10/V9 source
+selection and the later candidate CI are described above. This local proof did
+not establish remote CI, Developer-ID signing/notarization, original-application
+interoperability or OS file-dialog/Finder launching. No tag, push, registration or
 user Applications installation was performed.
 
 
@@ -294,7 +307,8 @@ with `--no-default-features --features jxr-codecs`, freezes the standalone CLI
 release installed-test recipe, then verifies the exact public record, schema 3,
 target, ordered import/export arrays and CLI SHA before executing candidate code.
 Candidate archive/private-prefix preparation deliberately does not call the
-shipping-policy verifier: the five held targets still require V7 for shipping.
+shipping-policy verifier: a candidate may differ from the exact current
+V10/V9 target selection.
 
 Each job runs the existing worker unit/integration controls, finite installed
 CLI/MCP baseline/portable/forged cases and the mandatory DDS CLI/MCP export
@@ -312,7 +326,7 @@ Processes execute serially with finite time and output budgets and process-tree
 cleanup. Success and failure receipts retain native identities, exact source,
 toolchain/flags, binary/manifest/notice hashes and bounded raw stdout/stderr.
 Ambient fixture/helper/oracle/golden-emission variables are removed. Evidence
-uploads run on failure too and never change the shipping map or global V7 default.
+uploads run on failure too and never change the shipping map or Cargo defaults.
 
 For an authorized local run from clean committed source, use a fresh output path:
 
@@ -337,5 +351,6 @@ artifact hashes, counts and raw output are local ignored evidence at
 The failed d9 attempt remains separate: its record fixture incorrectly selected
 private V8 under public `jxr-codecs`; only exact feature-selected fixture
 expectations were corrected. This passing run qualifies its recorded Mac ARM
-candidate only. The other five native targets remain unqualified and held at V7,
-as does the global Cargo default; no remote workflow or promotion occurred.
+candidate only. At that time the other five targets and the global default
+remained V7. That historical run did not execute remote CI or promote defaults;
+the later 12-job V9/V10 run and reviewed source promotion are described above.

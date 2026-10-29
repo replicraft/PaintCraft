@@ -20,9 +20,14 @@ explicit 16-bit-to-sRGB8 conversion, native V9/V10 candidate App controls in
 English/Japanese, and actual production Worker/Studio browser pixel evidence.
 The 16-bit path requires visible-preview depth-loss consent and digest-bound
 adoption; this does not add 16-bit editing. Actual installed CLI/MCP baseline and
-exact-selector checks passed for both roles on macOS ARM. Six-target candidate
-qualification and shipping promotion remain
-open, and the published 0.1.1 V7/V8 helper selections are unchanged.
+exact-selector checks passed for both roles on macOS ARM. The [six-target candidate run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
+at `025099c8` passed all 12 V9/V10 jobs. Current source/next shipping selection
+is V9 on five targets and V10 on Apple Silicon; the global helper default enables
+integer JPEG XL. Normal debug default/selected builds also passed 40 installed
+CLI/MCP tests on macOS ARM. Published 0.1.1 V7/V8 downloads and the tag remain
+unchanged. Wider actual native App JPEG XR writer qualification is underway;
+this first promotion retains its Apple Silicon writer selection and does not
+claim a new complete release.
 
 [Selected TIFF page import](TIFF_PAGE_IMPORT.md) now has bounded full-source
 inventory and explicit Studio conversion to an unsaved RGBA8 copy. Backend,
