@@ -291,14 +291,16 @@ pub(super) fn report(source: &Source, limits: Limits) -> Result<Value> {
             orientation_policy,
             identity_profile,
             source_attachment_policy: match source {
-                Source::Png(source) => Some(dto::SourceAttachmentPolicy {
-                    icc_profile_bytes: source.icc.is_some(),
-                    resolution_values: source.resolution.is_some(),
-                    color_management_applied: false,
-                    active_print_settings: false,
-                    requires_attachment_admission: true,
-                    requires_final_import_validation: true,
-                }),
+                Source::Png(source) if source.icc.is_some() || source.resolution.is_some() => {
+                    Some(dto::SourceAttachmentPolicy {
+                        icc_profile_bytes: source.icc.is_some(),
+                        resolution_values: source.resolution.is_some(),
+                        color_management_applied: false,
+                        active_print_settings: false,
+                        requires_attachment_admission: true,
+                        requires_final_import_validation: true,
+                    })
+                }
                 _ => None,
             },
             depth_policy,

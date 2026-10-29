@@ -154,14 +154,21 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
                 "png-source-profile-resolution-rgba8-v1"
             );
             let policy = &cli["proposed_conversion"]["source_attachment_policy"];
-            assert_eq!(policy["requires_attachment_admission"], true);
-            assert_eq!(policy["requires_final_import_validation"], true);
-            assert_eq!(policy["color_management_applied"], false);
-            assert_eq!(policy["active_print_settings"], false);
-            assert_eq!(
-                policy["icc_profile_bytes"],
-                name.ends_with("rgba8-icc-precedence.png")
-            );
+            if name.ends_with("rgba8-icc-precedence.png") {
+                assert_eq!(policy["requires_attachment_admission"], true);
+                assert_eq!(policy["requires_final_import_validation"], true);
+                assert_eq!(policy["color_management_applied"], false);
+                assert_eq!(policy["active_print_settings"], false);
+                assert_eq!(
+                    policy["icc_profile_bytes"],
+                    name.ends_with("rgba8-icc-precedence.png")
+                );
+            } else {
+                assert!(
+                    policy.is_null(),
+                    "No attachment is proposed without ICC/pHYs"
+                );
+            }
         } else {
             assert!(cli["proposed_conversion"]["source_attachment_policy"].is_null());
         }
