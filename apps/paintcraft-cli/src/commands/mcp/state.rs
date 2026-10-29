@@ -85,13 +85,28 @@ impl State {
         overwrite: bool,
         encode: impl FnOnce(&mut dyn std::io::Write) -> Result<()>,
     ) -> Result<Outcome> {
+        self.write_copy_with_checked(path, overwrite, encode, &|| Ok(()))
+    }
+    /// Recheck request lifetime at the existing post-stage publication barrier.
+    /// This retains source and destination checks; it is not an external CAS.
+    pub fn write_copy_with_checked(
+        &self,
+        path: &Path,
+        overwrite: bool,
+        encode: impl FnOnce(&mut dyn std::io::Write) -> Result<()>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Outcome> {
+        check()?;
         self.protect_copy_sources(path)?;
         Ok(save::save_with_preparation(
             path,
             overwrite,
             save::STAGED_FILE_BYTES_MAX,
             encode,
-            |_| self.protect_copy_sources(path),
+            |_| {
+                check()?;
+                self.protect_copy_sources(path)
+            },
         ))
     }
     pub fn session(&mut self) -> Result<&mut Session> {
@@ -206,6 +221,9 @@ impl State {
     }
 }
 
+#[cfg(test)]
+#[path = "state/cancellation_tests.rs"]
+mod cancellation_tests;
 #[cfg(test)]
 #[path = "state/source_tests.rs"]
 mod source_tests;
