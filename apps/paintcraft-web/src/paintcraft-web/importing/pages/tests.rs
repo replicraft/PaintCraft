@@ -153,3 +153,34 @@ fn oversized_page_stays_disabled_and_cancel_drops_private_source() {
     assert!(h.state().pending_import.is_none());
     assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
 }
+
+#[test]
+fn selected_pages_have_distinct_stable_document_state_and_layer_identities() {
+    let ctx = egui::Context::default();
+    let import = |page| {
+        let mut app = WebApp::new(&ctx);
+        stage(&mut app, &ctx);
+        app.choose_page_import(&ctx, page);
+        app.resolve_import(&ctx, true);
+        app.editor.session.document().clone()
+    };
+    let first = import(0);
+    let second = import(1);
+    let repeat = import(1);
+    assert_ne!(
+        first.layers[&first.roots[0]].raster.get(0, 0),
+        second.layers[&second.roots[0]].raster.get(0, 0)
+    );
+    assert_ne!(
+        first.document_id, second.document_id,
+        "different selected pixels cannot share a document ID"
+    );
+    assert_ne!(
+        first.state_id, second.state_id,
+        "render caches require distinct states"
+    );
+    assert_ne!(first.roots, second.roots);
+    assert_eq!(second.document_id, repeat.document_id);
+    assert_eq!(second.state_id, repeat.state_id);
+    assert_eq!(second.roots, repeat.roots);
+}

@@ -206,3 +206,34 @@ fn native_picker_import_retains_frozen_bytes_even_if_disk_source_changes() {
     );
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn selected_pages_have_distinct_stable_document_state_and_layer_identities() {
+    let ctx = egui::Context::default();
+    let import = |page| {
+        let mut app = App::new(None);
+        stage(&mut app);
+        app.choose_dcx_page(&ctx, page);
+        app.resolve_import(&ctx, true);
+        app.editor.document().clone()
+    };
+    let first = import(0);
+    let second = import(1);
+    let repeat = import(1);
+    assert_ne!(
+        first.layers[&first.roots[0]].raster.get(0, 0),
+        second.layers[&second.roots[0]].raster.get(0, 0)
+    );
+    assert_ne!(
+        first.document_id, second.document_id,
+        "different selected pixels cannot share a document ID"
+    );
+    assert_ne!(
+        first.state_id, second.state_id,
+        "render caches require distinct states"
+    );
+    assert_ne!(first.roots, second.roots);
+    assert_eq!(second.document_id, repeat.document_id);
+    assert_eq!(second.state_id, repeat.state_id);
+    assert_eq!(second.roots, repeat.roots);
+}
