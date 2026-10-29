@@ -1,4 +1,6 @@
 use super::*;
+#[path = "active_retirement_tests.rs"]
+mod active_retirement;
 use egui_kittest::{Harness, kittest::Queryable};
 use paintcraft_input::{
     Modifiers,
@@ -330,7 +332,7 @@ fn a_new_settings_modal_retires_continuation_before_receipt_ack_without_losing_f
 }
 
 #[test]
-fn ordinary_ime_is_delivered_during_own_wait_and_queued_native_work_is_retired() {
+fn ordinary_ime_waits_for_earlier_completed_contacts_then_receives_the_original_event() {
     let (mut host, ctx, _, _) = setup(Experience::Studio);
     let release = host.app.editing.clone().unwrap().pause();
     let before = host.app.editor.publications();
@@ -348,17 +350,19 @@ fn ordinary_ime_is_delivered_during_own_wait_and_queued_native_work_is_retired()
     host.snapshot(DeliveryHealth::Ready).unwrap();
     let mut step = host.step(&ctx, raw).unwrap();
     step.output.textures_delta.clear();
-    assert_eq!(step.progress, Progress::Retired);
+    assert_eq!(step.progress, Progress::WaitingForOwnEdit);
+    assert!(
+        !host.app.ime_composing,
+        "IME must not jump earlier completed contacts"
+    );
+    assert!(host.waiting.is_some());
+    release.send(()).unwrap();
+    finish(&mut host, &ctx);
     assert!(
         host.app.ime_composing,
         "normal IME path receives the original event"
     );
-    assert!(host.pending.is_none());
-    assert!(host.waiting.is_none());
-    release.send(()).unwrap();
-    finish(&mut host, &ctx);
-    // Retirement revokes the precisely owned private result before polling.
-    assert_eq!(host.app.editor.publications(), before);
+    assert_eq!(host.app.editor.publications(), before + 2);
 }
 
 #[test]
@@ -454,7 +458,7 @@ fn failure_does_not_abandon_a_preexisting_unrelated_edit() {
 }
 
 #[test]
-fn prepared_owned_pen_result_cannot_publish_after_failure_focus_modal_or_ime_retirement() {
+fn prepared_owned_pen_retires_for_failure_focus_modal_but_completed_work_precedes_ime() {
     for reason in 0..4 {
         let (mut host, ctx, _, _) = setup(Experience::Studio);
         let (prepared, release) = host.app.editing.as_ref().unwrap().pause_next_completion();
@@ -482,9 +486,11 @@ fn prepared_owned_pen_result_cannot_publish_after_failure_focus_modal_or_ime_ret
         }
         let mut step = host.step(&ctx, raw).unwrap();
         step.output.textures_delta.clear();
-        assert_eq!(step.progress, Progress::Retired);
         if reason == 3 {
-            assert!(host.app.ime_composing);
+            assert_eq!(step.progress, Progress::WaitingForOwnEdit);
+            assert!(!host.app.ime_composing);
+        } else {
+            assert_eq!(step.progress, Progress::Retired);
         }
         if reason == 2 {
             assert!(matches!(
@@ -493,7 +499,14 @@ fn prepared_owned_pen_result_cannot_publish_after_failure_focus_modal_or_ime_ret
             ));
         }
         release.send(()).unwrap();
-        assert_no_resurrection(&mut host, &ctx, before, depth);
+        if reason == 3 {
+            finish(&mut host, &ctx);
+            assert!(host.app.ime_composing);
+            assert_eq!(host.app.editor.publications(), before + 1);
+            assert_eq!(host.app.editor.undo_depth(), depth + 1);
+        } else {
+            assert_no_resurrection(&mut host, &ctx, before, depth);
+        }
     }
 }
 

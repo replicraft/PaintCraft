@@ -6,7 +6,10 @@ use paintcraft_input::tablet::{
     receiver::{Delivery, UiEvent},
 };
 use paintcraft_platform::tablet::{self as native, DeliveryHealth};
-use paintcraft_ui::pen_input::{Batch, Owner, Pass, Source, View as CaptureView};
+use paintcraft_ui::pen_input::{
+    Batch, NativePenCancellation, NativePenTarget, Owner, Pass, PublicationGuard, Source,
+    View as CaptureView,
+};
 const SOURCE_SLOTS: usize = 4096;
 const UI_SLOTS: usize = 12288;
 const UI_RELEASE_SLOTS: usize = UI_SLOTS + 3;
@@ -18,6 +21,7 @@ pub(super) struct Receiver {
     pass: Pass,
     pending: Option<(Owner, Batch)>,
     retained: Option<Batch>,
+    presented: Option<(PublicationGuard, NativePenTarget)>,
     controller_owned: bool,
     frame: u64,
     layer: Option<egui::LayerId>,
@@ -42,7 +46,9 @@ impl Receiver {
         let mut gui_events = budget.account(AllocationClass::PaintMetadata);
         gui_events.resize(
             (((UI_RELEASE_SLOTS + SOURCE_SLOTS) * std::mem::size_of::<egui::Event>())
-                + 2 * std::mem::size_of::<CaptureView>()) as u64,
+                + 2 * std::mem::size_of::<CaptureView>()
+                + std::mem::size_of::<Option<(PublicationGuard, NativePenTarget)>>())
+                as u64,
         )?;
         Ok(Self {
             installation,
@@ -50,6 +56,7 @@ impl Receiver {
             pass: Pass::default(),
             pending: None,
             retained: None,
+            presented: None,
             controller_owned: false,
             frame: 0,
             layer: None,
@@ -73,6 +80,7 @@ impl Receiver {
                 .is_some_and(|(_, b)| !b.frame.samples.is_empty());
         self.pending = None;
         self.retained = None;
+        self.presented = None;
         self.controller_owned = false;
         self.fallback_button = None;
         cancel_editor
@@ -190,8 +198,8 @@ fn ui_event(event: UiEvent) -> egui::Event {
     }
 }
 impl App {
-    /// Explicit opt-in while native lifecycle qualification is in progress.
-    /// Ordinary with_native_services does not install capture yet.
+    /// Legacy frame-based embedding API. The macOS application uses its
+    /// source-ordered owned loop and installs capture during normal startup.
     pub fn with_native_tablet(mut self, cc: &eframe::CreationContext<'_>) -> Self {
         if self.tablet.take().is_some() {
             self.editor.cancel_gesture();

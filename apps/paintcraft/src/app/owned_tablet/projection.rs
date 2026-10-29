@@ -10,7 +10,9 @@ use paintcraft_platform::tablet::{
     Boundary, CaptureEvent, CaptureRecord, Collected, Collector, DeliveryHealth, MouseKind,
     MouseRoute, PenRoute, RecordFault, WheelPhase, WindowPosition,
 };
-use paintcraft_ui::pen_input::{Batch, Owner, Source, View};
+use paintcraft_ui::pen_input::{Batch, NativePenCancellation, Owner, Source, View};
+#[path = "projection/retirement.rs"]
+mod retirement;
 
 // Keep the resource-owning Batch inline: a per-record Box would add callback
 // allocations. Every queue/frame slot is charged using this actual enum size.
@@ -21,6 +23,12 @@ pub enum Pointer {
     /// Carries its opaque source binding and admitted storage through replay.
     /// The consumer checks `is_current` immediately before each tool/UI use.
     Pen(Batch),
+    /// Exact negative metadata, never a new GUI action or global reset.
+    Retire(NativePenCancellation),
+    /// An exactly retired queued contact; retain its FIFO slot without replay.
+    Retired,
+    /// Private event-retention segment, not native source identity/authority.
+    Framework(u64),
     Cancel {
         reset_gui: bool,
     },
@@ -62,6 +70,7 @@ pub struct Projection {
     span_first: Option<u64>,
     handoff: u64,
     source_epoch: Option<u64>,
+    retirements: Vec<NativePenCancellation>,
 }
 impl Projection {
     pub fn new(limit: usize, budget: &SharedBudget) -> Result<Self> {
@@ -69,14 +78,22 @@ impl Projection {
             return Err(resource("Pointer projection capacity"));
         }
         let collector = Collector::new(limit, budget)?;
-        let source = Source::new(limit + 1, 3 * limit, budget)?;
+        let source = Source::new_native_contacts(limit + 1, 3 * limit, budget)?;
         let mut storage = budget.account(AllocationClass::PaintMetadata);
         storage.resize((limit * std::mem::size_of::<Tagged>()) as u64)?;
         let mut queue = Vec::new();
         queue
             .try_reserve_exact(limit)
             .map_err(|_| resource("Pointer projection reserve"))?;
-        storage.resize((queue.capacity() * std::mem::size_of::<Tagged>()) as u64)?;
+        let mut retirements = Vec::new();
+        retirements
+            .try_reserve_exact(limit)
+            .map_err(|_| resource("Pointer retirement reserve"))?;
+        storage.resize(
+            (queue.capacity() * std::mem::size_of::<Tagged>()
+                + retirements.capacity() * std::mem::size_of::<NativePenCancellation>())
+                as u64,
+        )?;
         let frames = budget
             .reserve_capacity((limit * frame_slot_bytes()) as u64)?
             .scope(AllocationClass::PaintMetadata);
@@ -94,6 +111,7 @@ impl Projection {
             span_first: None,
             handoff: 0,
             source_epoch: None,
+            retirements,
         })
     }
     /// Called after final layout, outside any GUI/native delivery lock. The same
@@ -179,7 +197,7 @@ impl Projection {
                 Collected::Mouse {
                     record,
                     route,
-                    cancel_pen,
+                    retire_capture,
                     ..
                 } => {
                     let CaptureEvent::Mouse(mouse) = record.event else {
@@ -199,14 +217,8 @@ impl Projection {
                         // Native chrome still retains its original ownership.
                         self.source.mouse_capture(self.mouse != 0);
                     }
-                    if cancel_pen {
-                        self.source.cancel();
-                        self.push(
-                            Some(record.ordinal),
-                            Pointer::Cancel {
-                                reset_gui: self.mouse == 0,
-                            },
-                        )?;
+                    if retire_capture.is_some() {
+                        self.retire_active(Some(record.ordinal))?;
                     }
                     if route != MouseRoute::Client {
                         continue;
@@ -348,6 +360,12 @@ impl Projection {
             self.epoch = self.epoch.checked_add(1).ok_or(RecordFault::Retired)?;
             return self.push(ordinal, Pointer::Cancel { reset_gui: true });
         }
+        if matches!(
+            kind,
+            Boundary::Keyboard | Boundary::ImeReceipt | Boundary::Navigation
+        ) {
+            return self.retire_active(ordinal);
+        }
         self.source.cancel();
         self.span_first = None;
         let window_retired = matches!(
@@ -429,7 +447,10 @@ impl Projection {
             .map(|entry| match &entry.pointer {
                 Pointer::Gui(_) => 1,
                 Pointer::Pen(batch) => batch.frame.ui.len(),
-                Pointer::Cancel { .. } => 0,
+                Pointer::Cancel { .. }
+                | Pointer::Retire(_)
+                | Pointer::Retired
+                | Pointer::Framework(_) => 0,
             })
             .sum::<usize>();
         if count > self.limit * 3 {
@@ -453,7 +474,10 @@ impl Projection {
                 Pointer::Pen(batch) => {
                     events.extend(batch.frame.ui.iter().map(|r| ui_event(r.event)))
                 }
-                Pointer::Cancel { .. } => {}
+                Pointer::Cancel { .. }
+                | Pointer::Retire(_)
+                | Pointer::Retired
+                | Pointer::Framework(_) => {}
             }
         }
         Ok(())
@@ -489,7 +513,10 @@ impl Projection {
                                 && v.focused
                         })
                 }
-                Pointer::Cancel { .. } => true,
+                Pointer::Cancel { .. }
+                | Pointer::Retire(_)
+                | Pointer::Retired
+                | Pointer::Framework(_) => true,
             }
     }
 }

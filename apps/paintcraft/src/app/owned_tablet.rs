@@ -7,12 +7,16 @@ use paintcraft_input::tablet::Phase;
 use paintcraft_platform::tablet::{CaptureRecord, DeliveryHealth, RecordFault};
 use paintcraft_ui::pen_input::{Owner, Predecessor};
 use std::sync::{Arc, Mutex};
-#[path = "owned_tablet/projection.rs"]
-pub mod projection;
 #[cfg(test)]
 #[path = "owned_tablet/native_ui/mod.rs"]
 mod native_ui;
+#[path = "owned_tablet/projection.rs"]
+pub mod projection;
 use projection::{Frame, Pointer, Projection};
+#[path = "owned_tablet/framework.rs"]
+mod framework;
+#[path = "owned_tablet/retirement.rs"]
+mod retirement;
 #[derive(Clone, Copy, Debug)]
 enum Origin {
     Pen {
@@ -63,6 +67,8 @@ pub struct Host {
     fresh_health: Option<DeliveryHealth>,
     delivery_failed: bool,
     delivery: Option<paintcraft_platform::tablet::DeliveryCheck>,
+    retirements: Vec<paintcraft_ui::pen_input::NativePenCancellation>,
+    framework: framework::Retained,
 }
 impl std::fmt::Debug for Host {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -81,6 +87,7 @@ impl Host {
             ));
         }
         let projection = Projection::new(limit, budget)?;
+        let framework = framework::Retained::new(limit * 3, budget)?;
         app.connect_owned_tablet(projection.source(), budget)?;
         let mut references =
             budget.account(paintcraft_core::types::resources::AllocationClass::PaintMetadata);
@@ -88,6 +95,18 @@ impl Host {
             (2 * limit * std::mem::size_of::<usize>()
                 + 4 * std::mem::size_of::<Scope>()
                 + 2 * std::mem::size_of::<Barrier>()) as u64,
+        )?;
+        let mut retirements = Vec::new();
+        retirements
+            .try_reserve_exact(limit)
+            .map_err(|_| resource("Native retirement handoff"))?;
+        references.resize(
+            (2 * limit * std::mem::size_of::<usize>()
+                + 4 * std::mem::size_of::<Scope>()
+                + 2 * std::mem::size_of::<Barrier>()
+                + retirements.capacity()
+                    * std::mem::size_of::<paintcraft_ui::pen_input::NativePenCancellation>())
+                as u64,
         )?;
         Ok(Self {
             app,
@@ -101,6 +120,8 @@ impl Host {
             fresh_health: None,
             delivery_failed: false,
             delivery: None,
+            retirements,
+            framework,
         })
     }
     /// Bind the actual installation before runtime input. A cloned authority is
@@ -140,6 +161,10 @@ impl Host {
                 .fault();
             return Ok(false);
         }
+        self.ingress
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .drain_retirements(&mut self.retirements)?;
         if self.waiting.is_none()
             && self
                 .pending
@@ -173,6 +198,7 @@ impl Host {
         }
     }
     pub(crate) fn retire(&mut self) {
+        self.framework.clear();
         self.cancel_own_work();
         self.pending = None;
         self.waiting = None;
@@ -185,6 +211,8 @@ impl Host {
     }
     fn render(&mut self, ctx: &egui::Context, input: egui::RawInput) -> egui::FullOutput {
         let output = ctx.run_ui(input, |ui| self.app.ui(ui));
+        self.app.sync_owned_presenter();
+        self.framework.after_render();
         self.app.editor.end_native_activation();
         output
     }
@@ -380,9 +408,18 @@ impl Host {
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .source_epoch();
+            let ingress = &self.ingress;
+            let retirements = &mut self.retirements;
+            let drain = || {
+                ingress
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .drain_retirements(retirements)
+                    .is_ok()
+            };
             let current = match installation {
-                Some(epoch) => delivery.authorize_installation(epoch, || true),
-                None => delivery.authorize(|| true),
+                Some(epoch) => delivery.authorize_installation(epoch, drain),
+                None => delivery.authorize(drain),
             };
             self.delivery_failed |= !current;
         }
@@ -403,29 +440,19 @@ impl Host {
                 error: Some(error),
             });
         }
+        self.apply_retirements(ctx);
         if input.events.iter().any(pointer_event) {
             self.retire();
             return Err(stale(
                 "Owned input must not duplicate framework pointer translation",
             ));
         }
-        if (self.waiting.is_some() || self.pending.is_some())
-            && (!input.focused || !input.events.is_empty())
-        {
+        if !input.focused {
+            self.framework.clear();
             // Framework key/text/IME events have no native pointer ordinal.
             // Preserve their ordinary App delivery, but never guess a semantic
             // join or silently discard them during an asynchronous own job.
-            let kind = if !input.focused {
-                paintcraft_platform::tablet::Boundary::FocusLost
-            } else if input
-                .events
-                .iter()
-                .any(|e| matches!(e, egui::Event::Ime(_)))
-            {
-                paintcraft_platform::tablet::Boundary::ImeReceipt
-            } else {
-                paintcraft_platform::tablet::Boundary::Keyboard
-            };
+            let kind = paintcraft_platform::tablet::Boundary::FocusLost;
             self.cancel_own_work();
             self.pending = None;
             self.cursor = 0;
@@ -441,12 +468,47 @@ impl Host {
             let result = self.publish_view();
             return Ok(self.completed(ctx, output, Progress::Retired, result));
         }
+        if !input.events.is_empty() {
+            let kind = if input
+                .events
+                .iter()
+                .any(|e| matches!(e, egui::Event::Ime(_)))
+            {
+                paintcraft_platform::tablet::Boundary::ImeReceipt
+            } else {
+                paintcraft_platform::tablet::Boundary::Keyboard
+            };
+            {
+                let mut ingress = self.ingress.lock().unwrap_or_else(|e| e.into_inner());
+                ingress
+                    .framework_boundary(kind)
+                    .map_err(|_| resource("Native framework boundary"))?;
+                ingress.drain_retirements(&mut self.retirements)?;
+            }
+            self.apply_retirements(ctx);
+            let serial = match self.framework.retain(&mut input.events) {
+                Ok(serial) => serial,
+                Err(error) => {
+                    self.retire();
+                    return Err(error);
+                }
+            };
+            let result = self
+                .ingress
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .retain_framework_marker(serial);
+            if let Err(error) = result {
+                self.retire();
+                return Err(error);
+            }
+            ctx.request_repaint();
+        }
         if let Some(barrier) = self.waiting.clone() {
             let source_current = barrier.publication.is_current();
             if self.app.action_context().blocked
                 || self.app.ime_composing
                 || self.app.owned_owner() != barrier.before
-                || !source_current
             {
                 self.retire();
                 ctx.input_mut(|i| i.pointer = Default::default());
@@ -456,6 +518,26 @@ impl Host {
                     output,
                     progress: Progress::Retired,
                     error: Some(stale("Native context retired before own publication")),
+                });
+            }
+            if !source_current {
+                // A callback can retire this exact contact after the last
+                // snapshot. Its final Scope check already denies publication;
+                // do not turn that negative into unrelated queue/window loss.
+                let healthy = self.refresh_retirements();
+                self.apply_retirements(ctx);
+                if !healthy || self.waiting.is_some() {
+                    // No exact negative descriptor: this is a stronger source
+                    // or installation invalidation, not scoped contact expiry.
+                    self.retire();
+                    ctx.input_mut(|i| i.pointer = Default::default());
+                }
+                self.app.begin_owned_edge(None, false)?;
+                let output = self.render(ctx, input);
+                return Ok(Step {
+                    output,
+                    progress: Progress::Retired,
+                    error: None,
                 });
             }
             self.app.defer_owned_wait(true);
@@ -483,7 +565,12 @@ impl Host {
             self.app.begin_owned_edge(None, false)?;
             let output = self.render(ctx, input);
             let result = self.publish_view();
-            return Ok(self.completed(ctx, output, Progress::Idle, result));
+            let progress = if self.framework.pending() {
+                Progress::Advanced
+            } else {
+                Progress::Idle
+            };
+            return Ok(self.completed(ctx, output, progress, result));
         };
         if self.cursor == frame.entries.len() {
             self.pending = None;
@@ -507,8 +594,7 @@ impl Host {
             .ingress
             .lock()
             .unwrap_or_else(|e| e.into_inner())
-            .source_epoch()
-            .ok_or_else(|| stale("Missing native source installation"))?;
+            .source_epoch();
         let source = self
             .ingress
             .lock()
@@ -517,9 +603,15 @@ impl Host {
         let publication = match &entry.pointer {
             Pointer::Pen(batch) => source.publication_guard(batch, before),
             Pointer::Gui(_) => source.ui_publication_guard(before),
-            Pointer::Cancel { .. } => None,
+            Pointer::Cancel { .. }
+            | Pointer::Retire(_)
+            | Pointer::Retired
+            | Pointer::Framework(_) => None,
         };
-        let actionable = !matches!(&entry.pointer, Pointer::Cancel { .. });
+        let actionable = !matches!(
+            &entry.pointer,
+            Pointer::Cancel { .. } | Pointer::Retire(_) | Pointer::Retired | Pointer::Framework(_)
+        );
         let pointer = std::mem::replace(&mut entry.pointer, Pointer::Cancel { reset_gui: false });
         self.cursor += 1;
         self.app.editor.take_native_publication(); // clear before the exact edge
@@ -571,6 +663,17 @@ impl Host {
                 }
                 self.app.begin_owned_edge(None, false)?;
             }
+            Pointer::Retire(cancellation) => {
+                self.apply_retirement(ctx, &cancellation);
+                self.app.begin_owned_edge(None, false)?;
+            }
+            Pointer::Retired => {
+                self.app.begin_owned_edge(None, false)?;
+            }
+            Pointer::Framework(serial) => {
+                self.framework.replay(serial, &mut input.events)?;
+                self.app.begin_owned_edge(None, false)?;
+            }
         }
         let sequence = match origin {
             Some(Origin::Pen { sequence, .. }) | Some(Origin::Gui(sequence)) => Some(sequence),
@@ -578,7 +681,12 @@ impl Host {
         };
         let activation = sequence
             .filter(|_| actionable)
-            .map(|sequence| Activation::new(before.session, source_epoch, sequence));
+            .map(|sequence| {
+                source_epoch
+                    .map(|epoch| Activation::new(before.session, epoch, sequence))
+                    .ok_or_else(|| stale("Missing native source installation"))
+            })
+            .transpose()?;
         let publication_scope = publication.clone();
         if let Some(activation) = activation {
             let Some(publication) = publication else {

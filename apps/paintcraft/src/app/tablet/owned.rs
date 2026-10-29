@@ -1,6 +1,77 @@
 //! Existing App tablet consumer handed one actual owned-loop edge at a time.
 use super::*;
 impl App {
+    #[cfg(test)]
+    pub(crate) fn owned_presenter_state(&self) -> (bool, Option<NativePenTarget>) {
+        self.tablet.as_ref().map_or((false, None), |receiver| {
+            (
+                receiver.controller_owned,
+                receiver.presented.as_ref().map(|(_, target)| *target),
+            )
+        })
+    }
+    /// Called after the actual egui/App interval, outside native delivery locks.
+    pub(crate) fn sync_owned_presenter(&mut self) {
+        let owner = self.tablet_owner();
+        let Some(receiver) = &mut self.tablet else {
+            return;
+        };
+        if receiver.presented.as_ref().is_some_and(|(guard, _)| {
+            guard.is_current() && receiver.source.native_pen_active_target(guard).is_none()
+        }) {
+            receiver.presented = None;
+        }
+        let candidate = receiver
+            .retained
+            .as_ref()
+            .or_else(|| receiver.pending.as_ref().map(|(_, batch)| batch));
+        if let Some(batch) = candidate
+            && let Some(guard) = receiver.source.publication_guard(batch, owner)
+            && let Some(target) = receiver.source.native_pen_active_target(&guard)
+            && (target == NativePenTarget::Ui
+                || receiver.controller_owned
+                || receiver.fallback_button.is_some())
+        {
+            receiver.presented = Some((guard, target));
+        }
+    }
+    /// Exact negative replay cannot clear another contact or a genuine mouse.
+    pub(crate) fn retire_owned_contact(&mut self, cancellation: &NativePenCancellation) -> bool {
+        let Some(receiver) = &mut self.tablet else {
+            return false;
+        };
+        if receiver
+            .pending
+            .as_ref()
+            .is_some_and(|(_, batch)| cancellation.matches_batch(batch))
+        {
+            receiver.pending = None;
+        }
+        if receiver
+            .retained
+            .as_ref()
+            .is_some_and(|batch| cancellation.matches_batch(batch))
+        {
+            receiver.retained = None;
+        }
+        let Some((guard, target)) = &receiver.presented else {
+            return false;
+        };
+        if !cancellation.matches_publication(guard) {
+            return false;
+        }
+        let target = *target;
+        receiver.presented = None;
+        if target == NativePenTarget::Ink {
+            let owned = receiver.controller_owned || receiver.fallback_button.is_some();
+            receiver.controller_owned = false;
+            receiver.fallback_button = None;
+            if owned {
+                self.editor.cancel_gesture();
+            }
+        }
+        target == NativePenTarget::Ui
+    }
     pub(crate) fn connect_owned_tablet(
         &mut self,
         source: Source,
