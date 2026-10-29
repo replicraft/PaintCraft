@@ -1,5 +1,91 @@
 use super::*;
 #[test]
+fn actual_integer_decoder_results_require_matching_rust_report_and_source_binding() {
+    const EIGHT: &[u8] = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba8.jxl"
+    ));
+    const SIXTEEN: &[u8] = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba16.jxl"
+    ));
+    let owner = wire::Owner {
+        session: Uuid::new_v4(),
+        state: Uuid::new_v4(),
+        epoch: 9,
+        frontend: 3,
+    };
+    for (bytes, depth, expected) in [
+        (
+            EIGHT,
+            8,
+            vec![
+                10, 20, 30, 0, 40, 50, 60, 1, 70, 80, 90, 127, 100, 110, 120, 128, 130, 140, 150,
+                254, 160, 170, 180, 255,
+            ],
+        ),
+        (
+            SIXTEEN,
+            16,
+            vec![
+                0, 0, 255, 1, 1, 127, 128, 0, 255, 4, 8, 128, 16, 32, 64, 255,
+            ],
+        ),
+    ] {
+        let request = wire::Request::capture_for(
+            wire::Codec::JxlIntegerRgba8,
+            Arc::new(bytes.to_vec()),
+            owner,
+            wire::PIXELS_MAX,
+        )
+        .unwrap();
+        let output = wire::jxl_integer::execute(request.header, bytes, &|| 0).unwrap();
+        let source = Source {
+            name: "fixture.jxl".into(),
+            length: bytes.len() as u64,
+        };
+        let (_, frame) = response::validate(
+            &source,
+            owner,
+            request.header.nonce,
+            &request.header.encode(),
+            &output,
+            &request.header.sha256,
+        )
+        .unwrap();
+        assert_eq!(frame.jxl_report.unwrap().source_depth, depth);
+        assert_eq!(frame.pixels, wire::Pixels::SrgbRgba8(&expected));
+        let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+        let document =
+            response::assemble(request.header, frame, budget.clone(), &|| Ok(())).unwrap();
+        assert!(budget.usage().reserved > 0);
+        drop(document);
+        assert_eq!(budget.usage().reserved, 0);
+        let report_at = wire::RESPONSE_HEADER + env!("CARGO_PKG_VERSION").len();
+        for at in [
+            report_at + 10,
+            report_at + 20,
+            report_at + 52,
+            report_at + 84,
+            output.len() - 1,
+        ] {
+            let mut changed = output.clone();
+            changed[at] ^= 0xff;
+            assert!(
+                response::validate(
+                    &source,
+                    owner,
+                    request.header.nonce,
+                    &request.header.encode(),
+                    &changed,
+                    &request.header.sha256
+                )
+                .is_err()
+            );
+        }
+    }
+}
+#[test]
 fn browser_jxl_has_no_generic_open_or_classic_route() {
     use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform, Request};
     for frontend in [
@@ -163,6 +249,15 @@ fn completed_import_uses_normal_editor_preferences_and_project_copy_name() {
     let result = Rc::new(RefCell::new(Some(Ok(Prepared {
         document,
         name: "painting.jxl".into(),
+        report: wire::jxl_integer::Report {
+            source_depth: 8,
+            width: 1,
+            height: 1,
+            source_sha256: [0; 32],
+            output_sha256: Sha256::digest([10, 20, 30, 0]).into(),
+            changed_rgb_components: 0,
+            changed_alpha: 0,
+        },
     }))));
     app.jxl.pending = Some(Pending {
         owner,
@@ -215,6 +310,15 @@ fn stale_completed_import_drops_private_document_without_replacing_newer_work() 
         result: Rc::new(RefCell::new(Some(Ok(Prepared {
             document,
             name: "old.jxl".into(),
+            report: wire::jxl_integer::Report {
+                source_depth: 8,
+                width: 1,
+                height: 1,
+                source_sha256: [0; 32],
+                output_sha256: Sha256::digest([1, 2, 3, 4]).into(),
+                changed_rgb_components: 0,
+                changed_alpha: 0,
+            },
         })))),
     });
     app.editor = crate::editor::Editor::new(9, 7).unwrap();
@@ -242,19 +346,43 @@ fn downloaded_fixture_keeps_independent_samples() {
         paintcraft_core::types::policy::STAGED_PIXELS_MAX,
     )
     .unwrap();
-    assert_eq!(document.canvas, (3, 2));
+    let depth = std::env::var("PAINTCRAFT_JXL_PCND_DEPTH").unwrap_or_else(|_| "8".into());
+    let (canvas, expected) = match depth.as_str() {
+        "8" => (
+            (3, 2),
+            vec![
+                [10, 20, 30, 0],
+                [40, 50, 60, 1],
+                [70, 80, 90, 127],
+                [100, 110, 120, 128],
+                [130, 140, 150, 254],
+                [160, 170, 180, 255],
+            ],
+        ),
+        "16" => (
+            (2, 2),
+            vec![
+                [0, 0, 255, 1],
+                [1, 127, 128, 0],
+                [255, 4, 8, 128],
+                [16, 32, 64, 255],
+            ],
+        ),
+        _ => panic!("Select exact independent fixture depth8 or16"),
+    };
+    assert_eq!(document.canvas, canvas);
     assert_eq!(document.roots.len(), 1);
     let raster = &document.layers_in_order().next().unwrap().raster;
-    let expected = [
-        [10, 20, 30, 0],
-        [40, 50, 60, 1],
-        [70, 80, 90, 127],
-        [100, 110, 120, 128],
-        [130, 140, 150, 254],
-        [160, 170, 180, 255],
-    ];
     for (index, pixel) in expected.into_iter().enumerate() {
-        assert_eq!(raster.get((index % 3) as i64, (index / 3) as i64).0, pixel);
+        assert_eq!(
+            raster
+                .get(
+                    (index % canvas.0 as usize) as i64,
+                    (index / canvas.0 as usize) as i64
+                )
+                .0,
+            pixel
+        );
     }
 }
 

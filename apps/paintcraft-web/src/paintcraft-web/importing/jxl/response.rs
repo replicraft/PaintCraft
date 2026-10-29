@@ -10,8 +10,10 @@ pub(super) fn validate<'a>(
     digest: &[u8],
 ) -> Result<(wire::Header, wire::Frame<'a>)> {
     let request = wire::Header::decode(header)?;
-    if request.codec != wire::Codec::JxlRgba8
-        || request.owner != owner
+    if !matches!(
+        request.codec,
+        wire::Codec::JxlRgba8 | wire::Codec::JxlIntegerRgba8
+    ) || request.owner != owner
         || request.nonce != nonce
         || request.length != source.length
         || u64::from(request.pixels) != wire::PIXELS_MAX

@@ -11,6 +11,8 @@ use uuid::Uuid;
 #[cfg(target_arch = "wasm32")]
 mod bridge;
 mod response;
+mod review;
+use sha2::{Digest, Sha256};
 #[derive(Clone, Debug)]
 pub(crate) struct Source {
     pub name: String,
@@ -45,6 +47,7 @@ impl Source {
 struct Prepared {
     document: Document,
     name: String,
+    report: wire::jxl_integer::Report,
     #[cfg(target_arch = "wasm32")]
     lease: bridge::Lease,
 }
@@ -59,19 +62,21 @@ struct Pending {
 #[derive(Debug, Default)]
 pub(crate) struct State {
     pending: Option<Pending>,
+    review: Option<review::Review>,
     quarantined: bool,
     #[cfg(target_arch = "wasm32")]
     service: Option<wasm_bindgen::JsValue>,
 }
 impl State {
     pub(crate) fn busy(&self) -> bool {
-        self.pending.is_some()
+        self.pending.is_some() || self.review.is_some()
     }
     #[cfg(target_arch = "wasm32")]
     pub(crate) fn attach(&mut self, service: wasm_bindgen::JsValue) {
         self.service = Some(service);
     }
     fn cancel(&mut self) {
+        self.review = None;
         if let Some(pending) = &self.pending {
             pending.cancelled.set(true);
             #[cfg(target_arch = "wasm32")]
@@ -152,6 +157,15 @@ impl WebApp {
     pub(crate) fn poll_jxl(&mut self, ctx: &eframe::egui::Context) {
         if self
             .jxl
+            .review
+            .as_ref()
+            .is_some_and(|review| !review.owner.current(self))
+        {
+            self.jxl.review = None;
+            self.message = t!(ctx, "The document changed; choose the image again.");
+        }
+        if self
+            .jxl
             .pending
             .as_ref()
             .is_some_and(|pending| !pending.owner.current(self))
@@ -165,7 +179,7 @@ impl WebApp {
             .and_then(|pending| pending.result.borrow_mut().take());
         self.jxl.refresh();
         let Some(value) = value else {
-            if self.jxl.busy() {
+            if self.jxl.pending.is_some() {
                 ctx.request_repaint_after(std::time::Duration::from_millis(10));
             }
             return;
@@ -173,26 +187,13 @@ impl WebApp {
         let pending = self.jxl.pending.take().expect("result has owner");
         match value {
             Ok(prepared) if pending.owner.current(self) && !pending.cancelled.get() => {
-                // Tiles already own the existing realm's resident leases. Build
-                // the new Editor privately before retiring the JS preparation.
-                let Prepared {
-                    document,
-                    name,
-                    #[cfg(target_arch = "wasm32")]
-                    mut lease,
-                } = prepared;
-                let editor = crate::editor::Editor::from_document(document);
-                #[cfg(target_arch = "wasm32")]
-                let released = lease.release();
-                #[cfg(not(target_arch = "wasm32"))]
-                let released = Ok::<_, Error>(());
-                match (editor, released) {
-                    (Ok(mut editor), Ok(())) if pending.owner.current(self) => {
-                        editor.session.mark_unsaved();
-                        self.install_import_editor(editor, name);
-                        self.message = t!(ctx, "JPEG XL imported as an editable project copy.");
+                if prepared.report.source_depth == 16 {
+                    match review::Review::new(ctx, pending.owner, prepared) {
+                        Ok(review) => self.jxl.review = Some(review),
+                        Err(_) => self.message = t!(ctx, FAILED),
                     }
-                    _ => self.message = t!(ctx, FAILED),
+                } else {
+                    self.install_jxl(pending.owner, prepared, None, ctx);
                 }
             }
             Ok(_) => self.message = t!(ctx, "The document changed; choose the image again."),
@@ -221,6 +222,10 @@ impl WebApp {
         }
     }
     pub(crate) fn jxl_dialog(&mut self, ctx: &eframe::egui::Context) -> bool {
+        if self.jxl.review.is_some() {
+            self.jxl_review_dialog(ctx);
+            return true;
+        }
         if !self.jxl.busy() {
             return false;
         }
@@ -238,7 +243,7 @@ impl WebApp {
 }
 const PAUSED: &str = "JPEG XL importing is paused for this tab. Download your project, then reload this tab to try again.";
 const FAILED: &str = "JPEG XL import failed; the current document was kept.";
-pub(crate) const VARIANT: &str = paintcraft_formats::registry::WEB_JXL_IMPORT_VARIANT;
+pub(crate) const VARIANT: &str = paintcraft_formats::registry::WEB_JXL_INTEGER_IMPORT_VARIANT;
 pub(crate) fn admit(name: &str) -> Result<()> {
     use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform, Request};
     let mut request = Request::new(

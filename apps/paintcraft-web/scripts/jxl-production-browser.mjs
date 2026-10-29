@@ -38,6 +38,7 @@ for (const name of [
 	'src/paintcraft-web/importing/jxl.rs',
 	'src/paintcraft-web/importing/jxl/bridge.rs',
 	'src/paintcraft-web/importing/jxl/response.rs',
+	'src/paintcraft-web/importing/jxl/review.rs',
 	'src/paintcraft-web/files.rs',
 	'src/lib/codec-worker.js',
 	'src/lib/codec-bridge.js',
@@ -117,20 +118,26 @@ try {
 		page.on('pageerror', (error) =>
 			(evidence.pageErrors ??= []).push(String(error)),
 		);
-		if (mode)
-			await page.addInitScript((mode) => {
-				const Original = window.Worker;
-				window.__codecWorkers = 0;
-				window.Worker = class extends Original {
-					constructor(url, options) {
-						if (String(url).includes('codec-worker-runtime')) {
-							window.__codecWorkers++;
+		await page.addInitScript((mode) => {
+			localStorage.setItem('showWelcomeScreen', 'false');
+			const Original = window.Worker;
+			window.__codecWorkers = 0;
+			window.__codecResults = 0;
+			window.Worker = class extends Original {
+				constructor(url, options) {
+					if (String(url).includes('codec-worker-runtime')) {
+						window.__codecWorkers++;
+						if (mode)
 							url = `/__qa/${mode === 'stale' ? 'hang' : mode}.js`;
-						}
-						super(url, options);
 					}
-				};
-			}, mode);
+					super(url, options);
+					this.addEventListener('message', (event) => {
+						if (event.data?.kind === 'result')
+							window.__codecResults++;
+					});
+				}
+			};
+		}, mode ?? null);
 		await page.goto(origin, { waitUntil: 'networkidle' });
 		await page.waitForFunction(
 			() =>
@@ -158,14 +165,14 @@ try {
 			),
 		);
 	}
-	async function openProject(page) {
+	async function openProject(page, name = 'imported.pcnd') {
 		const chooser = page.waitForEvent('filechooser');
 		await click(page, 20, 46);
 		await click(page, 80, 94);
-		await (await chooser).setFiles(path.join(out, 'imported.pcnd'));
+		await (await chooser).setFiles(path.join(out, name));
 		await page.waitForFunction(
-			() => document.title === 'imported.pcnd - PaintCraft',
-			null,
+			(name) => document.title === `${name} - PaintCraft`,
+			name,
 			{ timeout: 15000 },
 		);
 		assert.equal(
@@ -211,32 +218,71 @@ try {
 		'downloaded PCND reopened through actual Open as a clean project and downloaded again',
 	);
 	await reopened.close();
-	const refused = await open();
-	const originalTitle = await refused.title();
-	await pick(refused, 'rgba16.jxl');
-	await refused.waitForTimeout(1000);
-	await refused.waitForFunction(
-		() => window.paintcraft.codec_service_budget().pendingJobs === 0,
-	);
-	assert.equal(await refused.title(), originalTitle);
+	const integer = await open();
+	const originalTitle = await integer.title();
+	await pick(integer, 'rgba16.jxl');
+	await integer.waitForFunction(() => window.__codecResults === 1);
+	await integer.waitForTimeout(800);
+	assert.equal(await integer.title(), originalTitle);
 	assert.equal(
-		await refused.evaluate(() => window.paintcraft.is_dirty()),
+		await integer.evaluate(() => window.paintcraft.is_dirty()),
 		false,
 	);
+	assert.ok(
+		(await integer.evaluate(
+			() => window.paintcraft.codec_service_budget().reservedBytes,
+		)) > 0,
+	);
+	await integer.screenshot({
+		path: path.join(out, 'integer16-preview-before-consent.png'),
+	});
+	await integer.keyboard.press('Escape');
+	await integer.waitForFunction(
+		() => window.paintcraft.codec_service_budget().pendingJobs === 0,
+	);
+	assert.equal(await integer.title(), originalTitle);
 	assert.equal(
-		await refused.evaluate(
+		await integer.evaluate(
 			() => window.paintcraft.codec_service_budget().quarantined,
 		),
 		false,
 	);
-	await pick(refused, 'rgba8.jxl');
-	await refused.waitForFunction(
-		() => document.title === 'rgba8.jxl - PaintCraft',
+	await pick(integer, 'rgba16.jxl');
+	await integer.waitForFunction(() => window.__codecResults === 2);
+	await integer.waitForTimeout(800);
+	await integer.keyboard.press('Tab');
+	await integer.keyboard.press('Space');
+	await integer.screenshot({
+		path: path.join(out, 'integer16-checked-before-open.png'),
+	});
+	await click(integer, 538, 548);
+	await integer.waitForFunction(
+		() => document.title === 'rgba16.jxl - PaintCraft',
+		null,
+		{ timeout: 15000 },
 	);
+	assert.equal(
+		await integer.evaluate(() => window.paintcraft.is_dirty()),
+		true,
+	);
+	assert.equal(
+		await integer.evaluate(
+			() => window.paintcraft.codec_service_budget().reservedBytes,
+		),
+		0,
+	);
+	assert.equal(await save(integer, 'integer16.pcnd'), 'rgba16.pcnd');
+	await integer.screenshot({
+		path: path.join(out, 'integer16-imported.png'),
+	});
 	evidence.checks.push(
-		'canonical unsupported depth kept clean source, released charge and allowed real valid retry',
+		'integer16 real preview retained original clean project and charge; Cancel released it; retry required visible checkbox consent then adopted dirty editable pixels',
 	);
-	await refused.close();
+	await integer.close();
+	const integerReopened = await open();
+	await openProject(integerReopened, 'integer16.pcnd');
+	await save(integerReopened, 'integer16-reopened.pcnd');
+	await integerReopened.close();
 	for (const mode of ['hang', 'stale', 'trap', 'malformed']) {
 		const failed = await open(mode);
 		await openProject(failed);

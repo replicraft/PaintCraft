@@ -132,7 +132,7 @@ pub(super) async fn prepare(
     args.push(&JsValue::from_f64(wire::PIXELS_MAX as f64));
     args.push(&nonce.to_string().into());
     let mut admission = Admission {
-        value: call(service, "beginDecodeFile", &args)?,
+        value: call(service, "beginDecodeIntegerFile", &args)?,
         used: false,
     };
     *cancellation.borrow_mut() = Some(Cancellation(admission.value.clone()));
@@ -151,6 +151,15 @@ pub(super) async fn prepare(
     let response = bytes(&lease.value, "responseBytes", wire::OUTPUT_BYTES_MAX)?;
     let (request, frame) =
         response::validate(&source, captured, nonce, &header, &response, &digest)?;
+    if request.codec != wire::Codec::JxlIntegerRgba8 || frame.jxl_report.is_none() {
+        return Err(Error::new(
+            ErrorCode::CodecFailed,
+            "Integer JPEG XL result contract changed",
+        ));
+    }
+    let report = frame
+        .jxl_report
+        .ok_or_else(|| Error::new(ErrorCode::CodecFailed, "Missing integer JPEG XL report"))?;
     lease.validated = true;
     let check = || {
         if cancelled.get() {
@@ -177,6 +186,7 @@ pub(super) async fn prepare(
     Ok(Prepared {
         document,
         name: source.name,
+        report,
         lease,
     })
 }
