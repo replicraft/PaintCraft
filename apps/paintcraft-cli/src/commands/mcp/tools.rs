@@ -159,6 +159,7 @@ impl PaintingServer {
                     "image",
                 )?
             };
+            let raw_sha256: [u8; 32] = Sha256::digest(&bytes).into();
             let family = if p.svg.is_some() {
                 profile.admit_import_svg(&path, &bytes)?
             } else {
@@ -220,7 +221,7 @@ impl PaintingServer {
                 let document_key = if let Some(page)=p.page {
                     paintcraft_document::RasterConversionKey::checked(
                         paintcraft_document::RasterConversionContext {
-                            source_sha256:Sha256::digest(&bytes).into(),
+                            source_sha256:raw_sha256,
                             profile:paintcraft_formats::dcx::IMPORT_IDENTITY_PROFILE,
                             selection:paintcraft_document::RasterSelection::Page(page),assessment_sha256:None},
                         decoded.width,decoded.height,&decoded.rgba,image::DECODE_PIXELS_MAX,&check,
@@ -243,9 +244,10 @@ impl PaintingServer {
                 ));
             }
             check()?;
-            if family == Family::Dds || (family==Family::Tiff && p.page.is_some()) || (family==Family::Ora && source_identity.is_some()) {
-                let identity = source_identity.as_ref().ok_or_else(|| invalid("conversion requires a captured regular source"))?;
-                identity.verify_bytes(&path, bytes.len() as u64, &Sha256::digest(&bytes).into(), &check)?;
+            if let Some(identity) = &source_identity {
+                #[cfg(test)]
+                stock_source_tests::before_adoption(&path);
+                identity.verify_bytes(&path, bytes.len() as u64, &raw_sha256, &check)?;
             }
             let mut session = Session::new(doc);
             session.mark_unsaved();
@@ -475,3 +477,7 @@ impl PaintingServer {
             + Self::brush_router()
     }
 }
+
+#[cfg(test)]
+#[path = "tools/stock_source_tests.rs"]
+mod stock_source_tests;

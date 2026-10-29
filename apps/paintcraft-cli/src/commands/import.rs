@@ -121,6 +121,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "input",
                 )?
             };
+            let raw_sha256: [u8; 32] = Sha256::digest(&bytes).into();
             let family = if svg.is_some() {
                 a.profile.admit_import_svg(input, &bytes)?
             } else {
@@ -214,7 +215,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 let document_key = if let Some(page) = a.page {
                     paintcraft_document::RasterConversionKey::checked(
                         paintcraft_document::RasterConversionContext {
-                            source_sha256: Sha256::digest(&bytes).into(),
+                            source_sha256: raw_sha256,
                             profile: paintcraft_formats::dcx::IMPORT_IDENTITY_PROFILE,
                             selection: paintcraft_document::RasterSelection::Page(page),
                             assessment_sha256: None,
@@ -240,23 +241,8 @@ pub fn run(a: Options, json: bool) -> Reply {
                     format!("import would lose {loss}; acknowledge with --allow-loss {loss}"),
                 ));
             }
-            if family == paintcraft_formats::registry::Family::Dds
-                || (family == paintcraft_formats::registry::Family::Tiff && a.page.is_some())
-                || (family == paintcraft_formats::registry::Family::Ora
-                    && source_identity.is_some())
-            {
-                let identity = source_identity.as_ref().ok_or_else(|| {
-                    Error::new(
-                        ErrorCode::InputSchema,
-                        "conversion requires a captured regular source",
-                    )
-                })?;
-                identity.verify_bytes(
-                    input,
-                    bytes.len() as u64,
-                    &Sha256::digest(&bytes).into(),
-                    &|| Ok(()),
-                )?;
+            if let Some(identity) = &source_identity {
+                identity.verify_bytes(input, bytes.len() as u64, &raw_sha256, &|| Ok(()))?;
             }
             let ctx = Context {
                 operation: "save-as",
@@ -288,21 +274,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                                 "conversion output must not replace its captured imported source",
                             ));
                         }
-                        if (family == paintcraft_formats::registry::Family::Tiff
-                            && a.page.is_some())
-                            || matches!(
-                                family,
-                                paintcraft_formats::registry::Family::Dds
-                                    | paintcraft_formats::registry::Family::Ora
-                            )
-                        {
-                            identity.verify_bytes(
-                                input,
-                                bytes.len() as u64,
-                                &Sha256::digest(&bytes).into(),
-                                &|| Ok(()),
-                            )?;
-                        }
+                        identity.verify_bytes(
+                            input,
+                            bytes.len() as u64,
+                            &raw_sha256,
+                            &|| Ok(()),
+                        )?;
                     }
                     Ok(())
                 });
@@ -323,3 +300,7 @@ pub fn run(a: Options, json: bool) -> Reply {
         })(),
     )
 }
+
+#[cfg(test)]
+#[path = "import/source_tests.rs"]
+mod source_tests;
