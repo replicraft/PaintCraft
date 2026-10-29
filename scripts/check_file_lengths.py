@@ -6,6 +6,7 @@ from pathlib import Path
 
 from verify_jpegxr_vendor import verify as verify_jpegxr_vendor
 from verify_jpegxl_vendor import verify as verify_jpegxl_vendor
+from verify_jxl_decoder_vendor import verify as verify_jxl_decoder_vendor
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_LINES = 800
@@ -20,7 +21,8 @@ SOURCE_SUFFIXES = {
 
 def main():
     try:
-        inherited = verify_jpegxr_vendor(ROOT) | verify_jpegxl_vendor(ROOT)
+        inherited = (verify_jpegxr_vendor(ROOT) | verify_jpegxl_vendor(ROOT)
+                     | verify_jxl_decoder_vendor(ROOT))
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"Third-party source verification failed: {error}")
         return 1

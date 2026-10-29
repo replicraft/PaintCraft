@@ -20,10 +20,13 @@ class JpegXlVerification(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory(prefix="paintcraft-jxl-vendor-")
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
-        for name in [vendor.VENDOR, "vendor/jpegxr-pure-rs-0.1.0-paintcraft1"]:
+        for name in [vendor.VENDOR, "vendor/jpegxr-pure-rs-0.1.0-paintcraft1",
+                     "vendor/jxl-0.8.0-paintcraft1"]:
             shutil.copytree(vendor.ROOT / name, self.root / name)
             for suffix in [".patch", ".provenance.json"]:
                 shutil.copyfile(vendor.ROOT / (name + suffix), self.root / (name + suffix))
+            if name == "vendor/jxl-0.8.0-paintcraft1":
+                shutil.copyfile(vendor.ROOT / (name + ".README.md"), self.root / (name + ".README.md"))
         shutil.copyfile(vendor.ROOT / "vendor/.gitattributes", self.root / "vendor/.gitattributes")
         (self.root / "packaging").mkdir()
         shutil.copyfile(vendor.ROOT / "packaging/JPEGXR_LICENSE.txt",
@@ -104,7 +107,8 @@ class JpegXlVerification(unittest.TestCase):
                   contextlib.redirect_stdout(io.StringIO())):
                 self.assertEqual(lengths.main(), expected)
         path.write_text("// authored\n")
-        for name in [vendor.VENDOR, "vendor/jpegxr-pure-rs-0.1.0-paintcraft1"]:
+        for name in [vendor.VENDOR, "vendor/jpegxr-pure-rs-0.1.0-paintcraft1",
+                     "vendor/jxl-0.8.0-paintcraft1"]:
             target = self.root / name
             parked = target.with_name(target.name + ".parked")
             target.rename(parked)
