@@ -45,6 +45,40 @@ backend's EXPAND behavior, which substitutes opaque black for undeclared
 palette entries. Adam7 is deinterlaced before checked expansion. Existing 16-bit
 conversion continues to retain each sample's high byte.
 
+## JPEG and TIFF normalization
+
+JPEG conversion uses the selected Zune backend with explicit device-color
+interpretation and applies EXIF orientations 1 through 8 exactly once. Original
+dimensions, components, density and orientation remain inspection facts. CMYK
+conversion is a declared device convention, not ICC color management; an unmarked
+four-component source additionally reports the assumed convention. Original
+metadata is inspected separately from the bounded decoder projection.
+
+Supported ordinary single-image TIFF and explicit selected pages normalize all
+eight orientations. Raw dimensions and orientation remain source facts; output
+geometry swaps axes for orientations 5 through 8. Selected-page assessment and
+worker framing version 2 bind both geometries, source orientation and actual
+output samples. Old framing is refused. Selected GrayA16 support does not imply
+support through ordinary single-image decoding. See [TIFF page import](TIFF_PAGE_IMPORT.md).
+
+Normalized geometry, exact pixels and versioned policy contribute to document
+identity across desktop, web, CLI and MCP. Raw source hashes continue to guard
+original files. See [converted document identities](CONVERSION_IDENTITY.md).
+
+## BMP RLE and icon palette bounds
+
+Strict RLE4 and RLE8 imports validate runs, absolute samples, padding, deltas,
+row bounds and palette indices. Unwritten pixels use opaque palette entry zero.
+A zero declared image size uses the bounded end-marker profile and reports
+omitted metadata. Top-down compressed sources remain refused. Descriptors
+distinguish compressed stream extents from uncompressed row strides. Caller
+pixel admission precedes index scanning.
+
+Bitmap ICO payloads validate actual XOR palette indices, including masked
+pixels, before invoking the selected decoder. This prevents undeclared indices
+from reaching its unchecked palette lookup. Padding bits are not pixels. These
+changes do not add BMP16 or arbitrary icon variants.
+
 ## Visible loss review
 
 Desktop and web flat-raster conversions with reported losses now display the
@@ -94,7 +128,15 @@ seven focused controls and a 633-test non-JPEG snapshot, explicitly excluding
 seven then-pending JPEG controls. See the individual frozen receipts for their
 exact source and scope.
 
-These results do not establish fresh browser runtime, six-target stock-codec,
-original-application or physical-device behavior. JPEG frontend qualification,
-wider source preservation, color management and the full format roadmap remain
-in progress.
+Subsequent JPEG qualification covered 54 independent backend cases and 13
+profiles through all four consumers. BMP RLE covered 26 independent fixtures and
+six profiles through all four consumers. TIFF production-browser qualification
+covered 32 selected orientation pages, eight reviewed GrayA16 cases and actual
+saved PCND validation. Exact receipts and retained failed attempts are under
+`docs/validation/jpeg-source/`, `jpeg-consumers/`, `bmp-rle/`,
+`bmp-rle-consumers/`, `tiff-orientation/` and `tiff-orientation-consumers/`.
+
+These finite checks do not establish six-target stock-codec, original-application
+or physical-device behavior. Wider source preservation, color management and the
+full format roadmap remain in progress. PNG EXIF is historical source metadata;
+it is not automatically treated as an instruction to rotate edited PNG pixels.

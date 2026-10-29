@@ -1,7 +1,9 @@
 # Selected TIFF page import
 
 Studio's selected-page conversion is separate from ordinary Open. Ordinary TIFF
-Open continues to require a single admitted image. The conversion inventories
+Open continues to require a single admitted image. Both routes normalize valid
+TIFF Orientation values 1 through 8 into the actual pixels exactly once;
+orientations 5 through 8 swap the output dimensions. The conversion inventories
 the complete captured source and requires an explicit page choice, including
 page zero. A page with unsupported sample semantics stays visible and disabled;
 it does not prevent choosing a qualified later page. Invalid directory chains,
@@ -21,10 +23,13 @@ and 8/16-bit integer gray, RGB, gray-alpha and RGBA samples. Alpha is straight;
 16-bit reduction explicitly takes the high byte. This is distinct from the
 JPEG XL round-to-nearest conversion rule.
 WhiteIsZero grayscale inversion affects gray values only, including gray values
-behind zero alpha. Associated alpha, CMYK, floating point, nonidentity orientation
-and BigTIFF require separate profiles and remain refused by this route.
+behind zero alpha. Orientation is a checked whole-pixel permutation, including
+hidden RGB; it does not premultiply alpha or change sample values. Associated
+alpha, CMYK, floating point and BigTIFF require separate profiles and remain
+refused by this route. Ordinary single-image RGBA TIFF uses the same checked
+normalization; gray with alpha remains specific to selected-page conversion.
 
-The source is bounded to 64 MiB, 1,024 pages, 4,194,304 selected pixels, 4,096
+The selected-page source is bounded to 64 MiB, 1,024 pages, 4,194,304 selected pixels, 4,096
 tags per page, 65,536 tags in total, 1 MiB of metadata per page and 4 MiB of
 inventoried metadata in total. Each canvas side also obeys the shared
 1,048,576-pixel editor limit. Native private document
@@ -44,12 +49,20 @@ Conversion reports every applicable loss before publication:
 - `tiff-metadata-ignored` when admitted source metadata is omitted.
 - `icc-profile-ignored` when the source ICC profile is omitted.
 
-The sealed 256-byte assessment binds the complete source digest and byte count,
-selected page and page count, source descriptor, output geometry and digest,
-conversion policy and exact loss set. Its digest also supplies the imported
+The sealed 256-byte V2 assessment (`PCTIFF02`) binds the complete source digest
+and byte count, selected page and page count, original source dimensions and
+Orientation, output digest, conversion policy and exact loss set. Its encoded
+dimensions remain original source facts. Normalized output dimensions derive
+from those facts, swapping axes for orientations 5 through 8, and the output
+orientation is 1. Adoption checks the exact normalized dimensions and samples,
+so the transform is never applied again. The policy is
+`tiff-uint16-high-byte-oriented-rgba8-v2`. Its digest also supplies the imported
 document identity. Using only the raw file digest would give different pages
 the same document, state and layer IDs. Repeating the same choice is deterministic;
-choosing another page creates distinct identities.
+choosing another page creates distinct identities. V2 intentionally gives all
+selected-page conversions new identities, including orientation 1. Older V1
+reports are rejected rather than interpreted under the new contract; published
+0.1.1 artifacts are unchanged.
 
 ## Frontend contract
 
@@ -57,7 +70,10 @@ Native Studio performs inventory and decoding through background preparation.
 Browser Studio uses a dedicated TIFF Worker operation for both phases, retaining
 the complete File and binding requests to source, page, owner and nonce. Worker
 output must satisfy the binary assessment and independent frontend checks before
-document adoption. These are logical admission limits, not physical RSS bounds.
+document adoption. Browser wire V2 binds the original inventory dimensions and
+Orientation to the selected re-read, then requires exactly the normalized output
+geometry. Request, runtime and Rust-facing service declarations use one shared
+JavaScript protocol-version constant. Old wire V1 requests/results are refused. These are logical admission limits, not physical RSS bounds.
 
 The shared chooser makes no implicit selection. A retained decoded preview and
 the previous visible frame precede loss consent. A very thin preview may expand
@@ -73,48 +89,65 @@ this conversion by supplying its variant name.
 
 ## Qualification status
 
-The current local evidence is scoped to this conversion profile:
+The orientation follow-up is locally qualified on macOS Apple Silicon:
 
-- The backend has 18 selected-page controls, with the complete formats library
-  suite at 406 passed and 11 existing ignored tests. All-target strict checks pass.
-  Thirteen independently generated libtiff fixtures contain 24 pages. Their raw
-  sample oracles cover both byte orders, gray/RGB/straight alpha, GrayA8/16 with
-  both gray photometrics, strips/tiles and qualified compression, small/larger ICC
-  metadata lookup paths, and unsupported first pages followed by valid pages.
-- The compiled CLI and real stdio MCP have five passing end-to-end groups across
-  19 explicitly listed source/page profiles. They compare raw saved raster samples,
-  including hidden RGB, rather than flattened display pixels. They also check
-  exact report fields and consent, source aliases after Save/rename, destination
-  preservation, dirty/history preservation and cancellation. The CLI binary unit
-  suite has 44 passed and two existing ignored tests; all-target strict checks pass.
-- Native Studio has 11 passing headless App controls and App/UI all-target strict
-  checks. They exercise actual chooser/consent controls in all seven languages,
-  independent GrayA16/ICC preview/document agreement, no implicit page zero,
-  deterministic distinct page identities, source/stale/cancel guards, Undo,
-  separate retained allocation lifetimes and resident-denial preservation.
-  Both 65,537×1 and 1×65,537 pages exercise padded tile admission and the visible
-  thin-preview/prior-frame rule. Existing DCX controls continue to pass.
-- Production Chrome 156.0.8078.49 on the local Apple Silicon host passed all
-  13 source files: 23 classic-TIFF pages inventoried, 20 qualified selected pages
-  matched to independent libtiff samples, and one completed BigTIFF refusal.
-  Real Studio chooser, unsupported-first/later-page selection, actual preview
-  and consent, both cancellation stages, changed-source re-read and
-  hang/stale/trap/malformed-result preservation passed. A separate native Rust
-  reader checked all 12 downloaded PCND artifacts, including hidden RGB/alpha
-  and distinct/repeated page identities. Other engines and physical devices
-  remain unqualified; this is not a general browser-memory guarantee.
+- Backend checks pass 22 controls. The new independent coordinate corpus has
+  25 authored classic-TIFF files and 32 pages: all eight orientations, asymmetric
+  3 × 2 samples, both byte orders, straight RGBA8 with hidden RGB and selected
+  GrayA16 using the existing high-byte rule. Python writes raw IFDs/scanlines;
+  a separate libtiff scanline reader verifies the original samples and tags.
+  Ordinary single-image RGBA8 cases pass in both byte orders. Multipage ordinary
+  Open and ordinary GrayA remain refused.
+- Three actual host Worker controls pass, including all eight selected-page
+  orientations, exact normalized pixels and rejection of a forged inventory
+  Orientation. Seven host Web controls pass, with the two external-artifact
+  checks run separately. The existing 54-case independent JPEG group also passes
+  after sharing the checked pixel-permutation helper.
+- Native Studio passes three new headless consumer groups, including eight real
+  selected-page reviews and two ordinary image cases. Actual CLI and stdio MCP
+  pass two groups over 14 profiles, checking original/normalized report fields,
+  saved raw samples, deterministic policy-bound identities and source guards.
+  Matching native/CLI/MCP artifacts agree. For the shared standalone GrayA16
+  orientations 2 and 7, the actual native, Web, CLI and MCP PCND artifacts are
+  byte-identical. All-target strict checks pass.
+- Production Chrome 156.0.8078.49 passes the new 25-file/32-page Worker corpus
+  and all eight real GrayA16 Studio chooser, preview, consent, Save and reopen
+  workflows. Sixteen downloaded orientation PCND artifacts match the independent
+  raw-pixel oracles and retain their identities on reopen. The same run repeats
+  the initial 13-file corpus: 23 classic pages inventoried, 20 qualified decodes
+  and a completed BigTIFF refusal. Its chooser, consent, cancellation,
+  changed-source and hang/stale/trap/malformed preservation controls pass again.
+  A separate native Rust reader checks all 28 downloaded PCND artifacts.
+- Full JavaScript checks pass 94 tests. Formats/Web/Worker strict checks,
+  WebAssembly builds, Biome, formatting, source limits and built asset checks pass.
+  The Worker ceiling remains 4,096 WebAssembly pages (256 MiB linear memory),
+  not a physical RSS, GPU-memory or synchronous execution-stop guarantee.
 
-Raw logs and frozen source receipts are retained under ignored
+The frozen orientation receipts are
+[`tiff-orientation/final-freeze.json`](validation/tiff-orientation/final-freeze.json)
+and the separate native/CLI/MCP
+[`tiff-orientation-consumers/final-freeze-v2.json`](validation/tiff-orientation-consumers/final-freeze-v2.json).
+The separate [four-transport artifact comparison](validation/tiff-orientation-four-transport-comparison.json)
+binds those two matching sources without implying all profiles ran in every
+transport. The complete successful production run is retained at
+[`attempt-3wCBVq/production.json`](validation/tiff-orientation/production/attempt-3wCBVq/production.json).
+Two earlier production attempts exposed separate JavaScript version-gate defects;
+their failures and the corrected full run are preserved, rather than counted as
+successful UI qualification. These ignored local receipts do not establish a
+new release or green main-branch CI.
+
+The initial selected-page evidence remains historical under ignored
 `docs/validation/tiff-pages/`, `docs/validation/tiff-selected-page/` and
-`docs/validation/tiff-pages-2026-10-29/`. The production browser source/artifact
-receipt is `docs/validation/tiff-pages-2026-10-29/final-receipt.json`. The fixture
-source, manifest and independent provenance are checked in under
-`crates/services/paintcraft-formats/tests/tiff-fixtures/`.
+`docs/validation/tiff-pages-2026-10-29/`, including its original production
+[`final-receipt.json`](validation/tiff-pages-2026-10-29/final-receipt.json).
+Independent fixtures and reproducible source are tracked under
+[`tiff-fixtures`](../crates/services/paintcraft-formats/tests/tiff-fixtures/README.md)
+and [`tiff-orientation-fixtures`](../crates/services/paintcraft-formats/tests/tiff-orientation-fixtures/README.md).
 
 ## Remaining TIFF work
 
 This slice does not complete the format pack's full TIFF requirements. BigTIFF,
-associated alpha, CMYK/floating-point and additional sample/color/orientation
+associated alpha, CMYK/floating-point, additional sample/color
 or planar-storage profiles, broader metadata/profile retention or transformation,
 high-depth editing, page editing and foreign preserving Save remain separate work. Unsupported
 structures fail closed rather than importing an arbitrary first page. Native

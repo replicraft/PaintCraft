@@ -39,9 +39,9 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. Native/browser Studio, CLI and MCP can also explicitly select MSP2 row-RLE; the advanced browser route has its own bounded Worker profile. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - Native/browser Studio, CLI and MCP offer explicit DDS texture copies: uncompressed RGBA8 or lossy BC1/BC2/BC3, sRGB or converted linear8 samples, and generated mip levels. Studio previews the actual encoded base image and reviews losses before destination choice or download. Advanced browser exports use the bounded isolated Worker profile below; default single-level RGBA8 exports keep their old route and capacity.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
-- Studio also has [explicit TIFF selected-page conversion](TIFF_PAGE_IMPORT.md): native/browser Studio, CLI and MCP can choose an admitted integer gray/RGB/straight-alpha page and acknowledge actual depth/metadata/page omission losses. Ordinary Open and Classic behavior remain unchanged. Local production Chrome and independent downloaded-PCND checks passed; cross-browser and physical-device qualification remain open.
+- Studio also has [explicit TIFF selected-page conversion](TIFF_PAGE_IMPORT.md): native/browser Studio, CLI and MCP can choose an admitted integer gray/RGB/straight-alpha page and acknowledge actual depth/metadata/page omission losses. Ordinary Open and Classic still require one image; both ordinary and selected TIFF routes now normalize Orientation 1 through 8 exactly once. Local production Chrome and independent downloaded-PCND checks passed; cross-browser and physical-device qualification remain open.
 - ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
-- Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. A new [integer JPEG XL conversion](JXL_INTEGER_IMPORT.md) adds exact 8-bit or explicitly reviewed 16-bit-to-8-bit copies through native V9/V10 candidates and the browser Worker. Released native V7/V8 selections are unchanged. CLI and native MCP use the native route; ordinary Open and Classic reads remain denied. Eight-bit copies do not invent an empty loss prompt.
+- Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. The [integer JPEG XL conversion](JXL_INTEGER_IMPORT.md) supports exact 8-bit or explicitly reviewed 16-bit-to-8-bit copies through the qualified V10 helper, selected on all six native targets, and the browser Worker. Published 0.1.1 V7/V8 artifacts are unchanged. CLI and native MCP use the native route; ordinary Open and Classic reads remain denied. Eight-bit copies do not invent an empty loss prompt.
 - Native Studio, CLI and native MCP explicitly import the qualified opaque RGB8 JPEG XR profile with mandatory print-resolution loss consent. Studio displays the actual picture and effective horizontal/vertical DPI before approval. Ordinary Open, browser and Classic JPEG XR reads remain denied.
 - Native Studio, CLI and native MCP explicitly import the qualified direct-primary HEIF sRGB8 color/straight-alpha profile. Actual YCbCr reconstruction and nonempty item-name losses require consent; an unnamed identity-color source has no conversion-loss prompt. Ordinary Open, browser, Classic and all HEIF writing remain denied.
 - Native Studio, CLI and native MCP explicitly import the qualified identity sRGB8 and explicit SDR YCbCr AVIF still/straight-alpha profiles. SDR requires a verified V6/V7 helper and reconstruction consent; identity accepts V5/V6/V7. Nonempty source item names also require consent. Ordinary Open, browser and Classic reads remain denied.
@@ -55,12 +55,12 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | --- | --- | --- |
 | PCND | Native layered Open/Save with bounded container validation, compact sparse chunks and recovery integration | Retains project layers, transparency and canvas properties; foreign preserving writes are separate work |
 | PNG, JPEG, BMP | Classic/Studio raster Open and flat Export | Bounded RGBA8 conversion; JPEG quality is adjustable and loses alpha; metadata/depth/hidden-RGB losses are reported as applicable |
-| GIF | Classic/Studio still Open and palette Export | One full-logical-screen frame only; partial frames/animation refused; palette, alpha and hidden-RGB export losses are explicit |
-| TIFF | Classic/Studio single-page Open and RGBA8 Export; native/browser Studio and CLI/MCP explicit selected-page conversion | Selected-page profile admits bounded 1-bit gray and 8/16-bit integer gray/RGB/straight alpha, including reviewed high-byte 16-bit reduction and omitted-page/metadata/ICC losses. No implicit page zero, multipage editing or preserving TIFF Save. BigTIFF, CMYK, floating point, associated/ambiguous alpha and unqualified orientation remain refused; writer declares unassociated alpha |
+| GIF | Classic/Studio still Open and palette Export | One still frame with defined logical-screen composition, including partial rectangles: declared global background for opaque sources, clear uncovered pixels for transparent sources. Animation, reserved disposal and opaque partial frames without a defined global background remain refused; palette, alpha and hidden-RGB losses are explicit |
+| TIFF | Classic/Studio single-page Open and RGBA8 Export; native/browser Studio and CLI/MCP explicit selected-page conversion | Orientation 1 through 8 becomes normalized pixels exactly once, with swapped output axes for 5 through 8. Selected V2 reports bind original geometry/Orientation, source/page, normalized output and policy identity. The selected route admits bounded 1-bit gray and 8/16-bit integer gray/RGB/straight alpha, including GrayA, reviewed high-byte reduction and omission losses. Ordinary GrayA, BigTIFF, CMYK, floating point and associated/ambiguous alpha remain refused. No implicit page zero, multipage editing or preserving TIFF Save; writer declares unassociated alpha |
 | TGA | Studio integer raster Open and lossless RGBA8 Export | Admitted orientation, RLE and palette profiles only; palette/metadata losses explicit |
 | WebP | Studio still Open and lossless RGBA8 Export | Animation and unqualified extensions refused; import metadata losses explicit |
 | DDS | Studio 2D top-mip import; default single-level RGBA8 export; native/browser Studio and CLI/MCP explicit RGBA8 or BC1/BC2/BC3 texture copies with generated mips | Reader requires explicit sRGB and straight/opaque alpha, at most 64 MiB and 4,194,304 top-level pixels; lower levels are structurally checked and omitted with consent. Advanced fresh DX10 output offers sRGB or real linear8 conversion, single/full/custom mip counts, Nearest or stored-sample Box, and Normal/High BC effort. BC1 requires opaque input; BC2/BC3 use straight alpha. BC, actual hidden-RGB and linear8 quantization losses need consent. Browser advanced export has a separate 4MP/8-layer bounded source profile. BC1 cutout, other BC formats/swizzles, custom mip preservation and foreign preserving Save remain unavailable; arrays, cubes and volumes are refused. See the DDS texture-copy profile below |
-| JPEG XL | Studio lossless RGBA8 Export; released native Studio/CLI/MCP strict 8-bit Import for `native-jxl-srgb8-worker-v1`; native V9/V10 candidate and browser Studio [integer 8/16-bit conversion](JXL_INTEGER_IMPORT.md) | Metadata-free static identity-oriented original sRGB, at most 64 MiB input and 4,194,304 pixels. Optional alpha must be unnamed, straight, full-resolution integer samples at the color depth. Codec 9 preserves 8-bit samples exactly or reduces 16-bit samples with mandatory depth-loss consent and a bound actual preview; output/editor remains RGBA8. Native candidates require exact V9/schema 2 or V10/schema 3 manifests and do not change released V7/V8 shipping policy. Browser completion uncertainty retains quarantine. Ordinary Open/Classic reads and preserving JXL Save remain denied; export retains its independent 64 MiB output limit |
+| JPEG XL | Studio lossless RGBA8 Export; current native Studio/CLI/MCP [integer 8/16-bit conversion](JXL_INTEGER_IMPORT.md) through V10 selected on all six native targets; browser Studio isolated Worker conversion | Metadata-free static identity-oriented original sRGB, at most 64 MiB input and 4,194,304 pixels. Optional alpha must be unnamed, straight, full-resolution integer samples at the color depth. Codec 9 preserves 8-bit samples exactly or reduces 16-bit samples with mandatory depth-loss consent and a bound actual preview; output/editor remains RGBA8. Current native discovery requires an exact qualified helper/manifest; published 0.1.1 retains its historical V7/V8 strict 8-bit profiles. Browser completion uncertainty retains quarantine. Ordinary Open/Classic reads and preserving JXL Save remain denied; export retains its independent 64 MiB output limit |
 | AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for identity sRGB8 and SDR YCbCr variants | Reader: reduced-still identity 4:4:4 or explicit BT.709/sRGB8 full/limited-range 4:4:4 or 4:2:0 with qualified vertical/colocated siting, optional straight alpha, at most 64 MiB input and 4,194,304 pixels. SDR requires an exact V6/V7 helper/manifest and reconstruction consent; identity accepts V5/V6/V7. Named item loss also requires consent. Unknown 4:2:0 siting, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
@@ -102,14 +102,17 @@ Actual headless macOS ARM App controls passed with both immutable V9/V10
 helpers in English and Japanese. Production Worker/Studio browser controls
 passed in Chrome 156, including independent raw-pixel checks of nine PCND
 artifacts. Actual installed CLI/MCP baselines and exact selectors also passed
-with both candidate roles on macOS ARM; that development-checkout evidence is
-separate from clean candidate CI.
-The six-target V10 candidate run and reviewed source-policy promotion qualify
+with the then-candidate V9/V10 roles on macOS ARM; that development-checkout
+evidence is historical and separate from clean native CI.
+The six-target V10 qualification run and reviewed all-target source-policy promotion qualify
 those exact profiles; new release packaging/publication remains separate. The
 published 0.1.1 V7/V8 artifacts are unchanged. The dated strict 8-bit-only evidence
 below remains historical, and is not rewritten as 16-bit qualification.
 
 ## Selected TIFF page conversion, 2026-10-29
+
+The initial selected-page qualification below is retained as its original
+baseline; the Orientation V2 follow-up appears immediately afterward.
 
 The [TIFF page contract](TIFF_PAGE_IMPORT.md) adds an explicit Studio copy route,
 not a wider ordinary Open or a TIFF document model. A complete bounded source
@@ -139,6 +142,46 @@ page/profile requirements, original-application evidence, physical/cross-browser
 execution and release qualification stay open. This advance does not complete
 the full pack. The production browser source/artifact receipt is retained at
 `docs/validation/tiff-pages-2026-10-29/final-receipt.json`.
+
+### TIFF Orientation V2 follow-up, 2026-10-29
+
+Ordinary single-image TIFF and explicit selected-page conversion now normalize
+Orientation 1 through 8 as a checked straight-RGBA permutation. Axes swap for
+5 through 8; original dimensions and Orientation remain source facts, while
+output pixels have orientation 1 and are never transformed again. High-depth
+conversion keeps the existing `sample >> 8` rule. Ordinary GrayA remains
+unsupported; its qualified selected-page route is unchanged apart from orientation.
+
+The 256-byte `PCTIFF02` assessment binds original dimensions/Orientation,
+normalized output and its digest, complete source/page facts, actual losses and
+`tiff-uint16-high-byte-oriented-rgba8-v2` policy. Its digest intentionally changes
+all selected-page document identities, including orientation 1; old reports are
+refused. Browser wire V2 requires the exact normalized geometry derived from
+its bound inventory. Request, Worker runtime and Rust-facing service use one
+shared JavaScript version constant. This does not change published 0.1.1 artifacts.
+
+The new independent corpus has 25 files and 32 pages, with explicit asymmetric
+coordinate-label oracles, hidden RGB, both byte orders and GrayA16. Backend
+checks pass 22 controls, Worker controls pass three and host Web controls pass
+seven; the independent 54-case JPEG group remains green. Production Chrome
+156.0.8078.49 passes all 25/32 new Worker cases and eight real Studio 16-bit
+chooser/preview/consent/Save/reopen workflows. Its 16 orientation PCND downloads
+plus the repeated baseline's 12 downloads pass separate native Rust raw-pixel
+checks. Native headless and actual CLI/stdio MCP orientation consumers also pass,
+with unchanged current-work/source guards and deterministic policy-bound identities.
+For standalone GrayA16 orientations 2 and 7, actual native, Web, CLI and MCP
+PCND artifacts are byte-identical.
+All-target strict, 94 JavaScript controls, WebAssembly builds and asset checks pass.
+
+Exact local evidence and preserved failed attempts are linked in the
+[TIFF contract](TIFF_PAGE_IMPORT.md#qualification-status), including
+[`tiff-orientation/final-freeze.json`](validation/tiff-orientation/final-freeze.json)
+and the separate native/CLI/MCP
+[`final-freeze-v2.json`](validation/tiff-orientation-consumers/final-freeze-v2.json).
+This is local source qualification, not green main CI, a new release, color
+management, metadata retention or broader TIFF sample support. BigTIFF, CMYK,
+floating point, associated alpha, original-application and cross-browser/device
+gates remain open.
 
 ## Loss handling and publication
 

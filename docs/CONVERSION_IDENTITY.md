@@ -1,6 +1,6 @@
 # Converted raster document identities
 
-DCX page imports and native HDR/EXR conversions now bind document identities to
+DCX page imports, JPEG/TIFF normalization and native HDR/EXR conversions bind document identities to
 both the selected conversion and its actual RGBA8 output. This prevents a later
 conversion of the same source from reusing the document, state and layer IDs of
 a different result. It changes newly constructed conversion documents, without
@@ -98,9 +98,10 @@ Local headless checks on macOS ARM64 passed these separate scopes:
 
 All five affected packages passed all-target strict Clippy. The browser library
 also passed a Wasm check; repository formatting and source limits passed. The
-new installed float identity test is wired into native candidate qualification,
-but these local results do not establish that the new gate passed on all six
-native targets. Browser-host controls and a Wasm check are not a new actual
+new installed float identity test was subsequently executed by the successful
+[six-target V10 qualification](https://github.com/replicraft/PaintCraft/actions/runs/40889561591).
+That later gate is separate from the local snapshot above. Browser-host controls
+and a Wasm check are not a new actual
 browser execution claim for this identity change.
 
 Raw failed, exploratory and successful logs are retained under ignored
@@ -110,10 +111,32 @@ the redundant archive and installed executable copies after verification.
 Canonical build artifacts, manifests, notices, inputs and validation evidence
 were retained.
 
+## JPEG and TIFF normalization
+
+JPEG uses `jpeg-device-color-orientation-rgba8-v1`; ordinary TIFF uses
+`tiff-rgba8-oriented-v1`. Both bind original source SHA-256, normalized geometry
+and exact RGBA8 samples through the checked constructor. The shared image helper
+supplies these keys to desktop, web, CLI and MCP. Repeated conversions are stable
+across transports; policy changes require a new profile. Metadata omission,
+consent and filesystem authority remain separate checks.
+
+Selected TIFF pages use the complete version 2 assessment, with policy
+`tiff-uint16-high-byte-oriented-rgba8-v2`. It retains original dimensions and
+orientation alongside normalized output facts and the selected page. Even
+orientation-1 reports change identity with this assessment version. Version 1
+reports and worker messages are refused rather than reinterpreted.
+
+Local consumer controls compare pixels and document/state/layer IDs for 13 JPEG
+profiles across all four transports. TIFF controls cover all eight orientations;
+supplementary byte-for-byte PCND comparison across all four transports covers
+the two GrayA16 orientation-2/7 profiles. Production browser tests additionally
+validate downloaded PCND output against independent samples. Exact scopes are
+recorded in the JPEG/TIFF frozen receipts, without an all-variant or all-target
+qualification claim.
+
 ## Remaining scope
 
-TIFF already uses its full selected-page assessment as document identity. SVG
-already binds its render choices and output; ICO/CUR and ICNS bind their selected
-entries. Those routes were left unchanged. Other fixed-policy image imports
+SVG binds its render choices and output; ICO/CUR and ICNS bind their selected
+entries. Other fixed-policy image imports
 were not globally migrated, and this work does not add formats, preserving Save,
 new precision support or full format-roadmap qualification.

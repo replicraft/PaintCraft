@@ -14,8 +14,12 @@ source declarations and discarded metadata are explicit; indexed PNG samples
 are validated before expansion. Desktop/web loss review now requires a prior
 visible preview and explicit consent, with full host suites and actual offscreen
 screenshots. Defined partial still-GIF composition also retains palette samples
-and validates end markers. Full metadata retention, color management, fresh
-browser/physical qualification and broader stock-codec requirements remain open.
+and validates end markers. JPEG device-color conversion and all eight EXIF
+orientations, strict BMP RLE4/RLE8, icon palette bounds and all eight TIFF
+orientations now have independent pixel fixtures and consumer checks. TIFF
+version 2 additionally passed actual production-browser Worker, consent and
+PCND save/reopen checks. Full metadata/index retention, color management,
+six-target stock-codec and physical qualification remain open.
 
 [PaintCraft 0.1.1 release validation](releases/v0.1.1-validation.md) now records
 successful native desktop/CLI builds, finite helper and installed-consumer checks,
