@@ -91,3 +91,47 @@ fn browser_jxl_requires_its_own_exact_studio_import_variant() {
         }
     }
 }
+
+#[test]
+fn integer_jxl_requires_explicit_native_studio_conversion_and_preflight() {
+    use paintcraft_formats::codec_worker::jxl_integer::contracts::IMPORT_VARIANT;
+    for frontend in [
+        Frontend::Studio,
+        Frontend::ClassicV7,
+        Frontend::ClassicV10,
+        Frontend::ClassicV11,
+    ] {
+        for platform in [Platform::Native, Platform::Web] {
+            for operation in [
+                Operation::Open,
+                Operation::OpenRaster,
+                Operation::ImportConvert,
+                Operation::SavePreserving,
+                Operation::SaveAsCopy,
+                Operation::ExportFlat,
+            ] {
+                let mut request = Request::new(frontend, operation, Family::Jxl, platform);
+                request.extension = Some("jxl");
+                request.variant = Some(IMPORT_VARIANT);
+                let actual = registry::admission(request);
+                let expected = frontend == Frontend::Studio
+                    && platform == Platform::Native
+                    && operation == Operation::ImportConvert;
+                assert_eq!(actual.available(), expected, "{request:?}");
+                if expected {
+                    assert_eq!(
+                        actual,
+                        registry::Decision::AllowedWithPreflight(
+                            registry::Reason::ConvertRequiresConsent
+                        )
+                    );
+                    request.backend_available = false;
+                    assert!(!registry::admission(request).available());
+                    request.backend_available = true;
+                    request.extension = Some("png");
+                    assert!(!registry::admission(request).available());
+                }
+            }
+        }
+    }
+}

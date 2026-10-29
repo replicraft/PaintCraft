@@ -326,6 +326,13 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
         && request.variant == Some(crate::codec_worker::NATIVE_JXL_IMPORT_VARIANT);
+    // This variant is requested only after sealed helper capability selection.
+    // It does not widen ordinary Open, picker inventory, or the legacy profile.
+    let native_jxl_integer_import = request.family == Family::Jxl
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::codec_worker::jxl_integer::contracts::IMPORT_VARIANT);
     let native_jxr_import = request.family == Family::Jxr
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -461,6 +468,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !svg_rasterization
         && !neutral_ora_copy
         && !native_jxl_import
+        && !native_jxl_integer_import
         && !web_jxl_import
         && !native_jxr_import
         && !native_jxr_export
@@ -489,6 +497,7 @@ pub fn admission(request: Request<'_>) -> Decision {
     if !capability.qualified
         && !fresh_dcx_page
         && !native_jxl_import
+        && !native_jxl_integer_import
         && !web_jxl_import
         && !native_jxr_import
         && !native_jxr_export
@@ -504,6 +513,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         || native_dds_texture_export
         || web_dds_texture_export
         || native_jxr_import
+        || native_jxl_integer_import
         || native_heif_import
         || native_avif_import
         || native_float_import
