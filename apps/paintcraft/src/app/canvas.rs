@@ -109,6 +109,8 @@ impl App {
 
         self.validate_studio_pan(ui, viewport);
         if first_pass {
+            #[cfg(target_os = "windows")]
+            self.framework_force_validate(ui, view);
             let events = ui.input(|i| i.events.clone());
             #[cfg(target_os = "macos")]
             let events = {
@@ -117,6 +119,18 @@ impl App {
                 events
             };
             for event in events {
+                #[cfg(target_os = "windows")]
+                if self.framework_force_event(
+                    ui,
+                    painter.layer_id(),
+                    visible_canvas,
+                    controls,
+                    view,
+                    &event,
+                ) {
+                    continue;
+                }
+
                 if self.canvas_text_event(ui.ctx(), &event) {
                     continue;
                 }

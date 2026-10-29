@@ -109,7 +109,12 @@ impl App {
                 },
                 // Focus loss ends an unfinished gesture without publishing it.
                 egui::Event::WindowFocused(false) => {
+                    #[cfg(not(target_os = "windows"))]
                     self.editor.cancel_gesture();
+                    #[cfg(target_os = "windows")]
+                    if !self.editor.framework_force_active() {
+                        self.editor.cancel_gesture();
+                    }
                     self.studio.zoom.cancel();
                     self.studio.pan.cancel();
                     self.studio.space_pan = false;

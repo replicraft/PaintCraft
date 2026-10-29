@@ -120,6 +120,12 @@ impl App {
         self.image_paste_bar(ui);
         let accept_input =
             first_pass && !self.action_context().blocked && !self.editor.painting_blocked();
+        #[cfg(target_os = "windows")]
+        if first_pass && (!accept_input || self.document_count() == 0 || self.tab_closing.is_some())
+        {
+            let events = ui.input(|i| i.events.clone());
+            self.framework_force_inactive(&events);
+        }
         if first_pass && !accept_input {
             // A disabled/modal canvas never replays text or finishes a draft.
             // Revoke provisional IME now; keep committed text private until an

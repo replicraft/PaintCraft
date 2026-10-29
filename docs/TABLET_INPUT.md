@@ -116,7 +116,43 @@ unchanged legacy paint queues and floating workflows.
 
 Normal macOS startup uses the owned `winit + egui-winit + egui-wgpu` input
 path automatically. No environment variable or feature switch is needed.
-Windows and Linux retain their ordinary frontend input path.
+Windows and Linux retain their ordinary frontend input path. Windows also uses
+valid force reported by that framework automatically for the selected plain,
+round Brush. This fallback stores explicit framework contact points, separately
+from classified native pen samples. It never assigns pen/eraser identity, source
+clocks, tilt, twist or native contact-completion authority. Reported force may
+be an OS/API fallback value rather than a measured physical pressure sensor. Linux's current winit
+X11 and Wayland touch paths report no force, so ordinary input remains unchanged.
+
+The framework route starts only on an enabled, visible canvas with finite force
+in 0..1 and an available brush target. Widget starts, contacts without force,
+Pencil, Eraser, textured brushes and sampled tips keep their ordinary routes.
+The captured size/opacity response and plain-round mask are shared by preview
+and publication, producing one undoable stroke. A terminal without force finishes
+at the last valid reported point; missing/invalid force during motion cancels.
+Changing the session, target, tool, policy or canvas view cancels private input.
+Focus/modal loss and contact cancellation cannot publish its preview.
+
+Framework pointer events do not identify which mouse events were touch mirrors.
+While a force contact owns canvas ink, all legacy canvas pointer painting is
+fenced; GUI widgets still receive their original events. A competing contact or
+mouse/force conflict cancels only private canvas ink until the observed contacts
+and buttons are idle. This conservative policy does not claim uninterrupted
+native first-device ownership. The bounded bank retains at most sixteen contacts;
+uncertain overflow disables force acquisition until focus recovery. A Move cannot
+reacquire a cancelled capture. Windows native history/axes/IME integration and
+Linux tablet acquisition remain unfinished, and no physical-device or timing
+qualification follows from framework force support.
+
+Headless [framework-contact UI controls](../apps/paintcraft/src/app/framework_force/tests.rs),
+[controller controls](../apps/paintcraft/src/controller/framework_force/tests.rs)
+and [tool controls](../crates/editing/paintcraft-tools/tests/framework_force.rs)
+cover force-changing pixels, retained preview/release equality, one Undo,
+widget/non-force fallback, competing input, cancellation, unrelated draft
+preservation and zoom followed by a new Start in one event list. Local checks
+exercise these on macOS and compile the tool abstraction for Windows x86-64 and
+ARM64. Complete Windows App compilation and device/runtime qualification remain
+separate native-CI and hardware gates.
 
 It uses the existing document, dialog, recovery and GPU services. Native failure
 retires the capture installation and returns to ordinary mouse input while

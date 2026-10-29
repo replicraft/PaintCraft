@@ -38,6 +38,9 @@ mod files;
 mod format_admission;
 #[path = "app/format_filters.rs"]
 mod format_filters;
+#[cfg(any(target_os = "windows", test))]
+#[path = "app/framework_force.rs"]
+mod framework_force;
 #[path = "app/gpu_display.rs"]
 mod gpu_display;
 #[path = "app/history.rs"]
@@ -234,6 +237,8 @@ struct RenderedFrame {
 type RenderKey = (Uuid, u64, u64, paintcraft_core::types::Rect, u8);
 
 pub struct App {
+    #[cfg(any(target_os = "windows", test))]
+    framework_force: framework_force::State,
     #[cfg(target_os = "macos")]
     tablet: Option<tablet::Receiver>,
     #[cfg(target_os = "macos")]
@@ -475,6 +480,8 @@ impl App {
             closing_workspace: false,
             confirm: None,
             canvas_rect: None,
+            #[cfg(any(target_os = "windows", test))]
+            framework_force: framework_force::State::default(),
             #[cfg(target_os = "macos")]
             tablet: None,
             canvas_viewport: None,
