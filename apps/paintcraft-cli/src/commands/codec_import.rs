@@ -33,6 +33,8 @@ struct Prepared {
     owner: wire::Owner,
     cancel: paintcraft_runtime::Cancellation,
     assessment: Option<paintcraft_formats::jxr::ImportAssessment>,
+    jxl_integer_assessment: Option<(wire::jxl_integer::Report, [u8; 32])>,
+    actual_losses: Vec<String>,
     decoder_profile: &'static str,
     heif_assessment: Option<paintcraft_formats::heif::ImportAssessment>,
     avif_assessment: Option<paintcraft_formats::avif::ImportAssessment>,
@@ -42,24 +44,13 @@ struct Prepared {
 }
 impl Prepared {
     fn losses(&self) -> Vec<String> {
-        let losses = self
-            .assessment
-            .as_ref()
-            .map(|value| value.losses())
-            .or_else(|| self.heif_assessment.as_ref().map(|value| value.losses()))
-            .or_else(|| self.avif_assessment.as_ref().map(|value| value.losses()))
-            .or_else(|| {
-                self.avif_sdr_assessment
-                    .as_ref()
-                    .map(|value| value.losses())
-            })
-            .unwrap_or(&[]);
-        losses.iter().map(|code| (*code).to_owned()).collect()
+        self.actual_losses.clone()
     }
     fn source_assessment(&self) -> Value {
-        self.assessment
+        self.jxl_integer_assessment
             .as_ref()
-            .map(|value| value.to_value())
+            .map(|(report, digest)| jxl_assessment_value(report, digest))
+            .or_else(|| self.assessment.as_ref().map(|value| value.to_value()))
             .or_else(|| self.heif_assessment.as_ref().map(|value| value.to_value()))
             .or_else(|| self.avif_assessment.as_ref().map(|value| value.to_value()))
             .or_else(|| {
@@ -146,6 +137,25 @@ impl Prepared {
         })
     }
 }
+/// JSON describes the exact already-validated report whose digest is consumed
+/// for adoption. It never parses source headers or chooses a policy at report time.
+pub(super) fn jxl_assessment_value(report: &wire::jxl_integer::Report, digest: &[u8; 32]) -> Value {
+    Value::object([
+        ("policy", Value::str(report.policy())),
+        ("source_sha256", Value::str(hex(&report.source_sha256))),
+        ("output_sha256", Value::str(hex(&report.output_sha256))),
+        ("assessment_sha256", Value::str(hex(digest))),
+        ("source_depth", Value::Int(i64::from(report.source_depth))),
+        ("output_depth", Value::Int(8)),
+        ("width", Value::Int(i64::from(report.width))),
+        ("height", Value::Int(i64::from(report.height))),
+        (
+            "changed_rgb_components",
+            Value::Int(i64::from(report.changed_rgb_components)),
+        ),
+        ("changed_alpha", Value::Int(i64::from(report.changed_alpha))),
+    ])
+}
 fn reservation(length: u64) -> Result<u64> {
     wire::reservation_bytes_for_input(length)?
         .checked_add(DOCUMENT_BYTES + INDEX_AND_WRITER_BYTES + IO_BYTES)
@@ -173,7 +183,20 @@ fn prepare(
     })?;
     let check = || cancel.check();
     let residency = paintcraft_runtime::SharedBudget::new(DOCUMENT_BYTES);
-    let prepared = if job.codec == wire::Codec::JxrRgb8 {
+    let prepared = if job.codec == wire::Codec::JxlRgba8 {
+        let source = job.input.clone();
+        job.prepare_jxl_family(
+            residency,
+            lease.clone(),
+            &check,
+            &current_owner,
+            |selected| {
+                super::format_profile::Options { frontend }
+                    .admit_import_jxl_codec(&source, selected)
+            },
+            super::codec_worker::launch,
+        )
+    } else if job.codec == wire::Codec::JxrRgb8 {
         let source = job.input.clone();
         job.prepare_jxr_family(
             residency,
@@ -208,7 +231,21 @@ fn prepare(
         )
     }?;
     let decoder_profile = prepared.decoder_profile();
-    let adopted = prepared.adopt_with_losses(&allowed, &check, &current_owner)?;
+    let actual_losses = prepared
+        .losses()
+        .iter()
+        .map(|loss| (*loss).to_owned())
+        .collect();
+    let digest = if prepared.jxl_integer_assessment().is_some() {
+        Some(prepared.jxl_integer_assessment_digest()?)
+    } else {
+        None
+    };
+    let adopted = if let Some(digest) = digest {
+        prepared.adopt_jxl_integer(digest, &allowed, &check, &current_owner)?
+    } else {
+        prepared.adopt_with_losses(&allowed, &check, &current_owner)?
+    };
     Ok(Prepared {
         document: adopted.document,
         identity: adopted.identity,
@@ -218,6 +255,8 @@ fn prepare(
         owner,
         cancel,
         assessment: adopted.jxr_assessment,
+        jxl_integer_assessment: adopted.jxl_integer_assessment.zip(digest),
+        actual_losses,
         decoder_profile,
         heif_assessment: adopted.heif_assessment,
         avif_assessment: adopted.avif_assessment,
@@ -349,6 +388,7 @@ pub fn run(options: Options, json: bool) -> Reply {
                 "internal-qualification",
                 &options.losses.allowed_for(
                     &[
+                        &[paintcraft_formats::jxl::DEPTH16_LOSS],
                         paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES,
                         paintcraft_formats::heif::KNOWN_IMPORT_LOSSES,
                         paintcraft_formats::avif::KNOWN_IMPORT_LOSSES,

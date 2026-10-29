@@ -186,7 +186,19 @@ fn prepare(
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
             };
-            if codec == wire::Codec::JxrRgb8 {
+            if codec == wire::Codec::JxlRgba8 {
+                job.prepare_jxl_family(
+                    residency,
+                    lease,
+                    &check,
+                    &|| Ok(captured),
+                    |selected| {
+                        super::super::format_profile::Options::default()
+                            .admit_import_jxl_codec(&source, selected)
+                    },
+                    launch,
+                )
+            } else if codec == wire::Codec::JxrRgb8 {
                 job.prepare_jxr_family(
                     residency,
                     lease,
@@ -263,6 +275,11 @@ fn import_with_launch(
         .iter()
         .map(|code| (*code).to_owned())
         .collect();
+    let jxl_digest = if prepared.jxl_integer_assessment().is_some() {
+        Some(prepared.jxl_integer_assessment_digest()?)
+    } else {
+        None
+    };
     let assessment = prepared
         .jxr_assessment()
         .map(|assessment| assessment.to_value())
@@ -281,9 +298,21 @@ fn import_with_launch(
                 .avif_sdr_assessment()
                 .map(|assessment| assessment.to_value())
         })
+        .or_else(|| {
+            prepared
+                .jxl_integer_assessment()
+                .zip(jxl_digest.as_ref())
+                .map(|(report, digest)| {
+                    super::super::codec_import::jxl_assessment_value(report, digest)
+                })
+        })
         .map(|value| core_json(&value))
         .transpose()?;
-    let adopted = prepared.adopt_with_losses(allowed, &*check, &|| Ok(owner(state, empty)))?;
+    let adopted = if let Some(digest) = jxl_digest {
+        prepared.adopt_jxl_integer(digest, allowed, &*check, &|| Ok(owner(state, empty)))?
+    } else {
+        prepared.adopt_with_losses(allowed, &*check, &|| Ok(owner(state, empty)))?
+    };
     let mut session = Session::new(adopted.document);
     session.mark_unsaved();
     check()?;

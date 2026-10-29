@@ -61,7 +61,11 @@ impl Installation {
         let (profile, variants) =
             codec_contract::helper_contract(&helper_bytes, env!("CARGO_PKG_VERSION"))
                 .expect("exact single nonprivate helper declaration required");
-        let public_jxr = profile == wire::jxr_encode::qualified::NATIVE_PROFILE;
+        let public_jxr = matches!(
+            profile,
+            wire::jxr_encode::qualified::NATIVE_PROFILE
+                | wire::jxl_integer::contracts::writer::NATIVE_PROFILE
+        );
         let manifest = root.join("paintcraft-codec-worker.json");
         let mut value = Value::object([
             ("schema_version", Value::Int(if public_jxr { 3 } else { 2 })),
@@ -638,3 +642,6 @@ mod jxr_export;
 
 #[path = "support/codec_contract.rs"]
 mod codec_contract;
+
+#[path = "installed_codec_worker/jxl_integer.rs"]
+mod jxl_integer;

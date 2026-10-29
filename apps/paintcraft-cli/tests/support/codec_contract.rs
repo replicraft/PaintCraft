@@ -36,6 +36,18 @@ pub fn helper_contract(
             wire::jxr_encode::qualified::IMPORT_VARIANTS,
         ),
         (
+            wire::jxl_integer::contracts::base::BUILD_RECORD_MARKER,
+            wire::jxl_integer::contracts::base::build_record(version).ok()?,
+            wire::jxl_integer::contracts::base::NATIVE_PROFILE,
+            wire::jxl_integer::contracts::base::IMPORT_VARIANTS,
+        ),
+        (
+            wire::jxl_integer::contracts::writer::BUILD_RECORD_MARKER,
+            wire::jxl_integer::contracts::writer::build_record(version).ok()?,
+            wire::jxl_integer::contracts::writer::NATIVE_PROFILE,
+            wire::jxl_integer::contracts::writer::IMPORT_VARIANTS,
+        ),
+        (
             wire::jxr_encode::candidate::BUILD_RECORD_MARKER,
             wire::jxr_encode::candidate::build_record(version).ok()?,
             "private-refused",

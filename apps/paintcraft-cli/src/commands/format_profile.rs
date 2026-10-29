@@ -102,6 +102,24 @@ impl Options {
         };
         self.admit_import_native_variant(path, family, variant)
     }
+    pub fn admit_import_jxl_codec(
+        &self,
+        path: &std::path::Path,
+        codec: paintcraft_formats::codec_worker::Codec,
+    ) -> Result<()> {
+        use paintcraft_formats::codec_worker::{self as wire, Codec};
+        let variant = match codec {
+            Codec::JxlRgba8 => wire::NATIVE_JXL_IMPORT_VARIANT,
+            Codec::JxlIntegerRgba8 => wire::jxl_integer::contracts::IMPORT_VARIANT,
+            _ => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Unqualified JXL selected codec",
+                ));
+            }
+        };
+        self.admit_import_native_variant(path, Family::Jxl, variant)
+    }
     pub fn admit_import_jxr_assessment(
         &self,
         path: &std::path::Path,
@@ -152,7 +170,10 @@ impl Options {
         match registry::admission(request) {
             registry::Decision::Allowed => Ok(()),
             registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-                if matches!(family, Family::Jxr | Family::Heif | Family::Avif) =>
+                if matches!(
+                    family,
+                    Family::Jxl | Family::Jxr | Family::Heif | Family::Avif
+                ) =>
             {
                 Ok(())
             }

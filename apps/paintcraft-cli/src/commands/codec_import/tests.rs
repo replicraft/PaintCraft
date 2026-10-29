@@ -46,6 +46,8 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
                     owner,
                     cancel: cancel.clone(),
                     assessment: None,
+                    jxl_integer_assessment: None,
+                    actual_losses: vec![],
                     decoder_profile: wire::NATIVE_JXL_IMPORT_VARIANT,
                     heif_assessment: None,
                     avif_assessment: None,
