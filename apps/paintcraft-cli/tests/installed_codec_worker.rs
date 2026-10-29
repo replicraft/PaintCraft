@@ -58,55 +58,10 @@ impl Installation {
             normalize_copied_test_image(&helper);
         }
         let helper_bytes = fs::read(&helper).unwrap();
-        let public_jxr = helper_bytes
-            .windows(wire::jxr_encode::qualified::BUILD_RECORD_MARKER.len())
-            .any(|bytes| bytes == wire::jxr_encode::qualified::BUILD_RECORD_MARKER);
-        assert!(
-            !helper_bytes
-                .windows(wire::jxr_encode::candidate::BUILD_RECORD_MARKER.len())
-                .any(|bytes| bytes == wire::jxr_encode::candidate::BUILD_RECORD_MARKER)
-        );
-        if public_jxr {
-            assert_eq!(
-                helper_bytes
-                    .windows(wire::jxr_encode::qualified::BUILD_RECORD.len())
-                    .filter(|bytes| *bytes == wire::jxr_encode::qualified::BUILD_RECORD)
-                    .count(),
-                1
-            );
-        }
-        let avif = helper_bytes
-            .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
-            .any(|bytes| bytes == wire::AVIF_BUILD_RECORD_MARKER);
-        let sdr = helper_bytes
-            .windows(wire::AVIF_SDR_BUILD_RECORD_MARKER.len())
-            .any(|bytes| bytes == wire::AVIF_SDR_BUILD_RECORD_MARKER);
-        let float = helper_bytes
-            .windows(wire::FLOAT_BUILD_RECORD_MARKER.len())
-            .any(|bytes| bytes == wire::FLOAT_BUILD_RECORD_MARKER);
-        let (profile, variants): (&str, &[&str]) = if public_jxr {
-            (
-                wire::jxr_encode::qualified::NATIVE_PROFILE,
-                wire::jxr_encode::qualified::IMPORT_VARIANTS,
-            )
-        } else if float {
-            (
-                wire::FLOAT_NATIVE_PROFILE,
-                wire::QUALIFIED_FLOAT_IMPORT_VARIANTS,
-            )
-        } else if sdr {
-            (
-                wire::AVIF_SDR_NATIVE_PROFILE,
-                wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
-            )
-        } else if avif {
-            (
-                wire::AVIF_NATIVE_PROFILE,
-                wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
-            )
-        } else {
-            (wire::NATIVE_PROFILE, wire::QUALIFIED_NATIVE_IMPORT_VARIANTS)
-        };
+        let (profile, variants) =
+            codec_contract::helper_contract(&helper_bytes, env!("CARGO_PKG_VERSION"))
+                .expect("exact single nonprivate helper declaration required");
+        let public_jxr = profile == wire::jxr_encode::qualified::NATIVE_PROFILE;
         let manifest = root.join("paintcraft-codec-worker.json");
         let mut value = Value::object([
             ("schema_version", Value::Int(if public_jxr { 3 } else { 2 })),
@@ -680,3 +635,6 @@ mod float;
 
 #[path = "installed_codec_worker/jxr_export.rs"]
 mod jxr_export;
+
+#[path = "support/codec_contract.rs"]
+mod codec_contract;

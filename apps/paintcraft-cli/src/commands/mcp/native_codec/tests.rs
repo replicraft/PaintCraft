@@ -198,54 +198,9 @@ fn fixture_cancelled_import() {
     );
 }
 
-fn helper_contract(bytes: &[u8], version: &str) -> Option<(&'static str, &'static [&'static str])> {
-    let records = [
-        (
-            wire::BUILD_RECORD_MARKER,
-            wire::native_build_record(version).ok()?,
-            wire::NATIVE_PROFILE,
-            wire::QUALIFIED_NATIVE_IMPORT_VARIANTS,
-        ),
-        (
-            wire::AVIF_BUILD_RECORD_MARKER,
-            wire::native_avif_build_record(version).ok()?,
-            wire::AVIF_NATIVE_PROFILE,
-            wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
-        ),
-        (
-            wire::AVIF_SDR_BUILD_RECORD_MARKER,
-            wire::native_avif_sdr_build_record(version).ok()?,
-            wire::AVIF_SDR_NATIVE_PROFILE,
-            wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
-        ),
-        (
-            wire::FLOAT_BUILD_RECORD_MARKER,
-            wire::native_float_build_record(version).ok()?,
-            wire::FLOAT_NATIVE_PROFILE,
-            wire::QUALIFIED_FLOAT_IMPORT_VARIANTS,
-        ),
-    ];
-    let mut result = None;
-    for (marker, record, profile, variants) in records {
-        let positions = bytes
-            .windows(marker.len())
-            .enumerate()
-            .filter_map(|(at, value)| (value == marker).then_some(at))
-            .collect::<Vec<_>>();
-        if positions.is_empty() {
-            continue;
-        }
-        if result.is_some()
-            || positions
-                .iter()
-                .any(|at| bytes.get(*at..*at + record.len()) != Some(record.as_slice()))
-        {
-            return None;
-        }
-        result = Some((profile, variants));
-    }
-    result
-}
+#[path = "../../../../tests/support/codec_contract.rs"]
+mod codec_contract;
+use codec_contract::helper_contract;
 
 #[test]
 fn copied_helper_contract_accepts_exact_finite_records_and_refuses_corrupt_or_mixed() {
@@ -278,7 +233,7 @@ fn copied_helper_contract_accepts_exact_finite_records_and_refuses_corrupt_or_mi
         }
         let mut duplicate = record.clone();
         duplicate.extend(&record);
-        assert_eq!(helper_contract(&duplicate, version).unwrap().0, expected);
+        assert!(helper_contract(&duplicate, version).is_none());
         let mut corrupted_duplicate = record.clone();
         let mut corrupted = record.clone();
         *corrupted.last_mut().unwrap() ^= 1;

@@ -1,6 +1,6 @@
-//! Debug linkers may retain unused marker literals from linked library objects.
-//! They must never retain a second complete worker capability declaration.
-//! Shipping release builds additionally retain the strict bare-marker check.
+//! Linkers may retain unused marker literals on debug and release targets.
+//! Only complete declarations establish capability; malformed declaration-shaped
+//! headers, duplicate, stale and mixed declarations always refuse.
 use paintcraft_formats::codec_worker as wire;
 
 fn contracts() -> Vec<(&'static [u8], Vec<u8>)> {
@@ -40,9 +40,9 @@ enum Invalid {
     UnknownExpected,
     ExpectedCount(usize),
     OtherDeclaration(&'static [u8]),
-    ShippingMarker(&'static [u8]),
+    MalformedDeclaration(&'static [u8]),
 }
-fn check(bytes: &[u8], expected: &[u8], shipping: bool) -> Result<(), Invalid> {
+fn check(bytes: &[u8], expected: &[u8], _shipping: bool) -> Result<(), Invalid> {
     let contracts = contracts();
     if !contracts.iter().any(|(_, record)| record == expected) {
         return Err(Invalid::UnknownExpected);
@@ -66,21 +66,31 @@ fn check(bytes: &[u8], expected: &[u8], shipping: bool) -> Result<(), Invalid> {
         {
             let rest = &bytes[start + marker.len()..];
             let Some(version_len) = rest.iter().take(65).position(|byte| *byte == 0) else {
+                if rest.first().is_some_and(u8::is_ascii_digit)
+                    && rest
+                        .iter()
+                        .take(65)
+                        .all(|byte| byte.is_ascii_alphanumeric() || b".+-".contains(byte))
+                {
+                    return Err(Invalid::MalformedDeclaration(marker));
+                }
                 continue;
             };
-            if version_len > 0
-                && rest[..version_len].is_ascii()
-                && rest[version_len..].starts_with(suffix)
+            let version = &rest[..version_len];
+            if rest[version_len..].starts_with(suffix)
+                || (version.first().is_some_and(u8::is_ascii_digit)
+                    && version
+                        .iter()
+                        .all(|byte| byte.is_ascii_alphanumeric() || b".+-".contains(byte)))
             {
+                if !rest[version_len..].starts_with(suffix) {
+                    return Err(Invalid::MalformedDeclaration(marker));
+                }
                 let record = &bytes[start..start + marker.len() + version_len + suffix.len()];
                 if record != expected {
                     return Err(Invalid::OtherDeclaration(marker));
                 }
             }
-        }
-        if shipping && other != expected && bytes.windows(marker.len()).any(|value| value == marker)
-        {
-            return Err(Invalid::ShippingMarker(marker));
         }
     }
     Ok(())
@@ -108,7 +118,7 @@ pub fn selected() -> Vec<u8> {
 }
 
 #[test]
-fn debug_literal_is_not_a_second_declaration_but_shipping_rejects_it() {
+fn release_arm_retained_v4_literal_is_not_a_second_declaration() {
     for (marker, expected) in contracts() {
         assert_one(&expected, &expected);
         assert_eq!(check(&expected, &expected, true), Ok(()));
@@ -119,10 +129,7 @@ fn debug_literal_is_not_a_second_declaration_but_shipping_rejects_it() {
             let mut debug_image = expected.clone();
             debug_image.extend_from_slice(other_marker);
             assert_eq!(check(&debug_image, &expected, false), Ok(()));
-            assert_eq!(
-                check(&debug_image, &expected, true),
-                Err(Invalid::ShippingMarker(other_marker))
-            );
+            assert_eq!(check(&debug_image, &expected, true), Ok(()));
         }
     }
 }
@@ -163,7 +170,10 @@ fn unknown_or_stale_expected_declaration_is_not_an_alternate_policy() {
 #[test]
 fn stale_complete_records_cannot_hide_behind_debug_literal_policy() {
     let expected = selected();
-    for (marker, stale) in contracts_for("0.0.0") {
+    for (marker, stale) in contracts_for("0.0.0")
+        .into_iter()
+        .chain(contracts_for("v0.0.0"))
+    {
         let mixed = [expected.as_slice(), stale.as_slice()].concat();
         for shipping in [false, true] {
             assert_eq!(
@@ -171,5 +181,44 @@ fn stale_complete_records_cannot_hide_behind_debug_literal_policy() {
                 Err(Invalid::OtherDeclaration(marker))
             );
         }
+    }
+}
+
+#[test]
+fn malformed_versioned_declarations_cannot_hide_as_literals() {
+    let expected = selected();
+    for (marker, record) in contracts() {
+        for tail in [
+            b"0.1.1\0PCDEC003\0".as_slice(),
+            b"0.1.1\0PCDEC002".as_slice(),
+        ] {
+            let mixed = [expected.as_slice(), marker, tail].concat();
+            assert_eq!(
+                check(&mixed, &expected, true),
+                Err(Invalid::MalformedDeclaration(marker))
+            );
+        }
+        let truncated = [expected.as_slice(), &record[..record.len() - 1]].concat();
+        assert_eq!(
+            check(&truncated, &expected, true),
+            Err(Invalid::MalformedDeclaration(marker))
+        );
+    }
+}
+
+#[test]
+fn malformed_complete_versions_refuse_but_literal_binary_neighbors_are_ignored() {
+    let expected = selected();
+    for (marker, record) in contracts() {
+        let suffix = &record[marker.len() + env!("CARGO_PKG_VERSION").len()..];
+        for invalid in [b"".as_slice(), b"\xff".as_slice()] {
+            let mixed = [expected.as_slice(), marker, invalid, suffix].concat();
+            assert_eq!(
+                check(&mixed, &expected, true),
+                Err(Invalid::OtherDeclaration(marker))
+            );
+        }
+        let random = [expected.as_slice(), marker, b"1\xff\xfe"].concat();
+        assert_eq!(check(&random, &expected, true), Ok(()));
     }
 }
