@@ -436,3 +436,9 @@ msp-export-failed-the-current-document-was-kept = La exportación MSP falló; se
 download-msp = Descargar MSP
 requesting-msp-download-more = Solicitando la descarga MSP…
 msp-download-could-not-be-requested = No se pudo solicitar la descarga MSP.
+
+format-tiff-pages-count = Páginas TIFF: { $count }
+
+this-page-uses-an-unsupported-tiff-profile = Esta página utiliza un perfil TIFF no compatible.
+
+this-page-cannot-be-imported = No se puede importar esta página.

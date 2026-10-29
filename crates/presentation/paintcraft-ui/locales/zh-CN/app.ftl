@@ -207,3 +207,7 @@ ime-result-could-not-fit-the-text-draft-no-text-was-changed = 输入法结果超
 finish-the-current-composition-before-deleting-committed-text = 请先完成当前输入，再删除已确认的文本
 text-draft-changed = 文本草稿已更改
 text-could-not-fit-the-draft-no-text-was-changed = 文本超出草稿容量，未更改任何文本
+
+image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = 此标签页的图像导入已暂停。请下载项目，然后重新加载此标签页以重试。
+
+image-import-failed-the-current-document-was-kept = 图像导入失败；当前文档已保留。

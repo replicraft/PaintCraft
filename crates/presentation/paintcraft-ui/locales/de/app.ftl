@@ -207,3 +207,7 @@ ime-result-could-not-fit-the-text-draft-no-text-was-changed = Das IME-Ergebnis p
 finish-the-current-composition-before-deleting-committed-text = Schließe die aktuelle Eingabe ab, bevor du bestätigten Text löschst
 text-draft-changed = Der Textentwurf wurde geändert
 text-could-not-fit-the-draft-no-text-was-changed = Der Text passt nicht in den Entwurf; es wurde kein Text geändert
+
+image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = Der Bildimport ist für diesen Tab angehalten. Lade dein Projekt herunter und diesen Tab neu, um es erneut zu versuchen.
+
+image-import-failed-the-current-document-was-kept = Der Bildimport ist fehlgeschlagen; das aktuelle Dokument wurde beibehalten.

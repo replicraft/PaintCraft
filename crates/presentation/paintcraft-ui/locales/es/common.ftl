@@ -522,3 +522,5 @@ avif-image-item-names-are-not-retained-in-the-new-document = Los nombres de los 
 input-was-cancelled-lift-the-pen-or-release-the-mouse-buttons-then-try-again = La entrada se canceló. Levanta el lápiz o suelta los botones del ratón y vuelve a intentarlo.
 pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-restart-pen-input = Se alcanzó el límite de contactos del lápiz. Guarda tu trabajo y vuelve a cargar esta página para reiniciar la entrada del lápiz.
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = La entrada nativa del lápiz se ha detenido. Puedes seguir usando el ratón y guardar tu trabajo.
+
+only-the-selected-tiff-page-will-be-imported = Solo se importará la página TIFF seleccionada.

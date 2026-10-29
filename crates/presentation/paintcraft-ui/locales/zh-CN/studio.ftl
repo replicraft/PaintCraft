@@ -436,3 +436,9 @@ msp-export-failed-the-current-document-was-kept = MSP 导出失败；当前文�
 download-msp = 下载 MSP
 requesting-msp-download-more = 正在请求下载 MSP…
 msp-download-could-not-be-requested = 无法请求下载 MSP。
+
+format-tiff-pages-count = TIFF 页数：{ $count }
+
+this-page-uses-an-unsupported-tiff-profile = 此页面使用不受支持的 TIFF 配置。
+
+this-page-cannot-be-imported = 此页面无法导入。

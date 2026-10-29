@@ -41,6 +41,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
             "The icon's logical size and Retina density will not be kept in the imported picture."
         }
         "msp-metadata-ignored" => "MSP device settings and header metadata will not be retained.",
+        "tiff-other-pages-not-imported" => "Only the selected TIFF page will be imported.",
         "dcx-other-pages-not-imported" => "Only the selected DCX page will be imported.",
         "dds-other-mips-not-imported" => {
             "Only the full-size DDS image will be imported. Its smaller mip levels will stay in the source file."
@@ -149,6 +150,7 @@ mod tests {
             "avif-color-reconstruction",
             "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
+            "tiff-other-pages-not-imported",
             "pdn-metadata-ignored",
             "ora-opacity-quantized",
             "ora-resolution-ignored",

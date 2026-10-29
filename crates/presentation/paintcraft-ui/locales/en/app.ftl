@@ -207,3 +207,7 @@ ime-result-could-not-fit-the-text-draft-no-text-was-changed = IME result could n
 finish-the-current-composition-before-deleting-committed-text = Finish the current composition before deleting committed text
 text-draft-changed = Text draft changed
 text-could-not-fit-the-draft-no-text-was-changed = Text could not fit the draft; no text was changed
+
+image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = Image importing is paused for this tab. Download your project, then reload this tab to try again.
+
+image-import-failed-the-current-document-was-kept = Image import failed; the current document was kept.

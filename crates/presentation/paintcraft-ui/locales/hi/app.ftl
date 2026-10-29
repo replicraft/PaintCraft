@@ -207,3 +207,7 @@ ime-result-could-not-fit-the-text-draft-no-text-was-changed = IME का पर�
 finish-the-current-composition-before-deleting-committed-text = पुष्ट किए गए टेक्स्ट को हटाने से पहले वर्तमान कंपोज़िशन पूरी करें
 text-draft-changed = टेक्स्ट ड्राफ़्ट बदल गया
 text-could-not-fit-the-draft-no-text-was-changed = टेक्स्ट ड्राफ़्ट में नहीं समा सका; कोई टेक्स्ट नहीं बदला गया
+
+image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = इस टैब में चित्र आयात रुका हुआ है। अपना प्रोजेक्ट डाउनलोड करें, फिर दोबारा प्रयास करने के लिए इस टैब को फिर से लोड करें।
+
+image-import-failed-the-current-document-was-kept = चित्र आयात विफल रहा; वर्तमान दस्तावेज़ सुरक्षित रखा गया।

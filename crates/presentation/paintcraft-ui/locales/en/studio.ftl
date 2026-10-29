@@ -436,3 +436,9 @@ msp-export-failed-the-current-document-was-kept = MSP export failed; the current
 download-msp = Download MSP
 requesting-msp-download-more = Requesting MSP download…
 msp-download-could-not-be-requested = MSP download could not be requested.
+
+format-tiff-pages-count = TIFF pages: { $count }
+
+this-page-uses-an-unsupported-tiff-profile = This page uses an unsupported TIFF profile.
+
+this-page-cannot-be-imported = This page cannot be imported.

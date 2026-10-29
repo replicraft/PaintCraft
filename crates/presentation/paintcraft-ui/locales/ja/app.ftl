@@ -207,3 +207,7 @@ ime-result-could-not-fit-the-text-draft-no-text-was-changed = IME の確定結�
 finish-the-current-composition-before-deleting-committed-text = 確定済みのテキストを削除する前に、現在の文字入力を完了してください
 text-draft-changed = テキストが変更されました
 text-could-not-fit-the-draft-no-text-was-changed = テキストが上限を超えています。テキストは変更していません
+
+image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = このタブでは画像の読み込みが一時停止されています。プロジェクトをダウンロードしてから、このタブを再読み込みしてお試しください。
+
+image-import-failed-the-current-document-was-kept = 画像を読み込めませんでした。現在のドキュメントは保持されています。

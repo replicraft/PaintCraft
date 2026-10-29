@@ -436,3 +436,9 @@ msp-export-failed-the-current-document-was-kept = MSP の書き出しに失敗�
 download-msp = MSP をダウンロード
 requesting-msp-download-more = MSP のダウンロードを要求しています…
 msp-download-could-not-be-requested = MSP のダウンロードを要求できませんでした。
+
+format-tiff-pages-count = TIFF のページ数: { $count }
+
+this-page-uses-an-unsupported-tiff-profile = このページは未対応の TIFF プロファイルを使用しています。
+
+this-page-cannot-be-imported = このページは読み込めません。

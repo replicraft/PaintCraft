@@ -207,3 +207,7 @@ ime-result-could-not-fit-the-text-draft-no-text-was-changed = El resultado del I
 finish-the-current-composition-before-deleting-committed-text = Termina la composición actual antes de borrar el texto confirmado
 text-draft-changed = El borrador de texto cambió
 text-could-not-fit-the-draft-no-text-was-changed = El texto no cabe en el borrador; no se modificó ningún texto
+
+image-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = La importación de imágenes está en pausa en esta pestaña. Descarga tu proyecto y vuelve a cargar la pestaña para intentarlo de nuevo.
+
+image-import-failed-the-current-document-was-kept = La importación de la imagen falló; se conservó el documento actual.
