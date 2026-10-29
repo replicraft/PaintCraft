@@ -143,6 +143,12 @@ impl App {
         } else {
             Default::default()
         };
+        let export_frozen = if completion.kind == Kind::Export {
+            self.export_dialog_frozen.take()
+        } else {
+            None
+        };
+        let source_metadata = std::mem::take(&mut self.export_dialog_metadata);
         let export_stamp = if completion.kind == Kind::Export {
             self.export_dialog_stamp.take()
         } else {
@@ -207,14 +213,20 @@ impl App {
             Kind::Open => self.open_selected(path),
             Kind::Import => self.import_selected(path),
             Kind::SaveAs => self.save_selected(ctx, path),
-            Kind::Export => self.export_selected_settings(
-                path,
-                export_options::Settings {
+            Kind::Export => {
+                let settings = export_options::Settings {
                     jpeg_quality,
                     jpeg_matte,
                     pcx_encoding,
-                },
-            ),
+                    source_metadata,
+                };
+                if let Some(frozen) = export_frozen {
+                    self.plan_export_frozen(path, settings, frozen);
+                } else {
+                    self.export_selected_settings(path, settings);
+                }
+            }
+
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
             Kind::ExportIcns | Kind::ExportIcons => {
                 unreachable!("icon completion handled separately")
@@ -507,139 +519,6 @@ impl App {
         if let Err(error) = self.open_path_with_conversion(&path, true) {
             self.editor.set_status(format!("Cannot open: {error}"));
         }
-    }
-
-    /// Stage format and encoder options before opening the native destination picker.
-    pub(super) fn export_requested(&mut self, _ctx: &egui::Context) {
-        self.begin_export_options(paintcraft_ui::actions::ImageExport::Png);
-    }
-
-    pub(super) fn export_image_requested(
-        &mut self,
-        _ctx: &egui::Context,
-        format: paintcraft_ui::actions::ImageExport,
-    ) {
-        self.begin_export_options(format);
-    }
-
-    #[cfg(test)]
-    pub(super) fn export_selected(&mut self, path: PathBuf) {
-        self.export_selected_quality(path, 90);
-    }
-
-    #[cfg(test)]
-    pub(super) fn export_selected_quality(&mut self, path: PathBuf, jpeg_quality: u8) {
-        self.export_selected_settings(
-            path,
-            export_options::Settings {
-                jpeg_quality,
-                ..Default::default()
-            },
-        );
-    }
-
-    pub(super) fn export_selected_settings(
-        &mut self,
-        path: PathBuf,
-        settings: export_options::Settings,
-    ) {
-        if !self.editor.shape_file_ready() {
-            return;
-        }
-        self.editor.commit_text();
-        self.editor.run_pending();
-        if self.editing.is_some() {
-            self.defer_file(
-                editing::FileRequest::Export(path, settings),
-                token(&self.context, code::EXPORT),
-            );
-            return;
-        }
-        self.plan_export_settings(path, settings);
-    }
-
-    pub(super) fn plan_export_settings(
-        &mut self,
-        path: PathBuf,
-        settings: export_options::Settings,
-    ) {
-        let Some(format) = ImageFormat::from_extension(&path) else {
-            self.editor
-                .set_status("Choose a supported image filename extension.");
-            return;
-        };
-        if let Err(error) = self.admit_export_format(&path, format) {
-            self.editor.set_status(format!("Cannot export: {error}"));
-            return;
-        }
-        let all: Vec<String> = KNOWN_LOSSES.iter().map(|l| (*l).to_owned()).collect();
-        match export::export_flat_options(self.editor.document(), settings.options(format), &all) {
-            Ok(plan) => {
-                self.confirm = Some(Confirm::Export {
-                    exists: path.exists(),
-                    path,
-                    format,
-                    losses: plan.losses,
-                    jpeg_quality: settings.jpeg_quality,
-                    jpeg_matte: settings.jpeg_matte,
-                    pcx_encoding: settings.pcx_encoding,
-                    source: self.editor.preview_stamp(),
-                })
-            }
-            Err(e) => self.editor.set_status(format!("Cannot export: {e}")),
-        }
-    }
-
-    #[cfg(test)]
-    pub(super) fn do_export(&mut self, path: &Path, format: ImageFormat, losses: &[String]) {
-        self.do_export_quality(path, format, losses, 90);
-    }
-
-    #[cfg(test)]
-    pub(super) fn do_export_quality(
-        &mut self,
-        path: &Path,
-        format: ImageFormat,
-        losses: &[String],
-        jpeg_quality: u8,
-    ) {
-        self.do_export_settings(
-            path,
-            format,
-            losses,
-            export_options::Settings {
-                jpeg_quality,
-                ..Default::default()
-            },
-        );
-    }
-
-    pub(super) fn do_export_settings(
-        &mut self,
-        path: &Path,
-        format: ImageFormat,
-        losses: &[String],
-        settings: export_options::Settings,
-    ) {
-        if let Err(error) = self.admit_export_format(path, format) {
-            self.editor.set_status(format!("Cannot export: {error}"));
-            return;
-        }
-        let result =
-            export::export_flat_options(self.editor.document(), settings.options(format), losses)
-                .map_err(|e| e.to_string());
-        let status = match result {
-            Ok(flat) => {
-                let outcome = save::save(path, &flat.bytes, true);
-                if outcome.is_success() {
-                    format!("Exported {}", path.display())
-                } else {
-                    format!("Not exported safely: {}", outcome.reasons.join("; "))
-                }
-            }
-            Err(e) => format!("Cannot export: {e}"),
-        };
-        self.editor.set_status(status);
     }
 
     pub(super) fn save_requested(&mut self, ctx: &egui::Context) {

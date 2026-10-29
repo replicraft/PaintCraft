@@ -137,6 +137,7 @@ fn confirmed_image_export_does_not_replace_a_loaded_resource_through_a_symlink()
                     jpeg_quality,
                     jpeg_matte,
                     pcx_encoding,
+                    source_metadata: Default::default(),
                 },
             );
         }

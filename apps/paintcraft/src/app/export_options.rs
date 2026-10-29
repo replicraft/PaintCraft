@@ -5,6 +5,12 @@ use paintcraft_ui::{actions::ImageExport, t};
 #[path = "export_options/choice.rs"]
 mod choice;
 use choice::Choice;
+#[path = "export_options/frozen.rs"]
+mod frozen;
+#[path = "export_options/saving.rs"]
+mod saving;
+use export::metadata_policy::{Intent, Policy, Target};
+pub(crate) use frozen::Frozen;
 #[cfg(test)]
 #[path = "export_options/palette_tests.rs"]
 mod palette_tests;
@@ -21,6 +27,7 @@ pub(crate) struct Settings {
     pub jpeg_quality: u8,
     pub jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
     pub pcx_encoding: Encoding,
+    pub source_metadata: Intent,
 }
 impl Default for Settings {
     fn default() -> Self {
@@ -28,6 +35,7 @@ impl Default for Settings {
             jpeg_quality: 90,
             jpeg_matte: None,
             pcx_encoding: Encoding::Rgb24,
+            source_metadata: Intent::Refuse,
         }
     }
 }
@@ -52,6 +60,8 @@ fn mode(encoding: Encoding) -> paintcraft_formats::pcx::Mode {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Draft {
     owner: Uuid,
+    frozen: Frozen,
+    omit_source_metadata: bool,
     format: Choice,
     jpeg_quality: u8,
     jpeg_matte: [u8; 3],
@@ -94,8 +104,25 @@ impl App {
             return;
         }
         self.editor.cancel_gesture();
+        self.editor.run_pending();
+        if !self.editor.can_capture_file() {
+            self.defer_file(
+                editing::FileRequest::ExportOptions(format),
+                token(&self.context, code::EXPORT),
+            );
+            return;
+        }
+        let frozen = match Frozen::capture(self) {
+            Ok(frozen) => frozen,
+            Err(error) => {
+                self.editor.set_status(format!("Cannot export: {error}"));
+                return;
+            }
+        };
         self.confirm = Some(Confirm::ExportOptions(Draft {
             owner: self.active_tab_id(),
+            frozen,
+            omit_source_metadata: false,
             format: Choice::Flat(format),
             jpeg_quality: 90,
             jpeg_matte: [255; 3],
@@ -106,7 +133,7 @@ impl App {
     }
 
     pub(super) fn export_options_dialog(&mut self, ctx: &egui::Context, mut draft: Draft) {
-        if draft.owner != self.active_tab_id() {
+        if draft.owner != self.active_tab_id() || !draft.frozen.current(self) {
             self.confirm = None;
             self.pcx_preview.clear();
             return;
@@ -148,12 +175,11 @@ impl App {
             if draft.format == Choice::Flat(ImageExport::Pcx) {
                 pcx_export::controls(ui, &mut draft.pcx_encoding);
                 let editor = &self.editor;
+                let snapshot = draft.frozen.document.clone();
                 preview_ready =
                     self.pcx_preview
                         .show(ui, (editor.preview_stamp(), draft.pcx_encoding), || {
-                            let doc = editor
-                                .export_snapshot()
-                                .map_err(|error| error.to_string())?;
+                            let doc = snapshot;
                             let rgba = paintcraft_render::render_flat(&doc)
                                 .map_err(|error| error.to_string())?;
                             let prepared = paintcraft_formats::pcx::prepare_rgba(
@@ -189,7 +215,21 @@ impl App {
             if draft.format == Choice::Flat(ImageExport::Jpeg) {
                 paintcraft_ui::jpeg_export::controls(ui, &mut draft.jpeg_matte);
             }
-            let canvas = self.editor.document().canvas;
+            let separate_review = draft.format == Choice::Jxr
+                || (draft.format == Choice::Flat(ImageExport::Msp)
+                    && self.experience() == Experience::Studio)
+                || (draft.format == Choice::Flat(ImageExport::Dds)
+                    && crate::dds_export::advanced(draft.dds, draft.frozen.document.canvas)
+                    && crate::dds_export::admit(self.format_frontend(), Path::new("picture.dds"))
+                        .is_ok());
+            if !separate_review && draft.frozen.document.source_metadata.is_some() {
+                paintcraft_ui::source_metadata_export::controls(
+                    ui,
+                    &mut draft.omit_source_metadata,
+                );
+                preview_ready &= draft.omit_source_metadata;
+            }
+            let canvas = draft.frozen.document.canvas;
             ui.add_space(8.0);
             ui.label(t!(
                 ctx,
@@ -262,19 +302,31 @@ impl App {
                 self.export_dialog_matte = (draft.format == Choice::Flat(ImageExport::Jpeg))
                     .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte));
                 self.export_dialog_pcx = Some(draft.pcx_encoding);
+                self.export_dialog_frozen = Some(draft.frozen.clone());
+                self.export_dialog_metadata = if draft.omit_source_metadata {
+                    Intent::Omit
+                } else {
+                    Intent::Refuse
+                };
                 self.request_dialog_suggested(ctx, Kind::Export, Some(suggested));
             } else {
                 // Headless callers supply an explicit destination with set_path_text.
                 let destination =
                     Path::new(&self.path_text).with_extension(draft.format.extension());
-                self.export_selected_settings(
+                self.plan_export_frozen(
                     destination,
                     Settings {
                         jpeg_quality: draft.jpeg_quality,
                         jpeg_matte: (draft.format == Choice::Flat(ImageExport::Jpeg))
                             .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte)),
                         pcx_encoding: draft.pcx_encoding,
+                        source_metadata: if draft.omit_source_metadata {
+                            Intent::Omit
+                        } else {
+                            Intent::Refuse
+                        },
                     },
+                    draft.frozen,
                 );
             }
         } else {
@@ -282,6 +334,10 @@ impl App {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "export_options/metadata_tests.rs"]
+mod metadata_tests;
 
 #[cfg(test)]
 mod tests {

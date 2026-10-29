@@ -11,6 +11,7 @@ pub(super) enum FileRequest {
     ExportDds,
     ExportMsp,
     Export(PathBuf, export_options::Settings),
+    ExportOptions(paintcraft_ui::actions::ImageExport),
 }
 #[derive(Debug)]
 pub(super) struct DeferredFile {
@@ -182,6 +183,17 @@ impl App {
                             self.save_activation = None;
                             self.capture_save(ctx, path);
                             self.editor.release_file_barrier(request.barrier);
+                        }
+                        FileRequest::ExportOptions(format) => {
+                            self.deferred_files
+                                .front_mut()
+                                .expect("deferred options")
+                                .started = true;
+                            self.begin_export_options(format);
+                            if self.confirm.is_some() {
+                                original = id;
+                                self.reset_tab_presentation();
+                            }
                         }
                         FileRequest::Export(path, settings) => {
                             self.deferred_files

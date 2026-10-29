@@ -498,7 +498,7 @@ impl App {
             } => {
                 let mut t = t!(&ctx, "Export { $path } as { $format }.", &[("path", path.display().to_string()), ("format", format.name().into())]);
                 for loss in losses {
-                    let explanation = match loss.as_str() {
+                    let explanation = paintcraft_ui::i18n::import_loss_description(loss).unwrap_or(match loss.as_str() {
                         "flatten" => "Visible layers will be flattened into one picture.",
                         "hidden-rgb" => "Invisible color information will not be retained.",
                         "lossy-jpeg" => "JPEG uses lossy compression.",
@@ -509,7 +509,7 @@ impl App {
                         "alpha-binarized" => "Partial transparency will become fully transparent or opaque.",
                         "transparent-rgb-discarded" => "Invisible color information will not be retained.",
                         _ => loss,
-                    };
+                    });
                     t.push('\n');
                     t.push_str(&t!(&ctx, explanation));
                 }
@@ -579,13 +579,12 @@ impl App {
                         jpeg_matte,
                         pcx_encoding,
                         source,
+                        frozen,
+                        metadata_policy,
                         ..
                     } => {
-                        if source == self.editor.preview_stamp()
-                            && !self.editor.has_pending_edits()
-                            && !self.editor.is_editing_text()
-                        {
-                            self.do_export_settings(
+                        if source == self.editor.preview_stamp() && frozen.current(self) {
+                            self.do_export_frozen(
                                 &path,
                                 format,
                                 &losses,
@@ -593,7 +592,10 @@ impl App {
                                     jpeg_quality,
                                     jpeg_matte,
                                     pcx_encoding,
+                                    source_metadata: Default::default(),
                                 },
+                                frozen,
+                                metadata_policy,
                             )
                         } else {
                             self.editor.set_status(t!(

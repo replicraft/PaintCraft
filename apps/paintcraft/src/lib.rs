@@ -213,6 +213,8 @@ enum Confirm {
         jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
         pcx_encoding: paintcraft_ui::pcx_export::Encoding,
         source: controller::PreviewStamp,
+        frozen: export_options::Frozen,
+        metadata_policy: export::metadata_policy::Policy,
         exists: bool,
     },
 }
@@ -300,6 +302,8 @@ pub struct App {
     export_dialog_matte: Option<paintcraft_formats::image::JpegMatte>,
     export_dialog_pcx: Option<paintcraft_ui::pcx_export::Encoding>,
     export_dialog_stamp: Option<controller::PreviewStamp>,
+    export_dialog_frozen: Option<export_options::Frozen>,
+    export_dialog_metadata: export::metadata_policy::Intent,
     pcx_preview: paintcraft_ui::pcx_export::Cache<(
         controller::PreviewStamp,
         paintcraft_ui::pcx_export::Encoding,
@@ -451,6 +455,8 @@ impl App {
             export_dialog_matte: None,
             export_dialog_pcx: None,
             export_dialog_stamp: None,
+            export_dialog_frozen: None,
+            export_dialog_metadata: Default::default(),
             pcx_preview: Default::default(),
             texture: None,
             gpu_target: None,
