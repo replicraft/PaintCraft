@@ -113,7 +113,9 @@ fn later_source(
 }
 #[test]
 fn mixed_source_continuation_uses_actual_authored_and_navigation_results() {
-    for navigation in [false, true] {
+    for (navigation, native_contacts) in
+        [(false, false), (true, false), (false, true), (true, true)]
+    {
         let mut editor = Editor::new_document(8, 8).unwrap();
         if navigation {
             editor.request(77, Action::AddLayer);
@@ -122,7 +124,13 @@ fn mixed_source_continuation_uses_actual_authored_and_navigation_results() {
         }
         let v = context(&editor);
         let before = editor.session.ticket();
-        let source = Source::new_native_touch(64, 64, &SharedBudget::new(8 << 20)).unwrap();
+        let budget = SharedBudget::new(8 << 20);
+        let source = if native_contacts {
+            Source::new_native_contacts(64, 64, &budget)
+        } else {
+            Source::new_native_touch(64, 64, &budget)
+        }
+        .unwrap();
         source.publish(v).unwrap();
         // Synthetic source ordinal1 initiates exactly this real editor action;
         // later ordinal2/4 contacts arrive before its actual publication.
@@ -217,5 +225,7 @@ fn noop_without_typed_publication_cannot_supply_a_predecessor() {
     assert!(source.batch_is_current(&pen, v.owner));
     assert!(source.native_touch_batch_is_current(&touch, v.owner));
 }
+#[path = "active_retirement_tests.rs"]
+mod active_retirement;
 #[path = "native_touch_protocol.rs"]
 mod protocol;
