@@ -181,3 +181,44 @@ fn actual_hidden_rgb_loss_depends_on_source_and_selected_filter() {
         );
     }
 }
+
+#[test]
+fn every_progress_error_survives_an_upstream_success_for_one_shot_and_sticky_checks() {
+    let source = vec![255; 64];
+    let config = TextureOptions {
+        encoding: Encoding::Rgba8,
+        transfer: Transfer::Srgb,
+        alpha: SourceAlpha::Straight,
+        mips: MipCount::Levels(1),
+        filter: MipFilter::Nearest,
+        quality: TextureQuality::Normal,
+    };
+    let total = Cell::new(0);
+    encode_texture_checked(4, 4, &source, config, |_| Ok(()), &|| {
+        total.set(total.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for sticky in [false, true] {
+        for stop in 1..=total.get() {
+            let at = Cell::new(0);
+            let value = encode_texture_checked(4, 4, &source, config, |_| Ok(()), &|| {
+                at.set(at.get() + 1);
+                if at.get() == stop || (sticky && at.get() > stop) {
+                    Err(Error::new(
+                        ErrorCode::OperationCancelled,
+                        "one exact progress refusal",
+                    ))
+                } else {
+                    Ok(())
+                }
+            });
+            assert_eq!(
+                value.unwrap_err().code,
+                ErrorCode::OperationCancelled,
+                "stop={stop}, sticky={sticky}"
+            );
+            assert_eq!(source, vec![255; 64]);
+        }
+    }
+}

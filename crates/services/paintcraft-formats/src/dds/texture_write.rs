@@ -203,6 +203,7 @@ pub(crate) fn encode_admitted_texture(
         Ok(())
     }));
     operation.map_err(|_| codec("DDS selected encoder panicked"))??;
+    control.complete()?;
     check()?;
     if sink.bytes.len() as u64 != plan.encoded_bytes() {
         return Err(codec("DDS texture encoded extent differs from plan"));

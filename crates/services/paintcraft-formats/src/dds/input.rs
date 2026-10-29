@@ -15,6 +15,15 @@ impl<'a> Control<'a> {
         *self.failure.borrow_mut() = Some(error);
         std::io::Error::other("DDS operation rejected")
     }
+    /// A selected codec may report progress after completing a surface and then
+    /// return success despite the callback cancellation. Never discard the
+    /// caller's recorded typed refusal at an otherwise successful adapter edge.
+    pub fn complete(&self) -> Result<()> {
+        match self.failure.borrow_mut().take() {
+            Some(error) => Err(error),
+            None => Ok(()),
+        }
+    }
     pub fn error(&self, otherwise: Error) -> Error {
         self.failure.borrow_mut().take().unwrap_or(otherwise)
     }
