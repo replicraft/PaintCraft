@@ -1,4 +1,4 @@
-"""Native public-V8 candidate qualification, independent of shipping holdbacks."""
+"""Finite native candidate qualification, independent of shipping holdbacks."""
 import argparse
 import hashlib
 import json
@@ -23,8 +23,24 @@ EXECUTABLE_MAX = 256 << 20
 APP_GROUPS = ("importing::dds::tests::", "jxr_export::tests::", "dds_export::tests::")
 REQUIRED_WORKER_TARGETS = {"paintcraft-codec-worker", "native_jxl", "native_jxr", "native_heif",
                            "native_heif_color", "native_avif", "native_avif_sdr", "native_float",
-                           "native_jxr_encode", "native_jxr_writer"}
+                           "native_jxr_encode", "native_jxr_writer", "native_jxl_integer"}
 APP_LEGACY = "importing::native_codec::jxr_installed_tests::fixture_real_installed_jxr_review"
+CANDIDATES = {
+    "v8": ("jxr-codecs", codec_worker.JXR_PROFILE, 3),
+    "v9": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE, 2),
+    "v10": ("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE, 3),
+}
+APP_INTEGER = "importing::native_codec::jxl_integer_installed_tests::copied_jxl_integer_helper_runs_actual_app_review_and_failure_guards"
+INTEGER_WORKER_TESTS = (
+    "actual_integer_family_uses_one_request_and_exact_report_for_both_source_depths",
+    "old_exact8_request_never_adopts16_and_new_family_refuses_other_profiles",
+)
+
+
+def candidate_contract(candidate):
+    if candidate not in CANDIDATES:
+        raise ValueError("Unknown finite native candidate")
+    return CANDIDATES[candidate]
 
 
 def digest(path):
@@ -42,20 +58,20 @@ def bounded_binary(path, target):
     release.validate_binary(target, path)
 
 
-def verify_candidate(cli, target):
+def verify_candidate(cli, target, candidate="v8"):
     """Deliberately does NOT use helper_policy.verify (five targets hold V7)."""
     bounded_binary(cli, target)
     helper = cli.parent / codec_worker.filename(target)
     bounded_binary(helper, target)
     version = release.workspace_version()
     profile, _ = codec_worker.verify_build_record(helper, version)
-    if profile != codec_worker.JXR_PROFILE:
-        raise ValueError("Qualification requires exact nonprivate public V8")
+    if profile != candidate_contract(candidate)[1]:
+        raise ValueError("Qualification requires the exact selected nonprivate candidate")
     return helper
 
 
-def prepare_candidate(cli, target, output):
-    verify_candidate(cli, target)
+def prepare_candidate(cli, target, output, candidate="v8"):
+    verify_candidate(cli, target, candidate)
     version = release.workspace_version()
     archive = package_cli.package(version, target, cli, output / "archives")
     sums = archive.parent / "SHA256SUMS.txt"
@@ -63,8 +79,9 @@ def prepare_candidate(cli, target, output):
     installed = install_cli.install(archive, sums, version, target, output / "prefix")
     codec_worker.verify_installed_manifest(installed, version, target)
     metadata = codec_worker.read_manifest(installed)
-    if metadata["profile"] != codec_worker.JXR_PROFILE or metadata["schema_version"] != 3:
-        raise ValueError("Candidate installation lost its exact public schema3 contract")
+    _, profile, schema = candidate_contract(candidate)
+    if metadata["profile"] != profile or metadata["schema_version"] != schema:
+        raise ValueError("Candidate installation lost its exact public contract")
     cli_tests.bind_cli(installed / cli.name, cli)
     return installed
 
@@ -117,7 +134,10 @@ def group(runner, label, binary, prefix, names, cwd, env):
     return selected
 
 
-def qualify(target, output, oracle=None, target_directory=None):
+def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
+    feature, profile, schema = candidate_contract(candidate)
+    if oracle and candidate != "v8":
+        raise ValueError("The separate original-C fixture currently requires public V8")
     output.mkdir(parents=True, exist_ok=False)
     output = output.resolve(strict=True)
     runner = Runner(output / "logs")
@@ -127,7 +147,7 @@ def qualify(target, output, oracle=None, target_directory=None):
     policy = dict(helper_policy.ROLLOUT)
     receipt = {"schema": 1, "target": target, "status": "started", "native_runtime_qualified": False,
                "scope": "Candidate only; shipping map and global Cargo default are unchanged",
-               "target_directory": str(target_directory),
+               "target_directory": str(target_directory), "selected_candidate": candidate,
                "oracle_executed": False, "phases": {}, "flags": {
                    key: env.get(key) for key in ("RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "MACOSX_DEPLOYMENT_TARGET")}}
     save = lambda: (output / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
@@ -152,7 +172,7 @@ def qualify(target, output, oracle=None, target_directory=None):
                 raise ValueError("Explicit original-C executable does not match pinned qualification")
         base = ["cargo", "test", "--locked", "--release", "--target", target]
         worker_json = runner.run("build-worker", base + ["-p", "paintcraft-codec-worker", "--no-default-features",
-                                 "--features", "jxr-codecs", "--tests", "--no-run", "--message-format=json"],
+                                 "--features", feature, "--tests", "--no-run", "--message-format=json"],
                                  cwd=release.ROOT, env=env, timeout=3600)
         worker_values = artifacts(worker_json)
         test_targets = {value["target"]["name"] for value in worker_values if value["profile"]["test"]}
@@ -164,13 +184,17 @@ def qualify(target, output, oracle=None, target_directory=None):
             raise ValueError("Cargo did not identify exactly one candidate helper")
         helper = workers.pop()
         selected_worker = next(value for value in worker_values if value["executable"] == str(helper) and not value["profile"]["test"])
-        required = {"jxr-codecs", "jxr-encode", "float-codecs"}
+        required = {"float-codecs"}
+        if schema == 3:
+            required |= {"jxr-codecs", "jxr-encode"}
+        if candidate in ("v9", "v10"):
+            required.add("jxl-integer-codec")
         if not required.issubset(selected_worker.get("features", [])):
             raise ValueError("Candidate record requires all declared worker features")
         receipt["worker_features"] = selected_worker["features"]
         remember(helper)
-        profile, _ = codec_worker.verify_build_record(helper, release.workspace_version())
-        if profile != codec_worker.JXR_PROFILE:
+        actual_profile, _ = codec_worker.verify_build_record(helper, release.workspace_version())
+        if actual_profile != profile:
             raise ValueError("Built worker is not the exact qualified public candidate")
         receipt["helper"] = {"path": str(helper), "sha256": digest(helper), "profile": profile}
         save()
@@ -180,7 +204,7 @@ def qualify(target, output, oracle=None, target_directory=None):
         remember(cli)
         if cli.parent != helper.parent:
             raise ValueError("CLI/helper artifacts are not in the same fixed target build")
-        installed = prepare_candidate(cli, target, output / "candidate")
+        installed = prepare_candidate(cli, target, output / "candidate", candidate)
         receipt["candidate"] = {"installation": str(installed), "cli_sha256": digest(cli),
                                 "cli_test_sha256": digest(cli_test),
                                 "manifest": codec_worker.read_manifest(installed),
@@ -188,6 +212,8 @@ def qualify(target, output, oracle=None, target_directory=None):
         save()
         fixture_env = dict(env, PAINTCRAFT_QUALIFIED_HELPER=str(installed / helper.name),
                            PAINTCRAFT_QUALIFIED_INSTALLATION=str(installed), PAINTCRAFT_JXR_INSTALLATION=str(installed))
+        if candidate in ("v9", "v10"):
+            fixture_env["PAINTCRAFT_JXL_INTEGER_HELPER"] = str(installed / helper.name)
         if oracle:
             fixture_env["PAINTCRAFT_JXR_REFERENCE"] = str(oracle)
         for index, value in enumerate(worker_values):
@@ -198,9 +224,12 @@ def qualify(target, output, oracle=None, target_directory=None):
                 if not names:
                     raise ValueError("Empty worker qualification target")
                 run_tests(runner, f"worker-{index}", [test, "--test-threads=1", "--nocapture"], release.ROOT, env)
+                if value["target"]["name"] == "native_jxl_integer":
+                    for number, name in enumerate(INTEGER_WORKER_TESTS):
+                        exact(runner, f"integer-worker-{number}", test, name, names, release.ROOT, env)
         cli_names = listing(runner, "cli-list", cli_test, release.ROOT, fixture_env)
         run_tests(runner, "cli-ordinary", [cli_test, "--test-threads=1"], release.ROOT, fixture_env)
-        for index, name in enumerate(cli_tests.selectors("v8", bool(oracle))):
+        for index, name in enumerate(cli_tests.selectors(candidate, bool(oracle))):
             exact(runner, f"cli-{index}", cli_test, name, cli_names, release.ROOT, fixture_env, ignored=True)
         receipt["oracle_executed"] = bool(oracle)
         dds_cli_json = runner.run("build-dds-cli", base + ["-p", "paintcraft-cli", "--test", "dds_texture_export",
@@ -226,7 +255,10 @@ def qualify(target, output, oracle=None, target_directory=None):
         pnames = listing(runner, "platform-list", platform_test, release.ROOT, env)
         for index, prefix in enumerate(("dds::", "export::dds::", "export::jxr::",
                                         "codec_worker::native::jxr_encode::tests::",
-                                        "codec_worker::native::import::family_tests::")):
+                                        "codec_worker::native::import::family_tests::",
+                                        "codec_worker::jxl_integer::",
+                                        "codec_worker::native::jxl_integer::tests::",
+                                        "codec_worker::native::import::jxl_integer::tests::")):
             receipt["phases"][prefix] = group(runner, f"core-{index}", formats, prefix, fnames, release.ROOT, env)
         receipt["phases"]["codec_helper"] = group(runner, "platform-helper", platform_test, "codec_helper::", pnames, release.ROOT, env)
         dds_json = runner.run("build-dds-golden", base + ["-p", "paintcraft-formats", "--test", "dds_texture_write",
@@ -249,6 +281,10 @@ def qualify(target, output, oracle=None, target_directory=None):
         shutil.copy2(app, app_copy)
         remember(app_copy)
         exact(runner, "app-legacy-jxr", app_copy, APP_LEGACY, anames, release.ROOT, fixture_env, ignored=True)
+        if candidate in ("v9", "v10"):
+            exact(runner, "app-integer-jxl", app_copy, APP_INTEGER, anames,
+                  release.ROOT, dict(fixture_env, PAINTCRAFT_JXL_INTEGER_GUI_EVIDENCE=str(output / "app-jxl-evidence")),
+                  ignored=True)
         if oracle:
             exact(runner, "app-jxr-with-C", app_copy,
                   "jxr_export::installed_tests::copied_public_v8_runs_native_studio_export_and_own_reader",
@@ -278,11 +314,13 @@ def qualify(target, output, oracle=None, target_directory=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", choices=TARGETS, required=True)
+    parser.add_argument("--candidate", choices=tuple(CANDIDATES), default="v8")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--target-dir", type=Path, help="Explicit reusable dependency cache; defaults to checkout target")
     parser.add_argument("--oracle", type=Path, help="Separate pinned native original-C qualification; never implicit")
     args = parser.parse_args()
-    qualify(args.target, args.output.absolute(), args.oracle.resolve(strict=True) if args.oracle else None, args.target_dir)
+    qualify(args.target, args.output.absolute(), args.oracle.resolve(strict=True) if args.oracle else None,
+            args.target_dir, args.candidate)
 
 
 if __name__ == "__main__":

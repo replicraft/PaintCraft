@@ -86,6 +86,42 @@ class CandidateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "differs"):
             qualify_cli_helper.bind_cli(installed / cli.name, cli)
 
+    def test_integer_candidates_install_both_exact_roles_without_shipping_promotion(self):
+        before = dict(helper_policy.ROLLOUT)
+        contracts = (
+            ("v9", codec_worker.JXL_INTEGER_BUILD_PREFIX, codec_worker.JXL_INTEGER_BUILD_SUFFIX,
+             codec_worker.JXL_INTEGER_VARIANTS, 2),
+            ("v10", codec_worker.JXL_INTEGER_JXR_BUILD_PREFIX, codec_worker.JXL_INTEGER_JXR_BUILD_SUFFIX,
+             codec_worker.JXL_INTEGER_JXR_VARIANTS, 3),
+        )
+        for target in release.TARGETS:
+            for candidate, prefix, suffix, variants, schema in contracts:
+                with self.subTest(target=target, candidate=candidate):
+                    cli, helper = self.candidate(target, target + candidate)
+                    helper.write_bytes(helper.read_bytes().replace(codec_worker.JXR_BUILD_PREFIX, prefix)
+                                       .replace(codec_worker.JXR_BUILD_SUFFIX, suffix))
+                    installed = qualification.prepare_candidate(cli, target, cli.parent / "out", candidate)
+                    value = codec_worker.read_manifest(installed)
+                    self.assertEqual(value["schema_version"], schema)
+                    self.assertEqual(value["qualified_import_variants"], variants)
+                    self.assertEqual(value.get("qualified_export_variants"),
+                                     codec_worker.JXR_EXPORT_VARIANTS if schema == 3 else None)
+                    self.assertEqual((installed / helper.name).read_bytes(), helper.read_bytes())
+                    for wrong in set(qualification.CANDIDATES) - {candidate}:
+                        with self.assertRaises(ValueError):
+                            qualification.verify_candidate(cli, target, wrong)
+                    with self.assertRaisesRegex(ValueError, "rollout"):
+                        helper_policy.verify(cli, self.version, target)
+        self.assertEqual(before, helper_policy.ROLLOUT)
+
+    def test_unknown_candidates_and_unqualified_oracles_refuse_before_output_creation(self):
+        for candidate, oracle in (("private-v10", None), ("v9", self.root / "oracle"),
+                                  ("v10", self.root / "oracle")):
+            output = self.root / candidate
+            with self.assertRaises(ValueError):
+                qualification.qualify("aarch64-apple-darwin", output, oracle, candidate=candidate)
+            self.assertFalse(output.exists())
+
     def test_candidate_contract_failure_prevents_all_test_execution(self):
         target = "aarch64-apple-darwin"
         cli, helper = self.candidate(target, "before-execution")
@@ -245,6 +281,11 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("if: always()", workflow)
         self.assertIn("qualify_native_codecs.py --target", workflow)
+        self.assertIn("--candidate ${{ matrix.candidate }}", workflow)
+        self.assertIn("'[\"v9\",\"v10\"]'", workflow)
+        self.assertIn("${{ runner.temp }}/paintcraft-native-qualification-", workflow)
+        self.assertNotIn("--output target/", workflow)
+        self.assertIn("vendor/jxl-0.8.0-paintcraft1/**", workflow)
         self.assertIn("meson==1.12.1 ninja==1.13.2", workflow)
         self.assertIn("target-feature=+crt-static", workflow)
         self.assertNotIn("contents: write", workflow)

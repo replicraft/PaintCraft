@@ -1,12 +1,21 @@
 name: Native codec candidate qualification
 on:
   workflow_dispatch:
+    inputs:
+      candidate:
+        description: Exact public helper candidate to qualify
+        type: choice
+        options: [both, v8, v9, v10]
+        default: both
   pull_request:
     paths:
       - '.github/workflows/native-codec-qualification.yml'
       - '.github/workflows/release.yml'
       - 'scripts/packaging/**'
       - 'scripts/tests/test_package_native_qualification.py'
+      - 'scripts/tests/test_qualify_cli_helper.py'
+      - 'scripts/tests/test_package_jxl_integer_contract.py'
+      - 'scripts/tests/test_integer_qualification_flow.py'
       - 'apps/paintcraft-codec-worker/**'
       - 'apps/paintcraft-cli/**'
       - 'apps/paintcraft/**'
@@ -21,17 +30,27 @@ on:
       - 'crates/presentation/paintcraft-ui/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
+      - 'vendor/jxl-0.8.0-paintcraft1/**'
+      - 'vendor/jxl-0.8.0-paintcraft1*'
       - 'rust-toolchain.toml'
 permissions:
   contents: read
 jobs:
   candidate:
-    name: Public V8 candidate (${{ matrix.target }})
+    name: Public ${{ matrix.candidate }} candidate (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
+        candidate: ${{ fromJSON(inputs.candidate == 'v8' && '["v8"]' || inputs.candidate == 'v9' && '["v9"]' || inputs.candidate == 'v10' && '["v10"]' || '["v9","v10"]') }}
+        target:
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
         include:
           - os: windows-2022
             target: x86_64-pc-windows-msvc
@@ -60,7 +79,7 @@ jobs:
         env:
           CACHE_ON_FAILURE: 'true'
         with:
-          key: native-codec-candidate-${{ matrix.target }}
+          key: native-codec-candidate-${{ matrix.target }}-${{ matrix.candidate }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
@@ -81,14 +100,18 @@ jobs:
         shell: pwsh
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
       - name: Check candidate orchestration contracts
-        run: python -m unittest discover -s scripts/tests -p 'test_package_native_qualification.py'
-      - name: Build and execute the native public V8 candidate
-        run: python scripts/packaging/qualify_native_codecs.py --target ${{ matrix.target }} --output target/native-qualification/${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          python -m unittest discover -s scripts/tests -p 'test_package_native_qualification.py'
+          python -m unittest discover -s scripts/tests -p 'test_qualify_cli_helper.py'
+          python -m unittest discover -s scripts/tests -p 'test_package_jxl_integer_contract.py'
+          python -m unittest discover -s scripts/tests -p 'test_integer_qualification_flow.py'
+      - name: Build and execute the selected native public candidate
+        run: python scripts/packaging/qualify_native_codecs.py --target ${{ matrix.target }} --candidate ${{ matrix.candidate }} --output "${{ runner.temp }}/paintcraft-native-qualification-${{ matrix.target }}-${{ matrix.candidate }}-${{ github.run_id }}-${{ github.run_attempt }}"
       - name: Retain success and failure evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: native-codec-candidate-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: target/native-qualification/${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}/
+          name: native-codec-candidate-${{ matrix.target }}-${{ matrix.candidate }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/paintcraft-native-qualification-${{ matrix.target }}-${{ matrix.candidate }}-${{ github.run_id }}-${{ github.run_attempt }}/
           if-no-files-found: warn
           retention-days: 7
