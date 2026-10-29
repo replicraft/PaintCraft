@@ -2,6 +2,72 @@
 use super::*;
 const SKINNY_PIXEL: [u8; 4] = [13, 71, 201, 255];
 #[test]
+fn small_previews_upscale_without_changing_pixels_or_report_and_require_a_full_prior_frame() {
+    const ONE: &[u8] = include_bytes!(
+        "../../../../../../crates/services/paintcraft-formats/tests/tiff-fixtures/rgba16-be-strips-lzw.tif"
+    );
+    const SMALL: &[u8] = include_bytes!(
+        "../../../../../../crates/services/paintcraft-formats/tests/tiff-fixtures/icc-srgb-rgba8.tif"
+    );
+    for (input, index, canvas) in [(ONE, 1, (1, 1)), (SMALL, 0, (3, 2))] {
+        let mut fixture = FileFixture::new(false);
+        fixture.bytes = input.to_vec();
+        fs::write(&fixture.path, input).unwrap();
+        let mut app = app();
+        app.stage_tiff_import(fixture.path.clone()).unwrap();
+        poll(&mut app, false);
+        let ctx = app.context.clone();
+        app.choose_tiff_page(&ctx, index);
+        poll(&mut app, true);
+        let Candidate::Tiff(source) = &mut app.pending_import.as_mut().unwrap().candidate else {
+            panic!()
+        };
+        let prepared = source.prepared.as_ref().unwrap();
+        let digest = prepared.assessment.digest();
+        let pixels = paintcraft_render::render_flat(&prepared.document).unwrap();
+        let review = source.review.as_mut().unwrap();
+        review.consent_for_test();
+        let mut rect = egui::Rect::NOTHING;
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            ui.set_invisible();
+            review.preview(ui);
+            assert!(!review.ready(ui.ctx()));
+        });
+        output.textures_delta.clear();
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            ui.set_clip_rect(egui::Rect::from_min_size(
+                ui.cursor().min,
+                egui::Vec2::splat(10.0),
+            ));
+            rect = review.preview(ui);
+            assert!(!review.ready(ui.ctx()));
+        });
+        output.textures_delta.clear();
+        assert!((rect.width() - 200.0).abs() < 0.01);
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            rect = review.preview(ui);
+            assert!(
+                !review.ready(ui.ctx()),
+                "the first complete preview cannot authorize itself"
+            );
+        });
+        output.textures_delta.clear();
+        assert!((rect.height() - 200.0 * canvas.1 as f32 / canvas.0 as f32).abs() <= 0.5);
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            review.preview(ui);
+            assert!(review.ready(ui.ctx()));
+        });
+        output.textures_delta.clear();
+        assert_eq!(prepared.document.canvas, canvas);
+        assert_eq!(prepared.assessment.digest(), digest);
+        assert_eq!(
+            paintcraft_render::render_flat(&prepared.document).unwrap(),
+            pixels
+        );
+        assert_eq!(fs::read(&fixture.path).unwrap(), input);
+    }
+}
+#[test]
 fn independent_graya16_and_icc_pixels_match_the_review_and_exact_consented_document() {
     const GRAYA: &[u8] = include_bytes!(
         "../../../../../../crates/services/paintcraft-formats/tests/tiff-fixtures/gray-endian-packbits.tif"

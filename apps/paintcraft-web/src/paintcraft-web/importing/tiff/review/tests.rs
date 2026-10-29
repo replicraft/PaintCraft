@@ -17,14 +17,18 @@ fn app(ctx: &egui::Context) -> WebApp {
     app
 }
 fn prepared() -> (Rc<Held>, Prepared) {
-    let inventory = tiff_pages::inspect(SOURCE, &|| Ok(())).unwrap();
-    assert!(inventory.pages()[0].unsupported_reason.is_some());
-    let page = &inventory.pages()[1];
-    let decoded = tiff_pages::decode_page(SOURCE, 1, wire::PIXELS_MAX.into(), &|| Ok(())).unwrap();
-    assert_eq!(decoded.rgba, EXPECTED);
+    let value = prepared_source(SOURCE, 1);
+    pixels(&value.1.document);
+    value
+}
+fn prepared_source(input: &[u8], index: u16) -> (Rc<Held>, Prepared) {
+    let inventory = tiff_pages::inspect(input, &|| Ok(())).unwrap();
+    let page = &inventory.pages()[usize::from(index)];
+    let decoded =
+        tiff_pages::decode_page(input, index, wire::PIXELS_MAX.into(), &|| Ok(())).unwrap();
     let selection = wire::Selection {
         page: wire::Page {
-            index: 1,
+            index,
             width: page.width,
             height: page.height,
             ifd_offset: page.descriptor.ifd_offset,
@@ -43,7 +47,7 @@ fn prepared() -> (Rc<Held>, Prepared) {
     let held = Rc::new(
         Held::new(Source {
             name: "pages.tif".into(),
-            length: SOURCE.len() as u64,
+            length: input.len() as u64,
         })
         .unwrap(),
     );
@@ -63,6 +67,61 @@ fn pixels(document: &Document) {
         assert_eq!(
             raster.get((index % 2) as i64, (index / 2) as i64).0,
             *expected
+        );
+    }
+}
+#[test]
+fn small_actual_previews_upscale_without_changing_pixels_or_report_and_need_a_full_prior_frame() {
+    const ONE: &[u8] = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../crates/services/paintcraft-formats/tests/tiff-fixtures/rgba16-be-strips-lzw.tif"
+    ));
+    const SMALL: &[u8] = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../crates/services/paintcraft-formats/tests/tiff-fixtures/icc-srgb-rgba8.tif"
+    ));
+    for (input, index, canvas) in [(ONE, 1, (1, 1)), (SMALL, 0, (3, 2))] {
+        let ctx = egui::Context::default();
+        let app = app(&ctx);
+        let (held, prepared) = prepared_source(input, index);
+        let digest = prepared.report.digest();
+        let pixels = paintcraft_render::render_flat(&prepared.document).unwrap();
+        let mut review = Review::new(&ctx, held, Owner::capture(&app), prepared).unwrap();
+        review.consent = true;
+        let mut rect = egui::Rect::NOTHING;
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            ui.set_invisible();
+            review.preview(ui);
+        });
+        output.textures_delta.clear();
+        assert!(review.shown.is_none(), "hidden UI cannot authorize review");
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            ui.set_clip_rect(egui::Rect::from_min_size(
+                ui.cursor().min,
+                egui::Vec2::splat(10.0),
+            ));
+            rect = review.preview(ui);
+        });
+        output.textures_delta.clear();
+        assert!(
+            review.shown.is_none(),
+            "a clipped corner cannot authorize review"
+        );
+        assert!((rect.width() - 200.0).abs() < 0.01);
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            rect = review.preview(ui);
+            assert_eq!(review.shown, Some(ui.ctx().cumulative_frame_nr()));
+        });
+        output.textures_delta.clear();
+        assert!((rect.height() - 200.0 * canvas.1 as f32 / canvas.0 as f32).abs() <= 0.5);
+        let mut output = ctx.run_ui(Default::default(), |ui| assert!(review.show(ui)));
+        output.textures_delta.clear();
+        assert_eq!(review.prepared.document.canvas, canvas);
+        assert_eq!(review.size, egui::vec2(canvas.0 as f32, canvas.1 as f32));
+        assert_eq!(review.prepared.report.digest(), digest);
+        assert_eq!(
+            paintcraft_render::render_flat(&review.prepared.document).unwrap(),
+            pixels
         );
     }
 }
@@ -95,14 +154,13 @@ fn skinny_preview_has_a_visible_minimum_without_changing_source_dimensions() {
         egui::vec2(1.0, 65537.0),
         egui::vec2(wire::SIDE_MAX as f32, 1.0),
     ] {
-        let (size, expanded) = preview_size(source, 200.0);
-        assert!(expanded);
+        let size = paintcraft_ui::import_preview::fitted_size(source, egui::Vec2::splat(200.0));
         assert!(size.x >= 1.0 && size.y >= 1.0);
         assert!(size.x <= 200.0 && size.y <= 200.0);
     }
-    let (size, expanded) = preview_size(egui::vec2(2.0, 2.0), 200.0);
-    assert_eq!(size, egui::vec2(2.0, 2.0));
-    assert!(!expanded);
+    let size =
+        paintcraft_ui::import_preview::fitted_size(egui::vec2(2.0, 2.0), egui::Vec2::splat(200.0));
+    assert_eq!(size, egui::Vec2::splat(200.0));
 }
 #[test]
 fn actual_wide_tiff_uses_padded_staged_admission_separately_from_decoder_pixels() {
