@@ -44,6 +44,18 @@ fn run_profile(jxr_source: Option<&std::path::Path>, profile: crate::jxr::Profil
             })
         } else if jxr_source.is_some() {
             Err(invalid("Private JXR path supplied for another codec"))
+        } else if header.codec == wire::Codec::JxlIntegerRgba8 {
+            #[cfg(feature = "jxl-integer-codec")]
+            {
+                wire::jxl_integer::execute(header, &source, &|| crate::HEAP.peak() as u64)
+            }
+            #[cfg(not(feature = "jxl-integer-codec"))]
+            {
+                Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Integer JXL profile is not built",
+                ))
+            }
         } else if header.codec.is_float() {
             #[cfg(feature = "float-codecs")]
             {

@@ -9,6 +9,14 @@ fn contracts() -> Vec<(&'static [u8], Vec<u8>)> {
 fn contracts_for(version: &str) -> Vec<(&'static [u8], Vec<u8>)> {
     vec![
         (
+            wire::jxl_integer::contracts::base::BUILD_RECORD_MARKER,
+            wire::jxl_integer::contracts::base::build_record(version).unwrap(),
+        ),
+        (
+            wire::jxl_integer::contracts::writer::BUILD_RECORD_MARKER,
+            wire::jxl_integer::contracts::writer::build_record(version).unwrap(),
+        ),
+        (
             wire::BUILD_RECORD_MARKER,
             wire::native_build_record(version).unwrap(),
         ),
@@ -102,7 +110,13 @@ pub fn assert_one(bytes: &[u8], expected: &[u8]) {
 /// The same feature precedence as the real helper's embedded declaration.
 pub fn selected() -> Vec<u8> {
     let version = env!("CARGO_PKG_VERSION");
-    if cfg!(feature = "jxr-codecs") {
+    if cfg!(feature = "jxl-integer-codec") {
+        if cfg!(feature = "jxr-codecs") {
+            wire::jxl_integer::contracts::writer::build_record(version).unwrap()
+        } else {
+            wire::jxl_integer::contracts::base::build_record(version).unwrap()
+        }
+    } else if cfg!(feature = "jxr-codecs") {
         wire::jxr_encode::qualified::build_record(version).unwrap()
     } else if cfg!(feature = "jxr-encode") {
         wire::jxr_encode::candidate::build_record(version).unwrap()

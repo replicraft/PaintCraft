@@ -2,6 +2,12 @@
 #![deny(unsafe_code)]
 #[cfg(target_arch = "wasm32")]
 compile_error!("native codec helper is not a WebWorker implementation");
+#[cfg(all(
+    feature = "jxl-integer-codec",
+    feature = "jxr-encode",
+    not(feature = "jxr-codecs")
+))]
+compile_error!("integer JXL with the JXR writer requires the public jxr-codecs inventory");
 mod allocator;
 #[cfg(feature = "avif-codec")]
 mod avif;
@@ -36,7 +42,11 @@ static BUILD_RECORD: &[u8] = concat!(
     "PAINTCRAFT_CODEC_WORKER_BUILD_V6_AVIF_SDR\0", env!("CARGO_PKG_VERSION"),
     "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0AVIF_SDR709_YUV444_420_CSP12_WORK1\0END_CODEC_WORKER_BUILD\0",
 ).as_bytes();
-#[cfg(all(feature = "float-codecs", not(feature = "jxr-encode")))]
+#[cfg(all(
+    feature = "float-codecs",
+    not(feature = "jxr-encode"),
+    not(feature = "jxl-integer-codec")
+))]
 static BUILD_RECORD: &[u8] = concat!(
     "PAINTCRAFT_CODEC_WORKER_BUILD_V7_FLOAT\0",
     env!("CARGO_PKG_VERSION"),
@@ -45,10 +55,20 @@ static BUILD_RECORD: &[u8] = concat!(
     "FLOAT_SETTINGS32_REPORT96_INPUT16777216_PIXELS1048576\0END_CODEC_WORKER_BUILD\0",
 )
 .as_bytes();
-#[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
+#[cfg(all(
+    feature = "jxr-encode",
+    not(feature = "jxr-codecs"),
+    not(feature = "jxl-integer-codec")
+))]
 static BUILD_RECORD: &[u8] = paintcraft_formats::codec_worker::jxr_encode::candidate::BUILD_RECORD;
-#[cfg(feature = "jxr-codecs")]
+#[cfg(all(feature = "jxr-codecs", not(feature = "jxl-integer-codec")))]
 static BUILD_RECORD: &[u8] = paintcraft_formats::codec_worker::jxr_encode::qualified::BUILD_RECORD;
+#[cfg(all(feature = "jxl-integer-codec", not(feature = "jxr-codecs")))]
+static BUILD_RECORD: &[u8] =
+    paintcraft_formats::codec_worker::jxl_integer::contracts::base::BUILD_RECORD;
+#[cfg(all(feature = "jxl-integer-codec", feature = "jxr-codecs"))]
+static BUILD_RECORD: &[u8] =
+    paintcraft_formats::codec_worker::jxl_integer::contracts::writer::BUILD_RECORD;
 fn main() {
     std::hint::black_box(BUILD_RECORD);
     let args: Vec<_> = std::env::args_os().skip(1).collect();
