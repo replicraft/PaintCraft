@@ -482,10 +482,12 @@ generic Open or preserving Save.
 ## Native JPEG XR fresh copies
 
 `export_jxr` writes a native Studio fresh copy through an exact qualified
-V8/V10 writer installation. Current source and next shipping builds select V10
-on Apple Silicon and V9 without the writer on the other five targets. Normal
-helper builds also default to V9. The wider actual fresh-writer App gate is
-underway; the published 0.1.1 V7/V8 downloads stay unchanged. Pass `path`, optional
+V8/V10 writer installation. Current source, normal helper builds and next
+shipping policy select V10 on all six native targets. The
+[six-target V10 run](https://github.com/replicraft/PaintCraft/actions/runs/40889561591)
+at `5eb0831f` passed mandatory installed App writer controls with 30 scenarios
+and float conversion-identity checks. Published 0.1.1 V7/V8 downloads stay
+unchanged. Pass `path`, optional
 `overwrite` and `allow_losses`. The document must
 produce a wholly opaque composite; transparent output is refused instead of
 silently applying a matte. For example, a layered opaque document needs its
@@ -510,13 +512,14 @@ document. Classic/browser conversion, ordinary Open and preserving JPEG XR Save
 remain unavailable. The optional helper and actual CLI/MCP path have local Apple
 Silicon proof, including the optimized staged source/bundle proof in
 local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`. The
-current source policy selects V10 on Apple Silicon and V9 on the other five
-targets, with integer JPEG XL enabled in normal helper builds. All six targets
-passed V9/V10 candidate runtime/package checks at `025099c8`; normal macOS ARM
-debug V9/V10 archives also passed all 40 installed CLI/MCP test functions.
-JPEG XR writing remains selected only on Apple Silicon while the other targets
-await the actual fresh-writer native App gate. Published 0.1.1 V7/V8 downloads
-and the tag are unchanged; this does not claim a new packaged release.
+current source policy selects V10 on all six targets, with both integer JPEG XL
+and the fixed JPEG XR writer enabled in normal helper builds. The later six-target
+V10 run supplies the installed App writer and float-identity gates; the earlier
+V9/V10 matrix and 40 normal macOS ARM debug CLI/MCP tests remain historical
+proofs. Portable writer goldens were independently C-qualified, not decoded by
+C on every runner. Published 0.1.1 V7/V8 downloads and the tag are unchanged;
+this does not claim a new packaged release, original-application compatibility,
+signing or notarization.
 
 ## Native HEIC/HEIF import
 
@@ -604,8 +607,9 @@ installation checks from unexecuted six-target release and broader-profile work.
 ## HDR/EXR conversion
 
 Use `inspect_float` to review a supported `.hdr` or `.exr` source without changing
-the current painting. A complete native installation with the matching V7 helper
-is required. Inputs are limited to 16 MiB and 1,048,576 pixels; this converts to
+the current painting. A complete native installation with a matching qualified
+float-capable helper is required: current source policy selects V10, while finite
+V7/V8/V9 compatibility contracts remain supported. Inputs are limited to 16 MiB and 1,048,576 pixels; this converts to
 8-bit sRGB rather than retaining an HDR editing document.
 
 Every request supplies explicit settings, for example:

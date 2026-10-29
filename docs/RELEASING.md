@@ -6,13 +6,13 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
-Normal Cargo helper builds enable `jxl-integer-codec` (V9) by default. The
-explicit shipping policy in `scripts/packaging/helper_policy.py` selects V10
-through `jxr-codecs,jxl-integer-codec` for `aarch64-apple-darwin`, and V9 through
-`jxl-integer-codec` for the other five native targets. This first promotion makes
-integer JPEG XL available in normal builds while retaining the Apple Silicon
-JPEG XR writer selection. It applies to next release builds and source CLI
-installation; the published 0.1.1 V7/V8 downloads and tag remain unchanged.
+Normal Cargo helper builds enable `jxr-codecs,jxl-integer-codec` (V10) by
+default. The shipping policy in `scripts/packaging/helper_policy.py` selects
+that same exact V10 profile for Windows x64/ARM64, macOS Intel/Apple Silicon
+and Linux x64/ARM64. Integer JPEG XL and the fixed JPEG XR writer are therefore
+available in normal builds on all six targets. This applies to source CLI
+installation and next release builds; the published 0.1.1 V7/V8 downloads and
+tag remain unchanged.
 The local macOS bundle builder pins
 an explicit Rust target (`--target`, then `CARGO_BUILD_TARGET`, then `rustc` host),
 passes it to Cargo and verifies both binary architectures and the exact helper
@@ -35,14 +35,15 @@ no installed decoder library is used. Windows builds select the native MSVC
 compiler; release Rust flags request `crt-static` and the C build matches with
 Meson `b_vscrt=mt`. Normal/source builds without that target feature use `md`,
 so the Rust and C runtime choices agree. Each runner executes actual helper and installed
-CLI/MCP tests before packaging. The optimized
-[six-target V9/V10 candidate run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
-at `025099c8` passed all 12 jobs. Separate normal macOS ARM debug builds verified
-the default V9 and target-selected V10 records, real archive/install operations
-and 40 actual installed CLI/MCP tests. These qualify their exact scopes; a new
-complete release still needs its own native packaging/publication checks. The
-other five targets' actual fresh-writer App gate is underway and does not yet
-widen the JPEG XR shipping selection.
+CLI/MCP tests before packaging. The
+[six-target V10 run](https://github.com/replicraft/PaintCraft/actions/runs/40889561591)
+at `5eb0831f` passed all six jobs. Each required the actual installed App writer
+fixture with 30 scenarios and the float conversion-identity fixture, alongside
+its worker, installed CLI/MCP and packaging controls. This qualifies that finite
+native candidate scope, not a new complete release or signing/notarization.
+The earlier [12-role V9/V10 run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
+at `025099c8`, first split V9/V10 promotion and 40 normal macOS ARM debug
+CLI/MCP tests remain historical evidence.
 
 Packaging reads the helper's embedded build record without executing it, then
 writes an exact manifest for V4, identity-only V5, complete V6, qualified V7 or
@@ -253,7 +254,7 @@ private prefixes; synthetic archive checks for six targets do not qualify native
 execution on the other systems.
 
 
-Final V7 uses the exact nonprivate seven-variant qualification descriptor and the unchanged V7 record/protocol/schema. Its required notices add `HDR_EXR_LICENSES_V1.txt`; legacy V4/V5/V6 archive and installation payload sets remain unchanged. Private V7 manifests are unsupported. The 0.1.1 rollout required V8 on Apple-silicon macOS and V7 elsewhere; current source installation requires exact V10/V9 respectively. Preserve explicit `--no-default-features` when building historical V4 through V8 compatibility helpers.
+Final V7 uses the exact nonprivate seven-variant qualification descriptor and the unchanged V7 record/protocol/schema. Its required notices add `HDR_EXR_LICENSES_V1.txt`; legacy V4/V5/V6 archive and installation payload sets remain unchanged. Private V7 manifests are unsupported. The 0.1.1 rollout required V8 on Apple-silicon macOS and V7 elsewhere; current source installation requires exact V10 on all six targets. Preserve explicit `--no-default-features` when building historical V4 through V8 compatibility helpers.
 
 A local copied-helper or private-prefix proof does not establish native execution on the other five targets, MSI installation/repair, Linux package integration, signed macOS bundle behavior, or original-application file events. Require the actual native release workflow and its platform validators before claiming those results. Signing rewrites Mach-O bytes; regenerate and canonically verify the helper manifest after signing, before sealing the enclosing applications.
 
@@ -283,7 +284,7 @@ Exact artifacts, commands, component/source hashes and raw logs are in
 local ignored evidence at `docs/validation/jxr-staged-macos-2026-10-26/receipt.json`.
 
 This historical proof locally qualified the staged Apple-silicon macOS build.
-The subsequent 0.1.1 V7/V8 release is recorded separately. Current V10/V9 source
+The subsequent 0.1.1 V7/V8 release is recorded separately. Current all-target V10 source
 selection and the later candidate CI are described above. This local proof did
 not establish remote CI, Developer-ID signing/notarization, original-application
 interoperability or OS file-dialog/Finder launching. No tag, push, registration or
@@ -292,8 +293,8 @@ user Applications installation was performed.
 
 ## Native candidate qualification before widening rollout
 
-`native-codec-qualification.yml` is separate from shipping. It builds the fixed
-public V8 `jxr-codecs` candidate on the same six native runner/target pairs, using
+`native-codec-qualification.yml` is separate from shipping. It selects a finite
+public V8, V9 or V10 candidate on the same six native runner/target pairs, using
 the pinned Rust/Meson/Ninja setup, Linux desktop dependencies and matching Windows
 static CRT. Its token has read-only repository contents access; checkout does not
 persist credentials. It has no publish, secret, release or automatic policy-edit
@@ -303,24 +304,27 @@ no remote execution is implied by the workflow file or synthetic-header tests.
 The driver refuses cross-target or translated execution: OS/native-machine and
 Rust host must match the requested target. Windows uses the native-machine API
 even if Python itself is emulated; macOS rejects Rosetta. It builds worker tests
-with `--no-default-features --features jxr-codecs`, freezes the standalone CLI
-release installed-test recipe, then verifies the exact public record, schema 3,
-target, ordered import/export arrays and CLI SHA before executing candidate code.
+with defaults disabled and the exact candidate feature set, freezes the standalone CLI
+release installed-test recipe, then verifies the exact public record, profile-specific
+schema 2 or 3, target, ordered import/export arrays and CLI SHA before executing candidate code.
 Candidate archive/private-prefix preparation deliberately does not call the
 shipping-policy verifier: a candidate may differ from the exact current
-V10/V9 target selection.
+all-target V10 selection.
 
 Each job runs the existing worker unit/integration controls, finite installed
 CLI/MCP baseline/portable/forged cases and the mandatory DDS CLI/MCP export
 integration target, platform helper guards, DDS backend/core
 admission and export preparation, and the 96 Normal/High frozen DDS specimens.
 Native App tests are headless: DDS import/export controls and source guards,
-JXR preparation/source guards, and eight real copied-helper legacy JXR reviews.
+JXR preparation/source guards and eight copied-helper legacy JXR reviews. V10
+also requires integer JPEG XL App review, the portable installed App writer
+fixture with 30 scenarios, and float conversion-identity checks.
 Missing required targets/selectors or zero executed tests fail instead of
 producing an empty success. Every test step checks the actual execution summary.
 Portable expected JXR files were independently C-qualified; their use does not
-claim C ran on each runner. Explicit `--oracle` remains a separate pinned native
-C prerequisite for the extra C cases and the 24-case JXR App fixture.
+claim C ran on each runner. Explicit `--oracle` remains a separate V8-only
+qualification with a pinned native C prerequisite for the extra C cases and
+24-case JXR App fixture; it is not part of the six-target V10 proof.
 
 Processes execute serially with finite time and output budgets and process-tree
 cleanup. Success and failure receipts retain native identities, exact source,
@@ -331,7 +335,7 @@ uploads run on failure too and never change the shipping map or Cargo defaults.
 For an authorized local run from clean committed source, use a fresh output path:
 
 ```sh
-python scripts/packaging/qualify_native_codecs.py --target aarch64-apple-darwin --output /private/tmp/paintcraft-native-candidate-new
+python scripts/packaging/qualify_native_codecs.py --candidate v10 --target aarch64-apple-darwin --output /absolute/new-v10-evidence
 ```
 
 `--target-dir` may select a reusable dependency cache. A passing native job

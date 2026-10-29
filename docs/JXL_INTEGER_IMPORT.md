@@ -5,14 +5,19 @@ As of 2026-10-29, Studio has a new explicit JPEG XL import path for admitted
 sRGB RGBA8. This is precision conversion, not 16-bit editing or preserving
 JPEG XL Save. Ordinary Open and Classic JPEG XL reads remain denied.
 
-Current source and next shipping builds select V9 on Windows x64/ARM64, macOS
-Intel and Linux x64/ARM64, and V10 on Apple Silicon macOS. Normal Cargo helper
-builds enable the integer family by default. Native adoption still verifies the
-exact helper manifest and requires the explicit Studio import workflow. The
-published 0.1.1 artifacts and tag are unchanged: those downloads retain V7 on
-five targets and V8 on Apple Silicon, with their earlier strict 8-bit reader.
-Browser integer import has local production-build evidence; this source-policy
-promotion does not claim a new deployed release.
+Current source and next shipping builds select V10 on all six native targets:
+Windows x64/ARM64, macOS Intel/Apple Silicon and Linux x64/ARM64. Normal Cargo
+helper builds enable both `jxr-codecs` and `jxl-integer-codec` by default. Native
+adoption still verifies the exact helper manifest and requires explicit Studio
+import. The [V10 qualification run](https://github.com/replicraft/PaintCraft/actions/runs/40889561591)
+at `5eb0831f` passed all six targets, including mandatory installed App writer
+controls with 30 scenarios and float conversion-identity checks.
+
+Published 0.1.1 artifacts and the tag are unchanged: those downloads retain V7
+on five targets and V8 on Apple Silicon, with their earlier strict 8-bit reader.
+Browser integer import has local production-build evidence. This source-policy
+promotion does not claim a new deployed release, native C execution on every
+runner, original-application compatibility or signing/notarization.
 
 ## Pixel and source contract
 
@@ -105,7 +110,7 @@ all operating systems and browsers.
 | [Installed native App controls](../apps/paintcraft/src/app/importing/native_codec/jxl_integer_installed_tests.rs) | Actual immutable V9 and V10 helpers on macOS ARM, headless App rendering, English/Japanese first-visible-frame consent, exact hidden RGB/alpha, PCND round trips, aliases and stale/cancel/refusal preservation; final runs passed in 125.44 s and 128.38 s |
 | [Installed CLI/MCP controls](../apps/paintcraft-cli/tests/installed_codec_worker/jxl_integer.rs) | Actual producer-installed CLI/MCP payloads on macOS ARM: V9 passed 12 ordinary tests plus seven exact selectors; V10 passed 12 ordinary tests plus nine exact selectors, retaining AVIF/float baselines and V10 JXR goldens/guards. CLI/test bytes, source hashes and installed files remained unchanged. This was scoped development-checkout evidence, not the clean six-target candidate CI |
 | [Production Worker proof](../apps/paintcraft-web/scripts/codec-production-browser.mjs) and [Studio UI proof](../apps/paintcraft-web/scripts/jxl-production-browser.mjs) | Built Astro assets in headless Chrome 156.0.8078.49 on macOS ARM: 14 Worker checks and seven UI groups passed. All nine downloaded PCND artifacts passed an independent Rust raw-pixel oracle, including hidden RGB/alpha and failure-preserved documents |
-| [Candidate orchestration](../scripts/packaging/qualify_native_codecs.py) | Finite V8/V9/V10 selection, real package/install checks, exact nonzero worker/CLI/App fixture gates and clean-source checks; [six-target candidate run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331) at `025099c8` passed all six targets with both V9 and V10, including the recorded native worker, installed CLI/MCP and App gates |
+| [Candidate orchestration](../scripts/packaging/qualify_native_codecs.py) | Finite V8/V9/V10 selection, real package/install checks, exact nonzero worker/CLI/App fixture gates and clean-source checks. The [six-target V10 run](https://github.com/replicraft/PaintCraft/actions/runs/40889561591) at `5eb0831f` passed all six targets with mandatory installed App writer and float-identity fixtures; the earlier `025099c8` V9/V10 matrix remains historical evidence |
 
 The browser results include 8-bit automatic adoption, 16-bit preview/cancel/retry
 and explicit adoption, PCND download/reopen, strict unsupported profiles and
@@ -126,7 +131,8 @@ cargo test --locked -p paintcraft-formats --test native_jxl_gate
 
 For full native candidate qualification, use a clean committed checkout on the
 matching native host. This Apple Silicon example builds, packages, installs and
-executes the required actual fixtures without changing shipping policy:
+executes the required actual fixtures without changing shipping policy. V9 is an
+explicit compatibility qualification; V10 is the current selected profile:
 
 ```sh
 python3 scripts/packaging/qualify_native_codecs.py --candidate v9 --target aarch64-apple-darwin --output /absolute/new-v9-evidence
@@ -158,7 +164,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CODEC_EVIDENCE_DIR=/abs
 PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CODEC_EVIDENCE_DIR=/absolute/ui-evidence node scripts/jxl-production-browser.mjs
 ```
 
-Current-policy validation also exercised normal debug builds on macOS ARM: a
+The first source-policy promotion historically exercised normal debug builds on macOS ARM: a
 plain Cargo default produced the exact V9 record, and the target-selected recipe
 produced V10. Fresh real CLI archives and installations passed 12 ordinary tests
 plus seven exact selectors for V9, and 12 plus nine for V10. All 40 test functions
@@ -168,10 +174,11 @@ from the optimized clean six-target candidate CI; they do not qualify a new
 complete desktop release or signing/notarization. Raw receipts are retained in
 local ignored `docs/validation/jxl-integer-promotion` evidence.
 
-JPEG XR writing remains selected only on Apple Silicon in this first promotion.
-The other five targets now have executed V10 worker and CLI/MCP golden checks,
-but their actual fresh-writer native App gate is still underway. It is not
-claimed by the legacy-import App checks.
+That first promotion selected JPEG XR writing only on Apple Silicon. The later
+six-target V10 run supplied the mandatory actual fresh-writer App and float-identity
+gates, enabling the current all-target V10 selection. Legacy-import App checks
+alone do not substitute for those gates. Portable expected writer files were
+independently C-qualified; C did not run on every runner.
 
 Remaining gates include broader original files and reference applications,
 cross-browser/device evidence, security/license review and hostile-resource
