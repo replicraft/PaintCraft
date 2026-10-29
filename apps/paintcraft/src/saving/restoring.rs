@@ -34,6 +34,7 @@ pub(super) struct Control {
 }
 #[derive(Debug)]
 pub(crate) struct Drafts {
+    preview: controller::PreviewStamp,
     name: Option<(Uuid, String)>,
     name_revision: Option<(u64, u64)>,
     opacity: Option<(Uuid, u8)>,
@@ -41,6 +42,7 @@ pub(crate) struct Drafts {
 impl Drafts {
     pub(crate) fn capture(app: &App) -> Self {
         Self {
+            preview: app.editor.preview_stamp(),
             name: app
                 .name_edit
                 .as_ref()
@@ -53,8 +55,9 @@ impl Drafts {
         }
     }
     fn matches(&self, app: &App) -> bool {
-        self.name.as_ref().map(|(id, text)| (id, text))
-            == app.name_edit.as_ref().map(|(id, text, _)| (id, text))
+        self.preview == app.editor.preview_stamp()
+            && self.name.as_ref().map(|(id, text)| (id, text))
+                == app.name_edit.as_ref().map(|(id, text, _)| (id, text))
             && self.name_revision
                 == app
                     .name_edit
@@ -83,6 +86,7 @@ impl Request {
 pub(super) struct Intent {
     request: Request,
     cancelled: Arc<AtomicBool>,
+    metadata: paintcraft_runtime::SharedBudget,
 }
 impl NativeSaving {
     pub(crate) fn restoring(&self) -> bool {
@@ -100,6 +104,7 @@ impl NativeSaving {
         scope: Uuid,
         offer: Found,
         drafts: Drafts,
+        metadata: paintcraft_runtime::SharedBudget,
     ) -> Result<()> {
         if self.restoring() {
             return Ok(());
@@ -121,6 +126,7 @@ impl NativeSaving {
                 drafts,
             },
             cancelled,
+            metadata,
         });
         self.try_restore(editor, scope)
     }
@@ -132,8 +138,7 @@ impl NativeSaving {
             || intent.request.scope != scope
             || intent.request.generation != self.generation
             || intent.request.key != editor.render_key()
-            || editor.gesture_in_progress()
-            || editor.is_editing_text()
+            || intent.request.drafts.preview != editor.preview_stamp()
         {
             self.cancel_restore();
             return Err(Error::new(
@@ -150,13 +155,24 @@ impl NativeSaving {
         let ticket = self.submit_io(
             READ_CHARGE,
             move || {
-                if intent.cancelled.load(Ordering::Acquire) {
-                    return Err(Error::new(
-                        ErrorCode::OperationCancelled,
-                        "recovery preparation cancelled",
-                    ));
-                }
-                Recovery::claim(&offer).map(|claim| Completion::Claimed(Box::new(claim)))
+                Recovery::claim_with_metadata_admission_checked(
+                    &offer,
+                    paintcraft_formats::pcnd::MetadataAdmission {
+                        bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                        budget: &intent.metadata,
+                    },
+                    &|| {
+                        if intent.cancelled.load(Ordering::Acquire) {
+                            Err(Error::new(
+                                ErrorCode::OperationCancelled,
+                                "recovery preparation cancelled",
+                            ))
+                        } else {
+                            Ok(())
+                        }
+                    },
+                )
+                .map(|claim| Completion::Claimed(Box::new(claim)))
             },
             move || context.request_repaint(),
         );
@@ -324,8 +340,6 @@ impl App {
             && request.scope == self.recovery_scope
             && request.generation == saving.generation
             && request.key == self.editor.render_key()
-            && !self.editor.gesture_in_progress()
-            && !self.editor.is_editing_text()
             && self.confirm.is_none()
             && self.tab_closing.is_none()
             && self.dialog_owner.is_none()
@@ -401,3 +415,6 @@ impl App {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod metadata_tests;

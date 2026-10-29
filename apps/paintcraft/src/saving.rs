@@ -36,6 +36,7 @@ enum PendingKind {
     Initialize {
         session: Uuid,
         scope: Uuid,
+        cancelled: Arc<std::sync::atomic::AtomicBool>,
     },
     Restore(Box<restoring::Request>),
     OfferDiscard {
@@ -57,7 +58,7 @@ enum Completion {
     Resumed(paintcraft_formats::save_recovery::reconciliation::ReconciledSavedAttempt),
     Checkpoint(Checkpoint),
     Started {
-        report: Option<paintcraft_formats::recovery::ScanReport>,
+        report: Option<Result<paintcraft_formats::recovery::ScanReport>>,
         recovery: Result<Arc<Recovery>>,
     },
     Claimed(Box<paintcraft_formats::recovery::ClaimedRecovery>),
@@ -129,6 +130,15 @@ impl NativeSaving {
         })
     }
     pub(super) fn new_session(&mut self) {
+        for pending in &self.pending {
+            if let PendingKind::Initialize {
+                session, cancelled, ..
+            } = &pending.kind
+                && *session == self.session
+            {
+                cancelled.store(true, std::sync::atomic::Ordering::Release);
+            }
+        }
         self.cancel_restore();
         self.cancel_inspection();
         self.session = Uuid::new_v4();
@@ -268,12 +278,27 @@ impl NativeSaving {
         scope: Uuid,
         directory: PathBuf,
         discover: bool,
+        metadata: paintcraft_runtime::SharedBudget,
     ) -> Result<()> {
         // Recovery configuration is pinned; a failed later owner initialization
         // must not retarget the already authorized save-retention store.
         self.retention_directory
             .get_or_insert_with(|| directory.clone());
-        if self.pending.iter().any(|p| matches!(p.kind, PendingKind::Initialize { session, scope: pending_scope } if session == self.session && scope == pending_scope)) { return Ok(()); }
+        if self.pending.iter().any(|p| matches!(p.kind, PendingKind::Initialize { session, scope: pending_scope, .. } if session == self.session && scope == pending_scope)) { return Ok(()); }
+        for pending in &self.pending {
+            if let PendingKind::Initialize {
+                session,
+                scope: old,
+                cancelled,
+            } = &pending.kind
+                && *session == self.session
+                && *old != scope
+            {
+                cancelled.store(true, std::sync::atomic::Ordering::Release);
+            }
+        }
+        let cancelled = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let control = cancelled.clone();
         // Discovery runs the native parser. This exclusive estimate prevents other
         // I/O payload jobs from overlapping it; it is not an RSS qualification.
         let charge = if discover { 1 << 30 } else { 64 * 1024 };
@@ -281,8 +306,29 @@ impl NativeSaving {
         let ticket = self.submit_io(
             charge,
             move || {
-                let report = discover.then(|| Recovery::scan_report(&directory));
-                let recovery = Recovery::start(&directory).map(Arc::new);
+                let check = || {
+                    if control.load(std::sync::atomic::Ordering::Acquire) {
+                        Err(Error::new(
+                            ErrorCode::OperationCancelled,
+                            "recovery initialization superseded",
+                        ))
+                    } else {
+                        Ok(())
+                    }
+                };
+                let report = discover.then(|| {
+                    Recovery::scan_report_with_metadata_admission_checked(
+                        &directory,
+                        paintcraft_formats::pcnd::MetadataAdmission {
+                            bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                            budget: &metadata,
+                        },
+                        &check,
+                    )
+                });
+                let recovery = check()
+                    .and_then(|()| Recovery::start(&directory))
+                    .map(Arc::new);
                 Ok(Completion::Started { report, recovery })
             },
             move || context.request_repaint(),
@@ -292,6 +338,7 @@ impl NativeSaving {
             kind: PendingKind::Initialize {
                 session: self.session,
                 scope,
+                cancelled,
             },
         });
         Ok(())
@@ -421,24 +468,19 @@ impl App {
                     _ => unreachable!("typed checkpoint completion"),
                 }
             }
-            PendingKind::Initialize { session, scope } => match result {
+            PendingKind::Initialize { session, scope, .. } => match result {
                 Ok(Completion::Started { report, recovery }) => {
-                    if scope == self.recovery_scope {
+                    if scope == self.recovery_scope && session == saving.session {
                         if let Some(report) = report
                             && self.recovery_needs_scan
                         {
-                            self.recovery_needs_scan = false;
-                            self.recoverable = report.found;
-                            if !report.issues.is_empty() {
-                                self.editor.set_status(
-                                    report
-                                        .issues
-                                        .into_iter()
-                                        .take(3)
-                                        .collect::<Vec<_>>()
-                                        .join("; "),
-                                );
-                            }
+                            crate::recovery::apply_discovery(
+                                &mut self.editor,
+                                &mut self.recoverable,
+                                &mut self.recovery_needs_scan,
+                                &self.context,
+                                report,
+                            );
                         }
                         if session == saving.session {
                             match recovery {

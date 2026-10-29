@@ -16,22 +16,19 @@ impl App {
             return self;
         }
         self.recovery_scope = Uuid::new_v4();
-        self.recoverable.clear();
         if self.saving.is_some() {
             self.recovery_needs_scan = true;
         } else {
-            let report = Recovery::scan_report(&dir);
-            self.recoverable = report.found;
-            if !report.issues.is_empty() {
-                self.editor.set_status(
-                    report
-                        .issues
-                        .into_iter()
-                        .take(3)
-                        .collect::<Vec<_>>()
-                        .join("; "),
-                );
-            }
+            let budget = self.source_metadata_budget();
+            let report = Recovery::scan_report_with_metadata_admission_checked(
+                &dir,
+                paintcraft_formats::pcnd::MetadataAdmission {
+                    bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                    budget: &budget,
+                },
+                &|| Ok(()),
+            );
+            self.apply_recovery_discovery(report);
         }
         self.recovery_dir = Some(dir);
         self.recovery_needs_init = true;
@@ -43,11 +40,13 @@ impl App {
         let Some(dir) = &self.recovery_dir else {
             return;
         };
+        let budget = self.source_metadata_budget();
         if let Some(saving) = &mut self.saving {
             match saving.initialize_recovery(
                 self.recovery_scope,
                 dir.clone(),
                 self.recovery_needs_scan,
+                budget,
             ) {
                 Ok(()) => {
                     self.recovery_needs_init = false;
@@ -76,9 +75,15 @@ impl App {
     }
 
     pub(super) fn recover_requested(&mut self, item: Found) {
-        self.editor.commit_text();
-        self.editor.run_pending();
-        if self.experience() == Experience::Classic && self.editor.is_dirty() {
+        // Inspect private text without finalizing it: failed preparation must not
+        // turn a user's draft into a document/history transaction.
+        if self.experience() == Experience::Classic
+            && (self.editor.is_dirty()
+                || self
+                    .editor
+                    .canvas_text_content()
+                    .is_some_and(|text| !text.is_empty()))
+        {
             self.confirm = Some(Confirm::DiscardForRecovery(item));
         } else {
             self.do_recover(item);
@@ -86,12 +91,11 @@ impl App {
     }
 
     pub(super) fn do_recover(&mut self, item: Found) {
-        self.editor.cancel_gesture();
-        self.editor.commit_text();
         self.editor.run_pending();
         let drafts = saving::restoring::Drafts::capture(self);
+        let budget = self.source_metadata_budget();
         if let Some(saving) = &mut self.saving {
-            match saving.request_restore(&self.editor, self.recovery_scope, item, drafts) {
+            match saving.request_restore(&self.editor, self.recovery_scope, item, drafts, budget) {
                 Ok(()) => self.editor.set_status("Preparing recovered document…"),
                 Err(error) => self.editor.set_status(format!("Cannot recover: {error}")),
             }
@@ -106,7 +110,20 @@ impl App {
     }
 
     pub(super) fn recover_found(&mut self, item: &Found) -> paintcraft_core::types::Result<()> {
-        let claimed = Recovery::claim(item)?;
+        let budget = self.source_metadata_budget();
+        let claimed = Recovery::claim_with_metadata_admission_checked(
+            item,
+            paintcraft_formats::pcnd::MetadataAdmission {
+                bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                budget: &budget,
+            },
+            &|| Ok(()),
+        )?;
+        if self.experience() == Experience::Studio || self.tabs.is_empty() {
+            self.check_tab_capacity()?;
+        }
+        // install resolves the previous tab's input only after source and capacity
+        // admission; Classic replaces only after its explicit discard decision.
         self.install(Editor::recovered_document(claimed.document))?;
         self.forget_recovery_offer(item.session);
         self.recovery_source = Some(saving::restoring::Handoff::new(claimed.lease));
@@ -121,6 +138,19 @@ impl App {
             self.editor.set_status("Recovered; the original recovery copy is retained because a new checkpoint could not be confirmed.");
         }
         Ok(())
+    }
+
+    pub(crate) fn apply_recovery_discovery(
+        &mut self,
+        result: paintcraft_core::types::Result<paintcraft_formats::recovery::ScanReport>,
+    ) {
+        apply_discovery(
+            &mut self.editor,
+            &mut self.recoverable,
+            &mut self.recovery_needs_scan,
+            &self.context,
+            result,
+        );
     }
 
     pub(super) fn recovery_dialog(&mut self, ui: &mut egui::Ui) {
@@ -188,5 +218,49 @@ impl App {
                     }
                 });
             });
+    }
+}
+
+#[cfg(test)]
+#[path = "recovery/metadata_tests.rs"]
+mod metadata_tests;
+
+pub(crate) fn apply_discovery(
+    editor: &mut Editor,
+    recoverable: &mut Vec<Found>,
+    needs_scan: &mut bool,
+    ctx: &egui::Context,
+    result: paintcraft_core::types::Result<paintcraft_formats::recovery::ScanReport>,
+) {
+    match result {
+        Ok(report) => {
+            *needs_scan = false;
+            *recoverable = report.found;
+            if report.unsupported_sessions != 0 {
+                editor.set_status(t!(
+                    ctx,
+                    "Some recovery copies need a newer PaintCraft version. Those copies were kept."
+                ));
+            } else if !report.issues.is_empty() {
+                editor.set_status(
+                    report
+                        .issues
+                        .into_iter()
+                        .take(3)
+                        .collect::<Vec<_>>()
+                        .join("; "),
+                );
+            }
+        }
+        Err(error) => {
+            // No per-frame reinitialization: the current store remains useful.
+            // Existing explicit owner/store initialization can retry discovery.
+            *needs_scan = true;
+            editor.set_status(match error.code {
+                    paintcraft_core::types::ErrorCode::ResourceLimit=>t!(ctx,"Crash recovery discovery reached a resource limit. Existing recovery copies were kept."),
+                    paintcraft_core::types::ErrorCode::OperationCancelled=>t!(ctx,"Crash recovery discovery was cancelled. Existing recovery copies were kept."),
+                    _=>t!(ctx,"Crash recovery discovery failed. Existing recovery copies were kept."),
+                });
+        }
     }
 }
