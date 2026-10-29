@@ -57,6 +57,7 @@ pub(super) struct Pending {
     candidate: Candidate,
     path: PathBuf,
     digest: String,
+    raster_key: Option<paintcraft_document::RasterConversionKey>,
     owner: Uuid,
     base: Arc<paintcraft_document::Document>,
     ticket: (Uuid, u64),
@@ -129,6 +130,7 @@ impl App {
             candidate,
             path,
             digest,
+            raster_key: None,
             owner: self.active_tab_id(),
             base: self.editor.document_snapshot(),
             ticket: self.editor.render_key(),
@@ -182,9 +184,15 @@ impl App {
                 || matches!(&pending.candidate, Candidate::Layered(_))
                 || matches!(&pending.candidate, Candidate::Raster(image) if image.format == ImageFormat::Dds && !image.losses.is_empty());
             let document = match pending.candidate {
-                Candidate::Raster(image) => {
-                    import_image(image.width, image.height, &image.rgba, &pending.digest)?
-                }
+                Candidate::Raster(image) => import_image(
+                    image.width,
+                    image.height,
+                    &image.rgba,
+                    &pending
+                        .raster_key
+                        .map(|key| key.hex())
+                        .unwrap_or(pending.digest),
+                )?,
                 Candidate::Layered(project) => project.document,
                 Candidate::Pages(_)
                 | Candidate::Tiff(_)

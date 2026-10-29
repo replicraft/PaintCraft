@@ -8,6 +8,7 @@ use paintcraft_ui::page_import::{self, Page, Response};
 
 pub(super) struct Pages {
     bytes: Arc<Vec<u8>>,
+    source_sha256: [u8; 32],
     pages: Vec<Page>,
     selected: Option<u16>,
     error: Option<String>,
@@ -36,10 +37,12 @@ impl App {
             width: page.width,
             height: page.height,
         }));
-        let digest = hex(&Sha256::digest(&bytes));
+        let source_sha256: [u8; 32] = Sha256::digest(&bytes).into();
+        let digest = hex(&source_sha256);
         self.stage_candidate(
             Candidate::Pages(Pages {
                 bytes: Arc::new(bytes),
+                source_sha256,
                 pages,
                 selected: None,
                 error: None,
@@ -116,10 +119,24 @@ impl App {
                     "unknown page import loss",
                 ));
             }
-            Ok(image)
+            let key = paintcraft_document::RasterConversionKey::checked(
+                paintcraft_document::RasterConversionContext {
+                    source_sha256: source.source_sha256,
+                    profile: dcx::IMPORT_IDENTITY_PROFILE,
+                    selection: paintcraft_document::RasterSelection::Page(index),
+                    assessment_sha256: None,
+                },
+                image.width,
+                image.height,
+                &image.rgba,
+                image::DECODE_PIXELS_MAX,
+                &|| Ok(()),
+            )?;
+            Ok((image, key))
         })();
         match result {
-            Ok(image) => {
+            Ok((image, key)) => {
+                pending.raster_key = Some(key);
                 pending.candidate = Candidate::Raster(image);
                 self.pending_import = Some(pending);
                 self.confirm = Some(Confirm::ImportLosses);

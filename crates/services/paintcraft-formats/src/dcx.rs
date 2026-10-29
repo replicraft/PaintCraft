@@ -7,6 +7,8 @@ pub const DIRECTORY_BYTES: usize = 4 + 1024 * 4;
 pub const MAGIC: u32 = 987_654_321;
 pub const PAGES_MAX: usize = 1023;
 pub const EXPORT_VARIANT: &str = "dcx-fresh-single-pcx-page";
+/// Versioned semantic identity only; this does not grant import admission.
+pub const IMPORT_IDENTITY_PROFILE: &str = "paintcraft.dcx-selected-page-rgba8/v1";
 mod prepare;
 mod write;
 pub use prepare::{DocumentLimits, PreparedDocument, prepare_document, prepare_document_with};

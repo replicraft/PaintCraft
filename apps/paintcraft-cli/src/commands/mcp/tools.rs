@@ -217,15 +217,16 @@ impl PaintingServer {
                 } else {
                     image::decode(&bytes)?
                 };
-                (
-                    paintcraft_document::import_image(
-                        decoded.width,
-                        decoded.height,
-                        &decoded.rgba,
-                        &sha,
-                    )?,
-                    decoded.losses,
-                )
+                let document_key = if let Some(page)=p.page {
+                    paintcraft_document::RasterConversionKey::checked(
+                        paintcraft_document::RasterConversionContext {
+                            source_sha256:Sha256::digest(&bytes).into(),
+                            profile:paintcraft_formats::dcx::IMPORT_IDENTITY_PROFILE,
+                            selection:paintcraft_document::RasterSelection::Page(page),assessment_sha256:None},
+                        decoded.width,decoded.height,&decoded.rgba,image::DECODE_PIXELS_MAX,&check,
+                    )?.hex()
+                } else { sha.clone() };
+                (paintcraft_document::import_image(decoded.width,decoded.height,&decoded.rgba,&document_key)?,decoded.losses)
             };
             let missing = losses
                 .iter()

@@ -185,12 +185,25 @@ impl WebApp {
                     index,
                 )?;
                 let decoded = dcx::decode_page(&pending.source.bytes, index, MAX_PIXELS)?;
+                let key = paintcraft_document::RasterConversionKey::checked(
+                    paintcraft_document::RasterConversionContext {
+                        source_sha256: Sha256::digest(pending.source.bytes.as_slice()).into(),
+                        profile: dcx::IMPORT_IDENTITY_PROFILE,
+                        selection: paintcraft_document::RasterSelection::Page(index),
+                        assessment_sha256: None,
+                    },
+                    decoded.width,
+                    decoded.height,
+                    &decoded.rgba,
+                    MAX_PIXELS,
+                    &|| Ok(()),
+                )?;
                 (
                     paintcraft_document::import_image(
                         decoded.width,
                         decoded.height,
                         &decoded.rgba,
-                        &digest,
+                        &key.hex(),
                     )?,
                     decoded.losses,
                 )

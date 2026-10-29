@@ -211,8 +211,26 @@ pub fn run(a: Options, json: bool) -> Reply {
                 } else {
                     image::decode(&bytes)?
                 };
+                let document_key = if let Some(page) = a.page {
+                    paintcraft_document::RasterConversionKey::checked(
+                        paintcraft_document::RasterConversionContext {
+                            source_sha256: Sha256::digest(&bytes).into(),
+                            profile: paintcraft_formats::dcx::IMPORT_IDENTITY_PROFILE,
+                            selection: paintcraft_document::RasterSelection::Page(page),
+                            assessment_sha256: None,
+                        },
+                        img.width,
+                        img.height,
+                        &img.rgba,
+                        image::DECODE_PIXELS_MAX,
+                        &|| Ok(()),
+                    )?
+                    .hex()
+                } else {
+                    sha.clone()
+                };
                 (
-                    import_image(img.width, img.height, &img.rgba, &sha)?,
+                    import_image(img.width, img.height, &img.rgba, &document_key)?,
                     img.losses,
                 )
             };
