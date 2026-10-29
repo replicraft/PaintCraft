@@ -4,7 +4,10 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 
 mod families;
 pub use families::Family;
+mod input;
 mod policy;
+pub use input::sniff;
+use input::{admit_input, admit_input_with_preflight};
 mod svg;
 pub use policy::STUDIO_STOCK;
 pub use svg::admit_import_svg;
@@ -433,6 +436,10 @@ pub fn admission(request: Request<'_>) -> Decision {
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
+    let selected_tiff_page = request.family == Family::Tiff
+        && request.frontend == Frontend::Studio
+        && request.operation == Operation::ImportConvert
+        && request.variant == Some(crate::tiff_pages::IMPORT_VARIANT);
     let selected_entry = matches!(request.family, Family::Ico | Family::Cur | Family::Icns)
         && request.operation == Operation::ImportConvert
         && request.variant == Some("icon-selected-entry");
@@ -468,6 +475,7 @@ pub fn admission(request: Request<'_>) -> Decision {
     }
     if request.variant.is_some()
         && !selected_page
+        && !selected_tiff_page
         && !fresh_dcx_page
         && !selected_entry
         && !fresh_entry_set
@@ -516,6 +524,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight
+        || selected_tiff_page
         || web_msp2_export
         || native_msp2_export
         || native_dds_texture_export
@@ -623,8 +632,8 @@ pub fn admit_import_ora(
     Ok(family)
 }
 
-/// DCX import is available only with an explicit selected page. It is excluded
-/// from ordinary pickers until a page selector exists in that frontend.
+/// Explicit DCX/TIFF selected-page conversion. Generic TIFF Open keeps its
+/// separate strict single-page reader; this helper never performs pixel decode.
 pub fn admit_import_page(
     frontend: Frontend,
     filename: &str,
@@ -632,6 +641,25 @@ pub fn admit_import_page(
     platform: Platform,
     page: u16,
 ) -> Result<Family> {
+    if sniff(bytes) == Some(Family::Tiff) {
+        let family = admit_input_with_preflight(
+            frontend,
+            filename,
+            bytes,
+            platform,
+            Operation::ImportConvert,
+            Some(crate::tiff_pages::IMPORT_VARIANT),
+        )?;
+        let inventory = crate::tiff_pages::inspect(bytes, &|| Ok(()))?;
+        let selected = inventory
+            .pages()
+            .get(usize::from(page))
+            .ok_or_else(|| Error::new(ErrorCode::InputSchema, "TIFF page index is out of range"))?;
+        if let Some(reason) = selected.unsupported_reason {
+            return Err(Error::new(ErrorCode::CapabilityUnsupported, reason));
+        }
+        return Ok(family);
+    }
     let family = admit_input(
         frontend,
         filename,
@@ -689,106 +717,4 @@ pub fn admit_import_entry(
         ));
     }
     Ok(family)
-}
-
-fn admit_input(
-    frontend: Frontend,
-    filename: &str,
-    bytes: &[u8],
-    platform: Platform,
-    operation: Operation,
-    variant: Option<&str>,
-) -> Result<Family> {
-    let extension = filename
-        .rsplit(['/', '\\'])
-        .next()
-        .and_then(|name| name.rsplit_once('.').map(|(_, ext)| ext));
-    let hint = extension.and_then(Family::from_extension);
-    if let Some(family) = hint {
-        let request = Request::new(frontend, operation, family, platform);
-        // Refuse foreign projects/vectors before content acquisition or codec fallback.
-        if let Some(decision) = policy::deny(request) {
-            decision.require_allowed(request)?;
-        }
-    }
-    // MIF1 is shared with HEIF. A .paint suffix chooses a conversion candidate,
-    // never proves layer semantics; the strict item/pixel decoder still must run.
-    let paint_candidate = operation == Operation::ImportConvert
-        && hint == Some(Family::Paint)
-        && bytes.len() >= 16
-        && bytes.get(4..12) == Some(b"ftypmif1");
-    let sniffed = if paint_candidate {
-        Some(Family::Paint)
-    } else {
-        sniff(bytes)
-    }
-    .ok_or_else(|| Reason::InvalidSignature.error(hint, frontend, operation))?;
-    let mut request = Request::new(frontend, operation, sniffed, platform);
-    request.extension = extension;
-    request.variant = variant;
-    admission(request).require_allowed(request)?;
-    Ok(sniffed)
-}
-
-/// Recognize signatures without invoking a decoder or trusting an extension.
-pub fn sniff(bytes: &[u8]) -> Option<Family> {
-    if crate::ora::has_signature(bytes) {
-        Some(Family::Ora)
-    } else if bytes.len() >= 8 && bytes.starts_with(b"PCND") && bytes[5..8] == [13, 10, 26] {
-        Some(Family::Pcnd)
-    } else if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
-        Some(Family::Png)
-    } else if bytes.starts_with(&[255, 216, 255]) {
-        Some(Family::Jpeg)
-    } else if bytes.starts_with(b"BM") {
-        Some(Family::Bmp)
-    } else if bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a") {
-        Some(Family::Gif)
-    } else if bytes.starts_with(b"II\x2a\0") || bytes.starts_with(b"MM\0\x2a") {
-        Some(Family::Tiff)
-    } else if bytes.starts_with(b"PDN3") {
-        Some(Family::Pdn)
-    } else if bytes.starts_with(b"8BPS\0\x01") {
-        Some(Family::Psd)
-    } else if bytes.starts_with(b"8BPS\0\x02") {
-        Some(Family::Psb)
-    } else if crate::heif::has_signature(bytes) {
-        Some(Family::Heif)
-    } else if crate::jxr::sniff(bytes) {
-        Some(Family::Jxr)
-    } else if bytes.starts_with(b"DDS ") {
-        Some(Family::Dds)
-    } else if bytes.len() >= 8 && bytes.starts_with(b"icns") {
-        Some(Family::Icns)
-    } else if bytes.starts_with(&[0, 0, 1, 0]) {
-        Some(Family::Ico)
-    } else if bytes.starts_with(&[0, 0, 2, 0]) {
-        Some(Family::Cur)
-    } else if bytes.starts_with(&987_654_321u32.to_le_bytes()) {
-        Some(Family::Dcx)
-    } else if bytes.starts_with(b"DanM") || bytes.starts_with(b"LinS") {
-        Some(Family::Msp)
-    } else if bytes.starts_with(b"qoif") {
-        Some(Family::Qoi)
-    } else if bytes.starts_with(b"farbfeld") {
-        Some(Family::Farbfeld)
-    } else if matches!(bytes.get(..2), Some([b'P', b'1'..=b'7']))
-        && bytes.get(2).is_some_and(u8::is_ascii_whitespace)
-    {
-        Some(Family::Pnm)
-    } else if bytes.len() >= 128
-        && bytes[0] == 0x0a
-        && bytes[2] == 1
-        && matches!(bytes[3], 1 | 2 | 4 | 8)
-    {
-        Some(Family::Pcx)
-    } else if bytes.starts_with(b"%PDF-") {
-        Some(Family::Pdf)
-    } else if bytes.starts_with(b"RIFF") && bytes.get(8..12) == Some(b"WEBP") {
-        Some(Family::Webp)
-    } else if crate::image::ImageFormat::sniff(bytes) == Some(crate::image::ImageFormat::Tga) {
-        Some(Family::Tga)
-    } else {
-        None
-    }
 }
