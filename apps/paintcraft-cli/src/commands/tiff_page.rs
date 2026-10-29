@@ -108,6 +108,22 @@ fn assessment_json(value: &Assessment) -> Value {
         ("profile_variant", Value::str(tiff_pages::IMPORT_VARIANT)),
         ("source_sha256", Value::str(hex(&value.source_sha256()))),
         ("source_bytes", Value::Int(value.source_bytes() as i64)),
+        (
+            "source_width",
+            Value::Int(i64::from(value.source_dimensions().0)),
+        ),
+        (
+            "source_height",
+            Value::Int(i64::from(value.source_dimensions().1)),
+        ),
+        (
+            "source_orientation",
+            Value::Int(i64::from(value.descriptor().orientation)),
+        ),
+        (
+            "normalized_orientation",
+            Value::Int(i64::from(value.normalized_orientation())),
+        ),
         ("page_index", Value::Int(i64::from(value.page_index()))),
         ("page_count", Value::Int(i64::from(value.page_count()))),
         ("width", Value::Int(i64::from(value.width()))),

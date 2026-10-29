@@ -399,3 +399,7 @@ impl App {
 #[cfg(test)]
 #[path = "tiff/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "tiff/orientation_consumer_tests.rs"]
+mod orientation_consumer_tests;
