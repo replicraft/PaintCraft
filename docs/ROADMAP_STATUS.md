@@ -7,6 +7,14 @@ with its staged-adoption and performance contracts. The performance pack is
 queued work, not a claim of implementation or measured gains; it does not
 replace the canonical 37-task roadmap or transplant new contracts wholesale.
 
+[PaintCraft 0.1.1 release validation](releases/v0.1.1-validation.md) now records
+successful native desktop/CLI builds, finite helper and installed-consumer checks,
+and packaging on Windows, macOS and Linux for x64 and ARM64. All 24 downloads and
+the checksum manifest were verified and published from the exact tagged source.
+The producer's failed publisher step and successful artifact-reuse publication
+remain separate records. T28 and T35 are partial: these results do not complete
+original-application, security, interactive GUI/GPU or physical-device gates.
+
 [Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well

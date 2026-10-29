@@ -815,9 +815,16 @@
         "T15",
         "T35"
       ],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Target-specific manual/native tests, security protocol, license notices and final capability manifest. Capability manifest claims require profile-scoped executed evidence, not model-test status.",
+      "status": "partial",
+      "evidence": [
+        "docs/releases/v0.1.1-validation.md",
+        ".github/workflows/release.yml",
+        "scripts/packaging/package_release.py",
+        "scripts/packaging/verify_release_run.py",
+        "scripts/packaging/verify_windows_install.ps1",
+        "scripts/packaging/verify_macos_release.py"
+      ],
+      "remaining_or_scope": "Version 0.1.1 has executed six-target native desktop/CLI builds, installed helper consumers, Windows MSI lifecycle checks, macOS DMG/updater verification, Linux package inspection and exact 24-download/checksum publication. The failed producer publisher and successful artifact-reuse controller remain separate evidence. Interactive native/device and complete upgrade/recovery trials, security/permission protocol, full license/asset/branding review and the final capability evidence manifest remain unfinished; publication does not complete this gate.",
       "acceptance": "Target-specific manual/native tests, security protocol, license notices and final capability manifest. Capability manifest claims require profile-scoped executed evidence, not model-test status."
     },
     {
@@ -910,9 +917,16 @@
       "milestone": "RELEASE",
       "title": "Profile-scoped release qualification",
       "depends_on": ["T10", "T15", "T33"],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "QUAL-01..10; synthetic or missing oracle cannot promote a release; foreign fresh/preserving support qualified separately; relevant backend changes invalidate scope.",
+      "status": "partial",
+      "evidence": [
+        "docs/releases/v0.1.1-validation.md",
+        "scripts/packaging/helper_policy.py",
+        "scripts/packaging/qualify_cli_helper.py",
+        "apps/paintcraft-cli/tests/installed_codec_worker.rs",
+        "apps/paintcraft-codec-worker/tests/native_float.rs",
+        "crates/services/paintcraft-platform/src/codec_helper/tests.rs"
+      ],
+      "remaining_or_scope": "The exact v0.1.1 source passed native worker and actual CLI/MCP consumer cases on all six release targets, with V7 held on five targets and public V8 JPEG XR cases on Apple Silicon. This evidence covers only the executed finite helper/package cases, not every codec variant or frontend. QUAL-01..10, original-consumer fresh/preserving and alternating edits, packaged permission probes, clean-install resource independence, broader device/reference matrices and a complete evidence manifest remain unfinished; relevant backend changes require requalification.",
       "acceptance": "QUAL-01..10; synthetic or missing oracle cannot promote a release; foreign fresh/preserving support qualified separately; relevant backend changes invalidate scope."
     },
     {
