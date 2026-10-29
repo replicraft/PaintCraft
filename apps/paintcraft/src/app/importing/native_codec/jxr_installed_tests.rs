@@ -7,6 +7,7 @@ use egui_kittest::{
 };
 use paintcraft_ui::i18n::{Language, translate};
 use std::{fs, time::Instant};
+use uuid::Uuid;
 const INFERRED: &[u8] = include_bytes!(
     "../../../../../../crates/services/paintcraft-formats/tests/jxr-fixtures/rgb8-4x3.jxr"
 );
@@ -20,7 +21,11 @@ fn fixture_real_installed_jxr_review() {
         .unwrap()
         .parent()
         .unwrap()
-        .to_path_buf();
+        .join(format!("legacy-jxr-review-{}", Uuid::new_v4()));
+    // Both the standalone gate and writer gate's child run in one installation.
+    // Keep each invocation's source/rename/hardlink fixtures independent while
+    // helper discovery continues to use the unchanged executable directory.
+    fs::create_dir(&root).unwrap();
     for index in 0..8 {
         let language = if index % 2 == 0 {
             Language::English

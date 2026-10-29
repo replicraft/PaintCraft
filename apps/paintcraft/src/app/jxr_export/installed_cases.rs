@@ -6,7 +6,8 @@ fn fixture_real_export_review_and_guards() {
     export_review_and_guards(Oracle::C);
 }
 pub(super) fn export_review_and_guards(oracle: Oracle) {
-    let root = directory();
+    let root = directory().join(format!("jxr-export-guards-{}", uuid::Uuid::new_v4()));
+    fs::create_dir(&root).unwrap();
     let manifest = resources_manifest_path();
     let original_manifest = fs::read(&manifest).unwrap();
     #[cfg(unix)]

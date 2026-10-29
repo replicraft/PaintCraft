@@ -152,7 +152,8 @@ fn installed_writer() {
     );
 }
 fn fresh_import(width: u32, height: u32, language: Language) {
-    let root = directory();
+    let root = directory().join(format!("jxr-portable-fresh-{}", uuid::Uuid::new_v4()));
+    fs::create_dir(&root).unwrap();
     let (raw, _) = golden(width, height);
     let source = root.join(format!(
         "portable-source-{width}x{height}-{language:?}.pcnd"
