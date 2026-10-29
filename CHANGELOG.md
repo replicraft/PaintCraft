@@ -644,6 +644,7 @@
 - run installed CLI checks before the GUI suite (58ade69)
 - bound copied cancellation fixture debug images (5ea4544)
 - strip debug data from all private Linux codec fixtures (018befd)
+- normalize debug-only installed codec fixtures (8511f19)
 
 
 ### Performance
