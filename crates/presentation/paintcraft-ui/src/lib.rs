@@ -2,6 +2,7 @@
 pub mod actions;
 pub mod brush_resources;
 pub mod chrome;
+pub mod composition;
 pub mod confirmation;
 pub mod dds_export;
 pub mod entry_import;
