@@ -777,3 +777,7 @@ mod msp_tests;
 #[cfg(test)]
 #[path = "files/jpeg_tests.rs"]
 mod jpeg_tests;
+
+#[cfg(test)]
+#[path = "files/bmp_rle_tests.rs"]
+mod bmp_rle_tests;

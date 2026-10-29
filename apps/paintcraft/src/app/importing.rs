@@ -348,3 +348,7 @@ mod stock_tests;
 #[cfg(test)]
 #[path = "importing/jpeg_tests.rs"]
 mod jpeg_tests;
+
+#[cfg(test)]
+#[path = "importing/bmp_rle_tests.rs"]
+mod bmp_rle_tests;
