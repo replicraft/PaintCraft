@@ -7,6 +7,7 @@ use paintcraft_render::render_flat;
 use crate::image::{self, ImageFormat};
 pub mod dds;
 pub mod jxr;
+pub mod metadata_policy;
 pub mod msp;
 pub(crate) mod web_snapshot;
 
@@ -23,7 +24,7 @@ pub fn require_metadata_policy(doc: &Document) -> Result<()> {
 }
 
 /// Loss codes a caller may acknowledge.
-pub const KNOWN_LOSSES: [&str; 12] = [
+pub const KNOWN_LOSSES: [&str; 13] = [
     "flatten",
     "hidden-rgb",
     "lossy-jpeg",
@@ -36,6 +37,7 @@ pub const KNOWN_LOSSES: [&str; 12] = [
     crate::dds::BLOCK_COMPRESSION_LOSS,
     crate::dds::MIP_HIDDEN_RGB_LOSS,
     dds::LINEAR_QUANTIZATION_LOSS,
+    metadata_policy::OMITTED_REASON,
 ];
 
 #[derive(Debug)]
@@ -51,6 +53,8 @@ pub struct FlatOptions {
     pub quality: u8,
     /// An explicit alpha backdrop is valid only for JPEG. None preserves white.
     pub jpeg_matte: Option<image::JpegMatte>,
+    /// Only explicit source-metadata intent can construct an omission witness.
+    pub source_metadata: metadata_policy::Policy,
     pub pcx_mode: crate::pcx::Mode,
     /// None retains the default MSP1 route; explicit versions use guarded monochrome preparation.
     pub msp_version: Option<crate::msp::Version>,
@@ -61,6 +65,7 @@ impl FlatOptions {
             format,
             quality,
             jpeg_matte: None,
+            source_metadata: metadata_policy::Policy::default(),
             pcx_mode: crate::pcx::Mode::Rgb24,
             msp_version: None,
         }
@@ -132,14 +137,24 @@ pub fn export_flat_options_with_check(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<FlatExport> {
     check()?;
-    require_metadata_policy(doc)?;
     let FlatOptions {
         format,
         quality: jpeg_quality,
         jpeg_matte,
+        source_metadata,
         pcx_mode,
         msp_version,
     } = options;
+    let target = metadata_policy::Target::new(
+        crate::registry::Family::from_id(format.name()).ok_or_else(|| {
+            Error::new(
+                ErrorCode::InputSchema,
+                "Unregistered export metadata target",
+            )
+        })?,
+        crate::registry::Operation::ExportFlat,
+    );
+    let metadata_omitted = source_metadata.validate(doc, target)?;
     check_loss_codes(allowed)?;
     if jpeg_matte.is_some() && format != ImageFormat::Jpeg {
         return Err(Error::new(
@@ -162,7 +177,7 @@ pub fn export_flat_options_with_check(
         }
         // Low-level callers own admission, as for the legacy flat facade. Hosts
         // needing retained leases use the two-stage preparation API directly.
-        let prepared = msp::prepare_document_with(
+        let prepared = msp::prepare_document_with_metadata_policy(
             doc,
             version,
             allowed,
@@ -170,6 +185,7 @@ pub fn export_flat_options_with_check(
             |_| Ok(()),
             |doc, _| render(doc),
             check,
+            source_metadata,
         )?;
         let (bytes, losses) = prepared.into_parts();
         return Ok(FlatExport { bytes, losses });
@@ -199,6 +215,9 @@ pub fn export_flat_options_with_check(
         losses.push("palette-quantized".into());
     }
     require_losses(format.name(), &losses, allowed)?;
+    if metadata_omitted {
+        losses.push(metadata_policy::OMITTED_REASON.into());
+    }
     let bytes = if let Some(prepared) = prepared {
         prepared.encode(check)?
     } else if let Some(matte) = jpeg_matte {
