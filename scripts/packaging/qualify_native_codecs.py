@@ -34,6 +34,7 @@ CANDIDATES = {
 }
 APP_INTEGER = "importing::native_codec::jxl_integer_installed_tests::copied_jxl_integer_helper_runs_actual_app_review_and_failure_guards"
 APP_PORTABLE_JXR = "jxr_export::installed_tests::portable::fixture_installed_app_writer_matches_c_qualified_goldens"
+FLOAT_IDENTITY = "codec_worker::native::float::identity_tests::installed_float_settings_have_distinct_stable_converted_document_identities"
 INTEGER_WORKER_TESTS = (
     "actual_integer_family_uses_one_request_and_exact_report_for_both_source_depths",
     "old_exact8_request_never_adopts16_and_new_family_refuses_other_profiles",
@@ -312,6 +313,12 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
         app_copy = copied / app.name
         shutil.copy2(app, app_copy)
         remember(app_copy)
+        formats_copy = copied / formats.name
+        shutil.copy2(formats, formats_copy)
+        remember(formats_copy)
+        exact(runner, "float-document-identity", formats_copy, FLOAT_IDENTITY, fnames,
+              release.ROOT, fixture_env, ignored=True)
+        receipt["phases"]["float_conversion_identity"] = FLOAT_IDENTITY
         exact(runner, "app-legacy-jxr", app_copy, APP_LEGACY, anames, release.ROOT, fixture_env, ignored=True)
         if candidate in ("v9", "v10"):
             exact(runner, "app-integer-jxl", app_copy, APP_INTEGER, anames,

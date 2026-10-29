@@ -27,6 +27,7 @@ WORKER_TESTS = (
 CLI_INTEGER = "jxl_integer::actual_cli_and_mcp_integer_jxl_consent_pixels_receipts_and_guards"
 APP_INTEGER = "importing::native_codec::jxl_integer_installed_tests::copied_jxl_integer_helper_runs_actual_app_review_and_failure_guards"
 APP_PORTABLE_JXR = "jxr_export::installed_tests::portable::fixture_installed_app_writer_matches_c_qualified_goldens"
+FLOAT_IDENTITY = "codec_worker::native::float::identity_tests::installed_float_settings_have_distinct_stable_converted_document_identities"
 CORE_GROUPS = (
     "dds::", "export::dds::", "export::jxr::",
     "codec_worker::native::jxr_encode::tests::",
@@ -78,7 +79,10 @@ class Scenario:
         self.cli_test = self.test_artifact("installed_codec_worker", ["ordinary_control", *cli_names])
         self.cli_record = self.artifact("paintcraft-cli", self.cli, test=False, kind=["bin"])
         self.dds_cli = self.test_artifact("dds_texture_export", ["dds_cli_control"])
-        self.formats = self.test_artifact("paintcraft_formats", [p + "control" for p in CORE_GROUPS])
+        formats_names = [p + "control" for p in CORE_GROUPS]
+        if mutation != "missing-float-identity":
+            formats_names.append(FLOAT_IDENTITY)
+        self.formats = self.test_artifact("paintcraft_formats", formats_names)
         self.platform = self.test_artifact("paintcraft_platform", ["codec_helper::control"])
         self.dds = self.test_artifact("dds_texture_write", [
             "dds_texture_vectors_match_independently_measured_frozen_specimens"])
@@ -159,7 +163,8 @@ class Scenario:
                             count = 1
                         if ((scenario.mutation == "zero-cli" and CLI_INTEGER in argv) or
                                 (scenario.mutation == "zero-app" and APP_INTEGER in argv) or
-                                (scenario.mutation == "zero-app-writer" and APP_PORTABLE_JXR in argv)):
+                                (scenario.mutation == "zero-app-writer" and APP_PORTABLE_JXR in argv) or
+                                (scenario.mutation == "zero-float-identity" and FLOAT_IDENTITY in argv)):
                             count = 0
                         value = f"running {count} tests\ntest result: ok. {count} passed; 0 failed;\n"
                 path.write_text(value, encoding="utf-8")
@@ -235,7 +240,7 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                     self.assertEqual((installed / flow.helper.name).read_bytes(), flow.helper.read_bytes())
                     self.assertTrue(list((flow.output / "candidate/archives").glob("SHA256SUMS.txt")))
                     phases = flow.phases()
-                    for name in ("integer-worker-0", "integer-worker-1", "cli-ordinary",
+                    for name in ("integer-worker-0", "integer-worker-1", "cli-ordinary", "float-document-identity",
                                  "app-legacy-jxr", "app-integer-jxl", "source-final", "source-final-status"):
                         self.assertEqual(phases.count(name), 1)
                     integer_cli = [row for row in flow.calls if CLI_INTEGER in row[1]]
@@ -270,7 +275,24 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                         self.assertEqual(writer[0][2]["PAINTCRAFT_JXR_PUBLIC_HELPER"],
                                          str(flow.output / "app-installation" / flow.helper.name))
                         self.assertLess(phases.index("app-jxr-portable"), phases.index("source-final"))
+                    identity = next(row for row in flow.calls if row[0] == "float-document-identity")
+                    self.assertEqual(identity[1][1], FLOAT_IDENTITY)
+                    self.assertIn("--exact", identity[1])
+                    self.assertIn("--ignored", identity[1])
+                    self.assertEqual(Path(identity[1][0]).parent, flow.output / "app-installation")
+                    self.assertEqual(receipt["phases"]["float_conversion_identity"], FLOAT_IDENTITY)
         self.assertEqual(helper_policy.ROLLOUT, policy)
+
+    def test_float_identity_gate_cannot_be_missing_or_execute_zero_tests(self):
+        self.assertEqual(qualification.FLOAT_IDENTITY, FLOAT_IDENTITY)
+        for candidate in ("v9", "v10"):
+            for target in release.TARGETS:
+                for mutation, message in (("missing-float-identity", "Missing or ambiguous"),
+                                          ("zero-float-identity", "count")):
+                    with self.subTest(candidate=candidate, target=target, mutation=mutation):
+                        flow = self.scenario(candidate, target, mutation=mutation)
+                        self.assert_failed(flow, message, forbidden="app-legacy-jxr")
+                        self.assertNotIn("source-final", flow.phases())
 
     def test_portable_writer_gate_is_exact_and_mandatory_on_every_v10_target(self):
         self.assertEqual(qualification.APP_PORTABLE_JXR, APP_PORTABLE_JXR)
