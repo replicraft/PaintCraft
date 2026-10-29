@@ -18,6 +18,8 @@ pub use extended::ENCODE_PIXELS_MAX as EXTENDED_ENCODE_PIXELS_MAX;
 pub(crate) use extended::inspect_pcx;
 pub mod bmp_metadata;
 mod gif;
+mod identity;
+pub use identity::{JPEG_IDENTITY_PROFILE, document_conversion_key};
 pub mod jpeg;
 mod png_indexed;
 pub mod png_metadata;

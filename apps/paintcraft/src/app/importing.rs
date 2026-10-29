@@ -344,3 +344,7 @@ mod tests;
 #[cfg(test)]
 #[path = "importing/stock_tests.rs"]
 mod stock_tests;
+
+#[cfg(test)]
+#[path = "importing/jpeg_tests.rs"]
+mod jpeg_tests;

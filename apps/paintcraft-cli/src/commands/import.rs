@@ -228,7 +228,9 @@ pub fn run(a: Options, json: bool) -> Reply {
                     )?
                     .hex()
                 } else {
-                    sha.clone()
+                    image::document_conversion_key(&bytes, &img, &|| Ok(()))?
+                        .map(|key| key.hex())
+                        .unwrap_or_else(|| sha.clone())
                 };
                 (
                     import_image(img.width, img.height, &img.rgba, &document_key)?,

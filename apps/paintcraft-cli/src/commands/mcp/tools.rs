@@ -226,7 +226,7 @@ impl PaintingServer {
                             selection:paintcraft_document::RasterSelection::Page(page),assessment_sha256:None},
                         decoded.width,decoded.height,&decoded.rgba,image::DECODE_PIXELS_MAX,&check,
                     )?.hex()
-                } else { sha.clone() };
+                } else { image::document_conversion_key(&bytes,&decoded,&check)?.map(|key|key.hex()).unwrap_or_else(||sha.clone()) };
                 (paintcraft_document::import_image(decoded.width,decoded.height,&decoded.rgba,&document_key)?,decoded.losses)
             };
             let missing = losses

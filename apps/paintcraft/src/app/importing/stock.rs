@@ -11,6 +11,7 @@ impl App {
         self.guard_asset_adoption(&path, Some(&identity))?;
         let sha256: [u8; 32] = Sha256::digest(&bytes).into();
         let image = image::decode(&bytes)?;
+        let raster_key = image::document_conversion_key(&bytes, &image, &|| Ok(()))?;
         identity.verify_bytes(&path, bytes.len() as u64, &sha256, &|| Ok(()))?;
         let guard = crate::destination::SourceGuard {
             path: path.clone(),
@@ -19,6 +20,7 @@ impl App {
         if !image.losses.is_empty() {
             self.stage_import(image, path, hex(&sha256), convert)?;
             let pending = self.pending_import.as_mut().unwrap();
+            pending.raster_key = raster_key;
             pending.captured_source = Some(CapturedSource {
                 identity,
                 bytes: bytes.len() as u64,
@@ -27,7 +29,10 @@ impl App {
             pending.auxiliary_sources.push(guard);
             return Ok(());
         }
-        let doc = import_image(image.width, image.height, &image.rgba, &hex(&sha256))?;
+        let key = raster_key
+            .map(|key| key.hex())
+            .unwrap_or_else(|| hex(&sha256));
+        let doc = import_image(image.width, image.height, &image.rgba, &key)?;
         identity.verify_bytes(&path, bytes.len() as u64, &sha256, &|| Ok(()))?;
         self.install(Editor::with_document(doc, None))?;
         self.bound = None;

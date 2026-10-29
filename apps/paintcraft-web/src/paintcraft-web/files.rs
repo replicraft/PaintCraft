@@ -358,12 +358,14 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
         });
     }
     let image = image::decode_with_pixel_limit(bytes, MAX_PIXELS)?;
-    let sha = paintcraft_document::hex(&Sha256::digest(bytes));
+    let key = image::document_conversion_key(bytes, &image, &|| Ok(()))?
+        .map(|key| key.hex())
+        .unwrap_or_else(|| paintcraft_document::hex(&Sha256::digest(bytes)));
     Ok(Loaded {
         raster_preview: true,
         converted_copy: convert
             || (image.format == image::ImageFormat::Dds && !image.losses.is_empty()),
-        document: paintcraft_document::import_image(image.width, image.height, &image.rgba, &sha)?,
+        document: paintcraft_document::import_image(image.width, image.height, &image.rgba, &key)?,
         name,
         losses: image.losses,
     })
@@ -771,3 +773,7 @@ mod ora_tests;
 #[cfg(test)]
 #[path = "files/msp_tests.rs"]
 mod msp_tests;
+
+#[cfg(test)]
+#[path = "files/jpeg_tests.rs"]
+mod jpeg_tests;
