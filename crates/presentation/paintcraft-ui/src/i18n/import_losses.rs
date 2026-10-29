@@ -16,6 +16,17 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "depth-16-reduced-to-8" => "High-depth samples will be reduced from 16-bit to 8-bit.",
         "icc-profile-ignored" => "ICC color profiles will not be retained.",
         "exif-metadata-ignored" => "EXIF metadata will not be retained.",
+        "png-color-metadata-ignored" => {
+            "PNG color declarations will not be retained or used for color management."
+        }
+        "bmp-color-metadata-ignored" => {
+            "BMP color declarations will not be retained or used for color management."
+        }
+        "png-metadata-ignored" => "PNG metadata will not be retained.",
+        "bmp-metadata-ignored" => "BMP metadata will not be retained.",
+        "resolution-metadata-ignored" => {
+            "Image resolution metadata will not be retained; pixel dimensions will stay unchanged."
+        }
         "animation-first-frame-only" => "Only the first animation frame will be imported.",
         "palette-indices-expanded" => "Palette entries will be expanded to RGBA pixels.",
         "icon-palette-expanded" => "Palette entries will be expanded to RGBA pixels.",
@@ -120,6 +131,11 @@ mod tests {
     #[test]
     fn extended_conversion_limitations_are_translated_in_every_language() {
         for code in [
+            "png-color-metadata-ignored",
+            "bmp-color-metadata-ignored",
+            "png-metadata-ignored",
+            "bmp-metadata-ignored",
+            "resolution-metadata-ignored",
             "dds-other-mips-not-imported",
             "ora-group-structure-not-retained",
             "hdr-precision-reduced-to-8",

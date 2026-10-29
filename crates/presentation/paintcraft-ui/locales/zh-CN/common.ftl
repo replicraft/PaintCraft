@@ -524,3 +524,8 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = 原生笔输入已停止。您可以继续使用鼠标并保存作品。
 
 only-the-selected-tiff-page-will-be-imported = 仅导入所选的 TIFF 页面。
+png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG 颜色声明不会保留，也不会用于色彩管理。
+bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP 颜色声明不会保留，也不会用于色彩管理。
+png-metadata-will-not-be-retained = PNG 元数据不会保留。
+bmp-metadata-will-not-be-retained = BMP 元数据不会保留。
+image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = 图像分辨率元数据不会保留，像素尺寸保持不变。

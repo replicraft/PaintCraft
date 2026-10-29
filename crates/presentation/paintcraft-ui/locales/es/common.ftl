@@ -524,3 +524,8 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = La entrada nativa del lápiz se ha detenido. Puedes seguir usando el ratón y guardar tu trabajo.
 
 only-the-selected-tiff-page-will-be-imported = Solo se importará la página TIFF seleccionada.
+png-color-declarations-will-not-be-retained-or-used-for-color-management = Las declaraciones de color de PNG no se conservarán ni se usarán para la gestión del color.
+bmp-color-declarations-will-not-be-retained-or-used-for-color-management = Las declaraciones de color de BMP no se conservarán ni se usarán para la gestión del color.
+png-metadata-will-not-be-retained = Los metadatos PNG no se conservarán.
+bmp-metadata-will-not-be-retained = Los metadatos BMP no se conservarán.
+image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = Los metadatos de resolución de la imagen no se conservarán; las dimensiones en píxeles no cambiarán.

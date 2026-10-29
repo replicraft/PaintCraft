@@ -524,3 +524,8 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = ネイティブのペン入力が停止しました。マウスを使って作業を続け、保存できます。
 
 only-the-selected-tiff-page-will-be-imported = 選択した TIFF のページのみを読み込みます。
+png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG の色の定義は保持されず、カラーマネジメントにも使用されません。
+bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP の色の定義は保持されず、カラーマネジメントにも使用されません。
+png-metadata-will-not-be-retained = PNG のメタデータは保持されません。
+bmp-metadata-will-not-be-retained = BMP のメタデータは保持されません。
+image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = 画像の解像度のメタデータは保持されません。ピクセル単位の寸法は変わりません。
