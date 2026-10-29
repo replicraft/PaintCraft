@@ -286,3 +286,19 @@ fn bmp_pixel_offset_cannot_overlap_its_header() {
     bytes[10..14].copy_from_slice(&14u32.to_le_bytes());
     assert_eq!(decode(&bytes).unwrap_err().code, ErrorCode::CodecFailed);
 }
+
+#[test]
+fn bmp_caller_pixel_admission_precedes_palette_sample_scanning() {
+    // The header alone exceeds the caller allowance. Do not walk potentially
+    // huge packed rows before discovering that the caller cannot admit them.
+    let bytes = bmp(8, 3, 1, 0, &[[13, 71, 201]], &[1, 1, 1, 0]);
+    assert_eq!(
+        decode_with_pixel_limit(&bytes, 2).unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
+    // With enough admission the actual malformed palette sample is checked.
+    assert_eq!(
+        decode_with_pixel_limit(&bytes, 3).unwrap_err().code,
+        ErrorCode::CodecFailed
+    );
+}

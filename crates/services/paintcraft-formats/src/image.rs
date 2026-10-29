@@ -391,7 +391,7 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
         _ => Vec::new(),
     };
     if format == ImageFormat::Bmp {
-        admit_bmp(bytes)?;
+        admit_bmp(bytes, pixels)?;
         losses.extend(
             bmp_metadata::inspect(bytes, pixels, &|| Ok(()))?
                 .losses()
@@ -644,7 +644,7 @@ fn le32(bytes: &[u8], offset: usize) -> Result<u32> {
         value.try_into().expect("four checked bytes"),
     ))
 }
-fn admit_bmp(bytes: &[u8]) -> Result<()> {
+fn admit_bmp(bytes: &[u8], pixels: u64) -> Result<()> {
     let (header, _) =
         BmpHeader::read_from_prefix(bytes).map_err(|_| codec("truncated BMP header"))?;
     let (dib, w, h, bpp, compression) = (
@@ -662,6 +662,12 @@ fn admit_bmp(bytes: &[u8]) -> Result<()> {
     }
     let (width, height) = (w as u32, h.unsigned_abs());
     check_size(u64::from(width), u64::from(height))?;
+    if u64::from(width) * u64::from(height) > pixels {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "BMP exceeds the caller pixel allowance",
+        ));
+    }
     if !matches!(bpp, 1 | 4 | 8 | 24 | 32) {
         return Err(unsupported("unsupported BMP bit depth"));
     }
