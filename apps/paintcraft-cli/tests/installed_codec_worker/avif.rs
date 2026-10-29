@@ -20,8 +20,10 @@ fn installation() -> Installation {
                 | Some(wire::AVIF_SDR_NATIVE_PROFILE)
                 | Some(wire::FLOAT_NATIVE_PROFILE)
                 | Some(wire::jxr_encode::qualified::NATIVE_PROFILE)
+                | Some(wire::jxl_integer::contracts::base::NATIVE_PROFILE)
+                | Some(wire::jxl_integer::contracts::writer::NATIVE_PROFILE)
         ),
-        "Build an actual V5, V6 or V7 AVIF-capable helper first"
+        "Build an actual public V5 through V10 AVIF-capable helper first"
     );
     installation
 }

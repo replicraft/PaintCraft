@@ -141,37 +141,41 @@ impl Installation {
         let manifest = directory.join("paintcraft-codec-worker.json");
         let value: serde_json::Value =
             serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
-        if value["profile"].as_str() == Some(wire::jxr_encode::qualified::NATIVE_PROFILE) {
-            assert_eq!(value["schema_version"], 3);
-            assert_eq!(value["encode_protocol_version"], 1);
-            assert_eq!(
-                value["qualified_import_variants"],
-                serde_json::json!(wire::jxr_encode::qualified::IMPORT_VARIANTS)
-            );
-            assert_eq!(
-                value["qualified_export_variants"],
-                serde_json::json!(wire::jxr_encode::qualified::EXPORT_VARIANTS)
-            );
-            let bytes = fs::read(&helper).unwrap();
-            let record = wire::jxr_encode::qualified::BUILD_RECORD;
-            assert_eq!(
-                bytes
-                    .windows(record.len())
-                    .filter(|part| *part == record)
-                    .count(),
-                1
-            );
-        } else {
-            assert_eq!(value["profile"], wire::FLOAT_NATIVE_PROFILE);
-            assert_eq!(
-                value["qualified_import_variants"],
-                serde_json::json!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS)
-            );
-        }
-        assert_eq!(
-            value["sha256"],
-            hex(&Sha256::digest(fs::read(&helper).unwrap()))
+        assert!(!helper.is_symlink() && !manifest.is_symlink() && !cli.is_symlink());
+        let bytes = fs::read(&helper).unwrap();
+        let (profile, variants) =
+            codec_contract::helper_contract(&bytes, env!("CARGO_PKG_VERSION"))
+                .expect("exact single nonprivate helper declaration required");
+        assert!(matches!(
+            profile,
+            wire::FLOAT_NATIVE_PROFILE
+                | wire::jxr_encode::qualified::NATIVE_PROFILE
+                | wire::jxl_integer::contracts::base::NATIVE_PROFILE
+                | wire::jxl_integer::contracts::writer::NATIVE_PROFILE
+        ));
+        let writer = matches!(
+            profile,
+            wire::jxr_encode::qualified::NATIVE_PROFILE
+                | wire::jxl_integer::contracts::writer::NATIVE_PROFILE
         );
+        let mut expected = serde_json::json!({
+            "schema_version": if writer { 3 } else { 2 },
+            "embedded_build_record_verified": true,
+            "application_version": env!("CARGO_PKG_VERSION"),
+            "target": target(),
+            "executable": helper.file_name().unwrap().to_str().unwrap(),
+            "sha256": hex(&Sha256::digest(&bytes)),
+            "protocol_version": wire::PROTOCOL_VERSION,
+            "profile": profile,
+            "requested_heap_ceiling_bytes": wire::HEAP_BYTES,
+            "qualified_import_variants": variants,
+        });
+        if writer {
+            expected["encode_protocol_version"] = serde_json::json!(1);
+            expected["qualified_export_variants"] =
+                serde_json::json!(wire::jxr_encode::qualified::EXPORT_VARIANTS);
+        }
+        assert_eq!(value, expected);
         assert!(cli.is_file());
         eprintln!(
             "final-installed cli_sha256={} helper_sha256={}",
@@ -560,10 +564,19 @@ fn installed_mcp_native_jxl_adoption_and_source_guards() {
     assert_eq!(imported["width"], 3);
     assert_eq!(imported["height"], 2);
     assert_eq!(imported["dirty"], true);
-    assert_eq!(
-        imported["conversion"]["decoder_profile"],
+    let helper_bytes = fs::read(&installation.helper).unwrap();
+    let (helper_profile, _) =
+        codec_contract::helper_contract(&helper_bytes, env!("CARGO_PKG_VERSION")).unwrap();
+    let expected_profile = if matches!(
+        helper_profile,
+        wire::jxl_integer::contracts::base::NATIVE_PROFILE
+            | wire::jxl_integer::contracts::writer::NATIVE_PROFILE
+    ) {
+        wire::jxl_integer::contracts::IMPORT_VARIANT
+    } else {
         wire::NATIVE_JXL_IMPORT_VARIANT
-    );
+    };
+    assert_eq!(imported["conversion"]["decoder_profile"], expected_profile);
     let source_alias = installation.root.join("source-alias.pcnd");
     fs::hard_link(&input, &source_alias).unwrap();
     assert_eq!(
