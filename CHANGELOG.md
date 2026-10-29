@@ -509,6 +509,8 @@
 - scope native host helpers to supported platforms (b0cd93b)
 - synchronize parser harness with release package versions (d38eb79)
 - identify complete codec build declarations (ec4f96f)
+- isolate helper installations from compiler caches (126e667)
+- verify complete streaming build declarations (724425d)
 
 
 ### Maintenance
