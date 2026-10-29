@@ -37,6 +37,11 @@ struct Prepared {
     lease: Option<bridge::Lease>,
 }
 impl Prepared {
+    fn requires_consent(&self) -> bool {
+        self.losses
+            .iter()
+            .any(|loss| loss != paintcraft_formats::export::metadata_policy::OMITTED_REASON)
+    }
     #[cfg(test)]
     fn bytes(&self) -> &[u8] {
         &self.response[self.encoded.clone()]
@@ -45,6 +50,7 @@ impl Prepared {
 type Outcome<T> = Rc<RefCell<Option<Result<T>>>>;
 #[derive(Debug)]
 struct Pending {
+    omit_source_metadata: bool,
     version: Version,
     result: Outcome<Prepared>,
     cancelled: Rc<Cell<bool>>,
@@ -52,6 +58,9 @@ struct Pending {
     cancellation: Rc<RefCell<Option<bridge::Cancellation>>>,
 }
 struct Review {
+    frozen: super::exporting::Frozen,
+    omit_source_metadata: bool,
+    plan: Option<wire::SourcePlan>,
     owner: crate::importing::Owner,
     name: String,
     filename: String,
@@ -73,6 +82,7 @@ impl std::fmt::Debug for Review {
 impl Review {
     fn current(&self, app: &WebApp) -> bool {
         self.owner.current(app)
+            && self.frozen.current(app)
             && self.name == app.name
             && self.version == app.msp_version
             && self.version == Version::RowRleV2
@@ -91,15 +101,42 @@ impl Review {
     fn take_ready(&mut self, frame: u64) -> Result<Prepared> {
         let prepared = self.prepared.as_ref().ok_or_else(stale)?;
         if self.version != Version::RowRleV2
-            || prepared.header.owner != self.owner.wire()
-            || (!prepared.losses.is_empty() && !self.approved)
+            || !self.matches_prepared(prepared)
+            || (prepared.requires_consent() && !self.approved)
             || self.shown.is_none_or(|f| f >= frame)
         {
             return Err(stale());
         }
         self.prepared.take().ok_or_else(stale)
     }
+    fn waiting_metadata_choice(&self) -> bool {
+        self.frozen.document.source_metadata.is_some() && !self.omit_source_metadata
+    }
+    fn wire_owner(&self) -> paintcraft_formats::codec_worker::Owner {
+        let mut owner = self.owner.wire();
+        owner.state = self.frozen.document.state_id;
+        owner
+    }
+    fn matches_prepared(&self, prepared: &Prepared) -> bool {
+        self.omit_source_metadata == prepared.header.metadata.omit_intent()
+            && prepared.header.owner == self.wire_owner()
+            && self.plan.as_ref().is_some_and(|plan| {
+                plan.metadata_context() == prepared.header.metadata
+                    && plan.validate_metadata_policy(&self.frozen.document).is_ok()
+            })
+    }
+    fn revoke_metadata_intent(&mut self) {
+        if let Some(pending) = self.pending.take() {
+            pending.cancelled.set(true);
+            #[cfg(target_arch = "wasm32")]
+            if let Some(ticket) = pending.cancellation.borrow().as_ref() {
+                ticket.cancel();
+            }
+        }
+        self.retire_preview();
+    }
     fn retire_preview(&mut self) {
+        self.plan = None;
         self.prepared = None;
         self.texture = None;
         self.shown = None;
@@ -175,8 +212,16 @@ impl WebApp {
                     "MSP2 filename allowance",
                 ));
             }
+            let frozen = match &self.export_frozen {
+                Some(frozen) if frozen.current(self) => frozen.clone(),
+                Some(_) => return Err(stale()),
+                None => super::exporting::Frozen::capture(self)?,
+            };
             let owner = crate::importing::Owner::capture(self);
             let mut review = Review {
+                frozen,
+                omit_source_metadata: false,
+                plan: None,
                 owner,
                 name: self.name.clone(),
                 filename: self.download_name(Some(ImageExport::Msp)),
@@ -201,8 +246,24 @@ impl WebApp {
     }
     fn launch_msp(&self, review: &mut Review, ctx: &egui::Context) {
         let result: Result<()> = (|| {
-            let doc = self.editor.session.snapshot();
-            let plan = wire::SourcePlan::capture(&doc)?;
+            if review.waiting_metadata_choice() {
+                return Ok(());
+            }
+            let doc = review.frozen.document.clone();
+            let policy = paintcraft_formats::export::metadata_policy::Policy::capture(
+                &doc,
+                paintcraft_formats::export::metadata_policy::Target::new(
+                    paintcraft_formats::registry::Family::Msp,
+                    paintcraft_formats::registry::Operation::ExportFlat,
+                ),
+                if review.omit_source_metadata {
+                    paintcraft_formats::export::metadata_policy::Intent::Omit
+                } else {
+                    paintcraft_formats::export::metadata_policy::Intent::Refuse
+                },
+            )?;
+            let plan = wire::SourcePlan::capture_with_metadata_policy(&doc, policy)?;
+            review.plan = Some(plan.clone());
             #[cfg(target_arch = "wasm32")]
             {
                 let service = self
@@ -219,7 +280,7 @@ impl WebApp {
                 let stop = cancelled.clone();
                 let cancellation = Rc::new(RefCell::new(None));
                 let token = cancellation.clone();
-                let owner = review.owner.wire();
+                let owner = review.wire_owner();
                 let nonce = uuid::Uuid::new_v4();
                 let ctx = ctx.clone();
                 wasm_bindgen_futures::spawn_local(async move {
@@ -235,6 +296,7 @@ impl WebApp {
                     ctx.request_repaint();
                 });
                 review.pending = Some(Pending {
+                    omit_source_metadata: review.omit_source_metadata,
                     version: review.version,
                     result,
                     cancelled,
@@ -288,12 +350,15 @@ impl WebApp {
             .and_then(|p| p.result.borrow_mut().take())
         {
             let pending = review.pending.take().unwrap();
-            if pending.version == review.version {
+            if pending.version == review.version
+                && pending.omit_source_metadata == review.omit_source_metadata
+            {
                 match value {
-                    Ok(prepared) => {
+                    Ok(prepared) if review.matches_prepared(&prepared) => {
                         review.approved = false;
                         review.prepared = Some(prepared);
                     }
+                    Ok(_) => review.error = Some(stale()),
                     Err(error) => review.error = Some(error),
                 }
             }

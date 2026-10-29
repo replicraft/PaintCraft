@@ -25,11 +25,16 @@ fn artifact(
     let bytes = wire::execute(&request, env!("CARGO_PKG_VERSION"), &|| Ok(())).unwrap();
     (header, bytes)
 }
-fn review(app: &WebApp) -> Review {
+fn review(app: &mut WebApp) -> Review {
+    let frozen = super::super::exporting::Frozen::capture(app).unwrap();
+    let plan = wire::SourcePlan::capture(&frozen.document).unwrap();
     let owner = crate::importing::Owner::capture(app);
     let (header, bytes) = artifact(app.editor.session.document(), owner.wire());
     let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
     Review {
+        frozen,
+        plan: Some(plan),
+        omit_source_metadata: false,
         owner,
         name: app.name.clone(),
         filename: "copy.msp".into(),
@@ -114,7 +119,7 @@ fn actual_en_ja_preview_requires_consent_and_version_change_returns_to_unchanged
         let before = h.state().editor.session.snapshot();
         let ticket = h.state().editor.session.ticket();
         let name = h.state().name.clone();
-        let r = review(h.state());
+        let r = review(h.state_mut());
         assert_eq!(
             r.prepared.as_ref().unwrap().losses,
             ["flatten", "hidden-rgb"]
@@ -162,11 +167,12 @@ fn source_owner_name_modal_or_version_change_cancels_without_adopting_late_resul
         h.state_mut().editor = Editor::from_document(document()).unwrap();
         h.state_mut().export_confirm = Some(ImageExport::Msp);
         h.state_mut().msp_version = Version::RowRleV2;
-        let mut r = review(h.state());
+        let mut r = review(h.state_mut());
         r.prepared = None;
         let target = Rc::new(RefCell::new(None));
         let cancelled = Rc::new(Cell::new(false));
         r.pending = Some(Pending {
+            omit_source_metadata: false,
             version: Version::RowRleV2,
             result: target.clone(),
             cancelled: cancelled.clone(),
@@ -211,7 +217,7 @@ fn preview_cannot_cross_a_prepared_owner_or_current_frame_and_cancel_keeps_sourc
     h.state_mut().editor = Editor::from_document(document()).unwrap();
     h.state_mut().msp_version = Version::RowRleV2;
     h.state_mut().export_confirm = Some(ImageExport::Msp);
-    let mut r = review(h.state());
+    let mut r = review(h.state_mut());
     r.shown = Some(2);
     assert!(r.take_ready(2).is_err());
     r.prepared.as_mut().unwrap().header.owner.epoch += 1;
@@ -245,7 +251,7 @@ fn compact_preview_and_footer_remain_reachable_with_a_full_visible_image() {
     h.state_mut().msp_version = Version::RowRleV2;
     let before = h.state().editor.session.snapshot();
     let ticket = h.state().editor.session.ticket();
-    h.state_mut().msp.review = Some(review(h.state()));
+    h.state_mut().msp.review = Some(review(h.state_mut()));
     h.run();
     assert!(h.state().msp.review.as_ref().unwrap().shown.is_some());
     let download = h.get_by_label("Download MSP");
@@ -273,13 +279,14 @@ fn stale_view_and_finish_retire_only_their_own_export_modal() {
                 h.state_mut().editor = Editor::from_document(document()).unwrap();
                 h.state_mut().msp_version = Version::RowRleV2;
                 h.state_mut().export_confirm = Some(ImageExport::Msp);
-                let mut r = review(h.state());
+                let mut r = review(h.state_mut());
                 r.shown = Some(0);
                 r.approved = true;
                 let cancelled = Rc::new(Cell::new(false));
                 if !prepared {
                     r.prepared = None;
                     r.pending = Some(Pending {
+                        omit_source_metadata: false,
                         version: Version::RowRleV2,
                         result: Rc::new(RefCell::new(None)),
                         cancelled: cancelled.clone(),

@@ -12,14 +12,22 @@ fn document() -> paintcraft_document::Document {
     .unwrap()
 }
 fn artifact(doc: &paintcraft_document::Document, settings: Settings) -> (wire::Header, Vec<u8>) {
-    let plan = wire::SourcePlan::capture(doc, options(settings)).unwrap();
-    let source = plan.snapshot(doc).unwrap();
     let owner = paintcraft_formats::codec_worker::Owner {
         session: doc.document_id,
         state: doc.state_id,
         epoch: 1,
         frontend: 3,
     };
+
+    artifact_owned(doc, settings, owner)
+}
+fn artifact_owned(
+    doc: &paintcraft_document::Document,
+    settings: Settings,
+    owner: paintcraft_formats::codec_worker::Owner,
+) -> (wire::Header, Vec<u8>) {
+    let plan = wire::SourcePlan::capture(doc, options(settings)).unwrap();
+    let source = plan.snapshot(doc).unwrap();
     let header = wire::Header::capture(&plan, &source, owner, uuid::Uuid::new_v4()).unwrap();
     let mut request = header.encode().to_vec();
     request.extend(source);
@@ -94,10 +102,15 @@ fn post_admission_ui_displays_preview_and_losses_without_touching_source_in_en_a
             transfer: controls::Transfer::Linear8,
             ..Default::default()
         };
-        let (header, bytes) = artifact(&snapshot, settings);
-        let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
         let owner = crate::importing::Owner::capture(h.state());
+        let (header, bytes) = artifact_owned(&snapshot, settings, owner.wire());
+        let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
+        let frozen = super::super::exporting::Frozen::capture(h.state_mut()).unwrap();
+        let plan = wire::SourcePlan::capture(&frozen.document, options(settings)).unwrap();
         h.state_mut().dds.review = Some(Review {
+            frozen,
+            plan: Some(plan),
+            omit_source_metadata: false,
             owner,
             name: name.clone(),
             filename: "copy.dds".into(),
@@ -209,16 +222,25 @@ fn validated_refusal_marks_completion_but_malformed_refusal_does_not() {
     assert!(!completed);
 }
 
-fn pending_review(app: &WebApp, settings: Settings) -> (Review, Outcome<Prepared>, Rc<Cell<bool>>) {
+fn pending_review(
+    app: &mut WebApp,
+    settings: Settings,
+) -> (Review, Outcome<Prepared>, Rc<Cell<bool>>) {
+    let frozen = super::super::exporting::Frozen::capture(app).unwrap();
+    let plan = wire::SourcePlan::capture(&frozen.document, options(settings)).unwrap();
     let result = Rc::new(RefCell::new(None));
     let cancelled = Rc::new(Cell::new(false));
     (
         Review {
+            frozen,
+            plan: Some(plan),
+            omit_source_metadata: false,
             owner: crate::importing::Owner::capture(app),
             name: app.name.clone(),
             filename: "copy.dds".into(),
             settings,
             pending: Some(Pending {
+                omit_source_metadata: false,
                 settings,
                 result: result.clone(),
                 cancelled: cancelled.clone(),
@@ -243,7 +265,7 @@ fn settings_changes_drain_old_completion_without_reusing_its_preview() {
     h.state_mut().export_confirm = Some(ImageExport::Dds);
     let snapshot = h.state().editor.session.snapshot();
     let ticket = h.state().editor.session.ticket();
-    let (mut review, target, cancelled) = pending_review(h.state(), Settings::default());
+    let (mut review, target, cancelled) = pending_review(h.state_mut(), Settings::default());
     review.settings.transfer = controls::Transfer::Linear8;
     review.retire_preview();
     h.state_mut().dds.review = Some(review);
@@ -275,7 +297,7 @@ fn source_owner_or_modal_change_retires_pending_work_and_preserves_foreign_modal
         h.state_mut().frontend = Frontend::Studio;
         h.state_mut().editor = Editor::from_document(document()).unwrap();
         h.state_mut().export_confirm = Some(ImageExport::Dds);
-        let (review, _target, cancelled) = pending_review(h.state(), Settings::default());
+        let (review, _target, cancelled) = pending_review(h.state_mut(), Settings::default());
         h.state_mut().dds.review = Some(review);
         match case {
             0 => h.state_mut().name = "renamed.pcnd".into(),
@@ -333,9 +355,10 @@ fn compact_review_keeps_footer_reachable_and_requires_a_fully_visible_preview() 
             filter: controls::Filter::BoxStored,
             quality: controls::Quality::High,
         };
-        let (header, bytes) = artifact(h.state().editor.session.document(), settings);
+        let (mut review, _, _) = pending_review(h.state_mut(), settings);
+        let (header, bytes) =
+            artifact_owned(&review.frozen.document, settings, review.wire_owner());
         let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
-        let (mut review, _, _) = pending_review(h.state(), settings);
         review.pending = None;
         review.prepared = Some(prepared);
         h.state_mut().dds.review = Some(review);

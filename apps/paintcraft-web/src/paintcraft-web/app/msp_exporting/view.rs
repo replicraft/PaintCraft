@@ -11,6 +11,7 @@ impl WebApp {
             self.retire_msp_export();
             return;
         }
+        let mut metadata_changed = false;
         let response = egui::Modal::new(egui::Id::unique("browser-msp-export")).show(ctx, |ui| {
             ui.set_max_width((ctx.content_rect().width() - 32.0).clamp(1.0, 440.0));
             ui.heading(t!(ctx, "MSP picture"));
@@ -24,7 +25,13 @@ impl WebApp {
                 .show(ui, |ui| {
             ui.label(&review.filename);
             ui.label(t!(ctx, "This browser MSP2 profile allows up to 4,194,304 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
-            let changed = controls::controls(ui, &mut review.version);
+            let mut changed = controls::controls(ui, &mut review.version);
+            if review.frozen.document.source_metadata.is_some() {
+                let previous = review.omit_source_metadata;
+                paintcraft_ui::source_metadata_export::controls(ui, &mut review.omit_source_metadata);
+                metadata_changed = previous != review.omit_source_metadata;
+                changed |= metadata_changed;
+            }
             if let Some(texture) = &review.texture {
                 ui.label(t!(ctx, "Base image preview"));
                 let image = ui.add(egui::Image::new(texture).alt_text(t!(ctx, "Base image preview")));
@@ -40,7 +47,7 @@ impl WebApp {
                     "MSP export failed; the current document was kept."
                 };
                 ui.colored_label(ui.visuals().error_fg_color, t!(ctx, message));
-            } else {
+            } else if !review.waiting_metadata_choice() {
                 ui.spinner();
                 ui.label(t!(ctx, "Preparing MSP picture…"));
             }
@@ -55,17 +62,18 @@ impl WebApp {
                     let description = match loss.as_str() {
                         "flatten" => "Visible layers will be flattened into one picture.",
                         "hidden-rgb" => "Invisible color information will not be retained.",
+                        paintcraft_formats::export::metadata_policy::OMITTED_REASON => "Original source metadata is omitted from this exported copy.",
                         _ => loss.as_str(),
                     };
                     ui.label(t!(ctx, description));
                 }
             }
-            if review.prepared.as_ref().is_some_and(|p| !p.losses.is_empty()) {
+            if review.prepared.as_ref().is_some_and(Prepared::requires_consent) {
                 ui.checkbox(&mut review.approved, t!(ctx, "I accept these export changes."));
             }
             changed
                 }).inner;
-            let consent = review.prepared.as_ref().is_some_and(|p| p.losses.is_empty() || review.approved);
+            let consent = review.prepared.as_ref().is_some_and(|p| !p.requires_consent() || review.approved);
             let ready = consent && !changed && !paused && review.prepared.is_some()
                 && review.shown.is_some_and(|f| f < ctx.cumulative_frame_nr());
             ui.horizontal(|ui| {
@@ -86,13 +94,20 @@ impl WebApp {
         }
         if changed {
             self.msp_version = review.version;
-            review.retire_preview();
-            self.msp.review = Some(review);
-            self.msp.cancel();
-            // Return to the original, unchanged MSP1 dialog/encoder. Cancelling
-            // an active Worker may quarantine codecs, never this legacy route.
+            if metadata_changed {
+                review.revoke_metadata_intent();
+            } else {
+                review.retire_preview();
+            }
+            if review.version != Version::RowRleV2 {
+                self.msp.review = Some(review);
+                self.msp.cancel();
+                // A version change returns to the legacy MSP1 dialog. Metadata
+                // intent changes keep this review and its exact frozen copy.
+                ctx.request_repaint();
+                return;
+            }
             ctx.request_repaint();
-            return;
         }
         self.msp.review = Some(review);
         if accept {

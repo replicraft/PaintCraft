@@ -29,6 +29,10 @@ pub(super) async fn prepare(
         ("width", size.0.into()),
         ("height", size.1.into()),
         ("sourceFlags", u32::from(plan.source_flags()).into()),
+        (
+            "metadataContext",
+            Uint8Array::from(plan.metadata_context().encode().as_slice()).into(),
+        ),
         ("version", 2u32.into()),
     ])?;
     let args = js_sys::Array::new();

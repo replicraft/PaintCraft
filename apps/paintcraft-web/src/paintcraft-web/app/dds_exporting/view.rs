@@ -14,6 +14,7 @@ impl WebApp {
             }
             return;
         }
+        let mut metadata_changed = false;
         let response = egui::Modal::new(egui::Id::unique("browser-dds-export")).show(ctx, |ui| {
             ui.set_max_width((ctx.content_rect().width() - 32.0).clamp(1.0, 440.0));
             ui.heading(t!(ctx, "DDS texture"));
@@ -27,8 +28,14 @@ impl WebApp {
                 .show(ui, |ui| {
             ui.label(&review.filename);
             ui.label(t!(ctx, "This browser DDS profile allows up to 4,194,304 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
-            let size = self.editor.session.document().canvas;
-            let changed = controls::controls(ui, &mut review.settings, size.0, size.1);
+            let size = review.frozen.document.canvas;
+            let mut changed = controls::controls(ui, &mut review.settings, size.0, size.1);
+            if review.frozen.document.source_metadata.is_some() {
+                let previous = review.omit_source_metadata;
+                paintcraft_ui::source_metadata_export::controls(ui, &mut review.omit_source_metadata);
+                metadata_changed = previous != review.omit_source_metadata;
+                changed |= metadata_changed;
+            }
             if let Some(texture) = &review.texture {
                 ui.label(t!(ctx, "Base image preview"));
                 let image = ui.add(egui::Image::new(texture).alt_text(t!(ctx, "Base image preview")));
@@ -44,7 +51,7 @@ impl WebApp {
                     "DDS export failed; the current document was kept."
                 };
                 ui.colored_label(ui.visuals().error_fg_color, t!(ctx, message));
-            } else {
+            } else if !review.waiting_metadata_choice() {
                 ui.spinner();
                 ui.label(t!(ctx, "Preparing DDS texture…"));
             }
@@ -62,17 +69,18 @@ impl WebApp {
                         dds::BLOCK_COMPRESSION_LOSS => "Block compression can change colors and transparency.",
                         dds::MIP_HIDDEN_RGB_LOSS => "Mip filtering discards invisible colors in smaller images.",
                         paintcraft_formats::export::dds::LINEAR_QUANTIZATION_LOSS => "Converting to linear 8-bit samples loses color precision.",
+                        paintcraft_formats::export::metadata_policy::OMITTED_REASON => "Original source metadata is omitted from this exported copy.",
                         _ => loss.as_str(),
                     };
                     ui.label(t!(ctx, description));
                 }
             }
-            if review.prepared.as_ref().is_some_and(|p| !p.losses.is_empty()) {
+            if review.prepared.as_ref().is_some_and(Prepared::requires_consent) {
                 ui.checkbox(&mut review.approved, t!(ctx, "I accept these export changes."));
             }
             changed
                 }).inner;
-            let consent = review.prepared.as_ref().is_some_and(|p| p.losses.is_empty() || review.approved);
+            let consent = review.prepared.as_ref().is_some_and(|p| !p.requires_consent() || review.approved);
             let ready = consent && !changed && !paused && review.prepared.is_some()
                 && review.shown.is_some_and(|f| f < ctx.cumulative_frame_nr());
             ui.horizontal(|ui| {
@@ -93,11 +101,14 @@ impl WebApp {
             return;
         }
         if changed {
-            if let Ok(settings) = effective(review.settings, self.editor.session.document().canvas)
-            {
+            if let Ok(settings) = effective(review.settings, review.frozen.document.canvas) {
                 review.settings = settings;
             }
-            review.retire_preview();
+            if metadata_changed {
+                review.revoke_metadata_intent();
+            } else {
+                review.retire_preview();
+            }
             ctx.request_repaint();
         }
         self.dds.review = Some(review);
@@ -111,7 +122,8 @@ impl WebApp {
             let review = self.dds.review.as_mut().ok_or_else(stale)?;
             let prepared = review.prepared.take().ok_or_else(stale)?;
             let expected = wire::encode_settings(options(review.settings), prepared.header.size)?;
-            if (!prepared.losses.is_empty() && !review.approved)
+            if !review.matches_prepared(&prepared)
+                || (prepared.requires_consent() && !review.approved)
                 || prepared.header.settings != expected
                 || review.shown.is_none_or(|f| f >= ctx.cumulative_frame_nr())
             {

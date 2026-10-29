@@ -30,6 +30,10 @@ pub(super) async fn prepare(
         ("height", size.1.into()),
         ("sourceFlags", u32::from(plan.source_flags()).into()),
         (
+            "metadataContext",
+            Uint8Array::from(plan.metadata_context().encode().as_slice()).into(),
+        ),
+        (
             "settings",
             Uint8Array::from(plan.settings().as_slice()).into(),
         ),
