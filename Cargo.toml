@@ -184,8 +184,9 @@ libc = { version = "0.2.191", default-features = false }
 # Pinned JXR source with reviewed RGB8/capped-sink API; isolated native use only.
 # Exact upstream/patch inventory: vendor/jpegxr-pure-rs-0.1.0-paintcraft1.provenance.json.
 jpegxr = { package = "jpegxr-pure-rs", path = "vendor/jpegxr-pure-rs-0.1.0-paintcraft1", version = "=0.1.0", default-features = false }
-# Independent PNG fixture generation in tests.
+# Selected PNG/GIF decoder access and independent fixture generation.
 png = "0.18.1"
+gif = "0.14.2"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

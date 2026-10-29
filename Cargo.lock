@@ -3560,6 +3560,7 @@ dependencies = [
  "divan",
  "exr",
  "flate2",
+ "gif",
  "heic-decoder",
  "icns",
  "ico",

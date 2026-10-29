@@ -25,6 +25,7 @@ paintcraft-render.workspace = true
 
 image.workspace = true
 png.workspace = true
+gif.workspace = true
 quick-xml.workspace = true
 flate2.workspace = true
 crc32fast.workspace = true

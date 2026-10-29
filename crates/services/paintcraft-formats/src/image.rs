@@ -343,6 +343,9 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
     if format == ImageFormat::Pcx {
         return extended::decode_pcx(bytes, pixels);
     }
+    if format == ImageFormat::Gif {
+        return gif::decode(bytes, pixels);
+    }
     if format == ImageFormat::Png {
         let source = png_metadata::inspect(bytes, pixels, &|| Ok(()))?;
         if source.color_type == 3 {
@@ -360,7 +363,6 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
         return decode_pixels(decoder, format, losses, pixels);
     }
     let mut losses = match format {
-        ImageFormat::Gif => gif::admit(bytes, pixels)?,
         ImageFormat::Tiff => tiff::admit(bytes, pixels)?,
         ImageFormat::Tga => tga::admit(bytes, pixels)?,
         ImageFormat::WebP => webp::admit(bytes, pixels)?,

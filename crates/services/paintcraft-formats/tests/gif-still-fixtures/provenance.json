@@ -1,0 +1,172 @@
+{
+  "schema": "paintcraft.gif-still-fixtures/1",
+  "owned_inputs": "Pixel values and encoded inputs authored for these tests, no external image copied.",
+  "fixture_encoder": {
+    "library": "GIFLIB",
+    "version": "6.1.3",
+    "library_bytes": {
+      "path": "/opt/homebrew/opt/giflib/lib/libgif.a",
+      "bytes": 36920,
+      "sha256": "455af2bd602577393f20e9cc5a344d3b8852dced965783f9e7ab97920db8de60"
+    },
+    "header": {
+      "path": "/opt/homebrew/opt/giflib/include/gif_lib.h",
+      "bytes": 12686,
+      "sha256": "fa87f58874aa1fc59395999ef6f069326b125a7b147bd7fd62a51791dec2c21f"
+    },
+    "source": {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/generate.c",
+      "bytes": 2356,
+      "sha256": "33047adb6fab26f716016b3630f5d756711620c68ca39df60a83d051b0ea6180"
+    }
+  },
+  "independent_decoders": {
+    "giflib_raw": {
+      "source": {
+        "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/giflib_oracle.c",
+        "bytes": 1472,
+        "sha256": "8cb73b45bb5a1924f6445ad6bf57540c3c6eaa162e17d62b3fe9450f4ed0a148"
+      },
+      "facts": "Logical/frame geometry, source palettes, GCE fields, deinterlaced indices; no composition."
+    },
+    "pillow": {
+      "version": "12.0.0",
+      "plugin": {
+        "path": "/private/tmp/paintcraft-heif-color-oracle-venv/lib/python3.14/site-packages/PIL/GifImagePlugin.py",
+        "bytes": 42213,
+        "sha256": "54d4c48032513fa388cdef0956dd045d8d6032fdd7c7dd28102c5ac208021401"
+      },
+      "compiled_extension": {
+        "path": "/private/tmp/paintcraft-heif-color-oracle-venv/lib/python3.14/site-packages/PIL/_imaging.cpython-314-darwin.so",
+        "bytes": 571968,
+        "sha256": "eac943a9072909ab4803fe192bf3764aeb6a0cd11c1ca3c2ca34ac8f4d125a81"
+      },
+      "facts": "Every actual in-frame RGBA source sample agrees with independently decoded GIFLIB palette/indices."
+    },
+    "imageio": {
+      "source": {
+        "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/imageio_oracle.c",
+        "bytes": 1201,
+        "sha256": "1962762c4b8546a49ce7ac420ec361f4cbe18fe9a99fd0afcf4fd997f0882a5c"
+      },
+      "controller": "ProductName:\t\tmacOS\nProductVersion:\t\t14.7.2\nBuildVersion:\t\t23H311",
+      "facts": "Native premultiplied canvas output retained only as disagreement evidence, not a transparent-RGB oracle."
+    }
+  },
+  "policy": "gif-still-logical-screen-v1",
+  "reference": "https://www.w3.org/Graphics/GIF/spec-gif89a.txt",
+  "cases": {
+    "original_library_streams": 10,
+    "defined_logical_screen_compositions": 9,
+    "undefined_no_global_opaque_partial_refusals": 1,
+    "additional_literal_and_malformed_index_streams": 2
+  },
+  "curated_streams": {
+    "invalid-palette-index.gif": "offset-background2.gif: set background index0, change GCT size4->2, remove global entries2/3; unchanged LZW yields indices2/3 beyond palette. Metadata preflight remains valid.",
+    "literal-three.gif": "Authored3x1 full-screen GIF89a, palette2, GCE0. LZW min2 and payload4450 decode clear,0,1,0,end. Independent GIFLIB indices[0,1,0]."
+  },
+  "evidence": [
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/README.md",
+      "bytes": 5061,
+      "sha256": "848ae5537aca380ce5eb75f2a55750bf1bbbba78ab4fb41a0ed87ca0b78dc08e"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/generate.c",
+      "bytes": 2356,
+      "sha256": "33047adb6fab26f716016b3630f5d756711620c68ca39df60a83d051b0ea6180"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/giflib_oracle.c",
+      "bytes": 1472,
+      "sha256": "8cb73b45bb5a1924f6445ad6bf57540c3c6eaa162e17d62b3fe9450f4ed0a148"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/imageio_oracle.c",
+      "bytes": 1201,
+      "sha256": "1962762c4b8546a49ce7ac420ec361f4cbe18fe9a99fd0afcf4fd997f0882a5c"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/invalid-palette-index.gif",
+      "bytes": 44,
+      "sha256": "6628f81b2525f2fe54314105fbbaf04b9ceefedf55284556643a5ecc588cfccf"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/invalid-palette-index.json",
+      "bytes": 236,
+      "sha256": "17d3929b36990d5a503214ade7951e8e224434da43d2f5b380b7687844883250"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/literal-three.gif",
+      "bytes": 43,
+      "sha256": "5ffc8a1252df0e8fda8de0ba08c3cf5fa5fa1e1b6e6042b1b388640fcdf29bca"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/literal-three.json",
+      "bytes": 230,
+      "sha256": "b11b6207697c7ee32d343a22e4f0bacf4bf8ff85b7bc9a6cd09fcdcf87ba1426"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-background0.gif",
+      "bytes": 50,
+      "sha256": "8ddfbd73fe14b65fc9a6ea60ec594d7eb35805db07fedd711cf245019f1ee01c"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-background2.gif",
+      "bytes": 50,
+      "sha256": "8b92cd901102736634c99050ca928ddc382ee30b2af0bf32d238b6d1926eb6b1"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-disposal1.gif",
+      "bytes": 50,
+      "sha256": "c96fef342137d23f7c09afa0ed0e31d354d0552a66b0125f5f1646c9c39a83a5"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-disposal2.gif",
+      "bytes": 50,
+      "sha256": "79bc1d96bec25728819886d58d8984fce4cc916202c94af0dfc9e11686df726f"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-disposal3.gif",
+      "bytes": 50,
+      "sha256": "c8a8f1e1eab46f88d64e04e662328fe4655133ddcc1840060c465ee78d5a9b08"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-interlace.gif",
+      "bytes": 57,
+      "sha256": "2ac4939b4b997bea259021bae10c2c47067f66df2ccdafdae619fe40f7eca3cd"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-local-only.gif",
+      "bytes": 50,
+      "sha256": "d8df188bc07d2be6139003416512183ccf9ac2911be204dbc44bf5ee736384ec"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-local-palette.gif",
+      "bytes": 62,
+      "sha256": "5f610bba310e64b8fc32fc0b2baa4641c3bb185d04bb92836f904d18dfcee3cd"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-local-transparent.gif",
+      "bytes": 50,
+      "sha256": "6fb5487b9d024c2d6b1e97f191c2b252c0bd4a90fefbced2c5aa20c3471a52e5"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-transparent.gif",
+      "bytes": 50,
+      "sha256": "9131b18fe1ac4f7af2585dbd1b71a92ae093c18629a8dfe47b60cc3282b37c31"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/oracle.json",
+      "bytes": 50131,
+      "sha256": "860081e114d5f134489771b0917e2dc213fd0e08ec1a78bf4a925354f3c9c469"
+    },
+    {
+      "path": "crates/services/paintcraft-formats/tests/gif-still-fixtures/verify.py",
+      "bytes": 2673,
+      "sha256": "7f4911c05d91f305723a9879d5c28ae0387576ef1baf36ea308d4e7c1577ad02"
+    }
+  ],
+  "limits": "Finite still profile, no second-frame conversion/timeline; no-GCT opaque partial requires a future explicit background choice. Byte/pixel/metadata bounds are logical, not aggregate RSS, arbitrary decoder scratch or interruption guarantees.",
+  "compatibility": "No pinned Windows Paint or other browser/device interoperability claim; documented decoder disagreements are intentional evidence, not hidden tolerance."
+}

@@ -316,9 +316,17 @@ fn gif_truecolor_export_quantizes_to_at_most_256_colors() {
 fn partial_gif_frames_do_not_silently_replace_background_with_transparency() {
     let mut bytes = gif_fixture();
     bytes[6..8].copy_from_slice(&3u16.to_le_bytes());
+    // The standalone transparency convention applies to uncovered pixels,
+    // without erasing source palette RGB in the actual transparent sample.
     assert_eq!(
-        decode(&bytes).unwrap_err().code,
-        ErrorCode::CapabilityUnsupported
+        decode(&bytes).unwrap().rgba,
+        [10, 20, 30, 255, 90, 80, 70, 0, 0, 0, 0, 0]
+    );
+    // Without transparency, the uncovered pixel is declared GCT background0.
+    bytes[22] = 0;
+    assert_eq!(
+        decode(&bytes).unwrap().rgba,
+        [10, 20, 30, 255, 90, 80, 70, 255, 10, 20, 30, 255]
     );
 }
 
