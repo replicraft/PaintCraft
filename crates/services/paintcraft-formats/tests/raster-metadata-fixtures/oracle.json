@@ -1,0 +1,841 @@
+{
+    "producer": "Python standard-library struct/zlib; no PaintCraft/image/png writer",
+    "icc_origin": "../tiff-fixtures/oracle.json icc-srgb-rgba8.tif page0; independently authored LittleCMS profile",
+    "icc_sha256": "7341cb33174b6b9b56f24ec9d16c0d6e5e1149f680404419f9e49ba8c4d9f0dd",
+    "fixtures": [
+        {
+            "file": "indexed1-trns.png",
+            "sha256": "f61bf8b0ec5d88d146b058d3f4beb3d2293e262cfe95eb73d84cc86c5fbd2c72",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                13,
+                71,
+                201,
+                128,
+                13,
+                71,
+                201,
+                128
+            ],
+            "rgba8_sha256": "98a9b77be184e3c4ad7b0e76fa6e3a9951fa7c66a8957e4ed677e7b67b088f2d",
+            "source_facts": {
+                "raw_scanlines_hex": "0060",
+                "palette": [
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        13,
+                        71,
+                        201
+                    ]
+                ],
+                "alpha": [
+                    0,
+                    128
+                ]
+            }
+        },
+        {
+            "file": "indexed2-trns.png",
+            "sha256": "536ff7585bd4fa5a7d3f2d7962dd92911cbe5e81ea2ad5da69534eeac807a4a6",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                13,
+                71,
+                201,
+                128,
+                250,
+                50,
+                20,
+                255
+            ],
+            "rgba8_sha256": "4ad9a27eda5025ce2269c63ee37a3cbb034f6621fb34e08716857600fdd69dc7",
+            "source_facts": {
+                "raw_scanlines_hex": "0018",
+                "palette": [
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        250,
+                        50,
+                        20
+                    ],
+                    [
+                        0,
+                        255,
+                        127
+                    ]
+                ],
+                "alpha": [
+                    0,
+                    128,
+                    255,
+                    1
+                ]
+            }
+        },
+        {
+            "file": "indexed4-trns.png",
+            "sha256": "1fa703fab9abeb139b3b1684cf9f4c16468c2425c0efcced7f33504944c55968",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                50,
+                20,
+                255,
+                13,
+                71,
+                201,
+                128
+            ],
+            "rgba8_sha256": "eb3ac066277b397654e0d8442639e7757981ff96df212943c601f71e2802563c",
+            "source_facts": {
+                "raw_scanlines_hex": "000210",
+                "palette": [
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        250,
+                        50,
+                        20
+                    ],
+                    [
+                        0,
+                        255,
+                        127
+                    ]
+                ],
+                "alpha": [
+                    0,
+                    128,
+                    255,
+                    1
+                ]
+            }
+        },
+        {
+            "file": "indexed8-trns.png",
+            "sha256": "98e1cae8e3aa0dcd3924b7e8ef6f2e0a6a95fdbc868adb1d2f34618ed7ee962d",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                250,
+                50,
+                20,
+                255,
+                13,
+                71,
+                201,
+                0,
+                13,
+                71,
+                201,
+                128
+            ],
+            "rgba8_sha256": "a5f789658636a118e9a5662353dba994ec67e50e5b53b6c4b42d31fab2393a27",
+            "source_facts": {
+                "raw_scanlines_hex": "00020001",
+                "palette": [
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        250,
+                        50,
+                        20
+                    ],
+                    [
+                        0,
+                        255,
+                        127
+                    ]
+                ],
+                "alpha": [
+                    0,
+                    128,
+                    255,
+                    1
+                ]
+            }
+        },
+        {
+            "file": "indexed2-adam7.png",
+            "sha256": "9de3205bae27dc98a475389e7254b5e5a5216103c67e26f495788338955c82d9",
+            "width": 5,
+            "height": 5,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                13,
+                71,
+                201,
+                128,
+                250,
+                50,
+                20,
+                255,
+                0,
+                255,
+                127,
+                1,
+                13,
+                71,
+                201,
+                0,
+                250,
+                50,
+                20,
+                255,
+                13,
+                71,
+                201,
+                0,
+                250,
+                50,
+                20,
+                255,
+                13,
+                71,
+                201,
+                128,
+                0,
+                255,
+                127,
+                1,
+                13,
+                71,
+                201,
+                0,
+                0,
+                255,
+                127,
+                1,
+                0,
+                255,
+                127,
+                1,
+                0,
+                255,
+                127,
+                1,
+                250,
+                50,
+                20,
+                255,
+                250,
+                50,
+                20,
+                255,
+                0,
+                255,
+                127,
+                1,
+                13,
+                71,
+                201,
+                0,
+                13,
+                71,
+                201,
+                128,
+                250,
+                50,
+                20,
+                255,
+                13,
+                71,
+                201,
+                0,
+                250,
+                50,
+                20,
+                255,
+                13,
+                71,
+                201,
+                0,
+                0,
+                255,
+                127,
+                1,
+                13,
+                71,
+                201,
+                128
+            ],
+            "rgba8_sha256": "757783ff6e3964756c5a3a529f6269170d743f9f94850c9f72e7822ad9fa605b",
+            "source_facts": {
+                "raw_scanlines_hex": "000000000010008000000038007000f000b00089c000b180",
+                "palette": [
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        13,
+                        71,
+                        201
+                    ],
+                    [
+                        250,
+                        50,
+                        20
+                    ],
+                    [
+                        0,
+                        255,
+                        127
+                    ]
+                ],
+                "alpha": [
+                    0,
+                    128,
+                    255,
+                    1
+                ]
+            }
+        },
+        {
+            "file": "rgba8-exif-orientation.png",
+            "sha256": "087fda58027d9b44b563aa2ed7e6f17f0e212f02db9eae461138a2456eea7073",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                1,
+                20,
+                128,
+                3,
+                4,
+                5,
+                255
+            ],
+            "rgba8_sha256": "a0476781530034cfc489bece5de4c777755399d6a602f9aa69c60f76a7a18b28",
+            "source_facts": {
+                "raw_scanlines_hex": "000d47c900fa011480030405ff",
+                "palette": null,
+                "alpha": null
+            }
+        },
+        {
+            "file": "rgba8-srgb-phys-text.png",
+            "sha256": "a7c03094ce82f8fe19ac14f05789673ef0d5b6fef69a35fe09efe7986e247b67",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                1,
+                20,
+                128,
+                3,
+                4,
+                5,
+                255
+            ],
+            "rgba8_sha256": "a0476781530034cfc489bece5de4c777755399d6a602f9aa69c60f76a7a18b28",
+            "source_facts": {
+                "raw_scanlines_hex": "000d47c900fa011480030405ff",
+                "palette": null,
+                "alpha": null
+            }
+        },
+        {
+            "file": "rgba8-aspect-gamma.png",
+            "sha256": "aa9f8c4301805027e5a67222ef0aa6037cafc7b522241f196742827adbef7dc7",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                1,
+                20,
+                128,
+                3,
+                4,
+                5,
+                255
+            ],
+            "rgba8_sha256": "a0476781530034cfc489bece5de4c777755399d6a602f9aa69c60f76a7a18b28",
+            "source_facts": {
+                "raw_scanlines_hex": "000d47c900fa011480030405ff",
+                "palette": null,
+                "alpha": null
+            }
+        },
+        {
+            "file": "rgba16-high-byte.png",
+            "sha256": "1e9e9472898366f38044997f12995eb7f84028ca8168bece6bf9e10da9e57b48",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                0,
+                0,
+                1,
+                0,
+                171,
+                152,
+                118,
+                128,
+                255,
+                0,
+                127,
+                255
+            ],
+            "rgba8_sha256": "03579f36b78389ab1be6d141c06303f03e5767d4e109715850ae87c258264912",
+            "source_facts": {
+                "raw_scanlines_hex": "00008100ff01000000abcd987676548080ffff00017fffffff",
+                "palette": null,
+                "alpha": null
+            }
+        },
+        {
+            "file": "rgba8-icc-precedence.png",
+            "sha256": "f7be2d53968eaf17c67ef8fdb87f99833a0f3b97c6cbcf6a60de298721c0ed9d",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                1,
+                20,
+                128,
+                3,
+                4,
+                5,
+                255
+            ],
+            "rgba8_sha256": "a0476781530034cfc489bece5de4c777755399d6a602f9aa69c60f76a7a18b28",
+            "source_facts": {
+                "raw_scanlines_hex": "000d47c900fa011480030405ff",
+                "palette": null,
+                "alpha": null
+            }
+        },
+        {
+            "file": "rgba8-cicp-precedence.png",
+            "sha256": "951371eee2dc9bf53ee70ff1f8dfa543dbfe222b91e176bee0512052c5fe8b81",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                1,
+                20,
+                128,
+                3,
+                4,
+                5,
+                255
+            ],
+            "rgba8_sha256": "a0476781530034cfc489bece5de4c777755399d6a602f9aa69c60f76a7a18b28",
+            "source_facts": {
+                "raw_scanlines_hex": "000d47c900fa011480030405ff",
+                "palette": null,
+                "alpha": null
+            }
+        },
+        {
+            "file": "invalid-index.png",
+            "sha256": "8d173105cdc2f36c94c0ecb292955e4de3456bb6efe11703c474442951c805a2",
+            "width": 1,
+            "height": 1,
+            "qualified": false,
+            "expected_rgba8": [
+                0,
+                0,
+                0,
+                255
+            ],
+            "rgba8_sha256": "e3820096cb82366b860b8a4e668453a7aaaf423af03bdf289fa308ea03a79332",
+            "source_facts": {
+                "raw_scanlines_hex": "0001",
+                "palette": [
+                    [
+                        17,
+                        19,
+                        23
+                    ]
+                ],
+                "alpha": null
+            }
+        },
+        {
+            "file": "indexed1-reserved.bmp",
+            "sha256": "0e40e0004620767de7aaa9ec196bfaa1a22bc9bac1cc8238039e84770dc3b4a9",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                255,
+                250,
+                1,
+                20,
+                255,
+                13,
+                71,
+                201,
+                255
+            ],
+            "rgba8_sha256": "bcdec516cb8836af317d481b4c19ff0bbf6c019797beb102b0524779fa7b91c4",
+            "source_facts": {
+                "palette_rgb_reserved": [
+                    [
+                        13,
+                        71,
+                        201,
+                        137
+                    ],
+                    [
+                        250,
+                        1,
+                        20,
+                        0
+                    ]
+                ],
+                "row_stride": 4,
+                "top_down": false,
+                "color_space": 0,
+                "resolution": [
+                    3780,
+                    7560
+                ],
+                "icc_sha256": null
+            }
+        },
+        {
+            "file": "indexed4-reserved.bmp",
+            "sha256": "459090da148427ed373bfbf21e9ba6c0e2ecf3e3f565863a940e6431722cf842",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                255,
+                250,
+                1,
+                20,
+                255,
+                13,
+                71,
+                201,
+                255
+            ],
+            "rgba8_sha256": "bcdec516cb8836af317d481b4c19ff0bbf6c019797beb102b0524779fa7b91c4",
+            "source_facts": {
+                "palette_rgb_reserved": [
+                    [
+                        13,
+                        71,
+                        201,
+                        137
+                    ],
+                    [
+                        250,
+                        1,
+                        20,
+                        0
+                    ]
+                ],
+                "row_stride": 4,
+                "top_down": false,
+                "color_space": 0,
+                "resolution": [
+                    3780,
+                    7560
+                ],
+                "icc_sha256": null
+            }
+        },
+        {
+            "file": "indexed8-reserved.bmp",
+            "sha256": "e224f20fdf580103018fddc613fbcf3d93454c83d37fed73f90d8db73e01abeb",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                255,
+                250,
+                1,
+                20,
+                255,
+                13,
+                71,
+                201,
+                255
+            ],
+            "rgba8_sha256": "bcdec516cb8836af317d481b4c19ff0bbf6c019797beb102b0524779fa7b91c4",
+            "source_facts": {
+                "palette_rgb_reserved": [
+                    [
+                        13,
+                        71,
+                        201,
+                        137
+                    ],
+                    [
+                        250,
+                        1,
+                        20,
+                        0
+                    ]
+                ],
+                "row_stride": 4,
+                "top_down": false,
+                "color_space": 0,
+                "resolution": [
+                    3780,
+                    7560
+                ],
+                "icc_sha256": null
+            }
+        },
+        {
+            "file": "rgb24-top-down.bmp",
+            "sha256": "01bd33718266a0c6cbbeeeb1d3fc171b83701510da156989474bc8d21f420611",
+            "width": 3,
+            "height": 2,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                255,
+                250,
+                1,
+                20,
+                255,
+                3,
+                4,
+                5,
+                255,
+                10,
+                20,
+                30,
+                255,
+                40,
+                50,
+                60,
+                255,
+                70,
+                80,
+                90,
+                255
+            ],
+            "rgba8_sha256": "fcafec6c7f21645c1e43351ed46a0cefd3bc1731f04e3eadf0312a5fd17fc3e0",
+            "source_facts": {
+                "palette_rgb_reserved": [],
+                "row_stride": 12,
+                "top_down": true,
+                "color_space": 0,
+                "resolution": [
+                    0,
+                    0
+                ],
+                "icc_sha256": null
+            }
+        },
+        {
+            "file": "rgb24-v4-calibrated.bmp",
+            "sha256": "cedeb90e2a7c2123b086de5d0764a73b45152929f066fe1b74d82664e55c8870",
+            "width": 3,
+            "height": 2,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                255,
+                250,
+                1,
+                20,
+                255,
+                3,
+                4,
+                5,
+                255,
+                10,
+                20,
+                30,
+                255,
+                40,
+                50,
+                60,
+                255,
+                70,
+                80,
+                90,
+                255
+            ],
+            "rgba8_sha256": "fcafec6c7f21645c1e43351ed46a0cefd3bc1731f04e3eadf0312a5fd17fc3e0",
+            "source_facts": {
+                "palette_rgb_reserved": [],
+                "row_stride": 12,
+                "top_down": false,
+                "color_space": 0,
+                "resolution": [
+                    0,
+                    0
+                ],
+                "icc_sha256": null
+            }
+        },
+        {
+            "file": "rgb24-v5-icc.bmp",
+            "sha256": "4d2972ee36e4895d5527fe0e28cee7289cf9cc56766458eded9a8310711d243a",
+            "width": 3,
+            "height": 2,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                255,
+                250,
+                1,
+                20,
+                255,
+                3,
+                4,
+                5,
+                255,
+                10,
+                20,
+                30,
+                255,
+                40,
+                50,
+                60,
+                255,
+                70,
+                80,
+                90,
+                255
+            ],
+            "rgba8_sha256": "fcafec6c7f21645c1e43351ed46a0cefd3bc1731f04e3eadf0312a5fd17fc3e0",
+            "source_facts": {
+                "palette_rgb_reserved": [],
+                "row_stride": 12,
+                "top_down": false,
+                "color_space": 1296188740,
+                "resolution": [
+                    3780,
+                    3780
+                ],
+                "icc_sha256": "7341cb33174b6b9b56f24ec9d16c0d6e5e1149f680404419f9e49ba8c4d9f0dd"
+            }
+        },
+        {
+            "file": "rgba32-v4-hidden.bmp",
+            "sha256": "4ad5d24bc22f66274c2aaccf2787b51377250e71cc95fc34e06213692f7a8f74",
+            "width": 3,
+            "height": 1,
+            "qualified": true,
+            "expected_rgba8": [
+                13,
+                71,
+                201,
+                0,
+                250,
+                1,
+                20,
+                128,
+                3,
+                4,
+                5,
+                255
+            ],
+            "rgba8_sha256": "a0476781530034cfc489bece5de4c777755399d6a602f9aa69c60f76a7a18b28",
+            "source_facts": {
+                "palette_rgb_reserved": [],
+                "row_stride": 12,
+                "top_down": false,
+                "color_space": 1934772034,
+                "resolution": [
+                    0,
+                    0
+                ],
+                "icc_sha256": null
+            }
+        }
+    ]
+}
