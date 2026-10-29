@@ -73,6 +73,11 @@ fn actual_dds_open_and_import_review_cancel_stale_and_source_change_preserve_non
                     .build_ui_state(|ui, app: &mut App| app.ui(ui), app);
                 h.run();
                 h.get_by_label(&translate(language,"Only the full-size DDS image will be imported. Its smaller mip levels will stay in the source file."));
+                if case != 1 {
+                    h.get_by_label(&translate(language, "Accept import limitations"))
+                        .click();
+                    h.run();
+                }
                 match case {
                     0 => {
                         h.get_by_role_and_label(

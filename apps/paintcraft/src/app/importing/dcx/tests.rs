@@ -61,6 +61,7 @@ fn explicit_selection_and_loss_consent_never_implicitly_publish_page_zero() {
     assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
     stage(&mut app);
     app.choose_dcx_page(&ctx, 1);
+    let ctx = super::super::raster_review::tests::authorize(&mut app);
     app.resolve_import(&ctx, true);
     let doc = app.editor.document();
     assert_eq!(doc.canvas, (1, 1));
@@ -148,6 +149,9 @@ fn native_page_controls_are_explicit_translated_and_keep_loss_confirmation_separ
             h.state().pending_import.as_ref().unwrap().candidate,
             Candidate::Raster(_)
         ));
+        h.get_by_label(&translate(language, "Accept import limitations"))
+            .click();
+        h.run();
         h.get_by_role_and_label(egui::Role::Button, &translate(language, "Open image"))
             .click();
         h.run();
@@ -194,6 +198,7 @@ fn native_picker_import_retains_frozen_bytes_even_if_disk_source_changes() {
     std::fs::write(&path, b"source changed after picker completion").unwrap();
     assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
     app.choose_dcx_page(&ctx, 1);
+    let ctx = super::super::raster_review::tests::authorize(&mut app);
     app.resolve_import(&ctx, true);
     let doc = app.editor.document();
     assert_eq!(
@@ -214,6 +219,7 @@ fn selected_pages_have_distinct_stable_document_state_and_layer_identities() {
         let mut app = App::new(None);
         stage(&mut app);
         app.choose_dcx_page(&ctx, page);
+        let ctx = super::super::raster_review::tests::authorize(&mut app);
         app.resolve_import(&ctx, true);
         app.editor.document().clone()
     };

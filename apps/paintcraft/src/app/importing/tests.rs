@@ -35,6 +35,7 @@ fn consent_is_required_before_publication_binding_recent_or_history_changes() {
     assert!(app.pending_import.is_none());
     assert!(app.confirm.is_none());
     stage(&mut app);
+    let ctx = super::raster_review::tests::authorize(&mut app);
     app.resolve_import(&ctx, true);
     assert_eq!(app.editor.document().canvas, (1, 1));
     let layer = &app.editor.document().layers[&app.editor.document().roots[0]];
@@ -157,6 +158,9 @@ fn real_gif_and_tiff_consent_controls_work_across_skins_and_languages() {
                 assert_eq!(h.state().editor.history_view().ticket, ticket);
                 assert!(h.state().recent.entries.is_empty());
                 h.state_mut().open_path(&path).unwrap();
+                h.run();
+                h.get_by_label(&translate(language, "Accept import limitations"))
+                    .click();
                 h.run();
                 h.get_by_role_and_label(egui::Role::Button, &translate(language, "Open image"))
                     .click();

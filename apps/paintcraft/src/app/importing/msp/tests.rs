@@ -28,6 +28,7 @@ fn native_msp_consent_preserves_prior_document_and_protects_pending_and_installe
     assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
     app.stage_msp_import_acquired(acquire(), path.clone())
         .unwrap();
+    let ctx = super::super::raster_review::tests::authorize(&mut app);
     let moved = root.join("moved.msp");
     std::fs::rename(&path, &moved).unwrap();
     let alias = root.join("alias.pcnd");

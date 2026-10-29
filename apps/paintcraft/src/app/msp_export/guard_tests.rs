@@ -158,8 +158,11 @@ fn original_msp_identity_remains_protected_after_native_project_save() {
         crate::format_admission::acquire_resource_source(&source, msp::BYTES_MAX as u64).unwrap();
     app.stage_msp_import_acquired(acquired, source.clone())
         .unwrap();
-    app.resolve_import(&egui::Context::default(), true);
     let mut h = harness(app);
+    h.run();
+    h.get_by_label("Accept import limitations").click();
+    h.run();
+    click(&mut h, Language::English, "Open image");
     let pcnd = root.join("saved.pcnd");
     let ctx = h.ctx.clone();
     h.state_mut().save_selected(&ctx, pcnd.clone());

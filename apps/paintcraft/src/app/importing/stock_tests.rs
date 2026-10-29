@@ -29,7 +29,6 @@ impl Drop for Fixture {
 }
 #[test]
 fn changed_stock_raster_after_consent_capture_cannot_replace_nonempty_work() {
-    let ctx = egui::Context::default();
     for replacement in [false, true] {
         let fixture = Fixture::new();
         let path = fixture.write("image.gif", ImageFormat::Gif);
@@ -46,6 +45,7 @@ fn changed_stock_raster_after_consent_capture_cannot_replace_nonempty_work() {
         let dirty = app.editor.is_dirty();
         app.open_path(&path).unwrap();
         assert!(app.pending_import.is_some());
+        let ctx = super::raster_review::tests::authorize(&mut app);
         let original = fs::read(&path).unwrap();
         if replacement {
             fs::rename(&path, fixture.0.join("original.gif")).unwrap();
@@ -82,6 +82,7 @@ fn stock_raster_frozen_alias_guards_survive_actual_pcnd_save_and_source_path_rep
         let ctx = app.context.clone();
         app.open_path(&path).unwrap();
         if app.pending_import.is_some() {
+            let ctx = super::raster_review::tests::authorize(&mut app);
             app.resolve_import(&ctx, true);
         }
         assert_eq!(app.editor.document().canvas, (2, 1));

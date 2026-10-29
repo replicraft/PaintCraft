@@ -18,6 +18,8 @@ mod msp;
 mod native_codec;
 #[path = "importing/ora.rs"]
 mod ora;
+#[path = "importing/raster_review.rs"]
+mod raster_review;
 #[path = "importing/stock.rs"]
 mod stock;
 #[path = "importing/svg.rs"]
@@ -60,6 +62,7 @@ pub(super) struct Pending {
     path: PathBuf,
     digest: String,
     raster_key: Option<paintcraft_document::RasterConversionKey>,
+    review: Option<raster_review::Review>,
     owner: Uuid,
     base: Arc<paintcraft_document::Document>,
     ticket: (Uuid, u64),
@@ -133,6 +136,7 @@ impl App {
             path,
             digest,
             raster_key: None,
+            review: None,
             owner: self.active_tab_id(),
             base: self.editor.document_snapshot(),
             ticket: self.editor.render_key(),
@@ -158,6 +162,16 @@ impl App {
         if !pending.current(self) {
             self.editor
                 .set_status(t!(ctx, "The document changed; choose the image again."));
+            return;
+        }
+        if matches!(&pending.candidate, Candidate::Raster(_))
+            && !pending
+                .review
+                .as_ref()
+                .is_some_and(|review| review.ready(ctx))
+        {
+            self.pending_import = Some(pending);
+            self.confirm = Some(Confirm::ImportLosses);
             return;
         }
         if matches!(
@@ -238,6 +252,14 @@ impl App {
         }
     }
     pub(super) fn import_dialog(&mut self, ctx: &egui::Context) {
+        if self
+            .pending_import
+            .as_ref()
+            .is_some_and(|pending| matches!(&pending.candidate, Candidate::Raster(_)))
+        {
+            self.raster_import_dialog(ctx);
+            return;
+        }
         if self
             .pending_import
             .as_ref()
