@@ -1,0 +1,575 @@
+{
+  "schema": "paintcraft.bmp-indexed-fixtures/1",
+  "ffmpeg": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers",
+  "tool_sha256": "59f30b63d07048598b29f0f4da3e07677f9c654f71d3596d9c19f611280a304a",
+  "palette": [
+    [
+      231,
+      17,
+      43
+    ],
+    [
+      9,
+      197,
+      81
+    ],
+    [
+      25,
+      53,
+      239
+    ],
+    [
+      201,
+      149,
+      7
+    ]
+  ],
+  "fixtures": [
+    {
+      "file": "rgb1-bottom.bmp",
+      "sha256": "6eadfd2398924e2c3ba686ac322a6e111f592501f3d653acf6202635a67606e0",
+      "width": 13,
+      "height": 3,
+      "bpp": 1,
+      "top_down": false,
+      "palette_entries": 2,
+      "valid": true,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    {
+      "file": "rgb1-top.bmp",
+      "sha256": "3b7f02dc670f77ee00cf2c92c9dc0c9d48fad75ac91f1124ec128d686902004e",
+      "width": 13,
+      "height": 3,
+      "bpp": 1,
+      "top_down": true,
+      "palette_entries": 2,
+      "valid": true,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    {
+      "file": "rgb4-bottom.bmp",
+      "sha256": "273e4a22c6e6dcd3a4898efa2140589062a597feff3adc5de12791d91be97c43",
+      "width": 13,
+      "height": 3,
+      "bpp": 4,
+      "top_down": false,
+      "palette_entries": 4,
+      "valid": true,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1
+        ],
+        [
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "file": "rgb4-top.bmp",
+      "sha256": "7f474879db53480b3c3830ef6219036a8317e91a7fc13513e922275e575ae403",
+      "width": 13,
+      "height": 3,
+      "bpp": 4,
+      "top_down": true,
+      "palette_entries": 4,
+      "valid": true,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1
+        ],
+        [
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "file": "rgb8-bottom.bmp",
+      "sha256": "b3eeaa413cc76b747d2917af6db6f437c49291622a8f516b0c48dd3445c77fe4",
+      "width": 13,
+      "height": 3,
+      "bpp": 8,
+      "top_down": false,
+      "palette_entries": 4,
+      "valid": true,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1
+        ],
+        [
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "file": "rgb8-top.bmp",
+      "sha256": "98cecedfda3af02cb9dc31e64901f221cb4d6a72904af916204003dad2c91542",
+      "width": 13,
+      "height": 3,
+      "bpp": 8,
+      "top_down": true,
+      "palette_entries": 4,
+      "valid": true,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1
+        ],
+        [
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "file": "rgb1-bottom-undeclared.bmp",
+      "sha256": "529e02d71c7b48d638ece9e66dd37e9fde291e7e04d4d27abf21ffef3cb7a5a4",
+      "width": 13,
+      "height": 3,
+      "bpp": 1,
+      "top_down": false,
+      "palette_entries": 1,
+      "valid": false,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    {
+      "file": "rgb4-bottom-undeclared.bmp",
+      "sha256": "fab1766473b3d5e4a390fa84ad79a45bf431730d989d6bcd27e5078034235b19",
+      "width": 13,
+      "height": 3,
+      "bpp": 4,
+      "top_down": false,
+      "palette_entries": 3,
+      "valid": false,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1
+        ],
+        [
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "file": "rgb8-bottom-undeclared.bmp",
+      "sha256": "fa158200cebadbd3e2dabdc74f80732eccc4fe2bb6a9ed846909fc1d3996e972",
+      "width": 13,
+      "height": 3,
+      "bpp": 8,
+      "top_down": false,
+      "palette_entries": 3,
+      "valid": false,
+      "rows_top_down": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0
+        ],
+        [
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1
+        ],
+        [
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2,
+          3,
+          0,
+          1,
+          2
+        ]
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "file": "rgb1-bottom.ico",
+      "sha256": "871b89735426a569bfabfe5abe0054a6c911bd40c8c8024786990db27e2c0f24",
+      "valid": true
+    },
+    {
+      "file": "rgb1-bottom-undeclared.ico",
+      "sha256": "6a8853b389660de00fe86c25b15005af070bf12a786b8ddc5d5f80761af34def",
+      "valid": false
+    },
+    {
+      "file": "rgb4-bottom.ico",
+      "sha256": "020f717a11dfcc223e02ef02e34a4cba6a98575499932a7a90ddb351a070508e",
+      "valid": true
+    },
+    {
+      "file": "rgb4-bottom-undeclared.ico",
+      "sha256": "51ee488203598c7cfc1207c298d9731bfde1a3e6fc9a6eeb602312a88d4b98d2",
+      "valid": false
+    },
+    {
+      "file": "rgb8-bottom.ico",
+      "sha256": "76818163eefb65fa5e7c97fe9af28371eedaafde7e38b4d19971d8f6ccb9c463",
+      "valid": true
+    },
+    {
+      "file": "rgb8-bottom-undeclared.ico",
+      "sha256": "605ad8b4a82357142e6833f1889269efd10faf62615fd8508ef60c9226a1454b",
+      "valid": false
+    }
+  ],
+  "ico_alpha_oracle": "Explicit authored AND bits; FFmpeg ignores AND and its differing raw output is retained."
+}
