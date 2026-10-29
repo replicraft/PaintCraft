@@ -1,4 +1,5 @@
 use super::*;
+mod source_copy;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
@@ -119,7 +120,8 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ));
             }
             save::preflight(dest, a.output.overwrite)?;
-            let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
+            let (bytes, sha, captured_source) = source_copy::SourceCopy::capture(input)?;
+            captured_source.check(dest)?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
             if a.profile.admit_open(input, &bytes)? != paintcraft_formats::registry::Family::Pcnd {
                 return Err(Error::new(
@@ -136,6 +138,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ),
                 a.source_metadata,
             )?;
+            captured_source.check(dest)?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = if a.render_workers == 1 {
                 export::export_flat_options(&doc, options, &allowed)?
@@ -168,8 +171,8 @@ pub fn run(a: Options, json: bool) -> Reply {
                 losses_acknowledged: flat.losses,
                 destination: dest,
             };
-            let (receipt, ok, summary) =
-                write_output(dest, a.output.overwrite, Ok(flat.bytes), &ctx);
+            let outcome = captured_source.save(dest, a.output.overwrite, &flat.bytes);
+            let (receipt, ok, summary) = finish_output(dest, &ctx, outcome);
             Ok(Written {
                 engine: None,
                 receipt,
