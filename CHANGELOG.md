@@ -508,6 +508,7 @@
 - keep unfinished IME text out of layer renames (0e28d90)
 - scope native host helpers to supported platforms (b0cd93b)
 - synchronize parser harness with release package versions (d38eb79)
+- identify complete codec build declarations (ec4f96f)
 
 
 ### Maintenance
@@ -646,6 +647,7 @@
 - strip debug data from all private Linux codec fixtures (018befd)
 - normalize debug-only installed codec fixtures (8511f19)
 - isolate missing codec installation fixture (171e90c)
+- distinguish complete build declarations from retained literals (0d8d9c4)
 
 
 ### Performance
