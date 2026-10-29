@@ -118,9 +118,11 @@ class SelectionTests(unittest.TestCase):
         self.assertIn("actual failed test", output.getvalue())
         self.assertIn("failure detail", errors.getvalue())
 
-    def test_release_uses_finite_selector_and_keeps_exact_v7_feature(self):
+    def test_release_uses_finite_selector_and_installed_archive_for_all_targets(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
-        self.assertIn("qualify_cli_helper.py --profile v7", workflow)
+        self.assertIn("qualify_cli_helper.py --profile ${{ steps.helper-policy.outputs.selector }}", workflow)
+        self.assertIn('--installation "${{ runner.temp }}/paintcraft-helper-qualification-', workflow)
+        self.assertNotIn("outputs.selector ==", workflow)
         self.assertIn("--features paintcraft-codec-worker/${{ steps.helper-policy.outputs.feature }}", workflow)
         self.assertNotIn("--include-ignored", workflow)
 

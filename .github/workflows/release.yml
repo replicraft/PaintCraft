@@ -152,12 +152,8 @@ jobs:
         run: cargo test --locked --release -p paintcraft-cli --target ${{ matrix.target }} --test installed_codec_worker --no-run --message-format=json
       - name: Produce and install the exact qualification CLI archive
         run: python scripts/packaging/helper_policy.py --target ${{ matrix.target }} --prepare-installation target/${{ matrix.target }}/release/paintcraft-cli${{ runner.os == 'Windows' && '.exe' || '' }} --output "${{ runner.temp }}/paintcraft-helper-qualification-${{ github.run_id }}-${{ github.run_attempt }}"
-      - name: Qualify V7 installed consumers on held targets
-        if: steps.helper-policy.outputs.selector == 'v7'
-        run: python scripts/packaging/qualify_cli_helper.py --profile v7 --target ${{ matrix.target }} --helper "${{ github.workspace }}/target/${{ matrix.target }}/release/paintcraft-codec-worker${{ runner.os == 'Windows' && '.exe' || '' }}"
-      - name: Qualify V8 installed consumers on the promoted target
-        if: steps.helper-policy.outputs.selector == 'v8'
-        run: python scripts/packaging/qualify_cli_helper.py --profile v8 --target ${{ matrix.target }} --installation "${{ runner.temp }}/paintcraft-helper-qualification-${{ github.run_id }}-${{ github.run_attempt }}/prefix/bin"
+      - name: Qualify exact installed consumers for the selected helper
+        run: python scripts/packaging/qualify_cli_helper.py --profile ${{ steps.helper-policy.outputs.selector }} --target ${{ matrix.target }} --installation "${{ runner.temp }}/paintcraft-helper-qualification-${{ github.run_id }}-${{ github.run_attempt }}/prefix/bin"
       - name: Test native clipboard transport and lifecycle
         if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib

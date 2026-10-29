@@ -191,7 +191,7 @@ class CodecWorkerTests(unittest.TestCase):
         self.assertIn("-p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target", workflow)
         self.assertIn("--features paintcraft-codec-worker/${{ steps.helper-policy.outputs.feature }}", workflow)
         self.assertIn("meson==1.12.1 ninja==1.13.2", workflow)
-        self.assertIn("qualify_cli_helper.py --profile v7", workflow)
+        self.assertIn("qualify_cli_helper.py --profile ${{ steps.helper-policy.outputs.selector }}", workflow)
         self.assertNotIn("--include-ignored", workflow)
 
 
