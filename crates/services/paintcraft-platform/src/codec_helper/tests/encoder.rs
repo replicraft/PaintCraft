@@ -125,6 +125,60 @@ fn schema3_contract_enforces_host_selected_eight_imports_without_assuming_seven(
 }
 
 #[test]
+fn ninth_import_requires_exact_inventory_and_tenth_is_refused() {
+    use crate::codec_helper::decode::verify_decoder;
+    const NINE: &[&str] = &[
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "writer-read",
+        "integer-read",
+    ];
+    const TEN: &[&str] = &[
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "writer-read",
+        "integer-read",
+        "extra",
+    ];
+    let installation = Installation::new(Target::MacArm, false);
+    let mut contract = encoder_contract();
+    contract.decode.qualified_import_variants = NINE;
+    contract.validate().unwrap();
+    let mut helper = binary(installation.target);
+    helper.truncate(helper.len() - RECORD.len());
+    helper.extend_from_slice(ENCODE_RECORD);
+    fs::write(&installation.helper, &helper).unwrap();
+    let mut value = manifest(&installation);
+    set(&mut value, "qualified_import_variants", array(NINE));
+    write(&installation, &value);
+    let verified =
+        verify_decoder(&installation.app, contract, installation.target, &|| Ok(())).unwrap();
+    assert_eq!(
+        verified.checked_executable(&|| Ok(())).unwrap(),
+        installation.helper
+    );
+    for changed in [&NINE[..8], TEN] {
+        set(&mut value, "qualified_import_variants", array(changed));
+        write(&installation, &value);
+        assert!(
+            verify_decoder(&installation.app, contract, installation.target, &|| Ok(())).is_err()
+        );
+    }
+    contract.decode.qualified_import_variants = TEN;
+    assert!(contract.validate().is_err());
+}
+
+#[test]
 fn sealed_schema3_decoder_checks_full_installation_and_exact_eighth_variant() {
     use crate::codec_helper::decode::verify_decoder;
     const EIGHT: &[&str] = &[

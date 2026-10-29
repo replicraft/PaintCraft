@@ -50,7 +50,7 @@ impl Contract<'_> {
             || !self.application_version.is_ascii()
             || self.profile.is_empty()
             || self.profile.len() > 128
-            || self.qualified_import_variants.len() > 8
+            || self.qualified_import_variants.len() > 9
             || self
                 .qualified_import_variants
                 .iter()
