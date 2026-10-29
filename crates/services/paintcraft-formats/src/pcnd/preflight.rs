@@ -116,7 +116,7 @@ mod tests {
         let bytes = include_bytes!("../../tests/pcnd-metadata-fixtures/rgb-profile.pcnd");
         let mut document = read(bytes).unwrap();
         let original = document.source_metadata.take().unwrap();
-        let descriptor = original.descriptor().clone();
+        let descriptor = *original.descriptor();
         let raw = write(&document).unwrap();
         // This independent specimen has no raster records: all body bytes are metadata.
         assert!(document.layers.is_empty());
@@ -129,7 +129,7 @@ mod tests {
             profile[..4].copy_from_slice(&length.to_be_bytes());
             let realm = SharedBudget::new(BYTES_MAX + 4096);
             let metadata = SourceMetadata::capture(
-                descriptor.clone(),
+                descriptor,
                 Some(&profile),
                 BYTES_MAX,
                 &realm,
