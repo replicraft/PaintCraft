@@ -1,0 +1,48 @@
+--- a/src/api/codestream_parser/image_info.rs
++++ b/src/api/codestream_parser/image_info.rs
+@@ -119,6 +119,18 @@
+                 .extra_channel_info
+                 .iter()
+                 .map(|info| JxlExtraChannel {
++                    bit_depth: if info.bit_depth().floating_point_sample() {
++                        JxlBitDepth::Float {
++                            bits_per_sample: info.bit_depth().bits_per_sample(),
++                            exponent_bits_per_sample: info.bit_depth().exponent_bits_per_sample(),
++                        }
++                    } else {
++                        JxlBitDepth::Int {
++                            bits_per_sample: info.bit_depth().bits_per_sample(),
++                        }
++                    },
++                    dim_shift: info.dim_shift(),
++                    name_present: info.name_present(),
+                     ec_type: info.ec_type,
+                     alpha_associated: info.alpha_associated(),
+                 })
+--- a/src/api/data_types.rs
++++ b/src/api/data_types.rs
+@@ -300,6 +300,12 @@
+ 
+ #[derive(Clone, Debug, PartialEq, Eq)]
+ pub struct JxlExtraChannel {
++    /// Actual source precision, independent of the main color channels.
++    pub bit_depth: JxlBitDepth,
++    /// Actual source dimension reduction exponent.
++    pub dim_shift: u32,
++    /// Whether source extra-channel metadata contains a nonempty name.
++    pub name_present: bool,
+     pub ec_type: ExtraChannel,
+     pub alpha_associated: bool,
+ }
+--- a/src/headers/extra_channels.rs
++++ b/src/headers/extra_channels.rs
+@@ -83,6 +83,9 @@
+             cfa_channel,
+         }
+     }
++    pub(crate) fn name_present(&self) -> bool {
++        !self.name.is_empty()
++    }
+     pub fn dim_shift(&self) -> u32 {
+         self.dim_shift
+     }

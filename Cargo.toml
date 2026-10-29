@@ -14,6 +14,7 @@ default-members = ["apps/paintcraft"]
 exclude = [
     "vendor/jpegxr-pure-rs-0.1.0-paintcraft1",
     "vendor/zune-jpegxl-0.5.2-paintcraft1",
+    "vendor/jxl-0.8.0-paintcraft1",
 ]
 
 [workspace.package]
@@ -156,7 +157,8 @@ exr = { version = "=1.74.2", default-features = false }
 tiff = { version = "0.11.3", default-features = false }
 zerocopy = { version = "0.8.63", features = ["derive"] }
 # JPEG XL adapters: pure Rust decoder and a separately scoped lossless writer.
-jxl = { version = "0.8.0", default-features = false }
+# Exact source metadata exposure; decoder arithmetic is unchanged.
+jxl = { path = "vendor/jxl-0.8.0-paintcraft1", version = "=0.8.0", default-features = false }
 # Exact upstream source plus reviewed size/alpha metadata fixes; see vendor provenance.
 zune-jpegxl = { version = "=0.5.2", path = "vendor/zune-jpegxl-0.5.2-paintcraft1", default-features = false, features = ["std"] }
 zune-core = { version = "0.5.3", default-features = false, features = ["std"] }

@@ -15,3 +15,11 @@ zune-jpegxl-0.5.2-paintcraft1.provenance.json -text
 zune-jpegxl-0.5.2-paintcraft1/src/encoder.rs -whitespace
 zune-jpegxl-0.5.2-paintcraft1/src/lib.rs -whitespace
 zune-jpegxl-0.5.2-paintcraft1/src/bit_depth.rs -whitespace
+
+# JPEG XL decoder retains exact release bytes and metadata-only patch.
+jxl-0.8.0-paintcraft1/** -text
+jxl-0.8.0-paintcraft1.patch -text -whitespace
+jxl-0.8.0-paintcraft1.provenance.json -text
+jxl-0.8.0-paintcraft1.README.md -text
+# Retain this hash-verified upstream blank line at EOF.
+jxl-0.8.0-paintcraft1/Cargo.toml.orig -whitespace
