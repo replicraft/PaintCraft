@@ -1,6 +1,6 @@
 # Format interoperability implementation
 
-This ledger follows `docs/temp/paintcraft-format-interoperability-classic-studio-v3` alongside the canonical editor and PCND specifications. It records implemented operations as of 2026-10-26, not completion of the entire planning pack.
+This ledger follows `docs/temp/paintcraft-format-interoperability-classic-studio-v3` alongside the canonical editor and PCND specifications. The initial 2026-10-26 ledger is extended by dated qualification updates below; it does not claim completion of the entire planning pack.
 
 Codec implementation, enabled frontend operations and release qualification are separate gates. `paintcraft_formats::registry` controls discovery and admission; individual adapters enforce their narrower file profiles and resource limits. A listed format does not imply support for every variant, metadata field or original application version.
 
@@ -24,7 +24,7 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Native/browser Studio, CLI and MCP offer explicit DDS texture copies: uncompressed RGBA8 or lossy BC1/BC2/BC3, sRGB or converted linear8 samples, and generated mip levels. Studio previews the actual encoded base image and reviews losses before destination choice or download. Advanced browser exports use the bounded isolated Worker profile below; default single-level RGBA8 exports keep their old route and capacity.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 - ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
-- Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. CLI and native MCP use the native route. Ordinary Open and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
+- Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. A new [integer JPEG XL conversion](JXL_INTEGER_IMPORT.md) adds exact 8-bit or explicitly reviewed 16-bit-to-8-bit copies through native V9/V10 candidates and the browser Worker. Released native V7/V8 selections are unchanged. CLI and native MCP use the native route; ordinary Open and Classic reads remain denied. Eight-bit copies do not invent an empty loss prompt.
 - Native Studio, CLI and native MCP explicitly import the qualified opaque RGB8 JPEG XR profile with mandatory print-resolution loss consent. Studio displays the actual picture and effective horizontal/vertical DPI before approval. Ordinary Open, browser and Classic JPEG XR reads remain denied.
 - Native Studio, CLI and native MCP explicitly import the qualified direct-primary HEIF sRGB8 color/straight-alpha profile. Actual YCbCr reconstruction and nonempty item-name losses require consent; an unnamed identity-color source has no conversion-loss prompt. Ordinary Open, browser, Classic and all HEIF writing remain denied.
 - Native Studio, CLI and native MCP explicitly import the qualified identity sRGB8 and explicit SDR YCbCr AVIF still/straight-alpha profiles. SDR requires a verified V6/V7 helper and reconstruction consent; identity accepts V5/V6/V7. Nonempty source item names also require consent. Ordinary Open, browser and Classic reads remain denied.
@@ -43,7 +43,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | TGA | Studio integer raster Open and lossless RGBA8 Export | Admitted orientation, RLE and palette profiles only; palette/metadata losses explicit |
 | WebP | Studio still Open and lossless RGBA8 Export | Animation and unqualified extensions refused; import metadata losses explicit |
 | DDS | Studio 2D top-mip import; default single-level RGBA8 export; native/browser Studio and CLI/MCP explicit RGBA8 or BC1/BC2/BC3 texture copies with generated mips | Reader requires explicit sRGB and straight/opaque alpha, at most 64 MiB and 4,194,304 top-level pixels; lower levels are structurally checked and omitted with consent. Advanced fresh DX10 output offers sRGB or real linear8 conversion, single/full/custom mip counts, Nearest or stored-sample Box, and Normal/High BC effort. BC1 requires opaque input; BC2/BC3 use straight alpha. BC, actual hidden-RGB and linear8 quantization losses need consent. Browser advanced export has a separate 4MP/8-layer bounded source profile. BC1 cutout, other BC formats/swizzles, custom mip preservation and foreign preserving Save remain unavailable; arrays, cubes and volumes are refused. See the DDS texture-copy profile below |
-| JPEG XL | Studio lossless RGBA8 Export; native Studio/CLI/MCP explicit Import for `native-jxl-srgb8-worker-v1`; browser Studio explicit Import for `web-jxl-srgb8-worker-quarantine-v1` | Both readers require metadata-free static identity-oriented straight sRGB8, at most 64 MiB input and 4,194,304 pixels. Native import requires the matching packaged helper/schema 2 manifest. Browser import uses the production isolated Worker and persistent quarantine on uncertain completion. Ordinary Open and Classic reads remain denied. Export accepts 1-pixel dimensions and retains its 64 MiB output limit |
+| JPEG XL | Studio lossless RGBA8 Export; released native Studio/CLI/MCP strict 8-bit Import for `native-jxl-srgb8-worker-v1`; native V9/V10 candidate and browser Studio [integer 8/16-bit conversion](JXL_INTEGER_IMPORT.md) | Metadata-free static identity-oriented original sRGB, at most 64 MiB input and 4,194,304 pixels. Optional alpha must be unnamed, straight, full-resolution integer samples at the color depth. Codec 9 preserves 8-bit samples exactly or reduces 16-bit samples with mandatory depth-loss consent and a bound actual preview; output/editor remains RGBA8. Native candidates require exact V9/schema 2 or V10/schema 3 manifests and do not change released V7/V8 shipping policy. Browser completion uncertainty retains quarantine. Ordinary Open/Classic reads and preserving JXL Save remain denied; export retains its independent 64 MiB output limit |
 | AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for identity sRGB8 and SDR YCbCr variants | Reader: reduced-still identity 4:4:4 or explicit BT.709/sRGB8 full/limited-range 4:4:4 or 4:2:0 with qualified vertical/colocated siting, optional straight alpha, at most 64 MiB input and 4,194,304 pixels. SDR requires an exact V6/V7 helper/manifest and reconstruction consent; identity accepts V5/V6/V7. Named item loss also requires consent. Unknown 4:2:0 siting, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
@@ -70,6 +70,26 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
 
 PDN/PAINT conversions limit source acquisition to 64 MiB, layers to 256 and aggregate decoded layer pixels to 4,194,304. Unknown graph/container variants fail closed. PDN uses inert typed graph parsing without executing .NET objects. PAINT brands alone do not prove a supported document. Converted sources never become preserving Save bindings; users save the new project as PCND. Native writer qualification still requires reopen in pinned original Windows applications, beyond PaintCraft self-roundtrips.
+
+## Integer JPEG XL conversion, 2026-10-29
+
+The [integer import contract and evidence](JXL_INTEGER_IMPORT.md) adds one
+codec 9 family for exact 8-bit or reviewed 16-bit-to-sRGB8 copies. The 16-bit rule
+is `(u32(value) + 128) / 257` for every straight RGBA component, including hidden
+RGB; depth-loss consent is mandatory even when all samples are exactly
+representable. A canonical 96-byte source/output report binds the actual preview
+to consent and publication. The selected jxl-rs decoder and zune-jpegxl writer
+remain separate; this does not add high-depth editing.
+
+Actual headless macOS ARM App controls passed with both immutable V9/V10
+helpers in English and Japanese. Production Worker/Studio browser controls
+passed in Chrome 156, including independent raw-pixel checks of nine PCND
+artifacts. Actual installed CLI/MCP baselines and exact selectors also passed
+with both candidate roles on macOS ARM; that development-checkout evidence is
+separate from clean candidate CI.
+Six-target native candidate CI and shipping promotion remain separate gates;
+the published 0.1.1 V7/V8 artifacts are unchanged. The dated strict 8-bit-only evidence
+below remains historical, and is not rewritten as 16-bit qualification.
 
 ## Loss handling and publication
 

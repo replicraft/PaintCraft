@@ -15,6 +15,15 @@ The producer's failed publisher step and successful artifact-reuse publication
 remain separate records. T28 and T35 are partial: these results do not complete
 original-application, security, interactive GUI/GPU or physical-device gates.
 
+[Integer JPEG XL import](JXL_INTEGER_IMPORT.md) now has shared exact 8-bit and
+explicit 16-bit-to-sRGB8 conversion, native V9/V10 candidate App controls in
+English/Japanese, and actual production Worker/Studio browser pixel evidence.
+The 16-bit path requires visible-preview depth-loss consent and digest-bound
+adoption; this does not add 16-bit editing. Actual installed CLI/MCP baseline and
+exact-selector checks passed for both roles on macOS ARM. Six-target candidate
+qualification and shipping promotion remain
+open, and the published 0.1.1 V7/V8 helper selections are unchanged.
+
 [Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well
