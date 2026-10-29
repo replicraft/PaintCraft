@@ -33,6 +33,7 @@ pub mod recovery;
 pub mod registry;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod save_recovery;
+pub mod source_inspection;
 pub mod svg;
 pub mod tiff_pages;
 #[cfg(not(target_arch = "wasm32"))]
