@@ -2,9 +2,9 @@
 
 Tablet support is being implemented across native and browser frontends. Shared
 input, pressure rendering and guarded editor controllers are implemented and
-tested. Browser startup now installs dedicated Pointer Events capture. Desktop
-has an experimental owned AppKit event loop; normal desktop startup does not
-activate it. Canonical keyboard/IME ordering and physical input qualification
+tested. Browser startup now installs dedicated Pointer Events capture. macOS
+starts its owned AppKit input loop automatically and falls back to ordinary
+mouse input if native capture is unavailable. Canonical keyboard/IME ordering and physical input qualification
 remain in progress. Physical tablets, drivers and platform timing have not been
 qualified. A pen reaching the
 existing mouse path is not evidence of pressure or tilt support.
@@ -45,8 +45,8 @@ with opacity and textured dynamics disabled. Malformed explicit policies are
 rejected. The Q16 curves are deterministic; disabling size pressure uses the
 selected diameter while preserving original pressure and axes in retained samples.
 Each stroke captures its policy at Down, so changing preferences cannot rewrite
-an existing preview or history item. These controls do not activate the unfinished
-native capture integration.
+an existing preview or history item. These controls use the available frontend input path. Windows and Linux native
+pen acquisition remains unfinished.
 
 Optional pressure opacity uses capped dabs: overlapping parts of one stroke do
 not repeatedly build up opacity. Enabled media dynamics preserve each existing
@@ -81,7 +81,7 @@ unqualified.
 
 ## Frontend integration status
 
-The desktop `with_native_tablet` opt-in connects AppKit capture, the bounded
+The legacy desktop `with_native_tablet` API connects AppKit capture, the bounded
 receiver, existing editing service and guarded publication. The AppKit adapter
 retains actual pressure/tilt/rotation availability, device/proximity identity,
 barrel buttons and native view/backing coordinates. Its delivery gate records
@@ -107,12 +107,9 @@ preparation and completed results to check failure, focus, modal and IME loss,
 invalid framework input, exact Undo ordering and recovery. They also cover
 unchanged legacy paint queues and floating workflows.
 
-Normal startup keeps native capture disabled. On macOS, the experimental owned
-`winit + egui-winit + egui-wgpu` path can be started explicitly:
-
-```sh
-PAINTCRAFT_NATIVE_TABLET=1 cargo run -p paintcraft
-```
+Normal macOS startup uses the owned `winit + egui-winit + egui-wgpu` input
+path automatically. No environment variable or feature switch is needed.
+Windows and Linux retain their ordinary frontend input path.
 
 It uses the existing document, dialog, recovery and GPU services. Native failure
 retires the capture installation and returns to ordinary mouse input while
@@ -131,8 +128,8 @@ during teardown. Other tracking areas cannot claim this capture path. The
 executable and owned startup sources were recorded; this was not a frozen
 whole-workspace release qualification.
 
-Canonical keyboard/IME order still requires qualification before default native
-activation. Per-source sequence numbers or frame event positions cannot prove
+Canonical keyboard/IME order and physical-device behavior still require
+qualification. Per-source sequence numbers or frame event positions cannot prove
 that order. Windows pointer/history acquisition has cross-target SDK checks.
 The Windows adapter also captures bounded raw keyboard, focus, layout and IME
 observations. IMM composition data is read once by the owned adapter. Cross-target
@@ -162,9 +159,9 @@ through outstanding batches, cancellation handoffs and publication guards. Typed
 continuation updates only the exact supplied pen or touch lifetime after an
 authored predecessor receipt. The ordinary Source constructor does not allocate
 this bank. The native App projection still explicitly refuses touch records:
-gesture and widget delivery are not enabled by these metadata controls. Precise
-active-contact retirement must preserve earlier completed work before consumers
-can adopt these scopes.
+gesture and widget delivery are not enabled by these metadata controls. Precise active-contact retirement preserves earlier completed work through
+opaque lifetime guards. Headless editor controls include paused real jobs
+followed by wheel and keyboard cancellation of a newer contact.
 
 The browser editor controller has tests for changing-pressure pixels, identical
 preview/release output, one history item, undo/redo, cancellation, stale owners,
@@ -291,7 +288,7 @@ delivery scope above and physical native traces remain distinct evidence.
 
 | Area | Remaining work |
 | --- | --- |
-| Native capture | Complete canonical AppKit keyboard/IME ordering; integrate and qualify Windows pointer/history and native touch, and implement ordered XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The committed AppKit boundary and opt-in host are foundations. |
+| Native capture | Complete canonical AppKit keyboard/IME ordering; integrate and qualify Windows pointer/history and native touch, and implement ordered XInput2 and Wayland tablet-v2 acquisition. Qualify safe installation/removal, IME, display conversion and cancellation through the actual frontend. The AppKit boundary and normal macOS owned host are implemented foundations. |
 | Browser capture | Cross-browser and physical-device qualification, real eraser-end delivery, panic recovery and sustained acquisition/display timing. Extend the recorded startup/drop checks to other browsers. Preserve the qualified mouse and palm behavior while extending finger navigation. |
 | Controller adoption | Complete native production source-to-controller wiring and mixed-device ordering. Retain browser/native ownership/IME/draft arbitration, pressure-changing pixels, preview/release equality, one undo item and eraser-end/button semantics. |
 | Brush settings and dynamics | Qualify the captured size, curve, opacity and textured-brush settings through production input; add device capability feedback and physical tilt/twist traces. Functional settings and headless pixel controls do not establish physical brush feel. |

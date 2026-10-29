@@ -7,7 +7,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Desktop, browser and command-line apps.
 - **MCP support:** let AI assistants paint, edit layers, preview images and save projects.
 - Nine brushes, pencil, eraser, fill and color picker.
-- Pressure-sensitive round strokes in the browser.
+- Pen pressure controls for size and opacity, with native macOS and browser input.
 - Shapes, curves and text.
 - Rectangular and free-form selections, copy and cut.
 - Paste images onto the canvas or into new layers (macOS and supported browsers).

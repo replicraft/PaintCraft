@@ -1,14 +1,15 @@
 # Native tablet capture boundary
 
 This adapter contains AppKit event-monitor capture, Windows pointer/history
-acquisition and shared packet/delivery logic. Normal desktop startup keeps native
-capture disabled. Linux acquisition, canonical native keyboard/IME ordering and
+acquisition and shared packet/delivery logic. Normal macOS startup installs native
+capture automatically, with ordinary mouse recovery if installation fails.
+Windows consumer integration, Linux acquisition, canonical keyboard/IME ordering and
 physical hardware qualification remain unfinished. See the current
-[frontend status and opt-in startup instructions](../../../docs/TABLET_INPUT.md).
+[frontend status and startup behavior](../../../docs/TABLET_INPUT.md).
 
 The legacy `with_native_tablet` host is a separate integration path. Its
 frame-based genuine mouse/pen merge does not prove source-time chronology and
-must not be enabled as the default. The newer owned macOS loop uses
+must not be enabled as the default. The owned macOS loop uses
 `install_records` and source-observed mouse/pen ordering. An actual window
 startup/render/close smoke test retained native delivery health `Ready` before
 close, with zero reported failures. That establishes installation and startup,
@@ -140,8 +141,8 @@ zero pressure/axes, boundaries and failures. They do not install a live monitor.
 The owned macOS integration now consumes source records and captures display/view
 state. Canonical keyboard/IME ordering, Windows consumer integration,
 XI2/Wayland acquisition and physical hardware qualification remain required.
-Passing collector controls do not establish those results. Default startup
-remains disabled.
+Passing collector controls do not establish those results. Native capture
+starts automatically on macOS; this does not establish physical qualification.
 
 ### Focus recovery in the ordered collector
 
