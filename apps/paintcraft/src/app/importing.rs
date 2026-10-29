@@ -20,10 +20,13 @@ mod native_codec;
 mod ora;
 #[path = "importing/svg.rs"]
 mod svg;
+#[path = "importing/tiff.rs"]
+pub(crate) mod tiff;
 pub(super) use svg::FontPick;
 
 enum Candidate {
     Pages(dcx::Pages),
+    Tiff(Box<tiff::Source>),
     Entries(icons::Entries),
     Icns(Box<icns::Source>),
     NativeCodec(Box<native_codec::Source>),
@@ -35,6 +38,7 @@ impl Candidate {
     fn losses(&self) -> &[String] {
         match self {
             Self::Pages(_)
+            | Self::Tiff(_)
             | Self::Entries(_)
             | Self::Icns(_)
             | Self::NativeCodec(_)
@@ -155,6 +159,7 @@ impl App {
         if matches!(
             pending.candidate,
             Candidate::Pages(_)
+                | Candidate::Tiff(_)
                 | Candidate::Entries(_)
                 | Candidate::Icns(_)
                 | Candidate::NativeCodec(_)
@@ -182,6 +187,7 @@ impl App {
                 }
                 Candidate::Layered(project) => project.document,
                 Candidate::Pages(_)
+                | Candidate::Tiff(_)
                 | Candidate::Entries(_)
                 | Candidate::Icns(_)
                 | Candidate::NativeCodec(_)
@@ -214,6 +220,14 @@ impl App {
         }
     }
     pub(super) fn import_dialog(&mut self, ctx: &egui::Context) {
+        if self
+            .pending_import
+            .as_ref()
+            .is_some_and(|pending| matches!(pending.candidate, Candidate::Tiff(_)))
+        {
+            self.tiff_import_dialog(ctx);
+            return;
+        }
         if self
             .pending_import
             .as_ref()

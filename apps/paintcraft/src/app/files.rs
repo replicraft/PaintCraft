@@ -400,7 +400,9 @@ impl App {
             )?;
             return self.stage_icns_import_acquired(source, path.to_path_buf());
         }
-        if self.try_import_ora_source(path, convert)? {
+        if self.try_import_tiff_source(path, convert)?
+            || self.try_import_ora_source(path, convert)?
+        {
             return Ok(());
         }
         if self.try_open_dds_source(path, convert)? {
