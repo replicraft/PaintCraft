@@ -41,6 +41,7 @@ cargo run --release -p paintcraft-cli -- mcp
 **PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency and canvas size intact, while being compressed and lightweight. Save as PCND to keep working on your project.
 
 - **Classic and Studio:** open and export PNG, JPEG, BMP, still GIF and single-page TIFF.
+- **TIFF page import:** choose a supported page in desktop/browser Studio, CLI or MCP after reviewing color-depth and metadata losses.
 - **Studio:** also open and export TGA, still WebP and supported 2D DDS images.
 - **DDS texture export:** choose compression and generate smaller texture levels in desktop/browser Studio, CLI or MCP; Studio previews the result.
 - **Studio exports:** lossless JPEG XL, lossy AVIF, QOI, PAM, farbfeld and PCX with optional 256-color palettes and a preview.

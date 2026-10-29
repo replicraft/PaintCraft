@@ -24,6 +24,15 @@ exact-selector checks passed for both roles on macOS ARM. Six-target candidate
 qualification and shipping promotion remain
 open, and the published 0.1.1 V7/V8 helper selections are unchanged.
 
+[Selected TIFF page import](TIFF_PAGE_IMPORT.md) now has bounded full-source
+inventory and explicit Studio conversion to an unsaved RGBA8 copy. Backend,
+native headless App and actual CLI/MCP controls pass, including GrayA16/ICC,
+loss consent, source/history guards and distinct page identities. Production
+Chrome picker/preview/adoption/download controls and independent saved-pixel
+checks also pass. Broader TIFF precision/profile/page editing, physical and
+cross-browser qualification, foreign preserving Save and format-pack delivery
+gates remain unfinished.
+
 [Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well
