@@ -19,6 +19,10 @@ pub(crate) use msp_export::MspExportPending;
 mod dds_export;
 pub(crate) use dds_export::DdsExportPending;
 
+#[path = "background/tiff_import.rs"]
+mod tiff_import;
+pub(crate) use tiff_import::{TiffCompletion, TiffPending};
+
 // Provisional preparation admission, not allocator/RSS accounting. The service
 // admits one transaction across all documents, including unconsumed results.
 const PREPARATION_CHARGE: u64 = 2 << 30;
@@ -26,6 +30,7 @@ const PREPARATION_CHARGE: u64 = 2 << 30;
 pub(super) enum Completion {
     Edit(PreparedEdit),
     PenEdit(super::pen::Prepared),
+    TiffImport(TiffCompletion),
     CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
     JxrExport(Box<PreparedJxrExport>),
     DdsExport(Box<crate::dds_export::worker::Prepared>),
@@ -444,7 +449,8 @@ impl Editor {
                 }),
             Ok(Completion::Deferred(_)) => unreachable!("deferred edits were retained above"),
             Ok(
-                Completion::CodecImport(_)
+                Completion::TiffImport(_)
+                | Completion::CodecImport(_)
                 | Completion::JxrExport(_)
                 | Completion::DdsExport(_)
                 | Completion::MspExport(_),
