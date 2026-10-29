@@ -27,11 +27,13 @@ use paintcraft_history::{History, Snapshot};
 mod flatten;
 mod history;
 mod paste;
+mod persistence;
 mod preparation;
 mod residency;
 mod sampled_brush;
 mod shape_mask;
 pub use history::{HistoryTicket, HistoryView};
+pub use persistence::PersistentValidator;
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
 
@@ -99,6 +101,8 @@ pub struct Session {
     saved_state: Option<Uuid>,
     staged_pixels: u64,
     preparation_policy: Arc<()>,
+    persistent_validator: Option<PersistentValidator>,
+    detached: bool,
 }
 
 impl Session {
@@ -123,6 +127,8 @@ impl Session {
             epoch: 0,
             staged_pixels: STAGED_PIXELS_MAX,
             preparation_policy: Arc::new(()),
+            persistent_validator: None,
+            detached: false,
         }
     }
 
@@ -325,6 +331,9 @@ impl Session {
             staged.doc.state_id = deterministic_id(&["state", &base, digest]);
         }
         let history_id = deterministic_id(&["history", &base, &self.epoch.to_string(), digest]);
+        if content_changed && !self.detached {
+            self.validate_persistent(&staged.doc, &check)?;
+        }
         let doc = Arc::new(staged.doc);
         // The single publication point: document, selection, history and epoch together.
         self.history.record_labeled_checked(

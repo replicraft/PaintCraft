@@ -42,6 +42,8 @@ impl Session {
                 saved_state: self.saved_state,
                 staged_pixels: self.staged_pixels,
                 preparation_policy: self.preparation_policy.clone(),
+                persistent_validator: self.persistent_validator,
+                detached: true,
             },
         })
     }
@@ -57,6 +59,9 @@ impl Session {
         check()?;
         self.validate_preparation(prepared.base, &prepared.session)?;
         if prepared.receipt.committed {
+            if !prepared.session.doc.same_semantics(&self.doc) {
+                self.validate_persistent(&prepared.session.doc, &check)?;
+            }
             self.doc = prepared.session.doc;
             self.selection = prepared.session.selection;
             self.epoch = prepared.session.epoch;
