@@ -33,6 +33,8 @@ fn copied_installed_real_helper_cancellation_preserves_mcp_session_and_retires_c
     fs::copy(&current, &child).unwrap();
     let installed = root.join(helper_name);
     fs::copy(helper, &installed).unwrap();
+    normalize_copied_test_image(&child);
+    normalize_copied_test_image(&installed);
     let target = match (std::env::consts::OS, std::env::consts::ARCH) {
         ("macos", "aarch64") => "aarch64-apple-darwin",
         ("macos", "x86_64") => "x86_64-apple-darwin",
@@ -79,6 +81,34 @@ fn copied_installed_real_helper_cancellation_preserves_mcp_session_and_retires_c
     );
     fs::remove_dir_all(root).unwrap();
 }
+fn normalize_copied_test_image(path: &std::path::Path) {
+    let before = fs::metadata(path).unwrap().len();
+    // The real installed-helper verifier bounds both application and helper at
+    // 256MiB. Linux debug test ELF files can exceed it solely through DWARF;
+    // normalize only these private copies, never weaken the production bound.
+    #[cfg(target_os = "linux")]
+    if before > 256 << 20 {
+        let output = Command::new("strip")
+            .arg("--strip-debug")
+            .arg(path)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "strip private fixture: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            fs::metadata(path).unwrap().len() <= 256 << 20,
+            "private fixture remains beyond installed executable allowance after stripping debug metadata"
+        );
+    }
+    eprintln!(
+        "copied cancellation image {}: {before} -> {} bytes",
+        path.display(),
+        fs::metadata(path).unwrap().len()
+    );
+}
 #[test]
 #[ignore = "private copied-installation cancellation fixture"]
 fn fixture_cancelled_import() {
@@ -95,6 +125,7 @@ fn fixture_cancelled_import() {
     };
     let before = state.inspection().unwrap();
     let cancelled = Arc::new(AtomicBool::new(false));
+    let launched = Arc::new(AtomicBool::new(false));
     let checks = Arc::new(AtomicUsize::new(0));
     let flag = cancelled.clone();
     let check: Check = Arc::new(move || {
@@ -106,12 +137,15 @@ fn fixture_cancelled_import() {
     });
     let flag = cancelled.clone();
     let probes = checks.clone();
+    let entered = launched.clone();
+    let started = std::time::Instant::now();
     let error = import_with_launch(
         &mut state,
         &input,
         &[],
         check,
         Box::new(move |launch, check| {
+            entered.store(true, Ordering::Release);
             // Real verified helper waits for its missing source while the retained
             // parent lease remains open. Second supervisor check occurs after spawn.
             process::run_parent_lease(
@@ -135,7 +169,24 @@ fn fixture_cancelled_import() {
         }),
     )
     .unwrap_err();
-    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert_eq!(
+        error.code,
+        ErrorCode::OperationCancelled,
+        "actual cancellation error={error:?}; launch_entered={}; supervisor_checks={}; elapsed={:?}; application_bytes={}; helper_bytes={}",
+        launched.load(Ordering::Acquire),
+        checks.load(Ordering::Acquire),
+        started.elapsed(),
+        fs::metadata(std::env::current_exe().unwrap())
+            .unwrap()
+            .len(),
+        fs::metadata(input.parent().unwrap().join(if cfg!(windows) {
+            "paintcraft-codec-worker.exe"
+        } else {
+            "paintcraft-codec-worker"
+        }))
+        .unwrap()
+        .len()
+    );
     assert!(checks.load(Ordering::Acquire) >= 2);
     assert_eq!(state.inspection().unwrap(), before);
     assert!(state.import_identity.is_none());
