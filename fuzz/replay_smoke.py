@@ -86,6 +86,10 @@ def main():
     print("Verified 24 seed hashes and 6168 deterministic cases; no coverage-guided run")
     from stock_replay_smoke import run
     run(args.replay)
+    from pcnd_replay_smoke import run as run_pcnd
+    run_pcnd(args.replay)
+    from pcnd_semantic_smoke import run as run_pcnd_semantic
+    run_pcnd_semantic(args.replay)
 
 
 if __name__ == "__main__":

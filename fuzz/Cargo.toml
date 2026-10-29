@@ -14,6 +14,7 @@ members = ["."]
 fuzzing = ["dep:libfuzzer-sys"]
 
 [dependencies]
+sha2 = "=0.11.1"
 libfuzzer-sys = { version = "=0.4.13", optional = true }
 paintcraft-core = { path = "../crates/foundation/paintcraft-core" }
 paintcraft-formats = { path = "../crates/services/paintcraft-formats" }
@@ -99,6 +100,14 @@ required-features = ["fuzzing"]
 [[bin]]
 name = "icons"
 path = "fuzz_targets/icons.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "pcnd"
+path = "fuzz_targets/pcnd.rs"
 test = false
 doc = false
 bench = false

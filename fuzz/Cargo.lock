@@ -864,6 +864,7 @@ dependencies = [
  "paintcraft-formats",
  "paintcraft-paint",
  "paintcraft-pdn",
+ "sha2",
 ]
 
 [[package]]

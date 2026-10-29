@@ -2,6 +2,7 @@
 //! Declared parser limits are not a hard RSS limit or a native-code sandbox.
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::cell::Cell;
+mod pcnd;
 mod stock;
 pub const INPUT_MAX: usize = 256 << 10;
 pub const PIXELS_MAX: u64 = 16_384;
@@ -18,6 +19,7 @@ pub enum Target {
     Raster,
     TiffPages,
     Icons,
+    Pcnd,
 }
 impl Target {
     pub fn parse(value: &str) -> Option<Self> {
@@ -32,6 +34,7 @@ impl Target {
             "raster" => Self::Raster,
             "tiff_pages" => Self::TiffPages,
             "icons" => Self::Icons,
+            "pcnd" => Self::Pcnd,
             _ => return None,
         })
     }
@@ -58,6 +61,14 @@ pub fn classify(result: Result<()>) -> Outcome {
 /// Entry wrappers classify returned errors; invariant failures and panics remain
 /// findings rather than ordinary rejections.
 pub fn exercise(target: Target, bytes: &[u8]) -> Result<()> {
+    exercise_mode(target, bytes, false)
+}
+/// Harness-only semantic mutation route. Repairs only the outer PCND checksum;
+/// the product parser still validates every inner digest and encoded payload.
+pub fn exercise_pcnd_checksum_aware(bytes: &[u8]) -> Result<()> {
+    exercise_mode(Target::Pcnd, bytes, true)
+}
+fn exercise_mode(target: Target, bytes: &[u8], checksum_aware: bool) -> Result<()> {
     if bytes.len() > INPUT_MAX {
         return Err(Error::new(ErrorCode::ResourceLimit, "fuzz input allowance"));
     }
@@ -74,7 +85,15 @@ pub fn exercise(target: Target, bytes: &[u8]) -> Result<()> {
             Ok(())
         }
     };
+    let repaired;
+    let bytes = if checksum_aware {
+        repaired = pcnd::repair_outer_sha(bytes, &check)?;
+        repaired.as_slice()
+    } else {
+        bytes
+    };
     match target {
+        Target::Pcnd => pcnd::exercise(bytes, &check)?,
         Target::Avif => {
             paintcraft_formats::avif::assess_family(bytes, PIXELS_MAX, &check)?;
         }

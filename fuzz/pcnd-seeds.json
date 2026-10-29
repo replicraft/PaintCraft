@@ -1,0 +1,117 @@
+{
+  "schema": "paintcraft.pcnd-fuzz-seeds/v1",
+  "seeds": [
+    {
+      "target": "pcnd",
+      "name": "legacy-v1.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/legacy-v1.pcnd",
+      "bytes": 165,
+      "sha256": "35114ca131f0c2d7939fd4c35c4e7c0f05a41b4472db78d8affb603a22c13673",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "rgb-profile.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/rgb-profile.pcnd",
+      "bytes": 3322,
+      "sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "resolution-only.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/resolution-only.pcnd",
+      "bytes": 298,
+      "sha256": "e3569169a04c958dbb2c4e45e3a804eeff4fadb9eeecca0d27cc2cd5bbe466d9",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "orientation-only.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/orientation-only.pcnd",
+      "bytes": 298,
+      "sha256": "9d47ad14c26112b4d197567da5ee6b575b953b9ffadedc2e72e047abd60d68fd",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "unknown-version.pcnd",
+      "source": "fuzz/pcnd-fixtures/unknown-version.pcnd",
+      "bytes": 3322,
+      "sha256": "2c28150765bef2d049b8a9d7de1a9233c9a75b112eadcd51ac75991faeb3879a",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "icc-extent-overflow.pcnd",
+      "source": "fuzz/pcnd-fixtures/icc-extent-overflow.pcnd",
+      "bytes": 3322,
+      "sha256": "98f4711d0977a8493a819f2ae42ed10deda8065ea6102693971fa6d63e055c61",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "inner-digest-mismatch.pcnd",
+      "source": "fuzz/pcnd-fixtures/inner-digest-mismatch.pcnd",
+      "bytes": 3322,
+      "sha256": "d382bff6d578d738dd2d223cac707ad9a13001ef91ce22c5572bd7fe3eab620d",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "rgba-runs.pcnd",
+      "source": "fuzz/pcnd-fixtures/rgba-runs.pcnd",
+      "bytes": 173,
+      "sha256": "ca48f5a9c6a52b47469a61099748b2fce86a902b75bd25f7cd5c0b6e48422ae4",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "zstd.pcnd",
+      "source": "fuzz/pcnd-fixtures/zstd.pcnd",
+      "bytes": 178,
+      "sha256": "4d9b4f7acdb131462f29635d7fe9ceb621e6875b2d51c684bfc4c1234c849e1b",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "lz4.pcnd",
+      "source": "fuzz/pcnd-fixtures/lz4.pcnd",
+      "bytes": 167,
+      "sha256": "60ea390f53b8411a55263f7185cc44c04179785609faecc51243da1b86cb9644",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "runs-lz4.pcnd",
+      "source": "fuzz/pcnd-fixtures/runs-lz4.pcnd",
+      "bytes": 179,
+      "sha256": "fd84c946560f257583d51e836218133fc5c6c663d9cdfc9dfb84fdbd2f93d208",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "huge-default-only.pcnd",
+      "source": "fuzz/pcnd-fixtures/huge-default-only.pcnd",
+      "bytes": 157,
+      "sha256": "ee619a9ceb0f7639a2ceb0816aa5010bb76cae040a962c83102eecd50668cb9e",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "two-tiles.pcnd",
+      "source": "fuzz/pcnd-fixtures/two-tiles.pcnd",
+      "bytes": 2202,
+      "sha256": "10e7100dca743aecfe6f3e166e4cd88419ef5f8e83cdc28848d7382ba895a204",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "three-tiles.pcnd",
+      "source": "fuzz/pcnd-fixtures/three-tiles.pcnd",
+      "bytes": 3235,
+      "sha256": "bdc87d2a5c1f575219a66a611eed9dc0ab58a61124b0f09f59313bd6e6808668",
+      "accepted": false
+    }
+  ]
+}

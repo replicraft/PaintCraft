@@ -2,7 +2,7 @@
 
 This standalone, unpublished Cargo workspace exercises existing parser entrypoints.
 It adds no product dependency or file-format capability. `replay` builds without
-libFuzzer; the ten target wrappers require the `fuzzing` feature and pinned
+libFuzzer; the eleven target wrappers require the `fuzzing` feature and pinned
 `libfuzzer-sys = 0.4.13`. `Cargo.lock` is checked separately from the product lock.
 
 ## Stock decoder extension
@@ -281,3 +281,82 @@ For the current seven-target, 6,168-case inventory, use the manifest-driven help
 ```sh
 python3 fuzz/replay_smoke.py --replay /path/to/private/target/debug/replay
 ```
+
+## PCND native-project extension
+
+`pcnd` is a separate pure target for the public
+`pcnd::read_with_metadata_admission_checked` reader. It accepts at most 256 KiB
+input, 16,384 canvas pixels, eight layers, 131,072 staged pixels (two nominal
+256 × 256 resident tiles), and a separately charged 16 KiB source attachment.
+Huge default-only sparse layer dimensions are not confused with materialized
+pixel cost. Checks share the existing 4,096-checkpoint allowance.
+
+Accepted documents undergo bounded structural checks and canonical raw
+write/read semantic comparison through a 1 MiB private sink,
+including exact source metadata and hidden pixels. Original and restored
+attachments use separate 16 KiB budget realms; this does not charge two live
+snapshots against one attachment quota. The two admitted tiles consume at most 512 KiB raw; strings, headers and the
+attachment are bounded by the 256 KiB input. The separate 1 MiB output allowance
+covers both plus canonical framing; exceeding it is an invariant finding, never
+a silently skipped roundtrip.
+The pure entrypoint has no filesystem, helper, editor or GPU work. Test and replay
+runners read fixtures externally. These are logical bounds, not hard RSS or time
+limits, sanitizer instrumentation or a hostile-input sandbox.
+
+`pcnd-seeds.json` and `pcnd-fixtures/provenance.json` independently bind fourteen
+seeds, ten positive and four negative. They include four independently serialized
+PCND1/2 sources, recomputed-outer-SHA unknown-version/ICC-extent/inner-digest
+negatives, RGBA-runs/Zstd/LZ4/runs-LZ4 tile bodies, huge default-only geometry and
+two/three-resident-tile admission boundaries. See the generator's exact parent
+hashes/recipes. Zstd seed generation uses installed Zstandard 1.5.7; product
+codec versions and validators are unchanged.
+
+The additional deterministic stream has exactly **3,598 cases**. The original
+seven-target 6,168-case and three-stock-target 7,453-case receipts and inventories
+remain separate and unchanged. The main replay helper runs the three raw streams and the separately reported
+checksum-aware stream described below;
+the new stream can also run alone:
+
+```sh
+CARGO_INCREMENTAL=0 cargo test --locked --manifest-path fuzz/Cargo.toml --target-dir target
+CARGO_INCREMENTAL=0 cargo build --locked --manifest-path fuzz/Cargo.toml --target-dir target --bin replay
+python3 fuzz/pcnd_replay_smoke.py --replay target/debug/replay
+```
+
+Random mutations usually fail the outer SHA before deeper parsing. Valid
+compressed seeds and integrity-recomputed negative controls deliberately reach
+those deeper paths; a short stable libFuzzer driver run does not establish
+coverage or replace a future instrumented campaign. No nightly/tool installation
+or alternate Cargo target directory is required for this extension.
+
+A **separate checksum-aware PCND stream** mutates each seed's body and recomputes
+only its outer SHA-256 before invoking the same parser. It does not repair inner
+attachment digests, encoded tile data or semantic fields. Its 3,598 cases are
+reported separately from the raw PCND stream and the historical/stock streams.
+This reaches container boundaries behind the integrity prefilter; it is still
+stable mutation smoke, not coverage-guided qualification. Generated input batches
+are bounded, live under ignored validation storage and are removed on exit.
+
+```sh
+python3 fuzz/pcnd_semantic_smoke.py --replay target/debug/replay
+```
+
+The actual `pcnd` libFuzzer wrapper also executes **both** the raw parser and the
+explicit checksum-aware route on each input. The latter makes one fallible,
+input-bounded copy and hashes in checked 64 KiB chunks under the same checkpoint
+allowance. Only the outer 32-byte checksum is replaced. The extra harness-only
+SHA-256 dependency is pinned to the product's already selected `sha2` 0.11.1;
+no product parser API or checksum validation is widened.
+
+The initial local PCND qualification used Darwin/arm64 and the repository's
+selected stable toolchain. Fourteen Rust controls (five PCND-specific) and nine
+Python inventory/replay controls passed. The unchanged historical and stock
+streams passed separately, followed by raw PCND 3,598 cases (28 accepted) and
+checksum-aware PCND 3,598 cases (601 accepted). All eleven wrappers compiled.
+The actual stable PCND driver completed 2,000 inputs with both routes enabled,
+reporting 31 MiB RSS and warnings for absent sanitizer/coverage instrumentation;
+it reduced its working corpus to one byte. This is mutation smoke, **not** an
+instrumented coverage result or exhaustive hostile-parser qualification. Original
+fourteen seed files and their hashes remain preserved separately from that
+working corpus. The ignored `docs/validation/pcnd-fuzz/` receipt binds exact
+sources, commands, logs, lock edge and executed driver/replay digests.
