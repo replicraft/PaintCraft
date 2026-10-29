@@ -39,6 +39,11 @@ actual metadata save limit. Representative DDS/MSP browser Worker flows also
 pass consent, revocation, cancellation and independent output checks, plus 12
 real tampered-request/admission cases. Broader format, browser and native target
 qualification remains separate work.
+Studio ICO/CUR/ICNS copies now also require explicit metadata omission before
+preparation and retain the original frozen export policy through publication.
+Native controls in all seven languages and actual Chrome downloads pass,
+including cancellation, revocation and independently checked selected pixels.
+The shared asset preview requires a complete visible image in a prior frame.
 
 JPEG export now has an explicit RGB background through desktop/browser controls,
 CLI and MCP, preserving white by default and existing loss consent. Exact alpha

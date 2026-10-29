@@ -127,3 +127,13 @@ choices, changed settings, later text edits, cancellation, source aliases and
 changed destinations. The shared icon preview requires a complete visible image
 in a prior frame; a partly clipped image does not establish review. These are
 local host/UI and filesystem checks, not physical GUI or six-target qualification.
+
+Production Chrome additionally passes real retained-PNG import, PCND2 save/reopen
+and ICO/CUR/ICNS downloads with the same omission controls. Independent container
+checks confirm omitted ICC/resolution chunks, exact 32-pixel entry samples and
+CUR hotspots; resized ICO/CUR entries receive structural checks only. Unchecked
+and revoked choices block output, and Cancel/export retain byte-identical PCND
+downloads, title and clean state. The first ICO attempt exposed incorrect
+forwarding of the metadata receipt as an ordinary loss code; that failure is
+retained separately, and the corrected flow has an actual encoding regression.
+These checks cover local Chrome, not other browsers or physical devices.
