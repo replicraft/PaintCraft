@@ -1,6 +1,5 @@
 //! Browser pickers and immediate downloads. Downloads never claim confirmed disk saves.
-#[cfg(any(target_arch = "wasm32", test))]
-use crate::editor::MAX_PIXELS;
+use paintcraft_core::types::resources::SharedBudget;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 use paintcraft_formats::registry::Frontend;
@@ -9,7 +8,7 @@ use paintcraft_formats::registry::{Family, Platform};
 #[cfg(any(target_arch = "wasm32", test))]
 use paintcraft_formats::{image, pcnd};
 use paintcraft_ui::actions::ImageExport;
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 use sha2::{Digest, Sha256};
 use std::{cell::RefCell, rc::Rc};
 
@@ -53,13 +52,32 @@ pub(crate) struct ExportOptions {
     pub frontend: Frontend,
 }
 
-#[derive(Debug, Default)]
+// One source/preview realm per WebApp, shared across parked interfaces, pending
+// loads and retained history. This is logical accounting, not total browser RSS.
+const METADATA_REALM_BYTES: u64 = 64 << 20;
+#[derive(Debug)]
 pub(crate) struct Files {
     pub busy: bool,
     outcome: Rc<RefCell<Option<Result<Outcome>>>>,
+    metadata: SharedBudget,
+}
+impl Default for Files {
+    fn default() -> Self {
+        Self::with_metadata_budget(SharedBudget::new(METADATA_REALM_BYTES))
+    }
 }
 
 impl Files {
+    pub(crate) fn with_metadata_budget(metadata: SharedBudget) -> Self {
+        Self {
+            busy: false,
+            outcome: Rc::default(),
+            metadata,
+        }
+    }
+    pub(crate) fn metadata_budget(&self) -> SharedBudget {
+        self.metadata.clone()
+    }
     pub fn download_asset(
         &mut self,
         ctx: &eframe::egui::Context,
@@ -115,6 +133,7 @@ impl Files {
         self.busy = true;
         let target = Rc::clone(&self.outcome);
         let ctx = ctx.clone();
+        let metadata = self.metadata_budget();
         let mut extensions: Vec<_> = paintcraft_formats::registry::enabled_extensions(
             frontend,
             if convert {
@@ -220,11 +239,13 @@ impl Files {
                         frontend,
                     )?));
                 }
-                Ok(Outcome::Loaded(decode_input(
+                Ok(Outcome::Loaded(decode_input_with_metadata(
                     &bytes,
                     file.file_name(),
                     frontend,
                     convert,
+                    &metadata,
+                    &|| Ok(()),
                 )?))
             }
             .await;
@@ -310,67 +331,16 @@ pub(crate) fn decode_for_profile(bytes: &[u8], name: String, frontend: Frontend)
     decode_input(bytes, name, frontend, false)
 }
 
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -> Result<Loaded> {
-    if bytes.len() > FILE_BYTES {
-        return Err(Error::new(
-            ErrorCode::ResourceLimit,
-            "Browser input limit is 64 MiB",
-        ));
-    }
-    let family = if convert {
-        paintcraft_formats::registry::admit_import(frontend, &name, bytes, Platform::Web)?
-    } else {
-        paintcraft_formats::registry::admit_open(frontend, &name, bytes, Platform::Web)?
-    };
-    if convert && family.is_project() && !paintcraft_formats::project_import::supports(family) {
-        return Err(Error::new(
-            ErrorCode::CapabilityUnsupported,
-            "Import image expects a raster picture",
-        ));
-    }
-    if paintcraft_formats::project_import::supports(family) {
-        let converted = if family == Family::Ora && convert {
-            paintcraft_formats::registry::admit_import_ora(frontend, &name, bytes, Platform::Web)?;
-            paintcraft_formats::project_import::decode_ora_with_neutral_groups(
-                bytes,
-                MAX_PIXELS,
-                &|| Ok(()),
-            )?
-        } else {
-            paintcraft_formats::project_import::decode_layered(family, bytes, MAX_PIXELS, &|| {
-                Ok(())
-            })?
-        };
-        return Ok(Loaded {
-            raster_preview: false,
-            converted_copy: true,
-            document: converted.document,
-            name,
-            losses: converted.losses,
-        });
-    }
-    if family == Family::Pcnd {
-        return Ok(Loaded {
-            raster_preview: false,
-            converted_copy: false,
-            document: pcnd::read_with_limits(bytes, MAX_PIXELS, MAX_PIXELS * 4)?,
-            name,
-            losses: Vec::new(),
-        });
-    }
-    let image = image::decode_with_pixel_limit(bytes, MAX_PIXELS)?;
-    let key = image::document_conversion_key(bytes, &image, &|| Ok(()))?
-        .map(|key| key.hex())
-        .unwrap_or_else(|| paintcraft_document::hex(&Sha256::digest(bytes)));
-    Ok(Loaded {
-        raster_preview: true,
-        converted_copy: convert
-            || (image.format == image::ImageFormat::Dds && !image.losses.is_empty()),
-        document: paintcraft_document::import_image(image.width, image.height, &image.rgba, &key)?,
+    decode_input_with_metadata(
+        bytes,
         name,
-        losses: image.losses,
-    })
+        frontend,
+        convert,
+        &SharedBudget::new(METADATA_REALM_BYTES),
+        &|| Ok(()),
+    )
 }
 
 #[cfg(test)]
@@ -395,7 +365,14 @@ fn encode_options_for_profile(
     frontend: Frontend,
     pcx_encoding: paintcraft_ui::pcx_export::Encoding,
 ) -> Result<Vec<u8>> {
-    flat_export::encode(document, format, jpeg_quality, frontend, pcx_encoding, None)
+    flat_export::encode(
+        document,
+        format,
+        jpeg_quality,
+        frontend,
+        pcx_encoding,
+        None,
+    )
 }
 
 #[cfg(any(target_arch = "wasm32", test))]
@@ -744,3 +721,16 @@ mod bmp_rle_tests;
 mod flat_export;
 #[cfg(test)]
 mod matte_tests;
+
+#[cfg(any(target_arch = "wasm32", test))]
+mod loading;
+#[cfg(any(target_arch = "wasm32", test))]
+use loading::decode_input_with_metadata;
+
+#[cfg(test)]
+#[path = "files/metadata_tests.rs"]
+mod metadata_tests;
+
+#[cfg(test)]
+#[path = "files/png_metadata_tests.rs"]
+mod png_metadata_tests;

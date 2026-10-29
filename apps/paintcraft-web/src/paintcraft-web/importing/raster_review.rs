@@ -25,7 +25,11 @@ impl std::fmt::Debug for Review {
     }
 }
 impl Review {
-    pub(super) fn new(ctx: &egui::Context, document: &Document) -> Result<Self> {
+    pub(super) fn new(
+        ctx: &egui::Context,
+        document: &Document,
+        budget: SharedBudget,
+    ) -> Result<Self> {
         let (width, height) = document.canvas;
         let invalid = || {
             Error::new(
@@ -52,7 +56,7 @@ impl Review {
         let side = u64::from(width.max(height));
         let tw = (u64::from(width) * limit.min(side) / side).max(1) as usize;
         let th = (u64::from(height) * limit.min(side) / side).max(1) as usize;
-        let mut copy = SharedBudget::new(SIDE * SIDE * 8).account(AllocationClass::PaintMetadata);
+        let mut copy = budget.account(AllocationClass::PaintMetadata);
         copy.resize((tw * th * 8) as u64)?;
         let mut rgba = Vec::new();
         rgba.try_reserve_exact(tw * th * 4)

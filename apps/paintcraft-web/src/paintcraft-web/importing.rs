@@ -115,7 +115,11 @@ impl WebApp {
             return;
         }
         if pending.loaded.raster_preview && pending.review.is_none() {
-            match raster_review::Review::new(ctx, &pending.loaded.document) {
+            match raster_review::Review::new(
+                ctx,
+                &pending.loaded.document,
+                self.files.metadata_budget(),
+            ) {
                 Ok(review) => pending.review = Some(review),
                 Err(error) => {
                     self.message = error.to_string();

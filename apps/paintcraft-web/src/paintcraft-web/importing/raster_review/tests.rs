@@ -7,6 +7,41 @@ use egui_kittest::{
 use paintcraft_ui::i18n::{Language, set_language, translate};
 use std::sync::Arc;
 
+#[test]
+fn browser_raster_review_shares_the_retained_profile_quota_before_allocating_preview_pixels() {
+    let input = std::fs::read(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/rgb-profile.pcnd",
+    ))
+    .unwrap();
+    let probe = paintcraft_formats::pcnd::read(&input).unwrap();
+    let bytes = probe.source_metadata.as_ref().unwrap().storage_usage().1;
+    drop(probe);
+    let budget = SharedBudget::new(bytes + 7);
+    let loaded = paintcraft_formats::pcnd::read_with_metadata_admission_checked(
+        &input,
+        16,
+        65536,
+        1,
+        paintcraft_formats::pcnd::MetadataAdmission {
+            bytes: paintcraft_document::source_metadata::BYTES_MAX,
+            budget: &budget,
+        },
+        &|| Ok(()),
+    )
+    .unwrap();
+    let raster = paintcraft_document::import_image(1, 1, &[1, 2, 3, 255], "edited-preview")
+        .unwrap()
+        .with_source_metadata_checked(loaded.source_metadata.clone(), &|| Ok(()))
+        .unwrap();
+    let ctx = eframe::egui::Context::default();
+    let error = Review::new(&ctx, &raster, budget.clone()).unwrap_err();
+    assert_eq!(error.code, ErrorCode::ResourceLimit);
+    assert_eq!(budget.usage().reserved, bytes);
+    drop(raster);
+    drop(loaded);
+    assert_eq!(budget.usage().reserved, 0);
+}
+
 fn raw_pixels(document: &Document) -> Vec<u8> {
     let layer = &document.layers[&document.roots[0]];
     let mut rgba = Vec::new();
@@ -87,7 +122,7 @@ fn hidden_clipped_and_first_visible_frames_cannot_authorize_and_copy_charge_drop
         let pixels = [13, 71, 201, 0].repeat((width * height) as usize);
         let doc =
             paintcraft_document::import_image(width, height, &pixels, "preview-test").unwrap();
-        let mut review = Review::new(&ctx, &doc).unwrap();
+        let mut review = Review::new(&ctx, &doc, SharedBudget::new(SIDE * SIDE * 8)).unwrap();
         let budget = review._copy.budget();
         assert!(budget.usage().reserved > 0);
         review.consent = true;
