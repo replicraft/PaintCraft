@@ -9,6 +9,13 @@ remain in progress. Physical tablets, drivers and platform timing have not been
 qualified. A pen reaching the
 existing mouse path is not evidence of pressure or tilt support.
 
+Tablet integration is part of normal input handling, without an experimental
+feature flag or opt-in setting. Install available native or browser capture at
+startup and keep ordinary pointer input usable when capture is unavailable.
+Pressure and brush preferences control drawing behavior, not whether the input
+backend is installed. Unimplemented platform backends remain listed explicitly
+below.
+
 ## Implemented shared foundations
 
 - Captured samples retain device/pointer identity, source clock and epoch,
@@ -91,7 +98,7 @@ See the [native boundary](../crates/adapters/paintcraft-tablet-native/README.md)
 The [Linux acquisition investigation](LINUX_TABLET_INTEGRATION.md) records the
 locked dependency options and the remaining queue-ordering requirements.
 
-The optional ordered App coordinator now projects native records into admitted
+The ordered App coordinator projects native records into admitted
 pointer frames and processes one semantic edge or service poll per step. An
 accepted action retains its exact source scope through the outbox, FIFO, worker
 admission and retry. Actual authored receipts and history-navigation results stay

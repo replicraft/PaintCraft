@@ -1,5 +1,5 @@
-//! Bounded semantic-edge host for the optional owned native event loop.
-//! No window/monitor/executor is created here, and startup does not enable it.
+//! Bounded semantic-edge host used by the native desktop event loop.
+//! Desktop startup owns window creation and capture installation.
 use crate::controller::native_publication::{Activation, Scope};
 use crate::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, resources::SharedBudget};
