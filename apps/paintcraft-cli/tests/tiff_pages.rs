@@ -14,7 +14,7 @@ const META: &str = "tiff-metadata-ignored";
 const PAGES: &str = "tiff-other-pages-not-imported";
 const DEPTH: &str = "depth-16-reduced-to-8";
 const ICC: &str = "icc-profile-ignored";
-const POLICY: &str = "tiff-uint16-high-byte-rgba8-v1";
+const POLICY: &str = "tiff-uint16-high-byte-oriented-rgba8-v2";
 const PROFILE: &str = "tiff-selected-page-rgba8-v1";
 struct Folder(PathBuf);
 impl Folder {
