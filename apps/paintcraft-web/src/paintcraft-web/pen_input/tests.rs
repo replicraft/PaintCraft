@@ -76,7 +76,7 @@ fn raw(h: &Host, sequence: u64, phase: Phase, pressure: f32, buttons: u16) -> Ra
         tilt: Some(Tilt::Degrees(12.0, -8.0)),
         twist_degrees: Some(31.0),
         contact: Some((2.0, 1.0)),
-        provenance: Provenance::Coalesced,
+        provenance: Provenance::Actual,
     }
 }
 fn submit(h: &mut Host, raw: RawSample) {
@@ -110,13 +110,14 @@ fn actual_eframe_host_pressure_preview_release_and_one_undo_match() {
                 Buttons::TIP,
             );
             submit(&mut h, down);
-            let moved = raw(
+            let mut moved = raw(
                 &h,
                 2,
                 Phase::Move,
                 if varying { 0.8 } else { 1.0 },
                 Buttons::TIP,
             );
+            moved.provenance = Provenance::Coalesced;
             submit(&mut h, moved);
             assert_eq!(h.state().editor.session.ticket(), before);
             assert!(h.state().editor.tools.pen_in_progress());
@@ -335,6 +336,39 @@ fn a_drained_cancellation_does_not_recancel_the_following_fresh_stroke() {
     let up = raw(&h, 4, Phase::Up, 0.8, 0);
     submit(&mut h, up);
     assert_eq!(h.state().editor.session.undo_depth(), 1);
+}
+#[test]
+fn historical_contact_edges_cannot_begin_or_end_actual_host_ink() {
+    let mut h = harness();
+    let source = h.app.pen.source.clone().unwrap();
+    let mut historical_down = raw(&h, 1, Phase::Down, 0.5, Buttons::TIP);
+    historical_down.provenance = Provenance::Coalesced;
+    assert_eq!(
+        source
+            .submit_with(receiver::Delivery::ReceiverPointer, |_| Ok(historical_down))
+            .unwrap(),
+        receiver::Route::Suppressed
+    );
+    h.step();
+    assert!(!h.app.editor.tools.pen_in_progress());
+    assert_eq!(h.app.editor.session.undo_depth(), 0);
+    let down = raw(&h, 1, Phase::Down, 0.5, Buttons::TIP);
+    submit(&mut h, down);
+    let mut historical_up = raw(&h, 2, Phase::Up, 0.5, 0);
+    historical_up.provenance = Provenance::Coalesced;
+    assert_eq!(
+        source
+            .submit_with(receiver::Delivery::ReceiverPointer, |_| Ok(historical_up))
+            .unwrap(),
+        receiver::Route::Suppressed
+    );
+    h.step();
+    assert!(h.app.editor.tools.pen_in_progress());
+    assert_eq!(h.app.editor.session.undo_depth(), 0);
+    let up = raw(&h, 2, Phase::Up, 0.5, 0);
+    submit(&mut h, up);
+    assert!(!h.app.editor.tools.pen_in_progress());
+    assert_eq!(h.app.editor.session.undo_depth(), 1);
 }
 
 #[path = "arbitration_tests.rs"]
