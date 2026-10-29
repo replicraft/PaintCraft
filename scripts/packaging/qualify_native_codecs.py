@@ -33,6 +33,7 @@ CANDIDATES = {
     "v10": ("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE, 3),
 }
 APP_INTEGER = "importing::native_codec::jxl_integer_installed_tests::copied_jxl_integer_helper_runs_actual_app_review_and_failure_guards"
+APP_PORTABLE_JXR = "jxr_export::installed_tests::portable::fixture_installed_app_writer_matches_c_qualified_goldens"
 INTEGER_WORKER_TESTS = (
     "actual_integer_family_uses_one_request_and_exact_report_for_both_source_depths",
     "old_exact8_request_never_adopts16_and_new_family_refuses_other_profiles",
@@ -315,6 +316,11 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
         if candidate in ("v9", "v10"):
             exact(runner, "app-integer-jxl", app_copy, APP_INTEGER, anames,
                   release.ROOT, dict(fixture_env, PAINTCRAFT_JXL_INTEGER_GUI_EVIDENCE=str(output / "app-jxl-evidence")),
+                  ignored=True)
+        if candidate in ("v8", "v10"):
+            exact(runner, "app-jxr-portable", app_copy, APP_PORTABLE_JXR, anames,
+                  release.ROOT, dict(fixture_env,
+                                     PAINTCRAFT_JXR_PUBLIC_HELPER=str(copied / helper.name)),
                   ignored=True)
         if oracle:
             exact(runner, "app-jxr-with-C", app_copy,

@@ -26,6 +26,7 @@ WORKER_TESTS = (
 )
 CLI_INTEGER = "jxl_integer::actual_cli_and_mcp_integer_jxl_consent_pixels_receipts_and_guards"
 APP_INTEGER = "importing::native_codec::jxl_integer_installed_tests::copied_jxl_integer_helper_runs_actual_app_review_and_failure_guards"
+APP_PORTABLE_JXR = "jxr_export::installed_tests::portable::fixture_installed_app_writer_matches_c_qualified_goldens"
 CORE_GROUPS = (
     "dds::", "export::dds::", "export::jxr::",
     "codec_worker::native::jxr_encode::tests::",
@@ -87,6 +88,8 @@ class Scenario:
         app_names += [qualification.APP_LEGACY]
         if mutation != "missing-app":
             app_names.append(APP_INTEGER)
+        if mutation != "missing-app-writer":
+            app_names.append(APP_PORTABLE_JXR)
         self.app = self.test_artifact("paintcraft", app_names)
 
     @staticmethod
@@ -155,7 +158,8 @@ class Scenario:
                         else:
                             count = 1
                         if ((scenario.mutation == "zero-cli" and CLI_INTEGER in argv) or
-                                (scenario.mutation == "zero-app" and APP_INTEGER in argv)):
+                                (scenario.mutation == "zero-app" and APP_INTEGER in argv) or
+                                (scenario.mutation == "zero-app-writer" and APP_PORTABLE_JXR in argv)):
                             count = 0
                         value = f"running {count} tests\ntest result: ok. {count} passed; 0 failed;\n"
                 path.write_text(value, encoding="utf-8")
@@ -257,7 +261,32 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                     self.assertEqual(app[2]["PAINTCRAFT_JXL_INTEGER_HELPER"], str(installed / flow.helper.name))
                     self.assertLess(phases.index("cli-ordinary"), phases.index("app-integer-jxl"))
                     self.assertLess(phases.index("app-integer-jxl"), phases.index("source-final"))
+                    writer = [row for row in flow.calls if row[0] == "app-jxr-portable"]
+                    self.assertEqual(len(writer), int(candidate == "v10"))
+                    if writer:
+                        self.assertEqual(writer[0][1][1], APP_PORTABLE_JXR)
+                        self.assertIn("--exact", writer[0][1])
+                        self.assertIn("--ignored", writer[0][1])
+                        self.assertEqual(writer[0][2]["PAINTCRAFT_JXR_PUBLIC_HELPER"],
+                                         str(flow.output / "app-installation" / flow.helper.name))
+                        self.assertLess(phases.index("app-jxr-portable"), phases.index("source-final"))
         self.assertEqual(helper_policy.ROLLOUT, policy)
+
+    def test_portable_writer_gate_is_exact_and_mandatory_on_every_v10_target(self):
+        self.assertEqual(qualification.APP_PORTABLE_JXR, APP_PORTABLE_JXR)
+        for target in release.TARGETS:
+            for mutation, message in (("missing-app-writer", "Missing or ambiguous"),
+                                      ("zero-app-writer", "count")):
+                with self.subTest(target=target, mutation=mutation):
+                    flow = self.scenario("v10", target, mutation=mutation)
+                    self.assert_failed(flow, message, forbidden="source-final")
+                    self.assertIn("app-integer-jxl", flow.phases())
+
+    def test_reader_only_v9_does_not_require_or_run_the_writer_gate(self):
+        flow = self.scenario("v9", mutation="missing-app-writer")
+        flow.execute()
+        self.assertEqual(flow.receipt()["status"], "passed")
+        self.assertNotIn("app-jxr-portable", flow.phases())
 
     def test_app_bound_still_refuses_and_retains_actual_size_before_any_app_execution(self):
         flow = self.scenario("v9", "x86_64-unknown-linux-gnu", mutation="oversized-app")
