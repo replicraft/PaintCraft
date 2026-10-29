@@ -658,3 +658,6 @@ mod codec_contract;
 
 #[path = "installed_codec_worker/jxl_integer.rs"]
 mod jxl_integer;
+
+#[path = "installed_codec_worker/source_metadata.rs"]
+mod source_metadata;

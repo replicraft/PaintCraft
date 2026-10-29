@@ -9,6 +9,8 @@ use std::{cell::RefCell, sync::Arc};
 #[derive(Debug, clap::Args)]
 pub struct Options {
     input: PathBuf,
+    #[command(flatten)]
+    metadata: super::export_metadata::Options,
     #[arg(long)]
     expect_input_sha256: Option<String>,
     #[command(flatten)]
@@ -56,7 +58,39 @@ pub(super) fn write_copy(
     protect: &dyn Fn(&Path) -> Result<()>,
     check: jxr_export_job::Check,
 ) -> Result<(Value, bool, String, Value)> {
+    write_copy_with_metadata_policy(
+        doc,
+        dest,
+        overwrite,
+        allowed,
+        source_sha,
+        owner,
+        current,
+        pool,
+        protect,
+        check,
+        export::metadata_policy::Policy::default(),
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub(super) fn write_copy_with_metadata_policy(
+    doc: &Document,
+    dest: &Path,
+    overwrite: bool,
+    allowed: &[String],
+    source_sha: Option<String>,
+    owner: wire::Owner,
+    current: &dyn Fn() -> Result<wire::Owner>,
+    pool: SharedBudget,
+    protect: &dyn Fn(&Path) -> Result<()>,
+    check: jxr_export_job::Check,
+    policy: export::metadata_policy::Policy,
+) -> Result<(Value, bool, String, Value)> {
     check()?;
+    policy.validate(
+        doc,
+        export::metadata_policy::Target::new(Family::Jxr, Operation::ExportFlat),
+    )?;
     protect(dest)?;
     save::preflight(dest, overwrite)?;
     export::check_loss_codes(allowed)?;
@@ -74,8 +108,18 @@ pub(super) fn write_copy(
                     "JXR export owner changed",
                 ));
             }
-            let value =
-                jxr_export_job::prepare(doc.clone(), owner, pool, check.clone(), allowed.to_vec())?;
+            let value = if policy == export::metadata_policy::Policy::Refuse {
+                jxr_export_job::prepare(doc.clone(), owner, pool, check.clone(), allowed.to_vec())?
+            } else {
+                jxr_export_job::prepare_with_metadata_policy(
+                    doc.clone(),
+                    owner,
+                    pool,
+                    check.clone(),
+                    allowed.to_vec(),
+                    policy,
+                )?
+            };
             value.check(current)?;
             *prepared.borrow_mut() = Some(value);
             let guard = prepared.borrow();
@@ -168,18 +212,39 @@ pub fn run(a: Options, json: bool) -> Reply {
             drop(bytes);
             let mut owner = codec_worker::owner();
             owner.state = doc.state_id;
-            let (receipt, ok, summary, details) = write_copy(
-                &doc,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                owner,
-                &|| Ok(owner),
-                SharedBudget::new(512 << 20),
-                &protect,
-                Arc::new(|| Ok(())),
-            )?;
+            let policy = a
+                .metadata
+                .capture(&doc, super::export_metadata::CopyFormat::Jxr)?;
+            let (receipt, ok, summary, details) =
+                if a.metadata.intent == export::metadata_policy::Intent::Refuse {
+                    write_copy(
+                        &doc,
+                        dest,
+                        a.output.overwrite,
+                        &allowed,
+                        Some(sha),
+                        owner,
+                        &|| Ok(owner),
+                        SharedBudget::new(512 << 20),
+                        &protect,
+                        Arc::new(|| Ok(())),
+                    )?
+                } else {
+                    write_copy_with_metadata_policy(
+                        &doc,
+                        dest,
+                        a.output.overwrite,
+                        &allowed,
+                        Some(sha),
+                        owner,
+                        &|| Ok(owner),
+                        SharedBudget::new(512 << 20),
+                        &protect,
+                        Arc::new(|| Ok(())),
+                        policy,
+                    )?
+                };
+
             Ok(Written {
                 engine: Some(details),
                 receipt,

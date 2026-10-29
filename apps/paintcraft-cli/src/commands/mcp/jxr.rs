@@ -15,6 +15,8 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct Export {
+    /// Explicitly omit original source metadata from this copy; default refuse.
+    source_metadata: Option<super::params::SourceMetadata>,
     path: String,
     #[serde(default)]
     overwrite: bool,
@@ -58,18 +60,39 @@ impl PaintingServer {
             let empty = codec_worker::owner();
             let captured = super::native_codec::owner(state, empty);
             let current = || Ok(super::native_codec::owner(state, empty));
-            let (receipt, ok, _, details) = export_jxr::write_copy(
-                doc,
-                &path,
-                p.overwrite,
-                &p.allow_losses,
-                None,
-                captured,
-                &current,
-                super::native_codec::preparation_budget(),
-                &protect,
-                check,
-            )?;
+            let intent: paintcraft_formats::export::metadata_policy::Intent =
+                p.source_metadata.unwrap_or_default().into();
+            let policy = super::super::export_metadata::CopyFormat::Jxr.capture(doc, intent)?;
+            let (receipt, ok, _, details) =
+                if intent == paintcraft_formats::export::metadata_policy::Intent::Refuse {
+                    export_jxr::write_copy(
+                        doc,
+                        &path,
+                        p.overwrite,
+                        &p.allow_losses,
+                        None,
+                        captured,
+                        &current,
+                        super::native_codec::preparation_budget(),
+                        &protect,
+                        check,
+                    )?
+                } else {
+                    export_jxr::write_copy_with_metadata_policy(
+                        doc,
+                        &path,
+                        p.overwrite,
+                        &p.allow_losses,
+                        None,
+                        captured,
+                        &current,
+                        super::native_codec::preparation_budget(),
+                        &protect,
+                        check,
+                        policy,
+                    )?
+                };
+
             let value = paintcraft_core::types::json::Value::object([
                 ("export", details),
                 ("save", receipt),

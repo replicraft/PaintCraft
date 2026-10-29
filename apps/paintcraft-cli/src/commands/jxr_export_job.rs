@@ -41,7 +41,31 @@ pub(super) fn prepare(
     host: Check,
     allowed: Vec<String>,
 ) -> Result<Prepared> {
+    prepare_with_metadata_policy(
+        doc,
+        owner,
+        pool,
+        host,
+        allowed,
+        export::metadata_policy::Policy::default(),
+    )
+}
+pub(super) fn prepare_with_metadata_policy(
+    doc: Document,
+    owner: wire::Owner,
+    pool: SharedBudget,
+    host: Check,
+    allowed: Vec<String>,
+    policy: export::metadata_policy::Policy,
+) -> Result<Prepared> {
     host()?;
+    policy.validate(
+        &doc,
+        export::metadata_policy::Target::new(
+            paintcraft_formats::registry::Family::Jxr,
+            paintcraft_formats::registry::Operation::ExportFlat,
+        ),
+    )?;
     let layout = encode::Layout::new(doc.canvas.0, doc.canvas.1, encode::ENCODED_BYTES_MAX)?;
     let rgba = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4;
     let quote = layout
@@ -78,7 +102,7 @@ pub(super) fn prepare(
                 }
                 Ok(())
             };
-            let prepared = export::jxr::prepare_opaque_rgb_checked(
+            let prepared = export::jxr::prepare_opaque_rgb_with_metadata_policy(
                 &doc,
                 encode::ENCODED_BYTES_MAX,
                 &allowed,
@@ -94,6 +118,7 @@ pub(super) fn prepare(
                 },
                 |doc, check| paintcraft_render::render_cancellable(doc, check),
                 &check,
+                policy,
             )?;
             let (layout, rgb, losses) = prepared.into_parts();
             let remaining = DEADLINE
