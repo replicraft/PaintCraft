@@ -59,8 +59,11 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Build the actual helper for installed CLI tests
         run: cargo build --locked -p paintcraft-codec-worker
+      # Installed fixtures hash real binaries and enforce production deadlines.
+      # Avoid overlapping independent fixtures on shared runners; concurrency
+      # qualification remains a separate workload, with the deadlines unchanged.
       - name: Test the CLI and its installed helper before GUI tests
-        run: cargo test --locked -p paintcraft-cli -- --nocapture
+        run: cargo test --locked -p paintcraft-cli -- --nocapture --test-threads=1
       - run: cargo test --workspace --exclude paintcraft-cli
       - name: Check the isolated stable parser harness
         if: runner.os == 'Linux'
