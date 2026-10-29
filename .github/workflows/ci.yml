@@ -57,7 +57,11 @@ jobs:
       - run: python3 -m unittest discover -s scripts/tests -p 'test_verify_*.py'
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
+      - name: Build the actual helper for installed CLI tests
+        run: cargo build --locked -p paintcraft-codec-worker
+      - name: Test the CLI and its installed helper before GUI tests
+        run: cargo test --locked -p paintcraft-cli -- --nocapture
+      - run: cargo test --workspace --exclude paintcraft-cli
       - name: Check the isolated stable parser harness
         if: runner.os == 'Linux'
         run: |
