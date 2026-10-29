@@ -128,14 +128,9 @@ mod tests {
             let length = profile.len() as u32;
             profile[..4].copy_from_slice(&length.to_be_bytes());
             let realm = SharedBudget::new(BYTES_MAX + 4096);
-            let metadata = SourceMetadata::capture(
-                descriptor,
-                Some(&profile),
-                BYTES_MAX,
-                &realm,
-                &|| Ok(()),
-            )
-            .unwrap();
+            let metadata =
+                SourceMetadata::capture(descriptor, Some(&profile), BYTES_MAX, &realm, &|| Ok(()))
+                    .unwrap();
             let candidate = document
                 .with_source_metadata_checked(Some(metadata), &|| Ok(()))
                 .unwrap();
