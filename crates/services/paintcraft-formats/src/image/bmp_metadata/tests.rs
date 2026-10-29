@@ -40,7 +40,7 @@ fn independent_bmp_pixels_hidden_rgb_palette_reserved_and_storage_rows_are_exact
         }
         if name == "rgb24-top-down.bmp" {
             assert!(descriptor.top_down);
-            assert_eq!(descriptor.row_stride, 12);
+            assert_eq!(descriptor.row_stride, Some(12));
             assert!(descriptor.losses().is_empty());
         }
     }

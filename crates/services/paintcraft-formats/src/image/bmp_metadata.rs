@@ -18,7 +18,11 @@ pub struct Descriptor {
     pub dib_bytes: u32,
     pub bits_per_pixel: u16,
     pub compression: u32,
-    pub row_stride: u64,
+    /// Compressed streams have no physical row stride.
+    pub row_stride: Option<u64>,
+    pub declared_image_bytes: u32,
+    pub pixel_data_bytes: u64,
+    pub rle_stream_bytes: Option<u64>,
     pub pixel_offset: u32,
     pub masks: [u32; 4],
     pub palette: Palette,
@@ -56,6 +60,7 @@ impl Descriptor {
             || self.important_colors != 0
             || self.file_reserved != [0; 2]
             || self.bits_per_pixel > 8 && self.declared_colors_used != 0
+            || self.rle_stream_bytes.is_some() && self.declared_image_bytes == 0
         {
             losses.push("bmp-metadata-ignored");
         }
@@ -122,6 +127,8 @@ pub fn inspect_with_metadata_limit(
     let mut masks = [0; 4];
     let external_masks = match compression {
         0 => 0,
+        1 if bpp == 8 && !top_down => 0,
+        2 if bpp == 4 && !top_down => 0,
         3 if bpp == 32 => {
             for (i, value) in masks[..3].iter_mut().enumerate() {
                 *value = u32_at(bytes, 54 + i * 4)?;
@@ -138,7 +145,9 @@ pub fn inspect_with_metadata_limit(
         }
         _ => return Err(facts::unsupported("Unsupported BMP source compression")),
     };
-    let row_stride = (u64::from(width) * u64::from(bpp)).div_ceil(32) * 4;
+    let row_stride = (!matches!(compression, 1 | 2))
+        .then(|| (u64::from(width) * u64::from(bpp)).div_ceil(32) * 4);
+    let declared_image_bytes = u32_at(bytes, 34)?;
     let pixel_offset = u32_at(bytes, 10)?;
     let count = if bpp <= 8 {
         let n = u32_at(bytes, 46)?;
@@ -150,10 +159,55 @@ pub fn inspect_with_metadata_limit(
         return Err(facts::invalid("BMP source palette domain"));
     }
     let metadata_end = header_end + external_masks + count as usize * 4;
+    if (pixel_offset as usize) < metadata_end || metadata_end > bytes.len() {
+        return Err(facts::invalid("BMP source metadata/pixel bounds"));
+    }
+    let (pixel_data_bytes, rle_stream_bytes) = if let Some(stride) = row_stride {
+        (
+            stride
+                .checked_mul(u64::from(height))
+                .ok_or_else(|| facts::invalid("BMP row storage extent"))?,
+            None,
+        )
+    } else {
+        let mut limit = bytes.len() as u64;
+        if dib == 124 && u32_at(bytes, 70)? == PROFILE_EMBEDDED {
+            let start = 14u64
+                .checked_add(u64::from(u32_at(bytes, 126)?))
+                .ok_or_else(|| facts::invalid("BMP profile offset"))?;
+            let length = u64::from(u32_at(bytes, 130)?);
+            let end = start
+                .checked_add(length)
+                .ok_or_else(|| facts::invalid("BMP profile extent"))?;
+            if length == 0 || start < metadata_end as u64 || end > bytes.len() as u64 {
+                return Err(facts::invalid("BMP profile source bounds"));
+            }
+            if start >= u64::from(pixel_offset) {
+                limit = start;
+            } else if end > u64::from(pixel_offset) {
+                return Err(facts::invalid("BMP profile overlaps RLE source"));
+            }
+        }
+        let span = super::bmp_rle::scan(
+            bytes,
+            super::bmp_rle::Spec {
+                width,
+                height,
+                depth: bpp,
+                palette_entries: count,
+                pixel_offset,
+                declared_bytes: declared_image_bytes,
+                limit,
+            },
+            check,
+            |_, _, _| Ok(()),
+        )?;
+        (span.storage_bytes, Some(span.stream_bytes))
+    };
     let pixels_end = u64::from(pixel_offset)
-        .checked_add(row_stride * u64::from(height))
+        .checked_add(pixel_data_bytes)
         .ok_or_else(|| facts::invalid("BMP pixel extent"))?;
-    if (pixel_offset as usize) < metadata_end || pixels_end > bytes.len() as u64 {
+    if pixels_end > bytes.len() as u64 {
         return Err(facts::invalid("BMP source pixel bounds"));
     }
     let mut palette = Palette::default();
@@ -184,6 +238,9 @@ pub fn inspect_with_metadata_limit(
         bits_per_pixel: bpp,
         compression,
         row_stride,
+        declared_image_bytes,
+        pixel_data_bytes,
+        rle_stream_bytes,
         pixel_offset,
         masks,
         palette,

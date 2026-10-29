@@ -17,6 +17,7 @@ mod specialist;
 pub use extended::ENCODE_PIXELS_MAX as EXTENDED_ENCODE_PIXELS_MAX;
 pub(crate) use extended::inspect_pcx;
 pub mod bmp_metadata;
+mod bmp_rle;
 mod gif;
 mod identity;
 pub use identity::{JPEG_IDENTITY_PROFILE, document_conversion_key};
@@ -351,6 +352,9 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
     }
     if format == ImageFormat::Gif {
         return gif::decode(bytes, pixels);
+    }
+    if format == ImageFormat::Bmp && bmp_rle::is_rle(bytes) {
+        return bmp_rle::decode(bytes, pixels, &|| Ok(()));
     }
     if format == ImageFormat::Jpeg {
         let converted = jpeg::decode(bytes, pixels, &|| Ok(()))?;
