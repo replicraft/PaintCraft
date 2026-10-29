@@ -7,14 +7,15 @@ import subprocess
 import codec_worker
 import package_release as release
 
-# Actual public V8 runtime qualification currently covers Mac ARM only.
+# Integer JPEG XL is qualified on all six targets. Keep JPEG XR writing on
+# Apple-silicon macOS, preserving the existing writer rollout boundary.
 ROLLOUT = {
-    "x86_64-pc-windows-msvc": ("float-codecs", codec_worker.FLOAT_PROFILE),
-    "aarch64-pc-windows-msvc": ("float-codecs", codec_worker.FLOAT_PROFILE),
-    "aarch64-apple-darwin": ("jxr-codecs", codec_worker.JXR_PROFILE),
-    "x86_64-apple-darwin": ("float-codecs", codec_worker.FLOAT_PROFILE),
-    "x86_64-unknown-linux-gnu": ("float-codecs", codec_worker.FLOAT_PROFILE),
-    "aarch64-unknown-linux-gnu": ("float-codecs", codec_worker.FLOAT_PROFILE),
+    "x86_64-pc-windows-msvc": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
+    "aarch64-pc-windows-msvc": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
+    "aarch64-apple-darwin": ("jxr-codecs,jxl-integer-codec", codec_worker.JXL_INTEGER_JXR_PROFILE),
+    "x86_64-apple-darwin": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
+    "x86_64-unknown-linux-gnu": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
+    "aarch64-unknown-linux-gnu": ("jxl-integer-codec", codec_worker.JXL_INTEGER_PROFILE),
 }
 
 
@@ -23,6 +24,12 @@ def selection(target):
         return ROLLOUT[target]
     except KeyError as error:
         raise ValueError("Target has no exact helper rollout policy") from error
+
+
+def selector(target):
+    """Exact public contract; feature names never imply a fallback profile."""
+    return {codec_worker.JXL_INTEGER_PROFILE: "v9",
+            codec_worker.JXL_INTEGER_JXR_PROFILE: "v10"}[selection(target)[1]]
 
 
 def macos_target(explicit=None):
@@ -71,7 +78,7 @@ def main():
     feature, profile = selection(args.target)
     if args.github_output:
         with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as stream:
-            stream.write(f"feature={feature}\nprofile={profile}\nselector={'v8' if feature == 'jxr-codecs' else 'v7'}\n")
+            stream.write(f"feature={feature}\nprofile={profile}\nselector={selector(args.target)}\n")
     if args.prepare_installation:
         if args.output is None:
             parser.error("--prepare-installation requires --output")

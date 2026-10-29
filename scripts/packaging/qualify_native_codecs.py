@@ -83,7 +83,7 @@ def app_build_command(base, target):
 
 
 def verify_candidate(cli, target, candidate="v8"):
-    """Deliberately does NOT use helper_policy.verify (five targets hold V7)."""
+    """Verify the selected candidate independently of the shipping target map."""
     bounded_binary(cli, target)
     helper = cli.parent / codec_worker.filename(target)
     bounded_binary(helper, target)

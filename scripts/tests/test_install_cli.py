@@ -41,7 +41,9 @@ class InstallTests(unittest.TestCase):
             prefix, suffix = ({"v5": (codec_worker.AVIF_BUILD_PREFIX, codec_worker.AVIF_BUILD_SUFFIX),
                                "v6": (codec_worker.AVIF_SDR_BUILD_PREFIX, codec_worker.AVIF_SDR_BUILD_SUFFIX),
                                "v7": (codec_worker.FLOAT_BUILD_PREFIX, codec_worker.FLOAT_BUILD_SUFFIX),
-                               "v8": (codec_worker.JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX)})[contract]
+                               "v8": (codec_worker.JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX),
+                               "v9": (codec_worker.JXL_INTEGER_BUILD_PREFIX, codec_worker.JXL_INTEGER_BUILD_SUFFIX),
+                               "v10": (codec_worker.JXL_INTEGER_JXR_BUILD_PREFIX, codec_worker.JXL_INTEGER_JXR_BUILD_SUFFIX)})[contract]
             helper.write_bytes(helper.read_bytes().replace(codec_worker.BUILD_PREFIX, prefix).replace(codec_worker.BUILD_SUFFIX, suffix))
         output = directory / "archives"
         archive = package_cli.package(self.version, target, binary, output)
@@ -312,7 +314,7 @@ class InstallTests(unittest.TestCase):
     def test_source_build_requires_the_exact_target_rollout_profile(self):
         import helper_policy
         for target in release.TARGETS:
-            for contract in ("v5", "v6", "v7", "v8"):
+            for contract in ("v5", "v6", "v7", "v8", "v9", "v10"):
                 with self.subTest(target=target, contract=contract):
                     label = target + "-" + contract
                     archive, sums = self.archive(target, "source-" + label, contract)
@@ -326,7 +328,7 @@ class InstallTests(unittest.TestCase):
                     temporary.mkdir()
                     metadata = subprocess.CompletedProcess([], 0, stdout=json.dumps({"target_directory": str(target_directory)}))
                     feature, expected_profile = helper_policy.selection(target)
-                    selected = "v8" if feature == "jxr-codecs" else "v7"
+                    selected = helper_policy.selector(target)
                     with patch.object(install.subprocess, "run", return_value=metadata) as run:
                         if contract != selected:
                             with self.assertRaisesRegex(ValueError, "exact target rollout"):

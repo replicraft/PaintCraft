@@ -39,7 +39,7 @@ class CandidateTests(unittest.TestCase):
                            .replace(codec_worker.BUILD_SUFFIX, codec_worker.JXR_BUILD_SUFFIX))
         return cli, helper
 
-    def test_candidate_all_six_exact_installs_do_not_weaken_shipping_holdbacks(self):
+    def test_historical_v8_candidates_remain_valid_without_changing_current_rollout(self):
         before = dict(helper_policy.ROLLOUT)
         for index, target in enumerate(release.TARGETS):
             with self.subTest(target=target):
@@ -51,9 +51,8 @@ class CandidateTests(unittest.TestCase):
                 self.assertEqual(metadata["qualified_export_variants"], codec_worker.JXR_EXPORT_VARIANTS)
                 self.assertEqual((installed / helper.name).read_bytes(), helper.read_bytes())
                 self.assertEqual((installed / cli.name).read_bytes(), cli.read_bytes())
-                if target != "aarch64-apple-darwin":
-                    with self.assertRaisesRegex(ValueError, "rollout"):
-                        helper_policy.verify(cli, self.version, target)
+                with self.assertRaisesRegex(ValueError, "rollout"):
+                    helper_policy.verify(cli, self.version, target)
         self.assertEqual(before, helper_policy.ROLLOUT)
 
     def test_unknown_private_duplicate_wrong_target_and_forged_schema_refuse(self):
@@ -86,7 +85,7 @@ class CandidateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "differs"):
             qualify_cli_helper.bind_cli(installed / cli.name, cli)
 
-    def test_integer_candidates_install_both_exact_roles_without_shipping_promotion(self):
+    def test_integer_candidates_install_both_exact_roles_without_mutating_shipping_policy(self):
         before = dict(helper_policy.ROLLOUT)
         contracts = (
             ("v9", codec_worker.JXL_INTEGER_BUILD_PREFIX, codec_worker.JXL_INTEGER_BUILD_SUFFIX,
@@ -110,8 +109,11 @@ class CandidateTests(unittest.TestCase):
                     for wrong in set(qualification.CANDIDATES) - {candidate}:
                         with self.assertRaises(ValueError):
                             qualification.verify_candidate(cli, target, wrong)
-                    with self.assertRaisesRegex(ValueError, "rollout"):
+                    if candidate == helper_policy.selector(target):
                         helper_policy.verify(cli, self.version, target)
+                    else:
+                        with self.assertRaisesRegex(ValueError, "rollout"):
+                            helper_policy.verify(cli, self.version, target)
         self.assertEqual(before, helper_policy.ROLLOUT)
 
     def test_unknown_candidates_and_unqualified_oracles_refuse_before_output_creation(self):

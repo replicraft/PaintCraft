@@ -125,8 +125,8 @@ class BundleTests(unittest.TestCase):
     def test_build_pins_rust_target_and_verifies_reported_architecture_and_profile(self):
         import codec_worker
         for target, prefix, suffix in [
-            ("aarch64-apple-darwin", codec_worker.JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX),
-            ("x86_64-apple-darwin", codec_worker.FLOAT_BUILD_PREFIX, codec_worker.FLOAT_BUILD_SUFFIX),
+            ("aarch64-apple-darwin", codec_worker.JXL_INTEGER_JXR_BUILD_PREFIX, codec_worker.JXL_INTEGER_JXR_BUILD_SUFFIX),
+            ("x86_64-apple-darwin", codec_worker.JXL_INTEGER_BUILD_PREFIX, codec_worker.JXL_INTEGER_BUILD_SUFFIX),
         ]:
             with self.subTest(target=target):
                 directory = self.root / target
@@ -144,7 +144,7 @@ class BundleTests(unittest.TestCase):
                     self.assertIn("--release", command)
                     self.assertIn("--locked", command)
                     self.assertEqual(command[command.index("--target") + 1], target)
-                    expected = "jxr-codecs" if target.startswith("aarch64") else "float-codecs"
+                    expected = "jxr-codecs,jxl-integer-codec" if target.startswith("aarch64") else "jxl-integer-codec"
                     self.assertIn("paintcraft-codec-worker/" + expected, command)
                     helper.write_bytes(helper.read_bytes().replace(prefix, codec_worker.BUILD_PREFIX)
                                        .replace(suffix, codec_worker.BUILD_SUFFIX))
