@@ -65,7 +65,7 @@ fn run(request: &wire::Request, check: &dyn Fn() -> Result<()>) -> Result<proces
 }
 #[cfg(not(feature = "jxr-encode"))]
 #[test]
-fn default_v7_refuses_encoder_argv_and_new_frame_without_changing_its_record() {
+fn nonencoder_profile_refuses_encoder_argv_and_new_frame_without_changing_its_record() {
     let output = Command::new(helper()).arg("--jxr-encode").output().unwrap();
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
@@ -84,8 +84,7 @@ fn default_v7_refuses_encoder_argv_and_new_frame_without_changing_its_record() {
         Err(error) => assert_eq!(error.code, ErrorCode::CodecFailed),
     }
     let bytes = std::fs::read(helper()).unwrap();
-    let record = decode::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    build_record::assert_one(&bytes, &record);
+    build_record::assert_one(&bytes, &build_record::selected());
 }
 #[cfg(feature = "jxr-encode")]
 #[test]
@@ -100,7 +99,7 @@ fn selected_record_preserves_seven_imports_and_declares_writer_read_separately()
     let bytes = std::fs::read(helper()).unwrap();
     let record = contract::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     assert_eq!(record, contract::BUILD_RECORD);
-    build_record::assert_one(&bytes, &record);
+    build_record::assert_one(&bytes, &build_record::selected());
     assert_eq!(
         &contract::IMPORT_VARIANTS[..7],
         decode::QUALIFIED_FLOAT_IMPORT_VARIANTS

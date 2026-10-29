@@ -246,13 +246,7 @@ fn v7_refuses_malformed_request_response_owner_shapes_and_quota_declarations() {
         ErrorCode::OperationCancelled
     );
     let bytes = load(env!("CARGO_BIN_EXE_paintcraft-codec-worker"));
-    #[cfg(not(feature = "jxr-encode"))]
-    let record = wire::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
-    let record = wire::jxr_encode::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(feature = "jxr-codecs")]
-    let record = wire::jxr_encode::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    build_record::assert_one(&bytes, &record);
+    build_record::assert_one(&bytes, &build_record::selected());
     assert_eq!(wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.len(), 5);
     assert_eq!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS.len(), 7);
 }

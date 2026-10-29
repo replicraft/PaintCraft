@@ -294,15 +294,7 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
         record,
         wire::native_avif_sdr_build_record(env!("CARGO_PKG_VERSION")).unwrap()
     );
-    #[cfg(all(feature = "float-codecs", not(feature = "jxr-encode")))]
-    let record_buffer = wire::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(all(feature = "jxr-encode", not(feature = "jxr-codecs")))]
-    let record_buffer =
-        wire::jxr_encode::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(feature = "jxr-codecs")]
-    let record_buffer =
-        wire::jxr_encode::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    #[cfg(feature = "float-codecs")]
-    let record = record_buffer.as_slice();
-    build_record::assert_one(&bytes, record);
+    // Historical constructor/literal checks above stay independent. The actual
+    // executable can advertise a superset (V9/V10) selected by Cargo features.
+    build_record::assert_one(&bytes, &build_record::selected());
 }
