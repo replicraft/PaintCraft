@@ -22,6 +22,8 @@ mod gif;
 mod identity;
 pub use identity::{JPEG_IDENTITY_PROFILE, TIFF_IDENTITY_PROFILE, document_conversion_key};
 pub mod jpeg;
+mod jpeg_encode;
+pub use jpeg_encode::{JpegMatte, encode_checked as encode_jpeg_checked};
 pub(crate) mod orientation;
 mod png_indexed;
 pub mod png_metadata;
@@ -614,25 +616,14 @@ fn encode_inner(
             .encode(rgba, width, height, ::image::ExtendedColorType::Rgba8)
             .map_err(image_error)?,
         ImageFormat::Jpeg => {
-            if width > u32::from(u16::MAX) || height > u32::from(u16::MAX) {
-                return Err(unsupported("JPEG supports at most 65535 pixels per side"));
-            }
-            let rgb: Vec<u8> = rgba
-                .as_chunks::<4>()
-                .0
-                .iter()
-                .flat_map(|px| {
-                    let a = u32::from(px[3]);
-                    [px[0], px[1], px[2]]
-                        .map(|c| ((u32::from(c) * a + 255 * (255 - a) + 127) / 255) as u8)
-                })
-                .collect();
-            ::image::codecs::jpeg::JpegEncoder::new_with_quality(
-                &mut out,
-                jpeg_quality.clamp(1, 100),
-            )
-            .encode(&rgb, width, height, ::image::ExtendedColorType::Rgb8)
-            .map_err(image_error)?;
+            return jpeg_encode::encode_checked(
+                width,
+                height,
+                rgba,
+                jpeg_quality,
+                JpegMatte::WHITE,
+                check,
+            );
         }
     }
     Ok(out)

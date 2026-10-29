@@ -49,6 +49,8 @@ pub struct FlatExport {
 pub struct FlatOptions {
     pub format: ImageFormat,
     pub quality: u8,
+    /// An explicit alpha backdrop is valid only for JPEG. None preserves white.
+    pub jpeg_matte: Option<image::JpegMatte>,
     pub pcx_mode: crate::pcx::Mode,
     /// None retains the default MSP1 route; explicit versions use guarded monochrome preparation.
     pub msp_version: Option<crate::msp::Version>,
@@ -58,6 +60,7 @@ impl FlatOptions {
         Self {
             format,
             quality,
+            jpeg_matte: None,
             pcx_mode: crate::pcx::Mode::Rgb24,
             msp_version: None,
         }
@@ -133,10 +136,17 @@ pub fn export_flat_options_with_check(
     let FlatOptions {
         format,
         quality: jpeg_quality,
+        jpeg_matte,
         pcx_mode,
         msp_version,
     } = options;
     check_loss_codes(allowed)?;
+    if jpeg_matte.is_some() && format != ImageFormat::Jpeg {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "JPEG matte requires JPEG output",
+        ));
+    }
     if format != ImageFormat::Pcx && pcx_mode != crate::pcx::Mode::Rgb24 {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -191,6 +201,15 @@ pub fn export_flat_options_with_check(
     require_losses(format.name(), &losses, allowed)?;
     let bytes = if let Some(prepared) = prepared {
         prepared.encode(check)?
+    } else if let Some(matte) = jpeg_matte {
+        image::encode_jpeg_checked(
+            doc.canvas.0,
+            doc.canvas.1,
+            &rgba,
+            jpeg_quality,
+            matte,
+            check,
+        )?
     } else {
         image::encode_checked(
             format,
