@@ -2,6 +2,7 @@
 //! calls `process::exit`.
 
 mod import_source;
+mod tiff_page;
 use import_source::read_conversion_source;
 use std::fs::File;
 use std::io::Read as _;

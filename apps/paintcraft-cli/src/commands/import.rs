@@ -3,7 +3,7 @@ use super::*;
 #[derive(clap::Args, Debug)]
 pub struct Options {
     input: PathBuf,
-    /// Explicit zero-based page for a DCX import; never selects a page implicitly.
+    /// Explicit zero-based DCX/TIFF page; never selects a page implicitly.
     #[arg(long, conflicts_with = "entry")]
     page: Option<u16>,
     /// Explicit zero-based ICO/CUR/ICNS entry; never selects the largest image implicitly.
@@ -60,6 +60,9 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .chain(paintcraft_formats::avif::sdr::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::svg::KNOWN_LOSSES.iter())
                 .copied()
+                .chain(std::iter::once(
+                    paintcraft_formats::tiff_pages::LOSS_OTHER_PAGES,
+                ))
                 .collect();
             let allowed = a.losses.allowed_for(&known)?;
             save::preflight(dest, a.output.overwrite)?;
@@ -100,6 +103,9 @@ pub fn run(a: Options, json: bool) -> Reply {
                     paintcraft_formats::registry::Family::Dds => {
                         Some(paintcraft_formats::dds::BYTES_MAX)
                     }
+                    paintcraft_formats::registry::Family::Tiff if a.page.is_some() => {
+                        Some(paintcraft_formats::tiff_pages::BYTES_MAX)
+                    }
                     _ => None,
                 }) {
                 let (bytes, sha, identity) = read_captured(input, limit as u64, "captured input")?;
@@ -135,6 +141,16 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "DDS/MSP import requires a captured regular source",
                 ));
             }
+            if family == paintcraft_formats::registry::Family::Tiff
+                && a.page.is_some()
+                && source_identity.is_none()
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "TIFF page import requires a captured regular source",
+                ));
+            }
+            let mut tiff_assessment = None;
             let (doc, losses) = if let Some(selection) = &svg {
                 if !allowed.iter().any(|code| code == "svg-rasterized") {
                     return Err(Error::new(
@@ -174,6 +190,13 @@ pub fn run(a: Options, json: bool) -> Reply {
                     &|| Ok(()),
                 )?;
                 (decoded.document(&sha)?, decoded.losses)
+            } else if let Some(page) = a
+                .page
+                .filter(|_| family == paintcraft_formats::registry::Family::Tiff)
+            {
+                let converted = super::tiff_page::convert(&bytes, page, &sha, &|| Ok(()))?;
+                tiff_assessment = Some(converted.assessment);
+                (converted.document, converted.losses)
             } else if let Some(entry) = a.entry {
                 let decoded = paintcraft_formats::icons::decode_entry(
                     &bytes,
@@ -200,13 +223,14 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ));
             }
             if family == paintcraft_formats::registry::Family::Dds
+                || (family == paintcraft_formats::registry::Family::Tiff && a.page.is_some())
                 || (family == paintcraft_formats::registry::Family::Ora
                     && source_identity.is_some())
             {
                 let identity = source_identity.as_ref().ok_or_else(|| {
                     Error::new(
                         ErrorCode::InputSchema,
-                        "DDS import requires a captured .dds source",
+                        "conversion requires a captured regular source",
                     )
                 })?;
                 identity.verify_bytes(
@@ -246,11 +270,14 @@ pub fn run(a: Options, json: bool) -> Reply {
                                 "conversion output must not replace its captured imported source",
                             ));
                         }
-                        if matches!(
-                            family,
-                            paintcraft_formats::registry::Family::Dds
-                                | paintcraft_formats::registry::Family::Ora
-                        ) {
+                        if (family == paintcraft_formats::registry::Family::Tiff
+                            && a.page.is_some())
+                            || matches!(
+                                family,
+                                paintcraft_formats::registry::Family::Dds
+                                    | paintcraft_formats::registry::Family::Ora
+                            )
+                        {
                             identity.verify_bytes(
                                 input,
                                 bytes.len() as u64,
@@ -262,7 +289,15 @@ pub fn run(a: Options, json: bool) -> Reply {
                     Ok(())
                 });
             Ok(Written {
-                engine: None,
+                engine: tiff_assessment.map(|assessment| {
+                    Value::object([
+                        (
+                            "decoder_profile",
+                            Value::str(paintcraft_formats::tiff_pages::IMPORT_VARIANT),
+                        ),
+                        ("source_assessment", assessment),
+                    ])
+                }),
                 receipt,
                 ok,
                 summary,
