@@ -224,6 +224,7 @@ impl Source {
                         canvas_epoch: context.canvas,
                         pen_epoch: None,
                         native_touch: Some(lease),
+                        native_contacts: None,
                         acknowledged: None,
                         canvas_samples: target == NativeTouchTarget::Canvas,
                         last_down: Some(down),
@@ -261,6 +262,18 @@ impl Source {
             .unwrap_or_else(|e| e.into_inner())
             .native_touch
             .retire_all()
+    }
+    /// Retire only qualified, physically held touch lifetimes. Earlier completed
+    /// batches, pending edits and genuine mouse publication guards stay valid.
+    /// The returned descriptors grant only exact negative presentation authority.
+    pub fn retire_active_native_touches(
+        &self,
+    ) -> std::result::Result<[Option<NativeTouchCancellation>; 32], Invalid> {
+        self.0
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .native_touch
+            .retire_active()
     }
     /// Only after Collector verified a true native !INRANGE/no-held lifetime
     /// end. Ordinary Leave/Up/cancel is not clock reclamation evidence.

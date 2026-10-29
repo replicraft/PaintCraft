@@ -161,6 +161,24 @@ impl Metadata {
         self.fence_all();
         result
     }
+    pub(super) fn retire_active(&mut self) -> [Option<NativeTouchCancellation>; CONTACTS] {
+        let result = std::array::from_fn(|i| {
+            let active = self
+                .contacts
+                .iter()
+                .flatten()
+                .any(|contact| contact.held && !contact.denied && contact.slot == Some(i));
+            active.then(|| self.cancel_slot(i, None)).flatten()
+        });
+        for contact in self.contacts.iter_mut().flatten() {
+            // A completed slot may still have opaque guards outside Source.
+            // Only this currently held contact becomes a denied physical tail.
+            if contact.held && contact.slot.is_some_and(|i| result[i].is_some()) {
+                contact.denied = true;
+            }
+        }
+        result
+    }
     pub(super) fn retire_identity(
         &mut self,
         identity: Identity,

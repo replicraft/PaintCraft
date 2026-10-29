@@ -13,6 +13,7 @@ pub struct PublicationGuard {
     canvas_samples: bool,
     pen_epoch: Option<u64>,
     pub(super) native_touch: Option<native_touch::Lease>,
+    pub(super) native_contacts: Option<contact_tokens::Leases>,
 }
 impl PublicationGuard {
     /// Metadata only. Native hosts call this inside their sealed delivery check,
@@ -31,6 +32,9 @@ impl PublicationGuard {
                 .native_touch
                 .as_ref()
                 .is_none_or(native_touch::Lease::current)
+            && self.native_contacts.as_ref().is_none_or(|leases| {
+                leases.current() && state.native_contacts.context_matches(leases, self.owner)
+            })
             && self.cancel != u64::MAX
             && self.cancel == state.receiver.cancellation_epoch()
             && self.window != u64::MAX
@@ -55,7 +59,9 @@ impl Source {
         if !self.current_in(&state, batch, owner) {
             return None;
         }
-        self.guard_in(&state, owner, batch.binding.canvas_samples, true)
+        let mut guard = self.guard_in(&state, owner, batch.binding.canvas_samples, true)?;
+        guard.native_contacts = batch.binding.native_contacts.clone();
+        Some(guard)
     }
     /// Genuine source-observed GUI edges have no pen Batch. They still require
     /// the exact current document and installation/window lifetime at commit.
@@ -86,6 +92,7 @@ impl Source {
             canvas_samples,
             pen_epoch: pen_bound.then_some(state.pen_epoch),
             native_touch: None,
+            native_contacts: None,
         })
     }
 }

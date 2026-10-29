@@ -12,7 +12,10 @@ use std::sync::{Arc, Mutex};
 
 mod continuation;
 pub use continuation::Continuation;
+mod contact_tokens;
 mod native;
+mod native_contacts;
+pub use native_contacts::NativePenCancellation;
 mod native_touch;
 pub use native_touch::{
     NativeFingerAdmission, NativeFingerMetadata, NativeTouchBatch, NativeTouchCancellation,
@@ -86,6 +89,7 @@ struct State {
     pen_epoch: u64,
     native: native::Metadata,
     native_touch: native_touch::Resident,
+    native_contacts: native_contacts::Resident,
 }
 /// Cloneable endpoint for native sinks/DOM listeners; it never touches egui Context.
 #[derive(Clone, Debug)]
@@ -107,6 +111,7 @@ struct Binding {
     canvas_epoch: u64,
     pen_epoch: Option<u64>,
     native_touch: Option<native_touch::Lease>,
+    native_contacts: Option<contact_tokens::Leases>,
     acknowledged: Option<u64>,
     canvas_samples: bool,
     last_down: Option<u64>,
@@ -130,7 +135,7 @@ pub struct Predecessor {
 }
 impl Source {
     pub fn new(source_capacity: usize, ui_capacity: usize, budget: &SharedBudget) -> Result<Self> {
-        Self::construct(source_capacity, ui_capacity, budget, false)
+        Self::construct(source_capacity, ui_capacity, budget, false, false)
     }
     /// Explicit native-touch candidate configuration. Default/browser sources
     /// retain the original quote and allocate no native bank or native frames.
@@ -139,13 +144,26 @@ impl Source {
         ui_capacity: usize,
         budget: &SharedBudget,
     ) -> Result<Self> {
-        Self::construct(source_capacity, ui_capacity, budget, true)
+        Self::construct(source_capacity, ui_capacity, budget, true, false)
+    }
+    /// Candidate native source with exact per-contact pen and touch authority.
+    /// Default/browser sources retain their original bank allocation semantics.
+    /// Each handoff binds every included contact. If an aggregated interval
+    /// contains a retired contact, the whole handoff refuses publication;
+    /// separately drained completed work retains its independent authority.
+    pub fn new_native_contacts(
+        source_capacity: usize,
+        ui_capacity: usize,
+        budget: &SharedBudget,
+    ) -> Result<Self> {
+        Self::construct(source_capacity, ui_capacity, budget, true, true)
     }
     fn construct(
         source_capacity: usize,
         ui_capacity: usize,
         budget: &SharedBudget,
         native_touch: bool,
+        native_contacts: bool,
     ) -> Result<Self> {
         if !(2..=65_537).contains(&source_capacity) || !(1..=196_608).contains(&ui_capacity) {
             return Err(invalid(Invalid::Capacity));
@@ -159,12 +177,24 @@ impl Source {
         // Separate reservation for at most one full source/UI handoff. Acquiring
         // it now avoids callbacks into GUI/resource watchers under a native gate.
         let frames = budget
-            .reserve_capacity(bytes as u64)?
+            .reserve_capacity(
+                (bytes
+                    + if native_contacts {
+                        std::mem::size_of::<contact_tokens::Leases>()
+                    } else {
+                        0
+                    }) as u64,
+            )?
             .scope(AllocationClass::PaintMetadata);
         let native_touch = if native_touch {
             native_touch::Resident::new(budget, source_capacity)?
         } else {
             native_touch::Resident::default()
+        };
+        let native_contacts = if native_contacts {
+            native_contacts::Resident::new(budget)?
+        } else {
+            native_contacts::Resident::default()
         };
         let receiver = Receiver::new(source_capacity, ui_capacity).map_err(invalid)?;
         storage.resize(
@@ -182,6 +212,7 @@ impl Source {
             pen_epoch: 0,
             native: Default::default(),
             native_touch,
+            native_contacts,
         }))))
     }
     /// Publish only a complete final layout. Changed owners/transforms retire
@@ -320,6 +351,7 @@ impl Source {
     /// Native hosts invoke this inside Installation::with_delivery, before editor
     /// work. A failed delivery discards even a fully queued but unpublished Up.
     pub fn take(&self, frame: u64, owner: Owner, delivery_failed: bool) -> Result<Batch> {
+        let frame_id = frame;
         let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
         if delivery_failed {
             state.native_touch.fence_all();
@@ -348,10 +380,17 @@ impl Source {
             }
         }
         let mut storage = state.frames.account();
+        let binding_bytes = if state.native_contacts.configured() {
+            std::mem::size_of::<contact_tokens::Leases>()
+        } else {
+            0
+        };
         let frame = state
             .receiver
             .take(frame, |bytes| {
-                storage.resize(bytes as u64).map_err(|_| Invalid::Capacity)
+                storage
+                    .resize((bytes + binding_bytes) as u64)
+                    .map_err(|_| Invalid::Capacity)
             })
             .map_err(invalid)?;
         let canvas_samples = !frame.samples.is_empty();
@@ -372,6 +411,7 @@ impl Source {
                 canvas_epoch: state.canvas_epoch,
                 pen_epoch: Some(state.pen_epoch),
                 native_touch: None,
+                native_contacts: state.native_contacts.take(frame_id),
                 acknowledged: None,
                 canvas_samples,
                 last_down,
@@ -398,6 +438,9 @@ impl Source {
                 .native_touch
                 .as_ref()
                 .is_some_and(|lease| !lease.current())
+            || binding.native_contacts.as_ref().is_some_and(|leases| {
+                !leases.current() || !state.native_contacts.context_matches(leases, binding.owner)
+            })
             || binding.window_epoch == u64::MAX
             || binding.window_epoch != state.window_epoch
         {

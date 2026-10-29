@@ -67,6 +67,15 @@ impl Resident {
     ) -> std::result::Result<[Option<NativeTouchCancellation>; 32], Invalid> {
         Ok(self.value.first_mut().ok_or(Invalid::Owner)?.retire_all())
     }
+    pub(crate) fn retire_active(
+        &mut self,
+    ) -> std::result::Result<[Option<NativeTouchCancellation>; 32], Invalid> {
+        Ok(self
+            .value
+            .first_mut()
+            .ok_or(Invalid::Owner)?
+            .retire_active())
+    }
     pub(crate) fn retire_identity(
         &mut self,
         id: Identity,

@@ -79,7 +79,7 @@ impl Metadata {
             contact.orphan = false;
         }
     }
-    fn deny(&mut self, identity: Identity) {
+    pub(super) fn deny(&mut self, identity: Identity) {
         self.forget_idle(identity);
         if let Some(contact) = self.0.iter_mut().flatten().find(|c| c.identity == identity) {
             contact.fenced |= contact.held;
@@ -311,12 +311,22 @@ impl State {
                 return Err(error);
             }
         };
+        state
+            .native_contacts
+            .reconcile(state.receiver.capture_status().pen);
         let result = state.receiver.submit(
             raw,
             view.transform,
             view.permissions(raw.logical_position),
             delivery,
         );
+        if let Ok(route) = result
+            && let Err(error) = state.native_contacts.observe(raw, route, view.owner)
+        {
+            state.native.fence();
+            state.receiver.cancel();
+            return Err(error);
+        }
         if !matches!(&result, Ok(route) if *route != Route::Suppressed) {
             state.native.deny(raw.identity);
         }

@@ -109,6 +109,11 @@ impl Source {
                 .native_touch
                 .as_ref()
                 .is_some_and(|lease| !state.native_touch.validate_continuation(lease, proof))
+                || batches
+                    .binding(i)
+                    .native_contacts
+                    .as_ref()
+                    .is_some_and(|leases| !state.native_contacts.follows(leases, proof.sequence))
         }) {
             return Err(Invalid::Owner);
         }
@@ -119,6 +124,9 @@ impl Source {
             let b = batches.binding_mut(i);
             if let Some(lease) = &b.native_touch {
                 state.native_touch.acknowledge(lease, proof.after);
+            }
+            if let Some(leases) = &b.native_contacts {
+                state.native_contacts.acknowledge(leases, proof.after);
             }
             b.owner = proof.after;
             if let Some(captured) = &mut b.view {

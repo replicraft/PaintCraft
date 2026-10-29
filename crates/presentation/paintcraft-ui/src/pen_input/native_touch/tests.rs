@@ -1,4 +1,6 @@
 use super::*;
+#[path = "tests_active_retirement.rs"]
+mod active_retirement;
 use paintcraft_input::{
     Modifiers,
     tablet::{Buttons, Clock, DeviceKind},
