@@ -11,6 +11,9 @@ pub struct Options {
     format: Option<String>,
     #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
     quality: u8,
+    /// JPEG only: RGB hexadecimal alpha backdrop (RRGGBB); default is white.
+    #[arg(long)]
+    jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
     /// PCX only: exact indexed colors or explicitly quantize to 256 colors.
     #[arg(long, value_enum)]
     pcx_encoding: Option<super::pcx_options::Encoding>,
@@ -68,6 +71,12 @@ pub fn run(a: Options, json: bool) -> Reply {
             let input = &a.input;
             let dest = a.output.output.as_path();
             let format = output_format(a.format.as_deref(), dest)?;
+            if a.jpeg_matte.is_some() && format != ImageFormat::Jpeg {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "--jpeg-matte requires JPEG output",
+                ));
+            }
             if a.pcx_encoding.is_some() && format != ImageFormat::Pcx {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
@@ -98,6 +107,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             let allowed = a.losses.allowed()?;
             let quality = a.quality;
             let mut options = export::FlatOptions::new(format, quality);
+            options.jpeg_matte = a.jpeg_matte;
             options.pcx_mode = a.pcx_encoding.unwrap_or_default().into();
             if !(1..=100).contains(&quality) {
                 return Err(Error::new(

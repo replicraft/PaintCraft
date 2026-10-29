@@ -44,6 +44,8 @@ pub struct Save {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Export {
+    /// JPEG only: six RGB hexadecimal digits for the alpha backdrop; default white.
+    pub jpeg_matte: Option<String>,
     /// Extension selects the image codec, for example .png or .jpg.
     pub path: String,
     /// PCX only. RGB24 is the default; indexed-256 requires consent for any changed colors.

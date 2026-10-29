@@ -385,6 +385,14 @@ impl PaintingServer {
             s.protect_copy_sources(&path)?;
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
+            let jpeg_matte = p
+                .jpeg_matte
+                .as_deref()
+                .map(str::parse::<paintcraft_formats::image::JpegMatte>)
+                .transpose()?;
+            if jpeg_matte.is_some() && format != ImageFormat::Jpeg {
+                return Err(invalid("jpeg_matte requires JPEG output"));
+            }
             if p.pcx_encoding.is_some() && format != ImageFormat::Pcx {
                 return Err(invalid("pcx_encoding requires PCX output"));
             }
@@ -427,8 +435,25 @@ impl PaintingServer {
             save::preflight(&path, p.overwrite)?;
             let doc = s.session()?.document();
             let mut options = export::FlatOptions::new(format, 90);
+            options.jpeg_matte = jpeg_matte;
             options.pcx_mode = p.pcx_encoding.unwrap_or_default().into();
-            let flat = export::export_flat_options(doc, options, &p.allow_losses)?;
+            let check = || {
+                if cancellation.is_cancelled() || dropped.load(std::sync::atomic::Ordering::Acquire)
+                {
+                    return Err(paintcraft_core::types::Error::new(
+                        paintcraft_core::types::ErrorCode::OperationCancelled,
+                        "Image export request was cancelled",
+                    ));
+                }
+                Ok(())
+            };
+            let flat = export::export_flat_options_with_check(
+                doc,
+                options,
+                &p.allow_losses,
+                |document| paintcraft_render::render_cancellable(document, check),
+                &check,
+            )?;
             let ctx = Context {
                 operation: "export",
                 source_state: doc.state_id,
@@ -436,10 +461,20 @@ impl PaintingServer {
                 losses_acknowledged: p.allow_losses,
                 destination: &path,
             };
-            let outcome = s.write_copy_with(&path, p.overwrite, |sink| {
-                sink.write_all(&flat.bytes)
-                    .map_err(|error| super::super::storage("staged image", &error))
-            })?;
+            check()?;
+            let outcome = s.write_copy_with_checked(
+                &path,
+                p.overwrite,
+                |sink| {
+                    for chunk in flat.bytes.chunks(65_536) {
+                        check()?;
+                        sink.write_all(chunk)
+                            .map_err(|error| super::super::storage("staged image", &error))?;
+                    }
+                    check()
+                },
+                &check,
+            )?;
             let (receipt, ok, _) = super::super::finish_output(&path, &ctx, outcome);
             let content = vec![ContentBlock::text(core_json(&receipt)?.to_string())];
             Ok(if ok {
