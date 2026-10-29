@@ -270,7 +270,35 @@ fn v7_refuses_malformed_request_response_owner_shapes_and_quota_declarations() {
         wire::jxr_encode::qualified::BUILD_RECORD_MARKER,
     ] {
         if marker != selected_marker {
-            assert!(!bytes.windows(marker.len()).any(|v| v == marker));
+            // Debug linkers can retain a bare marker literal from a library
+            // object without retaining a second embedded build declaration.
+            // Shipping artifacts must satisfy the stricter marker check too.
+            let version = env!("CARGO_PKG_VERSION");
+            let other = if marker == wire::BUILD_RECORD_MARKER {
+                wire::native_build_record(version).unwrap()
+            } else if marker == wire::AVIF_BUILD_RECORD_MARKER {
+                wire::native_avif_build_record(version).unwrap()
+            } else if marker == wire::AVIF_SDR_BUILD_RECORD_MARKER {
+                wire::native_avif_sdr_build_record(version).unwrap()
+            } else if marker == wire::FLOAT_BUILD_RECORD_MARKER {
+                wire::native_float_build_record(version).unwrap()
+            } else if marker == wire::jxr_encode::candidate::BUILD_RECORD_MARKER {
+                wire::jxr_encode::candidate::build_record(version).unwrap()
+            } else {
+                wire::jxr_encode::qualified::build_record(version).unwrap()
+            };
+            assert!(
+                !bytes.windows(other.len()).any(|v| v == other),
+                "unexpected complete worker declaration: {}",
+                String::from_utf8_lossy(marker)
+            );
+            if !cfg!(debug_assertions) {
+                assert!(
+                    !bytes.windows(marker.len()).any(|v| v == marker),
+                    "unexpected shipping worker marker: {}",
+                    String::from_utf8_lossy(marker)
+                );
+            }
         }
     }
     assert_eq!(wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.len(), 5);
