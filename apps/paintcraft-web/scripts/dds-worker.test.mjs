@@ -1,14 +1,17 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import {
-	freezeDdsPlan,
 	captureDds,
-	decodeDdsResponse,
-	encodeDdsRequest,
-	isCompletedDdsRefusal,
+	DDS_REQUEST_HEADER,
 	DDS_RESERVATION,
 	DDS_RESPONSE_HEADER,
+	decodeDdsResponse,
+	encodeDdsRequest,
+	freezeDdsPlan,
+	isCompletedDdsRefusal,
 } from '../src/lib/dds-worker-protocol.js';
+import { context } from './test-support/source-metadata-context.mjs';
+
 const owner = Object.freeze({
 	session: '00000000-0000-4000-8000-000000000001',
 	state: '00000000-0000-4000-8000-000000000002',
@@ -22,6 +25,7 @@ function plan() {
 		width: 1,
 		height: 1,
 		sourceFlags: 0,
+		metadataContext: context(1),
 		settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 	};
 }
@@ -49,8 +53,8 @@ async function response(
 			DDS_RESPONSE_HEADER + encoded.length + preview.length + msg.length,
 		),
 		v = new DataView(bytes.buffer);
-	bytes.set(text.encode('PCDDSR01'));
-	v.setUint16(8, 1);
+	bytes.set(text.encode('PCDDSR02'));
+	v.setUint16(8, 2);
 	bytes[10] = status;
 	bytes.set(header.subarray(16, 24), 12);
 	bytes.set(header.subarray(12, 16), 20);
@@ -71,12 +75,16 @@ async function response(
 	);
 	bytes[193] = status
 		? 0
-		: header[121] | (header[113] ? 4 : 0) | (count ? 16 : 0);
+		: header[121] |
+			(header[113] ? 4 : 0) |
+			(count ? 16 : 0) |
+			((header[176] & 3) === 3 ? 32 : 0);
 	v.setUint32(194, count);
 	bytes[198] = app.length;
 	bytes.set(app, 199);
 	v.setUint16(263, msg.length);
 	bytes[265] = header[121];
+	bytes.set(header.subarray(128, 192), 288);
 	bytes.set(encoded, DDS_RESPONSE_HEADER);
 	bytes.set(preview, DDS_RESPONSE_HEADER + encoded.length);
 	bytes.set(msg, DDS_RESPONSE_HEADER + encoded.length + preview.length);
@@ -134,7 +142,7 @@ test('public capture freezes source, owner, plan and options before digest await
 	assert.throws(() => {
 		captured.plan.settings[0] = 3;
 	}, TypeError);
-	assert.equal(encodeDdsRequest(captured).length, 131);
+	assert.equal(encodeDdsRequest(captured).length, DDS_REQUEST_HEADER + 3);
 	for (const mutate of [
 		(p) => {
 			p.width = 1048577;
@@ -170,7 +178,7 @@ test('two-phase admission precedes serialization and returns only a Rust-validat
 	assert.equal(raw.requiresRustValidation, true);
 	assert.equal(raw.encoded, undefined);
 	assert.equal(raw.preview, undefined);
-	assert.equal(raw.requestHeader.length, 128);
+	assert.equal(raw.requestHeader.length, 192);
 	assert.equal(raw.sourceSha256.length, 32);
 	assert.ok(raw.responseBytes.length > DDS_RESPONSE_HEADER);
 	assert.equal(m.codecWorkerBudget().reservedBytes, DDS_RESERVATION);
@@ -356,7 +364,7 @@ test('bridge admission cannot rebind a stale owner and keeps the service exclusi
 	const { createCodecService } = await import('../src/lib/codec-bridge.js');
 	const service = createCodecService(version);
 	service.setOwner(owner);
-	assert.equal(service.ddsExportProtocolVersion(), 1);
+	assert.equal(service.ddsExportProtocolVersion(), 2);
 	assert.throws(
 		() => service.beginDdsExport({ ...owner, epoch: 9n }, plan(), nonce),
 		{ code: 'ConflictStaleBase' },
@@ -489,5 +497,45 @@ test('a running job deadline or changed owner quarantines and ignores subsequent
 		instance.onmessage({ data: { kind: 'result', bytes: late.buffer } });
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		assert.equal(m.codecWorkerBudget().reservedBytes, DDS_RESERVATION);
+	}
+});
+
+test('v2 freezes explicit source intent and rejects metadata, target and old-version echoes', async () => {
+	for (const present of [false, true]) {
+		const p = plan();
+		p.metadataContext = context(1, { present, omit: true });
+		const original = p.metadataContext.slice();
+		const pending = captureDds(new Uint8Array([1]), owner, p, nonce);
+		p.metadataContext.fill(0); // Mutation after capture cannot change intent.
+		const captured = await pending;
+		assert.deepEqual(captured.header.subarray(128, 192), original);
+		const valid = await response(captured.header);
+		const result = await decodeDdsResponse(valid, captured, owner, version);
+		assert.equal(Boolean(result.lossMask & 32), present);
+		for (const at of [288, 304, 336, 337, 338, 339, 340, 344]) {
+			const changed = valid.slice();
+			changed[at] ^= 1;
+			await assert.rejects(
+				decodeDdsResponse(changed, captured, owner, version),
+				{ code: 'CodecFailed' },
+			);
+		}
+		const wrongLoss = valid.slice();
+		wrongLoss[193] ^= 32;
+		await assert.rejects(
+			decodeDdsResponse(wrongLoss, captured, owner, version),
+			{ code: 'CodecFailed' },
+		);
+		const old = valid.slice();
+		old[7] = '1'.charCodeAt(0);
+		new DataView(old.buffer).setUint16(8, 1);
+		await assert.rejects(decodeDdsResponse(old, captured, owner, version), {
+			code: 'CodecFailed',
+		});
+	}
+	for (const metadataContext of [context(2), context(1, { present: true })]) {
+		assert.throws(() => freezeDdsPlan({ ...plan(), metadataContext }), {
+			code: 'InputSchema',
+		});
 	}
 });

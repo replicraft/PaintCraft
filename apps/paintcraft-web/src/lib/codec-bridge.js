@@ -13,6 +13,8 @@ import {
 	PIXELS_MAX,
 	refusal,
 } from './codec-worker-protocol.js';
+import { DDS_PROTOCOL_VERSION } from './dds-worker-protocol.js';
+import { MSP_PROTOCOL_VERSION } from './msp-worker-protocol.js';
 import {
 	freezeTiffPlan,
 	TIFF_PROTOCOL_VERSION,
@@ -151,11 +153,11 @@ export function createCodecService(applicationVersion) {
 		cancel() {
 			active?.abort();
 		},
-		ddsExportProtocolVersion: () => 1,
+		ddsExportProtocolVersion: () => DDS_PROTOCOL_VERSION,
 		beginDdsExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitDdsInWorker);
 		},
-		mspExportProtocolVersion: () => 1,
+		mspExportProtocolVersion: () => MSP_PROTOCOL_VERSION,
 		beginMspExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitMspInWorker);
 		},

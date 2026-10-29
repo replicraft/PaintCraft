@@ -13,11 +13,13 @@ import {
 } from '../src/lib/codec-worker-protocol.js';
 import {
 	DDS_OUTPUT_MAX,
+	DDS_PROTOCOL_VERSION,
 	DDS_REQUEST_HEADER,
 	DDS_SOURCE_MAX,
 } from '../src/lib/dds-worker-protocol.js';
 import {
 	MSP_OUTPUT_MAX,
+	MSP_PROTOCOL_VERSION,
 	MSP_REQUEST_HEADER,
 	MSP_SOURCE_MAX,
 } from '../src/lib/msp-worker-protocol.js';
@@ -57,8 +59,8 @@ function runtime(extra = {}) {
 		protocol_version: () => 2,
 		linear_memory_ceiling: () => LINEAR_MEMORY_BYTES,
 		application_version: () => '0.1.0',
-		dds_export_protocol_version: () => 1,
-		msp_export_protocol_version: () => 1,
+		dds_export_protocol_version: () => DDS_PROTOCOL_VERSION,
+		msp_export_protocol_version: () => MSP_PROTOCOL_VERSION,
 		tiff_page_protocol_version: () => 2,
 		decode_request: execute('decode'),
 		dds_export_request: execute('dds-export'),
@@ -71,9 +73,11 @@ function runtime(extra = {}) {
 		DDS_SOURCE_MAX,
 		DDS_REQUEST_HEADER,
 		DDS_OUTPUT_MAX,
+		DDS_PROTOCOL_VERSION,
 		MSP_SOURCE_MAX,
 		MSP_REQUEST_HEADER,
 		MSP_OUTPUT_MAX,
+		MSP_PROTOCOL_VERSION,
 		TIFF_REQUEST_HEADER,
 		TIFF_SOURCE_MAX,
 		TIFF_PROTOCOL_VERSION,
@@ -135,7 +139,7 @@ test('invalid operation, profile version, input and output caps cannot call anot
 			assert.equal(r.messages[0].value.kind, 'failure');
 		}
 	}
-	const badVersion = runtime({ msp_export_protocol_version: () => 2 });
+	const badVersion = runtime({ msp_export_protocol_version: () => 1 });
 	await badVersion.self.onmessage({
 		data: { kind: 'msp-export', bytes: new ArrayBuffer(129) },
 	});

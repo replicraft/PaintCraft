@@ -13,6 +13,7 @@ import {
 	MSP_RESPONSE_HEADER,
 	MSP_SOURCE_MAX,
 } from '../src/lib/msp-worker-protocol.js';
+import { context } from './test-support/source-metadata-context.mjs';
 
 const source = fs.readFileSync(
 	new URL(
@@ -49,6 +50,7 @@ test('MSP Rust and JS request/output/admission caps agree exactly', () => {
 		width,
 		height,
 		sourceFlags: 0,
+		metadataContext: context(2),
 		version: 2,
 	});
 	assert.doesNotThrow(() => freezeMspPlan(plan(2048, 2048)));

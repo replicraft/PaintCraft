@@ -4,15 +4,17 @@ import fs from 'node:fs';
 import test from 'node:test';
 import { LINEAR_MEMORY_BYTES } from '../src/lib/codec-worker-protocol.js';
 import {
-	DDS_SOURCE_MAX,
 	DDS_ENCODED_MAX,
+	DDS_OUTPUT_MAX,
 	DDS_PREVIEW_MAX,
 	DDS_REQUEST_HEADER,
-	DDS_RESPONSE_HEADER,
-	DDS_OUTPUT_MAX,
 	DDS_RESERVATION,
+	DDS_RESPONSE_HEADER,
+	DDS_SOURCE_MAX,
 	freezeDdsPlan,
 } from '../src/lib/dds-worker-protocol.js';
+import { context } from './test-support/source-metadata-context.mjs';
+
 const source = fs.readFileSync(
 	new URL(
 		'../../../crates/services/paintcraft-formats/src/dds/web_export.rs',
@@ -48,6 +50,7 @@ test('DDS Rust and JS request/output/admission caps agree exactly', () => {
 		width,
 		height,
 		sourceFlags: 0,
+		metadataContext: context(1),
 		settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 	});
 	assert.doesNotThrow(() => freezeDdsPlan(plan(2048, 2048)));

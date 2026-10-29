@@ -19,11 +19,13 @@ import {
 } from './codec-worker-protocol.js';
 import {
 	DDS_OUTPUT_MAX,
+	DDS_PROTOCOL_VERSION,
 	DDS_REQUEST_HEADER,
 	DDS_SOURCE_MAX,
 } from './dds-worker-protocol.js';
 import {
 	MSP_OUTPUT_MAX,
+	MSP_PROTOCOL_VERSION,
 	MSP_REQUEST_HEADER,
 	MSP_SOURCE_MAX,
 } from './msp-worker-protocol.js';
@@ -56,7 +58,7 @@ const operations = Object.freeze({
 		input: DDS_SOURCE_MAX,
 		output: DDS_OUTPUT_MAX,
 		version: dds_export_protocol_version,
-		expectedVersion: 1,
+		expectedVersion: DDS_PROTOCOL_VERSION,
 		execute: dds_export_request,
 	}),
 	'msp-export': Object.freeze({
@@ -64,7 +66,7 @@ const operations = Object.freeze({
 		input: MSP_SOURCE_MAX,
 		output: MSP_OUTPUT_MAX,
 		version: msp_export_protocol_version,
-		expectedVersion: 1,
+		expectedVersion: MSP_PROTOCOL_VERSION,
 		execute: msp_export_request,
 	}),
 });

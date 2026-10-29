@@ -5,6 +5,7 @@ import { createCodecService } from '../src/lib/codec-bridge.js';
 import { RESPONSE_HEADER } from '../src/lib/codec-worker-protocol.js';
 import { DDS_RESPONSE_HEADER } from '../src/lib/dds-worker-protocol.js';
 import { MSP_RESERVATION } from '../src/lib/msp-worker-protocol.js';
+import { context } from './test-support/source-metadata-context.mjs';
 
 const owner = Object.freeze({
 	session: '00000000-0000-4000-8000-000000000001',
@@ -14,11 +15,18 @@ const owner = Object.freeze({
 });
 const version = '0.1.0';
 const text = new TextEncoder();
-const mono = () => ({ width: 1, height: 1, sourceFlags: 0, version: 2 });
+const mono = () => ({
+	width: 1,
+	height: 1,
+	sourceFlags: 0,
+	version: 2,
+	metadataContext: context(2),
+});
 const dds = () => ({
 	width: 1,
 	height: 1,
 	sourceFlags: 0,
+	metadataContext: context(1),
 	settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 });
 const begin = (service, kind) =>
@@ -46,8 +54,8 @@ async function refusal(kind, request) {
 		bytes.set(app, header);
 		bytes.set(detail, header + app.length);
 	} else {
-		bytes.set(text.encode(kind === 'dds-export' ? 'PCDDSR01' : 'PCMSPR01'));
-		v.setUint16(8, 1);
+		bytes.set(text.encode(kind === 'dds-export' ? 'PCDDSR02' : 'PCMSPR02'));
+		v.setUint16(8, 2);
 		bytes.set(request.subarray(16, 24), 12);
 		bytes.set(request.subarray(12, 16), 20);
 		bytes.set(request.subarray(24, 65), 32);
@@ -64,6 +72,7 @@ async function refusal(kind, request) {
 		bytes.set(app, 199);
 		v.setUint16(263, detail.length);
 		bytes[265] = request[kind === 'dds-export' ? 121 : 114];
+		bytes.set(request.subarray(128, 192), 288);
 		bytes.set(detail, header);
 	}
 	return bytes;

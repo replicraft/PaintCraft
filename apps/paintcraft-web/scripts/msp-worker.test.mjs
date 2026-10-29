@@ -6,9 +6,11 @@ import {
 	encodeMspRequest,
 	freezeMspPlan,
 	isCompletedMspRefusal,
+	MSP_REQUEST_HEADER,
 	MSP_RESERVATION,
 	MSP_RESPONSE_HEADER,
 } from '../src/lib/msp-worker-protocol.js';
+import { context } from './test-support/source-metadata-context.mjs';
 
 const owner = Object.freeze({
 	session: '00000000-0000-4000-8000-000000000001',
@@ -23,6 +25,7 @@ function plan() {
 		width: 1,
 		height: 1,
 		sourceFlags: 0,
+		metadataContext: context(2),
 		version: 2,
 	};
 }
@@ -49,8 +52,8 @@ async function response(
 			MSP_RESPONSE_HEADER + encoded.length + preview.length + msg.length,
 		),
 		v = new DataView(bytes.buffer);
-	bytes.set(text.encode('PCMSPR01'));
-	v.setUint16(8, 1);
+	bytes.set(text.encode('PCMSPR02'));
+	v.setUint16(8, 2);
 	bytes[10] = status;
 	bytes.set(header.subarray(16, 24), 12);
 	bytes.set(header.subarray(12, 16), 20);
@@ -69,11 +72,12 @@ async function response(
 		new Uint8Array(await crypto.subtle.digest('SHA-256', preview)),
 		161,
 	);
-	bytes[193] = status ? 0 : header[114];
+	bytes[193] = status ? 0 : header[114] | ((header[176] & 3) === 3 ? 4 : 0);
 	bytes[198] = app.length;
 	bytes.set(app, 199);
 	v.setUint16(263, msg.length);
 	bytes[265] = header[114];
+	bytes.set(header.subarray(128, 192), 288);
 	bytes.set(encoded, MSP_RESPONSE_HEADER);
 	bytes.set(preview, MSP_RESPONSE_HEADER + encoded.length);
 	bytes.set(msg, MSP_RESPONSE_HEADER + encoded.length + preview.length);
@@ -131,7 +135,7 @@ test('public capture freezes source, owner, plan and options before digest await
 	assert.throws(() => {
 		captured.plan.version = 1;
 	}, TypeError);
-	assert.equal(encodeMspRequest(captured).length, 131);
+	assert.equal(encodeMspRequest(captured).length, MSP_REQUEST_HEADER + 3);
 	for (const mutate of [
 		(p) => {
 			p.width = 65536;
@@ -165,7 +169,7 @@ test('two-phase admission precedes serialization and returns only a Rust-validat
 	assert.equal(raw.requiresRustValidation, true);
 	assert.equal(raw.encoded, undefined);
 	assert.equal(raw.preview, undefined);
-	assert.equal(raw.requestHeader.length, 128);
+	assert.equal(raw.requestHeader.length, 192);
 	assert.equal(raw.sourceSha256.length, 32);
 	assert.ok(raw.responseBytes.length > MSP_RESPONSE_HEADER);
 	assert.equal(m.codecWorkerBudget().reservedBytes, MSP_RESERVATION);
@@ -351,7 +355,7 @@ test('bridge admission cannot rebind a stale owner and keeps the service exclusi
 	const { createCodecService } = await import('../src/lib/codec-bridge.js');
 	const service = createCodecService(version);
 	service.setOwner(owner);
-	assert.equal(service.mspExportProtocolVersion(), 1);
+	assert.equal(service.mspExportProtocolVersion(), 2);
 	assert.throws(
 		() => service.beginMspExport({ ...owner, epoch: 9n }, plan(), nonce),
 		{ code: 'ConflictStaleBase' },
@@ -499,6 +503,7 @@ test('MSP, DDS and legacy decode share one reservation and caller options cannot
 			width: 1,
 			height: 1,
 			sourceFlags: 0,
+			metadataContext: context(1),
 			settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 		},
 	});
@@ -524,4 +529,44 @@ test('MSP, DDS and legacy decode share one reservation and caller options cannot
 	});
 	dds.release();
 	assert.equal(m.codecWorkerBudget().reservedBytes, 0);
+});
+
+test('v2 freezes explicit source intent and rejects metadata, target and old-version echoes', async () => {
+	for (const present of [false, true]) {
+		const p = plan();
+		p.metadataContext = context(2, { present, omit: true });
+		const original = p.metadataContext.slice();
+		const pending = captureMsp(new Uint8Array([1]), owner, p, nonce);
+		p.metadataContext.fill(0); // Mutation after capture cannot change intent.
+		const captured = await pending;
+		assert.deepEqual(captured.header.subarray(128, 192), original);
+		const valid = await response(captured.header);
+		const result = await decodeMspResponse(valid, captured, owner, version);
+		assert.equal(Boolean(result.lossMask & 4), present);
+		for (const at of [288, 304, 336, 337, 338, 339, 340, 344]) {
+			const changed = valid.slice();
+			changed[at] ^= 1;
+			await assert.rejects(
+				decodeMspResponse(changed, captured, owner, version),
+				{ code: 'CodecFailed' },
+			);
+		}
+		const wrongLoss = valid.slice();
+		wrongLoss[193] ^= 4;
+		await assert.rejects(
+			decodeMspResponse(wrongLoss, captured, owner, version),
+			{ code: 'CodecFailed' },
+		);
+		const old = valid.slice();
+		old[7] = '1'.charCodeAt(0);
+		new DataView(old.buffer).setUint16(8, 1);
+		await assert.rejects(decodeMspResponse(old, captured, owner, version), {
+			code: 'CodecFailed',
+		});
+	}
+	for (const metadataContext of [context(1), context(2, { present: true })]) {
+		assert.throws(() => freezeMspPlan({ ...plan(), metadataContext }), {
+			code: 'InputSchema',
+		});
+	}
 });

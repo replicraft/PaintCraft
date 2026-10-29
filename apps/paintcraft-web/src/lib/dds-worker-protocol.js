@@ -1,16 +1,21 @@
-// Browser-only protocol1. Native/JXL decoder2 stays independent.
+// Browser-only protocol2. Native/JXL decoder2 stays independent.
 import {
-	ownerBytes,
-	nonceBytes,
-	matchesOwner,
 	equal,
+	matchesOwner,
+	nonceBytes,
+	ownerBytes,
 	refusal,
 } from './codec-worker-protocol.js';
+import {
+	freezeMetadataContext,
+	metadataOmitted,
+} from './source-metadata-worker-context.js';
 export const DDS_SOURCE_MAX = 32 * 1024 * 1024;
 export const DDS_ENCODED_MAX = 24 * 1024 * 1024 + 4096;
 export const DDS_PREVIEW_MAX = 192 * 192 * 4;
-export const DDS_REQUEST_HEADER = 128;
-export const DDS_RESPONSE_HEADER = 288;
+export const DDS_PROTOCOL_VERSION = 2;
+export const DDS_REQUEST_HEADER = 192;
+export const DDS_RESPONSE_HEADER = 352;
 export const DDS_OUTPUT_MAX =
 	DDS_RESPONSE_HEADER + DDS_ENCODED_MAX + DDS_PREVIEW_MAX + 4096;
 export const DDS_RESERVATION = 640 * 1024 * 1024;
@@ -32,7 +37,7 @@ function utf8(bytes) {
 export function freezeDdsPlan(plan) {
 	if (plan && frozenPlans.has(plan)) return plan;
 	if (!plan) throw refusal('InputSchema', 'Invalid browser DDS profile');
-	const { width, height, sourceFlags, settings } = plan;
+	const { width, height, sourceFlags, settings, metadataContext } = plan;
 	if (
 		!Number.isInteger(width) ||
 		!Number.isInteger(height) ||
@@ -64,10 +69,12 @@ export function freezeDdsPlan(plan) {
 		(s[0] === 0 && s[5])
 	)
 		throw refusal('InputSchema', 'Noncanonical browser DDS settings');
+	const metadata = freezeMetadataContext(metadataContext, 1);
 	const frozen = Object.freeze({
 		width,
 		height,
 		sourceFlags,
+		metadataContext: metadata,
 		settings: Object.freeze([...s]),
 	});
 	frozenPlans.add(frozen);
@@ -89,9 +96,9 @@ export async function captureDds(
 	plan = freezeDdsPlan(plan);
 	const frozen = source.slice();
 	const header = new Uint8Array(DDS_REQUEST_HEADER);
-	header.set(encoder.encode('PCDDSQ01'));
+	header.set(encoder.encode('PCDDSQ02'));
 	const view = new DataView(header.buffer);
-	view.setUint16(8, 1);
+	view.setUint16(8, DDS_PROTOCOL_VERSION);
 	view.setUint32(12, frozen.length);
 	view.setUint32(16, plan.width);
 	view.setUint32(20, plan.height);
@@ -103,6 +110,7 @@ export async function captureDds(
 	);
 	header.set(plan.settings, 113);
 	header[121] = plan.sourceFlags;
+	header.set(plan.metadataContext, 128);
 	const captured = { source: frozen, header, plan };
 	proofs.set(captured, {});
 	return captured;
@@ -146,12 +154,12 @@ export async function decodeDdsResponse(
 		count = view.getUint32(194),
 		versionLength = bytes[198],
 		detail = view.getUint16(263);
-	require(equal(bytes.subarray(0, 8), encoder.encode('PCDDSR01')) &&
-		view.getUint16(8) === 1 &&
+	require(equal(bytes.subarray(0, 8), encoder.encode('PCDDSR02')) &&
+		view.getUint16(8) === DDS_PROTOCOL_VERSION &&
 		status <= 5 &&
 		!bytes[11] &&
 		bytes
-			.subarray(266, DDS_RESPONSE_HEADER)
+			.subarray(266, 288)
 			.every((b) => b === 0), 'Browser DDS response framing');
 	require(width === captured.plan.width &&
 		height === captured.plan.height &&
@@ -161,6 +169,7 @@ export async function decodeDdsResponse(
 		equal(bytes.subarray(89, 121), captured.header.subarray(81, 113)) &&
 		equal(bytes.subarray(121, 129), captured.header.subarray(113, 121)) &&
 		bytes[265] === captured.plan.sourceFlags &&
+		equal(bytes.subarray(288, 352), captured.header.subarray(128, 192)) &&
 		versionLength > 0 &&
 		versionLength <= 64 &&
 		utf8(bytes.subarray(199, 199 + versionLength)) === version &&
@@ -219,7 +228,8 @@ export async function decodeDdsResponse(
 		!detail &&
 		pw === expectedW &&
 		ph === expectedH &&
-		mask <= 31 &&
+		mask <= 63 &&
+		Boolean(mask & 32) === metadataOmitted(captured.plan.metadataContext) &&
 		(mask & 3) === captured.plan.sourceFlags &&
 		Boolean(mask & 4) === (s[0] !== 0) &&
 		(!(mask & 8) || (s[4] === 1 && s[3] > 1)) &&
