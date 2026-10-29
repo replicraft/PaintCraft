@@ -1,6 +1,6 @@
 //! Canonical sealed conversion assessment, independent of browser/native wires.
 use super::*;
-const MAGIC: &[u8; 8] = b"PCTIFF01";
+const MAGIC: &[u8; 8] = b"PCTIFF02";
 const DEPTH: &str = "depth-16-reduced-to-8";
 const META: &str = "tiff-metadata-ignored";
 const ICC: &str = "icc-profile-ignored";
@@ -60,7 +60,7 @@ pub(super) fn qualified(value: &Descriptor) -> bool {
             2 => n == 3 + alpha && depth != 1,
             _ => false,
         }
-        && value.orientation == 1
+        && (1..=8).contains(&value.orientation)
         && value.planar_configuration == 1
         && matches!(value.storage, 1 | 2)
         && match value.compression {
@@ -111,8 +111,8 @@ impl Assessment {
             inventory.source_sha256,
             inventory.source_bytes,
             page.index,
-            page.width,
-            page.height,
+            value.width(),
+            value.height(),
             rgba,
         )?;
         Ok(value)
@@ -155,11 +155,26 @@ impl Assessment {
     pub fn page_count(&self) -> u16 {
         self.page_count
     }
+    /// Original encoded dimensions, before applying the source Orientation tag.
+    pub fn source_dimensions(&self) -> (u32, u32) {
+        (self.width, self.height)
+    }
+    pub fn normalized_orientation(&self) -> u8 {
+        1
+    }
     pub fn width(&self) -> u32 {
-        self.width
+        if self.descriptor.orientation >= 5 {
+            self.height
+        } else {
+            self.width
+        }
     }
     pub fn height(&self) -> u32 {
-        self.height
+        if self.descriptor.orientation >= 5 {
+            self.width
+        } else {
+            self.height
+        }
     }
     pub fn descriptor(&self) -> &Descriptor {
         &self.descriptor
@@ -198,7 +213,7 @@ impl Assessment {
         if self.source_sha256 != source_sha256
             || self.source_bytes != source_bytes
             || self.page_index != index
-            || (self.width, self.height) != (width, height)
+            || (self.width(), self.height()) != (width, height)
             || rgba.len() as u64 != u64::from(width) * u64::from(height) * 4
             || self.output_sha256 != <[u8; 32]>::from(Sha256::digest(rgba))
         {
@@ -211,7 +226,7 @@ impl Assessment {
     pub fn encode(&self) -> [u8; ASSESSMENT_BYTES] {
         let mut out = [0; ASSESSMENT_BYTES];
         out[..8].copy_from_slice(MAGIC);
-        out[8..10].copy_from_slice(&1u16.to_be_bytes());
+        out[8..10].copy_from_slice(&2u16.to_be_bytes());
         out[10..12].copy_from_slice(&self.losses.to_be_bytes());
         out[12..20].copy_from_slice(&self.source_bytes.to_be_bytes());
         out[20..22].copy_from_slice(&self.page_index.to_be_bytes());
@@ -266,7 +281,7 @@ impl Assessment {
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != ASSESSMENT_BYTES
             || &bytes[..8] != MAGIC
-            || bytes[8..10] != 1u16.to_be_bytes()
+            || bytes[8..10] != 2u16.to_be_bytes()
             || bytes[104] > 1
             || bytes[106..108] != [0; 2]
             || bytes[228] > 1

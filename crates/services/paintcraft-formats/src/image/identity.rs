@@ -6,8 +6,9 @@ use paintcraft_document::{RasterConversionContext, RasterConversionKey, RasterSe
 /// JPEG display orientation and device-color interpretation are materialized
 /// before constructing a document. A policy change must use a new profile.
 pub const JPEG_IDENTITY_PROFILE: &str = jpeg::IDENTITY_PROFILE;
+pub const TIFF_IDENTITY_PROFILE: &str = "tiff-rgba8-oriented-v1";
 
-/// Bind normalized JPEG pixels and their conversion policy to document IDs.
+/// Bind normalized JPEG/TIFF pixels and their conversion policy to document IDs.
 /// Other formats retain their existing construction keys. This does not grant
 /// admission, metadata retention, loss consent or filesystem authority.
 pub fn document_conversion_key(
@@ -15,20 +16,40 @@ pub fn document_conversion_key(
     decoded: &Decoded,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<RasterConversionKey>> {
-    if decoded.format != ImageFormat::Jpeg {
-        return Ok(None);
-    }
-    let source = jpeg::inspect(bytes, super::DECODE_PIXELS_MAX, check)?;
-    if source.oriented_dimensions() != (decoded.width, decoded.height) {
+    let (source_sha256, profile, dimensions) = match decoded.format {
+        ImageFormat::Jpeg => {
+            let source = jpeg::inspect(bytes, super::DECODE_PIXELS_MAX, check)?;
+            (
+                source.source_sha256(),
+                JPEG_IDENTITY_PROFILE,
+                source.oriented_dimensions(),
+            )
+        }
+        ImageFormat::Tiff => {
+            let (source, _) = super::tiff::admit_source(bytes, super::DECODE_PIXELS_MAX, check)?;
+            let dimensions = if source.orientation >= 5 {
+                (source.height, source.width)
+            } else {
+                (source.width, source.height)
+            };
+            (
+                super::raster_source_metadata::digest(bytes, check)?.sha256,
+                TIFF_IDENTITY_PROFILE,
+                dimensions,
+            )
+        }
+        _ => return Ok(None),
+    };
+    if dimensions != (decoded.width, decoded.height) {
         return Err(Error::new(
             ErrorCode::InputSchema,
-            "JPEG converted document geometry differs from normalized source",
+            "Converted document geometry differs from normalized source",
         ));
     }
     RasterConversionKey::checked(
         RasterConversionContext {
-            source_sha256: source.source_sha256(),
-            profile: JPEG_IDENTITY_PROFILE,
+            source_sha256,
+            profile,
             selection: RasterSelection::Image,
             assessment_sha256: None,
         },

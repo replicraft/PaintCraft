@@ -4,7 +4,7 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-pub const VERSION: u16 = 1;
+pub const VERSION: u16 = 2;
 pub const REQUEST_HEADER: usize = 176;
 pub const RESPONSE_HEADER: usize = 200;
 pub const SOURCE_MAX: usize = 64 << 20;
@@ -29,6 +29,7 @@ pub struct Page {
     pub height: u32,
     pub ifd_offset: u64,
     pub supported: bool,
+    pub orientation: u32,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Selection {
@@ -44,6 +45,15 @@ pub struct Header {
     pub nonce: Uuid,
     pub pixels: u32,
     pub selection: Option<Selection>,
+}
+impl Page {
+    pub fn output_dimensions(&self) -> (u32, u32) {
+        if self.orientation >= 5 {
+            (self.height, self.width)
+        } else {
+            (self.width, self.height)
+        }
+    }
 }
 impl Header {
     pub fn capture(
@@ -75,7 +85,8 @@ impl Header {
         }
         if let Some(selected) = self.selection {
             let page = selected.page;
-            if !page.supported
+            if !(1..=8).contains(&page.orientation)
+                || !page.supported
                 || selected.page_count == 0
                 || selected.page_count > PAGES_MAX
                 || page.index >= selected.page_count
@@ -101,7 +112,7 @@ impl Header {
     }
     pub fn encode(&self) -> [u8; REQUEST_HEADER] {
         let mut out = [0; REQUEST_HEADER];
-        out[..8].copy_from_slice(b"PCTIF001");
+        out[..8].copy_from_slice(b"PCTIF002");
         out[8..10].copy_from_slice(&VERSION.to_be_bytes());
         out[10] = self.operation();
         out[12..14].copy_from_slice(&self.page_index().to_be_bytes());
@@ -116,17 +127,18 @@ impl Header {
             out[151..155].copy_from_slice(&selected.page.width.to_be_bytes());
             out[155..159].copy_from_slice(&selected.page.height.to_be_bytes());
             out[159..167].copy_from_slice(&selected.page.ifd_offset.to_be_bytes());
+            out[167..171].copy_from_slice(&selected.page.orientation.to_be_bytes());
         }
         out
     }
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != REQUEST_HEADER
-            || &bytes[..8] != b"PCTIF001"
+            || &bytes[..8] != b"PCTIF002"
             || word16(bytes, 8) != VERSION
             || !matches!(bytes[10], 1 | 2)
             || bytes[11] != 0
             || bytes[14..16] != [0; 2]
-            || bytes[167..] != [0; 9]
+            || bytes[171..] != [0; 5]
         {
             return Err(invalid("TIFF browser request framing"));
         }
@@ -139,12 +151,13 @@ impl Header {
                     height: word32(bytes, 155),
                     ifd_offset: word64(bytes, 159),
                     supported: true,
+                    orientation: word32(bytes, 167),
                 },
                 page_count: word16(bytes, 149),
                 source_sha256: bytes[113..145].try_into().unwrap(),
             })
         } else {
-            if index != NONE || bytes[113..145] != [0; 32] || bytes[149..167] != [0; 18] {
+            if index != NONE || bytes[113..145] != [0; 32] || bytes[149..171] != [0; 22] {
                 return Err(invalid("TIFF inventory carries a selection"));
             }
             None
@@ -186,6 +199,7 @@ pub fn encode_inventory(pages: &[Page]) -> Result<Vec<u8>> {
         row[4..8].copy_from_slice(&page.width.to_be_bytes());
         row[8..12].copy_from_slice(&page.height.to_be_bytes());
         row[12..20].copy_from_slice(&page.ifd_offset.to_be_bytes());
+        row[20..24].copy_from_slice(&page.orientation.to_be_bytes());
     }
     Ok(out)
 }
@@ -201,15 +215,16 @@ pub fn decode_inventory(bytes: &[u8], count: u16, source_bytes: u64) -> Result<V
             height: word32(row, 8),
             ifd_offset: word64(row, 12),
             supported: row[2] == 1,
+            orientation: word32(row, 20),
         };
         if page.index as usize != index
             || row[2] > 1
             || row[3] != 0
-            || row[20..] != [0; 4]
             || page.ifd_offset < 8
             || page.ifd_offset >= source_bytes
             || (page.supported
-                && (page.width == 0
+                && (!(1..=8).contains(&page.orientation)
+                    || page.width == 0
                     || page.height == 0
                     || page.width > SIDE_MAX
                     || page.height > SIDE_MAX))
@@ -274,7 +289,7 @@ fn frame(
         return Err(invalid("TIFF response bounds"));
     }
     let mut out = vec![0; RESPONSE_HEADER];
-    out[..8].copy_from_slice(b"PCTIR001");
+    out[..8].copy_from_slice(b"PCTIR002");
     out[8..10].copy_from_slice(&VERSION.to_be_bytes());
     out[10] = header.operation();
     out[11] = status;
@@ -305,7 +320,7 @@ pub fn decode_response<'a>(
     header.validate()?;
     if bytes.len() < RESPONSE_HEADER
         || bytes.len() > OUTPUT_MAX
-        || &bytes[..8] != b"PCTIR001"
+        || &bytes[..8] != b"PCTIR002"
         || word16(bytes, 8) != VERSION
         || bytes[10] != header.operation()
         || bytes[11] > 5
@@ -362,8 +377,7 @@ pub fn decode_response<'a>(
     }
     if let Some(selected) = header.selection {
         if count != selected.page_count
-            || width != selected.page.width
-            || height != selected.page.height
+            || (width, height) != selected.page.output_dimensions()
             || report.len() != REPORT_BYTES
             || payload.len() as u64 != u64::from(width) * u64::from(height) * 4
         {

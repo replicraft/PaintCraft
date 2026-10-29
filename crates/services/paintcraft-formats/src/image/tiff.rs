@@ -41,8 +41,23 @@ impl Directory<'_> {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct Source {
+    pub width: u32,
+    pub height: u32,
+    pub orientation: u8,
+}
+pub(super) fn admit_source(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<(Source, Vec<String>)> {
+    admit_directory(bytes, pixels, None, check)
+}
+
+#[cfg(test)]
 pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
-    admit_directory(bytes, pixels, None, &|| Ok(()))
+    admit_directory(bytes, pixels, None, &|| Ok(())).map(|(_, losses)| losses)
 }
 
 pub(crate) fn admit_page(
@@ -51,7 +66,7 @@ pub(crate) fn admit_page(
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<String>> {
-    admit_directory(bytes, pixels, Some(offset), check)
+    admit_directory(bytes, pixels, Some(offset), check).map(|(_, losses)| losses)
 }
 
 fn admit_directory(
@@ -59,7 +74,7 @@ fn admit_directory(
     pixels: u64,
     selected: Option<usize>,
     check: &dyn Fn() -> Result<()>,
-) -> Result<Vec<String>> {
+) -> Result<(Source, Vec<String>)> {
     check()?;
     let directory = Directory {
         bytes,
@@ -85,6 +100,7 @@ fn admit_directory(
         ));
     }
     let (mut width, mut height) = (None, None);
+    let mut orientation = 1u8;
     let (mut photometric, mut channels, mut alpha) = (None, None, false);
     let mut metadata = 0usize;
     let mut losses: Vec<String> = Vec::new();
@@ -176,11 +192,14 @@ fn admit_directory(
                 photometric = Some(model);
             }
             274 => {
-                if directory.value(data, kind, 0)? != 1 {
-                    return Err(unsupported(
-                        "oriented TIFF requires an explicit orientation conversion",
-                    ));
+                if kind != 3 || n != 1 {
+                    return Err(codec("TIFF Orientation must be one SHORT"));
                 }
+                let value = directory.value(data, kind, 0)?;
+                if !(1..=8).contains(&value) {
+                    return Err(codec("TIFF Orientation is outside 1 through 8"));
+                }
+                orientation = value as u8;
             }
             277 => {
                 if n != 1 {
@@ -257,11 +276,18 @@ fn admit_directory(
             "TIFF exceeds the pixel budget",
         ));
     }
-    Ok(["tiff-metadata-ignored", "icc-profile-ignored"]
-        .into_iter()
-        .filter(|code| losses.iter().any(|loss| loss == code))
-        .map(str::to_owned)
-        .collect())
+    Ok((
+        Source {
+            width,
+            height,
+            orientation,
+        },
+        ["tiff-metadata-ignored", "icc-profile-ignored"]
+            .into_iter()
+            .filter(|code| losses.iter().any(|loss| loss == code))
+            .map(str::to_owned)
+            .collect(),
+    ))
 }
 
 pub(super) fn encode(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {

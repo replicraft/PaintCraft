@@ -179,12 +179,7 @@ fn tiff_structures_precision_and_metadata_are_never_silently_lost() {
         decode(&pages).unwrap_err().code,
         ErrorCode::CapabilityUnsupported
     );
-    for extra in [
-        (274, 3, 1, 6),
-        (339, 3, 1, 3),
-        (338, 3, 1, 1),
-        (330, 4, 1, 8),
-    ] {
+    for extra in [(339, 3, 1, 3), (338, 3, 1, 1), (330, 4, 1, 8)] {
         assert_eq!(
             decode(&tiff_fixture(true, 8, 1, &[10, 20], &[extra]))
                 .unwrap_err()
@@ -192,6 +187,15 @@ fn tiff_structures_precision_and_metadata_are_never_silently_lost() {
             ErrorCode::CapabilityUnsupported
         );
     }
+    assert_eq!(
+        decode(&tiff_fixture(true, 8, 1, &[10, 20], &[(274, 3, 1, 9)]))
+            .unwrap_err()
+            .code,
+        ErrorCode::CodecFailed
+    );
+    let oriented = decode(&tiff_fixture(true, 8, 1, &[10, 20], &[(274, 3, 1, 6)])).unwrap();
+    assert_eq!((oriented.width, oriented.height), (1, 2));
+    assert_eq!(oriented.rgba, [10, 10, 10, 255, 20, 20, 20, 255]);
     assert_eq!(
         decode_with_pixel_limit(&fixture, 1).unwrap_err().code,
         ErrorCode::ResourceLimit

@@ -20,7 +20,7 @@ pub mod bmp_metadata;
 mod bmp_rle;
 mod gif;
 mod identity;
-pub use identity::{JPEG_IDENTITY_PROFILE, document_conversion_key};
+pub use identity::{JPEG_IDENTITY_PROFILE, TIFF_IDENTITY_PROFILE, document_conversion_key};
 pub mod jpeg;
 pub(crate) mod orientation;
 mod png_indexed;
@@ -367,6 +367,31 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
             losses: converted.losses,
         });
     }
+    if format == ImageFormat::Tiff {
+        let (source, losses) = tiff::admit_source(bytes, pixels, &|| Ok(()))?;
+        let mut reader =
+            ::image::ImageReader::with_format(Cursor::new(bytes), ::image::ImageFormat::Tiff);
+        reader.limits(decode_limits(pixels));
+        let decoder = reader.into_decoder().map_err(image_error)?;
+        if decoder.dimensions() != (source.width, source.height) {
+            return Err(codec("TIFF decoder source geometry changed"));
+        }
+        let decoded = decode_pixels(decoder, format, losses, pixels)?;
+        let (width, height, rgba) = orientation::normalize(
+            source.width,
+            source.height,
+            source.orientation,
+            decoded.rgba,
+            &|| Ok(()),
+        )?;
+        return Ok(Decoded {
+            format,
+            width,
+            height,
+            rgba,
+            losses: decoded.losses,
+        });
+    }
     if format == ImageFormat::Png {
         let source = png_metadata::inspect(bytes, pixels, &|| Ok(()))?;
         if source.color_type == 3 {
@@ -384,7 +409,6 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
         return decode_pixels(decoder, format, losses, pixels);
     }
     let mut losses = match format {
-        ImageFormat::Tiff => tiff::admit(bytes, pixels)?,
         ImageFormat::Tga => tga::admit(bytes, pixels)?,
         ImageFormat::WebP => webp::admit(bytes, pixels)?,
         ImageFormat::Pnm => extended::admit_pnm(bytes, pixels)?,

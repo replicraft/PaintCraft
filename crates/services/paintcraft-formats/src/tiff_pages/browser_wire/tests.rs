@@ -22,6 +22,7 @@ fn header(selected: bool) -> Header {
                 height: 1,
                 ifd_offset: 64,
                 supported: true,
+                orientation: 1,
             },
             page_count: 2,
             source_sha256: sha,
@@ -59,6 +60,44 @@ fn typed_whole_source_request_never_reuses_decoder_or_owner_page_fields() {
     value.selection.as_mut().unwrap().page.ifd_offset = 0;
     assert!(Header::decode(&value.encode()).is_err());
 }
+
+#[test]
+fn selected_orientation_is_bound_and_only_the_exact_normalized_geometry_is_accepted() {
+    for orientation in 1..=8 {
+        let mut request = header(true);
+        let page = &mut request.selection.as_mut().unwrap().page;
+        page.width = 3;
+        page.height = 2;
+        page.orientation = orientation;
+        assert_eq!(Header::decode(&request.encode()).unwrap(), request);
+        let (width, height) = request.selection.unwrap().page.output_dimensions();
+        let pixels = vec![37; 24];
+        assert!(
+            response(
+                &request,
+                "0.1.1",
+                2,
+                width,
+                height,
+                &[0; REPORT_BYTES],
+                &pixels
+            )
+            .is_ok()
+        );
+        if orientation >= 5 {
+            assert!(response(&request, "0.1.1", 2, 3, 2, &[0; REPORT_BYTES], &pixels).is_err());
+        }
+        let mut legacy = request.encode();
+        legacy[..8].copy_from_slice(b"PCTIF001");
+        legacy[8..10].copy_from_slice(&1u16.to_be_bytes());
+        assert!(Header::decode(&legacy).is_err());
+    }
+    for orientation in [0, 9, u32::MAX] {
+        let mut request = header(true);
+        request.selection.as_mut().unwrap().page.orientation = orientation;
+        assert!(Header::decode(&request.encode()).is_err());
+    }
+}
 #[test]
 fn inventory_keeps_unsupported_first_page_without_implying_a_selection() {
     let header = header(false);
@@ -69,6 +108,7 @@ fn inventory_keeps_unsupported_first_page_without_implying_a_selection() {
             height: 0,
             ifd_offset: 8,
             supported: false,
+            orientation: 1,
         },
         Page {
             index: 1,
@@ -76,6 +116,7 @@ fn inventory_keeps_unsupported_first_page_without_implying_a_selection() {
             height: 1,
             ifd_offset: 64,
             supported: true,
+            orientation: 1,
         },
     ];
     let payload = encode_inventory(&pages).unwrap();
@@ -87,7 +128,7 @@ fn inventory_keeps_unsupported_first_page_without_implying_a_selection() {
     ));
     assert!(header.selection.is_none());
     assert_eq!(header.page_index(), u16::MAX);
-    for at in [0, 2, 3, 12, 20, 24] {
+    for at in [0, 2, 3, 12, 24, 44] {
         let mut bad = payload.clone();
         bad[at] ^= 255;
         assert!(decode_inventory(&bad, 2, 128).is_err());
@@ -123,6 +164,7 @@ fn every_response_byte_is_bound_before_any_report_or_pixels_can_be_used() {
                     height: 1,
                     ifd_offset: 8,
                     supported: true,
+                    orientation: 1,
                 }])
                 .unwrap(),
             )
@@ -184,6 +226,7 @@ fn narrow_pages_above_65536_follow_the_shared_canvas_side_and_pixel_limits() {
             height,
             ifd_offset: 8,
             supported: true,
+            orientation: 1,
         }])
         .unwrap();
         assert_eq!(

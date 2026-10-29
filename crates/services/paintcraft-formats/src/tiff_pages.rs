@@ -12,7 +12,7 @@ pub const METADATA_PER_PAGE_MAX: usize = 1 << 20;
 pub const METADATA_BYTES_MAX: usize = 4 << 20;
 pub const IMPORT_VARIANT: &str = "tiff-selected-page-rgba8-v1";
 pub const LOSS_OTHER_PAGES: &str = "tiff-other-pages-not-imported";
-pub const CONVERSION_POLICY: &str = "tiff-uint16-high-byte-rgba8-v1";
+pub const CONVERSION_POLICY: &str = "tiff-uint16-high-byte-oriented-rgba8-v2";
 pub const ASSESSMENT_BYTES: usize = 256;
 mod assessment;
 pub mod browser_wire;
@@ -154,6 +154,16 @@ pub fn decode_page(
     if (image.width, image.height) != (selected.width, selected.height) {
         return Err(malformed("TIFF selected decoder geometry changed"));
     }
+    let (width, height, rgba) = crate::image::orientation::normalize(
+        image.width,
+        image.height,
+        selected.descriptor.orientation as u8,
+        image.rgba,
+        check,
+    )?;
+    image.width = width;
+    image.height = height;
+    image.rgba = rgba;
     if inventory.pages.len() > 1 {
         image.losses.push(LOSS_OTHER_PAGES.into());
     }
@@ -173,3 +183,6 @@ mod hostile_tests;
 mod independent_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod orientation_tests;
