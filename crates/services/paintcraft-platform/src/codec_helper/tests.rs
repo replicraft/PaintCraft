@@ -583,6 +583,8 @@ mod encoder;
 
 #[path = "tests/mixed.rs"]
 mod mixed;
+#[path = "tests/mixed_set.rs"]
+mod mixed_set;
 
 mod layout;
 

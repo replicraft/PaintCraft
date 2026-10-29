@@ -7,6 +7,7 @@ mod import;
 mod jxl_integer;
 mod jxr_encode;
 mod launch;
+mod writer_contracts;
 mod writer_import;
 use super::*;
 pub use float::{float_max_resident_bytes, float_reservation_bytes, float_resident_bytes};
@@ -176,8 +177,18 @@ fn installed_helper(
     version: &str,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<codec_helper::VerifiedDecoderInstallation> {
+    let application = std::env::current_exe()
+        .map_err(|_| Error::new(ErrorCode::StorageFailed, "Cannot locate codec application"))?;
+    installed_helper_for_application(&application, codec, version, check)
+}
+fn installed_helper_for_application(
+    application: &Path,
+    codec: Codec,
+    version: &str,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<codec_helper::VerifiedDecoderInstallation> {
     if codec == Codec::JxlIntegerRgba8 {
-        return jxl_integer::discover(version, check);
+        return jxl_integer::for_application(application, version, check);
     }
     let legacy_record = native_build_record(version)?;
     let avif_record = native_avif_build_record(version)?;
@@ -219,7 +230,17 @@ fn installed_helper(
         build_marker: FLOAT_BUILD_RECORD_MARKER,
         build_record: &float_record,
     };
-    let historical = [base, avif, sdr, float];
+    let integer_record = super::jxl_integer::contracts::base::build_record(version)?;
+    let integer = codec_helper::Contract {
+        application_version: version,
+        protocol_version: PROTOCOL_VERSION,
+        profile: super::jxl_integer::contracts::base::NATIVE_PROFILE,
+        requested_heap_ceiling_bytes: HEAP_BYTES,
+        qualified_import_variants: super::jxl_integer::contracts::base::IMPORT_VARIANTS,
+        build_marker: super::jxl_integer::contracts::base::BUILD_RECORD_MARKER,
+        build_record: &integer_record,
+    };
+    let historical = [base, avif, sdr, float, integer];
     let first = match codec {
         Codec::HdrSdr8 | Codec::ExrSdr8 => 3,
         Codec::AvifSdr8 => 2,
@@ -227,24 +248,29 @@ fn installed_helper(
         _ => 0,
     };
     let legacy = &historical[first..];
-    let qualified_record = super::jxr_encode::qualified::build_record(version)?;
-    codec_helper::discover_decoder_compatible(
-        legacy,
-        codec_helper::EncoderContract {
-            decode: codec_helper::Contract {
-                application_version: version,
-                protocol_version: PROTOCOL_VERSION,
-                profile: super::jxr_encode::qualified::NATIVE_PROFILE,
-                requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: super::jxr_encode::qualified::IMPORT_VARIANTS,
-                build_marker: super::jxr_encode::qualified::BUILD_RECORD_MARKER,
-                build_record: &qualified_record,
-            },
-            encode_protocol_version: super::jxr_encode::VERSION,
-            qualified_export_variants: super::jxr_encode::qualified::EXPORT_VARIANTS,
-        },
-        check,
-    )
+    writer_contracts::with_contracts(version, |current| {
+        codec_helper::for_application_decoder_compatible_set(application, legacy, current, check)
+    })
+}
+/// Choose from verified helper capability only, never from host-side JXL parsing.
+/// The caller retains its owner/deadline guard across this and preparation.
+pub fn jxl_family_codec(version: &str, check: &dyn Fn() -> Result<()>) -> Result<Codec> {
+    check()?;
+    let helper = installed_helper(Codec::JxlRgba8, version, check)?;
+    jxl_codec_for_helper(&helper, check)
+}
+fn jxl_codec_for_helper(
+    helper: &codec_helper::VerifiedDecoderInstallation,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Codec> {
+    helper.checked_executable(check)?;
+    let codec = if helper.supports_import_variant(super::jxl_integer::contracts::IMPORT_VARIANT) {
+        Codec::JxlIntegerRgba8
+    } else {
+        Codec::JxlRgba8
+    };
+    check()?;
+    Ok(codec)
 }
 #[cfg(test)]
 mod compatibility_tests;

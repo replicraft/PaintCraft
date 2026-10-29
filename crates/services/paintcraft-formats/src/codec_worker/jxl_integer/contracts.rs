@@ -72,5 +72,10 @@ mod tests {
         assert_eq!(writer::IMPORT_VARIANTS.len(), 9);
         assert!(!QUALIFIED_FLOAT_IMPORT_VARIANTS.contains(&IMPORT_VARIANT));
         assert!(!jxr_encode::qualified::IMPORT_VARIANTS.contains(&IMPORT_VARIANT));
+        let maximum_version = "1.0.0-".to_owned() + &"a".repeat(58);
+        assert_eq!(maximum_version.len(), 64);
+        assert_eq!(writer::build_record(&maximum_version).unwrap().len(), 539);
+        assert!(base::build_record(&maximum_version).unwrap().len() < 539);
+        assert!(writer::build_record(&(maximum_version + "x")).is_err());
     }
 }

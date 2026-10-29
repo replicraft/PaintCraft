@@ -1,30 +1,17 @@
 //! Closed writer-compatible import with the exact final helper contract.
+#[cfg(test)]
 use super::super::jxr_encode::qualified;
 use super::*;
 use paintcraft_core::types::resources::{ResourceLease, SharedBudget};
 pub(super) enum Helper {
     Legacy(codec_helper::VerifiedDecoderInstallation),
-    Writer(codec_helper::VerifiedSchema3DecoderHelper),
+    Writer(codec_helper::VerifiedDecoderInstallation),
 }
 impl Helper {
     pub fn writer(version: &str, check: &dyn Fn() -> Result<()>) -> Result<Self> {
-        let record = qualified::build_record(version)?;
-        let helper = codec_helper::discover_decoder(
-            codec_helper::EncoderContract {
-                decode: codec_helper::Contract {
-                    application_version: version,
-                    protocol_version: PROTOCOL_VERSION,
-                    profile: qualified::NATIVE_PROFILE,
-                    requested_heap_ceiling_bytes: HEAP_BYTES,
-                    qualified_import_variants: qualified::IMPORT_VARIANTS,
-                    build_marker: qualified::BUILD_RECORD_MARKER,
-                    build_record: &record,
-                },
-                encode_protocol_version: super::super::jxr_encode::VERSION,
-                qualified_export_variants: qualified::EXPORT_VARIANTS,
-            },
-            check,
-        )?;
+        let helper = super::writer_contracts::with_contracts(version, |contracts| {
+            codec_helper::discover_decoder_compatible_set(&[], contracts, check)
+        })?;
         Ok(Self::Writer(helper))
     }
     pub fn checked_executable(&self, check: &dyn Fn() -> Result<()>) -> Result<&Path> {

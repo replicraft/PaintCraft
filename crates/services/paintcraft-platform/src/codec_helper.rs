@@ -8,10 +8,13 @@
 mod decode;
 mod mixed;
 pub use mixed::{
-    VerifiedDecoderInstallation, discover_decoder_compatible, for_application_decoder_compatible,
+    VerifiedDecoderInstallation, discover_decoder_compatible, discover_decoder_compatible_set,
+    for_application_decoder_compatible, for_application_decoder_compatible_set,
 };
 mod encode;
+mod encoder_set;
 pub use decode::{VerifiedSchema3DecoderHelper, discover_decoder, for_application_decoder};
+pub use encoder_set::{discover_encoder_set, for_application_encoder_set};
 mod files;
 mod layout;
 pub use encode::{
@@ -66,7 +69,7 @@ impl Contract<'_> {
             || self.requested_heap_ceiling_bytes > i64::MAX as u64
             || self.build_marker.is_empty()
             || self.build_marker.len() > 64
-            || self.build_record.len() > 512
+            || self.build_record.len() > 576
             || !self.build_record.starts_with(self.build_marker)
             || self.build_record.len() <= self.build_marker.len()
         {

@@ -86,23 +86,9 @@ fn check_owner(
     Ok(())
 }
 fn installed(check: &dyn Fn() -> Result<()>) -> Result<codec_helper::VerifiedEncoderHelper> {
-    let record = wire::qualified::build_record(env!("CARGO_PKG_VERSION"))?;
-    codec_helper::discover_encoder(
-        codec_helper::EncoderContract {
-            decode: codec_helper::Contract {
-                application_version: env!("CARGO_PKG_VERSION"),
-                protocol_version: PROTOCOL_VERSION,
-                profile: wire::qualified::NATIVE_PROFILE,
-                requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: wire::qualified::IMPORT_VARIANTS,
-                build_marker: wire::qualified::BUILD_RECORD_MARKER,
-                build_record: &record,
-            },
-            encode_protocol_version: wire::VERSION,
-            qualified_export_variants: wire::qualified::EXPORT_VARIANTS,
-        },
-        check,
-    )
+    super::writer_contracts::with_contracts(env!("CARGO_PKG_VERSION"), |contracts| {
+        codec_helper::discover_encoder_set(contracts, check)
+    })
 }
 impl JxrEncodeJob {
     /// Caller admits Layout::reservation_bytes before invocation and separately

@@ -19,45 +19,73 @@ fn target() -> &'static str {
     }
 }
 fn manifest(helper: &Path) -> Value {
-    Value::object([
-        ("schema_version", Value::Int(3)),
-        ("embedded_build_record_verified", Value::Bool(true)),
-        ("application_version", Value::str(env!("CARGO_PKG_VERSION"))),
-        ("target", Value::str(target())),
-        (
-            "executable",
-            Value::str(helper.file_name().unwrap().to_str().unwrap()),
-        ),
-        (
-            "sha256",
-            Value::str(hex(&Sha256::digest(fs::read(helper).unwrap()))),
-        ),
-        ("protocol_version", Value::Int(2)),
-        ("profile", Value::str(wire::qualified::NATIVE_PROFILE)),
-        (
-            "requested_heap_ceiling_bytes",
-            Value::Int(HEAP_BYTES as i64),
-        ),
-        (
-            "qualified_import_variants",
-            Value::Array(
-                wire::qualified::IMPORT_VARIANTS
-                    .iter()
-                    .map(|v| Value::str(*v))
-                    .collect(),
+    let bytes = fs::read(helper).unwrap();
+    super::super::writer_contracts::with_contracts(env!("CARGO_PKG_VERSION"), |contracts| {
+        let selected: Vec<_> = contracts
+            .iter()
+            .filter(|contract| {
+                bytes
+                    .windows(contract.decode.build_record.len())
+                    .any(|part| part == contract.decode.build_record)
+            })
+            .collect();
+        assert_eq!(
+            selected.len(),
+            1,
+            "exactly one current public V8 or V10 producer required"
+        );
+        let selected = selected[0];
+        assert_eq!(
+            bytes
+                .windows(selected.decode.build_record.len())
+                .filter(|part| *part == selected.decode.build_record)
+                .count(),
+            1
+        );
+        Ok(Value::object([
+            ("schema_version", Value::Int(3)),
+            ("embedded_build_record_verified", Value::Bool(true)),
+            ("application_version", Value::str(env!("CARGO_PKG_VERSION"))),
+            ("target", Value::str(target())),
+            (
+                "executable",
+                Value::str(helper.file_name().unwrap().to_str().unwrap()),
             ),
-        ),
-        ("encode_protocol_version", Value::Int(1)),
-        (
-            "qualified_export_variants",
-            Value::Array(
-                wire::qualified::EXPORT_VARIANTS
-                    .iter()
-                    .map(|v| Value::str(*v))
-                    .collect(),
+            ("sha256", Value::str(hex(&Sha256::digest(&bytes)))),
+            ("protocol_version", Value::Int(2)),
+            ("profile", Value::str(selected.decode.profile)),
+            (
+                "requested_heap_ceiling_bytes",
+                Value::Int(HEAP_BYTES as i64),
             ),
-        ),
-    ])
+            (
+                "qualified_import_variants",
+                Value::Array(
+                    selected
+                        .decode
+                        .qualified_import_variants
+                        .iter()
+                        .map(|v| Value::str(*v))
+                        .collect(),
+                ),
+            ),
+            (
+                "encode_protocol_version",
+                Value::Int(i64::from(selected.encode_protocol_version)),
+            ),
+            (
+                "qualified_export_variants",
+                Value::Array(
+                    selected
+                        .qualified_export_variants
+                        .iter()
+                        .map(|v| Value::str(*v))
+                        .collect(),
+                ),
+            ),
+        ]))
+    })
+    .unwrap()
 }
 #[test]
 #[ignore = "requires an actual final-profile encoder helper and explicit independent JXR reference"]
@@ -79,22 +107,6 @@ fn actual_qualified_installed_encoder_parent_lifetime_and_pixels() {
     } else {
         "paintcraft-codec-worker"
     });
-    let bytes = fs::read(&source).unwrap();
-    let record = wire::qualified::build_record(env!("CARGO_PKG_VERSION")).unwrap();
-    let positions = bytes
-        .windows(wire::qualified::BUILD_RECORD_MARKER.len())
-        .enumerate()
-        .filter_map(|(at, part)| (part == wire::qualified::BUILD_RECORD_MARKER).then_some(at))
-        .collect::<Vec<_>>();
-    assert!(
-        !positions.is_empty(),
-        "actual final record required; private/legacy helpers cannot qualify this test"
-    );
-    assert!(
-        positions
-            .iter()
-            .all(|at| bytes.get(*at..*at + record.len()) == Some(record.as_slice()))
-    );
     fs::copy(&source, &helper).unwrap();
     // Preserve the actual producer descriptor; never relabel a production decoder.
     let producer_manifest = source.with_file_name(codec_helper::MANIFEST_NAME);

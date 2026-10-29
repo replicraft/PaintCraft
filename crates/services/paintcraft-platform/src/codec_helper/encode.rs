@@ -59,6 +59,9 @@ pub struct VerifiedEncoderHelper {
     verified: VerifiedHelper,
 }
 impl VerifiedEncoderHelper {
+    pub(super) fn from_verified(verified: VerifiedHelper) -> Self {
+        Self { verified }
+    }
     pub fn checked_executable(&self, check: &dyn Fn() -> Result<()>) -> Result<&Path> {
         self.verified.checked_executable(check)
     }

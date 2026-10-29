@@ -1,15 +1,7 @@
 //! Exact candidate decoder discovery. Older contracts never authorize tag 9.
 use super::*;
 use crate::codec_worker::jxl_integer::contracts::{base, writer};
-pub(super) fn discover(
-    version: &str,
-    check: &dyn Fn() -> Result<()>,
-) -> Result<codec_helper::VerifiedDecoderInstallation> {
-    let application = std::env::current_exe()
-        .map_err(|_| Error::new(ErrorCode::StorageFailed, "Cannot locate codec application"))?;
-    for_application(&application, version, check)
-}
-fn for_application(
+pub(super) fn for_application(
     application: &Path,
     version: &str,
     check: &dyn Fn() -> Result<()>,
