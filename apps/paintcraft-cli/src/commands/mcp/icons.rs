@@ -41,6 +41,8 @@ struct Entry {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct Export {
+    /// Explicitly omit original source metadata from this copy; default refuse.
+    source_metadata: Option<super::params::SourceMetadata>,
     /// A fresh .ico or .cur destination; never a foreign preserving save.
     path: String,
     /// Ordered entries, each dimension 1..256. Every size is fitted independently.
@@ -114,13 +116,16 @@ impl PaintingServer {
                 Resampling::Lanczos3 => icons::Filter::Lanczos3,
             };
             let doc = state.session()?.document();
-            let prepared = icons::prepare_document(
+            let policy = super::super::export_metadata::CopyFormat::Icon(kind)
+                .capture(doc, p.source_metadata.unwrap_or_default().into())?;
+            let prepared = icons::prepare_document_with_metadata_policy(
                 doc,
                 kind,
                 &specs,
                 filter,
                 icons::WriteLimits::default(),
                 &|| Ok(()),
+                policy,
             )?;
             let bytes = prepared.encode(&p.allow_losses, &|| Ok(()))?;
             let context = Context {

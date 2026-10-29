@@ -1,6 +1,7 @@
 //! The CLI commands. Each returns what to print and how to exit; nothing here
 //! calls `process::exit`.
 
+mod export_metadata;
 mod import_source;
 mod source_metadata;
 mod tiff_page;

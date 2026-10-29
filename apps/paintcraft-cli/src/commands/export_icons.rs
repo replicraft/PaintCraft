@@ -8,6 +8,8 @@ use paintcraft_formats::{
 #[derive(clap::Args, Debug)]
 pub struct Options {
     input: PathBuf,
+    #[command(flatten)]
+    metadata: super::export_metadata::Options,
     /// Repeat SIZE:png|bitmap or WIDTHxHEIGHT:png|bitmap. CUR adds :HOTSPOT_X:HOTSPOT_Y.
     #[arg(long, required = true, value_parser = parse_entry)]
     entry: Vec<icons::EntrySpec>,
@@ -128,13 +130,17 @@ pub fn run(a: Options, json: bool) -> Reply {
             } else {
                 icons::Kind::Cursor
             };
-            let prepared = icons::prepare_document(
+            let policy = a
+                .metadata
+                .capture(&doc, super::export_metadata::CopyFormat::Icon(kind))?;
+            let prepared = icons::prepare_document_with_metadata_policy(
                 &doc,
                 kind,
                 &a.entry,
                 a.resampling.into(),
                 icons::WriteLimits::default(),
                 &|| Ok(()),
+                policy,
             )?;
             let encoded = prepared.encode(&allowed, &|| Ok(()))?;
             let ctx = Context {

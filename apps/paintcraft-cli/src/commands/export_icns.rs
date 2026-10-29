@@ -7,6 +7,8 @@ use paintcraft_formats::{
 #[derive(clap::Args, Debug)]
 pub struct Options {
     input: PathBuf,
+    #[command(flatten)]
+    metadata: super::export_metadata::Options,
     /// Repeat an exact ICNS type: ic07/ic08/ic09/ic10/ic11/ic12/ic13/ic14.
     /// For example ic11 is 16 logical pixels at 2x, whereas ic12 is 32 at 2x.
     #[arg(long="type", required=true,value_parser=parse_kind)]
@@ -83,7 +85,16 @@ pub fn run(a: Options, json: bool) -> Reply {
                 Resampling::Nearest => icons::Filter::Nearest,
                 Resampling::Lanczos3 => icons::Filter::Lanczos3,
             };
-            let prepared = icns::prepare_document(&doc, &a.kinds, filter, &|| Ok(()))?;
+            let policy = a
+                .metadata
+                .capture(&doc, super::export_metadata::CopyFormat::Icns)?;
+            let prepared = icns::prepare_document_with_metadata_policy(
+                &doc,
+                &a.kinds,
+                filter,
+                &|| Ok(()),
+                policy,
+            )?;
             let encoded = prepared.encode(&allowed, &|| Ok(()))?;
             // Check the same captured source immediately before output publication.
             if identity.matches_path(dest)? {

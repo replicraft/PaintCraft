@@ -58,6 +58,8 @@ enum Filter {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct Export {
+    /// Explicitly omit original source metadata from this copy; default refuse.
+    source_metadata: Option<super::params::SourceMetadata>,
     /// Fresh .icns destination. Source-preserving saves are unavailable.
     path: String,
     /// Explicit ordered types; ic11 is 16 logical pixels at 2x, ic12 is 32 at 2x.
@@ -137,7 +139,15 @@ impl PaintingServer {
                 Filter::Lanczos3 => icons::Filter::Lanczos3,
             };
             let doc = state.session()?.document();
-            let prepared = icns::prepare_document(doc, &kinds, filter, &|| Ok(()))?;
+            let policy = super::super::export_metadata::CopyFormat::Icns
+                .capture(doc, p.source_metadata.unwrap_or_default().into())?;
+            let prepared = icns::prepare_document_with_metadata_policy(
+                doc,
+                &kinds,
+                filter,
+                &|| Ok(()),
+                policy,
+            )?;
             let bytes = prepared.encode(&p.allow_losses, &|| Ok(()))?;
             let context = Context {
                 operation: "export",
