@@ -27,6 +27,7 @@ pub use jpeg_encode::{JpegMatte, encode_checked as encode_jpeg_checked};
 pub(crate) mod orientation;
 mod png_indexed;
 pub mod png_metadata;
+pub mod png_retention;
 pub mod raster_source_metadata;
 #[cfg(test)]
 mod raster_tests;
@@ -38,8 +39,11 @@ mod webp;
 pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
-/// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 25] = [
+/// Required conversion acknowledgements: actual omissions and retained source
+/// facts that do not activate working color/print interpretation.
+pub const KNOWN_IMPORT_LOSSES: [&str; 27] = [
+    png_retention::ICC_RETAINED_UNAPPLIED,
+    png_retention::RESOLUTION_RETAINED_INACTIVE,
     "dib-alpha-unspecified",
     "dib-alpha-mode-unspecified",
     "dib-metadata-ignored",
@@ -256,7 +260,8 @@ pub struct Decoded {
     pub height: u32,
     /// Straight RGBA8, row-major.
     pub rgba: Vec<u8>,
-    /// Things the source had that this import could not keep.
+    /// Required conversion acknowledgements, including actual omissions and
+    /// source facts retained without activating color/print interpretations.
     pub losses: Vec<String>,
 }
 
@@ -399,16 +404,7 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
         if source.color_type == 3 {
             return png_indexed::decode(bytes, &source, pixels, &|| Ok(()));
         }
-        let decoder = ::image::codecs::png::PngDecoder::with_limits(
-            Cursor::new(bytes),
-            decode_limits(pixels),
-        )
-        .map_err(image_error)?;
-        let mut losses: Vec<String> = source.losses().into_iter().map(str::to_owned).collect();
-        if decoder.is_apng().map_err(image_error)? {
-            losses.push("animation-first-frame-only".to_owned());
-        }
-        return decode_pixels(decoder, format, losses, pixels);
+        return png_retention::decode_legacy_pixels(bytes, &source, pixels, &|| Ok(()));
     }
     let mut losses = match format {
         ImageFormat::Tga => tga::admit(bytes, pixels)?,

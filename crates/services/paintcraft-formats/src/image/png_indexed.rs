@@ -24,6 +24,23 @@ pub(super) fn decode(
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Decoded> {
+    decode_inner(bytes, source, pixels, check, false)
+}
+pub(super) fn decode_captured_source(
+    bytes: &[u8],
+    source: &Descriptor,
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Decoded> {
+    decode_inner(bytes, source, pixels, check, true)
+}
+fn decode_inner(
+    bytes: &[u8],
+    source: &Descriptor,
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+    skip_metadata_storage: bool,
+) -> Result<Decoded> {
     check()?;
     let allowance = pixels.min(super::DECODE_PIXELS_MAX).saturating_mul(8);
     let mut decoder = png::Decoder::new_with_limits(
@@ -32,8 +49,13 @@ pub(super) fn decode(
             bytes: usize::try_from(allowance).unwrap_or(usize::MAX),
         },
     );
+    decoder.ignore_checksums(false);
     decoder.set_transformations(png::Transformations::IDENTITY);
     decoder.set_ignore_text_chunk(false);
+    if skip_metadata_storage {
+        decoder.set_ignore_iccp_chunk(true);
+        decoder.set_ignore_text_chunk(true);
+    }
     let mut reader = decoder.read_info().map_err(|e| codec(e.to_string()))?;
     check()?;
     let header = reader.info();
