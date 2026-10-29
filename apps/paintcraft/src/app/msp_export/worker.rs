@@ -46,10 +46,17 @@ pub(super) fn prepare(
     quoted: u64,
     capacity: u64,
     cancel: Cancellation,
+    policy: export::metadata_policy::Policy,
 ) -> Result<Prepared> {
-    prepare_with(doc, selected, quoted, capacity, cancel, |doc, check| {
-        paintcraft_render::render_cancellable(doc, check)
-    })
+    prepare_with(
+        doc,
+        selected,
+        quoted,
+        capacity,
+        cancel,
+        policy,
+        |doc, check| paintcraft_render::render_cancellable(doc, check),
+    )
 }
 pub(super) fn prepare_with(
     doc: Arc<paintcraft_document::Document>,
@@ -57,6 +64,7 @@ pub(super) fn prepare_with(
     quoted: u64,
     capacity: u64,
     cancel: Cancellation,
+    policy: export::metadata_policy::Policy,
     render_pixels: impl FnOnce(
         &paintcraft_document::Document,
         &dyn Fn() -> Result<()>,
@@ -73,7 +81,7 @@ pub(super) fn prepare_with(
     let budget = SharedBudget::new(capacity);
     let render = RefCell::new(None);
     let encode = RefCell::new(None);
-    let artifact = export::msp::prepare_document_with(
+    let artifact = export::msp::prepare_document_with_metadata_policy(
         &doc,
         version(selected),
         &export::KNOWN_LOSSES.map(str::to_owned),
@@ -93,6 +101,7 @@ pub(super) fn prepare_with(
         },
         render_pixels,
         &check,
+        policy,
     )?;
     // Composite has been released. Decode uses its RGBA allowance and the
     // packed allowance already charged above; encoded bytes stay retained.

@@ -23,6 +23,33 @@ impl JxrExportPending {
     }
 }
 impl Service {
+    /// Retry only executor-owned active contention; uncertain retirement is not
+    /// reclamation, and external/impossible admission remains a typed refusal.
+    pub(crate) fn try_submit_jxr_export(
+        &self,
+        quote: u64,
+        task: impl FnOnce(Cancellation) -> Result<PreparedJxrExport> + Send + 'static,
+    ) -> Result<Option<JxrExportPending>> {
+        if quote > PREPARATION_CHARGE {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "JPEG XR export exceeds editing admission",
+            ));
+        }
+        match self.submit_jxr_export(quote, task) {
+            Ok(pending) => Ok(Some(pending)),
+            Err(error) if error.code == ErrorCode::ResourceLimit => {
+                let mut executor = self.lock()?;
+                executor.reap_abandoned();
+                if executor.request_fits(PREPARATION_CHARGE) && executor.pending() > 0 {
+                    Ok(None)
+                } else {
+                    Err(error)
+                }
+            }
+            Err(error) => Err(error),
+        }
+    }
     pub(crate) fn submit_jxr_export(
         &self,
         quote: u64,

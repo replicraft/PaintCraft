@@ -13,8 +13,16 @@ impl App {
             ui.set_max_width(440.0);
             ui.heading(t!(ctx, "DDS texture"));
             let mut changed = false;
+            if state.has_source_metadata() {
+                let before = state.omit_source_metadata;
+                paintcraft_ui::source_metadata_export::controls(
+                    ui,
+                    &mut state.omit_source_metadata,
+                );
+                changed |= before != state.omit_source_metadata;
+            }
             if state.destination.is_none() {
-                changed = controls::controls(
+                changed |= controls::controls(
                     ui,
                     &mut state.settings,
                     self.editor.document().canvas.0,
@@ -27,7 +35,7 @@ impl App {
                 state.shown.get_or_insert(ctx.cumulative_frame_nr());
             } else if let Some(error) = &state.error {
                 ui.colored_label(ui.visuals().error_fg_color, error);
-            } else {
+            } else if state.metadata_ready() {
                 ui.spinner();
                 ui.label(t!(ctx, "Preparing DDS texture…"));
             }
@@ -44,6 +52,8 @@ impl App {
                                 "Mip filtering discards invisible colors in smaller images.",
                             export::dds::LINEAR_QUANTIZATION_LOSS =>
                                 "Converting to linear 8-bit samples loses color precision.",
+                            export::metadata_policy::OMITTED_REASON =>
+                                "Original source metadata is omitted from this exported copy.",
                             _ => loss.as_str(),
                         }
                     ));
@@ -56,6 +66,7 @@ impl App {
                 }
             }
             let ready = !changed
+                && state.metadata_ready()
                 && state.texture.is_some()
                 && state.prepared.is_some()
                 && state

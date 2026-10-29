@@ -22,13 +22,14 @@ pub(super) fn prepare(
     source: Arc<paintcraft_document::Document>,
     owner: wire::Owner,
     cancel: Cancellation,
+    policy: export::metadata_policy::Policy,
 ) -> Result<controller::background::PreparedJxrExport> {
     let lease = cancel
         .resource_lease()
         .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "JPEG XR export admission missing"))?;
     let check = || cancel.check();
     let allowed = export::KNOWN_LOSSES.map(str::to_owned);
-    let opaque = export::jxr::prepare_opaque_rgb_checked(
+    let opaque = export::jxr::prepare_opaque_rgb_with_metadata_policy(
         &source,
         encode::ENCODED_BYTES_MAX,
         &allowed,
@@ -45,6 +46,7 @@ pub(super) fn prepare(
         },
         |doc, check| paintcraft_render::render_cancellable(doc, check),
         &check,
+        policy,
     )?;
     let (layout, rgb, losses) = opaque.into_parts();
     let encoded = JxrEncodeJob {

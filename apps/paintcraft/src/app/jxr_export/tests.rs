@@ -30,7 +30,7 @@ fn opaque_only_preparation_refuses_alpha_before_helper_and_releases_the_shared_c
         let layout = encode::Layout::new(2, 2, encode::ENCODED_BYTES_MAX).unwrap();
         let pending = service
             .submit_jxr_export(worker::quote(layout).unwrap(), move |cancel| {
-                worker::prepare(source, owner, cancel)
+                worker::prepare(source, owner, cancel, Policy::Refuse)
             })
             .unwrap();
         assert_eq!(budget.usage().reserved, 2 << 30);

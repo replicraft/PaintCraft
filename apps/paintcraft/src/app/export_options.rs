@@ -285,13 +285,36 @@ impl App {
                 && crate::dds_export::admit(self.format_frontend(), Path::new("picture.dds"))
                     .is_ok()
             {
-                self.begin_dds_export(draft.dds);
+                self.begin_dds_export_frozen(
+                    draft.dds,
+                    draft.frozen.clone(),
+                    if draft.omit_source_metadata {
+                        Intent::Omit
+                    } else {
+                        Intent::Refuse
+                    },
+                );
             } else if draft.format == Choice::Flat(ImageExport::Msp)
                 && self.experience() == Experience::Studio
             {
-                self.begin_msp_export(draft.msp_version);
+                self.begin_msp_export_frozen(
+                    draft.msp_version,
+                    draft.frozen.clone(),
+                    if draft.omit_source_metadata {
+                        Intent::Omit
+                    } else {
+                        Intent::Refuse
+                    },
+                );
             } else if draft.format == Choice::Jxr {
-                self.begin_jxr_export();
+                self.begin_jxr_export_frozen(
+                    draft.frozen.clone(),
+                    if draft.omit_source_metadata {
+                        Intent::Omit
+                    } else {
+                        Intent::Refuse
+                    },
+                );
             } else if self.dialogs.is_some() {
                 let suggested = self
                     .bound
@@ -516,3 +539,7 @@ mod tests {
         assert!(!path.exists());
     }
 }
+
+#[cfg(test)]
+#[path = "export_options/advanced_metadata_tests.rs"]
+mod advanced_metadata_tests;

@@ -1,6 +1,7 @@
 //! Native Studio MSP copies, with retained exact preparation and source guards.
 use super::*;
 use crate::export_sources::Sources;
+use export::metadata_policy::{Intent, Policy, Target};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_formats::{
     msp,
@@ -28,6 +29,9 @@ struct Capture {
 }
 pub(super) struct State {
     tab: Uuid,
+    frozen: Option<export_options::Frozen>,
+    omit_source_metadata: bool,
+    metadata_policy: Policy,
     version: Version,
     capture: Option<Capture>,
     pending: Option<controller::background::MspExportPending>,
@@ -92,11 +96,16 @@ impl State {
                 prepared.artifact.plan().layout().version() == worker::version(self.version)
             })
             && app.experience() == Experience::Studio
-            && !app.has_document_drafts()
+            && self
+                .frozen
+                .as_ref()
+                .map_or_else(|| !app.has_document_drafts(), |f| f.current(app))
             && !app.editor.has_floating_selection()
             && self.capture.as_ref().is_none_or(|c| {
-                Arc::ptr_eq(&c.doc, &app.editor.document_snapshot())
-                    && c.stamp == app.editor.preview_stamp()
+                self.frozen.as_ref().map_or_else(
+                    || Arc::ptr_eq(&c.doc, &app.editor.document_snapshot()),
+                    |f| Arc::ptr_eq(&c.doc, &f.document),
+                ) && c.stamp == app.editor.preview_stamp()
                     && c.owner == app.editor.native_import_owner()
                     && c.dirty == app.editor.is_dirty()
                     && c.bound == app.bound
@@ -105,7 +114,20 @@ impl State {
                     && !app.editor.has_pending_edits()
             })
     }
+    fn has_source_metadata(&self) -> bool {
+        self.capture
+            .as_ref()
+            .is_some_and(|c| c.doc.source_metadata.is_some())
+            || self
+                .frozen
+                .as_ref()
+                .is_some_and(|f| f.document.source_metadata.is_some())
+    }
+    fn metadata_ready(&self) -> bool {
+        !self.has_source_metadata() || self.omit_source_metadata
+    }
     fn retire(&mut self) {
+        self.metadata_policy = Policy::Refuse;
         self.pending = None;
         self.prepared = None;
         self.texture = None;
@@ -115,11 +137,30 @@ impl State {
     }
 }
 impl App {
+    #[cfg(test)]
     pub(super) fn begin_msp_export(&mut self, version: Version) {
+        self.begin_msp_export_source(version, None, Intent::Refuse);
+    }
+    pub(super) fn begin_msp_export_frozen(
+        &mut self,
+        version: Version,
+        frozen: export_options::Frozen,
+        intent: Intent,
+    ) {
+        self.begin_msp_export_source(version, Some(frozen), intent);
+    }
+    fn begin_msp_export_source(
+        &mut self,
+        version: Version,
+        frozen: Option<export_options::Frozen>,
+        intent: Intent,
+    ) {
         let result = (|| {
             admit(self.format_frontend(), Path::new("picture.msp"), version)?;
             if self.document_count() == 0
-                || self.has_document_drafts()
+                || frozen
+                    .as_ref()
+                    .map_or_else(|| self.has_document_drafts(), |f| !f.current(self))
                 || self.editor.has_floating_selection()
                 || self.confirm.is_some()
                 || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
@@ -128,6 +169,9 @@ impl App {
             }
             self.msp_export = Some(State {
                 tab: self.active_tab_id(),
+                frozen,
+                omit_source_metadata: intent == Intent::Omit,
+                metadata_policy: Policy::Refuse,
                 version,
                 capture: None,
                 pending: None,
@@ -138,11 +182,19 @@ impl App {
                 error: None,
                 losses_accepted: false,
             });
-            self.defer_file(
-                editing::FileRequest::ExportMsp,
-                token(&self.context, code::EXPORT),
-            );
             self.confirm = Some(Confirm::MspExport);
+            if self
+                .msp_export
+                .as_ref()
+                .is_some_and(|state| state.frozen.is_some())
+            {
+                self.capture_msp_export();
+            } else {
+                self.defer_file(
+                    editing::FileRequest::ExportMsp,
+                    token(&self.context, code::EXPORT),
+                );
+            }
             Ok(())
         })();
         if let Err(error) = result {
@@ -169,7 +221,11 @@ impl App {
                 )
             })?;
             state.capture = Some(Capture {
-                doc: self.editor.document_snapshot(),
+                doc: state
+                    .frozen
+                    .as_ref()
+                    .map(|f| f.document.clone())
+                    .unwrap_or_else(|| self.editor.document_snapshot()),
                 stamp: self.editor.preview_stamp(),
                 owner: self.editor.native_import_owner(),
                 dirty: self.editor.is_dirty(),
@@ -209,6 +265,7 @@ impl App {
         if state.pending.is_none()
             && state.prepared.is_none()
             && state.error.is_none()
+            && state.metadata_ready()
             && let Some(capture) = &state.capture
         {
             let result = (|| {
@@ -221,9 +278,19 @@ impl App {
                 service.reap_abandoned();
                 let quote = worker::quote(&capture.doc, state.version)?;
                 let doc = capture.doc.clone();
+                let policy = Policy::capture(
+                    &doc,
+                    Target::new(Family::Msp, Operation::ExportFlat),
+                    if state.omit_source_metadata {
+                        Intent::Omit
+                    } else {
+                        Intent::Refuse
+                    },
+                )?;
+                state.metadata_policy = policy;
                 let version = state.version;
                 service.try_submit_msp_export(quote, move |cancel, capacity| {
-                    worker::prepare(doc, version, quote, capacity, cancel)
+                    worker::prepare(doc, version, quote, capacity, cancel, policy)
                 })
             })();
             match result {
@@ -336,13 +403,23 @@ impl App {
             let capture = state.capture.as_ref().ok_or_else(stale)?;
             let prepared = state.prepared.as_ref().ok_or_else(stale)?;
             let (path, expected) = state.destination.as_ref().ok_or_else(stale)?;
-            if !prepared.artifact.losses().is_empty() && !state.losses_accepted {
+            if prepared
+                .artifact
+                .losses()
+                .iter()
+                .any(|s| s != export::metadata_policy::OMITTED_REASON)
+                && !state.losses_accepted
+            {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
                     "MSP export changes need approval",
                 ));
             }
             let check = || {
+                state.metadata_policy.validate(
+                    &capture.doc,
+                    Target::new(Family::Msp, Operation::ExportFlat),
+                )?;
                 if !state.current(self) || prepared.artifact.source_state() != capture.doc.state_id
                 {
                     return Err(stale());

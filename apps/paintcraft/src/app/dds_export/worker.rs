@@ -71,6 +71,7 @@ pub(super) fn prepare(
     settings: Settings,
     quoted: u64,
     cancel: Cancellation,
+    policy: export::metadata_policy::Policy,
 ) -> Result<Prepared> {
     let lease = cancel.resource_lease().ok_or_else(|| {
         Error::new(
@@ -79,7 +80,7 @@ pub(super) fn prepare(
         )
     })?;
     let check = || cancel.check();
-    let artifact = export::dds::prepare_document(
+    let artifact = export::dds::prepare_document_with_metadata_policy(
         &doc,
         options(settings),
         &export::KNOWN_LOSSES.map(str::to_owned),
@@ -92,7 +93,9 @@ pub(super) fn prepare(
             }
             check()
         },
+        |doc, check| paintcraft_render::render_cancellable(doc, check),
         &check,
+        policy,
     )?;
     let decoded = dds::decode_top_mip_checked(artifact.encoded().bytes(), dds::PIXELS_MAX, &check)?;
     let (width, height) = (decoded.info.image.width, decoded.info.image.height);

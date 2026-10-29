@@ -34,6 +34,7 @@ fn exact_two_stage_denials_precede_their_allocations_and_one_render_is_retained(
                     quote,
                     limit,
                     cancel,
+                    Policy::Refuse,
                     |doc, check| {
                         renders.fetch_add(1, Ordering::SeqCst);
                         paintcraft_render::render_cancellable(doc, check)
@@ -83,7 +84,7 @@ fn opaque_black_white_is_required_without_implicit_alpha_or_color_conversion() {
             let quote = worker::quote(&doc, version).unwrap();
             let pending = service
                 .submit_msp_export(quote, move |cancel, capacity| {
-                    worker::prepare(doc, version, quote, capacity, cancel)
+                    worker::prepare(doc, version, quote, capacity, cancel, Policy::Refuse)
                 })
                 .unwrap();
             assert!(poll(&pending).is_err());
@@ -158,6 +159,7 @@ fn cancel_during_render_retires_without_an_artifact_and_releases_admission() {
                 quote,
                 capacity,
                 cancel,
+                Policy::Refuse,
                 |doc, check| {
                     started.send(()).unwrap();
                     wait_release.recv_timeout(Duration::from_secs(5)).unwrap();

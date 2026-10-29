@@ -9,6 +9,7 @@ use paintcraft_ui::t;
 #[path = "jxr_export/worker.rs"]
 mod worker;
 use crate::export_sources::Sources;
+use export::metadata_policy::{Intent, Policy, Target};
 
 type Prepared = controller::background::PreparedJxrExport;
 #[derive(Debug)]
@@ -25,6 +26,9 @@ struct Capture {
 #[derive(Debug)]
 pub(super) struct State {
     tab: Uuid,
+    frozen: Option<export_options::Frozen>,
+    omit_source_metadata: bool,
+    metadata_policy: Policy,
     capture: Option<Capture>,
     pending: Option<controller::background::JxrExportPending>,
     prepared: Option<Prepared>,
@@ -34,11 +38,16 @@ impl State {
     fn current(&self, app: &App) -> bool {
         self.tab == app.active_tab_id()
             && app.experience() == Experience::Studio
-            && !app.has_document_drafts()
+            && self
+                .frozen
+                .as_ref()
+                .map_or_else(|| !app.has_document_drafts(), |f| f.current(app))
             && !app.editor.has_floating_selection()
             && self.capture.as_ref().is_none_or(|capture| {
-                Arc::ptr_eq(&capture.source, &app.editor.document_snapshot())
-                    && capture.stamp == app.editor.preview_stamp()
+                self.frozen.as_ref().map_or_else(
+                    || Arc::ptr_eq(&capture.source, &app.editor.document_snapshot()),
+                    |f| Arc::ptr_eq(&capture.source, &f.document),
+                ) && capture.stamp == app.editor.preview_stamp()
                     && capture.owner == app.editor.native_import_owner()
                     && capture.dirty == app.editor.is_dirty()
                     && capture.bound == app.bound
@@ -46,6 +55,24 @@ impl State {
                     && capture.path_text == app.path_text
                     && !app.editor.has_pending_edits()
             })
+    }
+    fn has_source_metadata(&self) -> bool {
+        self.capture
+            .as_ref()
+            .is_some_and(|c| c.source.source_metadata.is_some())
+            || self
+                .frozen
+                .as_ref()
+                .is_some_and(|f| f.document.source_metadata.is_some())
+    }
+    fn metadata_ready(&self) -> bool {
+        !self.has_source_metadata() || self.omit_source_metadata
+    }
+    fn retire_preparation(&mut self) {
+        self.pending = None;
+        self.prepared = None;
+        self.destination = None;
+        self.metadata_policy = Policy::Refuse;
     }
 }
 pub(super) fn admit(frontend: registry::Frontend, path: &Path) -> Result<()> {
@@ -72,7 +99,14 @@ pub(super) fn admit(frontend: registry::Frontend, path: &Path) -> Result<()> {
     }
 }
 impl App {
-    pub(super) fn begin_jxr_export(&mut self) {
+    pub(super) fn begin_jxr_export_frozen(
+        &mut self,
+        frozen: export_options::Frozen,
+        intent: Intent,
+    ) {
+        self.begin_jxr_export_source(Some(frozen), intent);
+    }
+    fn begin_jxr_export_source(&mut self, frozen: Option<export_options::Frozen>, intent: Intent) {
         if self.jxr_export.is_some()
             || self.confirm.is_some()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
@@ -86,7 +120,9 @@ impl App {
         let result = (|| {
             admit(self.format_frontend(), Path::new("picture.jxr"))?;
             if self.document_count() == 0
-                || self.has_document_drafts()
+                || frozen
+                    .as_ref()
+                    .map_or_else(|| self.has_document_drafts(), |f| !f.current(self))
                 || self.editor.has_floating_selection()
                 || self.confirm.is_some()
                 || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
@@ -104,16 +140,27 @@ impl App {
             }
             self.jxr_export = Some(State {
                 tab: self.active_tab_id(),
+                frozen,
+                omit_source_metadata: intent == Intent::Omit,
+                metadata_policy: Policy::Refuse,
                 capture: None,
                 pending: None,
                 prepared: None,
                 destination: None,
             });
-            self.defer_file(
-                editing::FileRequest::ExportJxr,
-                token(&self.context, code::EXPORT),
-            );
             self.confirm = Some(Confirm::JxrExport);
+            if self
+                .jxr_export
+                .as_ref()
+                .is_some_and(|state| state.frozen.is_some())
+            {
+                self.capture_jxr_export();
+            } else {
+                self.defer_file(
+                    editing::FileRequest::ExportJxr,
+                    token(&self.context, code::EXPORT),
+                );
+            }
             Ok(())
         })();
         if let Err(error) = result {
@@ -139,10 +186,11 @@ impl App {
                     "Background image export is unavailable",
                 )
             })?;
-            let source = self.editor.document_snapshot();
-            let layout =
-                encode::Layout::new(source.canvas.0, source.canvas.1, encode::ENCODED_BYTES_MAX)?;
-            let quote = worker::quote(layout)?;
+            let source = state
+                .frozen
+                .as_ref()
+                .map(|f| f.document.clone())
+                .unwrap_or_else(|| self.editor.document_snapshot());
             let owner = self.editor.native_import_owner();
             let sources = Sources::capture(self, &service.metadata_budget())?;
             state.capture = Some(Capture {
@@ -155,16 +203,42 @@ impl App {
                 path_text: self.path_text.clone(),
                 sources,
             });
-            state.pending =
-                Some(service.submit_jxr_export(quote, move |cancel| {
-                    worker::prepare(source, owner, cancel)
-                })?);
+            self.prepare_jxr_state(&mut state)?;
             Ok(())
         })();
         match result {
             Ok(()) => self.jxr_export = Some(state),
             Err(error) => self.export_jxr_error(error),
         }
+    }
+    fn prepare_jxr_state(&self, state: &mut State) -> Result<()> {
+        if !state.metadata_ready() || state.pending.is_some() || state.prepared.is_some() {
+            return Ok(());
+        }
+        let Some(capture) = state.capture.as_ref() else {
+            return Ok(());
+        };
+        let source = capture.source.clone();
+        let layout =
+            encode::Layout::new(source.canvas.0, source.canvas.1, encode::ENCODED_BYTES_MAX)?;
+        let quote = worker::quote(layout)?;
+        let owner = capture.owner;
+        let policy = Policy::capture(
+            &source,
+            Target::new(Family::Jxr, Operation::ExportFlat),
+            if state.omit_source_metadata {
+                Intent::Omit
+            } else {
+                Intent::Refuse
+            },
+        )?;
+        let service = self.editing.as_ref().ok_or_else(stale)?;
+        service.reap_abandoned();
+        state.pending = service.try_submit_jxr_export(quote, move |cancel| {
+            worker::prepare(source, owner, cancel, policy)
+        })?;
+        state.metadata_policy = policy;
+        Ok(())
     }
     pub(super) fn poll_jxr_export(&mut self, ctx: &egui::Context) {
         let Some(mut state) = self.jxr_export.take() else {
@@ -175,6 +249,10 @@ impl App {
         }
         if !state.current(self) {
             self.export_jxr_error(stale());
+            return;
+        }
+        if let Err(error) = self.prepare_jxr_state(&mut state) {
+            self.export_jxr_error(error);
             return;
         }
         if let Some(result) = state.pending.as_ref().and_then(|pending| pending.poll()) {
@@ -189,7 +267,8 @@ impl App {
         }
         let choose =
             state.prepared.is_some() && state.destination.is_none() && !self.jxr_export_picker;
-        let pending = state.pending.is_some();
+        let pending =
+            state.pending.is_some() || (state.prepared.is_none() && state.metadata_ready());
         self.jxr_export = Some(state);
         if choose {
             self.choose_jxr_destination(ctx);
@@ -276,7 +355,7 @@ impl App {
         }
     }
     pub(super) fn jxr_export_dialog(&mut self, ctx: &egui::Context) {
-        let Some(state) = &self.jxr_export else {
+        let Some(mut state) = self.jxr_export.take() else {
             self.confirm = None;
             return;
         };
@@ -285,17 +364,31 @@ impl App {
             return;
         }
         let Some((path, expected)) = &state.destination else {
+            let before = state.omit_source_metadata;
             let response =
                 egui::Modal::new(egui::Id::unique("jxr-export-progress")).show(ctx, |ui| {
                     ui.heading(t!(ctx, "Export image"));
-                    ui.spinner();
-                    ui.label(t!(ctx, "Preparing JPEG XR picture…"));
+                    if state.has_source_metadata() {
+                        paintcraft_ui::source_metadata_export::controls(
+                            ui,
+                            &mut state.omit_source_metadata,
+                        );
+                    }
+                    if state.metadata_ready() {
+                        ui.spinner();
+                        ui.label(t!(ctx, "Preparing JPEG XR picture…"));
+                    }
                     ui.button(t!(ctx, "Cancel")).clicked()
                 });
             if ctx.current_pass_index() == 0 && (response.inner || response.should_close()) {
-                self.jxr_export = None;
                 self.confirm = None;
+                return;
             }
+            if ctx.current_pass_index() == 0 && before != state.omit_source_metadata {
+                state.retire_preparation();
+                ctx.request_repaint();
+            }
+            self.jxr_export = Some(state);
             return;
         };
         let Some(prepared) = &state.prepared else {
@@ -317,6 +410,8 @@ impl App {
                 match loss.as_str() {
                     "flatten" => "Visible layers will be flattened into one picture.",
                     "hidden-rgb" => "Invisible color information will not be retained.",
+                    export::metadata_policy::OMITTED_REASON =>
+                        "Original source metadata is omitted from this exported copy.",
                     _ => loss.as_str(),
                 }
             ));
@@ -335,6 +430,7 @@ impl App {
                 discard: None,
             },
         );
+        self.jxr_export = Some(state);
         if ctx.current_pass_index() != 0 {
             return;
         }
@@ -360,7 +456,11 @@ impl App {
             let prepared = state.prepared.as_ref().ok_or_else(stale)?;
             let (path, expected) = state.destination.as_ref().ok_or_else(stale)?;
             let check = || {
-                if !state.current(self) {
+                state.metadata_policy.validate(
+                    &capture.source,
+                    Target::new(Family::Jxr, Operation::ExportFlat),
+                )?;
+                if !state.current(self) || !state.metadata_ready() {
                     return Err(stale());
                 }
                 admit(self.format_frontend(), path)?;

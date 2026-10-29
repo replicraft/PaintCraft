@@ -95,7 +95,7 @@ fn admitted_worker_retains_one_artifact_and_shows_linear_samples_in_srgb() {
     let pending = service
         .submit_dds_export(quote, {
             let doc = doc.clone();
-            move |cancel| worker::prepare(doc, settings, quote, cancel)
+            move |cancel| worker::prepare(doc, settings, quote, cancel, Policy::Refuse)
         })
         .unwrap();
     let until = Instant::now() + Duration::from_secs(10);
@@ -631,7 +631,7 @@ fn only_a_live_executor_job_retries_and_an_oversized_quote_never_does() {
     let quote = worker::quote(&doc, settings).unwrap();
     let pending = service
         .try_submit_dds_export(quote, move |cancel| {
-            worker::prepare(doc, settings, quote, cancel)
+            worker::prepare(doc, settings, quote, cancel, Policy::Refuse)
         })
         .unwrap()
         .unwrap();
