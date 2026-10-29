@@ -3420,7 +3420,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "criterion",
  "eframe",
@@ -3452,7 +3452,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-classic"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "egui",
  "paintcraft-core",
@@ -3462,7 +3462,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64",
  "clap",
@@ -3491,7 +3491,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-codec-worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "jpegxr-pure-rs",
  "libc",
@@ -3506,7 +3506,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-commands"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "sha2",
@@ -3515,7 +3515,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "glam 0.34.1",
  "thiserror 2.0.21",
@@ -3524,7 +3524,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-document"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "paintcraft-raster",
@@ -3534,7 +3534,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-editor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "crc32fast",
  "criterion",
@@ -3551,7 +3551,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-formats"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ag-psd",
  "base64",
@@ -3596,7 +3596,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-history"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "crc32fast",
  "lz4_flex",
@@ -3609,11 +3609,11 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-input"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "paintcraft-paint"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "flate2",
  "paintcraft-core",
@@ -3622,7 +3622,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-pdn"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -3633,7 +3633,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-platform"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arboard",
  "clipboard-win",
@@ -3657,7 +3657,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-raster"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "criterion",
  "font8x8",
@@ -3666,7 +3666,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-render"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytemuck",
  "criterion",
@@ -3683,7 +3683,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-runtime"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "rayon",
@@ -3694,7 +3694,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-studio"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "egui",
  "paintcraft-core",
@@ -3704,7 +3704,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-tablet-native"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "block2 0.6.2",
  "objc2 0.6.5",
@@ -3719,7 +3719,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-tools"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cosmic-text",
  "paintcraft-core",
@@ -3731,7 +3731,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "egui",
  "fluent-bundle",
@@ -3744,7 +3744,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-web"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "eframe",
  "egui_kittest",
@@ -3772,7 +3772,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-web-codec-worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "paintcraft-document",
