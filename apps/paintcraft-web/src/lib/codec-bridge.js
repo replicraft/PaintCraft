@@ -13,7 +13,10 @@ import {
 	PIXELS_MAX,
 	refusal,
 } from './codec-worker-protocol.js';
-import { freezeTiffPlan } from './tiff-page-worker-protocol.js';
+import {
+	freezeTiffPlan,
+	TIFF_PROTOCOL_VERSION,
+} from './tiff-page-worker-protocol.js';
 export function createCodecService(applicationVersion) {
 	let owner;
 	let active;
@@ -134,7 +137,7 @@ export function createCodecService(applicationVersion) {
 		applicationVersion: () => applicationVersion,
 		protocolVersion: () => 2,
 		budget: () => codecWorkerBudget(),
-		tiffPageProtocolVersion: () => 1,
+		tiffPageProtocolVersion: () => TIFF_PROTOCOL_VERSION,
 		beginTiffFile,
 		setOwner(value) {
 			ownerBytes(value);

@@ -23,6 +23,7 @@ import {
 } from '../src/lib/msp-worker-protocol.js';
 import {
 	TIFF_OUTPUT_MAX,
+	TIFF_PROTOCOL_VERSION,
 	TIFF_REQUEST_HEADER,
 	TIFF_SOURCE_MAX,
 } from '../src/lib/tiff-page-worker-protocol.js';
@@ -58,7 +59,7 @@ function runtime(extra = {}) {
 		application_version: () => '0.1.0',
 		dds_export_protocol_version: () => 1,
 		msp_export_protocol_version: () => 1,
-		tiff_page_protocol_version: () => 1,
+		tiff_page_protocol_version: () => 2,
 		decode_request: execute('decode'),
 		dds_export_request: execute('dds-export'),
 		msp_export_request: execute('msp-export'),
@@ -75,6 +76,7 @@ function runtime(extra = {}) {
 		MSP_OUTPUT_MAX,
 		TIFF_REQUEST_HEADER,
 		TIFF_SOURCE_MAX,
+		TIFF_PROTOCOL_VERSION,
 		TIFF_OUTPUT_MAX,
 		...extra,
 	});
@@ -146,7 +148,7 @@ test('invalid operation, profile version, input and output caps cannot call anot
 		data: { kind: 'msp-export', bytes: new ArrayBuffer(129) },
 	});
 	assert.equal(badOutput.messages[0].value.kind, 'failure');
-	const tiffVersion = runtime({ tiff_page_protocol_version: () => 2 });
+	const tiffVersion = runtime({ tiff_page_protocol_version: () => 1 });
 	await tiffVersion.self.onmessage({
 		data: {
 			kind: 'tiff-pages',

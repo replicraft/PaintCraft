@@ -28,6 +28,80 @@ fn run(header: wire::Header, source: &[u8]) -> Vec<u8> {
     bytes.extend_from_slice(source);
     execute(&bytes).unwrap()
 }
+
+#[test]
+fn actual_worker_normalizes_each_bound_orientation_and_refuses_inventory_transform_forgery() {
+    let source = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../../../crates/services/paintcraft-formats/tests/tiff-orientation-fixtures/rgba8-le-eight-orientations.tif"
+    ));
+    let oracle = paintcraft_core::types::json::parse(include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"),
+        "/../../../../crates/services/paintcraft-formats/tests/tiff-orientation-fixtures/oracle.json"))).unwrap();
+    let expected = oracle
+        .get("fixtures")
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .last()
+        .unwrap()
+        .get("pages")
+        .unwrap()
+        .as_array()
+        .unwrap();
+    let request = capture(source, None);
+    let frame = run(request, source);
+    let wire::Frame::Success {
+        page_count,
+        payload,
+        ..
+    } = wire::decode_response(&frame, &request, request.owner, env!("CARGO_PKG_VERSION")).unwrap()
+    else {
+        panic!("inventory expected")
+    };
+    let pages = wire::decode_inventory(payload, page_count, source.len() as u64).unwrap();
+    assert_eq!(pages.len(), 8);
+    for (index, page) in pages.into_iter().enumerate() {
+        assert_eq!(page.orientation, index as u32 + 1);
+        let selection = wire::Selection {
+            page,
+            page_count,
+            source_sha256: request.source_sha256,
+        };
+        let request = capture(source, Some(selection));
+        let frame = run(request, source);
+        let wire::Frame::Success {
+            width,
+            height,
+            report,
+            payload,
+            ..
+        } = wire::decode_response(&frame, &request, request.owner, env!("CARGO_PKG_VERSION"))
+            .unwrap()
+        else {
+            panic!("decode expected")
+        };
+        let rgba: Vec<u8> = expected[index]
+            .get("rgba")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_i64().unwrap() as u8)
+            .collect();
+        assert_eq!(payload, rgba);
+        assert_eq!((width, height), page.output_dimensions());
+        let report = tiff_pages::Assessment::decode(report).unwrap();
+        assert_eq!(report.source_dimensions(), (3, 2));
+        assert_eq!(report.descriptor().orientation, page.orientation);
+        let mut stale = selection;
+        stale.page.orientation = if page.orientation == 1 { 2 } else { 1 };
+        let request = capture(source, Some(stale));
+        let frame = run(request, source);
+        assert!(
+            matches!(wire::decode_response(&frame,&request,request.owner,env!("CARGO_PKG_VERSION")).unwrap(), wire::Frame::Refused(error) if error.code == ErrorCode::ConflictStaleBase)
+        );
+    }
+}
 #[test]
 fn actual_whole_tiff_worker_inventories_unsupported_first_then_decodes_later_page() {
     let inventory = capture(SOURCE, None);

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
+import { createCodecService } from '../src/lib/codec-bridge.js';
 import {
 	captureTiff,
 	decodeTiffResponse,
@@ -33,6 +34,7 @@ function row(index, supported, width, height, offset) {
 	view.setUint32(4, width);
 	view.setUint32(8, height);
 	view.setBigUint64(12, BigInt(offset));
+	view.setUint32(20, 1);
 	return out;
 }
 function response(
@@ -57,8 +59,8 @@ function response(
 				payload.length,
 		),
 		view = new DataView(out.buffer);
-	out.set(new TextEncoder().encode('PCTIR001'));
-	view.setUint16(8, 1);
+	out.set(new TextEncoder().encode('PCTIR002'));
+	view.setUint16(8, 2);
 	out[10] = captured.header[10];
 	out[11] = status;
 	out.set(captured.header.subarray(12, 14), 12);
@@ -87,6 +89,7 @@ async function request(selected = false) {
 				width: 1,
 				height: 1,
 				ifdOffset: 32,
+				orientation: 1,
 				sourceSha256: hex(bytes),
 			}
 		: null;
@@ -99,7 +102,7 @@ test('TIFF inventory and selection use a distinct whole-source request, not deco
 			view = new DataView(bytes.buffer);
 		assert.equal(
 			new TextDecoder().decode(bytes.subarray(0, 8)),
-			'PCTIF001',
+			'PCTIF002',
 		);
 		assert.equal(bytes[10], selected ? 2 : 1);
 		assert.equal(view.getUint16(12), selected ? 1 : 65535);
@@ -129,6 +132,7 @@ test('selection is explicit and frozen to the displayed source hash and absolute
 		width: 1,
 		height: 1,
 		ifdOffset: 32,
+		orientation: 1,
 		sourceSha256: hex(original),
 	};
 	assert.equal(Object.isFrozen(freezeTiffPlan(plan)), true);
@@ -249,6 +253,7 @@ test('narrow TIFF pages above 65536 use the canonical side bound within 4MP', as
 			width,
 			height,
 			ifdOffset: 32,
+			orientation: 1,
 			sourceSha256: hex(source),
 		};
 		assert.equal(freezeTiffPlan(plan).width, width);
@@ -281,7 +286,81 @@ test('narrow TIFF pages above 65536 use the canonical side bound within 4MP', as
 				width,
 				height,
 				ifdOffset: 32,
+				orientation: 1,
 				sourceSha256: hex(source),
 			}),
 		);
+});
+
+test('all TIFF orientations bind source geometry and require the exact normalized result', async () => {
+	const source = new Uint8Array(64).fill(31);
+	for (let orientation = 1; orientation <= 8; orientation++) {
+		const captured = await captureTiff(
+			source,
+			owner,
+			{
+				index: 1,
+				pageCount: 2,
+				width: 3,
+				height: 2,
+				ifdOffset: 32,
+				orientation,
+				sourceSha256: hex(source),
+			},
+			nonce,
+		);
+		const width = orientation >= 5 ? 2 : 3;
+		const height = orientation >= 5 ? 3 : 2;
+		const options = {
+			width,
+			height,
+			report: new Uint8Array(TIFF_REPORT_BYTES),
+			payload: new Uint8Array(24),
+		};
+		assert.equal(
+			new DataView(captured.header.buffer).getUint32(167),
+			orientation,
+		);
+		const frame = await decodeTiffResponse(
+			response(captured, options),
+			captured,
+			owner,
+			'0.1.1',
+		);
+		assert.equal(frame.width, width);
+		assert.equal(frame.height, height);
+		if (orientation >= 5) {
+			await assert.rejects(
+				decodeTiffResponse(
+					response(captured, { ...options, width: 3, height: 2 }),
+					captured,
+					owner,
+					'0.1.1',
+				),
+			);
+		}
+		const legacy = response(captured, options);
+		legacy.set(new TextEncoder().encode('PCTIR001'));
+		new DataView(legacy.buffer).setUint16(8, 1);
+		await assert.rejects(
+			decodeTiffResponse(legacy, captured, owner, '0.1.1'),
+		);
+	}
+	for (const orientation of [0, 9, -1, 1.5]) {
+		assert.throws(() =>
+			freezeTiffPlan({
+				index: 1,
+				pageCount: 2,
+				width: 3,
+				height: 2,
+				ifdOffset: 32,
+				orientation,
+				sourceSha256: hex(source),
+			}),
+		);
+	}
+});
+
+test('Rust-facing service reports the exact orientation-aware TIFF protocol', () => {
+	assert.equal(createCodecService('0.1.1').tiffPageProtocolVersion(), 2);
 });

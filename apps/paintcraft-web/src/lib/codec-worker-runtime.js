@@ -29,6 +29,7 @@ import {
 } from './msp-worker-protocol.js';
 import {
 	TIFF_OUTPUT_MAX,
+	TIFF_PROTOCOL_VERSION,
 	TIFF_REQUEST_HEADER,
 	TIFF_SOURCE_MAX,
 } from './tiff-page-worker-protocol.js';
@@ -39,7 +40,7 @@ const operations = Object.freeze({
 		input: TIFF_SOURCE_MAX,
 		output: TIFF_OUTPUT_MAX,
 		version: tiff_page_protocol_version,
-		expectedVersion: 1,
+		expectedVersion: TIFF_PROTOCOL_VERSION,
 		execute: tiff_page_request,
 	}),
 	decode: Object.freeze({

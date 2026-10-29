@@ -120,6 +120,7 @@ fn plan(selection: Option<wire::Selection>) -> Result<JsValue> {
         ("index", selected.page.index as f64),
         ("pageCount", selected.page_count as f64),
         ("width", selected.page.width as f64),
+        ("orientation", selected.page.orientation as f64),
         ("height", selected.page.height as f64),
         ("ifdOffset", selected.page.ifd_offset as f64),
     ] {
@@ -221,7 +222,9 @@ pub(super) async fn prepare(
                     height,
                     payload,
                 )?;
-                if assessment.page_count() != page_count
+                if assessment.source_dimensions() != (selected.page.width, selected.page.height)
+                    || assessment.descriptor().orientation != selected.page.orientation
+                    || assessment.page_count() != page_count
                     || assessment.descriptor().ifd_offset != selected.page.ifd_offset
                 {
                     return Err(Error::new(

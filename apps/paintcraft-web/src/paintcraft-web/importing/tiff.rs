@@ -367,3 +367,6 @@ fn admit(name: &str) -> bool {
     request.variant = Some(tiff_pages::IMPORT_VARIANT);
     registry::admission(request).available()
 }
+
+#[cfg(test)]
+mod orientation_tests;

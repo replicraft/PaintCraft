@@ -119,6 +119,8 @@ impl WebApp {
             || prepared.report.source_sha256() != selected.source_sha256
             || prepared.report.page_index() != selected.page.index
             || prepared.report.page_count() != selected.page_count
+            || prepared.report.source_dimensions() != (selected.page.width, selected.page.height)
+            || prepared.report.descriptor().orientation != selected.page.orientation
             || prepared.report.descriptor().ifd_offset != selected.page.ifd_offset
             || !match consent {
                 Some(digest) => digest == prepared.report.digest(),

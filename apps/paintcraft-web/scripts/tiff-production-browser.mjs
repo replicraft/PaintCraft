@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { orientationProof } from './tiff-orientation-browser.mjs';
 
 const app = fileURLToPath(new URL('../', import.meta.url));
 const root = path.resolve(app, '../..');
@@ -55,6 +56,7 @@ for (const name of [
 	'src/lib/codec-worker-runtime.js',
 	'src/lib/codec-bridge.js',
 	'scripts/tiff-production-browser.mjs',
+	'scripts/tiff-orientation-browser.mjs',
 ]) {
 	const bytes = fs.readFileSync(path.join(app, name));
 	evidence.sources[name] = createHash('sha256').update(bytes).digest('hex');
@@ -95,6 +97,21 @@ retainTree(
 retainTree(
 	path.join(root, 'crates/services/paintcraft-formats/tests/tiff-fixtures'),
 );
+retainTree(
+	path.join(
+		root,
+		'crates/services/paintcraft-formats/tests/tiff-orientation-fixtures',
+	),
+);
+for (const name of [
+	'image.rs',
+	'image/orientation.rs',
+	'image/tiff.rs',
+	'image/identity.rs',
+])
+	retainSource(
+		path.join(root, 'crates/services/paintcraft-formats/src', name),
+	);
 const { chromium } = await import(
 	pathToFileURL(process.env.PLAYWRIGHT_MODULE).href
 );
@@ -223,14 +240,17 @@ try {
 		await page.mouse.click(x, y);
 		await page.waitForTimeout(500);
 	}
-	async function pick(page, name) {
+	async function pick(page, name, folder) {
 		const chooser = page.waitForEvent('filechooser');
 		await click(page, 20, 46);
 		await click(page, 80, 121);
 		await (await chooser).setFiles(
 			path.join(
-				root,
-				'crates/services/paintcraft-formats/tests/tiff-fixtures',
+				folder ??
+					path.join(
+						root,
+						'crates/services/paintcraft-formats/tests/tiff-fixtures',
+					),
 				name,
 			),
 		);
@@ -386,6 +406,7 @@ try {
 							width: rows.getUint32(at + 4),
 							height: rows.getUint32(at + 8),
 							ifdOffset: Number(rows.getBigUint64(at + 12)),
+							orientation: rows.getUint32(at + 20),
 							sourceSha256,
 						});
 				}
@@ -705,6 +726,17 @@ try {
 			`${mode}: full-source/owner/unknown completion guard kept the prior document and PCND pixels without publication`,
 		);
 	}
+	await orientationProof({
+		root,
+		out,
+		evidence,
+		open,
+		pick,
+		choose,
+		consent,
+		save,
+		openProject,
+	});
 	evidence.status = 'passed';
 	fs.writeFileSync(
 		path.join(out, 'pcnd-oracles.json'),

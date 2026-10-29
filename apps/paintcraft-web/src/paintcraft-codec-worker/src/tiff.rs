@@ -35,6 +35,7 @@ fn prepare(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
             || page.index != selection.page.index
             || page.width != selection.page.width
             || page.height != selection.page.height
+            || page.descriptor.orientation != selection.page.orientation
             || page.descriptor.ifd_offset != selection.page.ifd_offset
             || page.unsupported_reason.is_some()
         {
@@ -53,7 +54,9 @@ fn prepare(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
             decoded.height,
             &decoded.rgba,
         )?;
-        if decoded.assessment.page_count() != count
+        if decoded.assessment.source_dimensions() != (selection.page.width, selection.page.height)
+            || decoded.assessment.descriptor().orientation != selection.page.orientation
+            || decoded.assessment.page_count() != count
             || decoded.assessment.descriptor().ifd_offset != selection.page.ifd_offset
         {
             return Err(Error::new(
@@ -80,6 +83,7 @@ fn prepare(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
                 height: page.height,
                 ifd_offset: page.descriptor.ifd_offset,
                 supported: page.unsupported_reason.is_none(),
+                orientation: page.descriptor.orientation,
             })
             .collect();
         let payload = wire::encode_inventory(&pages)?;

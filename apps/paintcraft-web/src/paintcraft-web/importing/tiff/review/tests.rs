@@ -28,6 +28,7 @@ fn prepared_source(input: &[u8], index: u16) -> (Rc<Held>, Prepared) {
         tiff_pages::decode_page(input, index, wire::PIXELS_MAX.into(), &|| Ok(())).unwrap();
     let selection = wire::Selection {
         page: wire::Page {
+            orientation: page.descriptor.orientation,
             index,
             width: page.width,
             height: page.height,
@@ -251,7 +252,7 @@ fn same_source_pages_have_distinct_ids_and_repeated_selection_is_deterministic()
 fn report_digest_and_captured_inventory_are_both_required_for_adoption() {
     let ctx = egui::Context::default();
     let mut app = app(&ctx);
-    for change in 0..5 {
+    for change in 0..8 {
         let owner = Owner::capture(&app);
         let before = app.editor.session.snapshot();
         let ticket = app.editor.session.history_ticket();
@@ -263,6 +264,9 @@ fn report_digest_and_captured_inventory_are_both_required_for_adoption() {
             2 => value.selection.page.index = 0,
             3 => value.selection.page.ifd_offset += 1,
             4 => value.selection.page_count += 1,
+            5 => value.selection.page.orientation = 6,
+            6 => value.selection.page.width += 1,
+            7 => value.selection.page.height += 1,
             _ => {}
         }
         app.install_tiff(held, owner, value, consent, &ctx);

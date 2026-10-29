@@ -6,6 +6,7 @@ import {
 	ownerBytes,
 	refusal,
 } from './codec-worker-protocol.js';
+export const TIFF_PROTOCOL_VERSION = 2;
 export const TIFF_REQUEST_HEADER = 176;
 export const TIFF_RESPONSE_HEADER = 200;
 export const TIFF_SOURCE_MAX = 64 * 1024 * 1024;
@@ -48,7 +49,15 @@ function digestBytes(value) {
 }
 export function freezeTiffPlan(plan) {
 	if (plan === null || plan === undefined) return null;
-	const { index, pageCount, width, height, ifdOffset, sourceSha256 } = plan;
+	const {
+		index,
+		pageCount,
+		width,
+		height,
+		ifdOffset,
+		orientation,
+		sourceSha256,
+	} = plan;
 	if (
 		!Number.isInteger(index) ||
 		!Number.isInteger(pageCount) ||
@@ -56,6 +65,9 @@ export function freezeTiffPlan(plan) {
 		pageCount > TIFF_PAGES_MAX ||
 		index < 0 ||
 		index >= pageCount ||
+		!Number.isInteger(orientation) ||
+		orientation < 1 ||
+		orientation > 8 ||
 		!Number.isInteger(width) ||
 		!Number.isInteger(height) ||
 		width < 1 ||
@@ -75,6 +87,7 @@ export function freezeTiffPlan(plan) {
 		width,
 		height,
 		ifdOffset,
+		orientation,
 		sourceSha256,
 	});
 }
@@ -88,9 +101,9 @@ export async function captureTiff(source, owner, plan, nonce) {
 	plan = freezeTiffPlan(plan);
 	const frozen = source.slice();
 	const header = new Uint8Array(TIFF_REQUEST_HEADER);
-	header.set(text.encode('PCTIF001'));
+	header.set(text.encode('PCTIF002'));
 	const view = new DataView(header.buffer);
-	view.setUint16(8, 1);
+	view.setUint16(8, TIFF_PROTOCOL_VERSION);
 	header[10] = plan ? 2 : 1;
 	view.setUint16(12, plan?.index ?? 65535);
 	view.setBigUint64(16, BigInt(frozen.length));
@@ -113,6 +126,7 @@ export async function captureTiff(source, owner, plan, nonce) {
 		view.setUint32(151, plan.width);
 		view.setUint32(155, plan.height);
 		view.setBigUint64(159, BigInt(plan.ifdOffset));
+		view.setUint32(167, plan.orientation);
 	}
 	const captured = { source: frozen, header, plan };
 	proofs.set(captured, {});
@@ -140,8 +154,8 @@ export async function decodeTiffResponse(
 		captured.header.byteOffset,
 		captured.header.byteLength,
 	);
-	require(equal(bytes.subarray(0, 8), text.encode('PCTIR001')) &&
-		view.getUint16(8) === 1 &&
+	require(equal(bytes.subarray(0, 8), text.encode('PCTIR002')) &&
+		view.getUint16(8) === TIFF_PROTOCOL_VERSION &&
 		bytes[10] === captured.header[10] &&
 		bytes[11] <= 5 &&
 		view.getUint16(12) === request.getUint16(12) &&
@@ -211,8 +225,14 @@ export async function decodeTiffResponse(
 	}
 	if (captured.plan) {
 		require(pageCount === captured.plan.pageCount &&
-			width === captured.plan.width &&
-			height === captured.plan.height &&
+			width ===
+				(captured.plan.orientation >= 5
+					? captured.plan.height
+					: captured.plan.width) &&
+			height ===
+				(captured.plan.orientation >= 5
+					? captured.plan.width
+					: captured.plan.height) &&
 			report.length === TIFF_REPORT_BYTES &&
 			payload.length ===
 				width *
@@ -236,15 +256,17 @@ export async function decodeTiffResponse(
 				supported = payload[at + 2],
 				rowWidth = rows.getUint32(at + 4),
 				rowHeight = rows.getUint32(at + 8),
-				offset = rows.getBigUint64(at + 12);
+				offset = rows.getBigUint64(at + 12),
+				orientation = rows.getUint32(at + 20);
 			require(rows.getUint16(at) === index &&
 				supported <= 1 &&
 				payload[at + 3] === 0 &&
-				zero(payload.subarray(at + 20, at + 24)) &&
 				offset >= 8n &&
 				offset < BigInt(captured.source.length) &&
 				(!supported ||
-					(rowWidth > 0 &&
+					(orientation >= 1 &&
+						orientation <= 8 &&
+						rowWidth > 0 &&
 						rowHeight > 0 &&
 						rowWidth <= TIFF_SIDE_MAX &&
 						rowHeight <= TIFF_SIDE_MAX)), 'TIFF inventory row');
