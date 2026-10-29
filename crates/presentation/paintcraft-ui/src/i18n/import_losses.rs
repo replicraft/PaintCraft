@@ -16,6 +16,10 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "depth-16-reduced-to-8" => "High-depth samples will be reduced from 16-bit to 8-bit.",
         "icc-profile-ignored" => "ICC color profiles will not be retained.",
         "exif-metadata-ignored" => "EXIF metadata will not be retained.",
+        "jpeg-metadata-ignored" => "Original JPEG metadata will not be retained.",
+        "jpeg-cmyk-to-rgb" => {
+            "Device CMYK/YCCK samples will be converted numerically to RGB without using the source ICC profile. Colors may differ."
+        }
         "png-color-metadata-ignored" => {
             "PNG color declarations will not be retained or used for color management."
         }
@@ -131,6 +135,8 @@ mod tests {
     #[test]
     fn extended_conversion_limitations_are_translated_in_every_language() {
         for code in [
+            "jpeg-metadata-ignored",
+            "jpeg-cmyk-to-rgb",
             "png-color-metadata-ignored",
             "bmp-color-metadata-ignored",
             "png-metadata-ignored",

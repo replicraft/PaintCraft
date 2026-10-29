@@ -529,3 +529,5 @@ bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP-F
 png-metadata-will-not-be-retained = PNG-Metadaten werden nicht beibehalten.
 bmp-metadata-will-not-be-retained = BMP-Metadaten werden nicht beibehalten.
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = Die Auflösungsmetadaten des Bildes werden nicht beibehalten; die Pixelabmessungen bleiben unverändert.
+original-jpeg-metadata-will-not-be-retained = Die ursprünglichen JPEG-Metadaten werden nicht beibehalten.
+device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = Geräte-CMYK/YCCK-Werte werden ohne Verwendung des ICC-Quellprofils numerisch in RGB umgerechnet. Die Farben können abweichen.

@@ -529,3 +529,5 @@ bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP �
 png-metadata-will-not-be-retained = PNG 元数据不会保留。
 bmp-metadata-will-not-be-retained = BMP 元数据不会保留。
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = 图像分辨率元数据不会保留，像素尺寸保持不变。
+original-jpeg-metadata-will-not-be-retained = 原始 JPEG 元数据不会保留。
+device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = 设备 CMYK/YCCK 样本将通过数值计算转换为 RGB，不使用源 ICC 配置文件。颜色可能存在差异。
