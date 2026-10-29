@@ -87,7 +87,7 @@ fn normalize_copied_test_image(path: &std::path::Path) {
     // 256MiB and includes verification in the operation deadline. Linux DWARF
     // can exceed either fixture allowance; strip it from both private copies
     // before contract extraction/hashing, preserving the real verifier limits.
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", debug_assertions))]
     {
         let output = Command::new("strip")
             .arg("--strip-debug")

@@ -52,6 +52,11 @@ impl Installation {
         let helper = root.join(name);
         fs::copy(cli_source, &cli).unwrap();
         fs::copy(source, &helper).unwrap();
+        normalize_copied_test_image(&cli);
+        // Explicit qualified helpers retain their exact externally bound bytes.
+        if selected_helper.is_none() && qualified_source.is_none() {
+            normalize_copied_test_image(&helper);
+        }
         let helper_bytes = fs::read(&helper).unwrap();
         let public_jxr = helper_bytes
             .windows(wire::jxr_encode::qualified::BUILD_RECORD_MARKER.len())
@@ -249,6 +254,33 @@ impl Drop for Installation {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.root);
     }
+}
+fn normalize_copied_test_image(path: &Path) {
+    let before = fs::metadata(path).unwrap().len();
+    // Keep real verification limits while removing Linux DWARF from private
+    // installed fixtures before extracting contracts or hashing their bytes.
+    #[cfg(all(target_os = "linux", debug_assertions))]
+    {
+        let output = Command::new("strip")
+            .arg("--strip-debug")
+            .arg(path)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "strip private fixture: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            fs::metadata(path).unwrap().len() <= 256 << 20,
+            "private fixture remains beyond installed executable allowance after stripping debug metadata"
+        );
+    }
+    eprintln!(
+        "copied installed image {}: {before} -> {} bytes",
+        path.display(),
+        fs::metadata(path).unwrap().len()
+    );
 }
 fn target() -> &'static str {
     match (std::env::consts::OS, std::env::consts::ARCH) {
