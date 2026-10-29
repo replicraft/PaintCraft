@@ -34,7 +34,13 @@ fn request(bytes: &[u8]) -> Result<Vec<u8>> {
         .use_current_thread()
         .build_global()
         .map_err(|_| Error::new(ErrorCode::CodecFailed, "Wasm codec runner startup"))
-        .and_then(|()| wire::execute(header, &bytes[wire::REQUEST_HEADER..], &|| 0));
+        .and_then(|()| {
+            if header.codec == wire::Codec::JxlIntegerRgba8 {
+                wire::jxl_integer::execute(header, &bytes[wire::REQUEST_HEADER..], &|| 0)
+            } else {
+                wire::execute(header, &bytes[wire::REQUEST_HEADER..], &|| 0)
+            }
+        });
     match result {
         Ok(output) => Ok(output),
         // Native requested-heap metrics do not exist here. Zero explicitly means

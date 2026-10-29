@@ -99,7 +99,7 @@ export async function capture(
 		pixels > PIXELS_MAX
 	)
 		throw refusal('ResourceLimit', 'Codec input/pixel allowance');
-	if (codec !== 1 && codec !== 2)
+	if (codec !== 1 && codec !== 2 && codec !== 9)
 		throw refusal('CapabilityUnsupported', 'Unknown codec Worker profile');
 	// Copy before the first await. Caller mutation never changes captured bytes.
 	const frozen = source.slice();
@@ -203,8 +203,13 @@ export function decodeResponse(bytes, captured, currentOwner, version) {
 		height <= side &&
 		pixels <= captured.pixels &&
 		pixels <= PIXELS_MAX &&
-		detail === 0, 'Codec response dimensions');
-	const payload = bytes.subarray(RESPONSE_HEADER + versionBytes);
+		detail ===
+			(captured.codec === 9 ? 96 : 0), 'Codec response dimensions');
+	const reportBytes = bytes.subarray(
+		RESPONSE_HEADER + versionBytes,
+		RESPONSE_HEADER + versionBytes + detail,
+	);
+	const payload = bytes.subarray(RESPONSE_HEADER + versionBytes + detail);
 	if (captured.codec === 1) {
 		require(primary === pixels &&
 			opacity === (alpha ? pixels : 0) &&
@@ -233,5 +238,63 @@ export function decodeResponse(bytes, captured, currentOwner, version) {
 		primaries === 1 &&
 		transfer === 13 &&
 		matrix === 0, 'Codec sRGB RGBA8 profile');
-	return Object.freeze({ width, height, model: 'srgb-rgba8', rgba: payload });
+	const report =
+		captured.codec === 9
+			? integerReport(reportBytes, captured, width, height)
+			: undefined;
+	return Object.freeze({
+		width,
+		height,
+		model: 'srgb-rgba8',
+		rgba: payload,
+		...(report ? { report } : {}),
+	});
+}
+
+function integerReport(bytes, captured, width, height) {
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+	const depth = bytes[10],
+		rgb = view.getUint32(84),
+		alpha = view.getUint32(88);
+	require(equal(bytes.subarray(0, 8), text.encode('PCJXLI01')) &&
+		view.getUint16(8) === 1 &&
+		[8, 16].includes(depth) &&
+		bytes[11] === 0 &&
+		view.getUint32(12) === width &&
+		view.getUint32(16) === height &&
+		equal(bytes.subarray(20, 52), captured.header.subarray(80, 112)) &&
+		rgb <= width * height * 3 &&
+		alpha <= width * height &&
+		(depth === 16 || (rgb === 0 && alpha === 0)) &&
+		view.getUint16(92) === (depth === 16 ? 1 : 0) &&
+		view.getUint16(94) === 0, 'Integer JPEG XL report binding/policy');
+	return Object.freeze({
+		sourceDepth: depth,
+		changedRgbComponents: rgb,
+		changedAlpha: alpha,
+		bytes,
+	});
+}
+
+// Integer conversion hashes are checked in JS and independently in Rust. This
+// async boundary is separate from the historical synchronous decoder2 route.
+export async function decodeIntegerResponse(
+	bytes,
+	captured,
+	currentOwner,
+	version,
+	awaitBounded = (value) => value,
+) {
+	require(captured.codec === 9, 'Integer JPEG XL request tag');
+	const frame = decodeResponse(bytes, captured, currentOwner, version);
+	const outputHash = new Uint8Array(
+		await awaitBounded(
+			globalThis.crypto.subtle.digest('SHA-256', frame.rgba),
+		),
+	);
+	require(equal(
+		outputHash,
+		frame.report.bytes.subarray(52, 84),
+	), 'Integer JPEG XL output digest');
+	return frame;
 }

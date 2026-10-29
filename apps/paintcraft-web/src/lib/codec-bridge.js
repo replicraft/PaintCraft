@@ -71,7 +71,7 @@ export function createCodecService(applicationVersion) {
 			},
 		});
 	}
-	function beginDecodeFile(file, capturedOwner, pixels, nonce) {
+	function beginDecodeFile(file, capturedOwner, pixels, nonce, codec = 2) {
 		if (codecWorkerBudget().quarantined)
 			throw refusal('ResourceLimit', 'Codec service needs a reload');
 		if (active)
@@ -89,7 +89,7 @@ export function createCodecService(applicationVersion) {
 				decodeFileInWorker({
 					file,
 					owner: captured,
-					codec: 2,
+					codec,
 					nonce,
 					pixels,
 					signal: abort.signal,
@@ -126,6 +126,14 @@ export function createCodecService(applicationVersion) {
 		},
 		beginDecodeFile(file, capturedOwner, pixels = PIXELS_MAX, nonce) {
 			return beginDecodeFile(file, capturedOwner, pixels, nonce);
+		},
+		beginDecodeIntegerFile(
+			file,
+			capturedOwner,
+			pixels = PIXELS_MAX,
+			nonce,
+		) {
+			return beginDecodeFile(file, capturedOwner, pixels, nonce, 9);
 		},
 		decodeFile(file, capturedOwner, pixels = PIXELS_MAX, nonce) {
 			// Preserve the old always-Promise API, including synchronous guard

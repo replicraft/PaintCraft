@@ -1,6 +1,7 @@
 // Isolated browser service; UI reader admission is qualified separately.
 import {
 	capture,
+	decodeIntegerResponse,
 	decodeResponse,
 	encodeRequest,
 	INPUT_BYTES_MAX,
@@ -48,6 +49,12 @@ const DECODE = Object.freeze({
 		OUTPUT_BYTES_MAX * 2 +
 		65 * 1024 * 1024 +
 		65536,
+});
+const INTEGER_DECODE = Object.freeze({
+	...DECODE,
+	decode: decodeIntegerResponse,
+	// The isolated u16 RGBA source plane may coexist with its RGBA8 output.
+	quote: (length) => DECODE.quote(length) + 32 * 1024 * 1024,
 });
 const DDS = Object.freeze({
 	kind: 'dds-export',
@@ -316,7 +323,9 @@ async function runAdmitted(
 		// Keep admission charged until the caller consumes/discards this private
 		// result. A retained document needs a separate resident lease first.
 		return Object.freeze({
-			...(operation === DECODE ? frame : {}),
+			...(operation === DECODE || operation === INTEGER_DECODE
+				? frame
+				: {}),
 			release,
 			// Export encoded-file validation remains mandatory in Rust before
 			// marking the caller lease valid. Never publish from JS slices alone.
@@ -354,18 +363,24 @@ export function decodeInWorker(options) {
 		return Promise.reject(
 			refusal('InputSchema', 'Codec source must be bytes'),
 		);
-	return runAdmitted({ ...options, sourceLength: options.source.length });
+	return runAdmitted(
+		{ ...options, sourceLength: options.source.length },
+		options.codec === 9 ? INTEGER_DECODE : DECODE,
+	);
 }
 export function decodeFileInWorker({ file, ...options }) {
 	if (!(file instanceof File))
 		return Promise.reject(
 			refusal('InputSchema', 'Codec source must be a File'),
 		);
-	return runAdmitted({
-		...options,
-		sourceLength: file.size,
-		readSource: async () => new Uint8Array(await file.arrayBuffer()),
-	});
+	return runAdmitted(
+		{
+			...options,
+			sourceLength: file.size,
+			readSource: async () => new Uint8Array(await file.arrayBuffer()),
+		},
+		options.codec === 9 ? INTEGER_DECODE : DECODE,
+	);
 }
 
 // Admission precedes Rust snapshot serialization and every JS snapshot copy.

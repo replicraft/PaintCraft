@@ -94,6 +94,14 @@ try {
 		path.join(
 			root,
 			'crates/services/paintcraft-formats/tests/jxl-fixtures',
+			[
+				'color8-alpha16.jxl',
+				'color16-alpha8.jxl',
+				'alpha-float.jxl',
+				'alpha-named.jxl',
+			].includes(name)
+				? 'alpha-profiles'
+				: '.',
 			name,
 		);
 	server = http.createServer((request, response) => {
@@ -159,6 +167,7 @@ try {
 		const errors = [];
 		page.on('pageerror', (error) => errors.push(String(error)));
 		await page.addInitScript(() => {
+			localStorage.setItem('showWelcomeScreen', 'false');
 			window.__csp = [];
 			document.addEventListener('securitypolicyviolation', (event) =>
 				window.__csp.push({
@@ -239,6 +248,85 @@ try {
 				throw new Error(
 					'Canonical refusal did not release completed job',
 				);
+			const integer = [];
+			for (const [input, depth, expected] of [
+				[bytes, 8, pixels],
+				[
+					bad,
+					16,
+					[
+						0, 0, 255, 1, 1, 127, 128, 0, 255, 4, 8, 128, 16, 32,
+						64, 255,
+					],
+				],
+			]) {
+				const result = await service
+					.beginDecodeIntegerFile(
+						new File([input], 'integer.jxl'),
+						owner,
+					)
+					.run();
+				if (
+					result.report.sourceDepth !== depth ||
+					JSON.stringify(Array.from(result.rgba)) !==
+						JSON.stringify(expected)
+				)
+					throw new Error(
+						'Actual production integer JXL report/pixels mismatch',
+					);
+				if (
+					!result.requiresRustValidation ||
+					!service.budget().reservedBytes
+				)
+					throw new Error(
+						'Integer JXL lost private Rust-validation admission',
+					);
+				integer.push({
+					depth,
+					rgba: Array.from(result.rgba),
+					report: Array.from(result.report.bytes),
+					budget: service.budget(),
+				});
+				result.release();
+				if (
+					service.budget().reservedBytes ||
+					service.budget().quarantined
+				)
+					throw new Error(
+						'Completed integer result did not release exact charge',
+					);
+			}
+			const integerRefusals = [];
+			for (const name of [
+				'icc.jxl',
+				'linear.jxl',
+				'animation.jxl',
+				'color8-alpha16.jxl',
+				'color16-alpha8.jxl',
+				'alpha-float.jxl',
+				'alpha-named.jxl',
+			]) {
+				const bytes = await (
+					await fetch(`/__qa/${name}`)
+				).arrayBuffer();
+				let code;
+				try {
+					await service
+						.beginDecodeIntegerFile(new File([bytes], name), owner)
+						.run();
+				} catch (error) {
+					code = error.code;
+				}
+				if (
+					code !== 'CapabilityUnsupported' ||
+					service.budget().reservedBytes ||
+					service.budget().quarantined
+				)
+					throw new Error(
+						`Integer JXL unsupported metadata did not complete safely: ${name} ${code}`,
+					);
+				integerRefusals.push({ name, code });
+			}
 			const memory = await new Promise((resolve, reject) => {
 				const worker = new Worker(runtime, { type: 'module' });
 				const timer = setTimeout(() => {
@@ -298,6 +386,8 @@ try {
 			return {
 				version: app.application_version(),
 				pixels,
+				integer,
+				integerRefusals,
 				memory,
 				blobBlocked,
 				csp: document.querySelector(
@@ -316,6 +406,8 @@ try {
 		'exact-independent-rgba',
 		'version-binding',
 		'completed-refusal-release',
+		'integer8-and16-exact-report-and-hidden-rgb',
+		'integer-icc-linear-animation-and-alpha-profile-refusals-release',
 		'actual-memory-grow-refusal',
 		'production-csp',
 		'CJK-startup',
