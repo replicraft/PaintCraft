@@ -94,3 +94,26 @@ fn malformed_profile_extents_linked_profiles_masks_and_cancellation_refuse() {
     });
     assert!(matches!(result,Err(e) if e.code==ErrorCode::OperationCancelled));
 }
+
+#[test]
+fn signed_resolution_declarations_do_not_refuse_an_otherwise_admitted_picture() {
+    let original = fixture("rgb24-top-down.bmp");
+    let expected = super::super::decode(&original).unwrap().rgba;
+    let mut bytes = original;
+    bytes[38..42].copy_from_slice(&(-3780i32).to_le_bytes());
+    bytes[42..46].copy_from_slice(&i32::MIN.to_le_bytes());
+    assert_eq!(
+        ::image::load_from_memory_with_format(&bytes, ::image::ImageFormat::Bmp)
+            .unwrap()
+            .to_rgba8()
+            .into_raw(),
+        expected
+    );
+    // MS-WMF BitmapInfoHeader defines signed 32-bit resolution declarations;
+    // this conversion does not use them to rescale or interpret the pixels.
+    let descriptor = inspect(&bytes, 100, &|| Ok(())).unwrap();
+    assert_eq!(descriptor.resolution_raw, [-3780, i32::MIN]);
+    assert!(descriptor.resolution.is_none());
+    assert!(descriptor.losses().contains(&"resolution-metadata-ignored"));
+    assert_eq!(super::super::decode(&bytes).unwrap().rgba, expected);
+}

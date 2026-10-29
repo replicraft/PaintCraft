@@ -27,6 +27,8 @@ pub struct Descriptor {
     pub declared_colors_used: u32,
     pub important_colors: u32,
     pub file_reserved: [u16; 2],
+    /// Original signed PelsPerMeter fields, including nonphysical declarations.
+    pub resolution_raw: [i32; 2],
     pub resolution: Option<Resolution>,
     pub color_space: Option<u32>,
     pub endpoints_raw: Option<[i32; 9]>,
@@ -47,7 +49,7 @@ impl Descriptor {
         if self.color_space.is_some() {
             losses.push("bmp-color-metadata-ignored");
         }
-        if self.resolution.is_some() {
+        if self.resolution_raw != [0, 0] {
             losses.push("resolution-metadata-ignored");
         }
         if self.undeclared_bytes > 0
@@ -166,10 +168,9 @@ pub fn inspect_with_metadata_limit(
     }
     // RGBQUAD reserved bytes are not palette alpha under this qualified profile.
     let (x, y) = (u32_at(bytes, 38)? as i32, u32_at(bytes, 42)? as i32);
-    if x < 0 || y < 0 {
-        return Err(facts::invalid("Negative BMP physical resolution"));
-    }
-    let resolution = (x != 0 || y != 0).then_some(Resolution {
+    // These are signed source declarations, not an admission constraint on
+    // otherwise valid pixels. Never turn negative values into unsigned DPI.
+    let resolution = (x >= 0 && y >= 0 && (x != 0 || y != 0)).then_some(Resolution {
         x: x as u32,
         y: y as u32,
         unit: ResolutionUnit::Meter,
@@ -190,6 +191,7 @@ pub fn inspect_with_metadata_limit(
         declared_colors_used: u32_at(bytes, 46)?,
         important_colors: u32_at(bytes, 50)?,
         file_reserved: [u16_at(bytes, 6)?, u16_at(bytes, 8)?],
+        resolution_raw: [x, y],
         resolution,
         color_space: None,
         endpoints_raw: None,
