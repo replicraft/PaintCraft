@@ -20,6 +20,7 @@ mod preview_revision;
 mod selection;
 #[cfg(feature = "text")]
 pub mod text;
+mod text_edit;
 pub use preview_revision::PreviewRevision;
 
 use paintcraft_core::types::{Rgba, text::TextOptions};
@@ -302,20 +303,6 @@ impl ToolState {
 
     pub fn is_editing_text(&self) -> bool {
         self.text.is_some()
-    }
-
-    pub fn backspace(&mut self) {
-        if let Some(t) = &mut self.text
-            && t.text.pop().is_some()
-        {
-            self.preview_revision.advance();
-        }
-    }
-
-    pub fn cancel_text(&mut self) {
-        if self.text.take().is_some() {
-            self.preview_revision.advance();
-        }
     }
 
     /// Current marquee dimensions, clipped exactly like selection publication.
@@ -625,77 +612,5 @@ impl ToolState {
             }
         };
         Some((g.token, action))
-    }
-    pub fn clear_text(&mut self) {
-        if let Some(text) = &mut self.text
-            && !text.text.is_empty()
-        {
-            text.text.clear();
-            self.preview_revision.advance();
-        }
-    }
-    /// Borrow the active draft without cloning its text or resolving fonts.
-    pub fn text_content(&self) -> Option<&str> {
-        self.text.as_ref().map(|text| text.text.as_str())
-    }
-    /// Freeze the text intention while retaining the editable draft. A host can
-    /// prepare/validate/publicize it before dropping the draft on success.
-    pub fn pending_text_action(&self) -> Option<Action> {
-        let t = self.text.as_ref()?;
-        if t.text.is_empty() {
-            return None;
-        }
-        Some(Action::Text {
-            style: t.style.clone(),
-            background: t.background,
-            layer: t.layer,
-            at: t.at,
-            text: t.text.clone(),
-            scale: t.scale,
-            color: t.color,
-        })
-    }
-    pub fn commit_text(&mut self) -> Option<(u64, Action)> {
-        if let Some(t) = self.text.take() {
-            self.preview_revision.advance();
-            if t.text.is_empty() {
-                return None;
-            }
-            return Some((
-                t.token,
-                Action::Text {
-                    style: t.style,
-                    background: t.background,
-                    layer: t.layer,
-                    at: t.at,
-                    text: t.text,
-                    scale: t.scale,
-                    color: t.color,
-                },
-            ));
-        }
-        None
-    }
-    pub fn type_text(&mut self, typed: &str) -> usize {
-        let Some(t) = &mut self.text else { return 0 };
-        let mut skipped = 0;
-        let previous_len = t.text.len();
-        let mut count = t.text.chars().count();
-        for c in typed.chars() {
-            if !(if t.style.is_some() {
-                c == '\n' || !c.is_control()
-            } else {
-                paintcraft_raster::font::supported(c)
-            }) {
-                skipped += 1;
-            } else if count < paintcraft_raster::font::TEXT_CHARS_MAX {
-                t.text.push(c);
-                count += 1;
-            }
-        }
-        if t.text.len() != previous_len {
-            self.preview_revision.advance();
-        }
-        skipped
     }
 }
