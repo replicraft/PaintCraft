@@ -67,7 +67,7 @@ impl App {
             .unwrap_or_else(|| hex(&sha256));
         let doc = import_image(image.width, image.height, &image.rgba, &key)?
             .with_source_metadata_checked(source_metadata, &|| Ok(()))?;
-        paintcraft_formats::pcnd::check_metadata_admission(&doc, &|| Ok(()))?;
+        paintcraft_formats::pcnd::check_compact_metadata_admission(&doc, &|| Ok(()))?;
         identity.verify_bytes(&path, bytes.len() as u64, &sha256, &|| Ok(()))?;
         let mut editor = Editor::with_document(doc, None);
         if convert {

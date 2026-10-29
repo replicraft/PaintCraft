@@ -39,7 +39,7 @@ impl Prepared {
             check,
         )?;
         let document = document.with_source_metadata_checked(self.attachment.clone(), check)?;
-        crate::pcnd::check_metadata_admission(&document, check)?;
+        crate::pcnd::check_compact_metadata_admission(&document, check)?;
         Ok(document)
     }
 }

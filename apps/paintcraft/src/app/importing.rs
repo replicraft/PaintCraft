@@ -225,7 +225,7 @@ impl App {
             };
             let document =
                 document.with_source_metadata_checked(pending.source_metadata, &|| Ok(()))?;
-            paintcraft_formats::pcnd::check_metadata_admission(&document, &|| Ok(()))?;
+            paintcraft_formats::pcnd::check_compact_metadata_admission(&document, &|| Ok(()))?;
             let mut editor = Editor::with_document(document, None);
             if converted {
                 editor.invalidate_saved_state();
