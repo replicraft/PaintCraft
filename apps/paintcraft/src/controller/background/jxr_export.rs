@@ -70,3 +70,7 @@ impl Service {
         .map(JxrExportPending)
     }
 }
+
+#[cfg(test)]
+#[path = "jxr_export/tests.rs"]
+mod tests;
