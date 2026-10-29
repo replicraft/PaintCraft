@@ -195,6 +195,8 @@ pub fn decode_entry(
     let decoded = crate::image::decode_with_pixel_limit(payload, pixels)?;
     check()?;
     let mut losses = decoded.losses;
+    // Palette expansion is reported once with the existing icon-specific code.
+    losses.retain(|loss| loss != "palette-indices-expanded");
     losses.push("icns-metadata-ignored".into());
     if payload[25] == 3 {
         losses.push("icon-palette-expanded".into());

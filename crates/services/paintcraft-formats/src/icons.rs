@@ -205,7 +205,14 @@ pub fn decode_entry(bytes: &[u8], index: u16, pixels: u64) -> Result<Decoded> {
     let mut losses = Vec::new();
     let rgba = if entry.encoding == Encoding::Png {
         let decoded = crate::image::decode_with_pixel_limit(payload, pixels)?;
-        losses.extend(decoded.losses);
+        // This container exposes the equivalent icon-specific palette loss
+        // below; retain every other PNG omission without a duplicate prompt.
+        losses.extend(
+            decoded
+                .losses
+                .into_iter()
+                .filter(|loss| loss != "palette-indices-expanded"),
+        );
         if payload[25] == 3 {
             losses.push("icon-palette-expanded".into());
         }
