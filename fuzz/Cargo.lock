@@ -870,7 +870,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "glam 0.34.1",
  "thiserror",
@@ -879,7 +879,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-document"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "paintcraft-raster",
@@ -889,7 +889,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-formats"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ag-psd",
  "base64",
@@ -925,7 +925,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-paint"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "flate2",
  "paintcraft-core",
@@ -933,7 +933,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-pdn"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -943,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-platform"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "same-file",
@@ -953,7 +953,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-raster"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "font8x8",
  "paintcraft-core",
@@ -961,7 +961,7 @@ dependencies = [
 
 [[package]]
 name = "paintcraft-render"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "paintcraft-document",
