@@ -7,6 +7,14 @@ with its staged-adoption and performance contracts. The performance pack is
 queued work, not a claim of implementation or measured gains; it does not
 replace the canonical 37-task roadmap or transplant new contracts wholesale.
 
+[Stock raster conversion safety](RASTER_SOURCE_IMPORT.md) now captures native
+source identity through consent and adoption, retains overwrite guards after
+PCND Save, and revalidates regular CLI/MCP sources before publication. PNG/BMP
+source declarations and discarded metadata are explicit; indexed PNG samples
+are validated before expansion. Local desktop/CLI tests and WebAssembly
+compilation pass. Full metadata retention, color management, generic visual
+review and the broader stock-codec requirements remain unfinished.
+
 [PaintCraft 0.1.1 release validation](releases/v0.1.1-validation.md) now records
 successful native desktop/CLI builds, finite helper and installed-consumer checks,
 and packaging on Windows, macOS and Linux for x64 and ARM64. All 24 downloads and
