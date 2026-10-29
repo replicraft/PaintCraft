@@ -27,11 +27,16 @@ six-target stock-codec and physical qualification remain open.
 bytes, exact signed resolution and orientation facts through history and PCND2.
 Independent Python serialization matches raw output, and real canvas edits,
 Undo/Redo, cold spill/restoration, admission and export refusal controls pass.
-This is a storage foundation: ordinary image importers do not yet attach those
-facts, original ICC is not activated for working pixels, and aggregate host
-resource admission, explicit export privacy choices, palette/index retention and
-color-managed conversion remain unfinished. Documents without attachments keep
-their exact PCND1 representation.
+PNG new-document imports now retain exact decompressed ICC bytes and resolution
+values through native, browser, CLI and MCP adoption using shared host admission.
+Actual Chrome visible consent, PCND2 save/fresh reopen and explicit PNG privacy
+export preserve the source attachment and numeric pixels; Cancel and export
+leave the project unchanged. Other source attachments, palette/index retention
+and color-managed conversion remain unfinished. Original ICC is not activated
+for working pixels. Documents without attachments keep their exact PCND1
+representation; initial import also checks the current snapshot against PCND's
+actual metadata save limit. Advanced Worker export qualification remains a
+separate pending gate.
 
 JPEG export now has an explicit RGB background through desktop/browser controls,
 CLI and MCP, preserving white by default and existing loss consent. Exact alpha

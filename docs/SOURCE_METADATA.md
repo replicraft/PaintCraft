@@ -1,9 +1,9 @@
 # Original source metadata
 
 The document can retain one immutable attachment describing its original source.
-This is a storage foundation. Foreign raster importers do not yet create the
-attachment automatically; opening PCND2 restores previously stored attachments.
-Palette/index retention, complete EXIF preservation, per-layer provenance and
+PNG new-document imports now create the attachment when iCCP or pHYs is present;
+opening PCND2 restores previously stored attachments. Other foreign importers,
+palette/index retention, complete EXIF preservation, per-layer provenance and
 color-managed conversion remain separate work.
 
 The attachment preserves exact original ICC bytes, original signed resolution
@@ -67,19 +67,44 @@ prelude/title bytes before admitting/copying the profile, and accept a lower
 caller-owned `pcnd::MetadataAdmission` limit/budget. Failure during later layer
 admission releases the attachment lease.
 
-Legacy read wrappers create a per-read bounded realm. This does not qualify
-aggregate memory across application tabs, documents, Web imports or MCP sessions.
-Actual importer adoption must pass the host's shared resource realm and preserve
-the raw source identity/consent guards.
+Legacy read wrappers create a per-read bounded realm. Application PCND loads and
+PNG imports instead pass their host's shared resource realm. Browser pending
+loads, parked interfaces and retained snapshots share one 64 MiB logical metadata
+allowance; import previews use that allowance too. This is accounting for these
+allocations, rather than a total process or GPU memory cap.
 
-Foreign document export paths refuse attached metadata until preservation or an
-explicit captured omission/privacy policy is qualified. Adding an automatic
-known-loss acknowledgment or removing attachments from an export snapshot does
-not establish consent. PCND Save preserves the attachment.
+PNG retention stores the exact decompressed iCCP bytes and exact pHYs values and
+unit. It does not preserve the original compressed chunk, profile keyword, full
+EXIF, palette indices, text chunks or unrelated color declarations. Notices
+distinguish retained-but-inactive ICC/resolution from actual omissions. Neither
+retaining a profile nor accepting its notice activates color management.
+
+The retained conversion has its own versioned identity binding source bytes,
+geometry, RGBA samples and the attachment digest. The original source SHA256
+remains the file guard. Layer insertion and paste retain their separate omission
+policy; a second picture's profile is not assigned to the whole document.
+Warned new-document conversions become unsaved copies. Before adoption, a PCND
+preflight checks the current snapshot against the actual aggregate metadata
+limit, including the exact boundary. Future layer/title growth must still obey
+ordinary save admission.
+
+Foreign document export defaults to refusing attached metadata. Explicit privacy
+omission is captured against one frozen document ID, state ID, attachment digest,
+format and operation. A changed snapshot or target invalidates that witness.
+Adding an automatic known-loss acknowledgment or removing attachments from an
+export snapshot does not establish consent. An omission receipt appears only
+when an attachment was actually omitted. Other format losses retain their own
+consent requirements. PCND Save preserves the attachment; requesting omission
+for PCND or a preserving save is refused even for a document without metadata.
 
 Independent Python-authored PCND1/2 fixtures qualify exact profile/fact retention
 and raw output bytes. Native tests additionally cover signed density, identity,
 checkpoint cancellation, aggregate refusal before profile admission, later-error
 lease release, real canvas edits and Undo/Redo, and actual filesystem tile
 spilling/cold restoration. These tests do not establish color-transform accuracy,
-original-application interoperability or new importer metadata preservation.
+original-application interoperability or color-managed conversion. PNG samples
+additionally have 27 independently authored and FFmpeg-checked fixtures covering
+sample models, depth, transparency, Adam7 and hidden RGB. Native, CLI, MCP and
+browser host tests exercise import/adoption, project round trips, source guards,
+consent, cancellation and resource release. Actual production-browser and
+cross-platform qualification remain separate gates.
