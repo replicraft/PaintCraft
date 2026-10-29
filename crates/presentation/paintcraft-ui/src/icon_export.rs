@@ -360,7 +360,10 @@ impl<K: PartialEq, P> Cache<K, P> {
                 egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)),
                 egui::Color32::WHITE,
             );
-            if self.frame.is_none() && ui.is_rect_visible(rect) {
+            if self.frame.is_none()
+                && ui.is_rect_visible(rect)
+                && ui.clip_rect().contains_rect(rect)
+            {
                 self.frame = Some(ui.ctx().cumulative_frame_nr());
                 ui.ctx().request_repaint();
             }
@@ -423,6 +426,43 @@ mod tests {
                             })
                         },
                     ));
+                },
+            );
+            output.textures_delta.clear();
+            assert!(!observed.is_empty());
+            assert!(observed.iter().all(|ready| *ready == expected));
+        }
+    }
+    #[test]
+    fn partially_clipped_preview_requires_a_complete_visible_frame() {
+        let ctx = egui::Context::default();
+        let mut cache: Cache<u8, Vec<u8>> = Cache::default();
+        for (clipped, expected) in [(true, false), (true, false), (false, false), (false, true)] {
+            let mut observed = Vec::new();
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(400., 300.),
+                    )),
+                    ..Default::default()
+                },
+                |ui| {
+                    cache.update(ui.ctx(), 1, || Ok(vec![255; 32 * 32 * 4]));
+                    if clipped {
+                        ui.set_clip_rect(egui::Rect::from_min_size(
+                            ui.min_rect().min,
+                            egui::vec2(400., 80.),
+                        ));
+                    }
+                    observed.push(cache.show(ui, 0, |pixels, _| {
+                        Some(Frame {
+                            width: 32,
+                            height: 32,
+                            rgba: pixels,
+                            hotspot: None,
+                        })
+                    }));
                 },
             );
             output.textures_delta.clear();
