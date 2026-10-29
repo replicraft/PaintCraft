@@ -34,5 +34,6 @@ pub mod registry;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod save_recovery;
 pub mod svg;
+pub mod tiff_pages;
 #[cfg(not(target_arch = "wasm32"))]
 pub use paintcraft_platform::save;
