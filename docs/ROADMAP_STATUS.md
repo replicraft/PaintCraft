@@ -76,6 +76,11 @@ the exact V10 record, and 115 packaging/qualification contract tests passed.
 The first split V9/V10 promotion and its 40 normal macOS ARM installed CLI/MCP
 tests remain historical evidence. Published 0.1.1 V7/V8 downloads and the tag
 remain unchanged. This does not claim a new complete release.
+Native Studio additionally previews the actual encoded JPEG XR copy through the
+verified writer decoder and requires a complete visible frame before choosing a
+destination. Local installed macOS ARM English/Japanese metadata and 30-scenario
+compatibility checks pass; this new preview path still needs other-target and
+physical GUI qualification.
 
 [Selected TIFF page import](TIFF_PAGE_IMPORT.md) now has bounded full-source
 inventory and explicit Studio conversion to an unsaved RGBA8 copy. Backend,

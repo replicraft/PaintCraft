@@ -1932,3 +1932,27 @@ All failed attempts are retained, including the corrected compact-modal defect.
 Receipt: `docs/validation/dds-web-production-2026-10-27/receipt.json`.
 Physical phones/tablets, other browser engines, original texture applications
 and broader DDS profiles remain separate qualification work.
+
+## Native JPEG XR encoded previews, 2026-10-29
+
+Studio now decodes the actual sealed JPEG XR export through the same verified
+writer helper before destination selection. The decoded image must match the
+sealed source's dimensions and opaque RGB samples, with the original owner,
+nonce and encoded-source hash. A bounded thumbnail must be completely visible
+in a prior frame before the destination action is enabled. The original encoded
+artifact and metadata omission policy remain bound through final publication.
+
+The decoder uses the existing writer-specific selector and preserves the
+1,048,576-pixel, 65,536-side and 64 MiB encoded limits. Admission includes actual
+decode/thumbnail storage, cancellation and helper retirement. This adds no codec
+ABI, dependency, color management or wider input profile.
+
+Local macOS ARM debug qualification passes English/Japanese metadata copies,
+five injected owner/nonce/source-hash/geometry/sample refusals per language, and
+30 installed compatibility scenarios with independent C golden samples. Unit
+controls cover thumbnail bounds, complete-frame review, opaque samples, seals
+and cancellation. The first portable log retains an outdated diagnostic about
+thumbnail coverage; only that diagnostic was corrected after the passing run.
+Physical GUI, other native targets and original applications need their own
+qualification for this preview path. Copied executable/archive payloads were
+removed after independent postflight hash verification; evidence was retained.
