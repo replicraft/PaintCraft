@@ -38,16 +38,24 @@ pub(crate) fn same_file(a: &Path, b: &Path) -> bool {
         && same_file::is_same_file(a, b).unwrap_or(false)
 }
 pub(crate) fn acquire(path: &Path) -> Result<(Vec<u8>, Binding)> {
+    let (bytes, binding, _) = acquire_with_identity(path)?;
+    Ok((bytes, binding))
+}
+/// Read and retain the same regular file; a later raster adoption must not
+/// acquire an identity by reopening a pathname after decoding its bytes.
+pub(crate) fn acquire_with_identity(path: &Path) -> Result<(Vec<u8>, Binding, SourceIdentity)> {
     let resolved = std::fs::canonicalize(path).map_err(|e| {
         Error::new(
             ErrorCode::StorageFailed,
             format!("Cannot resolve opened document: {}", e.kind()),
         )
     })?;
-    let bytes = crate::format_admission::read_source(&resolved)?;
-    let binding = Binding::new(Some(Expectation::acquired(&resolved, &bytes)));
-    Ok((bytes, binding))
+    // Resource acquisition clamps this request to the existing generic source cap.
+    let source = crate::format_admission::acquire_resource_source(&resolved, u64::MAX)?;
+    let binding = Binding::new(Some(Expectation::acquired(&resolved, &source.bytes)));
+    Ok((source.bytes, binding, source.identity))
 }
+
 impl Binding {
     fn new(expected: Option<Expectation>) -> Self {
         Self(Arc::new(Mutex::new(State {

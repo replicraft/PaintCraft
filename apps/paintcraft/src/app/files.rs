@@ -408,7 +408,7 @@ impl App {
         if self.try_open_dds_source(path, convert)? {
             return Ok(());
         }
-        let (bytes, binding) = crate::destination::acquire(path)?;
+        let (bytes, binding, identity) = crate::destination::acquire_with_identity(path)?;
         if convert
             && matches!(
                 paintcraft_formats::registry::sniff(&bytes),
@@ -453,46 +453,17 @@ impl App {
             )?;
             return self.stage_project_import(converted, path.to_path_buf());
         }
-        let (editor, bound, note) = if family != paintcraft_formats::registry::Family::Pcnd {
-            let img = image::decode(&bytes)?;
-            if !img.losses.is_empty() {
-                return self.stage_import(
-                    img,
-                    path.to_path_buf(),
-                    hex(&Sha256::digest(&bytes)),
-                    convert,
-                );
-            }
-            let doc = import_image(
-                img.width,
-                img.height,
-                &img.rgba,
-                &hex(&Sha256::digest(&bytes)),
-            )?;
-            let note = if img.losses.is_empty() {
-                format!("Imported {}", path.display())
-            } else {
-                format!(
-                    "Imported {} (not kept: {})",
-                    path.display(),
-                    img.losses.join(", ")
-                )
-            };
-            // A picture is a new document; it is not bound to the image file.
-            (Editor::with_document(doc, None), None, note)
-        } else {
-            // Decode the same bounded acquisition; do not reopen an unbounded path.
-            let mut editor = Editor::with_document(
-                paintcraft_formats::pcnd::read(&bytes)?,
-                Some(path.to_path_buf()),
-            );
-            editor.bind_destination(Some(binding));
-            (
-                editor,
-                Some(path.to_path_buf()),
-                format!("Opened {}", path.display()),
-            )
-        };
+        if family != paintcraft_formats::registry::Family::Pcnd {
+            return self.open_raster_acquired(bytes, identity, path.to_path_buf(), convert);
+        }
+        // Keep PCND association semantics and decode the same bounded acquisition.
+        let mut editor = Editor::with_document(
+            paintcraft_formats::pcnd::read(&bytes)?,
+            Some(path.to_path_buf()),
+        );
+        editor.bind_destination(Some(binding));
+        let bound = Some(path.to_path_buf());
+        let note = format!("Opened {}", path.display());
         self.install(editor)?;
         self.bound = bound;
         self.imported_source = self.bound.is_none().then(|| path.to_path_buf());

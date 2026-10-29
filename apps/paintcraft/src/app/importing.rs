@@ -18,6 +18,8 @@ mod msp;
 mod native_codec;
 #[path = "importing/ora.rs"]
 mod ora;
+#[path = "importing/stock.rs"]
+mod stock;
 #[path = "importing/svg.rs"]
 mod svg;
 #[path = "importing/tiff.rs"]
@@ -207,6 +209,14 @@ impl App {
             if converted {
                 editor.invalidate_saved_state();
             }
+            if let Some(source) = &pending.captured_source {
+                source.identity.verify_bytes(
+                    &pending.path,
+                    source.bytes,
+                    &source.sha256,
+                    &|| Ok(()),
+                )?;
+            }
             self.install(editor)?;
             self.bound = None;
             self.imported_source = Some(pending.path.clone());
@@ -308,3 +318,7 @@ mod psd_tests;
 #[cfg(test)]
 #[path = "importing/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "importing/stock_tests.rs"]
+mod stock_tests;
