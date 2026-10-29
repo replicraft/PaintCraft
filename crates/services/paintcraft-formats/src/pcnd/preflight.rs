@@ -106,6 +106,16 @@ pub(super) fn check(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()
     binary::preflight_metadata(doc, check)
 }
 
+/// The raw-record upper bound is safe for compact output because selection never
+/// chooses a larger stored block and only its length changes the metadata width.
+/// The rare path must count the actual selected compact lengths, not raw lengths.
+pub(super) fn check_compact(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
+    if upper_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX) {
+        return check();
+    }
+    binary::preflight_compact_metadata(doc, check)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -164,3 +174,6 @@ mod tests {
         assert!(check_metadata_admission(&invalid, &|| Ok(())).is_err());
     }
 }
+
+#[cfg(test)]
+mod compact_tests;

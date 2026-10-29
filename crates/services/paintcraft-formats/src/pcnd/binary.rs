@@ -35,11 +35,22 @@ pub(super) fn write_raw(
 }
 
 pub(super) fn preflight_metadata(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
+    metadata_counter(doc, check, false)
+}
+
+pub(super) fn preflight_compact_metadata(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    metadata_counter(doc, check, true)
+}
+
+fn metadata_counter(doc: &Document, check: &dyn Fn() -> Result<()>, compact: bool) -> Result<()> {
     write_encoded(
         doc,
         Output::metadata_counter(std::io::sink()),
         check,
-        compression::Encoder::new(false)?,
+        compression::Encoder::new(compact)?,
     )
 }
 

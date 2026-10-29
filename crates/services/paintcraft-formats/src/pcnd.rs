@@ -18,10 +18,23 @@ mod compression;
 mod preflight;
 mod runs;
 
-/// Check that the current snapshot fits canonical PCND metadata admission.
-/// This does not promise future layer/title growth remains within that limit.
+/// Check canonical RAW PCND metadata admission (the `write`/`write_to` profile).
+/// This may reject a snapshot whose compact block lengths fit the same limit.
+/// It does not promise future edits remain within the limit.
 pub fn check_metadata_admission(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
     preflight::check(doc, check)
+}
+
+/// Check metadata admission for this build's normal compact PCND saver.
+/// Ordinary snapshots use a cheap safe upper bound. Near the limit this uses
+/// the same block selection and default-tile elision as `write_compact_to_checked`,
+/// while discarding payload output and body hashing. Native/portable encoder
+/// sets can differ; this is not a cross-host, future-edit or durable-save promise.
+pub fn check_compact_metadata_admission(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    preflight::check_compact(doc, check)
 }
 
 /// Deterministic raw encoding for portable conformance and content comparisons.
