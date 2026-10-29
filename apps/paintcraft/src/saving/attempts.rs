@@ -357,7 +357,7 @@ impl App {
         let name_draft = self
             .name_edit
             .as_ref()
-            .is_some_and(|(id, name)| layers.get(id).is_some_and(|layer| layer.name != *name));
+            .is_some_and(|(id, name, _)| layers.get(id).is_some_and(|layer| layer.name != *name));
         let opacity_draft = self.opacity_edit.is_some_and(|(id, opacity)| {
             layers
                 .get(&id)

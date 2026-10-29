@@ -501,7 +501,7 @@ fn clean_documents_with_uncommitted_drafts_also_require_discard_confirmation() {
     drain(&mut app);
     let target = app.editor.target().unwrap();
     assert!(!app.editor.is_dirty());
-    app.name_edit = Some((target, "keep this draft".into()));
+    app.name_edit = Some((target, "keep this draft".into(), Default::default()));
     app.saved_snapshot_requested(sequence);
     assert_eq!(app.confirm, Some(Confirm::DiscardForSaveSnapshot(sequence)));
     assert_eq!(app.name_edit.as_ref().unwrap().1, "keep this draft");

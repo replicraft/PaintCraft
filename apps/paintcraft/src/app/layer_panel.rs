@@ -3,10 +3,33 @@ use super::*;
 use paintcraft_ui::t;
 
 #[cfg(test)]
+#[path = "layer_panel/composition_repro.rs"]
+mod composition_repro;
+
+#[cfg(test)]
 #[path = "layer_panel/accessibility_tests.rs"]
 mod accessibility_tests;
 
 impl App {
+    pub(super) fn prepare_name_input(&mut self, ctx: &egui::Context) {
+        let owner = paintcraft_ui::composition::Owner {
+            session: self.editor.session_owner_id().as_u128(),
+            state: self.editor.render_key().0.as_u128(),
+            publication: self.editor.publications(),
+            interface: u8::from(self.experience() == Experience::Classic),
+        };
+        let permitted = self.confirm.is_none()
+            && !self.closing_workspace
+            && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
+        if let Some((target, text, field)) = &mut self.name_edit {
+            if permitted && self.editor.target() == Some(*target) {
+                field.prepare_boundary(ctx, owner, text);
+            } else {
+                field.retire(ctx);
+            }
+        }
+    }
+
     fn classic_layer_list(&mut self, ui: &mut egui::Ui) {
         use paintcraft_classic::layers::{Action as Intent, Layer};
         let document = self.editor.document_snapshot();
@@ -162,10 +185,16 @@ impl App {
         }
         let top = self.editor.document().roots.len() - 1;
 
-        // Name: committed on focus loss; Escape discards the local draft.
+        // Name: only committed editable text may publish on focus loss.
+        let name_owner = paintcraft_ui::composition::Owner {
+            session: self.editor.session_owner_id().as_u128(),
+            state: self.editor.render_key().0.as_u128(),
+            publication: self.editor.publications(),
+            interface: u8::from(classic),
+        };
         let buf = match &mut self.name_edit {
             Some(b) if b.0 == t => b,
-            other => other.insert((t, name.clone())),
+            other => other.insert((t, name.clone(), Default::default())),
         };
         ui.horizontal(|ui| {
             let label = if classic {
@@ -173,7 +202,8 @@ impl App {
             } else {
                 ui.label(t!(ui.ctx(), "Layer name"))
             };
-            let field_id = ui.scope_id().with(("layer-name", t));
+            let host_id = ui.scope_id().with(("layer-name", t));
+            let field_id = buf.2.id(host_id);
             let focused = ui.memory(|memory| memory.has_focus(field_id));
             let cancel = focused
                 && ui.ctx().current_pass_index() == 0
@@ -182,25 +212,45 @@ impl App {
             if cancel {
                 buf.1.clone_from(&name);
             }
-            let editor = egui::TextEdit::singleline(&mut buf.1)
-                .id(field_id)
-                .event_filter(egui::EventFilter {
-                    horizontal_arrows: true,
-                    vertical_arrows: true,
-                    escape: true,
-                    ..Default::default()
-                });
-            let editor = if classic {
-                editor
-                    .min_size(Vec2::new(0.0, property_height))
-                    .align(egui::Align2::LEFT_CENTER)
-            } else {
-                editor
-            };
-            let r = ui.add(editor).labelled_by(label.id);
+            let output = buf.2.show(
+                ui,
+                &mut buf.1,
+                paintcraft_ui::composition::Request {
+                    host_id,
+                    owner: name_owner,
+                    cancel,
+                    budget: &self.worker_budget,
+                },
+                |ui, text, id| {
+                    let editor =
+                        egui::TextEdit::singleline(text)
+                            .id(id)
+                            .event_filter(egui::EventFilter {
+                                horizontal_arrows: true,
+                                vertical_arrows: true,
+                                escape: true,
+                                ..Default::default()
+                            });
+                    let editor = if classic {
+                        editor
+                            .min_size(Vec2::new(0.0, property_height))
+                            .align(egui::Align2::LEFT_CENTER)
+                    } else {
+                        editor
+                    };
+                    editor.show(ui)
+                },
+            );
+            if output.refused {
+                ui.label(t!(ui.ctx(), "Edit cancelled"));
+            }
+            if output.cancelled {
+                buf.1.clone_from(&name);
+            }
+            let r = output.editor.response.response.labelled_by(label.id);
             if cancel {
                 r.surrender_focus();
-            } else if r.lost_focus() {
+            } else if r.lost_focus() || output.finished {
                 if buf.1 != name {
                     let rename = Action::Rename {
                         layer: t,

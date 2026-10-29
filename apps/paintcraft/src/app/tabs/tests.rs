@@ -224,11 +224,16 @@ fn new_drafts_after_save_and_close_keep_the_document_open() {
     app.tab_save_close = Some((id, source));
     app.do_save(&ctx, dir.join("a.pcnd"));
     let layer = app.editor.target().unwrap();
-    app.name_edit = Some((layer, "Uncommitted name".into()));
+    app.name_edit = Some((layer, "Uncommitted name".into(), Default::default()));
     drain(&mut app, &ctx);
     app.pump_tab_close(&ctx);
     assert_eq!(app.document_count(), 1);
-    assert_eq!(app.name_edit, Some((layer, "Uncommitted name".into())));
+    assert_eq!(
+        app.name_edit
+            .as_ref()
+            .map(|(id, name, _)| (*id, name.as_str())),
+        Some((layer, "Uncommitted name"))
+    );
     assert!(app.tab_save_close.is_none());
     std::fs::remove_dir_all(dir).unwrap();
 }

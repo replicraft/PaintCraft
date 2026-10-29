@@ -47,7 +47,7 @@ pub(super) struct DocumentState {
     recovery_needs_init: bool,
     recovery_source: Option<saving::restoring::Handoff>,
     last_autosave: f64,
-    name_edit: Option<(Uuid, String)>,
+    name_edit: Option<(Uuid, String, paintcraft_ui::composition::Field)>,
     opacity_edit: Option<(Uuid, u8)>,
 }
 
@@ -157,7 +157,10 @@ impl App {
     pub(super) fn resolve_tab_input(&mut self, ctx: &egui::Context) {
         self.editor.cancel_gesture();
         self.editor.commit_text();
-        if let Some((id, name)) = &self.name_edit
+        if let Some((_, _, field)) = &mut self.name_edit {
+            field.retire(ctx);
+        }
+        if let Some((id, name, _)) = &self.name_edit
             && self
                 .editor
                 .layer_properties(*id)
@@ -382,7 +385,7 @@ impl App {
     pub(super) fn has_document_drafts(&self) -> bool {
         self.editor.gesture_in_progress()
             || self.editor.is_editing_text()
-            || self.name_edit.as_ref().is_some_and(|(id, name)| {
+            || self.name_edit.as_ref().is_some_and(|(id, name, _)| {
                 self.editor
                     .layer_properties(*id)
                     .is_some_and(|p| p.0 != *name)

@@ -17,14 +17,14 @@ mod clipboard;
 #[path = "app/colors.rs"]
 mod colors;
 pub mod controller;
-#[cfg(target_os = "macos")]
-pub mod desktop;
 #[path = "app/cpu_rendering.rs"]
 mod cpu_rendering;
 #[path = "app/cursor.rs"]
 mod cursor;
 #[path = "app/dds_export.rs"]
 mod dds_export;
+#[cfg(target_os = "macos")]
+pub mod desktop;
 mod destination;
 #[path = "app/editing.rs"]
 mod editing;
@@ -359,7 +359,7 @@ pub struct App {
         egui::Theme,
     )>,
     /// Edit buffers for the selected layer's name and opacity, committed on release.
-    name_edit: Option<(Uuid, String)>,
+    name_edit: Option<(Uuid, String, paintcraft_ui::composition::Field)>,
     opacity_edit: Option<(Uuid, u8)>,
 }
 

@@ -59,6 +59,7 @@ impl App {
             self.poll_clipboard(&ctx);
             self.poll_paste(&ctx);
             self.guard_canvas_ime(&ctx);
+            self.prepare_name_input(&ctx);
             if !self.closing_workspace
                 && self.confirm.is_none()
                 && self.tab_closing.is_none()

@@ -357,7 +357,7 @@ fn layer_name_and_opacity_drafts_are_not_lost_to_a_prepared_restore() {
         let release = pause_queue(&mut app);
         app.do_recover(offered.clone());
         if editing_name {
-            app.name_edit = Some((layer, "keep this name draft".into()));
+            app.name_edit = Some((layer, "keep this name draft".into(), Default::default()));
         } else {
             app.opacity_edit = Some((layer, 71));
         }

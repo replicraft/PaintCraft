@@ -35,17 +35,33 @@ pub(super) struct Control {
 #[derive(Debug)]
 pub(crate) struct Drafts {
     name: Option<(Uuid, String)>,
+    name_revision: Option<(u64, u64)>,
     opacity: Option<(Uuid, u8)>,
 }
 impl Drafts {
     pub(crate) fn capture(app: &App) -> Self {
         Self {
-            name: app.name_edit.clone(),
+            name: app
+                .name_edit
+                .as_ref()
+                .map(|(id, text, _)| (*id, text.clone())),
+            name_revision: app
+                .name_edit
+                .as_ref()
+                .and_then(|(_, _, field)| field.revision()),
             opacity: app.opacity_edit,
         }
     }
     fn matches(&self, app: &App) -> bool {
-        self.name == app.name_edit && self.opacity == app.opacity_edit
+        self.name.as_ref().map(|(id, text)| (id, text))
+            == app.name_edit.as_ref().map(|(id, text, _)| (id, text))
+            && self.name_revision
+                == app
+                    .name_edit
+                    .as_ref()
+                    .and_then(|(_, _, field)| field.revision())
+            && (app.name_edit.is_none() || self.name_revision.is_some())
+            && self.opacity == app.opacity_edit
     }
 }
 #[derive(Debug)]
