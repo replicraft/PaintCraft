@@ -218,6 +218,7 @@ impl WebApp {
                 ));
             }
             Ok(Loaded {
+                raster_preview: pending.source.entries.is_none(),
                 converted_copy: true,
                 document,
                 name: pending.source.name.clone(),
@@ -227,6 +228,7 @@ impl WebApp {
         match result {
             Ok(loaded) => {
                 self.pending_import = Some(super::Pending {
+                    review: None,
                     loaded,
                     owner: pending.owner,
                 });

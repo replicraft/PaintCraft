@@ -4,6 +4,7 @@ use eframe::egui;
 
 fn loaded() -> Loaded {
     Loaded {
+        raster_preview: true,
         converted_copy: false,
         document: Editor::new(2, 1).unwrap().session.document().clone(),
         name: "new.png".into(),
@@ -29,6 +30,7 @@ fn import_consent_keeps_the_old_session_until_accept_and_cancel_releases_source(
     assert!(app.pending_import.is_none());
     assert!(Arc::ptr_eq(&before, &app.editor.session.snapshot()));
     stage(&mut app, &ctx);
+    let ctx = super::raster_review::tests::authorize(&mut app);
     app.resolve_import(&ctx, true);
     assert_eq!(app.editor.session.document().canvas, (2, 1));
     let accepted = app.editor.session.snapshot();
@@ -131,6 +133,9 @@ fn real_gif_and_tiff_require_translated_browser_consent_in_every_skin() {
                     .unwrap(),
                     &ctx,
                 );
+                h.run();
+                h.get_by_label(&translate(language, "Accept import limitations"))
+                    .click();
                 h.run();
                 h.get_by_role_and_label(egui::Role::Button, &translate(language, "Open image"))
                     .click();

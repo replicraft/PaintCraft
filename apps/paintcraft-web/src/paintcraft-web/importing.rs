@@ -3,6 +3,7 @@ pub(crate) mod icns;
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(crate) mod jxl;
 pub(crate) mod pages;
+mod raster_review;
 pub(crate) mod svg;
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(crate) mod tiff;
@@ -58,6 +59,7 @@ impl Owner {
 pub(crate) struct Pending {
     pub loaded: Loaded,
     pub owner: Owner,
+    review: Option<raster_review::Review>,
 }
 impl WebApp {
     pub(crate) fn accept_loaded(&mut self, loaded: Loaded, ctx: &eframe::egui::Context) {
@@ -72,7 +74,11 @@ impl WebApp {
             .iter()
             .all(|loss| paintcraft_ui::i18n::import_loss_description(loss).is_some())
         {
-            self.pending_import = Some(Pending { loaded, owner });
+            self.pending_import = Some(Pending {
+                loaded,
+                owner,
+                review: None,
+            });
         } else {
             self.message = t!(ctx, "This image contains unsupported import data.");
         }
@@ -89,7 +95,60 @@ impl WebApp {
             self.message = t!(ctx, "The document changed; choose the image again.");
             return;
         }
+        if pending.loaded.raster_preview
+            && !pending
+                .review
+                .as_ref()
+                .is_some_and(|review| review.ready(ctx))
+        {
+            self.pending_import = Some(pending);
+            return;
+        }
         self.install(pending.loaded);
+    }
+    pub(crate) fn raster_import_dialog(&mut self, ctx: &eframe::egui::Context) {
+        let Some(mut pending) = self.pending_import.take() else {
+            return;
+        };
+        if !pending.owner.current(self) {
+            self.message = t!(ctx, "The document changed; choose the image again.");
+            return;
+        }
+        if pending.loaded.raster_preview && pending.review.is_none() {
+            match raster_review::Review::new(ctx, &pending.loaded.document) {
+                Ok(review) => pending.review = Some(review),
+                Err(error) => {
+                    self.message = error.to_string();
+                    return;
+                }
+            }
+        }
+        let (mut accept, mut cancel) = (false, false);
+        eframe::egui::Modal::new(eframe::egui::Id::unique("web-import-losses")).show(ctx, |ui| {
+            ui.heading(t!(ctx, "Open with these import limitations?"));
+            let ready = if let Some(review) = &mut pending.review {
+                review.show(ui, &pending.loaded.losses)
+            } else {
+                for loss in &pending.loaded.losses {
+                    if let Some(description) = paintcraft_ui::i18n::import_loss_description(loss) {
+                        ui.label(t!(ctx, description));
+                    }
+                }
+                true
+            };
+            ui.horizontal(|ui| {
+                accept = ui
+                    .add_enabled(ready, eframe::egui::Button::new(t!(ctx, "Open image")))
+                    .clicked();
+                cancel = ui.button(t!(ctx, "Cancel")).clicked();
+            });
+        });
+        self.pending_import = Some(pending);
+        if ctx.current_pass_index() == 0
+            && (accept || cancel || ctx.input(|input| input.key_pressed(eframe::egui::Key::Escape)))
+        {
+            self.resolve_import(ctx, accept);
+        }
     }
 }
 

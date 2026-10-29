@@ -42,6 +42,7 @@ mod tests {
         let mut app = WebApp::new(&ctx);
         assert_eq!(app.document_title(), "Untitled - PaintCraft");
         app.install(crate::files::Loaded {
+            raster_preview: false,
             converted_copy: false,
             document: paintcraft_document::new_document(
                 12,
@@ -66,6 +67,7 @@ mod tests {
         assert_eq!(app.download_name(None), "旅行.photo.pcnd");
         assert!(Arc::ptr_eq(&original, &app.editor.session.snapshot()));
         app.install(crate::files::Loaded {
+            raster_preview: false,
             converted_copy: false,
             document: (*original).clone(),
             name: "reopened.png".into(),
@@ -85,6 +87,7 @@ fn lossless_converted_copy_is_unsaved_without_needing_a_loss_code() {
     let mut app = WebApp::new(&ctx);
     let doc = app.editor.session.snapshot();
     app.install(crate::files::Loaded {
+        raster_preview: false,
         converted_copy: true,
         document: doc.as_ref().clone(),
         name: "layers.ora".into(),

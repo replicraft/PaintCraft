@@ -53,6 +53,7 @@ fn explicit_page_and_separate_loss_consent_preserve_original_until_accept() {
     assert!(Arc::ptr_eq(&source, &app.editor.session.snapshot()));
     stage(&mut app, &ctx);
     app.choose_page_import(&ctx, 1);
+    let ctx = crate::importing::raster_review::tests::authorize(&mut app);
     app.resolve_import(&ctx, true);
     let doc = app.editor.session.document();
     assert_eq!(doc.canvas, (1, 1));
@@ -118,6 +119,13 @@ fn actual_page_dialog_requires_explicit_selection_and_then_separate_consent() {
     assert!(h.state().pending_pages.is_none());
     assert!(h.state().pending_import.is_some());
     assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
+    assert!(
+        h.get_by_role_and_label(egui::Role::Button, "Open image")
+            .accesskit_node()
+            .is_disabled()
+    );
+    h.get_by_label("Accept import limitations").click();
+    h.run();
     h.get_by_role_and_label(egui::Role::Button, "Open image")
         .click();
     h.run();
@@ -161,6 +169,7 @@ fn selected_pages_have_distinct_stable_document_state_and_layer_identities() {
         let mut app = WebApp::new(&ctx);
         stage(&mut app, &ctx);
         app.choose_page_import(&ctx, page);
+        let ctx = crate::importing::raster_review::tests::authorize(&mut app);
         app.resolve_import(&ctx, true);
         app.editor.session.document().clone()
     };

@@ -147,6 +147,7 @@ impl WebApp {
                             Error::new(ErrorCode::ConflictStaleBase, "ICNS entry preview changed")
                         })?;
                     Ok::<_, Error>(Loaded {
+                        raster_preview: false,
                         converted_copy: true,
                         document: decoded.document(&pending.source.digest)?,
                         name: pending.source.name.clone(),
@@ -156,6 +157,7 @@ impl WebApp {
                 match loaded {
                     Ok(loaded) => {
                         self.pending_import = Some(super::Pending {
+                            review: None,
                             loaded,
                             owner: pending.owner,
                         });

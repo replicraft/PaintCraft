@@ -18,6 +18,8 @@ const FILE_BYTES: usize = 64 * 1024 * 1024;
 
 #[derive(Debug)]
 pub(crate) struct Loaded {
+    /// Set by the flat decoder, never inferred from a name or layer count.
+    pub raster_preview: bool,
     pub converted_copy: bool,
     pub document: Document,
     pub name: String,
@@ -339,6 +341,7 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
             })?
         };
         return Ok(Loaded {
+            raster_preview: false,
             converted_copy: true,
             document: converted.document,
             name,
@@ -347,6 +350,7 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     }
     if family == Family::Pcnd {
         return Ok(Loaded {
+            raster_preview: false,
             converted_copy: false,
             document: pcnd::read_with_limits(bytes, MAX_PIXELS, MAX_PIXELS * 4)?,
             name,
@@ -356,6 +360,7 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     let image = image::decode_with_pixel_limit(bytes, MAX_PIXELS)?;
     let sha = paintcraft_document::hex(&Sha256::digest(bytes));
     Ok(Loaded {
+        raster_preview: true,
         converted_copy: convert
             || (image.format == image::ImageFormat::Dds && !image.losses.is_empty()),
         document: paintcraft_document::import_image(image.width, image.height, &image.rgba, &sha)?,

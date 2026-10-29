@@ -739,31 +739,7 @@ impl WebApp {
             return;
         }
         if self.pending_import.is_some() {
-            let mut accept = false;
-            let mut cancel = false;
-            egui::Modal::new(egui::Id::unique("web-import-losses")).show(ctx, |ui| {
-                ui.heading(t!(ui.ctx(), "Open with these import limitations?"));
-                for loss in &self
-                    .pending_import
-                    .as_ref()
-                    .expect("pending import")
-                    .loaded
-                    .losses
-                {
-                    if let Some(description) = paintcraft_ui::i18n::import_loss_description(loss) {
-                        ui.label(t!(ctx, description));
-                    }
-                }
-                ui.horizontal(|ui| {
-                    accept = ui.button(t!(ui.ctx(), "Open image")).clicked();
-                    cancel = ui.button(t!(ui.ctx(), "Cancel")).clicked();
-                });
-            });
-            if ctx.current_pass_index() == 0
-                && (accept || cancel || ctx.input(|input| input.key_pressed(egui::Key::Escape)))
-            {
-                self.resolve_import(ctx, accept);
-            }
+            self.raster_import_dialog(ctx);
         }
         self.export_dialog(ctx);
         self.icon_export_dialog(ctx);

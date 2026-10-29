@@ -111,6 +111,7 @@ impl WebApp {
                     let document = raster.document(&pending.source.digest, &|| Ok(()))?;
                     let losses = raster.losses;
                     let loaded = Loaded {
+                        raster_preview: false,
                         converted_copy: true,
                         document,
                         name: pending.source.name.clone(),
@@ -138,6 +139,7 @@ impl WebApp {
             Response::Import => {
                 if let Some(loaded) = pending.state.take(ctx) {
                     self.pending_import = Some(super::Pending {
+                        review: None,
                         loaded,
                         owner: pending.owner,
                     });

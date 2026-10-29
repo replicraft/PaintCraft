@@ -55,6 +55,11 @@ fn actual_browser_dds_open_import_review_preserves_nonempty_document_on_cancel_a
                 let ticket = h.state().editor.session.ticket();
                 assert!(h.state().pending_import.is_some());
                 h.get_by_label(&translate(language,"Only the full-size DDS image will be imported. Its smaller mip levels will stay in the source file."));
+                if case != 1 {
+                    h.get_by_label(&translate(language, "Accept import limitations"))
+                        .click();
+                    h.run();
+                }
                 match case {
                     2 => h.state_mut().frontend = paintcraft_ui::actions::Frontend::Classic,
                     3 => h.state_mut().text.preedit = "draft".into(),

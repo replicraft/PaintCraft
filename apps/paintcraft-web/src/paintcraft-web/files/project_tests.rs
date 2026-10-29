@@ -116,6 +116,7 @@ fn layered_paint_conversion_preserves_source_until_consent_and_remains_unbound()
 #[test]
 fn browser_msp_extended_import_and_exact_export_keep_pixels_require_metadata_consent_and_leave_project_unbound()
  {
+    use egui_kittest::{Harness, kittest::Queryable};
     const SOURCE: &[u8] = include_bytes!(
         "../../../../../crates/services/paintcraft-formats/tests/msp-fixtures/raw-9.msp"
     );
@@ -178,7 +179,22 @@ fn browser_msp_extended_import_and_exact_export_keep_pixels_require_metadata_con
             &before,
             &app.editor.session.snapshot()
         ));
-        app.resolve_import(&ctx, accept);
+        if accept {
+            let mut harness = Harness::builder()
+                .with_size(eframe::egui::vec2(1000.0, 800.0))
+                .build_ui_state(
+                    |ui, app: &mut &mut WebApp| app.raster_import_dialog(ui.ctx()),
+                    &mut app,
+                );
+            harness.run();
+            harness.get_by_label("Accept import limitations").click();
+            harness.run();
+            let rendered = harness.ctx.clone();
+            drop(harness);
+            app.resolve_import(&rendered, true);
+        } else {
+            app.resolve_import(&ctx, false);
+        }
     }
     assert_eq!(app.editor.session.document().canvas, (9, 3));
     assert!(app.editor.session.is_dirty());
