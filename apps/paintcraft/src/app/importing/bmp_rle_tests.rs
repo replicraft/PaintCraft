@@ -90,6 +90,13 @@ impl Case {
         }
     }
     fn losses(&self) -> Vec<&'static str> {
+        if !self.name.starts_with("rle") {
+            return if self.name.contains("v40-") {
+                vec![]
+            } else {
+                vec!["bmp-color-metadata-ignored"]
+            };
+        }
         let mut losses = vec!["palette-indices-expanded"];
         if self.name.contains("-icc-") {
             losses.extend(["icc-profile-ignored", "bmp-color-metadata-ignored"]);
@@ -122,6 +129,9 @@ impl Case {
         );
     }
 }
+
+#[path = "bmp16_tests.rs"]
+mod bmp16_tests;
 fn save(app: &mut App, ctx: &egui::Context, path: &Path) {
     app.save_selected(ctx, path.into());
     app.editor.run_pending();

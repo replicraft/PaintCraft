@@ -93,6 +93,13 @@ impl Case {
         }
     }
     fn losses(&self) -> Vec<&'static str> {
+        if !self.name.starts_with("rle") {
+            return if self.name.contains("v40-") {
+                vec![]
+            } else {
+                vec!["bmp-color-metadata-ignored"]
+            };
+        }
         let mut losses = vec!["palette-indices-expanded"];
         if self.name.contains("-icc-") {
             losses.extend(["icc-profile-ignored", "bmp-color-metadata-ignored"]);
@@ -115,6 +122,9 @@ impl Case {
         assert_eq!(rgba, self.pixels, "{} independent raw oracle", self.name);
     }
 }
+
+#[path = "support/bmp16_consumer.rs"]
+mod bmp16_consumer;
 fn assert_ids(a: &Document, b: &Document) {
     assert_eq!(a.document_id, b.document_id);
     assert_eq!(a.state_id, b.state_id);

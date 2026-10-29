@@ -79,6 +79,13 @@ impl Case {
         }
     }
     fn losses(&self) -> Vec<&'static str> {
+        if !self.name.starts_with("rle") {
+            return if self.name.contains("v40-") {
+                vec![]
+            } else {
+                vec!["bmp-color-metadata-ignored"]
+            };
+        }
         let mut losses = vec!["palette-indices-expanded"];
         if self.name.contains("-icc-") {
             losses.extend(["icc-profile-ignored", "bmp-color-metadata-ignored"]);
@@ -103,6 +110,9 @@ impl Case {
         assert_eq!(rgba, self.pixels, "{} independent raw oracle", self.name);
     }
 }
+
+#[path = "bmp16_tests.rs"]
+mod bmp16_tests;
 fn adopt(case: &Case, frontend: Frontend, language: Language) -> WebApp {
     use paintcraft_classic::ClassicVariant;
     let loaded = decode_for_profile(&case.bytes, case.name.clone(), frontend).unwrap();
