@@ -102,6 +102,7 @@ impl PaintingServer {
                     && !paintcraft_formats::avif::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::avif::sdr::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::svg::KNOWN_LOSSES.contains(&code.as_str())
+                    && code.as_str() != paintcraft_formats::tiff_pages::LOSS_OTHER_PAGES
             }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
@@ -145,6 +146,7 @@ impl PaintingServer {
                     Family::Msp=>Some(paintcraft_formats::msp::BYTES_MAX),
                     Family::Icns=>Some(paintcraft_formats::icns::BYTES_MAX),
                     Family::Dds=>Some(paintcraft_formats::dds::BYTES_MAX),
+                    Family::Tiff if p.page.is_some()=>Some(paintcraft_formats::tiff_pages::BYTES_MAX),
                     _=>None,
                 });
             let (bytes,sha,source_identity) = if let Some(limit)=captured_limit {
@@ -169,7 +171,11 @@ impl PaintingServer {
             if matches!(family, Family::Dds | Family::Msp) && source_identity.is_none() {
                 return Err(invalid("DDS/MSP import requires a captured regular source"));
             }
+            if family == Family::Tiff && p.page.is_some() && source_identity.is_none() {
+                return Err(invalid("TIFF page import requires a captured regular source"));
+            }
             let mut icns_entry = None;
+            let mut tiff_assessment = None;
             let (doc, losses) = if let Some(svg) = &p.svg {
                 if !p.allow_losses.iter().any(|code| code == "svg-rasterized") {
                     return Err(paintcraft_core::types::Error::new(
@@ -193,6 +199,10 @@ impl PaintingServer {
                 let document=decoded.document(&sha)?;
                 icns_entry=Some(decoded.entry);
                 (document,decoded.losses)
+            } else if let Some(page) = p.page.filter(|_|family==Family::Tiff) {
+                let converted=super::super::tiff_page::convert(&bytes,page,&sha,&check)?;
+                tiff_assessment=Some(core_json(&converted.assessment)?);
+                (converted.document,converted.losses)
             } else if let Some(entry) = p.entry {
                 let decoded = paintcraft_formats::icons::decode_entry(
                     &bytes,
@@ -232,8 +242,8 @@ impl PaintingServer {
                 ));
             }
             check()?;
-            if family == Family::Dds || (family==Family::Ora && source_identity.is_some()) {
-                let identity = source_identity.as_ref().ok_or_else(|| invalid("DDS import requires a captured .dds source"))?;
+            if family == Family::Dds || (family==Family::Tiff && p.page.is_some()) || (family==Family::Ora && source_identity.is_some()) {
+                let identity = source_identity.as_ref().ok_or_else(|| invalid("conversion requires a captured regular source"))?;
                 identity.verify_bytes(&path, bytes.len() as u64, &Sha256::digest(&bytes).into(), &check)?;
             }
             let mut session = Session::new(doc);
@@ -250,11 +260,15 @@ impl PaintingServer {
                 .svg
                 .map(|selection| selection.font_files)
                 .unwrap_or_default();
-            if matches!(family,Family::Msp|Family::Icns|Family::Dds|Family::Ora) {
+            if tiff_assessment.is_some() || matches!(family,Family::Msp|Family::Icns|Family::Dds|Family::Ora) {
                 let mut value=state.inspection()?;
                 value["conversion"]=json!({"source_sha256":sha,"losses_acknowledged":losses,"source_lineage_adopted":false,"source_format":family.id(),"icns_entry":icns_entry.map(|entry|json!({"index":entry.index,"record":entry.record,"tag":String::from_utf8_lossy(&entry.tag),"width":entry.width,"height":entry.height,"logical_width":entry.logical_width,"logical_height":entry.logical_height,"scale":entry.scale})),"preserving_save":false});
                 if let Some(variant) = ora_variant {
                     value["conversion"]["profile_variant"] = json!(variant);
+                }
+                if let Some(assessment)=tiff_assessment {
+                    value["conversion"]["profile_variant"]=json!(paintcraft_formats::tiff_pages::IMPORT_VARIANT);
+                    value["conversion"]["source_assessment"]=assessment;
                 }
                 Ok(super::state::reply(value))
             } else {state.inspect()}
