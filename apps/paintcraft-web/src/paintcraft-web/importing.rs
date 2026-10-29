@@ -4,6 +4,8 @@ pub(crate) mod icns;
 pub(crate) mod jxl;
 pub(crate) mod pages;
 pub(crate) mod svg;
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub(crate) mod tiff;
 use crate::{app::WebApp, files::Loaded};
 use paintcraft_classic::ClassicVariant;
 use paintcraft_document::Document;

@@ -223,6 +223,12 @@ mod browser {
                 .runner
                 .app_mut::<super::WebApp>()
                 .ok_or_else(|| JsValue::from_str("Editor not started"))?
+                .tiff
+                .attach(value.clone());
+            resources
+                .runner
+                .app_mut::<super::WebApp>()
+                .ok_or_else(|| JsValue::from_str("Editor not started"))?
                 .jxl
                 .attach(value.clone());
             resources

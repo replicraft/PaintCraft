@@ -82,6 +82,7 @@ pub struct WebApp {
     pub(crate) pending_pages: Option<crate::importing::pages::Pending>,
     pub(crate) pending_svg: Option<crate::importing::svg::Pending>,
     pub(crate) jxl: crate::importing::jxl::State,
+    pub(crate) tiff: crate::importing::tiff::State,
     pub(crate) import_owner: Option<crate::importing::Owner>,
     form: Option<forms::Form>,
     pub(crate) message: String,
@@ -157,6 +158,7 @@ impl WebApp {
             pending_svg: None,
             import_owner: None,
             jxl: Default::default(),
+            tiff: Default::default(),
             form: None,
             clipboard: Default::default(),
             paste: Default::default(),
@@ -209,6 +211,7 @@ impl WebApp {
             || self.shapes.open
             || self.confirm_replace.is_some()
             || self.jxl.busy()
+            || self.tiff.busy()
             || self.files.busy
             || self.pending_import.is_some()
             || self.pending_icns.is_some()
@@ -551,6 +554,8 @@ impl WebApp {
             Some(Ok(Outcome::Loaded(loaded))) => self.accept_loaded(loaded, ctx),
             #[cfg(target_arch = "wasm32")]
             Some(Ok(Outcome::Jxl(source))) => self.accept_jxl(source, ctx),
+            #[cfg(target_arch = "wasm32")]
+            Some(Ok(Outcome::Tiff(source))) => self.accept_tiff(source, ctx),
             Some(Ok(Outcome::Icns(source))) => self.accept_icns(source, ctx),
             Some(Ok(Outcome::Pages(source))) => self.accept_pages(source, ctx),
             Some(Ok(Outcome::Svg(source))) => self.accept_svg(source, ctx),
@@ -716,6 +721,9 @@ impl WebApp {
             });
         }
         if self.jxl_dialog(ctx) {
+            return;
+        }
+        if self.tiff_dialog(ctx) {
             return;
         }
         if self.pending_icns.is_some() {

@@ -17,6 +17,7 @@ impl WebApp {
             }
             self.poll_files(&ctx);
             self.poll_jxl(&ctx);
+            self.poll_tiff(&ctx);
             self.poll_dds_export(&ctx);
             self.poll_msp_export(&ctx);
             self.poll_copy(&ctx);

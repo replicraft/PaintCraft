@@ -29,6 +29,8 @@ pub(crate) enum Outcome {
     Loaded(Loaded),
     #[cfg(target_arch = "wasm32")]
     Jxl(crate::importing::jxl::Source),
+    #[cfg(target_arch = "wasm32")]
+    Tiff(crate::importing::tiff::Source),
     Pages(crate::importing::pages::Source),
     Icns(crate::importing::icns::Source),
     Svg(crate::importing::svg::Source),
@@ -149,6 +151,14 @@ impl Files {
                     return Ok(Outcome::Cancelled);
                 };
                 let name = file.file_name();
+                if convert
+                    && frontend == Frontend::Studio
+                    && name.rsplit('.').next().and_then(Family::from_extension)
+                        == Some(Family::Tiff)
+                {
+                    return crate::importing::tiff::Source::new(file.inner().clone())
+                        .map(Outcome::Tiff);
+                }
                 if convert
                     && frontend == Frontend::Studio
                     && name.rsplit('.').next().and_then(Family::from_extension) == Some(Family::Jxl)

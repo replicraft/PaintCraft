@@ -211,9 +211,14 @@ impl WebApp {
     pub(crate) fn jxl_panel(&mut self, ui: &mut eframe::egui::Ui) {
         self.jxl.refresh();
         if self.jxl.quarantined {
+            let paused = if self.tiff.quarantined {
+                super::tiff::PAUSED
+            } else {
+                PAUSED
+            };
             eframe::egui::Panel::top("web-jxl-quarantine").show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(t!(ui.ctx(), PAUSED));
+                    ui.label(t!(ui.ctx(), paused));
                     if ui.button(t!(ui.ctx(), "Download project")).clicked() {
                         self.download(ui.ctx(), false);
                     }
