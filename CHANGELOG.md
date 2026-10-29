@@ -506,6 +506,7 @@
 - preserve completed edits through active input cancellation (f84dfad)
 - translate canvas composition status messages (eca65d9)
 - keep unfinished IME text out of layer renames (0e28d90)
+- scope native host helpers to supported platforms (b0cd93b)
 
 
 ### Maintenance
@@ -638,6 +639,7 @@
 - distinguish debug literals from embedded build declarations (e093881)
 - distinguish actual contact edges from coalesced history (c77c786)
 - prepare version 0.1.1 (4dd3016)
+- validate complete build records across worker profiles (807ff64)
 
 
 ### Performance
