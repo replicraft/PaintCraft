@@ -524,8 +524,8 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = ネイティブのペン入力が停止しました。マウスを使って作業を続け、保存できます。
 
 only-the-selected-tiff-page-will-be-imported = 選択した TIFF のページのみを読み込みます。
-bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP の色の定義は保持されず、カラーマネジメントにも使用されません。
-bmp-metadata-will-not-be-retained = BMP のメタデータは保持されません。
+other-bmp-color-declarations-will-not-be-retained-or-used-for-color-management = その他の BMP の色の定義は保持されず、カラーマネジメントにも使用されません。
+some-bmp-metadata-will-not-be-retained = BMP の一部のメタデータは保持されません。
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = 画像の解像度のメタデータは保持されません。ピクセル単位の寸法は変わりません。
 original-jpeg-metadata-will-not-be-retained = 元の JPEG メタデータは保持されません。
 device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = デバイス CMYK/YCCK のサンプルは、元の ICC プロファイルを使用せず数値計算で RGB に変換されます。色が異なる場合があります。

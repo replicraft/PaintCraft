@@ -524,8 +524,8 @@ pen-input-reached-its-contact-limit-save-your-work-then-reload-this-page-to-rest
 native-pen-input-stopped-you-can-keep-using-the-mouse-and-save-your-work = Die native Stifteingabe wurde beendet. Sie können die Maus weiterverwenden und Ihre Arbeit speichern.
 
 only-the-selected-tiff-page-will-be-imported = Nur die ausgewählte TIFF-Seite wird importiert.
-bmp-color-declarations-will-not-be-retained-or-used-for-color-management = BMP-Farbangaben werden weder beibehalten noch für das Farbmanagement verwendet.
-bmp-metadata-will-not-be-retained = BMP-Metadaten werden nicht beibehalten.
+other-bmp-color-declarations-will-not-be-retained-or-used-for-color-management = Weitere BMP-Farbangaben werden weder beibehalten noch für das Farbmanagement verwendet.
+some-bmp-metadata-will-not-be-retained = Einige BMP-Metadaten werden nicht beibehalten.
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = Die Auflösungsmetadaten des Bildes werden nicht beibehalten; die Pixelabmessungen bleiben unverändert.
 original-jpeg-metadata-will-not-be-retained = Die ursprünglichen JPEG-Metadaten werden nicht beibehalten.
 device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = Geräte-CMYK/YCCK-Werte werden ohne Verwendung des ICC-Quellprofils numerisch in RGB umgerechnet. Die Farben können abweichen.

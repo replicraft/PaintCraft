@@ -27,7 +27,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
             "Other PNG color declarations will not be retained or used for color management."
         }
         "bmp-color-metadata-ignored" => {
-            "BMP color declarations will not be retained or used for color management."
+            "Other BMP color declarations will not be retained or used for color management."
         }
         "png-metadata-ignored" => "Some PNG metadata will not be retained.",
         "icc-source-retained-unapplied" => {
@@ -37,7 +37,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
             "Original image resolution will be kept as source information, not used as active print settings."
         }
         "source-metadata-omitted" => "Original source metadata is omitted from this exported copy.",
-        "bmp-metadata-ignored" => "BMP metadata will not be retained.",
+        "bmp-metadata-ignored" => "Some BMP metadata will not be retained.",
         "resolution-metadata-ignored" => {
             "Image resolution metadata will not be retained; pixel dimensions will stay unchanged."
         }
