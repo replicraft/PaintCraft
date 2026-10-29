@@ -1,6 +1,53 @@
 use paintcraft_core::types::ErrorCode;
 use paintcraft_formats::icons::{self, Encoding, Kind};
 
+fn indexed_fixture(name: &str) -> Vec<u8> {
+    std::fs::read(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/bmp-indexed-fixtures")
+            .join(name),
+    )
+    .unwrap()
+}
+
+#[test]
+fn bitmap_declared_indices_are_checked_even_when_hidden_by_and_mask() {
+    for depth in [1, 4, 8] {
+        let name = format!("rgb{depth}-bottom.ico");
+        let bytes = indexed_fixture(&name);
+        let before = bytes.clone();
+        let decoded = icons::decode_entry(&bytes, 0, 39).unwrap();
+        assert_eq!(decoded.rgba, indexed_fixture(&(name + ".rgba")));
+        assert_eq!(decoded.losses, ["icon-palette-expanded"]);
+        assert_eq!(before, bytes);
+        let broken = indexed_fixture(&format!("rgb{depth}-bottom-undeclared.ico"));
+        assert!(icons::inspect(&broken).is_err());
+        assert!(icons::decode_entry(&broken, 0, 39).is_err());
+        // Mask every source pixel, so no malformed index is visibly exposed.
+        // Hidden authored indices still must be in the declared source domain.
+        let mut hidden = broken.clone();
+        let end = hidden.len();
+        hidden[end - 12..].fill(255);
+        assert!(icons::inspect(&hidden).is_err());
+    }
+}
+
+#[test]
+fn unchecked_upstream_ico_palette_access_is_not_reachable_from_import() {
+    let bytes = indexed_fixture("rgb4-bottom-undeclared.ico");
+    let unchecked = std::panic::catch_unwind(|| {
+        ico::IconDir::read(std::io::Cursor::new(&bytes))
+            .unwrap()
+            .entries()[0]
+            .decode()
+    });
+    assert!(
+        unchecked.is_err(),
+        "pinned decoder indexes its declared-count table unchecked"
+    );
+    assert!(icons::decode_entry(&bytes, 0, 39).is_err());
+}
+
 fn fixture(cursor: bool) -> Vec<u8> {
     let mut directory = ico::IconDir::new(if cursor {
         ico::ResourceType::Cursor

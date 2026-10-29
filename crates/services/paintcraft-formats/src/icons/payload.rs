@@ -184,5 +184,24 @@ fn bitmap(data: &[u8], width: u32, height: u32) -> Result<(Encoding, u16, u32)> 
     if data.len() as u64 != 40 + u64::from(colors) * 4 + u64::from(xor + mask) {
         return Err(malformed("icon bitmap pixel or mask length mismatch"));
     }
+    if bits <= 8 {
+        // The selected decoder indexes its declared palette without a bounds
+        // check. Validate XOR indices, including pixels hidden by the AND mask.
+        // Unused packed bits and physical row padding are not samples.
+        let start = 40 + colors as usize * 4;
+        let stride = (width * u32::from(bits)).div_ceil(32) as usize * 4;
+        for row in data[start..start + xor as usize].chunks_exact(stride) {
+            for x in 0..width as usize {
+                let index = match bits {
+                    8 => row[x],
+                    4 => (row[x / 2] >> if x % 2 == 0 { 4 } else { 0 }) & 15,
+                    _ => (row[x / 8] >> (7 - x % 8)) & 1,
+                };
+                if u32::from(index) >= colors {
+                    return Err(malformed("icon bitmap index exceeds declared palette"));
+                }
+            }
+        }
+    }
     Ok((Encoding::Bitmap, bits, colors))
 }
