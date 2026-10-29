@@ -27,7 +27,21 @@ impl Editor {
     }
     pub fn open(path: &Path) -> Result<Editor> {
         let (bytes, binding) = crate::destination::acquire(path)?;
-        let mut e = Editor::with_document(pcnd::read(&bytes)?, Some(path.to_path_buf()));
+        // Standalone controllers share the same process-owned metadata realm as
+        // App/service controllers; this clone is not a fresh per-read allowance.
+        let metadata = paintcraft_raster::Admission::new(0).paint_metadata_budget();
+        let document = pcnd::read_with_metadata_admission_checked(
+            &bytes,
+            u64::MAX,
+            paintcraft_core::types::policy::STAGED_PIXELS_MAX,
+            paintcraft_document::LAYER_COUNT_MAX,
+            pcnd::MetadataAdmission {
+                bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                budget: &metadata,
+            },
+            &|| Ok(()),
+        )?;
+        let mut e = Editor::with_document(document, Some(path.to_path_buf()));
         e.destination = Some(binding);
         e.status = format!("Opened {}", path.display());
         Ok(e)

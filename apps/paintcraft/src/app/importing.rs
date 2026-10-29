@@ -12,6 +12,8 @@ mod dds;
 mod icns;
 #[path = "importing/icons.rs"]
 mod icons;
+#[path = "importing/metadata.rs"]
+mod metadata;
 #[path = "importing/msp.rs"]
 mod msp;
 #[path = "importing/native_codec.rs"]
@@ -62,6 +64,7 @@ pub(super) struct Pending {
     path: PathBuf,
     digest: String,
     raster_key: Option<paintcraft_document::RasterConversionKey>,
+    source_metadata: Option<paintcraft_document::SourceMetadata>,
     review: Option<raster_review::Review>,
     owner: Uuid,
     base: Arc<paintcraft_document::Document>,
@@ -136,6 +139,7 @@ impl App {
             path,
             digest,
             raster_key: None,
+            source_metadata: None,
             review: None,
             owner: self.active_tab_id(),
             base: self.editor.document_snapshot(),
@@ -198,7 +202,7 @@ impl App {
             }
             let converted = pending.convert
                 || matches!(&pending.candidate, Candidate::Layered(_))
-                || matches!(&pending.candidate, Candidate::Raster(image) if image.format == ImageFormat::Dds && !image.losses.is_empty());
+                || matches!(&pending.candidate, Candidate::Raster(image) if !image.losses.is_empty());
             let document = match pending.candidate {
                 Candidate::Raster(image) => import_image(
                     image.width,
@@ -219,6 +223,9 @@ impl App {
                     unreachable!("entry selection is resolved separately")
                 }
             };
+            let document =
+                document.with_source_metadata_checked(pending.source_metadata, &|| Ok(()))?;
+            paintcraft_formats::pcnd::check_metadata_admission(&document, &|| Ok(()))?;
             let mut editor = Editor::with_document(document, None);
             if converted {
                 editor.invalidate_saved_state();
@@ -352,3 +359,7 @@ mod jpeg_tests;
 #[cfg(test)]
 #[path = "importing/bmp_rle_tests.rs"]
 mod bmp_rle_tests;
+
+#[cfg(test)]
+#[path = "importing/png_metadata_tests.rs"]
+mod png_metadata_tests;

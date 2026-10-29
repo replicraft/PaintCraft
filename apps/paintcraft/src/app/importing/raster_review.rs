@@ -113,13 +113,7 @@ impl App {
             return;
         };
         if pending.review.is_none() {
-            // Reuse the native metadata realm when available. The UI-only
-            // fallback remains bounded to the maximum thumbnail copy extent.
-            let budget = self
-                .editing
-                .as_ref()
-                .map(|service| service.metadata_budget())
-                .unwrap_or_else(|| SharedBudget::new(SIDE * SIDE * 8));
+            let budget = self.source_metadata_budget();
             match Review::new(ctx, image, budget) {
                 Ok(review) => pending.review = Some(review),
                 Err(error) => {

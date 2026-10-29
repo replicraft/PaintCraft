@@ -464,7 +464,7 @@ impl App {
         }
         // Keep PCND association semantics and decode the same bounded acquisition.
         let mut editor = Editor::with_document(
-            paintcraft_formats::pcnd::read(&bytes)?,
+            self.read_project_with_metadata(&bytes)?,
             Some(path.to_path_buf()),
         );
         editor.bind_destination(Some(binding));
