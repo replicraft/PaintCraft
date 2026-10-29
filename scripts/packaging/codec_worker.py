@@ -38,12 +38,26 @@ JXR_VARIANTS = FLOAT_VARIANTS + ["native-jxr-writer-rgb8-worker-v1"]
 JXR_EXPORT_VARIANTS = ["native-jxr-rgb8-lossless-worker-v1"]
 PRIVATE_JXR_BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V8_JXR_ENCODE_PRIVATE\0"
 
+JXL_INTEGER_VARIANT = "native-jxl-integer-srgb8-worker-v1"
+JXL_INTEGER_TAIL = b"JXL_INTEGER8_16_RGBA8_ROUND257_REPORT96_INPUT67108864_PIXELS4194304\0END_CODEC_WORKER_BUILD\0"
+JXL_INTEGER_BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V9_JXL_INTEGER\0"
+JXL_INTEGER_BUILD_SUFFIX = FLOAT_BUILD_SUFFIX.removesuffix(b"END_CODEC_WORKER_BUILD\0") + JXL_INTEGER_TAIL
+JXL_INTEGER_PROFILE = "native-v9-jxl-integer8-16-srgb8-parent-lease1"
+JXL_INTEGER_VARIANTS = FLOAT_VARIANTS + [JXL_INTEGER_VARIANT]
+JXL_INTEGER_JXR_BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V10_JXL_INTEGER_JXR\0"
+JXL_INTEGER_JXR_BUILD_SUFFIX = JXR_BUILD_SUFFIX.removesuffix(b"END_CODEC_WORKER_BUILD\0") + JXL_INTEGER_TAIL
+JXL_INTEGER_JXR_PROFILE = "native-v10-jxl-integer8-16-srgb8-jxr-rgb8-lossless-parent-lease1"
+JXL_INTEGER_JXR_VARIANTS = JXR_VARIANTS + [JXL_INTEGER_VARIANT]
+ENCODER_PROFILES = (JXR_PROFILE, JXL_INTEGER_JXR_PROFILE)
+
 
 def variants(profile):
     known = {NATIVE_PROFILE: NATIVE_VARIANTS,
              AVIF_PROFILE: NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"],
              AVIF_SDR_PROFILE: FLOAT_VARIANTS[:5], FLOAT_PROFILE: FLOAT_VARIANTS,
-             JXR_PROFILE: JXR_VARIANTS}
+             JXR_PROFILE: JXR_VARIANTS,
+             JXL_INTEGER_PROFILE: JXL_INTEGER_VARIANTS,
+             JXL_INTEGER_JXR_PROFILE: JXL_INTEGER_JXR_VARIANTS}
     if profile not in known:
         raise ValueError("Unknown codec qualification profile")
     return known[profile]
@@ -51,7 +65,8 @@ def variants(profile):
 
 def notices(profile):
     variants(profile)  # Never infer compatibility from a version ordering.
-    return NOTICES + ((FLOAT_NOTICE,) if profile in (FLOAT_PROFILE, JXR_PROFILE) else ())
+    return NOTICES + ((FLOAT_NOTICE,) if profile in
+                      (FLOAT_PROFILE, JXR_PROFILE, JXL_INTEGER_PROFILE, JXL_INTEGER_JXR_PROFILE) else ())
 
 
 def parse_manifest(data):
@@ -70,7 +85,7 @@ def parse_manifest(data):
     if not isinstance(value, dict):
         raise ValueError("Codec helper manifest must be an object")
     profile = value.get("profile")
-    if profile == JXR_PROFILE:
+    if profile in ENCODER_PROFILES:
         fields |= {"encode_protocol_version", "qualified_export_variants"}
     if set(value) != fields:
         raise ValueError("Codec helper manifest fields differ from exact schema")
@@ -79,8 +94,8 @@ def parse_manifest(data):
     expected = variants(profile)
     version = value["application_version"]
     target = value["target"]
-    schema = 3 if profile == JXR_PROFILE else 2
-    if profile == JXR_PROFILE and (
+    schema = 3 if profile in ENCODER_PROFILES else 2
+    if profile in ENCODER_PROFILES and (
             type(value["encode_protocol_version"]) is not int
             or value["encode_protocol_version"] != 1
             or value["qualified_export_variants"] != JXR_EXPORT_VARIANTS):
@@ -115,6 +130,8 @@ def verify_build_record(helper, version):
                   NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"]),
                  (FLOAT_BUILD_PREFIX, FLOAT_BUILD_SUFFIX, FLOAT_PROFILE, FLOAT_VARIANTS),
                  (JXR_BUILD_PREFIX, JXR_BUILD_SUFFIX, JXR_PROFILE, JXR_VARIANTS),
+                 (JXL_INTEGER_BUILD_PREFIX, JXL_INTEGER_BUILD_SUFFIX, JXL_INTEGER_PROFILE, JXL_INTEGER_VARIANTS),
+                 (JXL_INTEGER_JXR_BUILD_PREFIX, JXL_INTEGER_JXR_BUILD_SUFFIX, JXL_INTEGER_JXR_PROFILE, JXL_INTEGER_JXR_VARIANTS),
                  (PRIVATE_JXR_BUILD_PREFIX, JXR_BUILD_SUFFIX, None, None)]
     with helper.open("rb") as stream:
         with mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as image:
@@ -182,7 +199,7 @@ def installed_metadata(directory, version, target):
     release.validate_binary(target, helper)
     profile, variants = verify_build_record(helper, version)
     value = {
-        "schema_version": 3 if profile == JXR_PROFILE else 2,
+        "schema_version": 3 if profile in ENCODER_PROFILES else 2,
         "embedded_build_record_verified": True,
         "application_version": version,
         "target": target,
@@ -193,7 +210,7 @@ def installed_metadata(directory, version, target):
         "requested_heap_ceiling_bytes": 256 << 20,
         "qualified_import_variants": variants,
     }
-    if profile == JXR_PROFILE:
+    if profile in ENCODER_PROFILES:
         value["encode_protocol_version"] = 1
         value["qualified_export_variants"] = JXR_EXPORT_VARIANTS
     return value
