@@ -1,0 +1,280 @@
+{
+  "schema": "paintcraft.bmp16-oracles/v1",
+  "width": 65,
+  "height": 3,
+  "scaling": "nearest integer sample*255/(2^bits-1); unused RGB555 bit15 ignored; opaque alpha",
+  "ffmpeg": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers",
+  "ffmpeg_binary_sha256": "59f30b63d07048598b29f0f4da3e07677f9c654f71d3596d9c19f611280a304a",
+  "fixtures": [
+    {
+      "file": "rgb555-v40-bottom.bmp",
+      "sha256": "632e96227ecf2a61e689e05b9f0a0651baad32d3ca4a5389031ec27a30025aee",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 40,
+      "mode": "rgb555",
+      "top_down": false,
+      "masks": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "rgb555-v40-top.bmp",
+      "sha256": "994db56e5fdfebdc48666547c206e5a6e7a037c5a9523f43495606bb6b59bffb",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 40,
+      "mode": "rgb555",
+      "top_down": true,
+      "masks": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "masks555-v40-bottom.bmp",
+      "sha256": "3d16767e0c4966e8763e971b403a980ac997b16eda56f6cd64937703127bdae4",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 40,
+      "mode": "masks555",
+      "top_down": false,
+      "masks": [
+        31744,
+        992,
+        31
+      ]
+    },
+    {
+      "file": "masks555-v40-top.bmp",
+      "sha256": "2368167d07e692ee1d0314c770e41b101566535dcb14928d5574b4a14310b464",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 40,
+      "mode": "masks555",
+      "top_down": true,
+      "masks": [
+        31744,
+        992,
+        31
+      ]
+    },
+    {
+      "file": "masks565-v40-bottom.bmp",
+      "sha256": "c00b3a53bfc14d622c85d11c52d416d6911b2ee0300299b8fa6c5bcc84675209",
+      "expected_sha256": "76d550eab722ef2336a01f6e63af495ac019d6b4db7c9a595413eb2badfe1a36",
+      "ffmpeg_sha256": "320b11d50a37a10bc8c1bd68222ad79ad0a8d6c381bfb6526c22967e7a9b7ba4",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 40,
+      "mode": "masks565",
+      "top_down": false,
+      "masks": [
+        63488,
+        2016,
+        31
+      ]
+    },
+    {
+      "file": "masks565-v40-top.bmp",
+      "sha256": "95bbbf8d8f200ce91c17b6f3a187738834fd049109bdebb36436f31d24327443",
+      "expected_sha256": "76d550eab722ef2336a01f6e63af495ac019d6b4db7c9a595413eb2badfe1a36",
+      "ffmpeg_sha256": "320b11d50a37a10bc8c1bd68222ad79ad0a8d6c381bfb6526c22967e7a9b7ba4",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 40,
+      "mode": "masks565",
+      "top_down": true,
+      "masks": [
+        63488,
+        2016,
+        31
+      ]
+    },
+    {
+      "file": "rgb555-v108-bottom.bmp",
+      "sha256": "bf1a822612aff12b8199ffdb12e68e70c7f13eaee028efb4fbecac94428c30c6",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 108,
+      "mode": "rgb555",
+      "top_down": false,
+      "masks": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "rgb555-v108-top.bmp",
+      "sha256": "7112221fc91b95025160752af8f00a16b32a5fabdd4b247fa741884e698100d1",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 108,
+      "mode": "rgb555",
+      "top_down": true,
+      "masks": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "masks555-v108-bottom.bmp",
+      "sha256": "faa903bfc31c35cc8f97938821b395c2b0abfba5a07fde7b9f17b311fddf01d1",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 108,
+      "mode": "masks555",
+      "top_down": false,
+      "masks": [
+        31744,
+        992,
+        31
+      ]
+    },
+    {
+      "file": "masks555-v108-top.bmp",
+      "sha256": "1df5eb7a0c33bbb4bbbfef8a6fdaf877f74bbaca605551bdde22f02e819a132b",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 108,
+      "mode": "masks555",
+      "top_down": true,
+      "masks": [
+        31744,
+        992,
+        31
+      ]
+    },
+    {
+      "file": "masks565-v108-bottom.bmp",
+      "sha256": "afcde93711c1297917fe7a4c6fb8f701f66155f371b4da0bfbbaf13c83787e2b",
+      "expected_sha256": "76d550eab722ef2336a01f6e63af495ac019d6b4db7c9a595413eb2badfe1a36",
+      "ffmpeg_sha256": "320b11d50a37a10bc8c1bd68222ad79ad0a8d6c381bfb6526c22967e7a9b7ba4",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 108,
+      "mode": "masks565",
+      "top_down": false,
+      "masks": [
+        63488,
+        2016,
+        31
+      ]
+    },
+    {
+      "file": "masks565-v108-top.bmp",
+      "sha256": "6e2a29eaad4ca9d8b28aaa07bb6ed013de7b509f2cbd21498069377366491d3f",
+      "expected_sha256": "76d550eab722ef2336a01f6e63af495ac019d6b4db7c9a595413eb2badfe1a36",
+      "ffmpeg_sha256": "320b11d50a37a10bc8c1bd68222ad79ad0a8d6c381bfb6526c22967e7a9b7ba4",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 108,
+      "mode": "masks565",
+      "top_down": true,
+      "masks": [
+        63488,
+        2016,
+        31
+      ]
+    },
+    {
+      "file": "rgb555-v124-bottom.bmp",
+      "sha256": "54e1fe149ace15255602539ffd66d4d6c7699374d51ac82a2d51af295044d76d",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 124,
+      "mode": "rgb555",
+      "top_down": false,
+      "masks": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "rgb555-v124-top.bmp",
+      "sha256": "6af580a6c72b0c43bc4da42877bd8352e53cfac3586fb45a55483dd5e985e7bf",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 124,
+      "mode": "rgb555",
+      "top_down": true,
+      "masks": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "masks555-v124-bottom.bmp",
+      "sha256": "b8060dce511e98baf469a7139627d836e6ea3cfdb7e1ac08c3efdc2625e0fa41",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 124,
+      "mode": "masks555",
+      "top_down": false,
+      "masks": [
+        31744,
+        992,
+        31
+      ]
+    },
+    {
+      "file": "masks555-v124-top.bmp",
+      "sha256": "86f5dc4202230f1199c2a172abb1ea1efdaf9f30dfde1551d51c5e0ffc29144b",
+      "expected_sha256": "61bb08ef49bd0cae2d7284befa98a34100938fc3337ac4a4cbd4a9951b8d10df",
+      "ffmpeg_sha256": "b56bd1a215d07647792d12ef633e969f0837810b8b773efaa66b49b4834f2bd8",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 124,
+      "mode": "masks555",
+      "top_down": true,
+      "masks": [
+        31744,
+        992,
+        31
+      ]
+    },
+    {
+      "file": "masks565-v124-bottom.bmp",
+      "sha256": "c6930df8fd31f131eae0592811cc6341843e5022f10fd685a69a4e325c49e59b",
+      "expected_sha256": "76d550eab722ef2336a01f6e63af495ac019d6b4db7c9a595413eb2badfe1a36",
+      "ffmpeg_sha256": "320b11d50a37a10bc8c1bd68222ad79ad0a8d6c381bfb6526c22967e7a9b7ba4",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 124,
+      "mode": "masks565",
+      "top_down": false,
+      "masks": [
+        63488,
+        2016,
+        31
+      ]
+    },
+    {
+      "file": "masks565-v124-top.bmp",
+      "sha256": "df847e85808f46454c2eda1a902d733d2a8115c5155b4f6688aa93ac88f5ed14",
+      "expected_sha256": "76d550eab722ef2336a01f6e63af495ac019d6b4db7c9a595413eb2badfe1a36",
+      "ffmpeg_sha256": "320b11d50a37a10bc8c1bd68222ad79ad0a8d6c381bfb6526c22967e7a9b7ba4",
+      "ffmpeg_max_channel_difference": 1,
+      "header": 124,
+      "mode": "masks565",
+      "top_down": true,
+      "masks": [
+        63488,
+        2016,
+        31
+      ]
+    }
+  ]
+}

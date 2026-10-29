@@ -693,15 +693,24 @@ fn admit_bmp(bytes: &[u8], pixels: u64) -> Result<()> {
             "BMP exceeds the caller pixel allowance",
         ));
     }
-    if !matches!(bpp, 1 | 4 | 8 | 24 | 32) {
+    if !matches!(bpp, 1 | 4 | 8 | 16 | 24 | 32) {
         return Err(unsupported("unsupported BMP bit depth"));
     }
     let masks_size = match compression {
         0 => 0,
-        3 if bpp == 32 => {
+        3 if matches!(bpp, 16 | 32) => {
             let masks = (le32(bytes, 54)?, le32(bytes, 58)?, le32(bytes, 62)?);
             let alpha = if dib >= 108 { le32(bytes, 66)? } else { 0 };
-            if masks != (0x00ff0000, 0x0000ff00, 0x000000ff) || !matches!(alpha, 0 | 0xff000000) {
+            let supported = match bpp {
+                16 => {
+                    matches!(masks, (0x7c00, 0x03e0, 0x001f) | (0xf800, 0x07e0, 0x001f))
+                        && alpha == 0
+                }
+                _ => {
+                    masks == (0x00ff0000, 0x0000ff00, 0x000000ff) && matches!(alpha, 0 | 0xff000000)
+                }
+            };
+            if !supported {
                 return Err(unsupported("unsupported BMP channel masks"));
             }
             if dib == 40 { 12 } else { 0 }

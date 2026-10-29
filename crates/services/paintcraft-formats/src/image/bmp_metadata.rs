@@ -121,7 +121,7 @@ pub fn inspect_with_metadata_limit(
     }
     let bpp = u16_at(bytes, 28)?;
     let compression = u32_at(bytes, 30)?;
-    if !matches!(bpp, 1 | 4 | 8 | 24 | 32) {
+    if !matches!(bpp, 1 | 4 | 8 | 16 | 24 | 32) {
         return Err(facts::unsupported("Unsupported BMP source depth"));
     }
     let mut masks = [0; 4];
@@ -129,16 +129,26 @@ pub fn inspect_with_metadata_limit(
         0 => 0,
         1 if bpp == 8 && !top_down => 0,
         2 if bpp == 4 && !top_down => 0,
-        3 if bpp == 32 => {
+        3 if matches!(bpp, 16 | 32) => {
             for (i, value) in masks[..3].iter_mut().enumerate() {
                 *value = u32_at(bytes, 54 + i * 4)?;
             }
             if dib >= 108 {
                 masks[3] = u32_at(bytes, 66)?;
             }
-            if masks[..3] != [0x00ff0000, 0x0000ff00, 0x000000ff]
-                || !matches!(masks[3], 0 | 0xff000000)
-            {
+            let supported = match bpp {
+                16 => {
+                    matches!(
+                        masks[..3],
+                        [0x7c00, 0x03e0, 0x001f] | [0xf800, 0x07e0, 0x001f]
+                    ) && masks[3] == 0
+                }
+                _ => {
+                    masks[..3] == [0x00ff0000, 0x0000ff00, 0x000000ff]
+                        && matches!(masks[3], 0 | 0xff000000)
+                }
+            };
+            if !supported {
                 return Err(facts::unsupported("Unsupported BMP source channel masks"));
             }
             if dib == 40 { 12 } else { 0 }

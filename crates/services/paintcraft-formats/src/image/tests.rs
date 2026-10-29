@@ -210,7 +210,7 @@ fn hostile_images_are_refused_without_large_allocations() {
             ErrorCode::CapabilityUnsupported,
         ),
         (
-            bmp(16, 1, 1, 0, &[], &[0; 4]),
+            bmp(12, 1, 1, 0, &[], &[0; 4]),
             ErrorCode::CapabilityUnsupported,
         ),
         (bmp(24, 0, 1, 0, &[], &[]), ErrorCode::CodecFailed),
