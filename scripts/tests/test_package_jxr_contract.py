@@ -82,8 +82,8 @@ class JxrContractTests(unittest.TestCase):
             codec_worker.parse_manifest(duplicate.encode())
         correct = self.helper.read_bytes()
         for changed in [correct.replace(codec_worker.JXR_BUILD_PREFIX, codec_worker.PRIVATE_JXR_BUILD_PREFIX),
-                        correct + codec_worker.PRIVATE_JXR_BUILD_PREFIX,
-                        correct + codec_worker.FLOAT_BUILD_PREFIX,
+                        correct + codec_worker.PRIVATE_JXR_BUILD_PREFIX + self.version.encode() + codec_worker.JXR_BUILD_SUFFIX,
+                        correct + codec_worker.FLOAT_BUILD_PREFIX + self.version.encode() + codec_worker.FLOAT_BUILD_SUFFIX,
                         correct + codec_worker.JXR_BUILD_PREFIX + self.version.encode() + codec_worker.JXR_BUILD_SUFFIX,
                         correct.replace(b"SEEK_CAP2", b"SEEK_CAP1"),
                         correct.replace(b"SIDES65536", b"SIDES65535")]:

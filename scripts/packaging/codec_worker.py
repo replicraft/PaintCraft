@@ -114,24 +114,35 @@ def verify_build_record(helper, version):
                  (AVIF_SDR_BUILD_PREFIX, AVIF_SDR_BUILD_SUFFIX, AVIF_SDR_PROFILE,
                   NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"]),
                  (FLOAT_BUILD_PREFIX, FLOAT_BUILD_SUFFIX, FLOAT_PROFILE, FLOAT_VARIANTS),
-                 (JXR_BUILD_PREFIX, JXR_BUILD_SUFFIX, JXR_PROFILE, JXR_VARIANTS)]
+                 (JXR_BUILD_PREFIX, JXR_BUILD_SUFFIX, JXR_PROFILE, JXR_VARIANTS),
+                 (PRIVATE_JXR_BUILD_PREFIX, JXR_BUILD_SUFFIX, None, None)]
     with helper.open("rb") as stream:
         with mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as image:
-            if image.find(PRIVATE_JXR_BUILD_PREFIX) >= 0:
-                raise ValueError("Private JXR worker is not a packaging contract")
-            found = [contract for contract in contracts if image.find(contract[0]) >= 0]
+            found = []
+            for prefix, suffix, profile, variants in contracts:
+                offset = image.find(prefix)
+                while offset >= 0:
+                    start = offset + len(prefix)
+                    end = image.find(b"\0", start, min(len(image), start + 65))
+                    if end >= start:
+                        declared_version = image[start:end]
+                        complete = image[end:end + len(suffix)] == suffix
+                        version_shaped = re.fullmatch(rb"[0-9][A-Za-z0-9.+-]{0,63}", declared_version)
+                        # Linkers can retain bare library marker constants. Only a
+                        # bounded version plus a contract tail declares capability;
+                        # version-shaped malformed declarations still fail closed.
+                        if complete or version_shaped:
+                            if profile is None:
+                                raise ValueError("Private JXR worker is not a packaging contract")
+                            if not complete or not declared_version or declared_version != version.encode("ascii"):
+                                raise ValueError("Codec helper compiled version/protocol/heap record mismatch")
+                            found.append((profile, variants))
+                    elif re.fullmatch(rb"[0-9][A-Za-z0-9.+-]*", image[start:start + 65]):
+                        raise ValueError("Codec helper build record version is truncated or oversized")
+                    offset = image.find(prefix, offset + len(prefix))
             if len(found) != 1:
                 raise ValueError("Codec helper must contain exactly one known build contract")
-            prefix, suffix, profile, variants = found[0]
-            expected = prefix + version.encode("ascii") + suffix
-            offset = image.find(prefix)
-            if profile == JXR_PROFILE and image.find(prefix, offset + len(prefix)) >= 0:
-                raise ValueError("JXR helper must contain exactly one public build record")
-            while offset >= 0:
-                if image[offset:offset + len(expected)] != expected:
-                    raise ValueError("Codec helper compiled version/protocol/heap record mismatch")
-                offset = image.find(prefix, offset + len(expected))
-            return profile, variants
+            return found[0]
 
 
 def filename(target):

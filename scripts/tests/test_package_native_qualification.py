@@ -61,7 +61,7 @@ class CandidateTests(unittest.TestCase):
         cli, helper = self.candidate(target, "negative")
         original = helper.read_bytes()
         for changed in [original.replace(codec_worker.JXR_BUILD_PREFIX, codec_worker.PRIVATE_JXR_BUILD_PREFIX),
-                        original + codec_worker.JXR_BUILD_PREFIX,
+                        original + codec_worker.JXR_BUILD_PREFIX + self.version.encode() + codec_worker.JXR_BUILD_SUFFIX,
                         original.replace(b"JXR_RGB8_LOSSLESS_SEEK_CAP2", b"JXR_RGB8_LOSSLESS_SEEK_CAP0"),
                         original.replace(codec_worker.JXR_BUILD_PREFIX, b"UNKNOWN_WORKER_RECORD\0")]:
             with self.subTest(changed=changed[-30:]):

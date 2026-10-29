@@ -109,7 +109,7 @@ class CodecWorkerTests(unittest.TestCase):
             codec_worker.copy(self.binary, destination, self.version, self.target)
         self.assertEqual(foreign.read_bytes(), expected)
 
-    def test_avif_contract_and_license_are_exact_and_ambiguous_markers_refuse(self):
+    def test_avif_contract_and_license_are_exact_and_ambiguous_declarations_refuse(self):
         original = self.helper.read_bytes()
         v5 = original.replace(codec_worker.BUILD_PREFIX, codec_worker.AVIF_BUILD_PREFIX).replace(codec_worker.BUILD_SUFFIX, codec_worker.AVIF_BUILD_SUFFIX)
         self.helper.write_bytes(v5)
@@ -121,7 +121,7 @@ class CodecWorkerTests(unittest.TestCase):
         self.assertEqual(metadata["qualified_import_variants"], codec_worker.NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"])
         self.assertEqual((destination / codec_worker.AVIF_NOTICE).read_bytes(), (release.ROOT / "apps/paintcraft-codec-worker/vendor/dav1d/COPYING").read_bytes())
         codec_worker.verify_manifest(destination, self.version, self.target)
-        for invalid in [v5 + codec_worker.BUILD_PREFIX, v5.replace(b"ALLOC1", b"ALLOC0"),
+        for invalid in [v5 + codec_worker.BUILD_PREFIX + self.version.encode() + codec_worker.BUILD_SUFFIX, v5.replace(b"ALLOC1", b"ALLOC0"),
                         v5.replace(b"DAV1D154", b"DAV1D130")]:
             self.helper.write_bytes(invalid)
             with self.assertRaises(ValueError):
@@ -145,7 +145,8 @@ class CodecWorkerTests(unittest.TestCase):
                 self.assertEqual(metadata["profile"], codec_worker.AVIF_SDR_PROFILE)
                 self.assertEqual(metadata["qualified_import_variants"], codec_worker.NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"])
                 codec_worker.verify_manifest(destination, self.version, target)
-                for bad in [v6 + codec_worker.AVIF_BUILD_PREFIX, v6 + codec_worker.BUILD_PREFIX,
+                for bad in [v6 + codec_worker.AVIF_BUILD_PREFIX + self.version.encode() + codec_worker.AVIF_BUILD_SUFFIX,
+                            v6 + codec_worker.BUILD_PREFIX + self.version.encode() + codec_worker.BUILD_SUFFIX,
                             v6.replace(b"CSP12_WORK1", b"CSP12_WORK0"),
                             v6.replace(b"YUV444_420", b"YUV444_422"),
                             v6.replace(b"ALLOC1", b"ALLOC0")]:
@@ -157,6 +158,33 @@ class CodecWorkerTests(unittest.TestCase):
                     manifest.write_text(json.dumps({**metadata, "qualified_import_variants": bad}))
                     with self.assertRaises(ValueError):
                         codec_worker.verify_manifest(destination, self.version, target)
+
+    def test_bare_linker_literals_are_not_declarations_but_complete_or_malformed_records_refuse(self):
+        contracts = [
+            (codec_worker.BUILD_PREFIX, codec_worker.BUILD_SUFFIX, codec_worker.NATIVE_PROFILE),
+            (codec_worker.AVIF_BUILD_PREFIX, codec_worker.AVIF_BUILD_SUFFIX, codec_worker.AVIF_PROFILE),
+            (codec_worker.AVIF_SDR_BUILD_PREFIX, codec_worker.AVIF_SDR_BUILD_SUFFIX, codec_worker.AVIF_SDR_PROFILE),
+            (codec_worker.FLOAT_BUILD_PREFIX, codec_worker.FLOAT_BUILD_SUFFIX, codec_worker.FLOAT_PROFILE),
+            (codec_worker.JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX, codec_worker.JXR_PROFILE),
+            (codec_worker.PRIVATE_JXR_BUILD_PREFIX, codec_worker.JXR_BUILD_SUFFIX, None),
+        ]
+        for prefix, suffix, profile in contracts[:-1]:
+            record = prefix + self.version.encode() + suffix
+            literals = b"".join(marker + b"library_constant\0" for marker, _, _ in contracts)
+            self.helper.write_bytes(record + literals)
+            self.assertEqual(codec_worker.verify_build_record(self.helper, self.version)[0], profile)
+            for other_prefix, other_suffix, _ in contracts:
+                for version in [self.version.encode(), b"0.0.0", b"v-stale"]:
+                    with self.subTest(profile=profile, marker=other_prefix, version=version):
+                        self.helper.write_bytes(record + other_prefix + version + other_suffix)
+                        with self.assertRaises(ValueError):
+                            codec_worker.verify_build_record(self.helper, self.version)
+                for malformed in [b"1.2.3", b"1" * 65,
+                                  b"1.2.3\0PCDEC999\0", b"1.2.3" + other_suffix[:-1],
+                                  other_suffix]:
+                    self.helper.write_bytes(record + other_prefix + malformed)
+                    with self.assertRaises(ValueError):
+                        codec_worker.verify_build_record(self.helper, self.version)
 
     def test_cli_and_desktop_workflow_share_one_helper_cargo_build(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
