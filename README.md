@@ -46,7 +46,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **DDS texture export:** choose compression and generate smaller texture levels in desktop/browser Studio, CLI or MCP; Studio previews the result.
 - **Studio exports:** lossless JPEG XL, lossy AVIF, QOI, PAM, farbfeld and PCX with optional 256-color palettes and a preview.
 - **JPEG XL import:** Studio on desktop and in your browser, CLI and MCP can import supported still pictures.
-- **JPEG XR pictures:** import supported pictures in desktop Studio, CLI and MCP; export lossless copies without transparency on Apple silicon Macs.
+- **JPEG XR pictures:** import supported pictures in desktop Studio, CLI and MCP; export supported lossless copies without transparency on Windows, macOS and Linux.
 - **HEIC/HEIF import:** native Studio, CLI and MCP can import supported sRGB pictures with transparency after reviewing any color or metadata losses.
 - **AVIF import:** native Studio, CLI and MCP can import supported sRGB pictures with transparency from a complete installation.
 - **HDR/EXR conversion:** preview supported pictures in native Studio; CLI and MCP offer the same exposure and tone settings for conversion to 8-bit images.
