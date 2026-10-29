@@ -531,3 +531,4 @@ bmp-metadata-will-not-be-retained = BMP का मेटाडेटा सु�
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = चित्र की रेज़ॉल्यूशन संबंधी जानकारी सुरक्षित नहीं रखी जाएगी; पिक्सेल में माप नहीं बदलेंगे।
 original-jpeg-metadata-will-not-be-retained = मूल JPEG मेटाडेटा सुरक्षित नहीं रखा जाएगा।
 device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = डिवाइस के CMYK/YCCK नमूनों को स्रोत ICC प्रोफ़ाइल का उपयोग किए बिना संख्यात्मक रूप से RGB में बदला जाएगा। रंग अलग दिख सकते हैं।
+this-jpeg-does-not-declare-its-cmyk-convention-conventional-cmyk-will-be-assumed = इस JPEG में CMYK की पद्धति घोषित नहीं है। पारंपरिक CMYK मान लिया जाएगा।

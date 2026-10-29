@@ -20,6 +20,9 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "jpeg-cmyk-to-rgb" => {
             "Device CMYK/YCCK samples will be converted numerically to RGB without using the source ICC profile. Colors may differ."
         }
+        "jpeg-color-model-assumed" => {
+            "This JPEG does not declare its CMYK convention. Conventional CMYK will be assumed."
+        }
         "png-color-metadata-ignored" => {
             "PNG color declarations will not be retained or used for color management."
         }
@@ -137,6 +140,7 @@ mod tests {
         for code in [
             "jpeg-metadata-ignored",
             "jpeg-cmyk-to-rgb",
+            "jpeg-color-model-assumed",
             "png-color-metadata-ignored",
             "bmp-color-metadata-ignored",
             "png-metadata-ignored",

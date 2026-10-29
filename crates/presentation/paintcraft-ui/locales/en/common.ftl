@@ -531,3 +531,4 @@ bmp-metadata-will-not-be-retained = BMP metadata will not be retained.
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = Image resolution metadata will not be retained; pixel dimensions will stay unchanged.
 original-jpeg-metadata-will-not-be-retained = Original JPEG metadata will not be retained.
 device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = Device CMYK/YCCK samples will be converted numerically to RGB without using the source ICC profile. Colors may differ.
+this-jpeg-does-not-declare-its-cmyk-convention-conventional-cmyk-will-be-assumed = This JPEG does not declare its CMYK convention. Conventional CMYK will be assumed.

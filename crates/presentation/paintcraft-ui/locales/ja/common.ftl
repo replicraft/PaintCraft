@@ -531,3 +531,4 @@ bmp-metadata-will-not-be-retained = BMP のメタデータは保持されませ�
 image-resolution-metadata-will-not-be-retained-pixel-dimensions-will-stay-unchanged = 画像の解像度のメタデータは保持されません。ピクセル単位の寸法は変わりません。
 original-jpeg-metadata-will-not-be-retained = 元の JPEG メタデータは保持されません。
 device-cmyk-ycck-samples-will-be-converted-numerically-to-rgb-without-using-the-source-icc-profile-colors-may-differ = デバイス CMYK/YCCK のサンプルは、元の ICC プロファイルを使用せず数値計算で RGB に変換されます。色が異なる場合があります。
+this-jpeg-does-not-declare-its-cmyk-convention-conventional-cmyk-will-be-assumed = この JPEG には CMYK の規約が指定されていません。通常の CMYK として扱います。
