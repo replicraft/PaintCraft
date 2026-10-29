@@ -358,10 +358,9 @@ fn unreleased_abi_environments_are_not_relabelled_as_gnu_or_msvc() {
     );
 }
 #[test]
-fn every_build_marker_occurrence_must_be_complete_and_match_the_contract() {
+fn versioned_declarations_must_be_complete_and_match_the_contract() {
     let f = Installation::new(Target::LinuxX64, false);
     for suffix in [
-        MARKER.to_vec(),
         [MARKER, b"0.1"].concat(),
         RECORD
             .iter()
@@ -586,3 +585,36 @@ mod encoder;
 mod mixed;
 
 mod layout;
+
+#[test]
+fn retained_selected_literals_cross_stream_boundaries_without_claiming_capability() {
+    let f = Installation::new(Target::LinuxX64, false);
+    let mut bytes = binary(f.target);
+    bytes.truncate(128);
+    bytes.resize(65536 - MARKER.len() / 2, 0xff);
+    bytes.extend_from_slice(RECORD);
+    bytes.resize(2 * 65536 - MARKER.len() / 2, 0xff);
+    bytes.extend_from_slice(MARKER);
+    bytes.extend_from_slice(b"1\xff\xfe\0random-rodata");
+    bytes.extend_from_slice(MARKER);
+    fs::write(&f.helper, &bytes).unwrap();
+    f.refresh();
+    f.verify().unwrap();
+    for bad in [
+        RECORD.to_vec(),
+        [MARKER, b"0.0.0", &RECORD[MARKER.len() + 5..]].concat(),
+        [MARKER, b"v0.0.0", &RECORD[MARKER.len() + 5..]].concat(),
+        [MARKER, b"0.1.0\0PCDEC003"].concat(),
+        [MARKER, b"0.1"].concat(),
+        RECORD[..RECORD.len() - 1].to_vec(),
+    ] {
+        let mut changed = bytes.clone();
+        changed.extend_from_slice(&bad);
+        fs::write(&f.helper, changed).unwrap();
+        f.refresh();
+        assert!(
+            f.verify().is_err(),
+            "malformed/duplicate/stale declaration accepted"
+        );
+    }
+}

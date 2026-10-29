@@ -154,48 +154,78 @@ impl Pinned {
         Ok(())
     }
 }
-/// Scan a bounded rolling window while hashing the exact acquired bytes. Prefix
-/// occurrences across block boundaries are retained, including truncated tails.
+/// Scan a bounded rolling window while hashing the exact acquired bytes.
 struct Record<'a> {
     contract: Contract<'a>,
     tail: Vec<u8>,
-    found: bool,
+    found: usize,
 }
 impl<'a> Record<'a> {
     fn new(contract: Contract<'a>) -> Self {
         Self {
             contract,
-            tail: Vec::with_capacity(65536 + 512),
-            found: false,
+            tail: Vec::with_capacity(65536 + 1024),
+            found: 0,
         }
     }
     fn push(&mut self, bytes: &[u8]) -> Result<()> {
         self.tail.extend_from_slice(bytes);
+        // Keep enough lookahead for a different bounded version and full tail.
         let full = self
             .tail
             .len()
-            .checked_sub(self.contract.build_record.len())
-            .map_or(0, |n| n + 1);
-        for index in 0..full {
-            if self.tail[index..].starts_with(self.contract.build_marker) {
-                if !self.tail[index..].starts_with(self.contract.build_record) {
-                    return Err(unavailable(
-                        "Installed helper embedded version/protocol/heap record mismatch",
-                    ));
-                }
-                self.found = true;
-            }
-        }
+            .saturating_sub(self.contract.build_record.len() + 65);
+        self.scan(full)?;
         self.tail.drain(..full);
         Ok(())
     }
-    fn finish(self) -> Result<()> {
-        if !self.found
-            || self
-                .tail
-                .windows(self.contract.build_marker.len())
-                .any(|window| window == self.contract.build_marker)
-        {
+    fn scan(&mut self, count: usize) -> Result<()> {
+        let marker = self.contract.build_marker;
+        let record = self.contract.build_record;
+        let version = self.contract.application_version.as_bytes();
+        let rest_expected = &record[marker.len()..];
+        let suffix = rest_expected
+            .strip_prefix(version)
+            .filter(|suffix| suffix.starts_with(b"\0") && suffix.len() > 1);
+        for index in 0..count {
+            let current = &self.tail[index..];
+            if !current.starts_with(marker) {
+                continue;
+            }
+            if current.starts_with(record) {
+                self.found += 1;
+                if self.found > 1 {
+                    return Err(unavailable("Installed helper build record is duplicated"));
+                }
+                continue;
+            }
+            let Some(suffix) = suffix else {
+                return Err(unavailable(
+                    "Installed helper embedded version/protocol/heap record mismatch",
+                ));
+            };
+            let rest = &current[marker.len()..];
+            let shaped = |bytes: &[u8]| {
+                bytes.first().is_some_and(u8::is_ascii_digit)
+                    && bytes
+                        .iter()
+                        .all(|byte| byte.is_ascii_alphanumeric() || b".+-".contains(byte))
+            };
+            let declared = match rest.iter().take(65).position(|byte| *byte == 0) {
+                Some(length) => rest[length..].starts_with(suffix) || shaped(&rest[..length]),
+                None => shaped(&rest[..rest.len().min(65)]),
+            };
+            if declared {
+                return Err(unavailable(
+                    "Installed helper embedded version/protocol/heap record mismatch",
+                ));
+            }
+        }
+        Ok(())
+    }
+    fn finish(mut self) -> Result<()> {
+        self.scan(self.tail.len())?;
+        if self.found != 1 {
             Err(unavailable(
                 "Installed helper build record missing or truncated",
             ))
