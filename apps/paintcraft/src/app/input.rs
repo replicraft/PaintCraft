@@ -47,9 +47,13 @@ impl App {
                     self.cut_requested(&ctx);
                 }
                 egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
-                    self.ime_composing = !text.is_empty();
+                    // Receipt-time shortcut exclusion has no text target or
+                    // publication authority; canvas binding happens in order.
+                    self.ime_composing = !widget_focus || !text.is_empty();
                 }
-                egui::Event::Ime(egui::ImeEvent::Commit(_)) => self.ime_composing = false,
+                egui::Event::Ime(egui::ImeEvent::Commit(_)) => {
+                    self.ime_composing = false;
+                }
                 egui::Event::Key {
                     key,
                     pressed: true,
@@ -57,6 +61,9 @@ impl App {
                     modifiers,
                     ..
                 } if !widget_focus && !self.ime_composing => match key {
+                    // Canvas editing is replayed with pointer events in order.
+                    egui::Key::Enter | egui::Key::Backspace | egui::Key::Delete | egui::Key::A
+                        if text_focus => {}
                     egui::Key::Enter
                         if self.editor.has_floating_selection()
                             && modifiers == egui::Modifiers::NONE
@@ -65,16 +72,9 @@ impl App {
                     {
                         self.editor.finish_selection_move();
                     }
-                    egui::Key::Enter if text_focus && !modifiers.command => {
-                        self.editor.type_text("\n");
-                    }
-                    egui::Key::Backspace if text_focus => self.editor.backspace(),
                     egui::Key::C | egui::Key::X | egui::Key::V
                         if modifiers.command && text_focus => {}
                     _ if repeat => {}
-                    egui::Key::Enter if modifiers.command && text_focus => {
-                        self.editor.commit_text();
-                    }
                     // Popup dismissal takes precedence over cancelling a canvas
                     // draft or leaving fullscreen, even if egui released focus.
                     egui::Key::Escape if popup_open => {}
@@ -109,18 +109,13 @@ impl App {
                 },
                 // Focus loss ends an unfinished gesture without publishing it.
                 egui::Event::WindowFocused(false) => {
-                    self.ime_composing = false;
                     self.editor.cancel_gesture();
                     self.studio.zoom.cancel();
                     self.studio.pan.cancel();
                     self.studio.space_pan = false;
                     self.studio.auto_scroll.cancel();
-                    if !matches!(self.editor.tool, Tool::Magnifier | Tool::Pan) {
-                        self.editor.commit_text();
-                    }
-                }
-                egui::Event::Text(typed) if text_focus && !self.ime_composing => {
-                    self.editor.type_text(&typed);
+                    // Text finish is replayed by the canvas after any earlier
+                    // result in this same event list.
                 }
                 _ => {}
             }

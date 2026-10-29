@@ -352,7 +352,6 @@ impl Editor {
     }
 
     /// Exact native input owner, including reopening an otherwise equal snapshot.
-    #[cfg(target_os = "macos")]
     pub(crate) fn session_owner_id(&self) -> Uuid {
         self.session.owner_id()
     }

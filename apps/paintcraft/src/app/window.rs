@@ -58,6 +58,7 @@ impl App {
             self.poll_print(&ctx);
             self.poll_clipboard(&ctx);
             self.poll_paste(&ctx);
+            self.guard_canvas_ime(&ctx);
             if !self.closing_workspace
                 && self.confirm.is_none()
                 && self.tab_closing.is_none()
@@ -118,6 +119,12 @@ impl App {
         self.image_paste_bar(ui);
         let accept_input =
             first_pass && !self.action_context().blocked && !self.editor.painting_blocked();
+        if first_pass && !accept_input {
+            // A disabled/modal canvas never replays text or finishes a draft.
+            // Revoke provisional IME now; keep committed text private until an
+            // enabled user action finishes it, including on window focus loss.
+            self.revoke_canvas_ime();
+        }
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()

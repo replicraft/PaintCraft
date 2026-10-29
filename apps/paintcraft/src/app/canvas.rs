@@ -117,6 +117,9 @@ impl App {
                 events
             };
             for event in events {
+                if self.canvas_text_event(ui.ctx(), &event) {
+                    continue;
+                }
                 if self.studio_pan_event(ui, &painter, viewport, &event)
                     || self.studio_zoom_event(ui, &painter, rect, viewport, &event)
                 {
@@ -417,7 +420,7 @@ impl App {
         if let Selection::Rect(r) = self.editor.display_selection() {
             ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
         }
-        let snapshot = self.editor.preview_snapshot();
+        let snapshot = self.canvas_text_preview();
         let overlay = snapshot.as_deref().filter(|preview| {
             !matches!(
                 preview,
@@ -467,6 +470,45 @@ impl App {
                 };
                 if let Some(mask) = mask {
                     let (x, y, height) = mask.caret;
+                    if self.canvas_ime.selected_all
+                        && let Some(bounds) = mask.bounds
+                    {
+                        painter.rect_filled(
+                            Rect::from_min_max(
+                                screen((bounds.x0, bounds.y0)),
+                                screen((bounds.x1, bounds.y1)),
+                            ),
+                            0.0,
+                            painter
+                                .ctx()
+                                .style_of(painter.ctx().theme())
+                                .visuals
+                                .selection
+                                .bg_fill
+                                .gamma_multiply(0.25),
+                        );
+                    }
+                    if !painter.ctx().egui_wants_keyboard_input()
+                        && !egui::Popup::is_any_open(painter.ctx())
+                        && !self.action_context().blocked
+                    {
+                        let cursor_rect =
+                            Rect::from_min_max(screen((x, y)), screen((x + 1, y + height)));
+                        if painter.clip_rect().intersects(cursor_rect) {
+                            let interrupt = std::mem::take(&mut self.canvas_ime.interrupt);
+                            painter.ctx().output_mut(|output| {
+                                output.ime = Some(egui::output::IMEOutput {
+                                    purpose: egui::IMEPurpose::Normal,
+                                    rect: self
+                                        .canvas_rect
+                                        .unwrap_or(cursor_rect)
+                                        .intersect(painter.clip_rect()),
+                                    cursor_rect,
+                                    should_interrupt_composition: interrupt,
+                                })
+                            });
+                        }
+                    }
                     painter.line_segment(
                         [screen((x, y)), screen((x, y + height))],
                         egui::Stroke::new(

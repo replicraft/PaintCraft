@@ -127,7 +127,7 @@ impl App {
             self.editor
                 .set_status("GPU device lost; rebuilding canvas with CPU rendering");
         }
-        let preview = self.editor.preview_snapshot().filter(|p| {
+        let preview = self.canvas_text_preview().filter(|p| {
             matches!(
                 p.as_ref(),
                 Preview::Path(_)

@@ -6,6 +6,8 @@ mod auto_scroll;
 mod brushes;
 #[path = "app/canvas.rs"]
 mod canvas;
+#[path = "app/canvas_ime.rs"]
+mod canvas_ime;
 #[path = "app/canvas_settings.rs"]
 mod canvas_settings;
 #[path = "app/chrome.rs"]
@@ -240,6 +242,7 @@ pub struct App {
     text_renderer: text::Shared,
     context: egui::Context,
     ime_composing: bool,
+    canvas_ime: canvas_ime::State,
     editor: Editor,
     tabs: Vec<tabs::Tab>,
     active_tab: usize,
@@ -386,6 +389,7 @@ impl App {
             text_renderer: text_renderer.clone(),
             context: Default::default(),
             ime_composing: false,
+            canvas_ime: canvas_ime::State::default(),
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid")
                 .with_text_renderer(text_renderer),

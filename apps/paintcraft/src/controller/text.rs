@@ -2,6 +2,23 @@
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, text::TextOptions};
 impl Editor {
+    pub(crate) fn canvas_text_target(&self) -> Option<(u64, Uuid)> {
+        self.tools.text_target()
+    }
+    pub(crate) fn canvas_text_content(&self) -> Option<&str> {
+        self.tools.text_content()
+    }
+    pub(crate) fn canvas_text_revision(&self) -> paintcraft_tools::PreviewRevision {
+        self.tools.preview_revision()
+    }
+    pub(crate) fn replace_canvas_text_tail(
+        &mut self,
+        token: u64,
+        delete: usize,
+        text: &str,
+    ) -> Result<()> {
+        self.tools.replace_text_tail(token, delete, text)
+    }
     pub(crate) fn with_text_renderer(mut self, renderer: crate::text::Shared) -> Self {
         self.text_renderer_connect(renderer);
         self
