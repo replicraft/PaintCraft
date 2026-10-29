@@ -15,6 +15,8 @@ pub use paintcraft_core::types::policy::CANVAS_SIDE_MAX;
 pub use paintcraft_core::types::policy::COORD_ABS_MAX;
 pub use paintcraft_core::types::policy::LAYER_COUNT_MAX;
 pub use paintcraft_core::types::policy::POLICY;
+mod conversion_identity;
+pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Layer {
