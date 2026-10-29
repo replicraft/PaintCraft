@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "palette-inspection", "shape-inspection", "brush-inspection"])]
+    #[arg(value_parser = ["batch", "batch-v2", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection"])]
     schema: String,
 }
 
@@ -11,6 +11,9 @@ pub fn run(a: Options, _json: bool) -> Reply {
     bare(
         true,
         (|| {
+            if a.schema == "source-inspection" {
+                return Ok((inspect_source::schema()?, String::new()));
+            }
             if a.schema == "brush-inspection" {
                 return Ok((brushes::schema()?, String::new()));
             }

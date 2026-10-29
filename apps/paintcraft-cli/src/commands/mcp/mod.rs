@@ -12,6 +12,7 @@ mod native_codec;
 mod palettes;
 mod params;
 mod shapes;
+mod source_inspection;
 mod state;
 mod tools;
 

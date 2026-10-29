@@ -36,6 +36,8 @@ enum Command {
     New(commands::new::Options),
     /// Inspect a document and acquire its concurrency ticket.
     Inspect(commands::inspect::Options),
+    /// Inspect PNG, BMP or JPEG source facts without decoding pixels or editing.
+    InspectSource(commands::inspect_source::Options),
     /// List ICNS entries with explicit logical sizes, Retina density and qualification.
     InspectIcns(commands::inspect_icns::Options),
     /// Inspect an explicitly configured float-to-SDR conversion without adoption.
@@ -81,6 +83,7 @@ fn main() -> ExitCode {
         Command::Flatten(a) => commands::flatten::run(a, cli.json),
         Command::New(a) => commands::new::run(a, cli.json),
         Command::Inspect(a) => commands::inspect::run(a, cli.json),
+        Command::InspectSource(a) => commands::inspect_source::run(a, cli.json),
         Command::InspectIcns(a) => commands::inspect_icns::run(a, cli.json),
         Command::InspectFloat(a) => commands::inspect_float::run(a, cli.json),
         Command::ImportFloat(a) => commands::import_float::run(a, cli.json),
