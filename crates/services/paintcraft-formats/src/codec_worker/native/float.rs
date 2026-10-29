@@ -165,11 +165,28 @@ impl Job {
             .float_report
             .ok_or_else(|| invalid("Float worker lacks bound report"))?;
         let assessment = plan.accept_report(report, (frame.width, frame.height), rgba, &check)?;
+        let key = paintcraft_document::RasterConversionKey::checked(
+            paintcraft_document::RasterConversionContext {
+                source_sha256: raw_sha,
+                profile: match self.codec {
+                    Codec::HdrSdr8 => super::super::NATIVE_HDR_SDR_IMPORT_VARIANT,
+                    Codec::ExrSdr8 => super::super::NATIVE_EXR_SDR_IMPORT_VARIANT,
+                    _ => return Err(invalid("Float identity has a non-float codec")),
+                },
+                selection: paintcraft_document::RasterSelection::Image,
+                assessment_sha256: Some(assessment.assessment().digest()),
+            },
+            frame.width,
+            frame.height,
+            rgba,
+            self.pixels,
+            &check,
+        )?;
         let document = paintcraft_document::import_image_with_admission_checked(
             frame.width,
             frame.height,
             rgba,
-            &hex(&raw_sha),
+            &key.hex(),
             &mut admission,
             &check,
         )?;
@@ -194,3 +211,6 @@ impl Job {
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod identity_tests;
