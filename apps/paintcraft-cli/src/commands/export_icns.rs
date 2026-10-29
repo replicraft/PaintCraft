@@ -78,7 +78,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "ICNS export expects a PCND project",
                 ));
             }
-            let doc = pcnd::read(&bytes)?;
+            let doc = super::source_metadata::read(&bytes)?;
             let filter = match a.resampling {
                 Resampling::Nearest => icons::Filter::Nearest,
                 Resampling::Lanczos3 => icons::Filter::Lanczos3,

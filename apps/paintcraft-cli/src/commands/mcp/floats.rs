@@ -122,6 +122,7 @@ impl PaintingServer {
             let mut session = Session::new(adopted.value.document);
             session.mark_unsaved();
             let mut candidate = State {
+                metadata_realm: state.metadata_realm.clone(),
                 session: Some(session),
                 import_source: Some(adopted.value.input),
                 import_identity: Some(adopted.value.identity),

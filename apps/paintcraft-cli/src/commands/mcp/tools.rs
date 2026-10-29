@@ -55,7 +55,7 @@ impl PaintingServer {
                     "open_project expects PCND; use import_image for pictures",
                 ));
             }
-            let doc = pcnd::read(&bytes)?;
+            let doc = state.metadata_realm.read(&bytes, &|| Ok(()))?;
             state.session = Some(Session::new(doc));
             state.source = Some((path, sha));
             state.project_identity = Some(identity);
@@ -211,6 +211,12 @@ impl PaintingServer {
                     image::DECODE_PIXELS_MAX,
                 )?;
                 (decoded.document(&sha)?, decoded.losses)
+            } else if family == Family::Png && p.page.is_none() {
+                let prepared = state.metadata_realm.png(&bytes, &check)?;
+                let document = prepared.document_with_admission(
+                    &mut paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX),
+                    &check)?;
+                (document, prepared.image.losses)
             } else {
                 profile.reject_project_import(family)?;
                 let decoded = if let Some(page) = p.page {

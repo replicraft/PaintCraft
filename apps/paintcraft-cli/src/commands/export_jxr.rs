@@ -164,7 +164,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 }
                 Ok(())
             };
-            let doc = pcnd::read(&bytes)?;
+            let doc = super::source_metadata::read(&bytes)?;
             drop(bytes);
             let mut owner = codec_worker::owner();
             owner.state = doc.state_id;

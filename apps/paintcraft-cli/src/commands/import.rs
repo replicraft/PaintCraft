@@ -205,6 +205,15 @@ pub fn run(a: Options, json: bool) -> Reply {
                     image::DECODE_PIXELS_MAX,
                 )?;
                 (decoded.document(&sha)?, decoded.losses)
+            } else if family == paintcraft_formats::registry::Family::Png && a.page.is_none() {
+                let prepared = super::source_metadata::Realm::default().png(&bytes, &|| Ok(()))?;
+                let document = prepared.document_with_admission(
+                    &mut paintcraft_raster::Admission::new(
+                        paintcraft_core::types::policy::STAGED_PIXELS_MAX,
+                    ),
+                    &|| Ok(()),
+                )?;
+                (document, prepared.image.losses)
             } else {
                 a.profile.reject_project_import(family)?;
                 let img = if let Some(page) = a.page {

@@ -73,7 +73,7 @@ pub fn run(a: Options, json: bool) -> Reply {
         Ok(v) => v,
         Err(e) => return bare(json, Err(e)),
     };
-    match pcnd::read(&bytes) {
+    match super::source_metadata::read(&bytes) {
         Ok(doc) => {
             let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
             let value = Value::object([

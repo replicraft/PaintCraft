@@ -122,7 +122,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "icon export expects a PCND project",
                 ));
             }
-            let doc = pcnd::read(&bytes)?;
+            let doc = super::source_metadata::read(&bytes)?;
             let kind = if family == Family::Ico {
                 icons::Kind::Icon
             } else {

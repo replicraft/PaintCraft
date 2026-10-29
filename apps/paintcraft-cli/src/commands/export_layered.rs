@@ -297,7 +297,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "layered copy expects a PCND project",
                 ));
             }
-            let doc = pcnd::read(&bytes)?;
+            let doc = super::source_metadata::read(&bytes)?;
             let (receipt, ok, summary, preparation) = write_copy(
                 &doc,
                 target,

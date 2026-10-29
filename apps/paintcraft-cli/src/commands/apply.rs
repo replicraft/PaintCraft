@@ -22,7 +22,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             let (bytes, sha, identity) = read_regular_or_bounded(input, INPUT_MAX, "input")?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
             let (ops, _) = read_bounded(&a.operations, OPERATIONS_MAX, "operations file")?;
-            let mut session = Session::new(pcnd::read(&bytes)?);
+            let mut session = Session::new(super::source_metadata::read(&bytes)?);
             let receipt = session.apply_json(&ops)?;
             let ctx = Context {
                 operation: if in_place { "save" } else { "save-as" },

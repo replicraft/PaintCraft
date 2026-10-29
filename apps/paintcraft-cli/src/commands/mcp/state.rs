@@ -4,6 +4,7 @@ use serde_json::{Value as Json, json};
 
 #[derive(Default)]
 pub struct State {
+    pub metadata_realm: super::super::source_metadata::Realm,
     pub session: Option<Session>,
     pub source: Option<(PathBuf, String)>,
     pub project_identity: Option<paintcraft_platform::source::SourceIdentity>,

@@ -124,7 +124,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "Render expects a PCND project",
                 ));
             }
-            let doc = pcnd::read(&bytes)?;
+            let doc = super::source_metadata::read(&bytes)?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = if a.render_workers == 1 {
                 export::export_flat_options(&doc, options, &allowed)?
@@ -188,7 +188,7 @@ fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
             "DDS render expects a PCND project",
         ));
     }
-    let doc = pcnd::read(&bytes)?;
+    let doc = super::source_metadata::read(&bytes)?;
     drop(bytes);
     let protect = |destination: &Path| {
         if identity.matches_path(destination)? {
@@ -236,7 +236,7 @@ fn explicit_msp(a: &Options, version: msp_options::Version) -> Result<Written> {
             "MSP render expects a PCND project",
         ));
     }
-    let doc = pcnd::read(&bytes)?;
+    let doc = super::source_metadata::read(&bytes)?;
     drop(bytes);
     let protect = |destination: &Path| {
         if identity.matches_path(destination)? {

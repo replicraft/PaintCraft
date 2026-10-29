@@ -131,7 +131,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "DCX export expects a PCND project",
                 ));
             }
-            let doc = pcnd::read(&bytes)?;
+            let doc = super::source_metadata::read(&bytes)?;
             let (receipt, ok, summary) = write_copy(
                 &doc,
                 a.pcx_mode,
