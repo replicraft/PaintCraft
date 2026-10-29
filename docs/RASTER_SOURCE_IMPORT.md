@@ -45,6 +45,38 @@ backend's EXPAND behavior, which substitutes opaque black for undeclared
 palette entries. Adam7 is deinterlaced before checked expansion. Existing 16-bit
 conversion continues to retain each sample's high byte.
 
+## Visible loss review
+
+Desktop and web flat-raster conversions with reported losses now display the
+actual pending pixels before consent. A bounded nearest thumbnail fits within
+200 logical points, enlarging tiny images and retaining a visible thin axis.
+The complete preview must have appeared in a previous frame before its explicit
+limitation checkbox can authorize Open. The resolver enforces this requirement
+as well as the button. Hidden or clipped initial previews cannot authorize an
+import. Loss-free imports retain their automatic route.
+
+Cancellation, stale ownership and changed sources retain the existing document
+and release the pending review. Source identity and final adoption checks remain
+separate from visual consent. Thumbnail accounting declares logical scratch
+and egui-image bytes; it is not a hard allocator, GPU or process-memory bound.
+Layered and specialized review workflows retain their own contracts.
+
+## Defined still GIF composition
+
+Still GIFs can place a smaller image inside their logical screen. Opaque images
+use the declared global background outside the image rectangle. Standalone
+transparent images use clear uncovered pixels and retain source palette RGB
+under transparent in-frame samples. Different external decoders disagree about
+some background cases; the fixture records preserve those disagreements and
+the explicit chosen policy.
+
+The selected indexed GIF decoder supplies original samples; every referenced
+palette index is validated before RGBA publication. Interlaced rows follow all
+four passes. The expected sample count and an actual LZW end marker are both
+required. Disposal does not erase the still before capture. Animation, reserved
+disposal modes and an opaque partial image without a defined global background
+remain refused. This adds defined still conversions, not timeline editing.
+
 ## Local evidence and remaining scope
 
 Nineteen independently serialized PNG/BMP specimens include exact packed rows,
@@ -53,10 +85,16 @@ an asymmetric seven-pass Adam7 image, duplicate palette colors, hidden RGB,
 cancellation controls accompany the fixtures. Records are under
 `docs/validation/png-bmp-metadata/` and `docs/validation/stock-source/`.
 
-The integrated macOS ARM checks passed 418 format tests, 649 desktop tests,
-46 CLI unit tests and two compiled CLI/MCP source lifecycle tests. Existing
-ignored installed-helper tests remain separate qualification work. The browser
-WebAssembly build passes; this is not a fresh runtime browser or six-target
-qualification claim. JPEG orientation/CMYK, GIF logical-screen placement,
-generic raster visual review, wider source preservation and the full format
-roadmap remain in progress.
+The initial integrated macOS ARM checks passed 418 format tests, 649 desktop
+tests, 46 CLI unit tests and two compiled CLI/MCP source lifecycle tests.
+The subsequent visual-review snapshot passed 652 desktop and 309 host Web tests,
+strict checks and WebAssembly compilation. Two actual offscreen egui/wgpu
+screenshots were inspected; no OS window was opened. GIF qualification passed
+seven focused controls and a 633-test non-JPEG snapshot, explicitly excluding
+seven then-pending JPEG controls. See the individual frozen receipts for their
+exact source and scope.
+
+These results do not establish fresh browser runtime, six-target stock-codec,
+original-application or physical-device behavior. JPEG frontend qualification,
+wider source preservation, color management and the full format roadmap remain
+in progress.

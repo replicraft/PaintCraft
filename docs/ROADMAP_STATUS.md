@@ -11,9 +11,11 @@ replace the canonical 37-task roadmap or transplant new contracts wholesale.
 source identity through consent and adoption, retains overwrite guards after
 PCND Save, and revalidates regular CLI/MCP sources before publication. PNG/BMP
 source declarations and discarded metadata are explicit; indexed PNG samples
-are validated before expansion. Local desktop/CLI tests and WebAssembly
-compilation pass. Full metadata retention, color management, generic visual
-review and the broader stock-codec requirements remain unfinished.
+are validated before expansion. Desktop/web loss review now requires a prior
+visible preview and explicit consent, with full host suites and actual offscreen
+screenshots. Defined partial still-GIF composition also retains palette samples
+and validates end markers. Full metadata retention, color management, fresh
+browser/physical qualification and broader stock-codec requirements remain open.
 
 [PaintCraft 0.1.1 release validation](releases/v0.1.1-validation.md) now records
 successful native desktop/CLI builds, finite helper and installed-consumer checks,
@@ -29,13 +31,16 @@ English/Japanese, and actual production Worker/Studio browser pixel evidence.
 The 16-bit path requires visible-preview depth-loss consent and digest-bound
 adoption; this does not add 16-bit editing. Actual installed CLI/MCP baseline and
 exact-selector checks passed for both roles on macOS ARM. The [six-target candidate run](https://github.com/replicraft/PaintCraft/actions/runs/40861212331)
-at `025099c8` passed all 12 V9/V10 jobs. Current source/next shipping selection
-is V9 on five targets and V10 on Apple Silicon; the global helper default enables
-integer JPEG XL. Normal debug default/selected builds also passed 40 installed
-CLI/MCP tests on macOS ARM. Published 0.1.1 V7/V8 downloads and the tag remain
-unchanged. Wider actual native App JPEG XR writer qualification is underway;
-this first promotion retains its Apple Silicon writer selection and does not
-claim a new complete release.
+at `025099c8` passed all 12 V9/V10 jobs. The subsequent
+[six-target V10 run](https://github.com/replicraft/PaintCraft/actions/runs/40889561591)
+at `5eb0831f` passed on every native target, including the mandatory installed
+App writer fixture, float-identity fixture and copied-payload checks. Current
+source/next shipping selection is V10 everywhere; global defaults enable both
+integer JPEG XL and public JPEG XR writing. A fresh plain Cargo build verified
+the exact V10 record, and 115 packaging/qualification contract tests passed.
+The first split V9/V10 promotion and its 40 normal macOS ARM installed CLI/MCP
+tests remain historical evidence. Published 0.1.1 V7/V8 downloads and the tag
+remain unchanged. This does not claim a new complete release.
 
 [Selected TIFF page import](TIFF_PAGE_IMPORT.md) now has bounded full-source
 inventory and explicit Studio conversion to an unsaved RGBA8 copy. Backend,
@@ -50,9 +55,9 @@ gates remain unfinished.
 DCX pages across desktop/browser Studio, CLI and MCP, and native HDR/EXR settings,
 while retaining the original source hashes and adoption guards. Actual local
 float-helper and frontend tests reproduce the prior collisions and verify
-stable distinct results. The new native identity gate still needs its own
-six-target candidate results; this correctness fix does not complete the format
-or performance roadmap.
+stable distinct results. Its native float-identity fixture now passes on all
+six V10 candidate targets. This correctness qualification does not complete
+the format or performance roadmap.
 
 [Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
 MCP as one recorded transaction. It retains the visible composition, selection,
