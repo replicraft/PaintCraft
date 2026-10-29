@@ -35,8 +35,11 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - PCND is the native layered project format and the preserving Save destination.
   Its [source metadata foundation](SOURCE_METADATA.md) retains explicit immutable
   attachments in PCND2, with byte-compatible PCND1 for documents without them.
-  Ordinary raster importer adoption, output privacy choices and CMS remain open;
-  incompatible foreign exports refuse attached metadata instead of dropping it.
+  PNG new-document imports retain original ICC and resolution facts across all
+  four frontends. Qualified copy exports offer explicit metadata omission bound
+  to one frozen document; default export refuses attached metadata. Other source
+  adapters, broader output policies and CMS remain open. Retained ICC is not
+  assigned to unmanaged working pixels.
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
 - Studio also opens TGA, still WebP and admitted 2D DDS top-mip images with loss review when lower levels are omitted, and opens the admitted historical PDN subset as a converted copy.
 - Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, historical monochrome MSP, selected DCX pages, OpenRaster layers with a limited neutral-group conversion and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
