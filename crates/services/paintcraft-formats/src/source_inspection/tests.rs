@@ -103,7 +103,32 @@ fn known_header_losses_match_actual_conversion_and_metadata_limits_only_lower_de
     ] {
         let bytes = fixture(name);
         let source = inspect(&bytes, Limits::default(), &|| Ok(())).unwrap();
-        let actual = image::decode(&bytes).unwrap();
+        let actual = if let Source::Png(descriptor) = &source {
+            let budget = paintcraft_core::types::resources::SharedBudget::new(
+                paintcraft_document::source_metadata::BYTES_MAX,
+            );
+            let retained = image::png_retention::decode(
+                &bytes,
+                image::DECODE_PIXELS_MAX,
+                crate::pcnd::MetadataAdmission {
+                    bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                    budget: &budget,
+                },
+                &|| Ok(()),
+            )
+            .unwrap();
+            // The explicit retained workflow changes acknowledgements, not the
+            // original declaration reader or legacy pixel-only decode route.
+            let legacy = image::decode(&bytes).unwrap();
+            assert_eq!(legacy.rgba, retained.image.rgba, "{name}");
+            assert_eq!(
+                legacy.losses.iter().any(|s| s == "icc-profile-ignored"),
+                descriptor.icc.is_some()
+            );
+            retained.image
+        } else {
+            image::decode(&bytes).unwrap()
+        };
         assert_eq!(
             source.proposed_dimensions(),
             (actual.width, actual.height),

@@ -156,12 +156,24 @@ pub(super) struct Limits {
     pub metadata_scope: &'static str,
 }
 #[derive(Debug, Serialize, JsonSchema)]
+pub(super) struct SourceAttachmentPolicy {
+    /// Proposed exact original bytes, never an applied working profile.
+    pub icc_profile_bytes: bool,
+    /// Proposed original pHYs values, never active print settings.
+    pub resolution_values: bool,
+    pub color_management_applied: bool,
+    pub active_print_settings: bool,
+    pub requires_attachment_admission: bool,
+    pub requires_final_import_validation: bool,
+}
+#[derive(Debug, Serialize, JsonSchema)]
 pub(super) struct Proposal {
     pub width: u32,
     pub height: u32,
     pub output_model: &'static str,
     pub orientation_policy: &'static str,
     pub identity_profile: Option<&'static str>,
+    pub source_attachment_policy: Option<SourceAttachmentPolicy>,
     pub depth_policy: &'static str,
     pub losses: Vec<String>,
     pub losses_are_header_derived: bool,

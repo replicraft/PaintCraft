@@ -90,7 +90,9 @@ impl Source {
                     result.push("depth-16-reduced-to-8".into());
                 }
                 result.extend(s.losses().into_iter().map(str::to_owned));
-                result
+                // This is a proposal for the explicit retained-PNG new-document
+                // route, not attachment admission or a final import receipt.
+                image::png_retention::required_acknowledgements(s, result)
             }
         }
     }

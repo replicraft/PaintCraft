@@ -243,7 +243,7 @@ pub(super) fn report(source: &Source, limits: Limits) -> Result<Value> {
         ),
         Source::Png(s) => (
             "as-stored; eXIf is historical metadata",
-            None,
+            Some(paintcraft_formats::image::png_retention::IDENTITY_PROFILE),
             if s.bit_depth == 16 {
                 "strip16-high-byte"
             } else {
@@ -290,6 +290,17 @@ pub(super) fn report(source: &Source, limits: Limits) -> Result<Value> {
             output_model: "straight-rgba8",
             orientation_policy,
             identity_profile,
+            source_attachment_policy: match source {
+                Source::Png(source) => Some(dto::SourceAttachmentPolicy {
+                    icc_profile_bytes: source.icc.is_some(),
+                    resolution_values: source.resolution.is_some(),
+                    color_management_applied: false,
+                    active_print_settings: false,
+                    requires_attachment_admission: true,
+                    requires_final_import_validation: true,
+                }),
+                _ => None,
+            },
             depth_policy,
             losses: source.proposed_losses(),
             losses_are_header_derived: true,

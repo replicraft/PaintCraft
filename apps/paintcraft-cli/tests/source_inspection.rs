@@ -93,7 +93,11 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
         (
             "raster-metadata-fixtures/rgba8-icc-precedence.png",
             "png",
-            &["icc-profile-ignored", "png-color-metadata-ignored"],
+            &[
+                "icc-source-retained-unapplied",
+                "png-color-metadata-ignored",
+                "png-metadata-ignored",
+            ],
         ),
         (
             "raster-metadata-fixtures/rgba8-exif-orientation.png",
@@ -144,6 +148,24 @@ fn actual_cli_and_stdio_report_original_facts_and_exact_header_known_conversion_
         assert_eq!(cli, peer);
         assert_common(&cli, &bytes, format);
         equal_losses(&cli["proposed_conversion"]["losses"], losses);
+        if format == "png" {
+            assert_eq!(
+                cli["proposed_conversion"]["identity_profile"],
+                "png-source-profile-resolution-rgba8-v1"
+            );
+            let policy = &cli["proposed_conversion"]["source_attachment_policy"];
+            assert_eq!(policy["requires_attachment_admission"], true);
+            assert_eq!(policy["requires_final_import_validation"], true);
+            assert_eq!(policy["color_management_applied"], false);
+            assert_eq!(policy["active_print_settings"], false);
+            assert_eq!(
+                policy["icc_profile_bytes"],
+                name.ends_with("rgba8-icc-precedence.png")
+            );
+        } else {
+            assert!(cli["proposed_conversion"]["source_attachment_policy"].is_null());
+        }
+
         let facts = &cli["facts"];
         if name.contains("indexed4-trns") {
             assert_eq!(facts["component_depth"], 4);
