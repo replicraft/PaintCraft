@@ -48,7 +48,7 @@ fn dirty(c: &mut mcp_client::Client) -> Value {
 fn real_stock_cli_and_stdio_mcp_preserve_sources_and_retain_alias_guards_after_pcnd_save() {
     for (format, ext, losses) in [
         (ImageFormat::Png, "png", &[][..]),
-        (ImageFormat::Bmp, "bmp", &[][..]),
+        (ImageFormat::Bmp, "bmp", &["bmp-color-metadata-ignored"][..]),
         (ImageFormat::Jpeg, "jpg", &[][..]),
         (ImageFormat::Gif, "gif", &["palette-indices-expanded"][..]),
         (ImageFormat::Tiff, "tiff", &["tiff-metadata-ignored"][..]),

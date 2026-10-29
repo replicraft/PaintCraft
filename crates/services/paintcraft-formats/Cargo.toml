@@ -24,6 +24,7 @@ paintcraft-pdn.workspace = true
 paintcraft-render.workspace = true
 
 image.workspace = true
+png.workspace = true
 quick-xml.workspace = true
 flate2.workspace = true
 crc32fast.workspace = true
@@ -54,7 +55,6 @@ zstd.workspace = true
 heic-decoder.workspace = true
 divan.workspace = true
 criterion.workspace = true
-png.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-editor.workspace = true
 paintcraft-runtime.workspace = true

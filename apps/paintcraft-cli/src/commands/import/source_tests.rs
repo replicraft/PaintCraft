@@ -28,7 +28,7 @@ fn command(args: Vec<String>) -> Reply {
 fn actual_stock_import_post_staging_checkpoint_rejects_changed_sources_and_renamed_aliases() {
     for (format, ext, losses) in [
         (ImageFormat::Png, "png", ""),
-        (ImageFormat::Bmp, "bmp", ""),
+        (ImageFormat::Bmp, "bmp", "bmp-color-metadata-ignored"),
         (ImageFormat::Jpeg, "jpg", ""),
         (ImageFormat::Gif, "gif", "palette-indices-expanded"),
         (ImageFormat::Tiff, "tiff", "tiff-metadata-ignored"),

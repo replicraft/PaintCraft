@@ -27,7 +27,12 @@ fn png_and_bmp_round_trip_exactly_including_alpha() {
         assert_eq!((d.format, d.width, d.height), (f, 37, 19));
         // Fully transparent pixels keep alpha 0; PNG/BMP keep their RGB too.
         assert_eq!(d.rgba, px, "{}", f.name());
-        assert!(d.losses.is_empty());
+        let expected: &[&str] = if f == ImageFormat::Bmp {
+            &["bmp-color-metadata-ignored"]
+        } else {
+            &[]
+        };
+        assert_eq!(d.losses, expected, "{}", f.name());
     }
 }
 

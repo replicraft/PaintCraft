@@ -16,7 +16,11 @@ mod extended;
 mod specialist;
 pub use extended::ENCODE_PIXELS_MAX as EXTENDED_ENCODE_PIXELS_MAX;
 pub(crate) use extended::inspect_pcx;
+pub mod bmp_metadata;
 mod gif;
+mod png_indexed;
+pub mod png_metadata;
+pub mod raster_source_metadata;
 #[cfg(test)]
 mod raster_tests;
 mod tga;
@@ -28,13 +32,18 @@ pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
 /// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 17] = [
+pub const KNOWN_IMPORT_LOSSES: [&str; 22] = [
     "dib-alpha-unspecified",
     "dib-alpha-mode-unspecified",
     "dib-metadata-ignored",
     "depth-16-reduced-to-8",
     "icc-profile-ignored",
     "exif-metadata-ignored",
+    "png-color-metadata-ignored",
+    "png-metadata-ignored",
+    "bmp-color-metadata-ignored",
+    "bmp-metadata-ignored",
+    "resolution-metadata-ignored",
     "animation-first-frame-only",
     "palette-indices-expanded",
     "gif-metadata-ignored",
@@ -335,19 +344,22 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
         return extended::decode_pcx(bytes, pixels);
     }
     if format == ImageFormat::Png {
+        let source = png_metadata::inspect(bytes, pixels, &|| Ok(()))?;
+        if source.color_type == 3 {
+            return png_indexed::decode(bytes, &source, pixels, &|| Ok(()));
+        }
         let decoder = ::image::codecs::png::PngDecoder::with_limits(
             Cursor::new(bytes),
             decode_limits(pixels),
         )
         .map_err(image_error)?;
-        let losses = if decoder.is_apng().map_err(image_error)? {
-            vec!["animation-first-frame-only".to_owned()]
-        } else {
-            Vec::new()
-        };
+        let mut losses: Vec<String> = source.losses().into_iter().map(str::to_owned).collect();
+        if decoder.is_apng().map_err(image_error)? {
+            losses.push("animation-first-frame-only".to_owned());
+        }
         return decode_pixels(decoder, format, losses, pixels);
     }
-    let losses = match format {
+    let mut losses = match format {
         ImageFormat::Gif => gif::admit(bytes, pixels)?,
         ImageFormat::Tiff => tiff::admit(bytes, pixels)?,
         ImageFormat::Tga => tga::admit(bytes, pixels)?,
@@ -358,6 +370,12 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
     };
     if format == ImageFormat::Bmp {
         admit_bmp(bytes)?;
+        losses.extend(
+            bmp_metadata::inspect(bytes, pixels, &|| Ok(()))?
+                .losses()
+                .into_iter()
+                .map(str::to_owned),
+        );
     }
     let mut reader =
         ::image::ImageReader::with_format(Cursor::new(bytes), external_format(format)?);
@@ -419,7 +437,10 @@ fn decode_pixels_metadata(
     {
         losses.push("icc-profile-ignored".to_owned());
     }
-    if read_metadata && decoder.exif_metadata().map_err(image_error)?.is_some() {
+    if read_metadata
+        && decoder.exif_metadata().map_err(image_error)?.is_some()
+        && !losses.iter().any(|loss| loss == "exif-metadata-ignored")
+    {
         losses.push("exif-metadata-ignored".to_owned());
     }
     let image = DynamicImage::from_decoder(decoder).map_err(image_error)?;
