@@ -78,7 +78,21 @@ impl WebApp {
             self.message = "Finish text composition before downloading".into();
             return;
         }
-        match self.editor.copy_snapshot() {
+        let mut source_metadata = paintcraft_formats::export::metadata_policy::Intent::Refuse;
+        let snapshot = if format.is_some() && self.export_frozen.is_some() {
+            let frozen = self.export_frozen.as_ref().expect("checked frozen copy");
+            if !frozen.current(self) {
+                self.message = "The document changed; choose the image again.".into();
+                return;
+            }
+            if self.export_omit_source_metadata {
+                source_metadata = paintcraft_formats::export::metadata_policy::Intent::Omit;
+            }
+            Ok(frozen.document.clone())
+        } else {
+            self.editor.copy_snapshot()
+        };
+        match snapshot {
             Ok(snapshot) => {
                 let name = self.download_name(format);
                 self.files.download(
@@ -92,6 +106,7 @@ impl WebApp {
                         }),
                         pcx_encoding: self.export_pcx_encoding,
                         frontend: self.format_profile(),
+                        source_metadata,
                     },
                     &name,
                     self.editor.session.history_ticket().owner,

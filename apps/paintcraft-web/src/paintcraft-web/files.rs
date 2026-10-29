@@ -50,6 +50,7 @@ pub(crate) struct ExportOptions {
     pub jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
     pub pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pub frontend: Frontend,
+    pub source_metadata: paintcraft_formats::export::metadata_policy::Intent,
 }
 
 // One source/preview realm per WebApp, shared across parked interfaces, pending
@@ -282,6 +283,7 @@ impl Files {
             options.frontend,
             options.pcx_encoding,
             options.jpeg_matte,
+            options.source_metadata,
         ) {
             Ok(bytes) => bytes,
             Err(error) => {
@@ -372,6 +374,7 @@ fn encode_options_for_profile(
         frontend,
         pcx_encoding,
         None,
+        Default::default(),
     )
 }
 
@@ -734,3 +737,7 @@ mod metadata_tests;
 #[cfg(test)]
 #[path = "files/png_metadata_tests.rs"]
 mod png_metadata_tests;
+
+#[cfg(test)]
+#[path = "files/metadata_export_tests.rs"]
+mod metadata_export_tests;

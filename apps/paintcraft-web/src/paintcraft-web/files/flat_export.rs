@@ -7,6 +7,7 @@ pub(super) fn encode(
     frontend: Frontend,
     pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     jpeg_matte: Option<image::JpegMatte>,
+    source_metadata: paintcraft_formats::export::metadata_policy::Intent,
 ) -> Result<Vec<u8>> {
     if jpeg_matte.is_some() && format != Some(ImageExport::Jpeg) {
         return Err(Error::new(
@@ -47,6 +48,11 @@ pub(super) fn encode(
         }
         let mut options = paintcraft_formats::export::FlatOptions::new(format, jpeg_quality);
         options.jpeg_matte = jpeg_matte;
+        options.source_metadata = paintcraft_formats::export::metadata_policy::Policy::capture(
+            document,
+            paintcraft_formats::export::metadata_policy::Target::new(family, Operation::ExportFlat),
+            source_metadata,
+        )?;
         if format == image::ImageFormat::Pcx {
             options.pcx_mode = pcx_mode(pcx_encoding);
         }
@@ -57,6 +63,16 @@ pub(super) fn encode(
         )?
         .bytes);
     }
+    // Project saves always preserve attachments. Even an empty project must not
+    // silently accept a request to omit them from PCND.
+    paintcraft_formats::export::metadata_policy::Policy::capture(
+        document,
+        paintcraft_formats::export::metadata_policy::Target::new(
+            Family::Pcnd,
+            paintcraft_formats::registry::Operation::SavePreserving,
+        ),
+        source_metadata,
+    )?;
     let mut writer = Limited(Vec::new());
     pcnd::write_compact_to(document, &mut writer)?;
     Ok(writer.0)

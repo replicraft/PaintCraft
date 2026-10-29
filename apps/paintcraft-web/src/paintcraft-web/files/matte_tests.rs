@@ -18,6 +18,7 @@ fn browser_encoder_delivers_matte_without_changing_project_or_legacy_white() {
             frontend,
             Default::default(),
             None,
+            Default::default(),
         )
         .unwrap();
         let white = flat_export::encode(
@@ -27,6 +28,7 @@ fn browser_encoder_delivers_matte_without_changing_project_or_legacy_white() {
             frontend,
             Default::default(),
             Some(image::JpegMatte::WHITE),
+            Default::default(),
         )
         .unwrap();
         assert_eq!(default, white);
@@ -37,6 +39,7 @@ fn browser_encoder_delivers_matte_without_changing_project_or_legacy_white() {
             frontend,
             Default::default(),
             Some(image::JpegMatte::new([32, 160, 224])),
+            Default::default(),
         )
         .unwrap();
         assert_ne!(bytes, white);
@@ -61,7 +64,8 @@ fn browser_encoder_delivers_matte_without_changing_project_or_legacy_white() {
                     90,
                     frontend,
                     Default::default(),
-                    Some(image::JpegMatte::WHITE)
+                    Some(image::JpegMatte::WHITE),
+                    Default::default(),
                 )
                 .unwrap_err()
                 .code,

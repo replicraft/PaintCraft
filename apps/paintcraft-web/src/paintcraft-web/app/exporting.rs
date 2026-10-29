@@ -1,7 +1,11 @@
 //! Browser export options and bounded palette preview ownership.
 use super::*;
+mod frozen;
+pub(crate) use frozen::Frozen;
 #[cfg(test)]
 mod matte_tests;
+#[cfg(test)]
+mod metadata_tests;
 impl WebApp {
     pub(super) fn export_dialog(&mut self, ctx: &egui::Context) {
         if self.dds.reviewing() {
@@ -13,6 +17,27 @@ impl WebApp {
             return;
         }
         if let Some(mut format) = self.export_confirm {
+            if self.export_frozen.is_none() {
+                match Frozen::capture(self) {
+                    Ok(frozen) => self.export_frozen = Some(frozen),
+                    Err(error) => {
+                        self.message = error.to_string();
+                        self.export_confirm = None;
+                        return;
+                    }
+                }
+            }
+            if !self
+                .export_frozen
+                .as_ref()
+                .is_some_and(|frozen| frozen.current(self))
+            {
+                self.export_confirm = None;
+                self.export_frozen = None;
+                self.export_omit_source_metadata = false;
+                self.message = t!(ctx, "The document changed; choose the image again.");
+                return;
+            }
             egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| {
                 ui.set_width(380.0);
                 ui.heading(t!(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
@@ -29,12 +54,13 @@ impl WebApp {
                 if format==ImageExport::Pcx {
                     paintcraft_ui::pcx_export::controls(ui,&mut self.export_pcx_encoding);
                     let editor=&self.editor;
+                    let snapshot=self.export_frozen.as_ref().expect("frozen export").document.clone();
                     let key=format!("{:?}/{:?}/{:?}/{:?}/{}",editor.session.history_ticket(),editor.tools.preview_revision(),editor.tools.pending_text_action(),self.export_pcx_encoding,self.text.preedit);
                     let encoding=self.export_pcx_encoding;
                     let preedit=self.text.preedit.is_empty();
                     preview_ready=self.pcx_preview.show(ui,key,|| {
                         if !preedit {return Err("text composition pending".into());}
-                        let doc=editor.copy_snapshot().map_err(|error|error.to_string())?;
+                        let doc=snapshot;
                         let rgba=paintcraft_render::render_flat(&doc).map_err(|error|error.to_string())?;
                         let prepared=paintcraft_formats::pcx::prepare_rgba(doc.canvas.0,doc.canvas.1,&rgba,crate::files::pcx_mode(encoding),&||Ok(())).map_err(|error|error.to_string())?;
                         let preview=prepared.preview(192,&||Ok(())).map_err(|error|error.to_string())?;
@@ -51,9 +77,13 @@ impl WebApp {
                 ui.label(t!(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
                 ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));
                 if format == ImageExport::Jpeg { ui.label(t!(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
+                let advanced=advanced_dds&&dds_exporting::advanced(self.dds_settings,self.editor.session.document().canvas);
+                let msp2=advanced_msp&&self.msp_version==paintcraft_ui::msp_export::Version::RowRleV2;
+                if !advanced && !msp2 && self.export_frozen.as_ref().is_some_and(|frozen| frozen.document.source_metadata.is_some()) {
+                    paintcraft_ui::source_metadata_export::controls(ui, &mut self.export_omit_source_metadata);
+                    preview_ready &= self.export_omit_source_metadata;
+                }
                 ui.horizontal(|ui| {
-                    let advanced=advanced_dds&&dds_exporting::advanced(self.dds_settings,self.editor.session.document().canvas);
-                    let msp2=advanced_msp&&self.msp_version==paintcraft_ui::msp_export::Version::RowRleV2;
                     let caption=if advanced||msp2{t!(ui.ctx(),"Preview export")}else{t!(ui.ctx(),"Download { $format }", &[("format", format.name().into())])};
                     if ui.add_enabled(preview_ready,egui::Button::new(caption)).clicked() {
                         if advanced {self.begin_dds_export(ctx);} else if msp2 {self.begin_msp_export(ctx);} else {self.download_image(ctx, format);self.export_confirm=None;}
@@ -64,6 +94,8 @@ impl WebApp {
         }
         if self.export_confirm.is_none() {
             self.pcx_preview.clear();
+            self.export_frozen = None;
+            self.export_omit_source_metadata = false;
         }
     }
 }
