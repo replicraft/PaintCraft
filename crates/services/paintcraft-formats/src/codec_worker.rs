@@ -6,6 +6,7 @@ pub mod native;
 #[cfg(feature = "heif-codec")]
 pub use decode::execute;
 pub mod float;
+pub mod jxl_integer;
 pub mod jxr_encode;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
@@ -148,6 +149,7 @@ pub enum Codec {
     AvifSdr8 = 6,
     HdrSdr8 = 7,
     ExrSdr8 = 8,
+    JxlIntegerRgba8 = 9,
 }
 impl Codec {
     pub fn is_float(self) -> bool {
@@ -171,6 +173,7 @@ impl Codec {
         match self {
             Self::HeifGray8 | Self::HeifSrgb8 => 16384,
             Self::JxlRgba8
+            | Self::JxlIntegerRgba8
             | Self::JxrRgb8
             | Self::AvifSrgb8
             | Self::AvifSdr8
@@ -188,6 +191,7 @@ impl Codec {
             6 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSdr8),
             7 if !cfg!(target_arch = "wasm32") => Ok(Self::HdrSdr8),
             8 if !cfg!(target_arch = "wasm32") => Ok(Self::ExrSdr8),
+            9 if !cfg!(target_arch = "wasm32") => Ok(Self::JxlIntegerRgba8),
             _ => Err(unsupported("worker codec request is not supported")),
         }
     }
@@ -232,6 +236,7 @@ impl Request {
                     | Codec::AvifSdr8
                     | Codec::HdrSdr8
                     | Codec::ExrSdr8
+                    | Codec::JxlIntegerRgba8
             )
         {
             return Err(unsupported("Requested codec worker is native-only"));
@@ -351,6 +356,7 @@ impl Header {
                     | Codec::AvifSdr8
                     | Codec::HdrSdr8
                     | Codec::ExrSdr8
+                    | Codec::JxlIntegerRgba8
             )
         {
             return Err(unsupported("Requested codec worker is native-only"));
@@ -410,6 +416,7 @@ pub struct Frame<'a> {
     pub heap_peak: u64,
     /// New private float codecs require SourcePlan validation before adoption.
     pub float_report: Option<crate::float_import::wire::Report>,
+    pub jxl_report: Option<jxl_integer::Report>,
 }
 #[derive(Debug)]
 pub struct Success<'a> {
@@ -663,6 +670,8 @@ pub fn decode_with_header<'a>(
         || detail
             != if request.codec.is_float() {
                 crate::float_import::wire::REPORT_BYTES
+            } else if request.codec == Codec::JxlIntegerRgba8 {
+                jxl_integer::REPORT_BYTES
             } else {
                 0
             }
@@ -676,7 +685,17 @@ pub fn decode_with_header<'a>(
     } else {
         None
     };
+    let jxl_report = if request.codec == Codec::JxlIntegerRgba8 {
+        Some(jxl_integer::Report::decode(
+            &body[version..version + detail],
+        )?)
+    } else {
+        None
+    };
     let payload = &body[version + detail..];
+    if let Some(report) = &jxl_report {
+        report.validate_payload(*request, width, height, payload)?;
+    }
     let pixels = match request.codec {
         Codec::HeifGray8 => {
             if y as u64 != pixels
@@ -700,7 +719,8 @@ pub fn decode_with_header<'a>(
         | Codec::AvifSrgb8
         | Codec::AvifSdr8
         | Codec::HdrSdr8
-        | Codec::ExrSdr8 => {
+        | Codec::ExrSdr8
+        | Codec::JxlIntegerRgba8 => {
             if y as u64 != pixels * 4
                 || a != 0
                 || alpha_flag != 0
@@ -723,6 +743,7 @@ pub fn decode_with_header<'a>(
         pixels,
         heap_peak: peak,
         float_report,
+        jxl_report,
     })
 }
 

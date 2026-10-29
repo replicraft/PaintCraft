@@ -153,6 +153,7 @@ fn captured_heif_frame_geometry_hash_extent_and_opacity_are_checked_before_tiles
     let mut rgba = vec![255; 32 * 24 * 4];
     fn frame(pixels: &[u8], width: u32) -> Frame<'_> {
         Frame {
+            jxl_report: None,
             width,
             height: 24,
             pixels: Pixels::SrgbRgba8(pixels),

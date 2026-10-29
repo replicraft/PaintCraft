@@ -4,6 +4,7 @@
 //! kill/reap supervisor. This module never launches arbitrary PATH-selected code.
 mod float;
 mod import;
+mod jxl_integer;
 mod jxr_encode;
 mod launch;
 mod writer_import;
@@ -175,6 +176,9 @@ fn installed_helper(
     version: &str,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<codec_helper::VerifiedDecoderInstallation> {
+    if codec == Codec::JxlIntegerRgba8 {
+        return jxl_integer::discover(version, check);
+    }
     let legacy_record = native_build_record(version)?;
     let avif_record = native_avif_build_record(version)?;
     let sdr_record = native_avif_sdr_build_record(version)?;
