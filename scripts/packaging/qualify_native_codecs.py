@@ -6,6 +6,7 @@ import os
 import re
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -53,10 +54,32 @@ def clean_environment(inherited):
     return {key: value for key, value in inherited.items() if not key.startswith("PAINTCRAFT_")}
 
 
+def binary_facts(path):
+    try:
+        value = path.lstat()
+    except OSError as error:
+        raise ValueError(f"Candidate executable metadata unavailable: {path} ({error.strerror})") from error
+    return {"path": str(path), "bytes": value.st_size,
+            "regular": stat.S_ISREG(value.st_mode), "symlink": stat.S_ISLNK(value.st_mode)}
+
+
 def bounded_binary(path, target):
-    if path.is_symlink() or not path.is_file() or not 0 < path.stat().st_size <= EXECUTABLE_MAX:
-        raise ValueError("Candidate executable must be a bounded regular file")
+    facts = binary_facts(path)
+    if facts["symlink"] or not facts["regular"] or not 0 < facts["bytes"] <= EXECUTABLE_MAX:
+        raise ValueError("Candidate executable must be a bounded regular file: "
+                         f"{facts['path']} (bytes={facts['bytes']}, limit={EXECUTABLE_MAX}, "
+                         f"regular={facts['regular']}, symlink={facts['symlink']})")
     release.validate_binary(target, path)
+
+
+def app_build_command(base, target):
+    args = list(base)
+    # Linux embeds release line-table DWARF in the large App test executable.
+    # The old failure did not measure its size; stripping is a bounded build
+    # policy, not proof of that diagnosis. Keep code, assertions and size cap.
+    if target.endswith("-unknown-linux-gnu"):
+        args += ["--config", 'profile.release.strip="debuginfo"']
+    return args + ["-p", "paintcraft", "--lib", "--no-run", "--message-format=json"]
 
 
 def verify_candidate(cli, target, candidate="v8"):
@@ -269,9 +292,16 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
         dnames = listing(runner, "dds-list", dds, release.ROOT, env)
         exact(runner, "dds-96-goldens", dds, "dds_texture_vectors_match_independently_measured_frozen_specimens",
               dnames, release.ROOT, env)
-        app_json = runner.run("build-app", base + ["-p", "paintcraft", "--lib", "--no-run", "--message-format=json"],
+        app_json = runner.run("build-app", app_build_command(base, target),
                               cwd=release.ROOT, env=env, timeout=3600)
         app = one_test(app_json, "paintcraft")
+        receipt["app_build"] = {
+            "role": "headless-app-test", "strip": "debuginfo" if target.endswith("-unknown-linux-gnu") else "workspace-default",
+            "cargo_profile": next(value["profile"] for value in artifacts(app_json, name="paintcraft")
+                                  if value["executable"] == str(app) and value["profile"].get("test")),
+            "binary": binary_facts(app), "executable_limit": EXECUTABLE_MAX,
+        }
+        save()  # Preserve measured facts even when the unchanged bound refuses.
         remember(app)
         anames = listing(runner, "app-list", app, release.ROOT, env)
         for index, prefix in enumerate(APP_GROUPS):

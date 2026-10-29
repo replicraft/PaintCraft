@@ -177,6 +177,35 @@ class CandidateTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 qualification.bounded_binary(alias, "aarch64-apple-darwin")
 
+    def test_only_linux_app_test_build_strips_debug_info_without_changing_the_bound(self):
+        for target in release.TARGETS:
+            base = ["cargo", "test", "--locked", "--release", "--target", target]
+            original = list(base)
+            command = qualification.app_build_command(base, target)
+            self.assertEqual(base, original)
+            self.assertEqual(command[:len(base)], base)
+            self.assertEqual(command[-5:], ["-p", "paintcraft", "--lib", "--no-run", "--message-format=json"])
+            self.assertNotIn("--no-default-features", command)
+            self.assertNotIn("--features", command)
+            if "linux" in target:
+                self.assertEqual(command[len(base):len(base)+2],
+                                 ["--config", 'profile.release.strip="debuginfo"'])
+            else:
+                self.assertNotIn("--config", command)
+        self.assertEqual(qualification.EXECUTABLE_MAX, 256 << 20)
+
+    def test_binary_rejection_preserves_measured_size_and_never_reads_an_oversized_file(self):
+        path = self.root / "large-app-test"
+        size = qualification.EXECUTABLE_MAX + 123
+        with path.open("wb") as stream:
+            stream.truncate(size)
+        with patch.object(release, "validate_binary") as validate:
+            with self.assertRaisesRegex(ValueError, rf"bytes={size}, limit={qualification.EXECUTABLE_MAX}"):
+                qualification.bounded_binary(path, "x86_64-unknown-linux-gnu")
+            validate.assert_not_called()
+        self.assertEqual(qualification.binary_facts(path), {
+            "path": str(path), "bytes": size, "regular": True, "symlink": False})
+
     def test_fixture_emission_and_helpers_are_removed_but_toolchain_remains(self):
         values = {"PAINTCRAFT_DDS_WRITE_VECTORS": "/emit", "PAINTCRAFT_DDS_WRITE_QUALITY": "High",
                   "PAINTCRAFT_JXR_GOLDEN_OUTPUT": "/rewrite", "PAINTCRAFT_JXR_REFERENCE": "/wrong",

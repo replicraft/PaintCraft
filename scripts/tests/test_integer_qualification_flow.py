@@ -121,6 +121,9 @@ class Scenario:
                 if name in builds:
                     if argv[0] != "cargo":
                         raise AssertionError("Build must pass through the simulated Cargo runner")
+                    if name == "build-app" and scenario.mutation == "oversized-app":
+                        with Path(scenario.app["executable"]).open("ab") as stream:
+                            stream.truncate(qualification.EXECUTABLE_MAX + 123)
                     value = "\n".join(map(json.dumps, builds[name]))
                 elif name in ("source", "source-final"):
                     if argv != ["git", "rev-parse", "HEAD"]:
@@ -204,6 +207,12 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                     self.assertEqual(receipt["source_commit"], COMMIT)
                     self.assertEqual(receipt["source_dirty"], "")
                     self.assertFalse(receipt["oracle_executed"])
+                    app_build = receipt["app_build"]
+                    self.assertEqual(app_build["role"], "headless-app-test")
+                    self.assertEqual(app_build["strip"], "debuginfo" if "linux" in target else "workspace-default")
+                    self.assertEqual(app_build["cargo_profile"], {"test": True})
+                    self.assertEqual(app_build["binary"], qualification.binary_facts(Path(flow.app["executable"])))
+                    self.assertEqual(app_build["executable_limit"], 256 << 20)
                     metadata = receipt["candidate"]["manifest"]
                     self.assertEqual(metadata["schema_version"], 2 if candidate == "v9" else 3)
                     self.assertEqual(metadata["profile"], qualification.CANDIDATES[candidate][1])
@@ -249,6 +258,15 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                     self.assertLess(phases.index("cli-ordinary"), phases.index("app-integer-jxl"))
                     self.assertLess(phases.index("app-integer-jxl"), phases.index("source-final"))
         self.assertEqual(helper_policy.ROLLOUT, policy)
+
+    def test_app_bound_still_refuses_and_retains_actual_size_before_any_app_execution(self):
+        flow = self.scenario("v9", "x86_64-unknown-linux-gnu", mutation="oversized-app")
+        self.assert_failed(flow, "bounded regular file", forbidden="app-list")
+        receipt = flow.receipt()
+        self.assertEqual(receipt["app_build"]["binary"]["bytes"], qualification.EXECUTABLE_MAX + 123)
+        self.assertEqual(receipt["app_build"]["strip"], "debuginfo")
+        self.assertIn(f"bytes={qualification.EXECUTABLE_MAX + 123}", receipt["error"])
+        self.assertNotIn("source-final", flow.phases())
 
     def test_missing_integer_worker_names_refuse_even_with_unrelated_passing_test(self):
         for candidate in ("v9", "v10"):
