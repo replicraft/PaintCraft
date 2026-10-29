@@ -49,6 +49,7 @@ Available tools:
 - `open_project`: open a layered PCND project.
 - `import_image`: import a local picture into a new unsaved project, with explicit conversion-loss consent.
 - `inspect_document`: inspect dimensions, layer IDs and history.
+- `inspect_source`: inspect original PNG, BMP or JPEG properties without decoding pixels or changing the painting.
 - `paint_stroke`: paint with the engine's brushes.
 - `draw_shape`: draw filled or outlined shapes.
 - `get_batch_schema`: discover all supported engine operations.
@@ -65,6 +66,44 @@ Available tools:
 - `export_palette`: write a fresh ASE palette copy while retaining groups, names, color models, swatch types and precise channel values.
 - `inspect_shapes`: inspect a CSH custom shape library, including exact bounds and ordered path records.
 - `export_shapes`: write a fresh CSH resource copy without editing or adopting the open document.
+
+### Read-only picture inspection
+
+`inspect_source` works without an open document. It returns
+`paintcraft.source-inspection/v1`: original source SHA-256 and byte count,
+dimensions, packed storage or component model, palettes, transparency, color
+declarations, profile identities, resolution and orientation where available.
+The conversion proposal names header-known losses and normalized dimensions.
+It is not an import ticket or permission to adopt a document; malformed samples
+or compressed data can still fail when decoded. The tool does not assign a
+profile, perform color management or retain metadata in a painting.
+
+```json
+{"name":"inspect_source","arguments":{"path":"/absolute/path/picture.jpg"}}
+```
+
+The corresponding CLI and schema are:
+
+```sh
+paintcraft-cli inspect-source picture.jpg --json
+paintcraft-cli inspect-source picture.jpg --expect-input-sha256 SHA256 --json
+paintcraft-cli schema source-inspection
+```
+
+MCP uses `expect_source_sha256` for the optional expected digest. Both interfaces
+accept lower input, pixel and adapter-specific metadata allowances; CLI spellings
+are `--max-input-bytes`, `--max-pixels` and `--max-metadata-bytes`. These are
+logical admission limits, not a total allocation or process-memory guarantee.
+In particular, BMP's metadata allowance bounds ICC inspection and excludes its
+small fixed palette descriptor. Requests cannot raise the adapter's defaults.
+
+Acquisition uses a captured regular-file handle. The source identity and bytes
+are revalidated before returning; replacement, mutation, cancellation and a bad
+expected digest fail without changing the document, Undo history or save
+binding. This is a bounded observation, not filesystem compare-and-swap or a
+persistent guarantee that another process cannot change the file afterward.
+Other format families remain unsupported by this tool; their dedicated
+inspection workflows remain separate.
 
 Palette tools work without an open document. They never edit the painting,
 history, dirty flag or project save binding. For example:

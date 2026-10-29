@@ -5,6 +5,15 @@ documents. They do not bind preserving Save to the original image.
 
 ## Source authority
 
+CLI `inspect-source INPUT --json` and MCP `inspect_source` expose original
+PNG/BMP/JPEG declarations without pixel decoding or editor adoption. Their
+versioned schema comes from the same typed report used for serialization:
+`paintcraft-cli schema source-inspection`. The report distinguishes source facts
+from a header-derived conversion proposal and carries no concurrency ticket,
+loss consent or adoption authority. Acquisition, expected digest, cancellation
+and final source revalidation are checked independently of the open painting.
+See [MCP source inspection](MCP.md#read-only-picture-inspection).
+
 Desktop acquisition retains the regular file identity from the same open handle
 that supplied the decoded bytes. The raw source SHA-256 and byte count are
 checked after decoding, before construction after loss consent, and immediately
