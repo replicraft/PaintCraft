@@ -1,5 +1,5 @@
-//! Experimental owned macOS window. Explicit opt-in; canonical key/IME source
-//! ordering and physical tablet qualification remain unfinished.
+//! Owned macOS window with native pointer capture and ordinary-input recovery.
+//! Physical tablet and canonical keyboard/IME qualification remain separate.
 use crate::{
     App,
     owned_tablet::{Host, Progress},
@@ -15,6 +15,8 @@ use winit::{
     window::{Window, WindowId},
 };
 mod output;
+#[cfg(test)]
+mod tests;
 
 type Failure = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, Failure>;
@@ -26,8 +28,8 @@ enum Wake {
     Repaint(Instant),
 }
 
-/// The caller has explicitly selected the experimental native intake path.
-/// Normal startup continues using eframe until native acceptance is complete.
+/// Normal macOS startup owns the input loop; unavailable native capture keeps
+/// the same window, document and ordinary framework input alive.
 pub fn run(app: App) -> Result<()> {
     let event_loop = EventLoop::<Wake>::with_user_event().build()?;
     let mut application = Application {
@@ -143,13 +145,23 @@ impl Desktop {
             Arc::new(move || {
                 let _ = proxy.send_event(Wake::Capture);
             }),
-        )?;
-        host.bind_delivery(native.delivery_check());
+        );
+        let native = match native {
+            Ok(native) => {
+                host.bind_delivery(native.delivery_check());
+                Some(native)
+            }
+            Err(error) => {
+                eprintln!("PaintCraft native input unavailable: {error}");
+                restore_pointer_input(&mut host, &ctx);
+                None
+            }
+        };
         let mut viewport = egui::ViewportInfo::default();
         egui_winit::update_viewport_info(&mut viewport, &ctx, &window, true);
         window.request_redraw();
         Ok(Self {
-            native: Some(native),
+            native,
             host,
             input,
             painter,
@@ -179,7 +191,7 @@ impl Desktop {
             match result {
                 Ok(step) => {
                     if let Some(error) = &step.error {
-                        eprintln!("PaintCraft experimental native input: {error}");
+                        eprintln!("PaintCraft native input: {error}");
                         self.retire_native();
                     } else if step.progress == Progress::Advanced {
                         self.window.request_redraw();
@@ -187,7 +199,7 @@ impl Desktop {
                     step.output
                 }
                 Err(error) => {
-                    eprintln!("PaintCraft experimental native input: {error}");
+                    eprintln!("PaintCraft native input: {error}");
                     self.retire_native();
                     let mut recovery = self.input.take_egui_input(&self.window);
                     recovery.viewports.insert(ROOT, self.viewport.clone());
@@ -218,23 +230,27 @@ impl Desktop {
             }
             drop(native);
         }
-        self.host.retire();
-        let app = self.host.app_mut();
-        app.editor.end_native_activation();
-        app.tablet.take();
-        app.editor.set_status(t!(
-            &self.ctx,
-            "Native pen input stopped. You can keep using the mouse and save your work."
-        ));
-        self.ctx.stop_dragging();
-        self.ctx
-            .input_mut(|input| input.pointer = Default::default());
-        self.ctx.request_repaint();
+        restore_pointer_input(&mut self.host, &self.ctx);
     }
 
     fn schedule(&mut self, when: Instant) {
         self.repaint_at = Some(self.repaint_at.map_or(when, |old| old.min(when)));
     }
+}
+
+/// Capture refusal is an input fallback, not application startup failure.
+fn restore_pointer_input(host: &mut Host, ctx: &egui::Context) {
+    host.retire();
+    let app = host.app_mut();
+    app.editor.end_native_activation();
+    app.tablet.take();
+    app.editor.set_status(t!(
+        ctx,
+        "Native pen input stopped. You can keep using the mouse and save your work."
+    ));
+    ctx.stop_dragging();
+    ctx.input_mut(|input| input.pointer = Default::default());
+    ctx.request_repaint();
 }
 
 fn framework_pointer(event: &egui::Event) -> bool {

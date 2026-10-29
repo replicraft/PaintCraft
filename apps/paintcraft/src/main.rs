@@ -30,9 +30,17 @@ fn main() -> eframe::Result {
 
 fn run(app: App) -> eframe::Result {
     #[cfg(target_os = "macos")]
-    if std::env::var("PAINTCRAFT_NATIVE_TABLET").is_ok_and(|value| value == "1") {
-        return paintcraft::desktop::run(app).map_err(eframe::Error::AppCreation);
+    {
+        paintcraft::desktop::run(app).map_err(eframe::Error::AppCreation)
     }
+    #[cfg(not(target_os = "macos"))]
+    {
+        run_framework(app)
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn run_framework(app: App) -> eframe::Result {
     let options = eframe::NativeOptions {
         renderer: eframe::Renderer::Wgpu,
         // eframe also uses the launch title for the macOS application menu.
