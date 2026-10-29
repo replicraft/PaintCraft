@@ -168,12 +168,27 @@ impl Commit {
             original,
         })
     }
+    #[cfg(test)]
     pub fn validate_payload(&self, dir: &Path, session: Uuid) -> Result<Document> {
-        let bytes = read_bounded(&payload_path(dir, session, self.payload), self.bytes)?;
+        super::admission::native(|metadata| {
+            self.validate_payload_checked(
+                dir,
+                session,
+                &super::admission::Context::new(metadata, &|| Ok(())),
+            )
+        })
+    }
+    pub(super) fn validate_payload_checked(
+        &self,
+        dir: &Path,
+        session: Uuid,
+        context: &super::admission::Context<'_>,
+    ) -> Result<Document> {
+        let bytes = context.file(&payload_path(dir, session, self.payload), self.bytes)?;
         if bytes.len() as u64 != self.bytes || hash(&bytes) != self.sha256 {
             return Err(invalid("recovery payload checksum or length mismatch"));
         }
-        let document = crate::pcnd::read(&bytes)?;
+        let document = context.read(&bytes)?;
         if document.document_id != self.document || document.state_id != self.state {
             return Err(invalid("recovery snapshot identity mismatch"));
         }

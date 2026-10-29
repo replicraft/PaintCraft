@@ -54,6 +54,17 @@ impl RecoveryLease {
 }
 impl Recovery {
     pub fn claim(found: &Found) -> Result<ClaimedRecovery> {
+        admission::native(|metadata| {
+            Self::claim_with_metadata_admission_checked(found, metadata, &|| Ok(()))
+        })
+    }
+    pub fn claim_with_metadata_admission_checked(
+        found: &Found,
+        metadata: crate::pcnd::MetadataAdmission<'_>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<ClaimedRecovery> {
+        let context = admission::Context::new(metadata, check);
+        context.check()?;
         let directory = found
             .checkpoint
             .parent()
@@ -83,20 +94,21 @@ impl Recovery {
                 "recovery was discarded after it was offered",
             ));
         }
-        let bytes = read_bounded(&found.checkpoint, SNAPSHOT_BYTES_MAX)?;
+        let bytes = context.file(&found.checkpoint, SNAPSHOT_BYTES_MAX)?;
         if hash(&bytes) != found.sha256 {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
                 "recovery content changed after it was offered",
             ));
         }
-        let document = crate::pcnd::read(&bytes)?;
+        let document = context.read(&bytes)?;
         if document.document_id != found.document_id || document.state_id != found.state_id {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
                 "recovery identity changed after it was offered",
             ));
         }
+        context.check()?;
         Ok(ClaimedRecovery {
             document,
             lease,

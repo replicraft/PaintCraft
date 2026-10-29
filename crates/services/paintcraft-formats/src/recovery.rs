@@ -2,6 +2,8 @@
 //! commit segments, then alternating heads publish a validated journal position.
 //! A head anchors a full semantic snapshot; only contiguous backed tail records
 //! may advance it. Recovery restores content, not the entire undo history.
+mod admission;
+mod cleanup;
 mod journal;
 mod lease;
 mod reader;
@@ -102,6 +104,8 @@ pub struct Checkpoint {
 }
 #[derive(Debug, Default)]
 pub struct ScanReport {
+    /// Future versions/features are retained without falling back to older content.
+    pub unsupported_sessions: usize,
     pub found: Vec<Found>,
     pub issues: Vec<String>,
 }
@@ -297,19 +301,47 @@ impl Recovery {
         }
     }
 
-    /// Compatibility entry point. Validate untrusted bytes using native admission.
+    /// Compatibility entry points use the existing process-owned metadata realm.
     pub fn checkpoint(&self, bytes: &[u8], original: Option<&Path>) -> Result<()> {
+        admission::native(|metadata| {
+            self.checkpoint_with_metadata_admission_checked(bytes, original, metadata, &|| Ok(()))
+        })
+    }
+    pub fn checkpoint_with_metadata_admission_checked(
+        &self,
+        bytes: &[u8],
+        original: Option<&Path>,
+        metadata: crate::pcnd::MetadataAdmission<'_>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
         if bytes.len() as u64 > SNAPSHOT_BYTES_MAX {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
                 "recovery snapshot exceeds its limit",
             ));
         }
-        self.checkpoint_document(&crate::pcnd::read(bytes)?, original)
-            .map(|_| ())
+        let context = admission::Context::new(metadata, check);
+        let document = context.read(bytes)?;
+        context.check()?;
+        // This final check admits the existing durable publication transaction.
+        // Later owner-token fences retain their original crash/partial-write rules;
+        // do not add a caller cancellation after reclamation has already begun.
+        self.checkpoint_document(&document, original).map(|_| ())
     }
     pub fn read_checkpoint(path: &Path) -> Result<Document> {
-        crate::pcnd::read(&read_bounded(path, SNAPSHOT_BYTES_MAX)?)
+        admission::native(|metadata| {
+            Self::read_checkpoint_with_metadata_admission_checked(path, metadata, &|| Ok(()))
+        })
+    }
+    pub fn read_checkpoint_with_metadata_admission_checked(
+        path: &Path,
+        metadata: crate::pcnd::MetadataAdmission<'_>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Document> {
+        let context = admission::Context::new(metadata, check);
+        let document = context.read(&context.file(path, SNAPSHOT_BYTES_MAX)?)?;
+        context.check()?;
+        Ok(document)
     }
 
     pub fn checkpoint_document(
@@ -528,13 +560,34 @@ impl Recovery {
         Self::scan_report(dir).found
     }
     pub fn scan_report(dir: &Path) -> ScanReport {
-        let mut report = reader::scan_report(dir);
+        admission::native(|metadata| {
+            Self::scan_report_with_metadata_admission_checked(dir, metadata, &|| Ok(()))
+        })
+        .unwrap_or_else(|error| ScanReport {
+            issues: vec![format!("Recovery inspection retained its files: {error}")],
+            ..Default::default()
+        })
+    }
+    pub fn scan_report_with_metadata_admission_checked(
+        dir: &Path,
+        metadata: crate::pcnd::MetadataAdmission<'_>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<ScanReport> {
+        let context = admission::Context::new(metadata, check);
+        let mut cleanup = cleanup::Batch::default();
+        let mut report = reader::scan_bounded(dir, 100_000, &context, &mut cleanup)?;
         let saves = dir.join(crate::save_recovery::DIRECTORY);
         match fs::symlink_metadata(&saves) {
             Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
-                let extra = reader::scan_bounded(&saves, crate::save_recovery::FILES_MAX);
+                let extra = reader::scan_bounded(
+                    &saves,
+                    crate::save_recovery::FILES_MAX,
+                    &context,
+                    &mut cleanup,
+                )?;
                 report.found.extend(extra.found);
                 report.issues.extend(extra.issues);
+                report.unsupported_sessions += extra.unsupported_sessions;
             }
             Ok(_) => report
                 .issues
@@ -546,7 +599,9 @@ impl Recovery {
             )),
         }
         report.found.sort_by_key(|found| found.modified);
-        report
+        context.check()?;
+        cleanup.commit(&mut report.issues);
+        Ok(report)
     }
     /// Refuse to remove a live session's store.
     pub fn discard(dir: &Path, session: Uuid) -> Result<()> {
@@ -593,3 +648,6 @@ impl Drop for Recovery {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod metadata_tests;

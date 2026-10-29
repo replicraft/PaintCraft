@@ -1,20 +1,24 @@
 //! Validate checkpoint anchors and replay only a backed contiguous journal tail.
 use super::*;
 
-pub(super) fn scan_report(dir: &Path) -> ScanReport {
-    scan_bounded(dir, 100_000)
-}
-pub(super) fn scan_bounded(dir: &Path, entry_limit: usize) -> ScanReport {
+pub(super) fn scan_bounded(
+    dir: &Path,
+    entry_limit: usize,
+    context: &admission::Context<'_>,
+    cleanup: &mut cleanup::Batch,
+) -> Result<ScanReport> {
+    context.check()?;
     let mut report = ScanReport::default();
     let Ok(entries) = fs::read_dir(dir) else {
-        return report;
+        return Ok(report);
     };
     for (count, entry) in entries.enumerate() {
+        context.check()?;
         if count >= entry_limit {
-            report.issues.push(
-                "Recovery directory scan limit reached; remaining entries were retained".into(),
-            );
-            break;
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "recovery directory scan limit reached; files retained",
+            ));
         }
         let Ok(entry) = entry else {
             report
@@ -63,20 +67,14 @@ pub(super) fn scan_bounded(dir: &Path, entry_limit: usize) -> ScanReport {
         let marker = tombstone(dir, session);
         if marker.exists() {
             if read_bounded(&marker, RECORD_MAX).is_ok_and(|b| b == cleared_bytes(session)) {
-                let cleaned = clear_owned(dir, session)
-                    .and_then(|()| remove_if_present(&marker))
-                    .and_then(|()| remove_if_present(&path))
-                    .and_then(|()| sync_directory(dir));
-                if let Err(error) = cleaned {
-                    report.issues.push(error.to_string());
-                }
+                cleanup.defer(dir, session, lock, true, &mut report.issues)?;
                 continue;
             }
             report.issues.push(format!(
                 "Recovery discard marker for {session} is invalid; data retained"
             ));
         }
-        match scan_session(dir, session, &mut report.issues) {
+        match scan_session(dir, session, &mut report.issues, context) {
             Ok(Some(found)) => report.found.push(found),
             Ok(None) => {
                 if owned_paths(dir, session).is_ok_and(|paths| {
@@ -87,17 +85,22 @@ pub(super) fn scan_bounded(dir: &Path, entry_limit: usize) -> ScanReport {
                                     == Some(format!("{session}.json").as_str())
                     })
                 }) {
-                    let _ = remove_if_present(&dir.join(format!("{session}.json")));
-                    let _ = remove_if_present(&path);
+                    cleanup.defer(dir, session, lock, false, &mut report.issues)?;
                 } else {
                     report.issues.push(format!("Recovery files for {session} have no valid checkpoint; retained for inspection"));
                 }
             }
-            Err(error) => report.issues.push(format!("Recovery {session}: {error}")),
+            Err(error) if context.abort(&error) => return Err(context.canonical(error)),
+            Err(error) => {
+                if error.code == ErrorCode::CapabilityUnsupported {
+                    report.unsupported_sessions += 1;
+                }
+                report.issues.push(format!("Recovery {session}: {error}"));
+            }
         }
     }
     report.found.sort_by_key(|f| f.modified);
-    report
+    Ok(report)
 }
 
 pub(super) fn load_commit(dir: &Path, session: Uuid, sequence: u64) -> Result<(Commit, String)> {
@@ -108,8 +111,13 @@ pub(super) fn load_commit(dir: &Path, session: Uuid, sequence: u64) -> Result<(C
     }
     Ok((commit, hash(&bytes)))
 }
-fn found_commit(dir: &Path, session: Uuid, commit: &Commit) -> Result<Found> {
-    commit.validate_payload(dir, session)?;
+fn found_commit(
+    dir: &Path,
+    session: Uuid,
+    commit: &Commit,
+    context: &admission::Context<'_>,
+) -> Result<Found> {
+    commit.validate_payload_checked(dir, session, context)?;
     let checkpoint = payload_path(dir, session, commit.payload);
     let modified = fs::metadata(&checkpoint)
         .and_then(|m| m.modified())
@@ -125,9 +133,15 @@ fn found_commit(dir: &Path, session: Uuid, commit: &Commit) -> Result<Found> {
         sha256: commit.sha256.clone(),
     })
 }
-fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<Option<Found>> {
+fn scan_session(
+    dir: &Path,
+    session: Uuid,
+    issues: &mut Vec<String>,
+    context: &admission::Context<'_>,
+) -> Result<Option<Found>> {
     let mut anchors = Vec::new();
     for slot in 0..2 {
+        context.check()?;
         let path = head_path(dir, session, slot);
         if fs::symlink_metadata(&path).is_err() {
             continue;
@@ -138,11 +152,13 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
             if digest != head.commit_sha256 {
                 return Err(journal::invalid("recovery head/commit checksum mismatch"));
             }
-            let found = found_commit(dir, session, &commit)?;
+            let found = found_commit(dir, session, &commit, context)?;
             Ok((found, digest))
         })();
         match anchor {
             Ok(anchor) => anchors.push(anchor),
+            Err(error) if context.abort(&error) => return Err(context.canonical(error)),
+            Err(error) if error.code == ErrorCode::CapabilityUnsupported => return Err(error),
             Err(error) => issues.push(format!("Recovery {session} head {slot}: {error}")),
         }
     }
@@ -154,6 +170,7 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
         (None, None, Some(1))
     };
     for _ in 0..TAIL_RECORDS_MAX {
+        context.check()?;
         let Some(next) = sequence else {
             break;
         };
@@ -165,7 +182,7 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
             if commit.previous != previous {
                 return Err(journal::invalid("recovery journal chain is discontinuous"));
             }
-            Ok((found_commit(dir, session, &commit)?, digest))
+            Ok((found_commit(dir, session, &commit, context)?, digest))
         })();
         match advanced {
             Ok((new_found, digest)) => {
@@ -173,6 +190,8 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
                 previous = Some(digest);
                 sequence = next.checked_add(1);
             }
+            Err(error) if context.abort(&error) => return Err(context.canonical(error)),
+            Err(error) if error.code == ErrorCode::CapabilityUnsupported => return Err(error),
             Err(error) => {
                 issues.push(format!(
                     "Recovery {session} stopped at journal {next}: {error}"
@@ -188,8 +207,8 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
     // admitted and semantically validated, rather than trusted because of a suffix.
     let legacy = dir.join(format!("{session}.pcnd"));
     if fs::symlink_metadata(&legacy).is_ok() {
-        let bytes = read_bounded(&legacy, SNAPSHOT_BYTES_MAX)?;
-        let document = crate::pcnd::read(&bytes)?;
+        let bytes = context.file(&legacy, SNAPSHOT_BYTES_MAX)?;
+        let document = context.read(&bytes)?;
         let original = read_bounded(&dir.join(format!("{session}.json")), RECORD_MAX)
             .ok()
             .and_then(|b| json::parse(&b).ok())
