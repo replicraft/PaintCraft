@@ -303,8 +303,20 @@ fn source_and_preview_admission_cancel_and_old_open_policy_are_preserved() {
     app.settings.experience = Experience::Classic;
     assert!(app.stage_tiff_import(fixture.path.clone()).is_err());
     app.settings.experience = Experience::Studio;
-    let budget = app.editing.as_ref().unwrap().metadata_budget();
-    let lease = budget.reserve(budget.usage().limit).unwrap();
+    // Exhaust only this fixture's metadata realm: the production default is
+    // process-shared and may already contain allocations from parallel Apps.
+    let limit = app
+        .editing
+        .as_ref()
+        .unwrap()
+        .metadata_budget()
+        .usage()
+        .limit;
+    let budget = paintcraft_runtime::SharedBudget::new(limit);
+    let service = app.editing.take().unwrap().with_metadata(budget.clone());
+    app.editor.connect_editing(service.clone());
+    app.editing = Some(service);
+    let lease = budget.reserve(limit).unwrap();
     app.stage_tiff_import(fixture.path.clone()).unwrap();
     let end = Instant::now() + Duration::from_secs(10);
     while app.pending_import.is_some() {
@@ -368,10 +380,12 @@ fn actual_page_two_controls_and_preview_consent_work_in_all_seven_languages() {
             &translate(language, "Import selected page"),
         )
         .click();
-        h.run();
         let end = Instant::now() + Duration::from_secs(10);
+        // The click starts asynchronous work whose spinner intentionally keeps
+        // repainting. Poll individual frames, not Harness::run's settle limit.
+        h.step();
         while source(h.state()).prepared.is_none() {
-            h.run();
+            h.step();
             assert!(Instant::now() < end);
             std::thread::sleep(Duration::from_millis(1));
         }
