@@ -52,8 +52,36 @@ pub fn prepare_document_with(
     render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<PreparedMsp> {
+    prepare_document_with_metadata_policy(
+        doc,
+        version,
+        allowed,
+        admit_render,
+        admit_encode,
+        render,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub fn prepare_document_with_metadata_policy(
+    doc: &Document,
+    version: Version,
+    allowed: &[String],
+    admit_render: impl FnOnce(RgbaLayout, u64) -> Result<()>,
+    admit_encode: impl FnOnce(RgbaWritePlan) -> Result<()>,
+    render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<PreparedMsp> {
     check()?;
-    crate::export::require_metadata_policy(doc)?;
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            crate::registry::Family::Msp,
+            crate::registry::Operation::ExportFlat,
+        ),
+    )?;
     check_loss_codes(allowed)?;
     let layout = RgbaLayout::new(version, doc.canvas.0, doc.canvas.1)?;
     render_reservation_bytes(layout)?;
@@ -69,8 +97,12 @@ pub fn prepare_document_with(
     }
     admit_render(layout, resident)?;
     check()?;
-    let FlatComposite { rgba, losses } = prepare_composite(doc, |doc| render(doc, check), check)?;
+    let FlatComposite { rgba, mut losses } =
+        prepare_composite(doc, |doc| render(doc, check), check)?;
     require_losses("MSP", &losses, allowed)?;
+    if metadata_omitted {
+        losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
     let plan = codec::preflight_rgba_exact(layout, &rgba, check)?;
     admit_encode(plan)?;
     check()?;

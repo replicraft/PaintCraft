@@ -8,7 +8,24 @@ pub const TITLE_LOSS: &str = "ora-document-title-not-exported";
 
 /// Validate every representable property before writing even the ZIP header.
 pub fn preflight(doc: &Document, limits: &Limits) -> Result<Vec<String>> {
-    crate::export::require_metadata_policy(doc)?;
+    preflight_with_metadata_policy(
+        doc,
+        limits,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn preflight_with_metadata_policy(
+    doc: &Document,
+    limits: &Limits,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<Vec<String>> {
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            crate::registry::Family::Ora,
+            crate::registry::Operation::SaveAsCopy,
+        ),
+    )?;
     dimensions(doc.canvas.0, doc.canvas.1, limits)?;
     if doc.roots.is_empty() || doc.roots.len() != doc.layers.len() {
         return Err(malformed("ORA requires a nonempty valid flat layer stack"));
@@ -48,11 +65,15 @@ pub fn preflight(doc: &Document, limits: &Limits) -> Result<Vec<String>> {
             return Err(resource("ORA aggregate layer pixels exceed writer limits"));
         }
     }
-    Ok(if doc.title.is_some() {
+    let mut losses = if doc.title.is_some() {
         vec![TITLE_LOSS.into()]
     } else {
         Vec::new()
-    })
+    };
+    if metadata_omitted {
+        losses.push(crate::export::metadata_policy::OMITTED_REASON.into());
+    }
+    Ok(losses)
 }
 
 fn attribute(text: &str, xml: &mut String) {
@@ -242,6 +263,23 @@ pub fn write_document_to(
     allowed_losses: &[String],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
+    write_document_to_with_metadata_policy(
+        doc,
+        sink,
+        limits,
+        allowed_losses,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn write_document_to_with_metadata_policy(
+    doc: &Document,
+    sink: impl Write,
+    limits: &Limits,
+    allowed_losses: &[String],
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<()> {
     check()?;
     if allowed_losses.iter().any(|loss| loss != TITLE_LOSS) {
         return Err(Error::new(
@@ -249,8 +287,10 @@ pub fn write_document_to(
             "Unknown OpenRaster export loss acknowledgement",
         ));
     }
-    let losses = preflight(doc, limits)?;
-    if losses.iter().any(|loss| !allowed_losses.contains(loss)) {
+    let losses = preflight_with_metadata_policy(doc, limits, policy)?;
+    if losses.iter().any(|loss| {
+        loss != crate::export::metadata_policy::OMITTED_REASON && !allowed_losses.contains(loss)
+    }) {
         return Err(unsupported(
             "OpenRaster export would omit the document title; explicit acknowledgement is required",
         ));
@@ -343,6 +383,21 @@ pub fn encode_document(
     allowed_losses: &[String],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
+    encode_document_with_metadata_policy(
+        doc,
+        limits,
+        allowed_losses,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn encode_document_with_metadata_policy(
+    doc: &Document,
+    limits: &Limits,
+    allowed_losses: &[String],
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<Vec<u8>> {
     struct Sink(Vec<u8>);
     impl Write for Sink {
         fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
@@ -357,7 +412,7 @@ pub fn encode_document(
         }
     }
     let mut sink = Sink(Vec::new());
-    write_document_to(doc, &mut sink, limits, allowed_losses, check)?;
+    write_document_to_with_metadata_policy(doc, &mut sink, limits, allowed_losses, check, policy)?;
     Ok(sink.0)
 }
 

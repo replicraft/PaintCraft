@@ -16,6 +16,7 @@ impl PreparedEntry {
 pub struct Prepared {
     entries: Vec<PreparedEntry>,
     losses: Vec<String>,
+    metadata_omitted: bool,
 }
 impl Prepared {
     pub fn entries(&self) -> &[PreparedEntry] {
@@ -26,7 +27,11 @@ impl Prepared {
     }
     pub fn encode(&self, allowed: &[String], check: &dyn Fn() -> Result<()>) -> Result<Vec<u8>> {
         crate::icons::check_export_loss_codes(allowed)?;
-        if let Some(loss) = self.losses.iter().find(|loss| !allowed.contains(loss)) {
+        if let Some(loss) = self.losses.iter().find(|loss| {
+            !allowed.contains(loss)
+                && !(self.metadata_omitted
+                    && loss.as_str() == crate::export::metadata_policy::OMITTED_REASON)
+        }) {
             return Err(unsupported(&format!(
                 "ICNS export requires acknowledgment of {loss}"
             )));
@@ -51,8 +56,29 @@ pub fn prepare_document(
     filter: crate::icons::Filter,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Prepared> {
+    prepare_document_with_metadata_policy(
+        doc,
+        kinds,
+        filter,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn prepare_document_with_metadata_policy(
+    doc: &Document,
+    kinds: &[IconType],
+    filter: crate::icons::Filter,
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<Prepared> {
     check()?;
-    crate::export::require_metadata_policy(doc)?;
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            crate::registry::Family::Icns,
+            crate::registry::Operation::ExportAsset,
+        ),
+    )?;
     if kinds.is_empty() || kinds.len() > IconType::WRITABLE.len() {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -77,7 +103,10 @@ pub fn prepare_document(
             (side, side)
         })
         .collect();
-    let (buffers, losses) = crate::icons::prepare_pixels(doc, &sizes, filter, check)?;
+    let (buffers, mut losses) = crate::icons::prepare_pixels(doc, &sizes, filter, check)?;
+    if metadata_omitted {
+        losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
     let entries = kinds
         .iter()
         .copied()
@@ -85,5 +114,9 @@ pub fn prepare_document(
         .map(|(kind, rgba)| PreparedEntry { kind, rgba })
         .collect();
     check()?;
-    Ok(Prepared { entries, losses })
+    Ok(Prepared {
+        entries,
+        losses,
+        metadata_omitted,
+    })
 }

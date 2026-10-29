@@ -6,7 +6,10 @@ mod stack;
 mod write;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::borrow::Cow;
-pub use write::{TITLE_LOSS, encode_document, preflight, write_document_to};
+pub use write::{
+    TITLE_LOSS, encode_document, encode_document_with_metadata_policy, preflight,
+    preflight_with_metadata_policy, write_document_to, write_document_to_with_metadata_policy,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {

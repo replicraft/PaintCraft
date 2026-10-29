@@ -37,8 +37,33 @@ pub fn prepare_opaque_rgb_checked(
     render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<OpaqueRgb> {
+    prepare_opaque_rgb_with_metadata_policy(
+        doc,
+        encoded_cap,
+        allowed,
+        admit,
+        render,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn prepare_opaque_rgb_with_metadata_policy(
+    doc: &Document,
+    encoded_cap: u64,
+    allowed: &[String],
+    admit: impl FnOnce(Layout, u64) -> Result<()>,
+    render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<OpaqueRgb> {
     check()?;
-    crate::export::require_metadata_policy(doc)?;
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            crate::registry::Family::Jxr,
+            crate::registry::Operation::ExportFlat,
+        ),
+    )?;
     check_loss_codes(allowed)?;
     let layout = Layout::new(doc.canvas.0, doc.canvas.1, encoded_cap)?;
     let rgba_bytes = u64::from(layout.width())
@@ -47,7 +72,8 @@ pub fn prepare_opaque_rgb_checked(
         .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "JXR composite extent overflow"))?;
     admit(layout, rgba_bytes)?;
     check()?;
-    let FlatComposite { rgba, losses } = prepare_composite(doc, |doc| render(doc, check), check)?;
+    let FlatComposite { rgba, mut losses } =
+        prepare_composite(doc, |doc| render(doc, check), check)?;
     for (index, pixel) in rgba.as_chunks::<4>().0.iter().enumerate() {
         if index.is_multiple_of(16384) {
             check()?;
@@ -60,6 +86,9 @@ pub fn prepare_opaque_rgb_checked(
         }
     }
     require_losses("JXR RGB8", &losses, allowed)?;
+    if metadata_omitted {
+        losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
     check()?;
     let length = usize::try_from(layout.rgb_bytes())
         .map_err(|_| Error::new(ErrorCode::ResourceLimit, "JXR RGB address extent"))?;

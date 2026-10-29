@@ -83,8 +83,33 @@ pub fn prepare_document_with(
     render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<PreparedDds> {
+    prepare_document_with_metadata_policy(
+        doc,
+        options,
+        allowed,
+        admit,
+        render,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn prepare_document_with_metadata_policy(
+    doc: &Document,
+    options: TextureOptions,
+    allowed: &[String],
+    admit: impl FnOnce(&TexturePlan, u64) -> Result<()>,
+    render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<PreparedDds> {
     check()?;
-    crate::export::require_metadata_policy(doc)?;
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            crate::registry::Family::Dds,
+            crate::registry::Operation::ExportFlat,
+        ),
+    )?;
     check_loss_codes(allowed)?;
     let plan = TexturePlan::new(doc.canvas.0, doc.canvas.1, options)?;
     preparation_reservation_bytes(&plan)?;
@@ -134,6 +159,9 @@ pub fn prepare_document_with(
         append_loss(&mut losses, loss);
     }
     require_losses("DDS texture", &losses, allowed)?;
+    if metadata_omitted {
+        losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
     check()?;
     Ok(PreparedDds {
         encoded,

@@ -6,7 +6,7 @@ mod prepare;
 pub(crate) use prepare::prepare_pixels;
 pub use prepare::{
     EntrySpec, Filter, KNOWN_EXPORT_LOSSES, Prepared, PreparedEntry, check_export_loss_codes,
-    prepare_document,
+    prepare_document, prepare_document_with_metadata_policy,
 };
 mod write;
 pub use write::{WRITE_PIXELS_MAX, WriteEntry, WriteLimits, encode_entries};

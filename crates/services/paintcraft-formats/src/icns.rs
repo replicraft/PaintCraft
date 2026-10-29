@@ -3,7 +3,9 @@
 //! CLI/MCP consumers use the shared profile; preserving Save remains unavailable.
 mod legacy;
 mod prepare;
-pub use prepare::{Prepared, PreparedEntry, prepare_document};
+pub use prepare::{
+    Prepared, PreparedEntry, prepare_document, prepare_document_with_metadata_policy,
+};
 mod read;
 #[cfg(test)]
 mod tests;

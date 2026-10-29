@@ -75,8 +75,33 @@ pub fn prepare_document_with(
     check: &dyn Fn() -> Result<()>,
     render: impl FnOnce(&Document) -> Result<Vec<u8>>,
 ) -> Result<PreparedDocument> {
+    prepare_document_with_metadata_policy(
+        doc,
+        mode,
+        allowed,
+        limits,
+        check,
+        render,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn prepare_document_with_metadata_policy(
+    doc: &Document,
+    mode: pcx::Mode,
+    allowed: &[String],
+    limits: DocumentLimits,
+    check: &dyn Fn() -> Result<()>,
+    render: impl FnOnce(&Document) -> Result<Vec<u8>>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<PreparedDocument> {
     check()?;
-    crate::export::require_metadata_policy(doc)?;
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            crate::registry::Family::Dcx,
+            crate::registry::Operation::ExportFlat,
+        ),
+    )?;
     export::check_loss_codes(allowed)?;
     let (width, height) = doc.canvas;
     let pixels = u64::from(width) * u64::from(height);
@@ -120,6 +145,21 @@ pub fn prepare_document_with(
     }
     let mut options = export::FlatOptions::new(ImageFormat::Pcx, 100);
     options.pcx_mode = mode;
+    if matches!(policy, crate::export::metadata_policy::Policy::Omit(_)) {
+        options.source_metadata = crate::export::metadata_policy::Policy::capture(
+            doc,
+            crate::export::metadata_policy::Target::new(
+                crate::registry::Family::Pcx,
+                crate::registry::Operation::ExportFlat,
+            ),
+            crate::export::metadata_policy::Intent::Omit,
+        )?;
+    }
+    debug_assert_eq!(
+        metadata_omitted,
+        doc.source_metadata.is_some()
+            && matches!(policy, crate::export::metadata_policy::Policy::Omit(_))
+    );
     let flat = export::export_flat_options_with_check(doc, options, allowed, render, check)?;
     check()?;
     let (actual_w, actual_h) = image::inspect_pcx(&flat.bytes, pixels)?;

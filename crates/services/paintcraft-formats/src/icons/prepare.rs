@@ -54,6 +54,7 @@ pub struct Prepared {
     kind: Kind,
     entries: Vec<PreparedEntry>,
     losses: Vec<String>,
+    metadata_omitted: bool,
     limits: WriteLimits,
 }
 impl Prepared {
@@ -69,7 +70,11 @@ impl Prepared {
         let missing: Vec<_> = self
             .losses
             .iter()
-            .filter(|code| !allowed.contains(code))
+            .filter(|code| {
+                !allowed.contains(code)
+                    && !(self.metadata_omitted
+                        && code.as_str() == crate::export::metadata_policy::OMITTED_REASON)
+            })
             .collect();
         if !missing.is_empty() {
             return Err(unsupported(&format!(
@@ -126,7 +131,35 @@ pub fn prepare_document(
     limits: WriteLimits,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Prepared> {
-    crate::export::require_metadata_policy(doc)?;
+    prepare_document_with_metadata_policy(
+        doc,
+        kind,
+        specs,
+        filter,
+        limits,
+        check,
+        crate::export::metadata_policy::Policy::default(),
+    )
+}
+pub fn prepare_document_with_metadata_policy(
+    doc: &Document,
+    kind: Kind,
+    specs: &[EntrySpec],
+    filter: Filter,
+    limits: WriteLimits,
+    check: &dyn Fn() -> Result<()>,
+    policy: crate::export::metadata_policy::Policy,
+) -> Result<Prepared> {
+    let metadata_omitted = policy.validate(
+        doc,
+        crate::export::metadata_policy::Target::new(
+            match kind {
+                Kind::Icon => crate::registry::Family::Ico,
+                Kind::Cursor => crate::registry::Family::Cur,
+            },
+            crate::registry::Operation::ExportAsset,
+        ),
+    )?;
     if specs.is_empty() || specs.len() > limits.entries.min(ENTRIES_MAX) {
         return Err(resource("icon output entry count outside writer budget"));
     }
@@ -140,7 +173,10 @@ pub fn prepare_document(
         return Err(resource("icon output set exceeds preparation budget"));
     }
     let sizes: Vec<_> = specs.iter().map(|spec| (spec.width, spec.height)).collect();
-    let (buffers, losses) = prepare_pixels(doc, &sizes, filter, check)?;
+    let (buffers, mut losses) = prepare_pixels(doc, &sizes, filter, check)?;
+    if metadata_omitted {
+        losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
     let entries: Vec<_> = specs
         .iter()
         .copied()
@@ -154,6 +190,7 @@ pub fn prepare_document(
         kind,
         entries,
         losses,
+        metadata_omitted,
         limits,
     })
 }

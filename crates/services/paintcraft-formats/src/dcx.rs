@@ -11,7 +11,10 @@ pub const EXPORT_VARIANT: &str = "dcx-fresh-single-pcx-page";
 pub const IMPORT_IDENTITY_PROFILE: &str = "paintcraft.dcx-selected-page-rgba8/v1";
 mod prepare;
 mod write;
-pub use prepare::{DocumentLimits, PreparedDocument, prepare_document, prepare_document_with};
+pub use prepare::{
+    DocumentLimits, PreparedDocument, prepare_document, prepare_document_with,
+    prepare_document_with_metadata_policy,
+};
 pub use write::{
     PagePixels, WriteLimits, WritePage, WritePlan, encode_pages, preflight_write, write_pages_to,
 };
