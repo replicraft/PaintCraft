@@ -73,20 +73,24 @@ impl Review {
             consent: false,
         })
     }
+    fn preview(&mut self, ui: &mut egui::Ui) -> egui::Rect {
+        let size = paintcraft_ui::import_preview::fitted_size(self.size, ui.available_size());
+        let image = egui::Image::new(&self.texture)
+            .maintain_aspect_ratio(false)
+            .fit_to_exact_size(size);
+        let image = ui.add(image);
+        if size.min_elem() >= 1.0
+            && ui.is_rect_visible(image.rect)
+            && ui.clip_rect().contains_rect(image.rect)
+        {
+            self.shown.get_or_insert(ui.ctx().cumulative_frame_nr());
+        }
+        image.rect
+    }
     fn show(&mut self, ui: &mut egui::Ui) -> bool {
         ui.label(t!(ui.ctx(), "Import preview"));
-        let (size, expanded) = preview_size(self.size, ui.available_width());
-        let image = egui::Image::new(&self.texture).fit_to_exact_size(size);
-        let image = if expanded {
-            image.maintain_aspect_ratio(false)
-        } else {
-            image
-        };
-        let image = ui.add(image);
+        self.preview(ui);
         let frame = ui.ctx().cumulative_frame_nr();
-        if ui.is_rect_visible(image.rect) {
-            self.shown.get_or_insert(frame);
-        }
         let visible = self.shown.is_some_and(|shown| shown < frame);
         for loss in self.prepared.report.losses() {
             if let Some(description) = paintcraft_ui::i18n::import_loss_description(loss) {
@@ -98,11 +102,6 @@ impl Review {
         });
         visible && self.consent
     }
-}
-fn preview_size(source: egui::Vec2, available: f32) -> (egui::Vec2, bool) {
-    let fitted = source * (available.clamp(1.0, 200.0) / source.x.max(source.y)).min(1.0);
-    let visible = fitted.max(egui::vec2(1.0, 1.0));
-    (visible, visible != fitted)
 }
 impl WebApp {
     pub(super) fn install_tiff(

@@ -50,18 +50,7 @@ impl Review {
                 .is_some_and(|shown| shown < ctx.cumulative_frame_nr())
     }
     pub(super) fn preview(&mut self, ui: &mut egui::Ui) -> egui::Rect {
-        let available = ui
-            .available_size()
-            .min(egui::Vec2::splat(200.0))
-            .max(egui::Vec2::ZERO);
-        let scale = (available.x / self.size.x)
-            .min(available.y / self.size.y)
-            .min(1.0);
-        // A skinny source must still occupy a visible logical pixel. Only the
-        // preview may expand that axis; labels and editable pixels keep exact dimensions.
-        let size = (self.size * scale)
-            .max(egui::Vec2::splat(1.0))
-            .min(available);
+        let size = paintcraft_ui::import_preview::fitted_size(self.size, ui.available_size());
         let response = ui.add(
             egui::Image::new(&self.texture)
                 .maintain_aspect_ratio(false)
@@ -70,6 +59,7 @@ impl Review {
         if response.rect.width() >= 1.0
             && response.rect.height() >= 1.0
             && ui.is_rect_visible(response.rect)
+            && ui.clip_rect().contains_rect(response.rect)
         {
             self.shown.get_or_insert(ui.ctx().cumulative_frame_nr());
         }
