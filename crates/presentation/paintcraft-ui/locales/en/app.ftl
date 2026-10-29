@@ -215,3 +215,13 @@ image-import-failed-the-current-document-was-kept = Image import failed; the cur
 jpeg-background-color = JPEG background color
 transparent-pixels-use-the-selected-background-color = Transparent pixels use the selected background color.
 higher-quality-creates-a-larger-file = Higher quality creates a larger file.
+
+crash-recovery-discovery-reached-a-resource-limit-existing-recovery-copies-were-kept = Crash recovery discovery reached a resource limit. Existing recovery copies were kept.
+
+crash-recovery-discovery-was-cancelled-existing-recovery-copies-were-kept = Crash recovery discovery was cancelled. Existing recovery copies were kept.
+
+crash-recovery-discovery-failed-existing-recovery-copies-were-kept = Crash recovery discovery failed. Existing recovery copies were kept.
+
+some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = Some recovery copies need a newer PaintCraft version. Those copies were kept.
+
+image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = Image processing is paused for this tab. Download your project, then reload this tab to try again.

@@ -215,3 +215,13 @@ image-import-failed-the-current-document-was-kept = 图像导入失败；当前�
 jpeg-background-color = JPEG 背景颜色
 transparent-pixels-use-the-selected-background-color = 透明像素使用所选的背景颜色。
 higher-quality-creates-a-larger-file = 更高的质量会生成更大的文件。
+
+crash-recovery-discovery-reached-a-resource-limit-existing-recovery-copies-were-kept = 崩溃恢复副本扫描已达到资源限制。现有恢复副本已保留。
+
+crash-recovery-discovery-was-cancelled-existing-recovery-copies-were-kept = 崩溃恢复副本扫描已取消。现有恢复副本已保留。
+
+crash-recovery-discovery-failed-existing-recovery-copies-were-kept = 崩溃恢复副本扫描失败。现有恢复副本已保留。
+
+some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = 部分恢复副本需要更新版本的 PaintCraft。这些副本已保留。
+
+image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = 此标签页的图像处理已暂停。请下载项目，然后重新加载此标签页以重试。

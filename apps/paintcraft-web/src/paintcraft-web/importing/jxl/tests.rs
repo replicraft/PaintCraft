@@ -407,3 +407,30 @@ fn prelaunch_cancel_marks_only_the_owned_pending_request_without_changing_the_do
     assert!(Arc::ptr_eq(&before, &app.editor.session.snapshot()));
     assert_eq!(ticket, app.editor.session.ticket());
 }
+
+#[test]
+fn shared_quarantine_banner_names_image_processing_for_every_language_and_codec() {
+    use egui_kittest::{Harness, kittest::Queryable};
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for language in Language::ALL {
+        for tiff in [false, true] {
+            let mut app = WebApp::new(&eframe::egui::Context::default());
+            let source = app.editor.session.snapshot();
+            app.jxl.quarantined = true;
+            app.tiff.quarantined = tiff;
+            let mut h = Harness::builder()
+                .with_size(eframe::egui::vec2(1400.0, 300.0))
+                .build_ui_state(
+                    move |ui, app: &mut WebApp| {
+                        set_language(ui.ctx(), language);
+                        app.jxl_panel(ui);
+                    },
+                    app,
+                );
+            h.run();
+            h.get_by_label(&translate(language, CODEC_PAUSED));
+            h.get_by_label(&translate(language, "Download project"));
+            assert!(Arc::ptr_eq(&source, &h.state().editor.session.snapshot()));
+        }
+    }
+}

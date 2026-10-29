@@ -211,11 +211,7 @@ impl WebApp {
     pub(crate) fn jxl_panel(&mut self, ui: &mut eframe::egui::Ui) {
         self.jxl.refresh();
         if self.jxl.quarantined {
-            let paused = if self.tiff.quarantined {
-                super::tiff::PAUSED
-            } else {
-                PAUSED
-            };
+            let paused = CODEC_PAUSED;
             eframe::egui::Panel::top("web-jxl-quarantine").show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     ui.label(t!(ui.ctx(), paused));
@@ -246,6 +242,7 @@ impl WebApp {
         true
     }
 }
+const CODEC_PAUSED: &str = "Image processing is paused for this tab. Download your project, then reload this tab to try again.";
 const PAUSED: &str = "JPEG XL importing is paused for this tab. Download your project, then reload this tab to try again.";
 const FAILED: &str = "JPEG XL import failed; the current document was kept.";
 pub(crate) const VARIANT: &str = paintcraft_formats::registry::WEB_JXL_INTEGER_IMPORT_VARIANT;

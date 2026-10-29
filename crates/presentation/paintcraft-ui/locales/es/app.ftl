@@ -215,3 +215,13 @@ image-import-failed-the-current-document-was-kept = La importación de la imagen
 jpeg-background-color = Color de fondo de JPEG
 transparent-pixels-use-the-selected-background-color = Los píxeles transparentes usan el color de fondo seleccionado.
 higher-quality-creates-a-larger-file = Una calidad mayor genera un archivo más grande.
+
+crash-recovery-discovery-reached-a-resource-limit-existing-recovery-copies-were-kept = La búsqueda de copias de recuperación alcanzó un límite de recursos. Se conservaron las copias existentes.
+
+crash-recovery-discovery-was-cancelled-existing-recovery-copies-were-kept = Se canceló la búsqueda de copias de recuperación. Se conservaron las copias existentes.
+
+crash-recovery-discovery-failed-existing-recovery-copies-were-kept = La búsqueda de copias de recuperación falló. Se conservaron las copias existentes.
+
+some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = Algunas copias de recuperación requieren una versión más reciente de PaintCraft. Se conservaron esas copias.
+
+image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = El procesamiento de imágenes está en pausa en esta pestaña. Descarga tu proyecto y vuelve a cargar la pestaña para intentarlo de nuevo.

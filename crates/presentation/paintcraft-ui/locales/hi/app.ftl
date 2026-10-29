@@ -215,3 +215,13 @@ image-import-failed-the-current-document-was-kept = चित्र आयात
 jpeg-background-color = JPEG पृष्ठभूमि का रंग
 transparent-pixels-use-the-selected-background-color = पारदर्शी पिक्सेल चुने गए पृष्ठभूमि रंग का उपयोग करते हैं।
 higher-quality-creates-a-larger-file = उच्च गुणवत्ता से फ़ाइल का आकार बढ़ता है।
+
+crash-recovery-discovery-reached-a-resource-limit-existing-recovery-copies-were-kept = क्रैश रिकवरी प्रतियों की खोज संसाधन सीमा तक पहुँच गई। मौजूदा रिकवरी प्रतियाँ सुरक्षित रखी गई हैं।
+
+crash-recovery-discovery-was-cancelled-existing-recovery-copies-were-kept = क्रैश रिकवरी प्रतियों की खोज रद्द कर दी गई। मौजूदा रिकवरी प्रतियाँ सुरक्षित रखी गई हैं।
+
+crash-recovery-discovery-failed-existing-recovery-copies-were-kept = क्रैश रिकवरी प्रतियों की खोज विफल रही। मौजूदा रिकवरी प्रतियाँ सुरक्षित रखी गई हैं।
+
+some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = कुछ रिकवरी प्रतियों के लिए PaintCraft का नया संस्करण चाहिए। वे प्रतियाँ सुरक्षित रखी गई हैं।
+
+image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = इस टैब में छवि प्रोसेसिंग रोक दी गई है। अपना प्रोजेक्ट डाउनलोड करें, फिर दोबारा कोशिश करने के लिए इस टैब को रीलोड करें।

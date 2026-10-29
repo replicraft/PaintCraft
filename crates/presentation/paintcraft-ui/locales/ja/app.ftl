@@ -215,3 +215,13 @@ image-import-failed-the-current-document-was-kept = 画像を読み込めませ�
 jpeg-background-color = JPEG の背景色
 transparent-pixels-use-the-selected-background-color = 透明なピクセルには選択した背景色を使用します。
 higher-quality-creates-a-larger-file = 画質を高くするとファイルサイズが大きくなります。
+
+crash-recovery-discovery-reached-a-resource-limit-existing-recovery-copies-were-kept = クラッシュ復元コピーの検索がリソースの上限に達しました。既存の復元コピーは保持されています。
+
+crash-recovery-discovery-was-cancelled-existing-recovery-copies-were-kept = クラッシュ復元コピーの検索がキャンセルされました。既存の復元コピーは保持されています。
+
+crash-recovery-discovery-failed-existing-recovery-copies-were-kept = クラッシュ復元コピーの検索に失敗しました。既存の復元コピーは保持されています。
+
+some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = 一部の復元コピーには、より新しいバージョンの PaintCraft が必要です。それらのコピーは保持されています。
+
+image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = このタブでは画像処理が一時停止されています。プロジェクトをダウンロードしてから、このタブを再読み込みしてお試しください。
