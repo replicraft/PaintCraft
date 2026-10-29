@@ -6,6 +6,7 @@ use paintcraft_core::types::{
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
 mod icc;
+mod reader;
 mod wire;
 pub use icc::{IccHeader, inspect_icc};
 pub const BYTES_MAX: u64 = 8 << 20;
@@ -189,7 +190,7 @@ impl SourceMetadata {
         } else {
             [0; 32]
         };
-        let mut inner = Inner {
+        let inner = Inner {
             descriptor,
             profile: retained,
             profile_header: header,
@@ -199,15 +200,7 @@ impl SourceMetadata {
             _lease: lease,
             _capacity_lease: capacity_lease,
         };
-        let mut hash = Sha256::new();
-        hash.update(wire::header(&inner));
-        for chunk in inner.profile.chunks(65536) {
-            check()?;
-            hash.update(chunk);
-        }
-        inner.digest = hash.finalize().into();
-        check()?;
-        Ok(Self(Arc::new(inner)))
+        reader::finish(inner, check)
     }
     pub fn descriptor(&self) -> &SourceDescriptor {
         &self.0.descriptor

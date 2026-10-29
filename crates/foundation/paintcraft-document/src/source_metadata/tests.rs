@@ -195,3 +195,83 @@ fn attachment_choice_is_semantic_and_deterministically_changes_state_not_documen
     assert_ne!(changed.state_id, a.state_id);
     assert!(changed.same_semantics(&plain));
 }
+
+#[test]
+fn streamed_profile_capture_binds_exact_bytes_admits_before_reads_and_releases_failures() {
+    use std::io::Read;
+    struct Counted<'a> {
+        bytes: &'a [u8],
+        reads: &'a Cell<usize>,
+    }
+    impl Read for Counted<'_> {
+        fn read(&mut self, out: &mut [u8]) -> std::io::Result<usize> {
+            self.reads.set(self.reads.get() + 1);
+            self.bytes.read(out)
+        }
+    }
+    let expected: [u8; 32] = Sha256::digest(SRGB).into();
+    for (bytes, hash, allowed) in [
+        (SRGB, expected, true),
+        (&SRGB[..SRGB.len() - 1], expected, false),
+        (SRGB, [0; 32], false),
+    ] {
+        let realm = SharedBudget::new(BYTES_MAX);
+        let reads = Cell::new(0);
+        let captured = SourceMetadata::capture_profile_reader(
+            descriptor(),
+            SRGB.len() as u64,
+            hash,
+            Counted {
+                bytes,
+                reads: &reads,
+            },
+            BYTES_MAX,
+            &realm,
+            &|| Ok(()),
+        );
+        assert_eq!(captured.is_ok(), allowed);
+        assert!(reads.get() > 0);
+        if let Ok(meta) = &captured {
+            assert_eq!(meta.profile(), Some(SRGB));
+        }
+        drop(captured);
+        assert_eq!(realm.usage().reserved, 0);
+    }
+    let mut extra = SRGB.to_vec();
+    extra.push(0);
+    let realm = SharedBudget::new(BYTES_MAX);
+    assert!(
+        SourceMetadata::capture_profile_reader(
+            descriptor(),
+            SRGB.len() as u64,
+            expected,
+            &extra[..],
+            BYTES_MAX,
+            &realm,
+            &|| Ok(())
+        )
+        .is_err()
+    );
+    assert_eq!(realm.usage().reserved, 0);
+    let zero = SharedBudget::new(0);
+    let reads = Cell::new(0);
+    assert_eq!(
+        SourceMetadata::capture_profile_reader(
+            descriptor(),
+            SRGB.len() as u64,
+            expected,
+            Counted {
+                bytes: SRGB,
+                reads: &reads
+            },
+            BYTES_MAX,
+            &zero,
+            &|| Ok(())
+        )
+        .unwrap_err()
+        .code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(reads.get(), 0);
+    assert_eq!(zero.usage().peak, 0);
+}
