@@ -152,10 +152,26 @@ fn import_and_export_cover_png_bmp_and_jpeg_with_explicit_losses() {
         first,
         "the same file imports to the same bytes"
     );
+    let refused = run(&["import", &out_bmp, "-o", &back, "--overwrite", "--json"]);
+    assert_eq!(refused.code, 3);
+    assert!(text(&refused.json(), &["engine", "message"]).contains("bmp-color-metadata-ignored"));
+    assert_eq!(fs::read(&back).unwrap(), first);
     assert_eq!(
-        run(&["import", &out_bmp, "-o", &back, "--overwrite"]).code,
+        run(&[
+            "import",
+            &out_bmp,
+            "-o",
+            &back,
+            "--overwrite",
+            "--allow-loss",
+            "bmp-color-metadata-ignored"
+        ])
+        .code,
         0
     );
+    let bmp_pixels = s.path("bmp-import.png");
+    assert_eq!(run(&["render", &back, "-o", &bmp_pixels]).code, 0);
+    assert_eq!(decode_png(&bmp_pixels), decode_png(&out_png));
     let (w, h, px) = decode_png(&out_png);
     assert_eq!((w, h, &px[..4]), (8, 4, &[0x33, 0x66, 0x99, 255][..]));
 
