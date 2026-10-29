@@ -75,6 +75,7 @@ struct Stream {
     target: Target,
     contact: bool,
     buttons: Buttons,
+    ui_prefix: usize,
 }
 #[derive(Debug)]
 pub struct Receiver {
@@ -244,6 +245,7 @@ impl Receiver {
                 target: if canvas { Target::Canvas } else { Target::Ui },
                 contact: false,
                 buttons: raw.buttons,
+                ui_prefix: self.ui.len(),
             });
         }
         if self.stream.is_some_and(|s| s.target == Target::Canvas)
@@ -256,6 +258,7 @@ impl Receiver {
                 target: Target::Suppressed,
                 contact: false,
                 buttons: raw.buttons,
+                ui_prefix: self.ui.len(),
             });
         }
         let target = self.stream.map_or(Target::Ui, |s| s.target);
@@ -399,6 +402,24 @@ impl Receiver {
             || self.stream.is_some_and(|s| s.target == Target::Ui);
         self.cancel_inner(!self.mouse_capture && ui_hold, !self.mouse_capture && hold);
     }
+    /// Exact active-only queue retirement for an opaque native host lifetime.
+    /// No global cancellation epoch/reset flag is emitted. The host must use
+    /// its matching cancellation lease to retire already-presented GUI state.
+    pub fn retire_active_pen(&mut self) {
+        let Some(stream) = self.stream.take() else {
+            return;
+        };
+        self.router.retire_active_pen();
+        if stream.target == Target::Ui {
+            self.ui.truncate(stream.ui_prefix);
+            self.ui_primary = false;
+            self.ui_secondary = false;
+            self.ui_position = None;
+            self.release_primary = false;
+            self.release_secondary = false;
+            self.release_position = None;
+        }
+    }
     fn cancel_inner(&mut self, reset_gui: bool, suppress: bool) {
         self.router.cancel();
         // A cancellation retires every unpublished source record, including an
@@ -496,6 +517,9 @@ impl Receiver {
             }
         };
         ui.extend(self.ui.drain(..));
+        if let Some(stream) = &mut self.stream {
+            stream.ui_prefix = 0;
+        }
         self.release_primary = false;
         self.release_secondary = false;
         self.release_position = None;

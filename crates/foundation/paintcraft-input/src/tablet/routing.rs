@@ -102,6 +102,9 @@ impl Router {
     pub fn cancel(&mut self) {
         self.queue.cancel_capture();
     }
+    pub(super) fn retire_active_pen(&mut self) {
+        self.queue.retire_active();
+    }
     /// Window/capture teardown establishes a new lifecycle for fingers too.
     pub fn reset(&mut self) {
         self.cancel();

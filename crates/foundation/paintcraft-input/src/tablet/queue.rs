@@ -15,6 +15,7 @@ pub struct Queue {
     samples: VecDeque<Sample>,
     capacity: usize,
     active: Option<Identity>,
+    active_prefix: Option<usize>,
     last: Option<Sample>,
     poisoned: bool,
     frame: Option<u64>,
@@ -32,6 +33,7 @@ impl Queue {
             samples,
             capacity,
             active: None,
+            active_prefix: None,
             last: None,
             poisoned: false,
             frame: None,
@@ -115,6 +117,7 @@ impl Queue {
         }
         if sample.phase == Phase::Down {
             self.active = Some(sample.identity);
+            self.active_prefix = Some(self.samples.len());
         }
         // The constructor reserved the whole bounded storage; this cannot grow.
         self.samples.push_back(sample);
@@ -126,8 +129,17 @@ impl Queue {
     }
     fn clear_capture(&mut self) {
         self.active = None;
+        self.active_prefix = None;
         self.last = None;
         self.poisoned = false;
+    }
+    /// Discard only the still-active contact interval. Completed earlier
+    /// intervals remain in the queue; no fabricated hardware terminal is added.
+    pub(super) fn retire_active(&mut self) {
+        if let Some(prefix) = self.active_prefix {
+            self.samples.truncate(prefix);
+        }
+        self.clear_capture();
     }
     fn cancel_from_last(&mut self) {
         if self.poisoned {
@@ -178,6 +190,9 @@ impl Queue {
             return Err(Invalid::Capacity);
         }
         output.extend(self.samples.drain(..));
+        if self.active.is_some() {
+            self.active_prefix = Some(0);
+        }
         self.frame = Some(frame);
         Ok(output)
     }
