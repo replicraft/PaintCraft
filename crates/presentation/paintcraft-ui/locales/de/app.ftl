@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = Zeichne und male mit Pins
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = Probiere Classic-Skins oder die Studio-Oberfläche mit Ebenen und Rückgängig-Funktion aus.
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = Öffne Bilder und speichere dein bearbeitbares Werk als PaintCraft-Projekt.
 click-interface-in-the-top-right-to-try-the-different-interfaces = Klicke oben rechts auf Oberfläche, um die verschiedenen Oberflächen auszuprobieren
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = Erstelle vor der Texteingabe einen Textentwurf auf der Leinwand
+not-enough-memory-for-text-composition = Nicht genügend Arbeitsspeicher für die Texteingabe
+ime-deletion-ignored-because-its-text-draft-changed = Die IME-Löschanforderung wurde ignoriert, da sich der Textentwurf geändert hat
+canvas-text-supports-deletion-before-its-end-cursor-only = Leinwandtext lässt sich nur vor dem Cursor am Textende löschen
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = Der Eingabetext überschreitet das Entwurfslimit oder enthält nicht unterstützte Zeichen
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = Die Leinwand-IME unterstützt derzeit nur einen Cursor am Textende; dieser Eingabebereich wird nicht unterstützt
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = Der Eingabetext überschreitet das Entwurfslimit; es wurde kein Text abgeschnitten
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = Das IME-Ergebnis wurde ignoriert, da sich der Leinwandtext geändert hat; starte die Eingabe erneut
+ime-result-belongs-to-an-older-text-draft = Das IME-Ergebnis gehört zu einem älteren Textentwurf
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = Das IME-Ergebnis passt nicht in den Textentwurf; es wurde kein Text geändert
+finish-the-current-composition-before-deleting-committed-text = Schließe die aktuelle Eingabe ab, bevor du bestätigten Text löschst
+text-draft-changed = Der Textentwurf wurde geändert
+text-could-not-fit-the-draft-no-text-was-changed = Der Text passt nicht in den Entwurf; es wurde kein Text geändert

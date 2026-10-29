@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = ブラシ、図形、編�
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = レイヤーと元に戻す機能を備えたClassicスキンやStudioインターフェイスをお試しください。
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = 画像を開き、編集可能な作品をPaintCraftプロジェクトとして保存できます。
 click-interface-in-the-top-right-to-try-the-different-interfaces = 右上の「インターフェイス」をクリックすると、さまざまなインターフェイスを試せます
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = 文字入力を始める前にキャンバスにテキストを作成してください
+not-enough-memory-for-text-composition = 文字入力に必要なメモリが不足しています
+ime-deletion-ignored-because-its-text-draft-changed = テキストが変更されたため、IME からの削除要求を無視しました
+canvas-text-supports-deletion-before-its-end-cursor-only = キャンバスのテキストでは、末尾のカーソルより前にある文字のみ削除できます
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = 入力中のテキストが上限を超えているか、未対応の文字が含まれています
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = キャンバスの IME は現在、末尾のカーソルのみに対応しています。この入力範囲には対応していません
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = 入力中のテキストが上限を超えています。テキストは切り詰めていません
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = キャンバスのテキストが変更されたため、IME の確定結果を無視しました。文字入力をやり直してください
+ime-result-belongs-to-an-older-text-draft = IME の確定結果は以前のテキストに属しています
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = IME の確定結果がテキストの上限を超えています。テキストは変更していません
+finish-the-current-composition-before-deleting-committed-text = 確定済みのテキストを削除する前に、現在の文字入力を完了してください
+text-draft-changed = テキストが変更されました
+text-could-not-fit-the-draft-no-text-was-changed = テキストが上限を超えています。テキストは変更していません

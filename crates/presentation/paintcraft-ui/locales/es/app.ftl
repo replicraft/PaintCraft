@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = Dibuja y pinta con pincel
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = Prueba los aspectos de Classic o la interfaz Studio, con capas y deshacer.
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = Abre imágenes y guarda tu trabajo editable como un proyecto de PaintCraft.
 click-interface-in-the-top-right-to-try-the-different-interfaces = Haz clic en Interfaz arriba a la derecha para probar las distintas interfaces
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = Crea un texto en el lienzo antes de iniciar la composición
+not-enough-memory-for-text-composition = No hay memoria suficiente para la composición de texto
+ime-deletion-ignored-because-its-text-draft-changed = Se ignoró la eliminación del IME porque cambió el borrador de texto
+canvas-text-supports-deletion-before-its-end-cursor-only = El texto del lienzo solo permite borrar antes del cursor situado al final
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = La composición de texto supera el límite del borrador o contiene caracteres no compatibles
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = El IME del lienzo solo admite el cursor al final; este intervalo de composición no es compatible
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = La composición de texto supera el límite del borrador; no se recortó ningún texto
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = Se ignoró el resultado del IME porque cambió el borrador del lienzo; reinicia la composición
+ime-result-belongs-to-an-older-text-draft = El resultado del IME pertenece a un borrador de texto anterior
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = El resultado del IME no cabe en el borrador; no se modificó ningún texto
+finish-the-current-composition-before-deleting-committed-text = Termina la composición actual antes de borrar el texto confirmado
+text-draft-changed = El borrador de texto cambió
+text-could-not-fit-the-draft-no-text-was-changed = El texto no cabe en el borrador; no se modificó ningún texto

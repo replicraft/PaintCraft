@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = ब्रश, आकृ�
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = लेयर और पूर्ववत सुविधा के साथ Classic स्किन या Studio इंटरफ़ेस आज़माएँ।
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = चित्र खोलें और अपने संपादन योग्य काम को PaintCraft प्रोजेक्ट के रूप में सहेजें।
 click-interface-in-the-top-right-to-try-the-different-interfaces = अलग-अलग इंटरफ़ेस आज़माने के लिए ऊपर दाईं ओर इंटरफ़ेस पर क्लिक करें
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = कंपोज़िशन शुरू करने से पहले कैनवास पर टेक्स्ट ड्राफ़्ट बनाएँ
+not-enough-memory-for-text-composition = टेक्स्ट कंपोज़िशन के लिए पर्याप्त मेमोरी नहीं है
+ime-deletion-ignored-because-its-text-draft-changed = टेक्स्ट ड्राफ़्ट बदलने के कारण IME का हटाने का अनुरोध अनदेखा किया गया
+canvas-text-supports-deletion-before-its-end-cursor-only = कैनवास टेक्स्ट में केवल अंत में स्थित कर्सर से पहले के अक्षर हटाए जा सकते हैं
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = टेक्स्ट कंपोज़िशन ड्राफ़्ट की सीमा से अधिक है या इसमें असमर्थित अक्षर हैं
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = कैनवास IME अभी केवल अंत में स्थित कर्सर का समर्थन करता है; यह कंपोज़िशन रेंज समर्थित नहीं है
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = टेक्स्ट कंपोज़िशन ड्राफ़्ट की सीमा से अधिक है; कोई टेक्स्ट काटा नहीं गया
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = कैनवास टेक्स्ट ड्राफ़्ट बदलने के कारण IME का परिणाम अनदेखा किया गया; कंपोज़िशन फिर से शुरू करें
+ime-result-belongs-to-an-older-text-draft = IME का परिणाम पुराने टेक्स्ट ड्राफ़्ट से संबंधित है
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = IME का परिणाम टेक्स्ट ड्राफ़्ट में नहीं समा सका; कोई टेक्स्ट नहीं बदला गया
+finish-the-current-composition-before-deleting-committed-text = पुष्ट किए गए टेक्स्ट को हटाने से पहले वर्तमान कंपोज़िशन पूरी करें
+text-draft-changed = टेक्स्ट ड्राफ़्ट बदल गया
+text-could-not-fit-the-draft-no-text-was-changed = टेक्स्ट ड्राफ़्ट में नहीं समा सका; कोई टेक्स्ट नहीं बदला गया

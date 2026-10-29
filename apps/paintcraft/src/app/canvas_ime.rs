@@ -2,6 +2,7 @@
 //! Framework events have no native composition ID. Known revoked results are
 //! refused; a new Preedit is the framework's observable new-start boundary.
 use super::*;
+use paintcraft_ui::t;
 use std::ops::Range;
 
 #[derive(Debug, Default)]
@@ -190,7 +191,7 @@ impl App {
             _ => return false,
         };
         if let Err(message) = result {
-            self.editor.set_status(message);
+            self.editor.set_status(t!(ctx, message));
         }
         ctx.request_repaint();
         true

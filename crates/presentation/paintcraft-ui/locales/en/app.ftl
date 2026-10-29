@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = Draw and paint with brush
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = Try Classic skins or the Studio interface, with layers and undo.
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = Open pictures and save your editable work as a PaintCraft project.
 click-interface-in-the-top-right-to-try-the-different-interfaces = Click Interface in the top right to try the different interfaces
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = Start a canvas text draft before composing
+not-enough-memory-for-text-composition = Not enough memory for text composition
+ime-deletion-ignored-because-its-text-draft-changed = IME deletion ignored because its text draft changed
+canvas-text-supports-deletion-before-its-end-cursor-only = Canvas text supports deletion before its end cursor only
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = Text composition exceeds the draft limit or contains unsupported characters
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = Canvas IME currently supports an end cursor; this composition range is unsupported
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = Text composition exceeds the draft limit; no text was truncated
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = IME result ignored because the canvas text draft changed; restart composition
+ime-result-belongs-to-an-older-text-draft = IME result belongs to an older text draft
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = IME result could not fit the text draft; no text was changed
+finish-the-current-composition-before-deleting-committed-text = Finish the current composition before deleting committed text
+text-draft-changed = Text draft changed
+text-could-not-fit-the-draft-no-text-was-changed = Text could not fit the draft; no text was changed

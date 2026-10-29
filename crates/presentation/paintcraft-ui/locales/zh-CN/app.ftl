@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = 使用画笔、形状和�
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = 尝试 Classic 皮肤或 Studio 界面，使用图层和撤销功能。
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = 打开图片，并将可编辑的作品保存为 PaintCraft 项目。
 click-interface-in-the-top-right-to-try-the-different-interfaces = 点击右上角的“界面”，尝试不同的界面
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = 请先在画布上创建文本草稿，再开始输入
+not-enough-memory-for-text-composition = 没有足够的内存进行文本输入
+ime-deletion-ignored-because-its-text-draft-changed = 文本草稿已更改，因此已忽略输入法的删除请求
+canvas-text-supports-deletion-before-its-end-cursor-only = 画布文本仅支持删除末尾光标前的字符
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = 输入中的文本超出草稿限制或包含不支持的字符
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = 画布输入法目前仅支持末尾光标，不支持此输入范围
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = 输入中的文本超出草稿限制，未截断任何文本
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = 画布文本草稿已更改，因此已忽略输入法结果，请重新开始输入
+ime-result-belongs-to-an-older-text-draft = 输入法结果属于先前的文本草稿
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = 输入法结果超出文本草稿容量，未更改任何文本
+finish-the-current-composition-before-deleting-committed-text = 请先完成当前输入，再删除已确认的文本
+text-draft-changed = 文本草稿已更改
+text-could-not-fit-the-draft-no-text-was-changed = 文本超出草稿容量，未更改任何文本

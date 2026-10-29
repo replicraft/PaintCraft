@@ -192,3 +192,18 @@ draw-and-paint-with-brushes-shapes-and-editable-text = Desenhe e pinte com pinc�
 try-classic-skins-or-the-studio-interface-with-layers-and-undo = Experimente as aparências Classic ou a interface Studio, com camadas e desfazer.
 open-pictures-and-save-your-editable-work-as-a-paintcraft-project = Abra imagens e salve seu trabalho editável como um projeto PaintCraft.
 click-interface-in-the-top-right-to-try-the-different-interfaces = Clique em Interface no canto superior direito para experimentar as diferentes interfaces
+
+# Canvas text composition status
+start-a-canvas-text-draft-before-composing = Crie um rascunho de texto na tela antes de iniciar a composição
+not-enough-memory-for-text-composition = Não há memória suficiente para a composição de texto
+ime-deletion-ignored-because-its-text-draft-changed = A exclusão do IME foi ignorada porque o rascunho de texto mudou
+canvas-text-supports-deletion-before-its-end-cursor-only = O texto da tela só permite excluir antes do cursor no final
+text-composition-exceeds-the-draft-limit-or-contains-unsupported-characters = A composição de texto excede o limite do rascunho ou contém caracteres não compatíveis
+canvas-ime-currently-supports-an-end-cursor-this-composition-range-is-unsupported = O IME da tela aceita apenas o cursor no final; este intervalo de composição não é compatível
+text-composition-exceeds-the-draft-limit-no-text-was-truncated = A composição de texto excede o limite do rascunho; nenhum texto foi cortado
+ime-result-ignored-because-the-canvas-text-draft-changed-restart-composition = O resultado do IME foi ignorado porque o rascunho da tela mudou; reinicie a composição
+ime-result-belongs-to-an-older-text-draft = O resultado do IME pertence a um rascunho de texto anterior
+ime-result-could-not-fit-the-text-draft-no-text-was-changed = O resultado do IME não cabe no rascunho; nenhum texto foi alterado
+finish-the-current-composition-before-deleting-committed-text = Conclua a composição atual antes de excluir o texto confirmado
+text-draft-changed = O rascunho de texto mudou
+text-could-not-fit-the-draft-no-text-was-changed = O texto não cabe no rascunho; nenhum texto foi alterado
