@@ -21,6 +21,11 @@ import {
 	MSP_REQUEST_HEADER,
 	MSP_SOURCE_MAX,
 } from '../src/lib/msp-worker-protocol.js';
+import {
+	TIFF_OUTPUT_MAX,
+	TIFF_REQUEST_HEADER,
+	TIFF_SOURCE_MAX,
+} from '../src/lib/tiff-page-worker-protocol.js';
 
 const source = fs
 	.readFileSync(
@@ -53,9 +58,11 @@ function runtime(extra = {}) {
 		application_version: () => '0.1.0',
 		dds_export_protocol_version: () => 1,
 		msp_export_protocol_version: () => 1,
+		tiff_page_protocol_version: () => 1,
 		decode_request: execute('decode'),
 		dds_export_request: execute('dds-export'),
 		msp_export_request: execute('msp-export'),
+		tiff_page_request: execute('tiff-pages'),
 		INPUT_BYTES_MAX,
 		REQUEST_HEADER,
 		OUTPUT_BYTES_MAX,
@@ -66,6 +73,9 @@ function runtime(extra = {}) {
 		MSP_SOURCE_MAX,
 		MSP_REQUEST_HEADER,
 		MSP_OUTPUT_MAX,
+		TIFF_REQUEST_HEADER,
+		TIFF_SOURCE_MAX,
+		TIFF_OUTPUT_MAX,
 		...extra,
 	});
 	return { self, calls, messages };
@@ -75,6 +85,7 @@ test('one shared runtime selects only the exact operation and transfers one resu
 		['decode', REQUEST_HEADER],
 		['dds-export', DDS_REQUEST_HEADER],
 		['msp-export', MSP_REQUEST_HEADER],
+		['tiff-pages', TIFF_REQUEST_HEADER],
 	]) {
 		const r = runtime();
 		await r.self.onmessage({
@@ -111,6 +122,7 @@ test('invalid operation, profile version, input and output caps cannot call anot
 		['decode', REQUEST_HEADER, INPUT_BYTES_MAX],
 		['dds-export', DDS_REQUEST_HEADER, DDS_SOURCE_MAX],
 		['msp-export', MSP_REQUEST_HEADER, MSP_SOURCE_MAX],
+		['tiff-pages', TIFF_REQUEST_HEADER, TIFF_SOURCE_MAX],
 	]) {
 		for (const length of [header - 1, header + max + 1]) {
 			const r = runtime();
@@ -134,4 +146,23 @@ test('invalid operation, profile version, input and output caps cannot call anot
 		data: { kind: 'msp-export', bytes: new ArrayBuffer(129) },
 	});
 	assert.equal(badOutput.messages[0].value.kind, 'failure');
+	const tiffVersion = runtime({ tiff_page_protocol_version: () => 2 });
+	await tiffVersion.self.onmessage({
+		data: {
+			kind: 'tiff-pages',
+			bytes: new ArrayBuffer(TIFF_REQUEST_HEADER + 1),
+		},
+	});
+	assert.equal(tiffVersion.calls.length, 0);
+	assert.equal(tiffVersion.messages[0].value.kind, 'failure');
+	const tiffOutput = runtime({
+		tiff_page_request: () => new Uint8Array(TIFF_OUTPUT_MAX + 1),
+	});
+	await tiffOutput.self.onmessage({
+		data: {
+			kind: 'tiff-pages',
+			bytes: new ArrayBuffer(TIFF_REQUEST_HEADER + 1),
+		},
+	});
+	assert.equal(tiffOutput.messages[0].value.kind, 'failure');
 });

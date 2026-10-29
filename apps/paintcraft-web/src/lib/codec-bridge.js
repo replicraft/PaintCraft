@@ -5,6 +5,7 @@ import {
 	admitMspInWorker,
 	codecWorkerBudget,
 	decodeFileInWorker,
+	tiffFileInWorker,
 } from './codec-worker.js';
 import {
 	matchesOwner,
@@ -12,6 +13,7 @@ import {
 	PIXELS_MAX,
 	refusal,
 } from './codec-worker-protocol.js';
+import { freezeTiffPlan } from './tiff-page-worker-protocol.js';
 export function createCodecService(applicationVersion) {
 	let owner;
 	let active;
@@ -99,11 +101,41 @@ export function createCodecService(applicationVersion) {
 			() => {},
 		);
 	}
+	function beginTiffFile(file, capturedOwner, plan, nonce) {
+		if (codecWorkerBudget().quarantined)
+			throw refusal('ResourceLimit', 'Codec service needs a reload');
+		if (active)
+			throw refusal('ResourceLimit', 'A codec job is already active');
+		const captured = Object.freeze({ ...capturedOwner }),
+			selection = freezeTiffPlan(plan);
+		if (!owner || !matchesOwner(owner, ownerBytes(captured)))
+			throw refusal(
+				'ConflictStaleBase',
+				'TIFF source belongs to a stale owner',
+			);
+		const abort = new AbortController();
+		return job(
+			abort,
+			() =>
+				tiffFileInWorker({
+					file,
+					owner: captured,
+					plan: selection,
+					nonce,
+					signal: abort.signal,
+					currentOwner: () => owner,
+					applicationVersion,
+				}),
+			() => {},
+		);
+	}
 
 	return Object.freeze({
 		applicationVersion: () => applicationVersion,
 		protocolVersion: () => 2,
 		budget: () => codecWorkerBudget(),
+		tiffPageProtocolVersion: () => 1,
+		beginTiffFile,
 		setOwner(value) {
 			ownerBytes(value);
 			const changed = owner && !matchesOwner(value, ownerBytes(owner));

@@ -32,6 +32,15 @@ import {
 	MSP_RESERVATION,
 	MSP_SOURCE_MAX,
 } from './msp-worker-protocol.js';
+import {
+	captureTiff,
+	decodeTiffResponse,
+	encodeTiffRequest,
+	freezeTiffPlan,
+	isCompletedTiffRefusal,
+	TIFF_RESERVATION,
+	TIFF_SOURCE_MAX,
+} from './tiff-page-worker-protocol.js';
 
 const DECODE = Object.freeze({
 	kind: 'decode',
@@ -77,6 +86,17 @@ const MSP = Object.freeze({
 	completed: isCompletedMspRefusal,
 	digest: (captured) => captured.header.slice(81, 113),
 	quote: () => MSP_RESERVATION,
+});
+const TIFF = Object.freeze({
+	kind: 'tiff-pages',
+	inputMax: TIFF_SOURCE_MAX,
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		captureTiff(source, owner, plan, nonce),
+	encode: encodeTiffRequest,
+	decode: decodeTiffResponse,
+	completed: isCompletedTiffRefusal,
+	digest: (captured) => captured.header.slice(81, 113),
+	quote: () => TIFF_RESERVATION,
 });
 let reserved = 0;
 let quarantined = null;
@@ -380,6 +400,24 @@ export function decodeFileInWorker({ file, ...options }) {
 			readSource: async () => new Uint8Array(await file.arrayBuffer()),
 		},
 		options.codec === 9 ? INTEGER_DECODE : DECODE,
+	);
+}
+export function tiffFileInWorker({ file, plan, ...options }) {
+	if (!(file instanceof File))
+		return Promise.reject(
+			refusal('InputSchema', 'TIFF source must be a File'),
+		);
+	const frozen = freezeTiffPlan(plan);
+	return runAdmitted(
+		{
+			...options,
+			sourceLength: file.size,
+			readSource: async () => new Uint8Array(await file.arrayBuffer()),
+		},
+		TIFF,
+		undefined,
+		undefined,
+		frozen,
 	);
 }
 

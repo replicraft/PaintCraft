@@ -8,6 +8,8 @@ import initialize, {
 	msp_export_protocol_version,
 	msp_export_request,
 	protocol_version,
+	tiff_page_protocol_version,
+	tiff_page_request,
 } from '../../codec-worker-pkg/paintcraft_web_codec_worker.js';
 import {
 	INPUT_BYTES_MAX,
@@ -25,8 +27,21 @@ import {
 	MSP_REQUEST_HEADER,
 	MSP_SOURCE_MAX,
 } from './msp-worker-protocol.js';
+import {
+	TIFF_OUTPUT_MAX,
+	TIFF_REQUEST_HEADER,
+	TIFF_SOURCE_MAX,
+} from './tiff-page-worker-protocol.js';
 
 const operations = Object.freeze({
+	'tiff-pages': Object.freeze({
+		header: TIFF_REQUEST_HEADER,
+		input: TIFF_SOURCE_MAX,
+		output: TIFF_OUTPUT_MAX,
+		version: tiff_page_protocol_version,
+		expectedVersion: 1,
+		execute: tiff_page_request,
+	}),
 	decode: Object.freeze({
 		header: REQUEST_HEADER,
 		input: INPUT_BYTES_MAX,
