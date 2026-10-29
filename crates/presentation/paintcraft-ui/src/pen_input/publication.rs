@@ -2,7 +2,7 @@
 use super::*;
 #[derive(Clone, Debug)]
 pub struct PublicationGuard {
-    source: std::sync::Weak<Mutex<State>>,
+    pub(super) source: std::sync::Weak<Mutex<State>>,
     owner: Owner,
     cancel: u64,
     window: u64,

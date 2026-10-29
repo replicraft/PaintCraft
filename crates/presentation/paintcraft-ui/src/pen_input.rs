@@ -15,7 +15,7 @@ pub use continuation::Continuation;
 mod contact_tokens;
 mod native;
 mod native_contacts;
-pub use native_contacts::NativePenCancellation;
+pub use native_contacts::{NativePenCancellation, NativePenTarget};
 mod native_touch;
 pub use native_touch::{
     NativeFingerAdmission, NativeFingerMetadata, NativeTouchBatch, NativeTouchCancellation,

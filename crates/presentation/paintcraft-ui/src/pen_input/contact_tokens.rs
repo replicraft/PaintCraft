@@ -154,6 +154,22 @@ impl Bank {
             .flatten()
             .all(|lease| lease.key.begin > sequence)
     }
+    pub(super) fn active_target(&self, leases: &Leases) -> Option<Target> {
+        self.slots.iter().find_map(|slot| {
+            (slot.active && slot.cell.valid.load(Ordering::Acquire))
+                .then(|| {
+                    leases
+                        .0
+                        .iter()
+                        .flatten()
+                        .find(|lease| {
+                            slot.key == Some(lease.key) && Arc::ptr_eq(&slot.cell, &lease.cell)
+                        })
+                        .map(|lease| lease.key.target)
+                })
+                .flatten()
+        })
+    }
     pub(super) fn retire_active(&mut self) -> [Option<Cancellation>; LIMIT] {
         std::array::from_fn(|i| {
             let slot = &mut self.slots[i];
@@ -178,7 +194,7 @@ impl Drop for Bank {
 }
 /// Negative exact authority only. Caller-visible identity equality cannot match
 /// a newer contact, another bank, or another retained allocation generation.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(super) struct Cancellation(Lease);
 impl Cancellation {
     pub(super) fn matches(&self, lease: &Lease) -> bool {

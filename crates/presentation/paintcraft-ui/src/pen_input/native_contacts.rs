@@ -23,10 +23,15 @@ pub(super) struct Resident {
 }
 /// Negative presentation authority for one exact contact, not permission to
 /// reset every GUI pointer or cancel an earlier prepared edit.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct NativePenCancellation {
     token: Cancellation,
     position: Option<(f64, f64)>,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NativePenTarget {
+    Ink,
+    Ui,
 }
 impl NativePenCancellation {
     pub fn matches_batch(&self, batch: &Batch) -> bool {
@@ -198,6 +203,20 @@ impl Resident {
 #[cfg(test)]
 mod tests;
 impl Source {
+    /// Sealed active presenter lookup. Mutable frame payload cannot turn an
+    /// unrelated hover or completed interval into current pointer ownership.
+    pub fn native_pen_active_target(&self, guard: &PublicationGuard) -> Option<NativePenTarget> {
+        if guard.source.as_ptr() != Arc::as_ptr(&self.0) {
+            return None;
+        }
+        let state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        let leases = guard.native_contacts.as_ref()?;
+        let resident = state.native_contacts.value.first()?;
+        match resident.bank.active_target(leases)? {
+            Target::Ink => Some(NativePenTarget::Ink),
+            Target::Ui => Some(NativePenTarget::Ui),
+        }
+    }
     /// No public identity/ordinal selector: Source selects its own exact held
     /// lifetime, fences that physical tail and preserves completed authority.
     pub fn retire_active_native_pen(
