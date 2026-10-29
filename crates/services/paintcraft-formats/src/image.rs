@@ -22,6 +22,7 @@ mod gif;
 mod identity;
 pub use identity::{JPEG_IDENTITY_PROFILE, document_conversion_key};
 pub mod jpeg;
+pub(crate) mod orientation;
 mod png_indexed;
 pub mod png_metadata;
 pub mod raster_source_metadata;
