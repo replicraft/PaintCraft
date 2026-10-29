@@ -325,3 +325,6 @@ fn copied_public_v8_runs_native_studio_export_and_own_reader() {
         );
     }
 }
+
+#[path = "metadata_installed.rs"]
+mod metadata;
