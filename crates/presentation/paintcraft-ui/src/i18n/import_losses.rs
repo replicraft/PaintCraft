@@ -29,7 +29,14 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "bmp-color-metadata-ignored" => {
             "BMP color declarations will not be retained or used for color management."
         }
-        "png-metadata-ignored" => "PNG metadata will not be retained.",
+        "png-metadata-ignored" => "Some PNG metadata will not be retained.",
+        "icc-source-retained-unapplied" => {
+            "Exact original ICC profile bytes will be kept as source information. Keeping the profile does not change the imported RGB pixels or apply color management."
+        }
+        "resolution-source-retained-inactive" => {
+            "Original image resolution will be kept as source information, not used as active print settings."
+        }
+        "source-metadata-omitted" => "Original source metadata is omitted from this exported copy.",
         "bmp-metadata-ignored" => "BMP metadata will not be retained.",
         "resolution-metadata-ignored" => {
             "Image resolution metadata will not be retained; pixel dimensions will stay unchanged."
@@ -144,6 +151,9 @@ mod tests {
             "png-color-metadata-ignored",
             "bmp-color-metadata-ignored",
             "png-metadata-ignored",
+            "icc-source-retained-unapplied",
+            "resolution-source-retained-inactive",
+            "source-metadata-omitted",
             "bmp-metadata-ignored",
             "resolution-metadata-ignored",
             "dds-other-mips-not-imported",

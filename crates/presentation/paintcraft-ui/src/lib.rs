@@ -22,6 +22,7 @@ pub mod pen_input;
 pub mod pen_settings;
 pub mod shape_assets;
 pub mod shape_placement;
+pub mod source_metadata_export;
 pub mod svg_import;
 pub mod view;
 pub mod widgets;
