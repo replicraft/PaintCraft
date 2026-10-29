@@ -641,6 +641,8 @@
 - distinguish actual contact edges from coalesced history (c77c786)
 - prepare version 0.1.1 (4dd3016)
 - validate complete build records across worker profiles (807ff64)
+- run installed CLI checks before the GUI suite (58ade69)
+- bound copied cancellation fixture debug images (5ea4544)
 
 
 ### Performance
