@@ -84,6 +84,8 @@ def main():
     if total != 6168:
         raise ValueError("Incomplete deterministic replay")
     print("Verified 24 seed hashes and 6168 deterministic cases; no coverage-guided run")
+    from stock_replay_smoke import run
+    run(args.replay)
 
 
 if __name__ == "__main__":

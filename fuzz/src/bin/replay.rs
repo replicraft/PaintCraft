@@ -6,7 +6,7 @@ fn main() {
     let target = Target::parse(
         &args
             .next()
-            .expect("target: avif/heif/paint/pdn/dcx/radiance/exr"),
+            .expect("target: avif/heif/paint/pdn/dcx/radiance/exr/raster/tiff_pages/icons"),
     )
     .expect("unknown target");
     let iterations: usize = args

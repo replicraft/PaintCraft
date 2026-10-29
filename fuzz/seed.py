@@ -12,7 +12,9 @@ def main():
     corpus = ROOT / "corpus"
     if corpus.is_symlink():
         raise ValueError("Refusing a symlink corpus directory")
-    for seed in json.loads((ROOT / "seeds.json").read_text())["seeds"]:
+    seeds = json.loads((ROOT / "seeds.json").read_text())["seeds"]
+    seeds += json.loads((ROOT / "stock-seeds.json").read_text())["seeds"]
+    for seed in seeds:
         source = (REPO / seed["source"]).resolve()
         if not source.is_relative_to(REPO):
             raise ValueError("Seed source must remain in this repository")
@@ -20,7 +22,7 @@ def main():
             data = stream.read(MAX_INPUT + 1)
         if len(data) > MAX_INPUT or len(data) != seed["bytes"] or hashlib.sha256(data).hexdigest() != seed["sha256"]:
             raise ValueError(f"Seed provenance mismatch: {source}")
-        if seed["target"] not in {"avif", "heif", "paint", "pdn", "dcx", "radiance", "exr"} or Path(seed["name"]).name != seed["name"]:
+        if seed["target"] not in {"avif", "heif", "paint", "pdn", "dcx", "radiance", "exr", "raster", "tiff_pages", "icons"} or Path(seed["name"]).name != seed["name"]:
             raise ValueError("Invalid target or corpus filename")
         directory = corpus / seed["target"]
         if directory.is_symlink():

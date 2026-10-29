@@ -1,0 +1,38 @@
+{
+  "schema": "paintcraft.stock-fuzz-derived/1",
+  "rights": "Original PaintCraft fixtures; retain parent reference-tool provenance.",
+  "records": [
+    {
+      "file": "invalid-exif-ifd.jpg",
+      "source": "crates/services/paintcraft-formats/tests/jpeg-fixtures/rgb-orientation-6-II.jpg",
+      "source_sha256": "18e979ca73120c960ec6e59248a3b8d4b1987fa2a2d3fbb4ac69ab2cba638ed3",
+      "recipe": "Insert APP1 Exif II42 with first IFD offset0xFFFFFFFE after SOI; original JPEG unchanged.",
+      "bytes": 447,
+      "sha256": "4b2f29caf83cce984b4e2a973f156c818593fc70aa00f3faa8d0494c92498ca3"
+    },
+    {
+      "file": "missing-lzw-eoi.gif",
+      "source": "crates/services/paintcraft-formats/tests/gif-still-fixtures/literal-three.gif",
+      "source_sha256": "5ffc8a1252df0e8fda8de0ba08c3cf5fa5fa1e1b6e6042b1b388640fcdf29bca",
+      "recipe": "Set byte40 from0x50 to0, removing EOI after all declared samples; preserve all other bytes.",
+      "bytes": 43,
+      "sha256": "b78a258d1db751424f2244aecf72fa9f65b29c7f0cd0370c23cdb746f6323266"
+    },
+    {
+      "file": "orientation6.tif",
+      "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/icc-srgb-rgba8.tif",
+      "source_sha256": "8362ad2b81b7add96f0e722123bdbd1b75af49fd0e8ea52ff21e26bec2fdc696",
+      "recipe": "Set original inline SHORT Orientation274 from1 to6; offsets, compressed samples and all other tags unchanged. Qualified normalized positive control.",
+      "bytes": 918,
+      "sha256": "293785431d13a2983f16c8e61d1ebd55d6ced9ee511e92296cd2208fe96a80c2"
+    },
+    {
+      "file": "invalid-orientation9.tif",
+      "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/icc-srgb-rgba8.tif",
+      "source_sha256": "8362ad2b81b7add96f0e722123bdbd1b75af49fd0e8ea52ff21e26bec2fdc696",
+      "recipe": "Set original inline SHORT Orientation274 from1 to9; preserve all offsets, samples and other tags. Invalid orientation must refuse ordinary and selected import.",
+      "bytes": 918,
+      "sha256": "e1b0e923dbbb709dee7f07b44f445d6c27a5c8b619a51fd3e3b7e401cbccde07"
+    }
+  ]
+}

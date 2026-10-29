@@ -79,3 +79,27 @@ test = false
 doc = false
 bench = false
 required-features = ["fuzzing"]
+
+[[bin]]
+name = "raster"
+path = "fuzz_targets/raster.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "tiff_pages"
+path = "fuzz_targets/tiff_pages.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "icons"
+path = "fuzz_targets/icons.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]

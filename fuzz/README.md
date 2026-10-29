@@ -2,8 +2,76 @@
 
 This standalone, unpublished Cargo workspace exercises existing parser entrypoints.
 It adds no product dependency or file-format capability. `replay` builds without
-libFuzzer; the seven coverage targets require the `fuzzing` feature and pinned
+libFuzzer; the ten target wrappers require the `fuzzing` feature and pinned
 `libfuzzer-sys = 0.4.13`. `Cargo.lock` is checked separately from the product lock.
+
+## Stock decoder extension
+
+Three targets call actual stock parser/decoder APIs. The parser functions do
+not access files, launch helpers/processes, contact a network, or use a GPU.
+Both libFuzzer wrappers and stable replay leave product panics uncaught;
+returned invariant errors remain findings through the existing classifier.
+
+| Target | Actual entrypoints and admitted work |
+| --- | --- |
+| `raster` | Restricted PNG/JPEG/GIF/BMP/TIFF signature dispatch through `image::decode_with_pixel_limit`; checks output extent and declared conversion losses |
+| `tiff_pages` | Full-source inventory, first and last eligible page (at most two), sealed assessment round trip and exact source/page/descriptor/output/loss binding |
+| `icons` | Full directory preflight and first/last explicit entry (at most two), including indexed XOR samples hidden by AND masks |
+
+All targets retain the harness 256 KiB source and 16,384-pixel limits. The selected
+TIFF API uses the existing 4,096-checkpoint allowance. The stock raster and icon
+public APIs do not expose an interruptible decoder callback; these bounds are
+not hard time, allocation/RSS, cancellation-latency, or sandbox guarantees.
+The harness introduces no new product format limits or decoder dependencies.
+
+`stock-seeds.json` separately binds 29 exact source lengths/hashes. The parent
+fixture directories retain independent PNG/JPEG/GIF/BMP/TIFF oracle provenance.
+Four derived sources have explicit parent SHA256 values and reproducible
+edits in `fixtures/provenance.json` and `fixtures/generate_stock.py`: malformed
+EXIF IFD offset, missing GIF LZW EOI after complete samples, valid TIFF Orientation
+6 and invalid Orientation 9. Orientation 6 is a normalized positive control for
+ordinary and selected-page import. Its exact 2×3 straight RGBA output is checked
+against the independent 3×2 libtiff fixture oracle, including hidden RGB. Invalid
+9, previous assessment versions and previous browser request framing still refuse.
+
+The initial pre-orientation-support run added these independent streams. Its
+negative orientation expectation and exact source snapshot remain historical
+evidence; they do not constrain the subsequently qualified valid feature.
+
+| Target | Seeds | Cases | Accepted | Returned errors |
+| --- | ---: | ---: | ---: | ---: |
+| Raster | 16 | 4,112 | 1,060 | 3,052 |
+| Selected TIFF pages | 5 | 1,285 | 334 | 951 |
+| Icons | 6 | 1,542 | 130 | 1,412 |
+| Additional total | 27 | 6,939 | 1,524 | 5,415 |
+
+After TIFF orientation normalization and its V2 report/protocol landed, the
+ordinary and selected Orientation 6 predicates became positive, and invalid
+Orientation 9 was added to both streams. The integration replay measured:
+
+| Target | Seeds | Cases | Accepted | Returned errors |
+| --- | ---: | ---: | ---: | ---: |
+| Raster | 17 | 4,369 | 1,244 | 3,125 |
+| Selected TIFF pages | 6 | 1,542 | 512 | 1,030 |
+| Icons | 6 | 1,542 | 130 | 1,412 |
+| Current additional total | 29 | 7,453 | 1,886 | 5,567 |
+
+`replay_smoke.py` first executes and validates the historical seven-target
+6,168-case stream unchanged, then calls the separate stock replay. The original
+manifest, sorted seed order, mutation policy and receipt stay intact. This
+initial extension passed 8 Rust controls, 7 Python controls, locked stable
+tests/Clippy, all ten optional wrapper checks, and linked the three new wrappers.
+The orientation follow-up passed all four stock Rust controls, seven Python
+controls, strict Clippy, the updated stock replay and rebuilt all three new
+wrappers with `CARGO_INCREMENTAL=0` in the canonical workspace target directory.
+The historical seven-target stream was not rerun during this scoped follow-up.
+
+Each new linked libFuzzer driver also completed 2,000 bounded runs from its exact
+staged seeds. These stable binaries reported missing sanitizer symbols and no
+coverage instrumentation. This is driver/mutation smoke, not coverage-guided or
+sanitizer qualification. The previously installed private nightly/cargo-fuzz
+tools are no longer present; no installation or product toolchain change was
+made for this slice. Preserve the historical guided evidence below separately.
 
 | Target | Entry and admitted work |
 | --- | --- |

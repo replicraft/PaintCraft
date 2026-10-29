@@ -2,6 +2,7 @@
 //! Declared parser limits are not a hard RSS limit or a native-code sandbox.
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::cell::Cell;
+mod stock;
 pub const INPUT_MAX: usize = 256 << 10;
 pub const PIXELS_MAX: u64 = 16_384;
 pub const CHECKPOINT_MAX: u32 = 4096;
@@ -14,6 +15,9 @@ pub enum Target {
     Dcx,
     Radiance,
     Exr,
+    Raster,
+    TiffPages,
+    Icons,
 }
 impl Target {
     pub fn parse(value: &str) -> Option<Self> {
@@ -25,6 +29,9 @@ impl Target {
             "dcx" => Self::Dcx,
             "radiance" => Self::Radiance,
             "exr" => Self::Exr,
+            "raster" => Self::Raster,
+            "tiff_pages" => Self::TiffPages,
+            "icons" => Self::Icons,
             _ => return None,
         })
     }
@@ -79,6 +86,9 @@ pub fn exercise(target: Target, bytes: &[u8]) -> Result<()> {
         }
         Target::Exr => {
             paintcraft_formats::exr::inspect(bytes, PIXELS_MAX, &check)?;
+        }
+        Target::Raster | Target::TiffPages | Target::Icons => {
+            stock::exercise(target, bytes, &check)?;
         }
         Target::Paint => {
             let limits = paintcraft_paint::DecodeLimits {

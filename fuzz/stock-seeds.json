@@ -1,0 +1,238 @@
+{
+    "schema": "paintcraft.stock-fuzz-seeds/v1",
+    "provenance": "Exact independent owned fixtures; parent fixture directories retain oracle provenance. Four explicitly derived sources have source hashes/recipes in fixtures/provenance.json; TIFF orientation6 is normalized, invalid9 refuses.",
+    "seeds": [
+        {
+            "target": "raster",
+            "name": "indexed1-trns.png",
+            "source": "crates/services/paintcraft-formats/tests/raster-metadata-fixtures/indexed1-trns.png",
+            "bytes": 99,
+            "sha256": "f61bf8b0ec5d88d146b058d3f4beb3d2293e262cfe95eb73d84cc86c5fbd2c72",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "invalid-index.png",
+            "source": "crates/services/paintcraft-formats/tests/raster-metadata-fixtures/invalid-index.png",
+            "bytes": 82,
+            "sha256": "8d173105cdc2f36c94c0ecb292955e4de3456bb6efe11703c474442951c805a2",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "rgb-orientation-6-II.jpg",
+            "source": "crates/services/paintcraft-formats/tests/jpeg-fixtures/rgb-orientation-6-II.jpg",
+            "bytes": 429,
+            "sha256": "18e979ca73120c960ec6e59248a3b8d4b1987fa2a2d3fbb4ac69ab2cba638ed3",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "unmarked-cmyk.jpg",
+            "source": "crates/services/paintcraft-formats/tests/jpeg-fixtures/unmarked-cmyk.jpg",
+            "bytes": 392,
+            "sha256": "063ae1401949d41817f3984b08578a7a9b17be050f778c44f059c986aedd3c2b",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "adobe-ycck-color.jpg",
+            "source": "crates/services/paintcraft-formats/tests/jpeg-fixtures/adobe-ycck-color.jpg",
+            "bytes": 693,
+            "sha256": "9d6e994e665fcbbe8d4b1612eac94616f9d1aefee48a471230af58fbc2bf1bdf",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "offset-interlace.gif",
+            "source": "crates/services/paintcraft-formats/tests/gif-still-fixtures/offset-interlace.gif",
+            "bytes": 57,
+            "sha256": "2ac4939b4b997bea259021bae10c2c47067f66df2ccdafdae619fe40f7eca3cd",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "invalid-palette-index.gif",
+            "source": "crates/services/paintcraft-formats/tests/gif-still-fixtures/invalid-palette-index.gif",
+            "bytes": 44,
+            "sha256": "6628f81b2525f2fe54314105fbbaf04b9ceefedf55284556643a5ecc588cfccf",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "rle4-combined.bmp",
+            "source": "crates/services/paintcraft-formats/tests/bmp-rle-fixtures/rle4-combined.bmp",
+            "bytes": 146,
+            "sha256": "cb2471a6d79c6675912c02038a565d32a51f876049b3b58bc211189b5ed02991",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "rle8-combined.bmp",
+            "source": "crates/services/paintcraft-formats/tests/bmp-rle-fixtures/rle8-combined.bmp",
+            "bytes": 166,
+            "sha256": "736d13672f4c944c52b5e5dfd22f6935565816858eb804894d068ed6bf8854fc",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "rgb4-top.bmp",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb4-top.bmp",
+            "bytes": 94,
+            "sha256": "7f474879db53480b3c3830ef6219036a8317e91a7fc13513e922275e575ae403",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "rgb4-bottom-undeclared.bmp",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb4-bottom-undeclared.bmp",
+            "bytes": 90,
+            "sha256": "fab1766473b3d5e4a390fa84ad79a45bf431730d989d6bcd27e5078034235b19",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "icc-srgb-rgba8.tif",
+            "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/icc-srgb-rgba8.tif",
+            "bytes": 918,
+            "sha256": "8362ad2b81b7add96f0e722123bdbd1b75af49fd0e8ea52ff21e26bec2fdc696",
+            "accepted": true
+        },
+        {
+            "target": "raster",
+            "name": "rgba16-be-strips-lzw.tif",
+            "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/rgba16-be-strips-lzw.tif",
+            "bytes": 618,
+            "sha256": "1732588a68d376a330843e92010b959e80f56406e4caea2fac30a028fc1ed425",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "invalid-exif-ifd.jpg",
+            "source": "fuzz/fixtures/invalid-exif-ifd.jpg",
+            "bytes": 447,
+            "sha256": "4b2f29caf83cce984b4e2a973f156c818593fc70aa00f3faa8d0494c92498ca3",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "missing-lzw-eoi.gif",
+            "source": "fuzz/fixtures/missing-lzw-eoi.gif",
+            "bytes": 43,
+            "sha256": "b78a258d1db751424f2244aecf72fa9f65b29c7f0cd0370c23cdb746f6323266",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "orientation6.tif",
+            "source": "fuzz/fixtures/orientation6.tif",
+            "bytes": 918,
+            "sha256": "293785431d13a2983f16c8e61d1ebd55d6ced9ee511e92296cd2208fe96a80c2",
+            "accepted": true
+        },
+        {
+            "target": "tiff_pages",
+            "name": "unsupported-first-rgba16.tif",
+            "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/unsupported-first-rgba16.tif",
+            "bytes": 612,
+            "sha256": "37c24b2877c921abedff4d6b80c564893e1d90153d63e3082f459f85724d77ba",
+            "accepted": true
+        },
+        {
+            "target": "tiff_pages",
+            "name": "gray-alpha-8-16-both-photos.tif",
+            "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/gray-alpha-8-16-both-photos.tif",
+            "bytes": 1196,
+            "sha256": "f5d0d6965b28a55798af7a0b9dc5380675814e9296bee9b2926b68a71442a20c",
+            "accepted": true
+        },
+        {
+            "target": "tiff_pages",
+            "name": "bigtiff-unqualified.tif",
+            "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/bigtiff-unqualified.tif",
+            "bytes": 448,
+            "sha256": "3dcc7dca3ae58ec7c08f77a519201940dc63824ad971a451dd182e0ba379164d",
+            "accepted": false
+        },
+        {
+            "target": "tiff_pages",
+            "name": "rgba8-le-tiles-deflate.tif",
+            "source": "crates/services/paintcraft-formats/tests/tiff-fixtures/rgba8-le-tiles-deflate.tif",
+            "bytes": 2006,
+            "sha256": "c24ef1f1243c93b5f4c95282f4931a74fe4841a78f7dcb7380cacc4d87c9dbad",
+            "accepted": true
+        },
+        {
+            "target": "tiff_pages",
+            "name": "orientation6.tif",
+            "source": "fuzz/fixtures/orientation6.tif",
+            "bytes": 918,
+            "sha256": "293785431d13a2983f16c8e61d1ebd55d6ced9ee511e92296cd2208fe96a80c2",
+            "accepted": true
+        },
+        {
+            "target": "icons",
+            "name": "rgb1-bottom.ico",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb1-bottom.ico",
+            "bytes": 94,
+            "sha256": "871b89735426a569bfabfe5abe0054a6c911bd40c8c8024786990db27e2c0f24",
+            "accepted": true
+        },
+        {
+            "target": "icons",
+            "name": "rgb1-bottom-undeclared.ico",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb1-bottom-undeclared.ico",
+            "bytes": 90,
+            "sha256": "6a8853b389660de00fe86c25b15005af070bf12a786b8ddc5d5f80761af34def",
+            "accepted": false
+        },
+        {
+            "target": "icons",
+            "name": "rgb4-bottom.ico",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb4-bottom.ico",
+            "bytes": 114,
+            "sha256": "020f717a11dfcc223e02ef02e34a4cba6a98575499932a7a90ddb351a070508e",
+            "accepted": true
+        },
+        {
+            "target": "icons",
+            "name": "rgb4-bottom-undeclared.ico",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb4-bottom-undeclared.ico",
+            "bytes": 110,
+            "sha256": "51ee488203598c7cfc1207c298d9731bfde1a3e6fc9a6eeb602312a88d4b98d2",
+            "accepted": false
+        },
+        {
+            "target": "icons",
+            "name": "rgb8-bottom.ico",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb8-bottom.ico",
+            "bytes": 138,
+            "sha256": "76818163eefb65fa5e7c97fe9af28371eedaafde7e38b4d19971d8f6ccb9c463",
+            "accepted": true
+        },
+        {
+            "target": "icons",
+            "name": "rgb8-bottom-undeclared.ico",
+            "source": "crates/services/paintcraft-formats/tests/bmp-indexed-fixtures/rgb8-bottom-undeclared.ico",
+            "bytes": 134,
+            "sha256": "605ad8b4a82357142e6833f1889269efd10faf62615fd8508ef60c9226a1454b",
+            "accepted": false
+        },
+        {
+            "target": "raster",
+            "name": "invalid-orientation9.tif",
+            "source": "fuzz/fixtures/invalid-orientation9.tif",
+            "bytes": 918,
+            "sha256": "e1b0e923dbbb709dee7f07b44f445d6c27a5c8b619a51fd3e3b7e401cbccde07",
+            "accepted": false
+        },
+        {
+            "target": "tiff_pages",
+            "name": "invalid-orientation9.tif",
+            "source": "fuzz/fixtures/invalid-orientation9.tif",
+            "bytes": 918,
+            "sha256": "e1b0e923dbbb709dee7f07b44f445d6c27a5c8b619a51fd3e3b7e401cbccde07",
+            "accepted": false
+        }
+    ]
+}
