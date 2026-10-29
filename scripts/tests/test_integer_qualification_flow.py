@@ -82,6 +82,8 @@ class Scenario:
         self.dds = self.test_artifact("dds_texture_write", [
             "dds_texture_vectors_match_independently_measured_frozen_specimens"])
         app_names = [p + "control" for p in qualification.APP_GROUPS]
+        if mutation == "missing-pressure":
+            app_names = [name for name in app_names if not name.startswith("framework_force::tests::")]
         app_names += [qualification.APP_LEGACY]
         if mutation != "missing-app":
             app_names.append(APP_INTEGER)
@@ -239,6 +241,8 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                                      "jxl-integer-codec" if candidate == "v9"
                                      else "jxr-codecs,jxl-integer-codec")
                     app = next(row for row in flow.calls if row[0] == "app-integer-jxl")
+                    for prefix in ("framework_force::tests::", "controller::framework_force::tests::"):
+                        self.assertEqual(sum(prefix in argv for _, argv, _ in flow.calls), 1)
                     self.assertIn("--exact", app[1])
                     self.assertIn("--ignored", app[1])
                     self.assertEqual(app[2]["PAINTCRAFT_JXL_INTEGER_HELPER"], str(installed / flow.helper.name))
@@ -261,6 +265,12 @@ class IntegerQualificationFlowTests(unittest.TestCase):
                 self.assert_failed(flow, "Missing or ambiguous", forbidden="app-integer-jxl")
                 self.assertIn("app-legacy-jxr", flow.phases())
                 self.assertNotIn("source-final", flow.phases())
+
+    def test_missing_framework_pressure_controls_prevent_native_qualification(self):
+        for candidate in ("v9", "v10"):
+            flow = self.scenario(candidate, mutation="missing-pressure")
+            self.assert_failed(flow, "Required native test group missing", forbidden="app-integer-jxl")
+            self.assertNotIn("source-final", flow.phases())
 
     def test_missing_cli_integer_selector_cannot_be_replaced_by_baseline_tests(self):
         for candidate in ("v9", "v10"):

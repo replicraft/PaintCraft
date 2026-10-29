@@ -20,7 +20,8 @@ import qualify_cli_helper as cli_tests
 
 TARGETS = tuple(release.TARGETS)
 EXECUTABLE_MAX = 256 << 20
-APP_GROUPS = ("importing::dds::tests::", "jxr_export::tests::", "dds_export::tests::")
+APP_GROUPS = ("importing::dds::tests::", "jxr_export::tests::", "dds_export::tests::",
+              "framework_force::tests::", "controller::framework_force::tests::")
 REQUIRED_WORKER_TARGETS = {"paintcraft-codec-worker", "native_jxl", "native_jxr", "native_heif",
                            "native_heif_color", "native_avif", "native_avif_sdr", "native_float",
                            "native_jxr_encode", "native_jxr_writer", "native_jxl_integer"}
