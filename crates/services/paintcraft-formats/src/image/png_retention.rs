@@ -1,8 +1,9 @@
 //! New-document PNG conversion with original ICC bytes/pHYs retained separately.
+pub use super::retained_raster::{ICC_RETAINED_UNAPPLIED, Prepared, RESOLUTION_RETAINED_INACTIVE};
 use super::{Decoded, ImageFormat, codec, png_metadata};
 use paintcraft_core::types::Result;
 use paintcraft_document::{
-    Document, RasterConversionContext, RasterConversionKey, RasterSelection, SourceMetadata,
+    RasterConversionContext, RasterConversionKey, RasterSelection, SourceMetadata,
 };
 mod capture;
 mod decoder;
@@ -17,8 +18,6 @@ pub(super) fn decode_legacy_pixels(
     decoder::decode(bytes, source, pixels, check)
 }
 
-pub const ICC_RETAINED_UNAPPLIED: &str = "icc-source-retained-unapplied";
-pub const RESOLUTION_RETAINED_INACTIVE: &str = "resolution-source-retained-inactive";
 pub const IDENTITY_PROFILE: &str = "png-source-profile-resolution-rgba8-v1";
 
 /// Required notices for the proposed retentive conversion. This does not grant
@@ -45,44 +44,6 @@ pub fn required_acknowledgements(
         }
     }
     losses
-}
-
-pub struct Prepared {
-    pub image: Decoded,
-    pub attachment: Option<SourceMetadata>,
-    pub document_key: RasterConversionKey,
-}
-impl std::fmt::Debug for Prepared {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PreparedPng")
-            .field("dimensions", &(self.image.width, self.image.height))
-            .field("rgba_bytes", &self.image.rgba.len())
-            .field("acknowledgements", &self.image.losses)
-            .field("attachment", &self.attachment)
-            .field("document_key", &self.document_key.hex())
-            .finish()
-    }
-}
-impl Prepared {
-    /// Construct a private candidate using the host's existing raster realm.
-    /// The host still owns final source/owner/acknowledgement publication guards.
-    pub fn document_with_admission(
-        &self,
-        admission: &mut paintcraft_raster::Admission,
-        check: &dyn Fn() -> Result<()>,
-    ) -> Result<Document> {
-        let document = paintcraft_document::import_image_with_admission_checked(
-            self.image.width,
-            self.image.height,
-            &self.image.rgba,
-            &self.document_key.hex(),
-            admission,
-            check,
-        )?;
-        let document = document.with_source_metadata_checked(self.attachment.clone(), check)?;
-        crate::pcnd::check_metadata_admission(&document, check)?;
-        Ok(document)
-    }
 }
 
 /// Capture original ICC bytes under host admission before pixel decoding. The
