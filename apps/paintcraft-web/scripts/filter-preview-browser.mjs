@@ -189,6 +189,10 @@ try {
 				residentBytes: 256 * 256 * 4,
 				metadataBytes: 0,
 				metadataCharge: 0,
+				maskCount: 0,
+				maskBands: 0,
+				maskRuns: 0,
+				maskDecodeBytes: 0,
 				filterDigest: fixture.filter_inventory_sha256,
 			};
 			const layer = '22222222-2222-4222-8222-222222222222';

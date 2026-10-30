@@ -136,6 +136,10 @@ export function validatePlan(plan) {
 			'metadataBytes',
 			'metadataCharge',
 			'filterDigest',
+			'maskCount',
+			'maskBands',
+			'maskRuns',
+			'maskDecodeBytes',
 		],
 		['sourceSha256'],
 	);
@@ -154,7 +158,24 @@ export function validatePlan(plan) {
 		!integer(plan.metadataBytes) ||
 		plan.metadataBytes > 8 * 1024 * 1024 ||
 		!integer(plan.metadataCharge) ||
-		plan.residentBytes + plan.metadataCharge > LINEAR_MEMORY_BYTES ||
+		!integer(plan.maskCount) ||
+		plan.maskCount > plan.layers * 256 ||
+		!integer(plan.maskBands) ||
+		plan.maskBands > 262144 ||
+		!integer(plan.maskRuns) ||
+		plan.maskRuns > 262144 ||
+		!integer(plan.maskDecodeBytes) ||
+		plan.maskDecodeBytes > LINEAR_MEMORY_BYTES ||
+		plan.maskBands > plan.maskRuns ||
+		(plan.maskBands === 0) !== (plan.maskRuns === 0) ||
+		(plan.maskCount === 0 &&
+			(plan.maskBands !== 0 ||
+				plan.maskRuns !== 0 ||
+				plan.maskDecodeBytes !== 0)) ||
+		(plan.maskBands === 0 && plan.maskDecodeBytes !== 0) ||
+		(plan.maskBands > 0 && plan.maskDecodeBytes === 0) ||
+		plan.residentBytes + plan.metadataCharge + plan.maskDecodeBytes >
+			LINEAR_MEMORY_BYTES ||
 		!isDigest(plan.filterDigest) ||
 		(plan.sourceSha256 !== undefined && !isDigest(plan.sourceSha256))
 	)
@@ -169,6 +190,10 @@ export function validateBinding(binding, plan) {
 		'sourceSha256',
 		'size',
 		'filterDigest',
+		'maskCount',
+		'maskBands',
+		'maskRuns',
+		'maskDecodeBytes',
 	])
 		if (!same(binding?.[key], plan[key]))
 			throw fail('CodecFailed', 'Render Worker source binding mismatch');

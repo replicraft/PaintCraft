@@ -1,16 +1,17 @@
 // Persistent visual Worker; separate from the one-shot format codec instance.
 import initialize, {
-	RenderWorker,
-	protocol_version,
 	linear_memory_ceiling,
+	protocol_version,
+	RenderWorker,
 } from '../../render-worker-pkg/paintcraft_web_render_worker.js';
 import {
+	canonical,
+	fail,
 	LINEAR_MEMORY_BYTES,
 	SOURCE_BYTES_MAX,
-	canonical,
 	validatePlan,
-	fail,
 } from './filter-preview-protocol.js';
+
 let service = null,
 	current = null,
 	desired = null,
@@ -134,7 +135,7 @@ self.onmessage = async ({ data }) => {
 			const encoded = canonical(data.plan);
 			const wasm = await initialize();
 			if (
-				protocol_version() !== 1 ||
+				protocol_version() !== 2 ||
 				linear_memory_ceiling() !== LINEAR_MEMORY_BYTES ||
 				wasm.memory.buffer.byteLength > LINEAR_MEMORY_BYTES
 			)

@@ -1,13 +1,13 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import test from 'node:test';
 import {
 	canonical,
-	validatePlan,
-	validateBinding,
-	validateResult,
-	validateRequest,
 	sha,
+	validateBinding,
+	validatePlan,
+	validateRequest,
+	validateResult,
 } from '../src/lib/filter-preview-protocol.js';
 
 test('uncertain active failure rejects the latest local job that was never posted', async () => {
@@ -219,6 +219,10 @@ const plan = {
 	residentBytes: 262144,
 	metadataBytes: 0,
 	metadataCharge: 0,
+	maskCount: 0,
+	maskBands: 0,
+	maskRuns: 0,
+	maskDecodeBytes: 0,
 	filterDigest: '0'.repeat(64),
 	sourceSha256: '1'.repeat(64),
 };
@@ -494,4 +498,39 @@ test('slider burst retains only active plus latest and acknowledges retirement w
 	assert.equal(service.filterPreviewUsage().quarantined, false);
 	await client.close();
 	assert.equal(service.filterPreviewUsage().reserved, 0);
+});
+
+test('protocol2 mask facts price expanded instances and old source plans refuse', () => {
+	const old = { ...plan };
+	for (const key of ['maskCount', 'maskBands', 'maskRuns', 'maskDecodeBytes'])
+		delete old[key];
+	assert.throws(() => validatePlan(old));
+	validatePlan({ ...plan, maskCount: 1 }); // stored zero mask has no heap payload
+	const masked = {
+		...plan,
+		maskCount: 2,
+		maskBands: 2,
+		maskRuns: 3,
+		maskDecodeBytes: 1024,
+	};
+	validatePlan(masked);
+	for (const delta of [
+		{ maskCount: 0 },
+		{ maskBands: 0 },
+		{ maskRuns: 0 },
+		{ maskDecodeBytes: 0 },
+		{ maskDecodeBytes: -1 },
+		{ maskDecodeBytes: Number.MAX_SAFE_INTEGER },
+		{ maskBands: 262145 },
+	])
+		assert.throws(() => validatePlan({ ...masked, ...delta }));
+	for (const key of [
+		'maskCount',
+		'maskBands',
+		'maskRuns',
+		'maskDecodeBytes',
+	]) {
+		const binding = { ...masked, [key]: masked[key] + 1 };
+		assert.throws(() => validateBinding(binding, masked));
+	}
 });

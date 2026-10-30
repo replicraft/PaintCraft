@@ -120,7 +120,12 @@ fn retained_metadata_declaration_does_not_authorize_wrong_profile_length_or_miss
 }
 fn plan(doc: &Document, bytes: &[u8]) -> Value {
     let metadata = doc.source_metadata.as_ref();
+    let masks = pcnd::coverage_facts(doc, &|| Ok(())).unwrap();
     Value::object([
+        ("maskCount", Value::Int(masks.masks as i64)),
+        ("maskBands", Value::Int(masks.bands as i64)),
+        ("maskRuns", Value::Int(masks.runs as i64)),
+        ("maskDecodeBytes", Value::Int(masks.decode_bytes as i64)),
         (
             "owner",
             Value::object([
@@ -389,4 +394,165 @@ fn source_mismatch_and_incompatible_quotes_refuse_before_decoder_allocation() {
         Source::parse(Value::Object(map)).unwrap_err().code,
         ErrorCode::InputSchema
     );
+}
+
+fn masked_plane() -> Document {
+    let bytes = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../../../crates/services/paintcraft-formats/tests/pcnd-mask-fixtures/opaque-half.pcnd"
+    ));
+    let budget = SharedBudget::new(1 << 20);
+    pcnd::read_with_admission_checked(
+        bytes,
+        2,
+        65536,
+        1,
+        pcnd::ReadAdmission {
+            metadata: pcnd::MetadataAdmission {
+                bytes: 0,
+                budget: &budget,
+            },
+            coverage: pcnd::CoverageAdmission {
+                bytes: 1 << 20,
+                budget: &budget,
+                limits: paintcraft_raster::coverage_mask::Limits::default(),
+            },
+        },
+        &|| Ok(()),
+    )
+    .unwrap()
+}
+#[test]
+fn pcnd4_masked_base_and_descriptor_update_render_literal_independent_samples() {
+    let doc = masked_plane();
+    let before = pcnd::write(&doc).unwrap();
+    let (mut service, p) = open(&doc);
+    service
+        .prepare(&text(&request(
+            &p,
+            1,
+            None,
+            Value::Null,
+            true,
+            [0, 0, 2, 1],
+            0,
+        )))
+        .unwrap();
+    let (_, pixels) = finish(&mut service);
+    assert_eq!(pixels, [127, 128, 128, 255, 0, 255, 0, 255]);
+    let layer = doc.roots[0];
+    let filter = &doc.layers[&layer].filters.as_slice()[0];
+    let mask_digest = filter.mask().unwrap().coverage().digest();
+    service.retire();
+    let operation = FilterOp::Update {
+        layer: LayerRef::Id(layer),
+        filter: FilterRef::Id(filter.id()),
+        descriptor: Descriptor::BrightnessContrastV1(
+            paintcraft_core::types::filters::BrightnessContrastV1::new(100, 0).unwrap(),
+        ),
+    }
+    .to_value()
+    .unwrap();
+    service
+        .prepare(&text(&request(
+            &p,
+            2,
+            Some(layer),
+            operation,
+            true,
+            [0, 0, 2, 1],
+            0,
+        )))
+        .unwrap();
+    let (_, pixels) = finish(&mut service);
+    assert_eq!(pixels, [255, 128, 128, 255, 0, 255, 0, 255]);
+    assert_eq!(
+        service.candidate.as_ref().unwrap().layers[&layer]
+            .filters
+            .as_slice()[0]
+            .mask()
+            .unwrap()
+            .coverage()
+            .digest(),
+        mask_digest
+    );
+    service.retire();
+    assert_eq!(pcnd::write(&service.base).unwrap(), before);
+}
+#[test]
+fn masked_source_facts_price_decode_before_open_and_bind_ready() {
+    let doc = masked_plane();
+    let bytes = pcnd::write(&doc).unwrap();
+    let original = plan(&doc, &bytes);
+    for (key, value) in [
+        ("maskCount", 0),
+        ("maskBands", 0),
+        ("maskRuns", 0),
+        ("maskDecodeBytes", 0),
+        ("maskDecodeBytes", 1),
+        ("maskDecodeBytes", 256 << 20),
+    ] {
+        let mut fields = original.as_object().unwrap().clone();
+        fields.insert(key.into(), Value::Int(value));
+        assert!(
+            Service::open(&bytes, &text(&Value::Object(fields))).is_err(),
+            "{key}={value}"
+        );
+    }
+    let mut old = original.as_object().unwrap().clone();
+    for key in ["maskCount", "maskBands", "maskRuns", "maskDecodeBytes"] {
+        old.remove(key);
+    }
+    assert_eq!(
+        Service::open(&bytes, &text(&Value::Object(old)))
+            .err()
+            .unwrap()
+            .code,
+        ErrorCode::InputSchema
+    );
+    let service = Service::open(&bytes, &text(&original)).unwrap();
+    assert_eq!(service.context(), original);
+    assert_eq!(
+        service.base.layers[&doc.roots[0]].filters.as_slice()[0]
+            .mask()
+            .unwrap()
+            .coverage()
+            .digest(),
+        doc.layers[&doc.roots[0]].filters.as_slice()[0]
+            .mask()
+            .unwrap()
+            .coverage()
+            .digest()
+    );
+}
+#[test]
+fn parameter_channel_refuses_mask_mutations_without_consuming_base() {
+    let doc = masked_plane();
+    let before = pcnd::write(&doc).unwrap();
+    let (mut service, p) = open(&doc);
+    let layer = doc.roots[0];
+    let filter = doc.layers[&layer].filters.as_slice()[0].id();
+    let operation = FilterOp::Mask {
+        layer: LayerRef::Id(layer),
+        filter: FilterRef::Id(filter),
+        operation: paintcraft_commands::MaskOp::Remove,
+    }
+    .to_value()
+    .unwrap();
+    assert!(
+        service
+            .prepare(&text(&request(
+                &p,
+                1,
+                Some(layer),
+                operation,
+                true,
+                [0, 0, 2, 1],
+                0
+            )))
+            .is_err()
+    );
+    assert!(service.candidate.is_none());
+    assert!(service.frame.is_none());
+    assert_eq!(pcnd::write(&service.base).unwrap(), before);
 }

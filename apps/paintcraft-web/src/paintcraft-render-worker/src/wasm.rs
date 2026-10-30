@@ -40,7 +40,7 @@ impl RenderWorker {
 }
 #[wasm_bindgen]
 pub fn protocol_version() -> u32 {
-    1
+    2
 }
 #[wasm_bindgen]
 pub fn application_version() -> String {

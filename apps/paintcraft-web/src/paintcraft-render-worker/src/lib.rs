@@ -62,14 +62,26 @@ impl Service {
             })
             .filter(|bytes| *bytes <= paintcraft_document::source_metadata::BYTES_MAX)
             .ok_or_else(|| resource("Filter preview source metadata extent"))?;
-        let base = pcnd::read_with_metadata_admission_checked(
+        let coverage = SharedBudget::new(source.masks.decode_bytes);
+        let base = pcnd::read_with_admission_checked(
             bytes,
             u64::MAX,
             source.resident / 4,
             source.layers,
-            pcnd::MetadataAdmission {
-                bytes: metadata_wire,
-                budget: &metadata,
+            pcnd::ReadAdmission {
+                metadata: pcnd::MetadataAdmission {
+                    bytes: metadata_wire,
+                    budget: &metadata,
+                },
+                coverage: pcnd::CoverageAdmission {
+                    bytes: source.masks.decode_bytes,
+                    budget: &coverage,
+                    limits: paintcraft_raster::coverage_mask::Limits {
+                        bands: source.masks.bands as usize,
+                        runs: source.masks.runs as usize,
+                        ..paintcraft_raster::coverage_mask::Limits::default()
+                    },
+                },
             },
             &|| Ok(()),
         )?;
@@ -90,6 +102,15 @@ impl Service {
             .as_ref()
             .map_or(0, |m| m.storage_usage().1);
         let inventory = filter_bake::inspect(&base, &|| Ok(()))?;
+        let mask_facts = pcnd::coverage_facts(&base, &|| Ok(()))?;
+        if mask_facts.masks != source.masks.masks
+            || mask_facts.bands != source.masks.bands
+            || mask_facts.runs != source.masks.runs
+            || mask_facts.decode_bytes > source.masks.decode_bytes
+            || coverage.usage().reserved > source.masks.decode_bytes
+        {
+            return Err(stale());
+        }
         if base.state_id != source.state
             || base.document_id != source.document
             || base.canvas != source.size
@@ -310,6 +331,12 @@ impl Service {
 }
 fn stable_target(op: &FilterOp, target: Uuid) -> Result<()> {
     let (layer, filter) = match op {
+        FilterOp::Mask { .. } => {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                "Mask edits require separately admitted editor publication",
+            ));
+        }
         FilterOp::Add { layer, .. } => (layer, None),
         FilterOp::Update { layer, filter, .. }
         | FilterOp::SetEnabled { layer, filter, .. }

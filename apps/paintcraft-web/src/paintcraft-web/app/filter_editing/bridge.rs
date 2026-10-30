@@ -181,6 +181,7 @@ pub(super) async fn open(capture: Capture, cancellation: CancelSlot) -> Result<C
         doc.source_metadata.as_ref().map_or((0usize, 0u64), |s| {
             (s.profile().map_or(0, <[u8]>::len), s.storage_usage().1)
         });
+    let masks = paintcraft_formats::pcnd::coverage_facts(doc, &|| Ok(()))?;
     let plan = object(&[
         ("owner", owner(&capture)?),
         ("draft", capture.draft.to_string().into()),
@@ -191,6 +192,10 @@ pub(super) async fn open(capture: Capture, cancellation: CancelSlot) -> Result<C
         ("metadataBytes", (metadata_bytes as f64).into()),
         ("metadataCharge", (metadata_charge as f64).into()),
         ("filterDigest", hex(&inventory.digest()).into()),
+        ("maskCount", (masks.masks as f64).into()),
+        ("maskBands", (masks.bands as f64).into()),
+        ("maskRuns", (masks.runs as f64).into()),
+        ("maskDecodeBytes", (masks.decode_bytes as f64).into()),
     ])?;
     // Admission precedes serialization, bridge copying and Worker construction.
     let mut admission = Admission {
@@ -227,6 +232,16 @@ pub(super) async fn open(capture: Capture, cancellation: CancelSlot) -> Result<C
     )?;
     string(&binding, "sourceSha256", &client.sha)?;
     string(&binding, "filterDigest", &hex(&inventory.digest()))?;
+    for (name, expected) in [
+        ("maskCount", masks.masks),
+        ("maskBands", masks.bands),
+        ("maskRuns", masks.runs),
+        ("maskDecodeBytes", masks.decode_bytes),
+    ] {
+        if field(&binding, name)?.as_f64() != Some(expected as f64) {
+            return Err(failed("Filter mask source admission changed"));
+        }
+    }
     let size = field(&binding, "size")?
         .dyn_into::<Array>()
         .map_err(error)?;

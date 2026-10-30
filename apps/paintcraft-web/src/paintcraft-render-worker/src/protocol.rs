@@ -85,6 +85,7 @@ pub struct Source {
     pub resident: u64,
     pub metadata: u64,
     pub metadata_charge: u64,
+    pub masks: paintcraft_formats::pcnd::CoverageFacts,
     pub quote: u64,
 }
 impl Source {
@@ -102,6 +103,10 @@ impl Source {
                 "metadataBytes",
                 "metadataCharge",
                 "filterDigest",
+                "maskCount",
+                "maskBands",
+                "maskRuns",
+                "maskDecodeBytes",
             ],
         )?;
         let owner = field(&value, "owner")?;
@@ -142,6 +147,25 @@ impl Source {
         if metadata > 8 << 20 || (metadata_charge == 0 && metadata != 0) {
             return Err(resource("Retained metadata declaration"));
         }
+        let masks = paintcraft_formats::pcnd::CoverageFacts {
+            masks: integer(field(&value, "maskCount")?)?,
+            bands: integer(field(&value, "maskBands")?)?,
+            runs: integer(field(&value, "maskRuns")?)?,
+            decode_bytes: integer(field(&value, "maskDecodeBytes")?)?,
+        };
+        let limits = paintcraft_raster::coverage_mask::Limits::default();
+        if masks.masks > layers as u64 * 256
+            || masks.bands > limits.bands as u64
+            || masks.runs > limits.runs as u64
+            || masks.bands > masks.runs
+            || (masks.bands == 0) != (masks.runs == 0)
+            || (masks.masks == 0
+                && (masks.bands != 0 || masks.runs != 0 || masks.decode_bytes != 0))
+            || (masks.bands == 0 && masks.decode_bytes != 0)
+            || (masks.bands > 0 && masks.decode_bytes == 0)
+        {
+            return Err(resource("Mask decode declaration"));
+        }
         // Price before decoding: natural per-layer filter cap, three private
         // metadata copies during execute plan/replay, wire input, caches,
         // output/transfer, and existing aggregate metadata/parser allowance.
@@ -152,6 +176,7 @@ impl Source {
             .and_then(|n| n.checked_mul(3))
             .and_then(|n| n.checked_add(resident))
             .and_then(|n| n.checked_add(metadata_charge))
+            .and_then(|n| n.checked_add(masks.decode_bytes))
             .and_then(|n| {
                 n.checked_add(
                     SOURCE_BYTES_MAX
@@ -177,6 +202,7 @@ impl Source {
             resident,
             metadata,
             metadata_charge,
+            masks,
             quote,
         })
     }
