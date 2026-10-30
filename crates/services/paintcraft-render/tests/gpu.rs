@@ -675,3 +675,6 @@ mod batches;
 
 #[path = "gpu/single.rs"]
 mod single;
+
+#[path = "gpu/filters.rs"]
+mod filters;

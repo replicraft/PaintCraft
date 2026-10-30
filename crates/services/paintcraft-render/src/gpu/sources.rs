@@ -60,6 +60,7 @@ struct Key {
     origin: (i64, i64),
     extent: (u32, u32),
     default: Rgba,
+    filters: [u8; 32],
     area: Rect,
     local: Rect,
     versions: Vec<(RegionCoord, RegionVersion)>,
@@ -71,6 +72,7 @@ impl Key {
             && self.origin == other.origin
             && self.extent == other.extent
             && self.default == other.default
+            && self.filters == other.filters
     }
     fn same_view(&self, other: &Self) -> bool {
         self.same_layer(other) && self.area == other.area && self.local == other.local
@@ -106,6 +108,7 @@ impl Key {
             origin: layer.origin,
             extent: (layer.raster.width(), layer.raster.height()),
             default: layer.raster.default_pixel(),
+            filters: layer.filters.digest(),
             area,
             local,
             versions,
@@ -289,7 +292,8 @@ impl SourceCache {
                 || (self.region_views
                     && e.key.origin == layer.origin
                     && e.key.extent == (layer.raster.width(), layer.raster.height())
-                    && e.key.default == layer.raster.default_pixel())
+                    && e.key.default == layer.raster.default_pixel()
+                    && e.key.filters == layer.filters.digest())
         });
         if let Some(weight) = key.as_ref().map(Key::weight) {
             while self.entries.len() == self.entries.capacity()
@@ -351,6 +355,7 @@ fn gather(layer: &Layer, local: Rect, check: &impl Fn() -> Result<()>) -> Result
     {
         check()?;
         layer.raster.read_span(y, local.x0, row);
+        crate::appearance::pixels(layer, row, check)?;
     }
     check()?;
     Ok(bytes)

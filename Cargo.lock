@@ -3681,6 +3681,7 @@ dependencies = [
  "paintcraft-core",
  "paintcraft-document",
  "paintcraft-editor",
+ "paintcraft-effects",
  "paintcraft-raster",
  "pollster 0.4.0",
  "rayon",

@@ -19,6 +19,7 @@ gpu = ["dep:wgpu", "dep:bytemuck"]
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
+paintcraft-effects.workspace = true
 paintcraft-raster.workspace = true
 rayon.workspace = true
 wide = { workspace = true, optional = true }

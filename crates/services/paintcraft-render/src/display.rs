@@ -131,7 +131,7 @@ pub(crate) fn uniform(
         let Some(pixel) = layer.raster.uniform_region(local, check)? else {
             return Ok(None);
         };
-        let pixel = pixel.with_opacity(layer.opacity);
+        let pixel = crate::appearance::pixel(layer, pixel, check)?.with_opacity(layer.opacity);
         if pixel.a() == 0 {
             continue;
         }

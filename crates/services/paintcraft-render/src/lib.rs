@@ -10,6 +10,7 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use paintcraft_document::Document;
 use paintcraft_raster::RowSpan;
 
+mod appearance;
 mod kernels;
 
 pub mod parallel;
@@ -109,7 +110,7 @@ pub(crate) fn compose_roots_into(
             let row = &mut out
                 [((y - region.y0) as usize * width + (area.x0 - region.x0) as usize) * 4..]
                 [..area.width() as usize * 4];
-            compose_row(layer, y, area.x0, row)?;
+            compose_row(layer, y, area.x0, row, check)?;
         }
     }
     Ok(())
@@ -121,6 +122,7 @@ pub(crate) fn compose_row(
     y: i64,
     x: i64,
     mut row: &mut [u8],
+    check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     for span in layer.raster.row_spans(
         (y - layer.origin.1) as u32,
@@ -131,7 +133,7 @@ pub(crate) fn compose_row(
         row = rest;
         match span {
             RowSpan::Uniform { color, .. } => {
-                let color = color.with_opacity(layer.opacity);
+                let color = appearance::pixel(layer, color, check)?.with_opacity(layer.opacity);
                 match color.a() {
                     0 => {}
                     255 => dst.as_chunks_mut::<4>().0.fill(color.0),
@@ -143,7 +145,20 @@ pub(crate) fn compose_row(
                 }
             }
             RowSpan::Pixels(src) => {
-                kernels::dense(dst, src, layer.opacity);
+                if layer.filters.is_empty() {
+                    kernels::dense(dst, src, layer.opacity);
+                } else {
+                    // Only private bounded scratch is transformed. Source tiles
+                    // remain shared and their versions never change for a filter.
+                    let mut scratch = [[0u8; 4]; 64];
+                    for (dst, src) in dst.chunks_mut(256).zip(src.chunks(256)) {
+                        check()?;
+                        let temporary = scratch[..src.len() / 4].as_flattened_mut();
+                        temporary.copy_from_slice(src);
+                        appearance::pixels(layer, temporary, check)?;
+                        kernels::dense(dst, temporary, layer.opacity);
+                    }
+                }
             }
         }
     }

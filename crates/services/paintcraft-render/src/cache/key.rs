@@ -10,6 +10,7 @@ struct LayerKey {
     size: (u32, u32),
     opacity: u8,
     default: Rgba,
+    filters: [u8; 32],
     versions: Vec<(RegionCoord, RegionVersion)>,
 }
 #[derive(Debug, PartialEq, Eq)]
@@ -92,6 +93,7 @@ impl Key {
                 size: (layer.raster.width(), layer.raster.height()),
                 opacity: layer.opacity,
                 default: layer.raster.default_pixel(),
+                filters: layer.filters.digest(),
                 versions,
             });
         }
@@ -119,6 +121,7 @@ impl Key {
                 || new.size != old.size
                 || new.opacity != old.opacity
                 || new.default != old.default
+                || new.filters != old.filters
                 || new.versions.len() != old.versions.len()
             {
                 return None;
