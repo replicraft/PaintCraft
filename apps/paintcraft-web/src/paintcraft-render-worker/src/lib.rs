@@ -51,13 +51,24 @@ impl Service {
             return Err(stale());
         }
         let metadata = SharedBudget::new(source.metadata_charge);
+        // The protocol echoes profile payload length. PCND's reader allowance
+        // includes the fixed source descriptor even for resolution-only sources.
+        let metadata_wire = source
+            .metadata
+            .checked_add(if source.metadata_charge > 0 {
+                paintcraft_document::source_metadata::WIRE_HEADER_BYTES as u64
+            } else {
+                0
+            })
+            .filter(|bytes| *bytes <= paintcraft_document::source_metadata::BYTES_MAX)
+            .ok_or_else(|| resource("Filter preview source metadata extent"))?;
         let base = pcnd::read_with_metadata_admission_checked(
             bytes,
             u64::MAX,
             source.resident / 4,
             source.layers,
             pcnd::MetadataAdmission {
-                bytes: source.metadata,
+                bytes: metadata_wire,
                 budget: &metadata,
             },
             &|| Ok(()),

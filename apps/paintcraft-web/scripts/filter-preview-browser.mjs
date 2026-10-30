@@ -25,6 +25,62 @@ const oracle = JSON.parse(
 const row = oracle.fixtures.find((f) => f.file === 'invert.pcnd');
 const bytes = fs.readFileSync(path.join(fixtureRoot, row.file));
 assert.equal(sha(bytes), row.sha256);
+const metadataRoot = path.join(
+	root,
+	'crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures',
+);
+const metadataOracle = JSON.parse(
+	fs.readFileSync(path.join(metadataRoot, 'oracle.json')),
+);
+const resolutionParent = fs.readFileSync(
+	path.join(metadataRoot, 'resolution-only.pcnd'),
+);
+assert.equal(
+	sha(resolutionParent),
+	metadataOracle.fixtures.find((f) => f.file === 'resolution-only.pcnd')
+		.sha256,
+);
+const headerOffset = resolutionParent.indexOf(Buffer.from('PCSMETA1'));
+assert.ok(headerOffset >= 0);
+const resolutionHeader = resolutionParent.subarray(
+	headerOffset,
+	headerOffset + 192,
+);
+assert.equal(resolutionHeader[74], 1);
+assert.equal(resolutionHeader[109], 0);
+assert.equal(resolutionHeader.readBigUInt64BE(112), 0n);
+// Join two independently serialized fixtures, retaining the complete original
+// attachment header (including its semantic digest). No Rust writer is used.
+const plainBody = bytes.subarray(0, -32);
+assert.equal(plainBody[43], 0);
+const resolutionBody = Buffer.concat([
+	plainBody.subarray(0, 43),
+	Buffer.from([1]),
+	resolutionHeader,
+	plainBody.subarray(44),
+]);
+const resolution = Buffer.concat([
+	resolutionBody,
+	createHash('sha256').update(resolutionBody).digest(),
+]);
+const iccRow = oracle.fixtures.find((f) => f.file === 'invert-metadata.pcnd');
+const icc = fs.readFileSync(path.join(fixtureRoot, iccRow.file));
+assert.equal(sha(icc), iccRow.sha256);
+const profileBytes = icc.readBigUInt64BE(
+	icc.indexOf(Buffer.from('PCSMETA1')) + 112,
+);
+const metadataSources = new Map([
+	['retained-icc', icc],
+	['resolution-only', resolution],
+]);
+const metadataCases = Array.from(metadataSources, ([name, source]) => ({
+	name,
+	sha256: sha(source),
+	bytes: source.length,
+	profileBytes: name === 'retained-icc' ? Number(profileBytes) : 0,
+}));
+for (const [name, source] of metadataSources)
+	fs.writeFileSync(path.join(out, `${name}.pcnd`), source);
 const runtimes = fs
 	.readdirSync(path.join(dist, '_astro'))
 	.filter((n) => /^filter-preview-runtime-.*\.js$/.test(n));
@@ -34,6 +90,10 @@ const evidence = {
 	scope: 'Actual production persistent Worker; editor UI, latency, RSS and physical reclamation are separate qualifications.',
 	assets: {},
 	fixture: row,
+	metadataCases,
+	resolutionParent: metadataOracle.fixtures.find(
+		(f) => f.file === 'resolution-only.pcnd',
+	),
 	startedAt: new Date().toISOString(),
 };
 function inventory(folder) {
@@ -66,6 +126,14 @@ try {
 		if (pathname === '/__fixture') {
 			response.setHeader('Content-Type', 'application/octet-stream');
 			response.end(bytes);
+			return;
+		}
+		const metadataSource = metadataSources.get(
+			pathname.slice('/__fixture-'.length),
+		);
+		if (pathname.startsWith('/__fixture-') && metadataSource) {
+			response.setHeader('Content-Type', 'application/octet-stream');
+			response.end(metadataSource);
 			return;
 		}
 		const file = path.resolve(dist, `.${pathname}`);
@@ -101,7 +169,7 @@ try {
 	const page = await browser.newPage();
 	await page.goto(`http://127.0.0.1:${server.address().port}/__probe`);
 	evidence.cases = await page.evaluate(
-		async ({ runtime, oracle, fixture }) => {
+		async ({ runtime, oracle, fixture, metadataCases }) => {
 			const source = new Uint8Array(
 				await (await fetch('/__fixture')).arrayBuffer(),
 			);
@@ -406,9 +474,68 @@ try {
 					negative.worker.terminate();
 				}
 			}
+			for (const metadata of metadataCases) {
+				const retained = client();
+				try {
+					const source = await (
+						await fetch(`/__fixture-${metadata.name}`)
+					).arrayBuffer();
+					const metadataPlan = {
+						...plan,
+						sourceSha256: metadata.sha256,
+						metadataBytes: metadata.profileBytes,
+						metadataCharge: 1024 * 1024,
+					};
+					const ready = await retained.send(
+						'open',
+						{ plan: metadataPlan, source },
+						[source],
+					);
+					equal(ready.kind, 'ready', `${metadata.name} source opens`);
+					for (const key of Object.keys(metadataPlan))
+						equal(
+							ready.binding[key],
+							metadataPlan[key],
+							`${metadata.name} ready ${key}`,
+						);
+					const frame = await retained.send('update', {
+						request: {
+							owner,
+							draft: plan.draft,
+							sourceSha256: metadata.sha256,
+							generation: '1',
+							operation: null,
+							target: null,
+							view,
+							render: true,
+						},
+					});
+					equal(frame.kind, 'frame', `${metadata.name} frame`);
+					equal(
+						Array.from(frame.pixels),
+						fixture.expected_rgba,
+						`${metadata.name} independent appearance`,
+					);
+					equal(
+						frame.sourceSha256,
+						metadata.sha256,
+						`${metadata.name} source binding`,
+					);
+					const closed = await retained.send('close', {});
+					equal(closed.kind, 'closed', `${metadata.name} close`);
+					cases.push({
+						name: metadata.name,
+						kind: frame.kind,
+						profileBytes: metadata.profileBytes,
+						pixels: Array.from(frame.pixels),
+					});
+				} finally {
+					retained.worker.terminate();
+				}
+			}
 			return cases;
 		},
-		{ runtime: runtimes[0], oracle, fixture: row },
+		{ runtime: runtimes[0], oracle, fixture: row, metadataCases },
 	);
 	for (const [name, record] of Object.entries(evidence.assets))
 		assert.equal(

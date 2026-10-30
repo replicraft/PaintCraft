@@ -11,10 +11,116 @@ const INVERT: [u8; 24] = [
 fn fixture() -> Document {
     paintcraft_document::import_image(3, 2, &PIXELS, "independent-preview-plane").unwrap()
 }
-fn open(doc: &Document) -> (Service, Value) {
-    let bytes = pcnd::write(doc).unwrap();
+fn retained_source(profile: bool) -> Document {
+    let independent = if profile {
+        include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/rgb-profile.pcnd")).as_slice()
+    } else {
+        include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../crates/services/paintcraft-formats/tests/pcnd-metadata-fixtures/resolution-only.pcnd")).as_slice()
+    };
+    let mut doc = fixture();
+    doc.source_metadata = pcnd::read(independent).unwrap().source_metadata;
+    doc
+}
+fn assert_retained_open_frame(profile: bool) {
+    let doc = retained_source(profile);
+    let original = doc.source_metadata.as_ref().unwrap();
+    if profile {
+        assert_eq!(
+            original.profile().unwrap(),
+            include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../../../assets/profiles/sRGB2014.icc"
+            ))
+        );
+    } else {
+        assert!(original.profile().is_none());
+        let resolution = original.descriptor().resolution.unwrap();
+        assert_eq!(resolution.horizontal.numerator, 30000);
+        assert_eq!(resolution.horizontal.denominator, 100);
+        assert_eq!(resolution.vertical.numerator, -3780);
+    }
+    let before = pcnd::write(&doc).unwrap();
+    let (mut service, plan) = open(&doc);
+    assert_eq!(
+        service.base.source_metadata.as_ref().unwrap().digest(),
+        original.digest()
+    );
+    service
+        .prepare(&text(&request(
+            &plan,
+            1,
+            Some(doc.roots[0]),
+            invert(&doc, true),
+            true,
+            [0, 0, 3, 2],
+            0,
+        )))
+        .unwrap();
+    let (_, pixels) = finish(&mut service);
+    assert_eq!(pixels, INVERT);
+    service.retire();
+    assert_eq!(pcnd::write(&service.base).unwrap(), before);
+    assert_eq!(
+        service.base.source_metadata.as_ref().unwrap().profile(),
+        original.profile()
+    );
+}
+#[test]
+fn retained_real_icc_source_opens_and_renders_without_consuming_provenance() {
+    assert_retained_open_frame(true);
+}
+#[test]
+fn retained_resolution_only_source_opens_with_zero_profile_payload() {
+    assert_retained_open_frame(false);
+}
+#[test]
+fn retained_metadata_declaration_does_not_authorize_wrong_profile_length_or_missing_charge() {
+    use paintcraft_document::source_metadata::BYTES_MAX;
+    let doc = retained_source(true);
+    let bytes = pcnd::write(&doc).unwrap();
+    let value = plan(&doc, &bytes);
+    let exact = integer(field(&value, "metadataBytes").unwrap()).unwrap();
+    for (name, bad, code) in [
+        ("layers", Value::Int(0), ErrorCode::ResourceLimit),
+        ("metadataBytes", Value::Int(0), ErrorCode::ResourceLimit),
+        (
+            "metadataBytes",
+            Value::Int((exact + 1) as i64),
+            ErrorCode::ConflictStaleBase,
+        ),
+        ("metadataCharge", Value::Int(1), ErrorCode::ResourceLimit),
+        (
+            "metadataBytes",
+            Value::Int(BYTES_MAX as i64),
+            ErrorCode::ResourceLimit,
+        ),
+    ] {
+        let mut fields = value.as_object().unwrap().clone();
+        fields.insert(name.into(), bad);
+        assert_eq!(
+            Service::open(&bytes, &text(&Value::Object(fields)))
+                .err()
+                .unwrap()
+                .code,
+            code,
+            "{name}"
+        );
+    }
+    let doc = retained_source(false);
+    let bytes = pcnd::write(&doc).unwrap();
+    let mut fields = plan(&doc, &bytes).as_object().unwrap().clone();
+    fields.insert("metadataCharge".into(), Value::Int(0));
+    assert_eq!(
+        Service::open(&bytes, &text(&Value::Object(fields)))
+            .err()
+            .unwrap()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+}
+fn plan(doc: &Document, bytes: &[u8]) -> Value {
     let metadata = doc.source_metadata.as_ref();
-    let plan = Value::object([
+    Value::object([
         (
             "owner",
             Value::object([
@@ -26,7 +132,7 @@ fn open(doc: &Document) -> (Service, Value) {
         ),
         ("draft", Value::str(Uuid::from_u128(2).to_string())),
         ("document", Value::str(doc.document_id.to_string())),
-        ("sourceSha256", Value::str(hex(&Sha256::digest(&bytes)))),
+        ("sourceSha256", Value::str(hex(&Sha256::digest(bytes)))),
         (
             "size",
             Value::Array(vec![
@@ -61,7 +167,11 @@ fn open(doc: &Document) -> (Service, Value) {
                 .unwrap()
                 .digest())),
         ),
-    ]);
+    ])
+}
+fn open(doc: &Document) -> (Service, Value) {
+    let bytes = pcnd::write(doc).unwrap();
+    let plan = plan(doc, &bytes);
     (Service::open(&bytes, &text(&plan)).unwrap(), plan)
 }
 fn request(
