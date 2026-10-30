@@ -1,6 +1,178 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import {
+	canonical,
+	validatePlan,
+	validateBinding,
+	validateResult,
+	validateRequest,
+	sha,
+} from '../src/lib/filter-preview-protocol.js';
+
+test('uncertain active failure rejects the latest local job that was never posted', async () => {
+	const { client, started } = await errorClient(
+		'update',
+		false,
+		'CodecFailed',
+		true,
+	);
+	const first = client
+		.base({ generation: '1', view: request.view })
+		.catch((e) => e);
+	await started;
+	let latestRejected = false;
+	const latest = client.base({ generation: '2', view: request.view });
+	latest.catch(() => {
+		latestRejected = true;
+	});
+	assert.equal((await first).code, 'CodecFailed');
+	await Promise.resolve();
+	assert.equal(latestRejected, true);
+});
+test('unrecognized error cannot mint reusable completion with only a flag', async () => {
+	const { service, client } = await errorClient(
+		'update',
+		true,
+		'invented.completion',
+	);
+	await assert.rejects(client.base({ generation: '1', view: request.view }));
+	assert.equal(service.filterPreviewUsage().quarantined, true);
+	assert.ok(service.filterPreviewUsage().reserved > 0);
+	await assert.rejects(client.close(), (e) => e.code === 'CodecFailed');
+});
+
+async function errorClient(
+	failingKind,
+	completed = false,
+	code = completed ? 'resource.limit' : 'CodecFailed',
+	delayed = false,
+) {
+	let notify;
+	const started = new Promise((resolve) => {
+		notify = resolve;
+	});
+	class ErrorWorker {
+		postMessage(message) {
+			queueMicrotask(async () => {
+				if (message.kind === 'open') {
+					this.plan = message.plan;
+					this.onmessage({
+						data: {
+							kind: 'ready',
+							id: message.id,
+							binding: this.plan,
+						},
+					});
+					return;
+				}
+				if (message.kind === failingKind && !this.failed) {
+					this.failed = true;
+					notify();
+					const emit = () =>
+						this.onmessage({
+							data: {
+								kind: 'error',
+								id: message.id,
+								code,
+								message: 'injected failure',
+								completed,
+							},
+						});
+					if (delayed) setTimeout(emit, 20);
+					else emit();
+					return;
+				}
+				if (message.kind === 'cancel') {
+					this.onmessage({
+						data: {
+							kind: 'retired',
+							id: message.id,
+							generation: message.generation,
+						},
+					});
+					return;
+				}
+				if (message.kind === 'close') {
+					this.onmessage({
+						data: { kind: 'closed', id: message.id },
+					});
+					return;
+				}
+				const r = message.request;
+				this.onmessage({
+					data: {
+						...frame(),
+						id: message.id,
+						generation: r.generation,
+						owner: this.plan.owner,
+						sourceSha256: this.plan.sourceSha256,
+						operationSha256: await sha(
+							new TextEncoder().encode(canonical(r.operation)),
+						),
+					},
+				});
+			});
+		}
+		terminate() {}
+	}
+	globalThis.Worker = ErrorWorker;
+	const service = await import(
+		`../src/lib/filter-preview-worker.js?error=${failingKind}-${completed}-${Date.now()}`
+	);
+	const source = new Uint8Array([10, 11, 12]);
+	return {
+		service,
+		started,
+		client: await service
+			.beginFilterPreview(plan)
+			.open(source, await sha(source)),
+	};
+}
+for (const kind of ['update', 'cancel', 'close']) {
+	test(`unknown matching ${kind} error quarantines without an invented retirement acknowledgment`, async () => {
+		const { service, client } = await errorClient(kind);
+		const call =
+			kind === 'update'
+				? client.base({ generation: '1', view: request.view })
+				: kind === 'cancel'
+					? client.cancel('1')
+					: client.close();
+		await assert.rejects(call);
+		assert.deepEqual(service.filterPreviewUsage().quarantined, true);
+		assert.ok(service.filterPreviewUsage().reserved > 0);
+		await assert.rejects(client.close(), (e) => e.code === 'CodecFailed');
+		await assert.rejects(
+			client.base({ generation: '2', view: request.view }),
+			(e) => e.code === 'CodecFailed',
+		);
+		assert.throws(
+			() => service.beginFilterPreview(plan),
+			(e) => e.code === 'ResourceLimit',
+		);
+	});
+}
+test('completed typed UPDATE refusal retires its job but keeps the exact source reusable', async () => {
+	const { service, client } = await errorClient('update', true);
+	await assert.rejects(
+		client.base({ generation: '1', view: request.view }),
+		(e) => e.code === 'resource.limit',
+	);
+	assert.equal(service.filterPreviewUsage().quarantined, false);
+	const output = await client.base({ generation: '2', view: request.view });
+	output.release();
+	const [ack, concurrent] = await Promise.all([
+		client.close(),
+		client.close(),
+	]);
+	assert.deepEqual(concurrent, ack);
+	assert.ok(Object.isFrozen(ack));
+	assert.throws(() => {
+		ack.kind = 'forged';
+	}, TypeError);
+	assert.deepEqual(await client.close(), ack);
+	assert.equal(service.filterPreviewUsage().reserved, 0);
+});
 test('completed typed OPEN refusal releases its exact lease while unknown failure quarantines', async () => {
 	const source = new Uint8Array([7, 8, 9]),
 		sourceSha = await sha(source);
@@ -35,14 +207,7 @@ test('completed typed OPEN refusal releases its exact lease while unknown failur
 		} else assert.ok(service.filterPreviewUsage().reserved > 0);
 	}
 });
-import {
-	canonical,
-	validatePlan,
-	validateBinding,
-	validateResult,
-	validateRequest,
-	sha,
-} from '../src/lib/filter-preview-protocol.js';
+
 globalThis.crypto ??= webcrypto;
 const uuid = '00000000-0000-4000-8000-000000000001';
 const plan = {

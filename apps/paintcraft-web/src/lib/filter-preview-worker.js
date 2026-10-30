@@ -15,6 +15,20 @@ export {
 	OUTPUT_PIXELS_MAX,
 	LINEAR_MEMORY_BYTES,
 } from './filter-preview-protocol.js';
+const typedRustErrors = new Set([
+	'input.schema',
+	'policy.unknown',
+	'reference.unknown_alias',
+	'reference.unknown_id',
+	'target.invalid',
+	'capability.unsupported',
+	'conflict.stale_base',
+	'resource.limit',
+	'operation.cancelled',
+	'codec.failed',
+	'storage.failed',
+	'invariant.violation',
+]);
 let reserved = false,
 	quarantined = false;
 export function filterPreviewUsage() {
@@ -64,9 +78,17 @@ export function beginFilterPreview(input) {
 				);
 				let sequence = 0,
 					closed = false,
+					closedAck = null,
+					closePromise = null,
 					frameHeld = false,
 					latest = -1n,
-					retiredThrough = -1n;
+					retiredThrough = -1n,
+					desired = null,
+					active = null,
+					hashing = null,
+					cancelInFlight = null,
+					pumpScheduled = false,
+					closing = false;
 				const pending = new Map();
 				function hardFail(error) {
 					if (closed) return;
@@ -74,6 +96,15 @@ export function beginFilterPreview(input) {
 					quarantined = true;
 					// terminate is not an acknowledged join; keep this one lease.
 					worker.terminate();
+					if (desired) {
+						desired.reject(error);
+						desired = null;
+					}
+					if (hashing) {
+						hashing.reject(error);
+						hashing = null;
+					}
+					if (active) active.reject(error);
 					for (const p of pending.values()) {
 						clearTimeout(p.timer);
 						p.reject(error);
@@ -138,8 +169,19 @@ export function beginFilterPreview(input) {
 								? data.message.slice(0, 4096)
 								: 'Render Worker failed',
 						);
-						if (p.kind === 'open' && data.completed === true)
+						const completed =
+							data.completed === true &&
+							typedRustErrors.has(data.code) &&
+							typeof data.message === 'string' &&
+							data.message.length <= 4096;
+						if (p.kind === 'open' && completed)
 							completedOpenRefusals.add(error);
+						if (
+							!completed ||
+							p.kind === 'cancel' ||
+							p.kind === 'close'
+						)
+							hardFail(error);
 						p.reject(error);
 					} else if (data.kind === 'retired' && p.update)
 						p.reject(
@@ -162,12 +204,6 @@ export function beginFilterPreview(input) {
 						'Missing render source acknowledgment',
 					);
 				validateBinding(ready.binding, plan);
-				let desired = null,
-					active = null,
-					hashing = null,
-					cancelInFlight = null,
-					pumpScheduled = false,
-					closing = false;
 				function cancelled() {
 					return fail(
 						'OperationCancelled',
@@ -351,29 +387,43 @@ export function beginFilterPreview(input) {
 						return retireThrough(generation);
 					},
 					async close() {
-						if (closed) return { kind: 'closed' };
+						if (closed) {
+							if (closedAck) return closedAck;
+							throw fail(
+								'CodecFailed',
+								'Filter Worker termination was not acknowledged',
+							);
+						}
+						if (closePromise) return closePromise;
 						if (frameHeld)
 							throw fail(
 								'ResourceLimit',
 								'Release the render frame before closing',
 							);
 						closing = true;
-						await retireThrough(
-							latest < 0n ? '0' : latest.toString(),
-						);
-						const ack = await send('close', {});
-						if (ack.kind !== 'closed') {
-							const error = fail(
-								'CodecFailed',
-								'Missing source-close acknowledgment',
+						closePromise = (async () => {
+							await retireThrough(
+								latest < 0n ? '0' : latest.toString(),
 							);
+							const ack = await send('close', {});
+							if (ack.kind !== 'closed')
+								throw fail(
+									'CodecFailed',
+									'Missing source-close acknowledgment',
+								);
+							closedAck = Object.freeze({
+								kind: 'closed',
+								id: ack.id,
+							});
+							closed = true;
+							worker.terminate();
+							reserved = false;
+							return closedAck;
+						})().catch((error) => {
 							hardFail(error);
 							throw error;
-						}
-						closed = true;
-						worker.terminate();
-						reserved = false;
-						return ack;
+						});
+						return closePromise;
 					},
 				};
 				return client;
