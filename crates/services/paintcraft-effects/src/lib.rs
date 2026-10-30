@@ -5,6 +5,7 @@
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, filters::Descriptor};
 
 mod coverage;
+mod point;
 pub use coverage::mix_point_coverage;
 
 /// Apply ordered descriptors. Every stage rounds independently and preserves
@@ -12,24 +13,7 @@ pub use coverage::mix_point_coverage;
 /// synchronous and has no cancellation checkpoints; use evaluate_row for work.
 pub fn evaluate_pixel(filters: &[Descriptor], mut pixel: Rgba) -> Rgba {
     for filter in filters {
-        for channel in &mut pixel.0[..3] {
-            *channel = match *filter {
-                Descriptor::InvertRgbV1 => 255 - *channel,
-                Descriptor::BrightnessContrastV1(parameters) => {
-                    let b = i64::from(parameters.brightness());
-                    let c = i64::from(parameters.contrast());
-                    let v = i64::from(*channel);
-                    // Exact rational form of (v-127.5)*(100+c)/(100-c)
-                    // +127.5+255*b/100. All validated domains fit i64.
-                    let denominator = 200 * (100 - c);
-                    let numerator = (2 * v - 255) * 100 * (100 + c)
-                        + 255 * 100 * (100 - c)
-                        + 510 * b * (100 - c);
-                    let clamped = numerator.clamp(0, 255 * denominator);
-                    ((clamped + denominator / 2) / denominator) as u8
-                }
-            };
-        }
+        pixel = point::evaluate(*filter, pixel);
     }
     pixel
 }
@@ -68,3 +52,6 @@ pub fn evaluate_row(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod point_oracles;
