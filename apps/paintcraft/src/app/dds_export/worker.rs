@@ -66,12 +66,31 @@ pub(super) fn quote(doc: &paintcraft_document::Document, settings: Settings) -> 
     })?;
     priced(&plan, resident)
 }
+#[cfg(test)]
 pub(super) fn prepare(
     doc: Arc<paintcraft_document::Document>,
     settings: Settings,
     quoted: u64,
     cancel: Cancellation,
     policy: export::metadata_policy::Policy,
+) -> Result<Prepared> {
+    prepare_with_policies(
+        doc,
+        settings,
+        quoted,
+        cancel,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub(super) fn prepare_with_policies(
+    doc: Arc<paintcraft_document::Document>,
+    settings: Settings,
+    quoted: u64,
+    cancel: Cancellation,
+    policy: export::CopyPolicies,
 ) -> Result<Prepared> {
     let lease = cancel.resource_lease().ok_or_else(|| {
         Error::new(
@@ -80,7 +99,7 @@ pub(super) fn prepare(
         )
     })?;
     let check = || cancel.check();
-    let artifact = export::dds::prepare_document_with_metadata_policy(
+    let artifact = export::dds::prepare_document_with_policies(
         &doc,
         options(settings),
         &export::KNOWN_LOSSES.map(str::to_owned),

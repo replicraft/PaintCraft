@@ -40,6 +40,7 @@ pub(super) fn quote(doc: &paintcraft_document::Document, selected: Version) -> R
     })?;
     priced(layout, resident)
 }
+#[cfg(test)]
 pub(super) fn prepare(
     doc: Arc<paintcraft_document::Document>,
     selected: Version,
@@ -58,6 +59,25 @@ pub(super) fn prepare(
         |doc, check| paintcraft_render::render_cancellable(doc, check),
     )
 }
+pub(super) fn prepare_with_policies(
+    doc: Arc<paintcraft_document::Document>,
+    selected: Version,
+    quoted: u64,
+    capacity: u64,
+    cancel: Cancellation,
+    policy: export::CopyPolicies,
+) -> Result<Prepared> {
+    prepare_with_renderer(
+        doc,
+        selected,
+        quoted,
+        capacity,
+        cancel,
+        policy,
+        |doc, check| paintcraft_render::render_cancellable(doc, check),
+    )
+}
+#[cfg(test)]
 pub(super) fn prepare_with(
     doc: Arc<paintcraft_document::Document>,
     selected: Version,
@@ -65,6 +85,31 @@ pub(super) fn prepare_with(
     capacity: u64,
     cancel: Cancellation,
     policy: export::metadata_policy::Policy,
+    render_pixels: impl FnOnce(
+        &paintcraft_document::Document,
+        &dyn Fn() -> Result<()>,
+    ) -> Result<Vec<u8>>,
+) -> Result<Prepared> {
+    prepare_with_renderer(
+        doc,
+        selected,
+        quoted,
+        capacity,
+        cancel,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+        render_pixels,
+    )
+}
+fn prepare_with_renderer(
+    doc: Arc<paintcraft_document::Document>,
+    selected: Version,
+    quoted: u64,
+    capacity: u64,
+    cancel: Cancellation,
+    policy: export::CopyPolicies,
     render_pixels: impl FnOnce(
         &paintcraft_document::Document,
         &dyn Fn() -> Result<()>,
@@ -81,7 +126,7 @@ pub(super) fn prepare_with(
     let budget = SharedBudget::new(capacity);
     let render = RefCell::new(None);
     let encode = RefCell::new(None);
-    let artifact = export::msp::prepare_document_with_metadata_policy(
+    let artifact = export::msp::prepare_document_with_policies(
         &doc,
         version(selected),
         &export::KNOWN_LOSSES.map(str::to_owned),

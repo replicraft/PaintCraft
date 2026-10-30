@@ -3,6 +3,8 @@ use super::*;
 #[derive(Clone)]
 pub(crate) struct Frozen {
     pub document: std::sync::Arc<paintcraft_document::Document>,
+    pub filter_bake: export::filter_bake::Policy,
+    pub has_filters: bool,
     owner: Uuid,
     source: controller::PreviewStamp,
     frontend: paintcraft_formats::registry::Frontend,
@@ -22,12 +24,20 @@ impl PartialEq for Frozen {
             && self.owner == other.owner
             && self.source == other.source
             && self.frontend == other.frontend
+            && self.filter_bake == other.filter_bake
     }
 }
 impl Frozen {
     pub(crate) fn capture(app: &App) -> paintcraft_core::types::Result<Self> {
         Ok(Self {
             document: app.editor.export_snapshot()?,
+            filter_bake: Default::default(),
+            has_filters: app
+                .editor
+                .document()
+                .layers
+                .values()
+                .any(|l| !l.filters.is_empty()),
             owner: app.active_tab_id(),
             source: app.editor.preview_stamp(),
             frontend: app.format_frontend(),

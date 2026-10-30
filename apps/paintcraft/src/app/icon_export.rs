@@ -14,7 +14,7 @@ pub(super) struct State {
     stamp: controller::PreviewStamp,
     copy: AssetCopy<widget::Config>,
     draft: widget::Draft,
-    cache: widget::Cache<(widget::Config, bool), icons::Prepared>,
+    cache: widget::Cache<(widget::Config, bool, bool), icons::Prepared>,
     bytes: Option<Vec<u8>>,
     destination: Option<(PathBuf, Option<save::Expectation>)>,
 }
@@ -46,14 +46,15 @@ impl State {
         }
         let config = self.draft.config.clone();
         let target = self.target();
-        if self
-            .cache
-            .update(ctx, (config.clone(), self.copy.omit), || {
+        if self.cache.update(
+            ctx,
+            (config.clone(), self.copy.omit, self.copy.bake),
+            || {
                 let policy = self
                     .copy
                     .prepare(config.clone(), target)
                     .map_err(|e| e.to_string())?;
-                icons::prepare_document_with_metadata_policy(
+                icons::prepare_document_with_policies(
                     &self.copy.frozen.document,
                     kind(&config),
                     &specs(&config),
@@ -67,8 +68,8 @@ impl State {
                     policy,
                 )
                 .map_err(|e| e.to_string())
-            })
-        {
+            },
+        ) {
             self.draft.accepted = false;
             self.bytes = None;
         }

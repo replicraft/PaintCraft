@@ -14,6 +14,7 @@ use export::metadata_policy::{Intent, Policy, Target};
 type Prepared = controller::background::PreparedJxrExport;
 #[derive(Debug)]
 struct Capture {
+    has_filters: bool,
     source: Arc<paintcraft_document::Document>,
     stamp: controller::PreviewStamp,
     owner: wire::Owner,
@@ -28,6 +29,8 @@ pub(super) struct State {
     frozen: Option<export_options::Frozen>,
     omit_source_metadata: bool,
     metadata_policy: Policy,
+    bake_filters: bool,
+    filter_bake: export::filter_bake::Policy,
     capture: Option<Capture>,
     pending: Option<controller::background::JxrExportPending>,
     prepared: Option<Prepared>,
@@ -76,8 +79,13 @@ impl State {
                 .as_ref()
                 .is_some_and(|f| f.document.source_metadata.is_some())
     }
+    fn has_filters(&self) -> bool {
+        self.capture.as_ref().is_some_and(|c| c.has_filters)
+            || self.frozen.as_ref().is_some_and(|f| f.has_filters)
+    }
     fn metadata_ready(&self) -> bool {
-        !self.has_source_metadata() || self.omit_source_metadata
+        (!self.has_source_metadata() || self.omit_source_metadata)
+            && (!self.has_filters() || self.bake_filters)
     }
     fn retire_preparation(&mut self) {
         self.pending = None;
@@ -87,6 +95,7 @@ impl State {
         self.reviewed = false;
         self.destination = None;
         self.metadata_policy = Policy::Refuse;
+        self.filter_bake = Default::default();
     }
 }
 pub(super) fn admit(frontend: registry::Frontend, path: &Path) -> Result<()> {
@@ -161,6 +170,8 @@ impl App {
                 frozen,
                 omit_source_metadata: intent == Intent::Omit,
                 metadata_policy: Policy::Refuse,
+                bake_filters: false,
+                filter_bake: Default::default(),
                 capture: None,
                 pending: None,
                 prepared: None,
@@ -215,6 +226,7 @@ impl App {
             let owner = self.editor.native_import_owner();
             let sources = Sources::capture(self, &service.metadata_budget())?;
             state.capture = Some(Capture {
+                has_filters: source.layers.values().any(|l| !l.filters.is_empty()),
                 source: source.clone(),
                 stamp: self.editor.preview_stamp(),
                 owner,
@@ -253,12 +265,26 @@ impl App {
                 Intent::Refuse
             },
         )?;
+        state.filter_bake = export::filter_bake::Policy::capture(
+            &source,
+            Target::new(Family::Jxr, Operation::ExportFlat),
+            if state.bake_filters {
+                export::filter_bake::Intent::Bake
+            } else {
+                export::filter_bake::Intent::Refuse
+            },
+            &|| Ok(()),
+        )?;
+        let policies = export::CopyPolicies {
+            source_metadata: policy,
+            filter_bake: state.filter_bake,
+        };
+        state.metadata_policy = policy;
         let service = self.editing.as_ref().ok_or_else(stale)?;
         service.reap_abandoned();
         state.pending = service.try_submit_jxr_export(quote, move |cancel| {
-            worker::prepare(source, owner, cancel, policy)
+            worker::prepare_with_policies(source, owner, cancel, policies)
         })?;
-        state.metadata_policy = policy;
         Ok(())
     }
     pub(super) fn poll_jxr_export(&mut self, ctx: &egui::Context) {
@@ -404,7 +430,7 @@ impl App {
             return;
         }
         let Some((path, expected)) = &state.destination else {
-            let before = state.omit_source_metadata;
+            let before = (state.omit_source_metadata, state.bake_filters);
             let response =
                 egui::Modal::new(egui::Id::unique("jxr-export-progress")).show(ctx, |ui| {
                     ui.heading(t!(ctx, "Export image"));
@@ -413,6 +439,9 @@ impl App {
                             ui,
                             &mut state.omit_source_metadata,
                         );
+                    }
+                    if state.has_filters() {
+                        paintcraft_ui::filter_bake_export::controls(ui, &mut state.bake_filters);
                     }
                     if let Some(texture) = &state.texture {
                         show_decoded_preview(ui, texture, &mut state.shown);
@@ -441,7 +470,9 @@ impl App {
                 self.confirm = None;
                 return;
             }
-            if ctx.current_pass_index() == 0 && before != state.omit_source_metadata {
+            if ctx.current_pass_index() == 0
+                && before != (state.omit_source_metadata, state.bake_filters)
+            {
                 state.retire_preparation();
                 ctx.request_repaint();
             }
@@ -473,6 +504,8 @@ impl App {
                     "hidden-rgb" => "Invisible color information will not be retained.",
                     export::metadata_policy::OMITTED_REASON =>
                         "Original source metadata is omitted from this exported copy.",
+                    export::filter_bake::BAKED_REASON =>
+                        paintcraft_ui::filter_bake_export::BAKED_DESCRIPTION,
                     _ => loss.as_str(),
                 }
             ));
@@ -521,6 +554,17 @@ impl App {
             let prepared = state.prepared.as_ref().ok_or_else(stale)?;
             let (path, expected) = state.destination.as_ref().ok_or_else(stale)?;
             let check = || {
+                if matches!(state.filter_bake, export::filter_bake::Policy::Bake(_))
+                    != state.bake_filters
+                    || !state.metadata_ready()
+                {
+                    return Err(stale());
+                }
+                state.filter_bake.validate(
+                    &capture.source,
+                    Target::new(Family::Jxr, Operation::ExportFlat),
+                    &|| Ok(()),
+                )?;
                 state.metadata_policy.validate(
                     &capture.source,
                     Target::new(Family::Jxr, Operation::ExportFlat),
@@ -620,3 +664,7 @@ mod tests;
 #[cfg(test)]
 #[path = "jxr_export/installed_tests.rs"]
 mod installed_tests;
+
+#[cfg(test)]
+#[path = "jxr_export/bake_tests.rs"]
+mod bake_tests;

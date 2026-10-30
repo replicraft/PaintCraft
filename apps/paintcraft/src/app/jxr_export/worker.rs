@@ -19,18 +19,35 @@ pub(super) fn quote(layout: encode::Layout) -> Result<u64> {
         .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "JPEG XR export quote overflow"))?;
     Ok(encode_quote.max(wire::native::jxr_preview_reservation_bytes(layout)?))
 }
+#[cfg(test)]
 pub(super) fn prepare(
     source: Arc<paintcraft_document::Document>,
     owner: wire::Owner,
     cancel: Cancellation,
     policy: export::metadata_policy::Policy,
 ) -> Result<controller::background::PreparedJxrExport> {
+    prepare_with_policies(
+        source,
+        owner,
+        cancel,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub(super) fn prepare_with_policies(
+    source: Arc<paintcraft_document::Document>,
+    owner: wire::Owner,
+    cancel: Cancellation,
+    policy: export::CopyPolicies,
+) -> Result<controller::background::PreparedJxrExport> {
     let lease = cancel
         .resource_lease()
         .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "JPEG XR export admission missing"))?;
     let check = || cancel.check();
     let allowed = export::KNOWN_LOSSES.map(str::to_owned);
-    let opaque = export::jxr::prepare_opaque_rgb_with_metadata_policy(
+    let opaque = export::jxr::prepare_opaque_rgb_with_policies(
         &source,
         encode::ENCODED_BYTES_MAX,
         &allowed,

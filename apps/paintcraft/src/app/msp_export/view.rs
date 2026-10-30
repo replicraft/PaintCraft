@@ -21,6 +21,11 @@ impl App {
                 );
                 changed |= before != state.omit_source_metadata;
             }
+            if state.has_filters() {
+                let before = state.bake_filters;
+                paintcraft_ui::filter_bake_export::controls(ui, &mut state.bake_filters);
+                changed |= before != state.bake_filters;
+            }
             if state.destination.is_none() {
                 changed |= controls::controls(ui, &mut state.version);
             }
@@ -43,6 +48,8 @@ impl App {
                             "hidden-rgb" => "Invisible color information will not be retained.",
                             export::metadata_policy::OMITTED_REASON =>
                                 "Original source metadata is omitted from this exported copy.",
+                            export::filter_bake::BAKED_REASON =>
+                                paintcraft_ui::filter_bake_export::BAKED_DESCRIPTION,
                             _ => loss.as_str(),
                         }
                     ));
@@ -54,12 +61,10 @@ impl App {
                     "Encoded size: { $bytes } bytes",
                     &[("bytes", prepared.artifact.bytes().len().to_string())]
                 ));
-                if prepared
-                    .artifact
-                    .losses()
-                    .iter()
-                    .any(|s| s != export::metadata_policy::OMITTED_REASON)
-                {
+                if prepared.artifact.losses().iter().any(|s| {
+                    s != export::metadata_policy::OMITTED_REASON
+                        && s != export::filter_bake::BAKED_REASON
+                }) {
                     ui.checkbox(
                         &mut state.losses_accepted,
                         t!(ctx, "I accept these export changes."),
@@ -76,11 +81,10 @@ impl App {
                 && state.metadata_ready()
                 && state.texture.is_some()
                 && state.prepared.as_ref().is_some_and(|p| {
-                    !p.artifact
-                        .losses()
-                        .iter()
-                        .any(|s| s != export::metadata_policy::OMITTED_REASON)
-                        || state.losses_accepted
+                    !p.artifact.losses().iter().any(|s| {
+                        s != export::metadata_policy::OMITTED_REASON
+                            && s != export::filter_bake::BAKED_REASON
+                    }) || state.losses_accepted
                 })
                 && state
                     .shown

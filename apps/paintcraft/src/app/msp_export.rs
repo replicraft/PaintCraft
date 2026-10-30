@@ -18,6 +18,7 @@ mod view;
 pub(crate) mod worker;
 #[derive(Debug)]
 struct Capture {
+    has_filters: bool,
     doc: Arc<paintcraft_document::Document>,
     stamp: controller::PreviewStamp,
     owner: paintcraft_formats::codec_worker::Owner,
@@ -32,6 +33,8 @@ pub(super) struct State {
     frozen: Option<export_options::Frozen>,
     omit_source_metadata: bool,
     metadata_policy: Policy,
+    bake_filters: bool,
+    filter_bake: export::filter_bake::Policy,
     version: Version,
     capture: Option<Capture>,
     pending: Option<controller::background::MspExportPending>,
@@ -123,11 +126,17 @@ impl State {
                 .as_ref()
                 .is_some_and(|f| f.document.source_metadata.is_some())
     }
+    fn has_filters(&self) -> bool {
+        self.capture.as_ref().is_some_and(|c| c.has_filters)
+            || self.frozen.as_ref().is_some_and(|f| f.has_filters)
+    }
     fn metadata_ready(&self) -> bool {
-        !self.has_source_metadata() || self.omit_source_metadata
+        (!self.has_source_metadata() || self.omit_source_metadata)
+            && (!self.has_filters() || self.bake_filters)
     }
     fn retire(&mut self) {
         self.metadata_policy = Policy::Refuse;
+        self.filter_bake = Default::default();
         self.pending = None;
         self.prepared = None;
         self.texture = None;
@@ -176,6 +185,8 @@ impl App {
                 frozen,
                 omit_source_metadata: intent == Intent::Omit,
                 metadata_policy: Policy::Refuse,
+                bake_filters: false,
+                filter_bake: Default::default(),
                 version,
                 capture: None,
                 pending: None,
@@ -224,12 +235,14 @@ impl App {
                     "Background image export is unavailable",
                 )
             })?;
+            let doc = state
+                .frozen
+                .as_ref()
+                .map(|f| f.document.clone())
+                .unwrap_or_else(|| self.editor.document_snapshot());
             state.capture = Some(Capture {
-                doc: state
-                    .frozen
-                    .as_ref()
-                    .map(|f| f.document.clone())
-                    .unwrap_or_else(|| self.editor.document_snapshot()),
+                has_filters: doc.layers.values().any(|l| !l.filters.is_empty()),
+                doc,
                 stamp: self.editor.preview_stamp(),
                 owner: self.editor.native_import_owner(),
                 dirty: self.editor.is_dirty(),
@@ -291,10 +304,24 @@ impl App {
                         Intent::Refuse
                     },
                 )?;
+                state.filter_bake = export::filter_bake::Policy::capture(
+                    &doc,
+                    Target::new(Family::Msp, Operation::ExportFlat),
+                    if state.bake_filters {
+                        export::filter_bake::Intent::Bake
+                    } else {
+                        export::filter_bake::Intent::Refuse
+                    },
+                    &|| Ok(()),
+                )?;
+                let policies = export::CopyPolicies {
+                    source_metadata: policy,
+                    filter_bake: state.filter_bake,
+                };
                 state.metadata_policy = policy;
                 let version = state.version;
                 service.try_submit_msp_export(quote, move |cancel, capacity| {
-                    worker::prepare(doc, version, quote, capacity, cancel, policy)
+                    worker::prepare_with_policies(doc, version, quote, capacity, cancel, policies)
                 })
             })();
             match result {
@@ -407,12 +434,10 @@ impl App {
             let capture = state.capture.as_ref().ok_or_else(stale)?;
             let prepared = state.prepared.as_ref().ok_or_else(stale)?;
             let (path, expected) = state.destination.as_ref().ok_or_else(stale)?;
-            if prepared
-                .artifact
-                .losses()
-                .iter()
-                .any(|s| s != export::metadata_policy::OMITTED_REASON)
-                && !state.losses_accepted
+            if prepared.artifact.losses().iter().any(|s| {
+                s != export::metadata_policy::OMITTED_REASON
+                    && s != export::filter_bake::BAKED_REASON
+            }) && !state.losses_accepted
             {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
@@ -420,6 +445,17 @@ impl App {
                 ));
             }
             let check = || {
+                if matches!(state.filter_bake, export::filter_bake::Policy::Bake(_))
+                    != state.bake_filters
+                    || !state.metadata_ready()
+                {
+                    return Err(stale());
+                }
+                state.filter_bake.validate(
+                    &capture.doc,
+                    Target::new(Family::Msp, Operation::ExportFlat),
+                    &|| Ok(()),
+                )?;
                 state.metadata_policy.validate(
                     &capture.doc,
                     Target::new(Family::Msp, Operation::ExportFlat),

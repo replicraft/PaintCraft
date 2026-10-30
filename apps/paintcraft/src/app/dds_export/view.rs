@@ -21,6 +21,11 @@ impl App {
                 );
                 changed |= before != state.omit_source_metadata;
             }
+            if state.has_filters() {
+                let before = state.bake_filters;
+                paintcraft_ui::filter_bake_export::controls(ui, &mut state.bake_filters);
+                changed |= before != state.bake_filters;
+            }
             if state.destination.is_none() {
                 changed |= controls::controls(
                     ui,
@@ -54,6 +59,8 @@ impl App {
                                 "Converting to linear 8-bit samples loses color precision.",
                             export::metadata_policy::OMITTED_REASON =>
                                 "Original source metadata is omitted from this exported copy.",
+                            export::filter_bake::BAKED_REASON =>
+                                paintcraft_ui::filter_bake_export::BAKED_DESCRIPTION,
                             _ => loss.as_str(),
                         }
                     ));

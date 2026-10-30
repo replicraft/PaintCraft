@@ -65,6 +65,7 @@ pub(crate) struct Draft {
     owner: Uuid,
     frozen: Frozen,
     omit_source_metadata: bool,
+    bake_filters: bool,
     format: Choice,
     jpeg_quality: u8,
     jpeg_matte: [u8; 3],
@@ -129,6 +130,7 @@ impl App {
             owner: self.active_tab_id(),
             frozen,
             omit_source_metadata: false,
+            bake_filters: false,
             format: Choice::Flat(format),
             jpeg_quality: 90,
             jpeg_matte: [255; 3],
@@ -235,6 +237,10 @@ impl App {
                 );
                 preview_ready &= draft.omit_source_metadata;
             }
+            if !separate_review && draft.frozen.has_filters {
+                paintcraft_ui::filter_bake_export::controls(ui, &mut draft.bake_filters);
+                preview_ready &= draft.bake_filters;
+            }
             let canvas = draft.frozen.document.canvas;
             ui.add_space(8.0);
             ui.label(t!(
@@ -322,42 +328,66 @@ impl App {
                         Intent::Refuse
                     },
                 );
-            } else if self.dialogs.is_some() {
-                let suggested = self
-                    .bound
-                    .as_deref()
-                    .unwrap_or_else(|| Path::new(&self.path_text))
-                    .with_extension(draft.format.extension());
-                self.export_dialog_quality = Some(draft.jpeg_quality);
-                self.export_dialog_matte = (draft.format == Choice::Flat(ImageExport::Jpeg))
-                    .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte));
-                self.export_dialog_pcx = Some(draft.pcx_encoding);
-                self.export_dialog_frozen = Some(draft.frozen.clone());
-                self.export_dialog_metadata = if draft.omit_source_metadata {
-                    Intent::Omit
-                } else {
-                    Intent::Refuse
-                };
-                self.request_dialog_suggested(ctx, Kind::Export, Some(suggested));
             } else {
-                // Headless callers supply an explicit destination with set_path_text.
-                let destination =
-                    Path::new(&self.path_text).with_extension(draft.format.extension());
-                self.plan_export_frozen(
-                    destination,
-                    Settings {
-                        jpeg_quality: draft.jpeg_quality,
-                        jpeg_matte: (draft.format == Choice::Flat(ImageExport::Jpeg))
-                            .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte)),
-                        pcx_encoding: draft.pcx_encoding,
-                        source_metadata: if draft.omit_source_metadata {
-                            Intent::Omit
-                        } else {
-                            Intent::Refuse
-                        },
+                let family =
+                    paintcraft_formats::registry::Family::from_extension(draft.format.extension())
+                        .expect("registered flat family");
+                let target =
+                    Target::new(family, paintcraft_formats::registry::Operation::ExportFlat);
+                draft.frozen.filter_bake = match export::filter_bake::Policy::capture(
+                    &draft.frozen.document,
+                    target,
+                    if draft.bake_filters {
+                        export::filter_bake::Intent::Bake
+                    } else {
+                        export::filter_bake::Intent::Refuse
                     },
-                    draft.frozen,
-                );
+                    &|| Ok(()),
+                ) {
+                    Ok(policy) => policy,
+                    Err(error) => {
+                        self.editor.set_status(format!("Cannot export: {error}"));
+                        return;
+                    }
+                };
+                if self.dialogs.is_some() {
+                    let suggested = self
+                        .bound
+                        .as_deref()
+                        .unwrap_or_else(|| Path::new(&self.path_text))
+                        .with_extension(draft.format.extension());
+                    self.export_dialog_quality = Some(draft.jpeg_quality);
+                    self.export_dialog_matte = (draft.format == Choice::Flat(ImageExport::Jpeg))
+                        .then(|| paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte));
+                    self.export_dialog_pcx = Some(draft.pcx_encoding);
+                    self.export_dialog_frozen = Some(draft.frozen.clone());
+                    self.export_dialog_metadata = if draft.omit_source_metadata {
+                        Intent::Omit
+                    } else {
+                        Intent::Refuse
+                    };
+                    self.request_dialog_suggested(ctx, Kind::Export, Some(suggested));
+                } else {
+                    // Headless callers supply an explicit destination with set_path_text.
+                    let destination =
+                        Path::new(&self.path_text).with_extension(draft.format.extension());
+                    self.plan_export_frozen(
+                        destination,
+                        Settings {
+                            jpeg_quality: draft.jpeg_quality,
+                            jpeg_matte: (draft.format == Choice::Flat(ImageExport::Jpeg)).then(
+                                || paintcraft_formats::image::JpegMatte::new(draft.jpeg_matte),
+                            ),
+                            pcx_encoding: draft.pcx_encoding,
+                            source_metadata: if draft.omit_source_metadata {
+                                Intent::Omit
+                            } else {
+                                Intent::Refuse
+                            },
+                        },
+                        draft.frozen,
+                    );
+                }
             }
         } else {
             self.confirm = Some(Confirm::ExportOptions(draft));
@@ -550,3 +580,7 @@ mod tests {
 #[cfg(test)]
 #[path = "export_options/advanced_metadata_tests.rs"]
 mod advanced_metadata_tests;
+
+#[cfg(test)]
+#[path = "export_options/filter_bake_tests.rs"]
+mod filter_bake_tests;
