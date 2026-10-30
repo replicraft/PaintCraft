@@ -7,6 +7,8 @@ pub struct Header {
     pub nonce: Uuid,
     pub source_sha256: [u8; 32],
     pub source_flags: u8,
+    pub bake_intent: u8,
+    pub filter_digest: [u8; 32],
     pub metadata: export::SourceMetadataContext,
 }
 impl Header {
@@ -25,6 +27,8 @@ impl Header {
             nonce,
             source_sha256: Sha256::digest(source).into(),
             source_flags: plan.source_flags(),
+            bake_intent: plan.bake_intent(),
+            filter_digest: plan.filter_digest(),
             metadata: plan.metadata_context(),
         };
         header.validate()?;
@@ -52,7 +56,7 @@ impl Header {
         {
             return Err(invalid("Browser MSP metadata target mismatch"));
         }
-        if self.source_flags > 3 {
+        if self.source_flags > 7 || self.bake_intent > 1 {
             return Err(invalid("Browser MSP2 source flags"));
         }
         RgbaLayout::new(Version::RowRleV2, self.size.0, self.size.1)?;
@@ -60,7 +64,7 @@ impl Header {
     }
     pub fn encode(&self) -> [u8; REQUEST_HEADER] {
         let mut bytes = [0; REQUEST_HEADER];
-        bytes[..8].copy_from_slice(b"PCMSPQ02");
+        bytes[..8].copy_from_slice(b"PCMSPQ03");
         bytes[8..10].copy_from_slice(&PROTOCOL_VERSION.to_be_bytes());
         bytes[12..16].copy_from_slice(&self.source_len.to_be_bytes());
         bytes[16..20].copy_from_slice(&self.size.0.to_be_bytes());
@@ -70,16 +74,19 @@ impl Header {
         bytes[81..113].copy_from_slice(&self.source_sha256);
         bytes[113] = 2;
         bytes[114] = self.source_flags;
-        bytes[128..192].copy_from_slice(&self.metadata.encode());
+        bytes[122] = self.bake_intent;
+        bytes[128..160].copy_from_slice(&self.filter_digest);
+        bytes[160..224].copy_from_slice(&self.metadata.encode());
         bytes
     }
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != REQUEST_HEADER
-            || &bytes[..8] != b"PCMSPQ02"
+            || &bytes[..8] != b"PCMSPQ03"
             || bytes[8..10] != PROTOCOL_VERSION.to_be_bytes()
             || bytes[10..12] != [0, 0]
             || bytes[113] != 2
-            || bytes[115..128].iter().any(|b| *b != 0)
+            || bytes[115..122].iter().any(|b| *b != 0)
+            || bytes[123..128].iter().any(|b| *b != 0)
         {
             return Err(invalid("Browser MSP2 request framing/reserved fields"));
         }
@@ -93,7 +100,9 @@ impl Header {
             nonce: Uuid::from_bytes(bytes[65..81].try_into().unwrap()),
             source_sha256: bytes[81..113].try_into().unwrap(),
             source_flags: bytes[114],
-            metadata: export::SourceMetadataContext::decode(&bytes[128..192])?,
+            bake_intent: bytes[122],
+            filter_digest: bytes[128..160].try_into().unwrap(),
+            metadata: export::SourceMetadataContext::decode(&bytes[160..224])?,
         };
         header.validate()?;
         Ok(header)

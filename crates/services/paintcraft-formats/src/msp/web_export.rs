@@ -13,9 +13,9 @@ pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
 /// Exact opt-in Web Studio route; registry admission is qualified separately.
-pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v2";
-pub const PROTOCOL_VERSION: u16 = 2;
-pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v2";
+pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v3";
+pub const PROTOCOL_VERSION: u16 = 3;
+pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v3";
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
 pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
@@ -24,17 +24,18 @@ pub const SOURCE_BYTES_MAX: usize = (32 << 20) + (128 << 10);
 pub const ENCODED_BYTES_MAX: usize = 1 << 20;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
-pub const REQUEST_HEADER: usize = 192;
-pub const RESPONSE_HEADER: usize = 352;
+pub const REQUEST_HEADER: usize = 224;
+pub const RESPONSE_HEADER: usize = 384;
 pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Logical copies plus the full 256MiB Worker ceiling; not browser/GPU/RSS.
 pub const RESERVATION_BYTES: u64 = 512 << 20;
 pub const WORKER_PAYLOAD_BYTES_MAX: u64 = 160 << 20;
-pub const LOSSES: [&str; 3] = [
+pub const LOSSES: [&str; 4] = [
     "flatten",
     "hidden-rgb",
     export::metadata_policy::OMITTED_REASON,
+    export::filter_bake::BAKED_REASON,
 ];
 pub(crate) const SOURCE_LIMITS: Limits = Limits {
     label: "Browser MSP2",
@@ -67,10 +68,20 @@ impl SourcePlan {
         doc: &Document,
         policy: export::metadata_policy::Policy,
     ) -> Result<Self> {
-        let source = SnapshotPlan::capture_with_metadata_policy(
+        Self::capture_with_policies(
+            doc,
+            export::CopyPolicies {
+                source_metadata: policy,
+                ..Default::default()
+            },
+        )
+    }
+    pub fn capture_with_policies(doc: &Document, policies: export::CopyPolicies) -> Result<Self> {
+        let source = SnapshotPlan::capture_with_policies(
             doc,
             SOURCE_LIMITS,
-            policy,
+            policies.source_metadata,
+            policies.filter_bake,
             export::metadata_policy::Target::new(
                 crate::registry::Family::Msp,
                 crate::registry::Operation::ExportFlat,
@@ -86,7 +97,16 @@ impl SourcePlan {
         self.source.metadata_context()
     }
     pub fn validate_metadata_policy(&self, doc: &Document) -> Result<()> {
+        self.validate_policies(doc)
+    }
+    pub fn validate_policies(&self, doc: &Document) -> Result<()> {
         self.source.validate_policy(doc)
+    }
+    pub fn bake_intent(&self) -> u8 {
+        self.source.bake_intent()
+    }
+    pub fn filter_digest(&self) -> [u8; 32] {
+        self.source.filter_inventory().digest()
     }
     pub fn source_flags(&self) -> u8 {
         self.source.flags()
@@ -111,3 +131,6 @@ pub fn preview_size(size: (u32, u32)) -> (u32, u32) {
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod filter_tests;

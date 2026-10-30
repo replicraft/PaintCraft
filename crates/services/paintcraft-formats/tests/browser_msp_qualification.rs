@@ -156,6 +156,10 @@ fn emit_owned_browser_msp_specimens() {
                 nonce,
                 source_sha256: Sha256::digest(&source).into(),
                 source_flags: 1,
+                bake_intent: 0,
+                filter_digest: paintcraft_formats::export::filter_bake::inspect(&doc, &|| Ok(()))
+                    .unwrap()
+                    .digest(),
             }
         } else {
             wire::Header::capture(

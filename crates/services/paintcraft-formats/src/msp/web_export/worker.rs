@@ -11,7 +11,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
         request.check_source(source)?;
         // Price retained profile/control payload before the reader can allocate.
         request.metadata.check_capture_quote(
-            source.len() as u64 + RESIDENT_BYTES_MAX + SOURCE_LIMITS.metadata,
+            export::web_snapshot::pre_read_quote(source.len(), SOURCE_LIMITS)?,
             WORKER_PAYLOAD_BYTES_MAX,
         )?;
         let metadata_budget = paintcraft_core::types::resources::SharedBudget::new(
@@ -28,6 +28,11 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             },
             check,
         )?;
+        if doc.state_id != request.owner.state || doc.canvas != request.size {
+            return Err(failed(
+                "Browser snapshot owner/geometry disagrees with request",
+            ));
+        }
         let policy = request.metadata.validate_document(
             &doc,
             export::metadata_policy::Target::new(
@@ -35,7 +40,40 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
                 crate::registry::Operation::ExportFlat,
             ),
         )?;
-        let plan = SourcePlan::capture_with_metadata_policy(&doc, policy)?;
+        // Inventory is descriptive: only the independent request intent can
+        // mint a copy policy after the exact immutable snapshot is checked.
+        let filters = export::filter_bake::inspect(&doc, check)?;
+        if filters.digest() != request.filter_digest
+            || filters.has_filters() != (request.source_flags & 4 != 0)
+            || filters.filter_count()
+                > (LAYERS_MAX * paintcraft_document::filters::FILTERS_MAX) as u64
+            || filters.filter_storage_bytes()
+                > export::web_snapshot::filter_storage_ceiling(LAYERS_MAX)?
+        {
+            return Err(failed("Browser filter inventory disagrees with request"));
+        }
+        let target = export::metadata_policy::Target::new(
+            crate::registry::Family::Msp,
+            crate::registry::Operation::ExportFlat,
+        );
+        let bake = export::filter_bake::Policy::capture(
+            &doc,
+            target,
+            if request.bake_intent == 1 {
+                export::filter_bake::Intent::Bake
+            } else {
+                export::filter_bake::Intent::Refuse
+            },
+            check,
+        )?;
+        bake.validate(&doc, target, check)?;
+        let plan = SourcePlan::capture_with_policies(
+            &doc,
+            export::CopyPolicies {
+                source_metadata: policy,
+                filter_bake: bake,
+            },
+        )?;
         if plan.source.state() != request.owner.state
             || plan.size() != request.size
             || plan.source_flags() != request.source_flags
@@ -43,7 +81,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             return Err(failed("Browser MSP2 snapshot disagrees with request"));
         }
         let first_quote = std::cell::Cell::new(0u64);
-        let artifact = export::msp::prepare_document_with_metadata_policy(
+        let artifact = export::msp::prepare_document_with_policies(
             &doc,
             Version::RowRleV2,
             &LOSSES.map(str::to_owned),
@@ -52,6 +90,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
                     .checked_add(resident)
                     .and_then(|n| n.checked_add(source.len() as u64))
                     .and_then(|n| n.checked_add(request.metadata.retained_charge()))
+                    .and_then(|n| n.checked_add(filters.filter_storage_bytes()))
                     // Existing parser metadata ceiling, framing/thumbnail and
                     // miscellaneous bounded codec/facade metadata payload.
                     .and_then(|n| {
@@ -82,7 +121,10 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             },
             |doc, check| paintcraft_render::render_cancellable(doc, check),
             check,
-            policy,
+            export::CopyPolicies {
+                source_metadata: policy,
+                filter_bake: bake,
+            },
         )?;
         // Composite is freed. Actual encoded pixels reuse that RGBA allowance;
         // packed decode reuses the already-admitted packed encoding allowance.

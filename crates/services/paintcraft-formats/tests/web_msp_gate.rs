@@ -66,6 +66,8 @@ fn generic_msp1_keeps_its_old_route_and_misspelled_worker_variants_are_denied() 
     for variant in [
         "web-msp2-row-rle-worker-v0",
         "web-msp2-row-rle-worker-v1",
+        "web-msp2-row-rle-worker-v2",
+        "web-msp2-row-rle-worker-v4",
         "native-msp2-row-rle-v1",
         "web-dds-texture-worker-v1",
         "web-dds-texture-worker-v2",
