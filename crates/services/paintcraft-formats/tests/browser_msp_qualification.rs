@@ -148,6 +148,7 @@ fn emit_owned_browser_msp_specimens() {
             context[49] = 2; // Actual MSP endpoint.
             context[50] = 1; // ExportFlat.
             wire::Header {
+                masks: Default::default(),
                 metadata: paintcraft_formats::export::SourceMetadataContext::decode(&context)
                     .unwrap(),
                 source_len: source.len() as u32,

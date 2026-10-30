@@ -11,6 +11,7 @@ pub struct Header {
     pub bake_intent: u8,
     pub filter_digest: [u8; 32],
     pub metadata: export::SourceMetadataContext,
+    pub masks: export::SourceMaskContext,
 }
 impl Header {
     pub fn capture(plan: &SourcePlan, source: &[u8], owner: Owner, nonce: Uuid) -> Result<Self> {
@@ -32,6 +33,7 @@ impl Header {
             bake_intent: plan.bake_intent(),
             filter_digest: plan.filter_digest(),
             metadata: plan.metadata_context(),
+            masks: plan.mask_context(),
         };
         header.validate()?;
         Ok(header)
@@ -58,7 +60,8 @@ impl Header {
         {
             return Err(invalid("Browser DDS metadata target mismatch"));
         }
-        if self.source_flags > 7 || self.bake_intent > 1 {
+        self.masks.check_flags(self.source_flags)?;
+        if self.source_flags > 15 || self.bake_intent > 1 {
             return Err(invalid("Browser DDS source flags"));
         }
         decode_settings(self.settings, self.size)?;
@@ -66,7 +69,7 @@ impl Header {
     }
     pub fn encode(&self) -> [u8; REQUEST_HEADER] {
         let mut bytes = [0; REQUEST_HEADER];
-        bytes[..8].copy_from_slice(b"PCDDSQ03");
+        bytes[..8].copy_from_slice(b"PCDDSQ04");
         bytes[8..10].copy_from_slice(&PROTOCOL_VERSION.to_be_bytes());
         bytes[12..16].copy_from_slice(&self.source_len.to_be_bytes());
         bytes[16..20].copy_from_slice(&self.size.0.to_be_bytes());
@@ -79,11 +82,12 @@ impl Header {
         bytes[122] = self.bake_intent;
         bytes[128..160].copy_from_slice(&self.filter_digest);
         bytes[160..224].copy_from_slice(&self.metadata.encode());
+        bytes[224..256].copy_from_slice(&self.masks.encode());
         bytes
     }
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != REQUEST_HEADER
-            || &bytes[..8] != b"PCDDSQ03"
+            || &bytes[..8] != b"PCDDSQ04"
             || bytes[8..10] != PROTOCOL_VERSION.to_be_bytes()
             || bytes[10..12] != [0, 0]
             || bytes[123..128].iter().any(|b| *b != 0)
@@ -104,6 +108,7 @@ impl Header {
             bake_intent: bytes[122],
             filter_digest: bytes[128..160].try_into().unwrap(),
             metadata: export::SourceMetadataContext::decode(&bytes[160..224])?,
+            masks: export::SourceMaskContext::decode(&bytes[224..256])?,
         };
         header.validate()?;
         Ok(header)

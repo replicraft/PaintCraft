@@ -52,6 +52,7 @@ test('MSP Rust and JS request/output/admission caps agree exactly', () => {
 		sourceFlags: 0,
 		filterDigest: new Uint8Array(32).fill(17),
 		bakeIntent: 0,
+		maskContext: new Uint8Array(32),
 		metadataContext: context(2),
 		version: 2,
 	});

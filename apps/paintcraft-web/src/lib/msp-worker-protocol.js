@@ -1,4 +1,4 @@
-// Browser-only protocol3. Native/JXL decoder2 stays independent.
+// Browser-only protocol4. Native/JXL decoder2 stays independent.
 import {
 	equal,
 	matchesOwner,
@@ -13,12 +13,15 @@ import {
 export const MSP_SOURCE_MAX = 32 * 1024 * 1024 + 128 * 1024;
 export const MSP_ENCODED_MAX = 1024 * 1024;
 export const MSP_PREVIEW_MAX = 192 * 192 * 4;
-export const MSP_PROTOCOL_VERSION = 3;
-export const MSP_REQUEST_HEADER = 224;
-export const MSP_RESPONSE_HEADER = 384;
+export const MSP_PROTOCOL_VERSION = 4;
+export const MSP_REQUEST_HEADER = 256;
+export const MSP_RESPONSE_HEADER = 416;
 export const MSP_OUTPUT_MAX =
 	MSP_RESPONSE_HEADER + MSP_ENCODED_MAX + MSP_PREVIEW_MAX + 4096;
 export const MSP_RESERVATION = 512 * 1024 * 1024;
+
+import { freezeMaskContext } from './source-mask-worker-context.js';
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const frozenPlans = new WeakSet();
@@ -43,6 +46,7 @@ export function freezeMspPlan(plan) {
 		sourceFlags,
 		version,
 		metadataContext,
+		maskContext,
 		filterDigest,
 		bakeIntent,
 	} = plan;
@@ -56,7 +60,7 @@ export function freezeMspPlan(plan) {
 		width * height > 4194304 ||
 		!Number.isInteger(sourceFlags) ||
 		sourceFlags < 0 ||
-		sourceFlags > 7 ||
+		sourceFlags > 15 ||
 		!Number.isInteger(bakeIntent) ||
 		bakeIntent < 0 ||
 		bakeIntent > 1 ||
@@ -71,6 +75,7 @@ export function freezeMspPlan(plan) {
 		height,
 		sourceFlags,
 		metadataContext: metadata,
+		maskContext: freezeMaskContext(maskContext, sourceFlags),
 		filterDigest: Object.freeze(
 			Array.from({ length: 32 }, (_, index) => filterDigest[index]),
 		),
@@ -96,7 +101,7 @@ export async function captureMsp(
 	plan = freezeMspPlan(plan);
 	const frozen = source.slice();
 	const header = new Uint8Array(MSP_REQUEST_HEADER);
-	header.set(encoder.encode('PCMSPQ03'));
+	header.set(encoder.encode('PCMSPQ04'));
 	const view = new DataView(header.buffer);
 	view.setUint16(8, MSP_PROTOCOL_VERSION);
 	view.setUint32(12, frozen.length);
@@ -113,6 +118,7 @@ export async function captureMsp(
 	header[122] = plan.bakeIntent;
 	header.set(plan.filterDigest, 128);
 	header.set(plan.metadataContext, 160);
+	header.set(plan.maskContext, 224);
 	const captured = { source: frozen, header, plan };
 	proofs.set(captured, {});
 	return captured;
@@ -155,7 +161,7 @@ export async function decodeMspResponse(
 	const mask = bytes[193],
 		versionLength = bytes[198],
 		detail = view.getUint16(263);
-	require(equal(bytes.subarray(0, 8), encoder.encode('PCMSPR03')) &&
+	require(equal(bytes.subarray(0, 8), encoder.encode('PCMSPR04')) &&
 		view.getUint16(8) === MSP_PROTOCOL_VERSION &&
 		status <= 5 &&
 		!bytes[11] &&
@@ -175,6 +181,7 @@ export async function decodeMspResponse(
 		bytes[266] === captured.plan.bakeIntent &&
 		equal(bytes.subarray(288, 320), captured.header.subarray(128, 160)) &&
 		equal(bytes.subarray(320, 384), captured.header.subarray(160, 224)) &&
+		equal(bytes.subarray(384, 416), captured.header.subarray(224, 256)) &&
 		versionLength > 0 &&
 		versionLength <= 64 &&
 		utf8(bytes.subarray(199, 199 + versionLength)) === version &&

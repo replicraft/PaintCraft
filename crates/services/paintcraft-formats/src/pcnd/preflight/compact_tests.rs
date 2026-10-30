@@ -258,3 +258,72 @@ fn retained_bmp_initial_adoption_uses_the_selected_compact_boundary() {
     drop(prepared);
     assert_eq!(realm.usage().reserved, 0);
 }
+
+#[test]
+fn web_export_snapshots_preserve_selected_compact_boundary_for_pcnd2_3_4() {
+    use crate::export::{
+        filter_bake,
+        metadata_policy::{Intent, Policy, Target},
+    };
+    use crate::registry::{Family, Operation};
+    use paintcraft_core::types::{Rect, filters::Descriptor};
+    use paintcraft_document::{FilterInstance, FilterMask, FilterStack};
+    for version in [2, 3, 4] {
+        let extra = match version {
+            2 => 0,
+            3 => 20,
+            _ => 30,
+        };
+        let (mut doc, _profile) = specimen(
+            DOCUMENT_MAX as usize - 273 - extra,
+            Some(Rgba([0, 0, 0, 255])),
+        );
+        if version >= 3 {
+            let mut filter = FilterInstance::new(Uuid::nil(), true, Descriptor::InvertRgbV1);
+            if version == 4 {
+                let coverage = paintcraft_raster::coverage_mask::A8Mask::from_bands(
+                    Rect::new(0, 0, 128, 128).unwrap(),
+                    &[],
+                    &SharedBudget::new(0),
+                    Default::default(),
+                    &|| Ok(()),
+                )
+                .unwrap();
+                filter = filter.with_mask(Some(FilterMask::new(true, coverage)));
+            }
+            doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+                FilterStack::new(vec![filter]).unwrap();
+        }
+        check_compact_metadata_admission(&doc, &|| Ok(())).unwrap();
+        assert_eq!(write(&doc).unwrap_err().code, ErrorCode::ResourceLimit);
+        let compact = write_compact(&doc).unwrap();
+        assert_eq!(compact[4], version);
+        for (family, limits) in [
+            (Family::Dds, crate::dds::web_export::SOURCE_LIMITS),
+            (Family::Msp, crate::msp::web_export::SOURCE_LIMITS),
+        ] {
+            let target = Target::new(family, Operation::ExportFlat);
+            let metadata = Policy::capture(&doc, target, Intent::Omit).unwrap();
+            let bake = filter_bake::Policy::capture(
+                &doc,
+                target,
+                if version >= 3 {
+                    filter_bake::Intent::Bake
+                } else {
+                    filter_bake::Intent::Refuse
+                },
+                &|| Ok(()),
+            )
+            .unwrap();
+            let plan = crate::export::web_snapshot::Plan::capture_with_policies(
+                &doc, limits, metadata, bake, target,
+            )
+            .unwrap();
+            assert_eq!(
+                plan.snapshot(&doc, |_| Ok(())).unwrap(),
+                compact,
+                "{family:?} PCND{version} compact boundary"
+            );
+        }
+    }
+}

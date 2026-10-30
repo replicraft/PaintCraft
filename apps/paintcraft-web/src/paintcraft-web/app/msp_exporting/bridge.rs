@@ -35,6 +35,10 @@ pub(super) async fn prepare(
             Uint8Array::from(plan.filter_digest().as_slice()).into(),
         ),
         (
+            "maskContext",
+            Uint8Array::from(plan.mask_context().encode().as_slice()).into(),
+        ),
+        (
             "metadataContext",
             Uint8Array::from(plan.metadata_context().encode().as_slice()).into(),
         ),

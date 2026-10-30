@@ -27,6 +27,7 @@ function plan() {
 		sourceFlags: 0,
 		filterDigest: new Uint8Array(32).fill(17),
 		bakeIntent: 0,
+		maskContext: new Uint8Array(32),
 		metadataContext: context(2),
 		version: 2,
 	};
@@ -54,8 +55,8 @@ async function response(
 			MSP_RESPONSE_HEADER + encoded.length + preview.length + msg.length,
 		),
 		v = new DataView(bytes.buffer);
-	bytes.set(text.encode('PCMSPR03'));
-	v.setUint16(8, 3);
+	bytes.set(text.encode('PCMSPR04'));
+	v.setUint16(8, 4);
 	bytes[10] = status;
 	bytes.set(header.subarray(16, 24), 12);
 	bytes.set(header.subarray(12, 16), 20);
@@ -86,6 +87,7 @@ async function response(
 	bytes[266] = header[122];
 	bytes.set(header.subarray(128, 160), 288);
 	bytes.set(header.subarray(160, 224), 320);
+	bytes.set(header.subarray(224, 256), 384);
 	bytes.set(encoded, MSP_RESPONSE_HEADER);
 	bytes.set(preview, MSP_RESPONSE_HEADER + encoded.length);
 	bytes.set(msg, MSP_RESPONSE_HEADER + encoded.length + preview.length);
@@ -177,7 +179,7 @@ test('two-phase admission precedes serialization and returns only a Rust-validat
 	assert.equal(raw.requiresRustValidation, true);
 	assert.equal(raw.encoded, undefined);
 	assert.equal(raw.preview, undefined);
-	assert.equal(raw.requestHeader.length, 224);
+	assert.equal(raw.requestHeader.length, 256);
 	assert.equal(raw.sourceSha256.length, 32);
 	assert.ok(raw.responseBytes.length > MSP_RESPONSE_HEADER);
 	assert.equal(m.codecWorkerBudget().reservedBytes, MSP_RESERVATION);
@@ -363,7 +365,7 @@ test('bridge admission cannot rebind a stale owner and keeps the service exclusi
 	const { createCodecService } = await import('../src/lib/codec-bridge.js');
 	const service = createCodecService(version);
 	service.setOwner(owner);
-	assert.equal(service.mspExportProtocolVersion(), 3);
+	assert.equal(service.mspExportProtocolVersion(), 4);
 	assert.throws(
 		() => service.beginMspExport({ ...owner, epoch: 9n }, plan(), nonce),
 		{ code: 'ConflictStaleBase' },
@@ -513,6 +515,7 @@ test('MSP, DDS and legacy decode share one reservation and caller options cannot
 			sourceFlags: 0,
 			filterDigest: new Uint8Array(32).fill(17),
 			bakeIntent: 0,
+			maskContext: new Uint8Array(32),
 			metadataContext: context(1),
 			settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 		},
@@ -541,7 +544,7 @@ test('MSP, DDS and legacy decode share one reservation and caller options cannot
 	assert.equal(m.codecWorkerBudget().reservedBytes, 0);
 });
 
-test('v3 freezes explicit source intent and rejects metadata, target and old-version echoes', async () => {
+test('v4 freezes explicit source intent and rejects metadata, target and old-version echoes', async () => {
 	for (const present of [false, true]) {
 		const p = plan();
 		p.metadataContext = context(2, { present, omit: true });

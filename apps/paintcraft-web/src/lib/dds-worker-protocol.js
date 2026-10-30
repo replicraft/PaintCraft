@@ -1,4 +1,4 @@
-// Browser-only protocol3. Native/JXL decoder2 stays independent.
+// Browser-only protocol4. Native/JXL decoder2 stays independent.
 import {
 	equal,
 	matchesOwner,
@@ -13,12 +13,15 @@ import {
 export const DDS_SOURCE_MAX = 32 * 1024 * 1024;
 export const DDS_ENCODED_MAX = 24 * 1024 * 1024 + 4096;
 export const DDS_PREVIEW_MAX = 192 * 192 * 4;
-export const DDS_PROTOCOL_VERSION = 3;
-export const DDS_REQUEST_HEADER = 224;
-export const DDS_RESPONSE_HEADER = 384;
+export const DDS_PROTOCOL_VERSION = 4;
+export const DDS_REQUEST_HEADER = 256;
+export const DDS_RESPONSE_HEADER = 416;
 export const DDS_OUTPUT_MAX =
 	DDS_RESPONSE_HEADER + DDS_ENCODED_MAX + DDS_PREVIEW_MAX + 4096;
 export const DDS_RESERVATION = 640 * 1024 * 1024;
+
+import { freezeMaskContext } from './source-mask-worker-context.js';
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const frozenPlans = new WeakSet();
@@ -43,6 +46,7 @@ export function freezeDdsPlan(plan) {
 		sourceFlags,
 		settings,
 		metadataContext,
+		maskContext,
 		filterDigest,
 		bakeIntent,
 	} = plan;
@@ -56,7 +60,7 @@ export function freezeDdsPlan(plan) {
 		width * height > 4194304 ||
 		!Number.isInteger(sourceFlags) ||
 		sourceFlags < 0 ||
-		sourceFlags > 7 ||
+		sourceFlags > 15 ||
 		!Number.isInteger(bakeIntent) ||
 		bakeIntent < 0 ||
 		bakeIntent > 1 ||
@@ -88,6 +92,7 @@ export function freezeDdsPlan(plan) {
 		height,
 		sourceFlags,
 		metadataContext: metadata,
+		maskContext: freezeMaskContext(maskContext, sourceFlags),
 		filterDigest: Object.freeze(
 			Array.from({ length: 32 }, (_, index) => filterDigest[index]),
 		),
@@ -113,7 +118,7 @@ export async function captureDds(
 	plan = freezeDdsPlan(plan);
 	const frozen = source.slice();
 	const header = new Uint8Array(DDS_REQUEST_HEADER);
-	header.set(encoder.encode('PCDDSQ03'));
+	header.set(encoder.encode('PCDDSQ04'));
 	const view = new DataView(header.buffer);
 	view.setUint16(8, DDS_PROTOCOL_VERSION);
 	view.setUint32(12, frozen.length);
@@ -130,6 +135,7 @@ export async function captureDds(
 	header[122] = plan.bakeIntent;
 	header.set(plan.filterDigest, 128);
 	header.set(plan.metadataContext, 160);
+	header.set(plan.maskContext, 224);
 	const captured = { source: frozen, header, plan };
 	proofs.set(captured, {});
 	return captured;
@@ -173,7 +179,7 @@ export async function decodeDdsResponse(
 		count = view.getUint32(194),
 		versionLength = bytes[198],
 		detail = view.getUint16(263);
-	require(equal(bytes.subarray(0, 8), encoder.encode('PCDDSR03')) &&
+	require(equal(bytes.subarray(0, 8), encoder.encode('PCDDSR04')) &&
 		view.getUint16(8) === DDS_PROTOCOL_VERSION &&
 		status <= 5 &&
 		!bytes[11] &&
@@ -191,6 +197,7 @@ export async function decodeDdsResponse(
 		bytes[266] === captured.plan.bakeIntent &&
 		equal(bytes.subarray(288, 320), captured.header.subarray(128, 160)) &&
 		equal(bytes.subarray(320, 384), captured.header.subarray(160, 224)) &&
+		equal(bytes.subarray(384, 416), captured.header.subarray(224, 256)) &&
 		versionLength > 0 &&
 		versionLength <= 64 &&
 		utf8(bytes.subarray(199, 199 + versionLength)) === version &&

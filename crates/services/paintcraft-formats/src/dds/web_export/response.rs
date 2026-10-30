@@ -96,7 +96,7 @@ fn build(
         .try_reserve_exact(length)
         .map_err(|_| resource("Browser DDS response allocation"))?;
     bytes.resize(RESPONSE_HEADER, 0);
-    bytes[..8].copy_from_slice(b"PCDDSR03");
+    bytes[..8].copy_from_slice(b"PCDDSR04");
     bytes[8..10].copy_from_slice(&PROTOCOL_VERSION.to_be_bytes());
     bytes[10] = status;
     bytes[12..16].copy_from_slice(&request.size.0.to_be_bytes());
@@ -120,6 +120,7 @@ fn build(
     bytes[266] = request.bake_intent;
     bytes[288..320].copy_from_slice(&request.filter_digest);
     bytes[320..384].copy_from_slice(&request.metadata.encode());
+    bytes[384..416].copy_from_slice(&request.masks.encode());
     bytes.extend_from_slice(encoded);
     bytes.extend_from_slice(preview);
     bytes.extend_from_slice(detail.as_bytes());
@@ -140,7 +141,7 @@ pub fn decode_response<'a>(
     }
     if bytes.len() < RESPONSE_HEADER
         || bytes.len() > RESPONSE_BYTES_MAX
-        || &bytes[..8] != b"PCDDSR03"
+        || &bytes[..8] != b"PCDDSR04"
         || bytes[8..10] != PROTOCOL_VERSION.to_be_bytes()
         || bytes[10] > 5
         || bytes[11] != 0
@@ -170,6 +171,7 @@ pub fn decode_response<'a>(
         || bytes[266] != request.bake_intent
         || bytes[288..320] != request.filter_digest
         || bytes[320..384] != request.metadata.encode()
+        || bytes[384..416] != request.masks.encode()
         || version_len == 0
         || version_len > 64
         || bytes[199..199 + version_len] != *version.as_bytes()

@@ -12,9 +12,9 @@ mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
-pub const EXPORT_VARIANT: &str = "web-dds-texture-worker-v3";
-pub const PROTOCOL_VERSION: u16 = 3;
-pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v3";
+pub const EXPORT_VARIANT: &str = "web-dds-texture-worker-v4";
+pub const PROTOCOL_VERSION: u16 = 4;
+pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v4";
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
 pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
@@ -23,8 +23,8 @@ pub const SOURCE_BYTES_MAX: usize = 32 << 20;
 pub const ENCODED_BYTES_MAX: usize = (24 << 20) + 4096;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
-pub const REQUEST_HEADER: usize = 224;
-pub const RESPONSE_HEADER: usize = 384;
+pub const REQUEST_HEADER: usize = 256;
+pub const RESPONSE_HEADER: usize = 416;
 pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Declares known copies and the entire 256MiB Worker linear-memory ceiling.
@@ -101,6 +101,9 @@ impl SourcePlan {
         )?;
         let settings = encode_settings(options, doc.canvas)?;
         Ok(Self { source, settings })
+    }
+    pub fn mask_context(&self) -> export::SourceMaskContext {
+        self.source.mask_context()
     }
     pub fn metadata_context(&self) -> export::SourceMetadataContext {
         self.source.metadata_context()

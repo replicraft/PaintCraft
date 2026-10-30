@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
 const app = fileURLToPath(new URL('../', import.meta.url));
 const root = path.resolve(app, '../..'),
 	dist = path.join(app, 'dist');
@@ -134,14 +135,14 @@ try {
 								await fetch(`/__fixture/${row.file}`)
 							).arrayBuffer(),
 						);
-						const h = new Uint8Array(224),
+						const h = new Uint8Array(256),
 							view = new DataView(h.buffer);
 						h.set(
 							new TextEncoder().encode(
-								kind === 'dds' ? 'PCDDSQ03' : 'PCMSPQ03',
+								kind === 'dds' ? 'PCDDSQ04' : 'PCMSPQ04',
 							),
 						);
-						view.setUint16(8, 3);
+						view.setUint16(8, 4);
 						view.setUint32(12, source.length);
 						view.setUint32(16, 2);
 						view.setUint32(20, 1);
@@ -256,9 +257,9 @@ try {
 						h = Buffer.from(result.header);
 					assert.equal(
 						b.subarray(0, 8).toString(),
-						kind === 'dds' ? 'PCDDSR03' : 'PCMSPR03',
+						kind === 'dds' ? 'PCDDSR04' : 'PCMSPR04',
 					);
-					assert.equal(b.readUInt16BE(8), 3);
+					assert.equal(b.readUInt16BE(8), 4);
 					assert.equal(b[11], 0);
 					assert.equal(b.readUInt32BE(12), 2);
 					assert.equal(b.readUInt32BE(16), 1);
@@ -299,10 +300,14 @@ try {
 					const length = b.readUInt32BE(24),
 						previewSize =
 							b.readUInt16BE(28) * b.readUInt16BE(30) * 4;
-					const encoded = b.subarray(384, 384 + length),
+					assert.deepEqual(
+						b.subarray(384, 416),
+						h.subarray(224, 256),
+					);
+					const encoded = b.subarray(416, 416 + length),
 						preview = b.subarray(
-							384 + length,
-							384 + length + previewSize,
+							416 + length,
+							416 + length + previewSize,
 						);
 					assert.equal(
 						sha(encoded),
@@ -314,7 +319,7 @@ try {
 					);
 					assert.equal(
 						b.length,
-						384 + length + previewSize + b.readUInt16BE(263),
+						416 + length + previewSize + b.readUInt16BE(263),
 					);
 					if (fault !== 'none') {
 						assert.equal(b[10], fault === 'refuse' ? 1 : 2);

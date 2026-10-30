@@ -11,23 +11,34 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
         request.check_source(source)?;
         // Price retained profile/control payload before the reader can allocate.
         request.metadata.check_capture_quote(
-            export::web_snapshot::pre_read_quote(source.len(), SOURCE_LIMITS)?,
+            request
+                .masks
+                .pre_read_quote(export::web_snapshot::pre_read_quote(
+                    source.len(),
+                    SOURCE_LIMITS,
+                )?)?,
             WORKER_PAYLOAD_BYTES_MAX,
         )?;
         let metadata_budget = paintcraft_core::types::resources::SharedBudget::new(
             request.metadata.retained_charge(),
         );
-        let doc = pcnd::read_with_metadata_admission_checked(
+        let mask_budget =
+            paintcraft_core::types::resources::SharedBudget::new(request.masks.decode_bytes());
+        let doc = pcnd::read_with_admission_checked(
             source,
             PIXELS_MAX,
             RESIDENT_BYTES_MAX / 4,
             LAYERS_MAX,
-            pcnd::MetadataAdmission {
-                bytes: u64::from(request.metadata.wire_bytes()),
-                budget: &metadata_budget,
-            },
+            request.masks.admission(
+                pcnd::MetadataAdmission {
+                    bytes: u64::from(request.metadata.wire_bytes()),
+                    budget: &metadata_budget,
+                },
+                &mask_budget,
+            ),
             check,
         )?;
+        request.masks.validate_decoded(&doc)?;
         if doc.state_id != request.owner.state || doc.canvas != request.size {
             return Err(failed(
                 "Browser snapshot owner/geometry disagrees with request",
@@ -90,6 +101,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
                     .checked_add(resident)
                     .and_then(|n| n.checked_add(source.len() as u64))
                     .and_then(|n| n.checked_add(request.metadata.retained_charge()))
+                    .and_then(|n| n.checked_add(request.masks.decode_bytes()))
                     .and_then(|n| n.checked_add(filters.filter_storage_bytes()))
                     // Existing parser metadata ceiling, framing/thumbnail and
                     // miscellaneous bounded codec/facade metadata payload.

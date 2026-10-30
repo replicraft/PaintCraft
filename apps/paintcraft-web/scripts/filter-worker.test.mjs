@@ -26,17 +26,18 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 		sourceFlags: 4,
 		filterDigest: new Uint8Array(32).fill(29),
 		bakeIntent: 1,
+		maskContext: new Uint8Array(32),
 		metadataContext: context(family),
 		settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 		version: 2,
 		...extra,
 	});
 	async function frame(captured, { status = 0, mask = filterBit } = {}) {
-		const out = new Uint8Array(384 + (status ? 0 : 5));
+		const out = new Uint8Array(416 + (status ? 0 : 5));
 		const view = new DataView(out.buffer),
 			h = captured.header;
-		out.set(text.encode(`PC${kind}R03`));
-		view.setUint16(8, 3);
+		out.set(text.encode(`PC${kind}R04`));
+		view.setUint16(8, 4);
 		out[10] = status;
 		out.set(h.subarray(16, 24), 12);
 		out.set(h.subarray(12, 16), 20);
@@ -54,13 +55,14 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 		out[266] = h[122];
 		out.set(h.subarray(128, 160), 288);
 		out.set(h.subarray(160, 224), 320);
+		out.set(h.subarray(224, 256), 384);
 		out[193] = status ? 0 : mask;
-		if (!status) out.set([9, 0, 0, 0, 255], 384);
+		if (!status) out.set([9, 0, 0, 0, 255], 416);
 		out.set(
 			new Uint8Array(
 				await crypto.subtle.digest(
 					'SHA-256',
-					out.subarray(384, status ? 384 : 385),
+					out.subarray(416, status ? 416 : 417),
 				),
 			),
 			129,
@@ -69,20 +71,20 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 			new Uint8Array(
 				await crypto.subtle.digest(
 					'SHA-256',
-					out.subarray(status ? 384 : 385),
+					out.subarray(status ? 416 : 417),
 				),
 			),
 			161,
 		);
 		return out;
 	}
-	test(`${kind} v3 binds independent bake intent and immutable inventory`, async () => {
+	test(`${kind} v4 binds independent bake intent and immutable inventory`, async () => {
 		const p = plan();
 		const pending = capture(new Uint8Array([1]), owner, p, nonce);
 		p.filterDigest.fill(0);
 		p.bakeIntent = 0;
 		const captured = await pending;
-		assert.equal(captured.header.length, 224);
+		assert.equal(captured.header.length, 256);
 		assert.equal(captured.header[122], 1);
 		assert.deepEqual(
 			captured.header.subarray(128, 160),
@@ -93,7 +95,10 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 			(await decode(valid, captured, owner, 'x')).lossMask,
 			filterBit,
 		);
-		for (const at of [266, 267, 287, 288, 319, 320, 383]) {
+		for (const at of [
+			266, 267, 287, 288, 319, 320, 383, 384, 391, 392, 399, 400, 407,
+			408, 415,
+		]) {
 			const bad = valid.slice();
 			bad[at] ^= 1;
 			await assert.rejects(decode(bad, captured, owner, 'x'), {
@@ -109,7 +114,7 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 		for (const extra of [
 			{ bakeIntent: 2 },
 			{ bakeIntent: undefined },
-			{ sourceFlags: 8 },
+			{ sourceFlags: 16 },
 			{ filterDigest: new Uint8Array(31) },
 		]) {
 			assert.throws(() => freeze(plan(extra)), { code: 'InputSchema' });
@@ -137,6 +142,7 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 			owner,
 			plan({
 				bakeIntent: 0,
+				maskContext: new Uint8Array(32),
 				metadataContext: context(family, { present: true, omit: true }),
 			}),
 			nonce,
@@ -158,6 +164,7 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 			new Uint8Array([1]),
 			owner,
 			plan({
+				maskContext: new Uint8Array(32),
 				metadataContext: context(family, { present: true, omit: true }),
 			}),
 			nonce,
@@ -172,6 +179,100 @@ for (const [kind, api, family, flagAt, filterBit, metadataBit] of [
 				)
 			).lossMask,
 			filterBit | metadataBit,
+		);
+	});
+	test(`${kind} v4 freezes expanded mask facts and binds every response byte`, async () => {
+		const bytes = new Uint8Array(32),
+			wire = new DataView(bytes.buffer);
+		for (const [at, value] of [
+			[0, 2n],
+			[8, 3n],
+			[16, 5n],
+			[24, 4096n],
+		])
+			wire.setBigUint64(at, value, true);
+		const original = bytes.slice();
+		bytes[Symbol.iterator] = () => {
+			throw Error('mask iterator must never run');
+		};
+		const pending = capture(
+			new Uint8Array([1]),
+			owner,
+			plan({ sourceFlags: 12, maskContext: bytes }),
+			nonce,
+		);
+		bytes.fill(0);
+		const captured = await pending;
+		assert.deepEqual(captured.header.subarray(224, 256), original);
+		const valid = await frame(captured);
+		assert.equal(
+			(await decode(valid, captured, owner, 'x')).lossMask,
+			filterBit,
+		);
+		for (let at = 384; at < 416; at++) {
+			const bad = valid.slice();
+			bad[at] ^= 1;
+			await assert.rejects(decode(bad, captured, owner, 'x'), {
+				code: 'CodecFailed',
+			});
+		}
+		for (const version of [3, 5]) {
+			const bad = valid.slice();
+			bad[7] = String(version).charCodeAt(0);
+			new DataView(bad.buffer).setUint16(8, version);
+			await assert.rejects(decode(bad, captured, owner, 'x'), {
+				code: 'CodecFailed',
+			});
+		}
+		for (const [at, value] of [
+			[0, 2049n],
+			[8, 262145n],
+			[16, 262145n],
+			[24, 268435457n],
+		]) {
+			const bad = original.slice();
+			new DataView(bad.buffer).setBigUint64(at, value, true);
+			assert.throws(
+				() => freeze(plan({ sourceFlags: 12, maskContext: bad })),
+				{ code: 'InputSchema' },
+			);
+		}
+		const zero = new Uint8Array(32);
+		new DataView(zero.buffer).setBigUint64(0, 1n, true);
+		freeze(plan({ sourceFlags: 12, maskContext: zero })); // stored zero is not absent
+		assert.throws(
+			() => freeze(plan({ sourceFlags: 4, maskContext: zero })),
+			{ code: 'InputSchema' },
+		);
+		assert.throws(
+			() =>
+				freeze(
+					plan({ sourceFlags: 12, maskContext: new Uint8Array(32) }),
+				),
+			{ code: 'InputSchema' },
+		);
+		assert.throws(() => freeze(plan({ maskContext: undefined })), {
+			code: 'InputSchema',
+		});
+		const unchecked = await capture(
+			new Uint8Array([1]),
+			owner,
+			plan({
+				sourceFlags: 12,
+				maskContext: original,
+				bakeIntent: 0,
+				metadataContext: context(family, { present: true, omit: true }),
+			}),
+			nonce,
+		);
+		await assert.rejects(
+			decode(
+				await frame(unchecked, { mask: filterBit | metadataBit }),
+				unchecked,
+				owner,
+				'x',
+			),
+			{ code: 'CodecFailed' },
 		);
 	});
 }

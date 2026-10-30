@@ -1,4 +1,4 @@
-//! Shared source inventory/raw serialization for admitted browser export jobs.
+//! Shared source inventory/compact serialization for admitted browser export jobs.
 //! No codec settings, rendering, scheduling or public reader policy lives here.
 use super::filter_bake::{self, Inventory};
 use super::{
@@ -34,6 +34,7 @@ pub(crate) struct Plan {
     context: SourceMetadataContext,
     filters: Inventory,
     bake: filter_bake::Policy,
+    masks: super::SourceMaskContext,
 }
 impl Plan {
     #[cfg(test)]
@@ -84,6 +85,7 @@ impl Plan {
         }
         bake.validate(doc, target, &|| Ok(()))?;
         let filters = filter_bake::inspect(doc, &|| Ok(()))?;
+        let masks = super::SourceMaskContext::capture(doc)?;
         let (mut pixels, mut resident) = (0u64, 0u64);
         let mut metadata = doc.title.as_ref().map_or(0, |s| s.len() as u64);
         for layer in doc.layers.values() {
@@ -114,14 +116,19 @@ impl Plan {
             size: doc.canvas,
             flags: u8::from(doc.roots.len() > 1)
                 | u8::from(doc.layers.values().any(|l| l.raster.has_hidden_rgb())) << 1
-                | u8::from(filters.has_filters()) << 2,
+                | u8::from(filters.has_filters()) << 2
+                | u8::from(masks.has_masks()) << 3,
             limits,
             policy,
             target,
             context,
             filters,
             bake,
+            masks,
         })
+    }
+    pub fn mask_context(&self) -> super::SourceMaskContext {
+        self.masks
     }
     pub fn filter_inventory(&self) -> Inventory {
         self.filters
@@ -133,6 +140,7 @@ impl Plan {
         self.context
     }
     pub fn validate_policy(&self, doc: &Document) -> Result<()> {
+        self.masks.validate_inventory(doc)?;
         self.policy.validate(doc, self.target)?;
         self.bake.validate(doc, self.target, &|| Ok(()))?;
         if SourceMetadataContext::capture(doc, self.policy, self.target)? != self.context {
@@ -211,7 +219,8 @@ impl Plan {
             bytes,
             max: self.limits.snapshot,
         };
-        crate::pcnd::write_to(doc, &mut sink).map_err(|_| resource("snapshot allowance"))?;
+        crate::pcnd::write_compact_to_checked(doc, &mut sink, &|| Ok(()))
+            .map_err(|_| resource("snapshot allowance"))?;
         Ok(sink.bytes)
     }
 }

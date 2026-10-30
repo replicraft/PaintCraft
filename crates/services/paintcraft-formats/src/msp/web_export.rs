@@ -13,9 +13,9 @@ pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
 /// Exact opt-in Web Studio route; registry admission is qualified separately.
-pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v3";
-pub const PROTOCOL_VERSION: u16 = 3;
-pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v3";
+pub const EXPORT_VARIANT: &str = "web-msp2-row-rle-worker-v4";
+pub const PROTOCOL_VERSION: u16 = 4;
+pub const PROFILE: &str = "web-msp2-pcnd32mib-4mp-v4";
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
 pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
@@ -24,8 +24,8 @@ pub const SOURCE_BYTES_MAX: usize = (32 << 20) + (128 << 10);
 pub const ENCODED_BYTES_MAX: usize = 1 << 20;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
-pub const REQUEST_HEADER: usize = 224;
-pub const RESPONSE_HEADER: usize = 384;
+pub const REQUEST_HEADER: usize = 256;
+pub const RESPONSE_HEADER: usize = 416;
 pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Logical copies plus the full 256MiB Worker ceiling; not browser/GPU/RSS.
@@ -92,6 +92,9 @@ impl SourcePlan {
     }
     pub fn size(&self) -> (u32, u32) {
         self.source.size()
+    }
+    pub fn mask_context(&self) -> export::SourceMaskContext {
+        self.source.mask_context()
     }
     pub fn metadata_context(&self) -> export::SourceMetadataContext {
         self.source.metadata_context()

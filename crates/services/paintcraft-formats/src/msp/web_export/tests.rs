@@ -64,7 +64,12 @@ fn real_worker_uses_exact_monochrome_msp2_and_bound_preview() {
         }
         _ => panic!("unexpected refusal"),
     }
-    assert_eq!(pcnd::write(&doc).unwrap(), bytes[REQUEST_HEADER..]);
+    assert_eq!(pcnd::write_compact(&doc).unwrap(), bytes[REQUEST_HEADER..]);
+    assert!(
+        pcnd::read(&bytes[REQUEST_HEADER..])
+            .unwrap()
+            .same_semantics(&doc)
+    );
 }
 #[test]
 fn independent_whole_file_bound_covers_row_table_and_all_allowed_shapes() {

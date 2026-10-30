@@ -44,14 +44,14 @@ fn source_side_and_tile_caps_are_distinct_without_truncating_skinny_sources() {
     let bytes = plan.snapshot(&source, |_| Ok(())).unwrap();
     assert!(
         bytes.len() < 1 << 20,
-        "raw PCND writes logical edge samples, not padded tiles"
+        "compact PCND writes logical edge samples, not padded tiles"
     );
     let reopened = crate::pcnd::read(&bytes).unwrap();
     assert_eq!(reopened.canvas, source.canvas);
     assert_eq!(reopened.layers[&reopened.roots[0]].raster.width(), 65535);
 }
 #[test]
-fn full_layer_samples_need_the_larger_raw_limit_and_remain_byte_identical() {
+fn full_layer_samples_use_selected_compact_without_relaxing_snapshot_caps() {
     let mut source = doc(2048, 2048);
     source.layers.get_mut(&source.roots[0]).unwrap().raster = raster(2048, 2048);
     let mut layer = source.layers[&source.roots[0]].clone();
@@ -60,10 +60,16 @@ fn full_layer_samples_need_the_larger_raw_limit_and_remain_byte_identical() {
     source.layers.insert(layer.id, layer);
     let profile = MSP;
     let plan = Plan::capture(&source, profile).unwrap();
+    // Keep the independently meaningful full logical source: RAW exceeds32MiB
+    // because both2048² layers and all canonical headers remain present.
+    let raw = crate::pcnd::write(&source).unwrap();
+    assert!(raw.len() > 32 << 20);
+    assert!(raw.len() <= profile.snapshot);
     let bytes = plan.snapshot(&source, |_| Ok(())).unwrap();
-    assert!(bytes.len() > 32 << 20);
-    assert_eq!(bytes, crate::pcnd::write(&source).unwrap());
-    let tight = Plan::capture(
+    assert_eq!(bytes, crate::pcnd::write_compact(&source).unwrap());
+    assert!(crate::pcnd::read(&bytes).unwrap().same_semantics(&source));
+    // A smaller wire allowance may now admit compression, not fewer samples.
+    let stored = Plan::capture(
         &source,
         Limits {
             snapshot: 32 << 20,
@@ -71,9 +77,24 @@ fn full_layer_samples_need_the_larger_raw_limit_and_remain_byte_identical() {
         },
     )
     .unwrap();
+    assert_eq!(stored.snapshot(&source, |_| Ok(())).unwrap(), bytes);
+    // The same exact stored-size boundary still refuses before publication.
+    let tight = Plan::capture(
+        &source,
+        Limits {
+            snapshot: bytes.len() - 1,
+            ..profile
+        },
+    )
+    .unwrap();
     assert_eq!(
         tight.snapshot(&source, |_| Ok(())).unwrap_err().code,
         ErrorCode::ResourceLimit
+    );
+    assert_eq!(
+        crate::pcnd::write(&source).unwrap(),
+        raw,
+        "failed snapshot never changes source"
     );
 }
 #[test]
