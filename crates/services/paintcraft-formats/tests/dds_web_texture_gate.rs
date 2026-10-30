@@ -67,7 +67,8 @@ fn unrelated_variants_refuse_while_absent_options_keep_the_legacy_route() {
     for variant in [
         "native-dds-texture-v1",
         "web-dds-texture-worker-v1",
-        "web-dds-texture-worker-v3",
+        "web-dds-texture-worker-v2",
+        "web-dds-texture-worker-v4",
         "dds-guessed",
     ] {
         request.variant = Some(variant);

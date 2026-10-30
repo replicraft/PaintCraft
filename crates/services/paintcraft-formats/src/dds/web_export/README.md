@@ -1,7 +1,7 @@
 # Bounded advanced browser DDS export
 
 These source-bound preparation helpers serve the exact
-`web-dds-texture-worker-v2` Studio flat-export variant. Hosts must admit that
+`web-dds-texture-worker-v3` Studio flat-export variant. Hosts must admit that
 route before preparation. Native `PCDEC002` and browser JXL decoder2 remain
 unchanged; legacy/default browser DDS keeps its old route and capacity.
 
@@ -9,14 +9,17 @@ The browser profile admits at most 4,194,304 canvas pixels, each dimension at
 most 65,536, eight layers, 8,388,608 logical layer pixels, 24 MiB of resident
 padded tiles and 64 KiB of title/layer/control metadata. An existing source
 attachment retains at most the document model’s 8 MiB wire allowance under a
-separate charged realm; it is never stripped from the PCND2 snapshot. Data is kept or refused; no source
+separate charged realm; it is never stripped from the PCND snapshot. Data is kept or refused; no source
 layer or encoded mip is truncated. This is not the largest possible browser
 profile. Large thin populated rasters can exceed the padded-tile bound even
 when their canvas area fits.
 
-`SourcePlan::capture` retains the default refusal for attached metadata.
-`capture_with_metadata_policy` validates a typed omission choice against the exact
-frozen document and actual DDS flat-export target before allocation. The
+`SourcePlan::capture` defaults to refusing metadata omission and filter baking.
+`capture_with_policies` receives independent typed choices against the exact frozen
+document and DDS flat-export target. The old metadata-only wrapper grants no Bake
+authority. Any nonempty filter stack, including disabled or hidden intentions,
+requires explicit Bake and records `filters-baked`. A loss-name list cannot grant
+that authority. The immutable snapshot retains the editable PCND3 stacks. The
 host obtains the JS service reservation before `snapshot`, whose existing raw
 PCND writer uses a fixed 32 MiB sink. No rendering or encoding runs there. The
 SHA binds every byte, including all layers and metadata. The Worker reuses the
@@ -88,9 +91,9 @@ the independent compressed golden or promise a general BC color-error bound.
 Node `dds-profile.test.mjs` checks Rust/JS caps and the quote formula. Local
 browser receipts retain source patches, asset hashes, attempts and screenshots.
 
-## Version-two metadata qualification
+## Historical version-two metadata qualification
 
-The current production build passed a real Studio flow from an independent
+The version-two production build passed a real Studio flow from an independent
 9×7 PNG with original ICC/pHYs retained in PCND2. Chrome 156 on Apple silicon
 exercised RGBA8 sRGB output with a full nearest mip chain, explicit omission,
 visible preview, revocation/recheck with a fresh nonce, Cancel and download.
@@ -110,15 +113,15 @@ It preserves executed drivers, input/oracle provenance and all 25 production
 asset identities, shared with the independent generic PNG privacy proof. This
 qualifies the stated case, not every DDS model, browser or physical device.
 
-## Version-two byte layout
+## Version-three byte layout
 
 Integers are big-endian. Reserved bytes and inactive settings must be canonical.
-The request is a 192-byte header followed by the declared PCND snapshot:
+The request is a 224-byte header followed by the declared PCND snapshot:
 
 | Bytes | Field |
 |---|---|
-| 0..8 | `PCDDSQ02` |
-| 8..10 | protocol 2 |
+| 0..8 | `PCDDSQ03` |
+| 8..10 | protocol 3 |
 | 10..12 | zero |
 | 12..16 | snapshot byte length |
 | 16..24 | width, height |
@@ -126,22 +129,24 @@ The request is a 192-byte header followed by the declared PCND snapshot:
 | 65..81 | nonce UUID |
 | 81..113 | source SHA-256 |
 | 113..121 | canonical eight-byte settings |
-| 121 | source flags: flatten, hidden RGB |
-| 122..128 | zero |
-| 128..192 | source metadata context below |
+| 121 | source flags: mask1 flatten, mask2 hidden RGB, mask4 any filter intentions |
+| 122 | independent bake intent: 0 Refuse, 1 Bake |
+| 123..128 | zero |
+| 128..160 | canonical filter inventory SHA-256 |
+| 160..224 | unchanged source metadata context below |
 
 Settings contain encoding (RGBA8/BC1/BC2/BC3), transfer (sRGB/Linear8), alpha
 (straight except opaque BC1), actual level count, filter (Nearest/BoxStored),
 effort (Normal/High), and two zero bytes. RGBA effort canonicalizes to Normal;
 one-level filtering to Nearest. Decoding refuses noncanonical wire values.
 
-The response is a 352-byte header followed by DDS bytes, thumbnail RGBA and
+The response is a 384-byte header followed by DDS bytes, thumbnail RGBA and
 optional refusal text, in that order:
 
 | Bytes | Field |
 |---|---|
-| 0..8 | `PCDDSR02` |
-| 8..10 | protocol 2 |
+| 0..8 | `PCDDSR03` |
+| 8..10 | protocol 3 |
 | 10..12 | status, zero |
 | 12..24 | captured width, height, snapshot length |
 | 24..28 | encoded length |
@@ -151,13 +156,15 @@ optional refusal text, in that order:
 | 89..121 | source SHA-256 |
 | 121..129 | settings |
 | 129..193 | encoded SHA-256, thumbnail SHA-256 |
-| 193 | six known loss bits, including actual source metadata omission |
+| 193 | seven loss bits: flatten1, hidden RGB2, block4, mip8, linear16, metadata32, filters64 |
 | 194..198 | quantized RGB sample count |
 | 198..263 | version byte length, 64-byte zero-padded ASCII version |
 | 263..265 | bounded UTF-8 refusal length |
 | 265..266 | captured source flags |
-| 266..288 | zero |
-| 288..352 | exact request metadata-context echo |
+| 266 | exact captured bake intent |
+| 267..288 | zero |
+| 288..320 | exact captured filter inventory digest |
+| 320..384 | exact request metadata-context echo |
 
 Successful replies must match source/owner/nonce/options/version, both result
 digests, exact thumbnail geometry, actual DDS header/complete-chain inventory
@@ -169,7 +176,7 @@ fail-closed quarantine rules and never treats `terminate()` as a join.
 
 ## Source metadata context and copy authorization
 
-Offsets are relative to request byte128 or response byte288:
+Offsets are relative to request byte160 or response byte320:
 
 | Bytes | Field |
 |---|---|
@@ -190,13 +197,13 @@ The existing 640 MiB reservation also covers this additional retained charge:
 the previous inventory plus its maximum 8.0625 MiB remains below that cap.
 The Worker quotes the charge before PCND capture, denies understated storage
 before copying, and verifies document UUID, actual digest/extent and charged
-admission against the decoded snapshot. It keeps the real PCND2 attachment.
+admission against the decoded snapshot. It keeps the real PCND attachment.
 
 Only after validating the actual DDS target does the Worker prepare a copy with
 omission. Its new bit32 acknowledges `source-metadata-omitted`; no-metadata plus
 explicit intent echoes that intent but sets no omission loss. The response binds
 all 64 context bytes as well as existing source/owner/options/digest fields. Old
-version-one requests and replies are rejected without fallback.
+version-one and version-two requests and replies are rejected without fallback.
 
 The host retains the original SourcePlan Policy and Frozen copy. Wire owner state
 names that actual copy (including text-draft pixels); the live session owner and
@@ -204,3 +211,61 @@ Frozen.current independently guard later publication. Unchecking the metadata
 choice revokes old preparation/preview, rather than reusing an earlier approval.
 The omission is separately explicit, so unrelated format losses still require
 the existing consent while this one reason needs no duplicate checkbox.
+
+
+## Filter inventory and allocation admission
+
+The versioned `filter_bake::Inventory` digest binds document/state UUIDs, canvas,
+ordered root/layer IDs, each cached ordered stack digest, visibility, opacity,
+placement, finite raster dimensions and implicit default pixels. The host captures
+it once with the original sealed Bake policy. Changing a stack with unchanged
+state UUID still invalidates snapshot preparation. Counts and actual retained Vec
+capacity are separately checked resource facts, not semantic digest bytes; PCND
+reading may reduce spare capacity without changing the inventory digest.
+
+Before reading PCND, the Worker quotes source bytes, the existing padded-tile cap,
+the existing 8 MiB PCND metadata ceiling, bounded inline layer/stack storage,
+8 layers × 256 `FilterInstance` values and the existing 1 MiB scratch allowance.
+The independent, dynamically sized source-profile charge is then added using the
+unchanged context. After reading, actual filter count/storage are reconciled and
+retained in subsequent preparation quotes. The old 64 KiB name/control cap stays
+separate from filter-owned storage. No 16 KiB profile limit applies here.
+
+The Worker checks the immutable source SHA, state/geometry, metadata context and
+filter inventory before capturing a target-bound policy from byte122. Preview
+loss masks cannot select Bake. Source flag4 maps to actual loss64, independently
+of metadata loss32. Both success and completed refusal echo intent and digest.
+The host verifies those fields in JS and Rust, keeps its original policy and
+rechecks owner/intent before publication. Revoking consent retires preparation.
+These are logical admission/binding contracts, not measured RSS or forced Worker
+reclamation guarantees.
+
+Version-three ordinary controls passed locally: Formats 757 passing tests (28 existing ignores), Worker 7,
+Web 344 (3 existing ignores), and Node 102. The actual production Worker passed
+24 cases in Chrome 156.0.8078.79 on Apple silicon: eight positive enabled/disabled
+Invert cases with/without original source metadata, eight completed refusals and
+eight framing failures. Independent Python-authored PCND3/digest inputs and literal
+black/white pixels check actual DDS RGBA8 samples and MSP2 packed rows, not a
+PaintCraft rerender oracle. Source files stayed byte-identical. This tiny corpus
+does not requalify maximum geometry or every codec setting; historical capacity
+receipts retain their original scope. Actual PNG, DDS and MSP editor workflows also passed on these same 25 asset
+hashes: unchecked/default blocking, explicit Bake, revocation/recheck, no stale
+artifact download, exact independent pixels, and unchanged original project,
+title and dirty state. Their proof directories are listed below.
+
+The exact source/assets/response inventory is retained in
+`docs/validation/filter-worker-v3/production/attempt-v8fa4g/production.json`, SHA256
+`b4511a163bf7a5aba194ea21069e5afa9117b58242dfeae2ef8ea7a65d051ba4`.
+No memory high-water or runtime-performance claim follows from these cases.
+
+
+The matching visible-consent proofs are retained separately:
+
+- PNG: `docs/validation/filter-bake-ui/browser/attempt-0vAVeM/production.json`
+- DDS: `docs/validation/filter-bake-ui/browser/attempt-dcMLpq/production.json`
+- MSP: `docs/validation/filter-bake-ui/browser/attempt-15KhIo/production.json`
+
+`docs/validation/filter-worker-v3/ui-crossbinding.json` records their complete
+receipt hashes and independently verifies all 25 production asset hashes match
+the raw Worker proof. The actual UI specimen uses enabled Invert; disabled-only
+intentions are separately covered by the real Worker corpus and host controls.

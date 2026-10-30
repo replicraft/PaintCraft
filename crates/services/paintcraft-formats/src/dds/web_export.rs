@@ -12,9 +12,9 @@ mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
-pub const EXPORT_VARIANT: &str = "web-dds-texture-worker-v2";
-pub const PROTOCOL_VERSION: u16 = 2;
-pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v2";
+pub const EXPORT_VARIANT: &str = "web-dds-texture-worker-v3";
+pub const PROTOCOL_VERSION: u16 = 3;
+pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v3";
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
 pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
@@ -23,8 +23,8 @@ pub const SOURCE_BYTES_MAX: usize = 32 << 20;
 pub const ENCODED_BYTES_MAX: usize = (24 << 20) + 4096;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
-pub const REQUEST_HEADER: usize = 192;
-pub const RESPONSE_HEADER: usize = 352;
+pub const REQUEST_HEADER: usize = 224;
+pub const RESPONSE_HEADER: usize = 384;
 pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Declares known copies and the entire 256MiB Worker linear-memory ceiling.
@@ -32,13 +32,14 @@ pub const RESPONSE_BYTES_MAX: usize =
 pub const RESERVATION_BYTES: u64 = 640 << 20;
 /// Existing isolated preparation workspace ceiling, including retained source facts.
 pub const WORKER_PAYLOAD_BYTES_MAX: u64 = 192 << 20;
-pub const LOSSES: [&str; 6] = [
+pub const LOSSES: [&str; 7] = [
     "flatten",
     "hidden-rgb",
     BLOCK_COMPRESSION_LOSS,
     MIP_HIDDEN_RGB_LOSS,
     export::dds::LINEAR_QUANTIZATION_LOSS,
     export::metadata_policy::OMITTED_REASON,
+    export::filter_bake::BAKED_REASON,
 ];
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::InputSchema, message)
@@ -74,10 +75,25 @@ impl SourcePlan {
         options: TextureOptions,
         policy: export::metadata_policy::Policy,
     ) -> Result<Self> {
-        let source = SnapshotPlan::capture_with_metadata_policy(
+        Self::capture_with_policies(
+            doc,
+            options,
+            export::CopyPolicies {
+                source_metadata: policy,
+                ..Default::default()
+            },
+        )
+    }
+    pub fn capture_with_policies(
+        doc: &Document,
+        options: TextureOptions,
+        policies: export::CopyPolicies,
+    ) -> Result<Self> {
+        let source = SnapshotPlan::capture_with_policies(
             doc,
             SOURCE_LIMITS,
-            policy,
+            policies.source_metadata,
+            policies.filter_bake,
             export::metadata_policy::Target::new(
                 crate::registry::Family::Dds,
                 crate::registry::Operation::ExportFlat,
@@ -90,7 +106,16 @@ impl SourcePlan {
         self.source.metadata_context()
     }
     pub fn validate_metadata_policy(&self, doc: &Document) -> Result<()> {
+        self.validate_policies(doc)
+    }
+    pub fn validate_policies(&self, doc: &Document) -> Result<()> {
         self.source.validate_policy(doc)
+    }
+    pub fn bake_intent(&self) -> u8 {
+        self.source.bake_intent()
+    }
+    pub fn filter_digest(&self) -> [u8; 32] {
+        self.source.filter_inventory().digest()
     }
     pub fn source_flags(&self) -> u8 {
         self.source.flags()
@@ -203,3 +228,6 @@ pub fn preview_size(size: (u32, u32)) -> (u32, u32) {
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod filter_tests;
