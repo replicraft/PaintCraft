@@ -1,7 +1,14 @@
 //! Shared byte reservations with ownership-based release.
 //! Consumers define the charged resource; this is not allocator/RSS interception.
 use super::{Error, ErrorCode, Result};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
+
+/// One default resident realm for binary selections and retained A8 coverage.
+/// Explicit host/test realms remain injectable; this is not an RSS limit.
+pub fn default_coverage_budget() -> SharedBudget {
+    static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
+    DEFAULT.get_or_init(|| SharedBudget::new(256 << 20)).clone()
+}
 mod watch;
 pub use watch::{BudgetPressure, BudgetWatch};
 mod reservation;

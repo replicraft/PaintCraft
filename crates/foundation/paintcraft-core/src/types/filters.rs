@@ -1,5 +1,7 @@
 //! Versioned encoded-RGB filter descriptors. These do not change composition policy.
 use super::{Error, ErrorCode, Result};
+mod coverage;
+pub use coverage::{A8Band, A8Input, A8InputBuilder, A8Run, MaskInputLimits};
 
 /// Brightness is a signed hundredth of the full channel range; contrast is a
 /// signed hundredth in the rational gain (100+c)/(100-c).
