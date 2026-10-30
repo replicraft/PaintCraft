@@ -174,7 +174,7 @@ impl A8Mask {
             pending: None,
         }
     }
-    fn view(
+    pub(super) fn view(
         &self,
         domain: Rect,
         support: Option<Rect>,
@@ -183,7 +183,7 @@ impl A8Mask {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
         let mut probe = Probe {
-            remaining: work,
+            remaining: Cell::new(work),
             check,
         };
         probe.step()?;
@@ -194,13 +194,14 @@ impl A8Mask {
             offset,
             storage: self.storage.clone(),
             digest: [0; 32],
+            stats: Stats::default(),
         };
         if result.visible().next_checked(&mut probe)?.is_none() {
             result.storage = None;
             result.support = None;
             result.offset = (0, 0);
         }
-        result.digest = result.hash(&mut probe)?;
+        (result.digest, result.stats) = result.hash(&mut probe)?;
         probe.step()?;
         Ok(result)
     }
@@ -273,7 +274,7 @@ impl A8Mask {
         mut emit: impl FnMut(i64, i64, Run) -> Result<()>,
     ) -> Result<()> {
         let mut probe = Probe {
-            remaining: work,
+            remaining: Cell::new(work),
             check,
         };
         probe.step()?;

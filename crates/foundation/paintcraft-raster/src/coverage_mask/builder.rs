@@ -1,6 +1,6 @@
 //! Two-pass canonical construction; retained allocations are admitted first.
 use super::*;
-use paintcraft_core::types::resources::AllocationClass;
+
 use std::mem::size_of;
 #[derive(Clone)]
 pub(super) struct Runs<'a> {
@@ -54,7 +54,7 @@ impl Runs<'_> {
 pub(super) fn build(
     domain: Rect,
     input: &[Band<'_>],
-    budget: &SharedBudget,
+    scope: &BudgetScope,
     limits: Limits,
     probe: &mut Probe<'_>,
 ) -> Result<Option<Arc<Storage>>> {
@@ -104,23 +104,13 @@ pub(super) fn build(
     if bands == 0 {
         return Ok(None);
     }
-    let size = |bc: usize, rc: usize| {
-        bc.checked_mul(size_of::<Rows>())
-            .and_then(|b| {
-                rc.checked_mul(size_of::<Run>())
-                    .and_then(|r| b.checked_add(r))
-            })
-            .and_then(|n| n.checked_add(size_of::<Storage>() + 2 * size_of::<usize>()))
-            .and_then(|n| u64::try_from(n).ok())
-            .ok_or_else(limit)
-    };
-    let mut charge = budget.scope(AllocationClass::SelectionMasks).account();
-    charge.resize(size(bands, runs)?)?;
+    let mut charge = scope.account();
+    charge.resize(quote(bands, runs)?)?;
     let mut output = Vec::<Rows>::new();
     let mut values = Vec::<Run>::new();
     output.try_reserve_exact(bands).map_err(|_| limit())?;
     values.try_reserve_exact(runs).map_err(|_| limit())?;
-    let bytes = size(output.capacity(), values.capacity())?;
+    let bytes = quote(output.capacity(), values.capacity())?;
     if let Err(error) = charge.resize(bytes) {
         drop(output);
         drop(values);
@@ -164,4 +154,21 @@ pub(super) fn build(
         bytes,
         _charge: charge,
     })))
+}
+
+pub(super) fn quote(bc: usize, rc: usize) -> Result<u64> {
+    if bc == 0 {
+        return if rc == 0 { Ok(0) } else { Err(schema()) };
+    }
+    if rc < bc {
+        return Err(schema());
+    }
+    bc.checked_mul(size_of::<Rows>())
+        .and_then(|b| {
+            rc.checked_mul(size_of::<Run>())
+                .and_then(|r| b.checked_add(r))
+        })
+        .and_then(|n| n.checked_add(size_of::<Storage>() + 2 * size_of::<usize>()))
+        .and_then(|n| u64::try_from(n).ok())
+        .ok_or_else(limit)
 }

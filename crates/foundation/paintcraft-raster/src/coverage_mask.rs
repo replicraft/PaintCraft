@@ -1,25 +1,18 @@
 //! Immutable finite A8 fields. This is independent of binary live selections.
-use paintcraft_core::types::resources::{BudgetAccount, SharedBudget};
+use paintcraft_core::types::resources::{
+    AllocationClass, BudgetAccount, BudgetScope, SharedBudget,
+};
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, policy::COORD_ABS_MAX};
 use sha2::{Digest, Sha256};
-use std::sync::Arc;
+use std::{cell::Cell, sync::Arc};
 mod builder;
+mod capture;
+mod mapping;
+mod query;
 mod views;
 
-/// A half-open nonzero run after canonicalization. Input may contain zero runs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Run {
-    pub x0: i64,
-    pub x1: i64,
-    pub coverage: u8,
-}
-/// Repeated identical rows, with ordered nonoverlapping half-open runs.
-#[derive(Clone, Copy, Debug)]
-pub struct Band<'a> {
-    pub y0: i64,
-    pub y1: i64,
-    pub runs: &'a [Run],
-}
+// Core owns the numeric wire shape; Raster supplies immutable admitted storage.
+pub use paintcraft_core::types::filters::{A8Band as Band, A8Run as Run};
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
     pub work: u64,
@@ -34,6 +27,21 @@ impl Default for Limits {
             runs: 262_144,
         }
     }
+}
+/// Cached canonical complexity, independent of hidden backing storage.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Stats {
+    pub bands: usize,
+    pub runs: usize,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visit {
+    Band { y0: i64, y1: i64, runs: usize },
+    Run(Run),
+}
+/// Final canonical storage charge, excluding caller-owned parse scratch.
+pub fn retained_quote(bands: usize, runs: usize) -> Result<u64> {
+    builder::quote(bands, runs)
 }
 #[derive(Debug)]
 struct Rows {
@@ -60,6 +68,7 @@ pub struct A8Mask {
     offset: (i64, i64),
     storage: Option<Arc<Storage>>,
     digest: [u8; 32],
+    stats: Stats,
 }
 // Equality is synchronous and bounded by retained records. Callers that need
 // cooperative cancellation must use same_coverage_checked instead.
@@ -67,18 +76,31 @@ impl PartialEq for A8Mask {
     fn eq(&self, other: &Self) -> bool {
         self.domain == other.domain
             && self.digest == other.digest
-            && self.visible().eq(other.visible())
+            && ((self.support == other.support
+                && self.offset == other.offset
+                && match (&self.storage, &other.storage) {
+                    (Some(a), Some(b)) => Arc::ptr_eq(a, b),
+                    (None, None) => true,
+                    _ => false,
+                })
+                || self.visible().eq(other.visible()))
     }
 }
 impl Eq for A8Mask {}
 struct Probe<'a> {
-    remaining: u64,
+    remaining: Cell<u64>,
     check: &'a dyn Fn() -> Result<()>,
 }
 impl Probe<'_> {
-    fn step(&mut self) -> Result<()> {
+    fn spend(&self, amount: u64) -> Result<()> {
+        self.remaining
+            .set(self.remaining.get().checked_sub(amount).ok_or_else(limit)?);
+        Ok(())
+    }
+    fn step(&self) -> Result<()> {
         (self.check)()?;
-        self.remaining = self.remaining.checked_sub(1).ok_or_else(limit)?;
+        self.remaining
+            .set(self.remaining.get().checked_sub(1).ok_or_else(limit)?);
         Ok(())
     }
 }
@@ -92,21 +114,32 @@ impl A8Mask {
         limits: Limits,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        let scope = budget.scope(AllocationClass::CoverageMasks);
+        Self::from_bands_in_scope(domain, bands, &scope, limits, check)
+    }
+    pub fn from_bands_in_scope(
+        domain: Rect,
+        bands: &[Band<'_>],
+        scope: &BudgetScope,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         let mut probe = Probe {
-            remaining: limits.work,
+            remaining: Cell::new(limits.work),
             check,
         };
         probe.step()?;
         valid(domain)?;
-        let storage = builder::build(domain, bands, budget, limits, &mut probe)?;
+        let storage = builder::build(domain, bands, scope, limits, &mut probe)?;
         let mut mask = Self {
             domain,
             support: Some(domain),
             offset: (0, 0),
             storage,
             digest: [0; 32],
+            stats: Stats::default(),
         };
-        mask.digest = mask.hash(&mut probe)?;
+        (mask.digest, mask.stats) = mask.hash(&mut probe)?;
         probe.step()?;
         Ok(mask)
     }
@@ -142,6 +175,9 @@ impl A8Mask {
     pub fn default_coverage(&self) -> u8 {
         0
     }
+    pub fn stats(&self) -> Stats {
+        self.stats
+    }
     pub fn digest(&self) -> [u8; 32] {
         self.digest
     }
@@ -175,7 +211,7 @@ impl A8Mask {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<bool> {
         let mut probe = Probe {
-            remaining: work,
+            remaining: Cell::new(work),
             check,
         };
         probe.step()?;
@@ -204,7 +240,7 @@ impl A8Mask {
             }
         }
     }
-    fn hash(&self, probe: &mut Probe<'_>) -> Result<[u8; 32]> {
+    fn hash(&self, probe: &mut Probe<'_>) -> Result<([u8; 32], Stats)> {
         let mut hash = Sha256::new();
         hash.update(b"paintcraft.a8-mask/v1\0");
         for v in [
@@ -216,11 +252,13 @@ impl A8Mask {
             hash.update(v.to_be_bytes());
         }
         let mut count = 0u64;
+        let mut stats = Stats::default();
         let mut cursor = self.visible();
         while cursor.next_checked(probe)?.is_some() {
             count += 1;
         }
         hash.update(count.to_be_bytes());
+        stats.bands = count as usize;
         let mut cursor = self.visible();
         while let Some(band) = cursor.next_checked(probe)? {
             hash.update(band.y0.to_be_bytes());
@@ -231,6 +269,7 @@ impl A8Mask {
                 count += 1;
             }
             hash.update(count.to_be_bytes());
+            stats.runs += count as usize;
             let mut runs = band.runs();
             while let Some(run) = runs.next_checked(probe)? {
                 hash.update(run.x0.to_be_bytes());
@@ -239,7 +278,7 @@ impl A8Mask {
             }
         }
         probe.step()?;
-        Ok(hash.finalize().into())
+        Ok((hash.finalize().into(), stats))
     }
 }
 fn valid(r: Rect) -> Result<()> {
@@ -266,5 +305,7 @@ fn limit() -> Error {
         "A8 mask work or storage admission exceeded",
     )
 }
+#[cfg(test)]
+mod lifecycle_tests;
 #[cfg(test)]
 mod tests;

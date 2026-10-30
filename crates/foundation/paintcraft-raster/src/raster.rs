@@ -71,19 +71,28 @@ pub struct Admission {
     stroke_scratch_limit: usize,
     residency: SharedBudget,
     selection_budget: SharedBudget,
+    coverage_budget: SharedBudget,
     reservation: Option<BudgetReservation>,
     allocation_scope: Option<Arc<std::sync::Mutex<tile::Scope>>>,
 }
 
 impl Admission {
     fn default_selection_budget() -> SharedBudget {
-        static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
-        DEFAULT.get_or_init(|| SharedBudget::new(256 << 20)).clone()
+        paintcraft_core::types::resources::default_coverage_budget()
     }
     /// Resident selection payloads share a separate realm across snapshots/history.
     pub fn with_selection_budget(mut self, budget: SharedBudget) -> Self {
         self.selection_budget = budget;
         self
+    }
+    /// Persistent filter coverage defaults to the same process realm as live
+    /// selections. Explicit setters affect only their named caller realm.
+    pub fn with_coverage_budget(mut self, budget: SharedBudget) -> Self {
+        self.coverage_budget = budget;
+        self
+    }
+    pub fn coverage_budget(&self) -> SharedBudget {
+        self.coverage_budget.clone()
     }
     pub fn selection_budget(&self) -> SharedBudget {
         self.selection_budget.clone()
@@ -103,6 +112,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             selection_budget: Self::default_selection_budget(),
+            coverage_budget: paintcraft_core::types::resources::default_coverage_budget(),
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
             paint_metadata_scope: paint::default_metadata_budget()
                 .scope(AllocationClass::PaintMetadata),
@@ -120,6 +130,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             selection_budget: Self::default_selection_budget(),
+            coverage_budget: paintcraft_core::types::resources::default_coverage_budget(),
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
             paint_metadata_scope: paint::default_metadata_budget()
                 .scope(AllocationClass::PaintMetadata),

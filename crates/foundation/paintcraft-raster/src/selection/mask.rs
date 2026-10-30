@@ -271,3 +271,51 @@ fn spend(work: &mut u64, amount: u64) -> Result<()> {
     *work = work.checked_sub(amount).ok_or_else(limit)?;
     Ok(())
 }
+
+impl BinaryMask {
+    /// Crate-local sparse geometry for immutable A8 capture. Missing tile ranges
+    /// are represented by the explicit default, not enumerated tile by tile.
+    pub(crate) fn stored_tile_rectangles_checked(
+        &self,
+        clip: Rect,
+        work: u64,
+        check: &dyn Fn() -> Result<()>,
+        mut emit: impl FnMut(Rect) -> Result<()>,
+    ) -> Result<()> {
+        check()?;
+        let mut remaining = work;
+        if let Some(storage) = &self.storage {
+            for coordinate in storage.tiles.keys() {
+                check()?;
+                spend(&mut remaining, 1)?;
+                let x = coordinate
+                    .tx
+                    .checked_mul(i64::from(crate::TILE_EDGE))
+                    .and_then(|x| x.checked_add(self.offset.0))
+                    .ok_or_else(limit)?;
+                let y = coordinate
+                    .ty
+                    .checked_mul(i64::from(crate::TILE_EDGE))
+                    .and_then(|y| y.checked_add(self.offset.1))
+                    .ok_or_else(limit)?;
+                let tile = Rect {
+                    x0: x,
+                    y0: y,
+                    x1: x
+                        .checked_add(i64::from(crate::TILE_EDGE))
+                        .ok_or_else(limit)?,
+                    y1: y
+                        .checked_add(i64::from(crate::TILE_EDGE))
+                        .ok_or_else(limit)?,
+                };
+                if let Some(rect) = tile
+                    .intersect(&self.domain)
+                    .and_then(|r| r.intersect(&clip))
+                {
+                    emit(rect)?;
+                }
+            }
+        }
+        check()
+    }
+}
