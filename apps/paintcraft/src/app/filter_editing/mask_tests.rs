@@ -284,3 +284,95 @@ fn read_project(bytes: &[u8]) -> paintcraft_document::Document {
     )
     .unwrap()
 }
+
+#[test]
+fn selection_only_epoch_stales_mask_capture_before_private_text_can_publish() {
+    for asynchronous in [false, true] {
+        for private_text in [false, true] {
+            let mut a = masked_app(asynchronous);
+            a.editor.request(
+                7301,
+                Action::Select {
+                    corners: Some(((0, 0), (0, 0))),
+                },
+            );
+            drain(&mut a);
+            let captured = a.editor.filter_capture(
+                operation(
+                    &a.editor,
+                    a.editor.target().unwrap(),
+                    Intent::UseSelection(Uuid::from_u128(71)),
+                )
+                .unwrap(),
+            );
+            assert!(matches!(
+                &captured.operation,
+                paintcraft_commands::FilterOp::Mask {
+                    operation: paintcraft_commands::MaskOp::FromSelection { enabled: true },
+                    ..
+                }
+            ));
+            let state_a = a.editor.render_key();
+            a.editor.request(
+                7302,
+                Action::Select {
+                    corners: Some(((1, 0), (1, 0))),
+                },
+            );
+            drain(&mut a);
+            let state_b = a.editor.render_key();
+            assert_eq!(
+                state_a.0, state_b.0,
+                "selection B must not change document state ID"
+            );
+            assert_ne!(
+                state_a.1, state_b.1,
+                "selection B must revoke captured epoch"
+            );
+            assert_eq!(captured.state_id, state_b.0);
+            assert_ne!(captured.publication_epoch, state_b.1);
+            let source = a.editor.document_snapshot();
+            let selected = a.editor.selection();
+            let history = a.editor.history_view();
+            let dirty = a.editor.published_is_dirty();
+            if private_text {
+                a.editor.select_tool(paintcraft_tools::Tool::Text);
+                a.editor.pointer_down((0, 0));
+                a.editor.pointer_up();
+                a.editor.type_text("keep selection-era text");
+            }
+            let text_revision = a.editor.canvas_text_revision();
+            let error = a
+                .editor
+                .queue_filter_apply(7303, captured.clone())
+                .unwrap_err();
+            assert_eq!(
+                error.code,
+                paintcraft_core::types::ErrorCode::ConflictStaleBase
+            );
+            // Also exercise the external Action boundary before commit_text.
+            assert!(!a.editor.request(7304, Action::Filter(captured)));
+            assert_eq!(a.editor.run_pending(), 0);
+            assert_eq!(a.editor.render_key(), state_b);
+            assert_eq!(a.editor.selection(), selected);
+            assert_eq!(a.editor.history_view(), history);
+            assert_eq!(a.editor.published_is_dirty(), dirty);
+            assert!(Arc::ptr_eq(&source, &a.editor.document_snapshot()));
+            assert!(
+                a.editor.document().layers[&a.editor.target().unwrap()]
+                    .filters
+                    .as_slice()[0]
+                    .mask()
+                    .is_none()
+            );
+            assert_eq!(a.editor.canvas_text_revision(), text_revision);
+            if private_text {
+                assert_eq!(
+                    a.editor.canvas_text_content(),
+                    Some("keep selection-era text")
+                );
+                assert!(a.editor.is_editing_text());
+            }
+        }
+    }
+}

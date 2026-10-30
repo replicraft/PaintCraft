@@ -206,3 +206,59 @@ fn read_project(bytes: &[u8]) -> paintcraft_document::Document {
     )
     .unwrap()
 }
+
+#[test]
+fn selection_only_epoch_stales_mask_capture_before_private_text_can_publish() {
+    for private_text in [false, true] {
+        let (_, mut app, id) = setup_filter();
+        selection(&mut app, Rect::new(0, 0, 1, 1).unwrap());
+        let ticket_a = app.editor.session.ticket();
+        let captured = FilterEdit {
+            owner: app.editor.session.owner_id(),
+            state_id: ticket_a.state_id,
+            publication_epoch: ticket_a.publication_epoch,
+            operation: state::operation(&app, Intent::UseSelection(id)).unwrap(),
+        };
+        assert!(matches!(
+            &captured.operation,
+            paintcraft_commands::FilterOp::Mask {
+                operation: paintcraft_commands::MaskOp::FromSelection { enabled: true },
+                ..
+            }
+        ));
+        selection(&mut app, Rect::new(1, 0, 1, 1).unwrap());
+        let ticket_b = app.editor.session.ticket();
+        assert_eq!(
+            ticket_a.state_id, ticket_b.state_id,
+            "selection B must not change document state ID"
+        );
+        assert_ne!(ticket_a.publication_epoch, ticket_b.publication_epoch);
+        let source = app.editor.session.snapshot();
+        let selected = app.editor.session.selection();
+        let depth = app.editor.session.undo_depth();
+        let dirty = app.editor.session.is_dirty();
+        if private_text {
+            app.editor
+                .tools
+                .begin_text(app.editor.target.unwrap(), (0, 0));
+            app.editor.tools.type_text("keep selection-era text");
+        }
+        let stamp = app.editor.tools.text_stamp();
+        let error = app.editor.apply(Edit::Filter(captured)).unwrap_err();
+        assert_eq!(error.code, ErrorCode::ConflictStaleBase);
+        assert_eq!(app.editor.session.ticket(), ticket_b);
+        assert_eq!(app.editor.session.selection(), selected);
+        assert_eq!(app.editor.session.undo_depth(), depth);
+        assert_eq!(app.editor.session.is_dirty(), dirty);
+        assert!(Arc::ptr_eq(&source, &app.editor.session.snapshot()));
+        assert!(
+            app.editor.session.document().layers[&app.editor.target.unwrap()]
+                .filters
+                .as_slice()[0]
+                .mask()
+                .is_none()
+        );
+        assert_eq!(app.editor.tools.text_stamp(), stamp);
+        assert_eq!(app.editor.tools.is_editing_text(), private_text);
+    }
+}
