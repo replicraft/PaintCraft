@@ -19,3 +19,10 @@ new foreign-image, CMS or ICC-colorimetry claim.
 Every malformed fixture has a recomputed valid outer SHA. Its failure therefore
 exercises the intended count, boolean, duplicate, parameter, algorithm/version,
 source-presence or canonical-version boundary rather than a checksum mismatch.
+
+Historical version note: the frozen `future-v5.pcnd` belongs to the earlier
+point-only qualification. Version5 is now recognized; this old fixture is still
+refused by legacy `read()` because explicit coverage admission is required for
+the new grammar. It is no longer evidence that5 is unknown. The PCND5 spatial
+corpus contains `future-v6.pcnd` as the current unknown-version control. Original
+fixture bytes and oracle hashes are unchanged.

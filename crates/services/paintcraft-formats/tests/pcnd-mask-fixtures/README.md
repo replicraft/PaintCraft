@@ -21,3 +21,10 @@ equal runs/bands must already be merged. A stored zero mask retains its domain.
 These are persistence/admission specimens, not browser, CMS or visual-render
 qualification. Unmasked PCND1/2/3 bytes retain their existing framing. PCND4
 readers must receive an explicit shared coverage realm before mask allocations.
+
+Historical classification note: `future-v5.pcnd` and its oracle/generator error
+label are retained byte-for-byte from the PCND4 qualification checkpoint, when
+version5 was unknown. The current PCND5 reader recognizes that header but rejects
+this unchanged body as `codec.failed` because it contains no Box descriptor.
+The independent PCND5 corpus now contains `future-v6.pcnd` as the actual unknown
+version control. Do not rewrite the historical file/hash stream to relabel it.

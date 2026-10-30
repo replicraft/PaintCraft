@@ -132,7 +132,7 @@ fn malformed_canonical_bands_and_unknown_disabled_codec_refuse_without_charge() 
         let name = row.get("file").unwrap().as_str().unwrap();
         let budget = SharedBudget::new(1 << 20);
         let result = open(&fixture(name), &budget, Limits::default(), &|| Ok(()));
-        let expected = if name == "unknown-disabled.pcnd" || name == "future-v5.pcnd" {
+        let expected = if name == "unknown-disabled.pcnd" {
             ErrorCode::CapabilityUnsupported
         } else {
             ErrorCode::CodecFailed
