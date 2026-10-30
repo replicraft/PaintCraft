@@ -202,6 +202,8 @@ pub fn tr_status(ctx: &egui::Context, source: &str) -> String {
         ),
         ("Cannot render: ", "Cannot render: { $detail }"),
         ("Cannot place text: ", "Cannot place text: { $detail }"),
+        ("Filter not opened: ", "Filter not opened: { $detail }"),
+        ("Filter not applied: ", "Filter not applied: { $detail }"),
         (
             "Cannot render viewport: ",
             "Cannot render viewport: { $detail }",
@@ -279,6 +281,41 @@ pub fn picker(ui: &mut egui::Ui, lang: &mut Language) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn studio_filter_statuses_translate_and_keep_diagnostic_values() {
+        let context = egui::Context::default();
+        let detail = "resource.limit: 原稿/{literal}.pcnd";
+        for language in Language::ALL {
+            set_language(&context, language);
+            for prefix in ["Filter not opened: ", "Filter not applied: "] {
+                let status = format!("{prefix}{detail}");
+                let translated = tr_status(&context, &status);
+                assert!(
+                    translated.ends_with(detail),
+                    "{}: {translated}",
+                    language.id()
+                );
+                if language == Language::English {
+                    assert_eq!(translated, status);
+                } else {
+                    assert_ne!(translated, status, "{}", language.id());
+                }
+            }
+            for source in [
+                "Filter applied",
+                "Filter not applied: its document changed",
+                "Applies to the whole layer.",
+            ] {
+                let translated = tr_status(&context, source);
+                if language == Language::English {
+                    assert_eq!(translated, source);
+                } else {
+                    assert_ne!(translated, source, "{}: {source}", language.id());
+                }
+            }
+        }
+    }
+
     #[test]
     fn retained_text_statuses_translate_without_changing_diagnostic_details() {
         let context = egui::Context::default();

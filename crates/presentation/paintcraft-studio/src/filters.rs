@@ -85,7 +85,7 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
                 if ui.small_button(t!(ui.ctx(), "Edit")).clicked() {
                     actions.push(Action::Edit(row.id));
                 }
-                ui.menu_button(t!(ui.ctx(), "Filter actions"), |ui| {
+                let menu = ui.menu_button("…", |ui| {
                     if ui
                         .add_enabled(index > 0, egui::Button::new(t!(ui.ctx(), "Move up")))
                         .clicked()
@@ -121,6 +121,11 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
                         ui.close();
                     }
                 });
+                let title = t!(ui.ctx(), "Filter actions");
+                menu.response.widget_info(|| {
+                    egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &title)
+                });
+                let _ = menu.response.on_hover_text(title);
             });
         });
     }
@@ -198,39 +203,47 @@ pub fn parameter_dialog(ctx: &egui::Context, values: &mut Parameters) -> Paramet
 
 fn draw_parameters(ctx: &egui::Context, values: &mut Parameters) -> ParameterResponse {
     let mut response = ParameterResponse::Pending;
-    let modal = egui::Modal::new(egui::Id::unique("studio-filter-parameters")).show(ctx, |ui| {
-        ui.set_min_width(300.0);
-        ui.heading(t!(ui.ctx(), values.kind.label()));
-        if values.kind == Kind::BrightnessContrast {
-            ui.add(
-                egui::Slider::new(&mut values.brightness, -100..=100)
-                    .text(t!(ui.ctx(), "Brightness")),
-            );
-            ui.add(
-                egui::Slider::new(&mut values.contrast, -99..=99).text(t!(ui.ctx(), "Contrast")),
-            );
-        }
-        ui.checkbox(&mut values.preview, t!(ui.ctx(), "Preview"));
-        ui.weak(t!(ui.ctx(), "Source pixels remain unchanged."));
-        ui.separator();
-        let descriptor = values.descriptor().ok();
-        ui.horizontal(|ui| {
-            if ui
-                .add_enabled(
-                    descriptor.is_some(),
-                    egui::Button::new(t!(ui.ctx(), "Apply")),
-                )
-                .clicked()
-                && let Some(descriptor) = descriptor
-            {
-                response = ParameterResponse::Apply(descriptor);
+    let mut open = true;
+    egui::Window::new(t!(ctx, values.kind.label()))
+        .id(egui::Id::unique("studio-filter-parameters"))
+        .open(&mut open)
+        .collapsible(false)
+        .resizable(false)
+        .default_width(340.0)
+        .show(ctx, |ui| {
+            ui.set_min_width(300.0);
+            if values.kind == Kind::BrightnessContrast {
+                ui.add(
+                    egui::Slider::new(&mut values.brightness, -100..=100)
+                        .text(t!(ui.ctx(), "Brightness")),
+                );
+                ui.add(
+                    egui::Slider::new(&mut values.contrast, -99..=99)
+                        .text(t!(ui.ctx(), "Contrast")),
+                );
             }
-            if ui.button(t!(ui.ctx(), "Cancel")).clicked() {
-                response = ParameterResponse::Cancel;
-            }
+            ui.checkbox(&mut values.preview, t!(ui.ctx(), "Preview"));
+            ui.weak(t!(ui.ctx(), "Applies to the whole layer."));
+            ui.weak(t!(ui.ctx(), "Source pixels remain unchanged."));
+            ui.separator();
+            let descriptor = values.descriptor().ok();
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(
+                        descriptor.is_some(),
+                        egui::Button::new(t!(ui.ctx(), "Apply")),
+                    )
+                    .clicked()
+                    && let Some(descriptor) = descriptor
+                {
+                    response = ParameterResponse::Apply(descriptor);
+                }
+                if ui.button(t!(ui.ctx(), "Cancel")).clicked() {
+                    response = ParameterResponse::Cancel;
+                }
+            });
         });
-    });
-    if modal.should_close() {
+    if !open || ctx.input(|input| input.key_pressed(egui::Key::Escape)) {
         return ParameterResponse::Cancel;
     }
     response
