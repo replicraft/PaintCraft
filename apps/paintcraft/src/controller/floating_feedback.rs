@@ -12,12 +12,14 @@ impl Editor {
     }
     /// Never skip a structural/file boundary to preview a later movement.
     pub(super) fn queued_move_preview(&self) -> Option<Preview> {
-        if self.file_barrier.is_some() || self.has_inflight_edit() {
+        if self.file_barrier.is_some() || self.has_inflight_edit() || self.text_placement_failed() {
             return None;
         }
         let action = match self.actions.front() {
             Some(background::Queued::Edit(queued)) => Some(&queued.action),
-            Some(background::Queued::FileBarrier(_)) => None,
+            Some(
+                background::Queued::FileBarrier(_) | background::Queued::TextCaptureFailure(_),
+            ) => None,
             None => self.outbox.pending().next(),
         }?;
         match action {

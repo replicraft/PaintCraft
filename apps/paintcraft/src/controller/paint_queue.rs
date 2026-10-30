@@ -111,6 +111,9 @@ impl Editor {
     /// Later painting can overlap a paint-only prefix. Any operation that could
     /// change layout, target validity, selection or publication identity blocks it.
     pub(crate) fn painting_blocked(&self) -> bool {
+        if self.retained_text_blocks_actions() {
+            return true;
+        }
         if self.editing.is_none() {
             return false;
         }
@@ -149,7 +152,7 @@ impl Editor {
     /// each. Stop at a file/structural boundary; its later commands are not yet
     /// part of the visible speculative document.
     pub(super) fn paint_preview(&self) -> Option<Preview> {
-        if self.editing.is_none() || self.file_barrier.is_some() {
+        if self.editing.is_none() || self.file_barrier.is_some() || self.text_placement_failed() {
             return None;
         }
         let mut paths = Vec::new();

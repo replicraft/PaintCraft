@@ -17,7 +17,9 @@ impl Editor {
         delete: usize,
         text: &str,
     ) -> Result<()> {
-        self.tools.replace_text_tail(token, delete, text)
+        self.tools.replace_text_tail(token, delete, text)?;
+        self.reconcile_text_submission();
+        Ok(())
     }
     pub(crate) fn with_text_renderer(mut self, renderer: crate::text::Shared) -> Self {
         self.text_renderer_connect(renderer);
@@ -111,8 +113,11 @@ impl Editor {
         }
         match self.font_text_operations(layer, at, text, style, color, background) {
             Ok(ops) if !ops.is_empty() => self.draw(ops, "Text"),
-            Ok(_) => {}
-            Err(error) => self.status = format!("Cannot place text: {error}"),
+            Ok(_) => self.finish_text_attempt(self.text_submission.executing, true),
+            Err(error) => {
+                self.fail_text_attempt(self.text_submission.executing);
+                self.status = format!("Cannot place text: {error}");
+            }
         }
     }
 }

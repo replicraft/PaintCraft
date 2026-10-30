@@ -197,6 +197,26 @@ impl Editor {
     /// result. Pending::drop retains the executor lease until worker retirement.
     #[cfg(target_os = "macos")]
     pub(crate) fn abandon_native_activation(&mut self, activation: Activation) {
+        self.drain_activations();
+        let text = self.actions.iter().find_map(|queued| match queued {
+            background::Queued::Edit(edit)
+                if edit
+                    .scope
+                    .as_ref()
+                    .is_some_and(|scope| scope.activation == activation) =>
+            {
+                edit.text
+            }
+            _ => None,
+        });
+        if let Some(attempt) = text {
+            let stamp = self.retire_queued_text(attempt);
+            for queued in &mut self.actions {
+                if matches!(queued, background::Queued::Edit(edit) if edit.text == Some(attempt)) {
+                    *queued = background::Queued::TextCaptureFailure(stamp);
+                }
+            }
+        }
         let queued = self.outbox.has(activation) || self.actions.iter().any(|queued| matches!(queued,
             background::Queued::Edit(edit) if edit.scope.as_ref().is_some_and(|s| s.activation == activation)));
         self.outbox.retire(activation);
@@ -204,13 +224,19 @@ impl Editor {
             !matches!(queued, background::Queued::Edit(edit)
             if edit.scope.as_ref().is_some_and(|s| s.activation == activation))
         });
-        let mut abandoned = queued;
+        let mut abandoned = queued || text.is_some();
         if self.pending_edit.as_ref().is_some_and(|p| {
             p.native_activation
                 .as_ref()
                 .is_some_and(|scope| scope.activation == activation)
         }) {
-            self.pending_edit.take();
+            let text = self.pending_edit.as_ref().unwrap().text;
+            if text.is_some() {
+                self.pending_edit.as_ref().unwrap().cancel();
+                self.fail_text_attempt(text);
+            } else {
+                self.pending_edit.take();
+            }
             abandoned = true;
         }
         if self.waiting_dispatch.as_ref().is_some_and(|p| {
@@ -218,6 +244,7 @@ impl Editor {
                 .as_ref()
                 .is_some_and(|scope| scope.activation == activation)
         }) {
+            self.fail_text_attempt(self.waiting_dispatch.as_ref().unwrap().text);
             self.waiting_dispatch.take();
             abandoned = true;
         }
@@ -226,6 +253,7 @@ impl Editor {
                 .as_ref()
                 .is_some_and(|scope| scope.activation == activation)
         }) {
+            self.fail_text_attempt(self.waiting_edit.as_ref().unwrap().text);
             self.waiting_edit.take();
             abandoned = true;
         }

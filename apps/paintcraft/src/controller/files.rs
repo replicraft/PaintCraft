@@ -5,7 +5,9 @@ use paintcraft_core::types::Error;
 impl Editor {
     /// Prepare editable text privately for an export preview without publication.
     pub(crate) fn export_snapshot(&self) -> Result<Arc<Document>> {
-        if !self.can_capture_file() || self.has_floating_selection() || self.is_constructing_shape()
+        if !self.can_capture_export()
+            || self.has_floating_selection()
+            || self.is_constructing_shape()
         {
             return Err(Error::new(
                 paintcraft_core::types::ErrorCode::InputSchema,
@@ -77,6 +79,10 @@ impl Editor {
 
     pub(super) fn save(&mut self) {
         self.save_outcome = Some(false);
+        if !self.text_save_ready() {
+            self.status = "Finish pending edits before saving".into();
+            return;
+        }
         let Some(path) = self.path.clone() else {
             self.status = "Choose a file name before saving".into();
             return;

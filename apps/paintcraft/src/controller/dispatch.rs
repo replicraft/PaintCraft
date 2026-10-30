@@ -16,6 +16,7 @@ pub(super) struct Waiting {
     empty: &'static str,
     target_alias: Option<&'static str>,
     pub(super) native_activation: Option<native_publication::Scope>,
+    pub(super) text: Option<text_submission::Attempt>,
 }
 impl std::fmt::Debug for Waiting {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -41,11 +42,13 @@ impl Editor {
                 empty,
                 target_alias,
                 native_activation: self.native_activation.clone(),
+                text: self.text_submission.executing,
             }),
             Err(error) => self.dispatch_failed(error),
         }
     }
     fn dispatch_failed(&mut self, error: Error) {
+        self.fail_text_attempt(self.text_submission.executing);
         self.preview_lineage = Uuid::new_v4();
         self.status = format!("Edit not prepared: {error}");
     }
@@ -58,10 +61,12 @@ impl Editor {
             empty,
             target_alias,
             native_activation,
+            text,
         } = waiting;
         match service.submit_retained(task, done.clone(), empty, target_alias) {
             Ok(mut pending) => {
                 pending.native_activation = native_activation;
+                pending.text = text;
                 self.status = format!("{done}…");
                 self.pending_edit = Some(pending);
             }
@@ -73,17 +78,24 @@ impl Editor {
                     empty,
                     target_alias,
                     native_activation,
+                    text,
                 });
                 self.status = "Waiting for editing worker capacity; Escape cancels the edit".into();
             }
-            Err(rejected) => self.dispatch_failed(rejected.error),
+            Err(rejected) => {
+                self.fail_text_attempt(text);
+                self.dispatch_failed(rejected.error);
+            }
         }
     }
     pub(super) fn retry_waiting_dispatch(&mut self) {
         let Some(waiting) = self.waiting_dispatch.as_ref() else {
             return;
         };
-        if waiting.base != self.session.history_ticket() {
+        if waiting.base != self.session.history_ticket()
+            || self.check_text_attempt(waiting.text).is_err()
+        {
+            self.fail_text_attempt(waiting.text);
             self.waiting_dispatch = None;
             self.publication_preview = None;
             self.preview_queue_revision.advance();

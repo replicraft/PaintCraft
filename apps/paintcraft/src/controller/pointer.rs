@@ -46,6 +46,14 @@ impl Editor {
         }
         if self.tool != Tool::ColorPicker {
             self.commit_text();
+            if self
+                .tools
+                .text_content()
+                .is_some_and(|text| !text.is_empty())
+            {
+                self.defer_next_text_pointer(point, button);
+                return;
+            }
         }
         if self.begin_floating(point, button) {
             return;

@@ -23,6 +23,7 @@ fn metadata_denial_does_not_enter_decoded_history_pressure_retry() {
     };
     assert_eq!(deferred.denial.class(), AllocationClass::PaintMetadata);
     editor.waiting_edit = Some(Waiting {
+        text: None,
         native_activation: None,
         deferred: *deferred,
         done: String::new(),

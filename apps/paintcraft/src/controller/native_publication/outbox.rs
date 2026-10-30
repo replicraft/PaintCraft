@@ -4,6 +4,7 @@ use super::*;
 pub(in crate::controller) struct QueuedEdit {
     pub(in crate::controller) action: Action,
     pub(in crate::controller) scope: Option<Scope>,
+    pub(in crate::controller) text: Option<text_submission::Attempt>,
 }
 #[derive(Debug, Default)]
 pub(in crate::controller) struct Activations(paintcraft_ui::outbox::Outbox<QueuedEdit>);
@@ -14,7 +15,21 @@ impl Activations {
         action: Action,
         scope: Option<Scope>,
     ) -> bool {
-        self.0.push(token, QueuedEdit { action, scope })
+        self.0.push(
+            token,
+            QueuedEdit {
+                action,
+                scope,
+                text: None,
+            },
+        )
+    }
+    pub(in crate::controller) fn push_queued(&mut self, token: Token, queued: QueuedEdit) -> bool {
+        self.0.push(token, queued)
+    }
+    pub(in crate::controller) fn revoke_text(&mut self, token: u64) {
+        self.0
+            .retain(|queued| queued.text.is_none_or(|attempt| attempt.token != token));
     }
     pub(in crate::controller) fn remember(&mut self, token: Token) -> bool {
         self.0.remember(token)
@@ -60,13 +75,17 @@ impl Editor {
         );
     }
     pub(in crate::controller) fn execute_activation(&mut self, queued: QueuedEdit) {
-        if let Err(error) = check(queued.scope.as_ref()) {
+        if let Err(error) =
+            check(queued.scope.as_ref()).and_then(|_| self.start_text_attempt(queued.text))
+        {
+            self.fail_text_attempt(queued.text);
             self.status = error.to_string();
             return;
         }
         let prior = self.native_activation.take();
         self.native_activation = queued.scope;
         self.execute(queued.action);
+        self.text_submission.executing = None;
         self.native_activation = prior;
     }
 }

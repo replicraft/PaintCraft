@@ -57,8 +57,14 @@ pub(super) struct Pending {
     empty: &'static str,
     target_alias: Option<&'static str>,
     pub(super) native_activation: Option<native_publication::Scope>,
+    pub(super) text: Option<text_submission::Attempt>,
 }
 impl Pending {
+    pub(super) fn cancel(&self) {
+        if let Ok(executor) = self.service.lock() {
+            executor.cancel(self.handle);
+        }
+    }
     pub(super) fn poll(&self) -> Option<Result<Completion>> {
         match self.service.lock() {
             Ok(mut executor) => executor.poll_for(self.handle),
@@ -200,6 +206,7 @@ impl Service {
             empty,
             target_alias,
             native_activation: None,
+            text: None,
         })
     }
 }
@@ -210,6 +217,7 @@ impl Service {
 pub(super) enum Queued {
     Edit(native_publication::QueuedEdit),
     FileBarrier(Uuid),
+    TextCaptureFailure(paintcraft_tools::TextStamp),
 }
 
 impl Editor {
@@ -219,6 +227,7 @@ impl Editor {
     /// Includes commands waiting behind an earlier transaction or another tab.
     pub fn has_pending_edits(&self) -> bool {
         self.has_inflight_edit()
+            || self.retained_text_blocks_actions()
             || self
                 .actions
                 .iter()
@@ -234,6 +243,13 @@ impl Editor {
         self.preview_queue_revision.advance();
         id
     }
+    pub(crate) fn file_barrier_live(&self, id: Uuid) -> bool {
+        self.file_barrier == Some(id)
+            || self
+                .actions
+                .iter()
+                .any(|queued| matches!(queued, Queued::FileBarrier(current) if *current == id))
+    }
     pub(crate) fn file_barrier_ready(&self, id: Uuid) -> bool {
         self.file_barrier == Some(id)
     }
@@ -247,7 +263,9 @@ impl Editor {
         self.file_barrier.is_some()
     }
     pub(crate) fn can_capture_file(&self) -> bool {
-        !self.has_image_paste() && (self.file_barrier.is_some() || !self.has_pending_edits())
+        !self.has_image_paste()
+            && !self.text_placement_failed()
+            && (self.file_barrier.is_some() || !self.has_pending_edits())
     }
     pub(crate) fn preview_owner(&self) -> (Uuid, Option<u64>) {
         (self.preview_lineage, self.preview_token())
@@ -263,6 +281,10 @@ impl Editor {
     /// until completion. Already published edits are never undone implicitly.
     pub fn cancel_pending_edits(&mut self) {
         self.preview_lineage = Uuid::new_v4();
+        if self.retained_text_blocks_actions() {
+            self.cancel_text();
+            return;
+        }
         self.actions
             .retain(|action| matches!(action, Queued::FileBarrier(_)));
         self.outbox.drain();
@@ -367,6 +389,13 @@ impl Editor {
             return;
         };
         let pending = self.pending_edit.take().expect("pending edit");
+        if let Err(error) = self.check_text_attempt(pending.text) {
+            self.finish_text_attempt(pending.text, false);
+            self.publication_preview = None;
+            self.preview_queue_revision.advance();
+            self.status = format!("Edit not published: {error}");
+            return;
+        }
         let result = match result {
             Ok(Completion::Deferred(deferred)) => {
                 self.status = "Waiting for memory capacity; Escape cancels the edit".into();
@@ -377,6 +406,7 @@ impl Editor {
                     last_probe: std::time::Instant::now(),
                     target_alias: pending.target_alias,
                     native_activation: pending.native_activation.clone(),
+                    text: pending.text,
                 });
                 return;
             }
@@ -464,6 +494,7 @@ impl Editor {
             )),
             Err(error) => Err(error),
         };
+        self.finish_text_attempt(pending.text, result.is_ok());
         if let Err(error) = result {
             self.preview_lineage = Uuid::new_v4();
             self.status = if pending.done == picker::STATUS {

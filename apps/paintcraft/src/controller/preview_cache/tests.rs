@@ -56,11 +56,22 @@ fn shape_constraint_and_text_edits_refresh_the_snapshot() {
     editor.backspace();
     assert_ne!(text, checked(&editor).unwrap());
     editor.set_text_style(paintcraft_core::types::text::TextOptions::default());
-    checked(&editor).unwrap();
+    let styled = checked(&editor).unwrap();
+    let stamp = editor.tools.text_stamp().unwrap();
+    let before = editor.document_snapshot();
+    let history = editor.history_view();
     editor.commit_text();
-    assert!(checked(&editor).is_none());
+    assert_eq!(checked(&editor).as_deref(), Some(styled.as_ref()));
     editor.run_pending();
-    checked(&editor);
+    // This standalone controller has no font renderer: failed preparation keeps
+    // the authored preview rather than clearing an unacknowledged intention.
+    assert!(editor.failed_text_retained());
+    assert!(editor.tools.text_stamp_current(stamp));
+    assert_eq!(checked(&editor).as_deref(), Some(styled.as_ref()));
+    assert!(Arc::ptr_eq(&before, &editor.document_snapshot()));
+    assert_eq!(editor.history_view(), history);
+    editor.cancel_text();
+    assert!(checked(&editor).is_none());
 }
 #[test]
 fn queued_paint_file_boundaries_and_completion_never_reuse_stale_snapshots() {

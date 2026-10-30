@@ -353,8 +353,10 @@ fn retained_font_text_keeps_its_captured_layer_after_text_entry_and_target_selec
             .iter()
             .any(|pixel| *pixel != [255; 4])
     );
+    let stamp = editor.tools.text_stamp().unwrap();
     editor.commit_text();
-    assert!(!editor.is_editing_text());
+    assert!(editor.is_editing_text());
+    assert!(editor.tools.text_stamp_current(stamp));
     assert!(editor.set_target(background));
     editor.run_pending();
     assert!(matches!(editor.preview(), Some(Preview::Text { layer, .. }) if layer == text_layer));
@@ -375,6 +377,10 @@ fn retained_font_text_keeps_its_captured_layer_after_text_entry_and_target_selec
         !editor.has_pending_edits()
     });
     assert_eq!(editor.target(), Some(background));
+    assert!(
+        !editor.is_editing_text(),
+        "exact successful publication acknowledges the draft"
+    );
     assert_eq!(
         paintcraft_render::render_flat(editor.document()).unwrap(),
         expected
@@ -471,7 +477,6 @@ pub(super) struct CompletionGate {
     release: mpsc::Receiver<()>,
 }
 impl Service {
-    #[cfg(target_os = "macos")]
     pub(crate) fn pause_next_completion(&self) -> (mpsc::Receiver<()>, mpsc::Sender<()>) {
         let (prepared, observe) = mpsc::sync_channel(1);
         let (release, wait) = mpsc::channel();

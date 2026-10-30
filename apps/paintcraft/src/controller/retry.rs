@@ -62,6 +62,7 @@ pub(super) struct Deferred {
 }
 #[derive(Debug)]
 pub(super) struct Waiting {
+    pub(super) text: Option<text_submission::Attempt>,
     pub(super) native_activation: Option<native_publication::Scope>,
     pub(super) deferred: Deferred,
     pub(super) done: String,
@@ -179,7 +180,10 @@ impl Editor {
         let Some(waiting) = &self.waiting_edit else {
             return;
         };
-        if waiting.deferred.base != self.session.history_ticket() {
+        if waiting.deferred.base != self.session.history_ticket()
+            || self.check_text_attempt(waiting.text).is_err()
+        {
+            self.fail_text_attempt(waiting.text);
             self.waiting_edit = None;
             self.publication_preview = None;
             self.preview_queue_revision.advance();
@@ -221,9 +225,11 @@ impl Editor {
             Admission::with_reserved_residency(u64::MAX, reservation)
                 .with_paint_metadata_budget(waiting.deferred.realms.metadata.clone())
         };
+        let text = waiting.text;
         let preparation = match self.session.preparation() {
             Ok(preparation) => preparation,
             Err(error) => {
+                self.fail_text_attempt(text);
                 self.waiting_edit = None;
                 self.publication_preview = None;
                 self.preview_queue_revision.advance();
@@ -253,12 +259,14 @@ impl Editor {
         match result {
             Ok(mut pending) => {
                 pending.native_activation = waiting.native_activation.clone();
+                pending.text = text;
                 self.waiting_edit = None;
                 self.pending_edit = Some(pending);
                 self.status = "Retrying edit after memory capacity became available…".into();
             }
             Err(error) if error.code == ErrorCode::ResourceLimit => {} // Retain across worker-admission races.
             Err(error) => {
+                self.fail_text_attempt(text);
                 self.waiting_edit = None;
                 self.publication_preview = None;
                 self.preview_queue_revision.advance();

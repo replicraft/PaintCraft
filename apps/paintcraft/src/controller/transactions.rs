@@ -36,6 +36,7 @@ impl Editor {
         let batch = match Batch::from_value(&batch) {
             Ok(batch) => batch,
             Err(error) => {
+                self.fail_text_attempt(self.text_submission.executing);
                 self.status = format!("Edit failed: {error}");
                 return None;
             }
@@ -49,6 +50,15 @@ impl Editor {
         done: &str,
         target_alias: Option<&'static str>,
     ) -> Option<paintcraft_editor::session::Receipt> {
+        if self.text_placement_failed() && self.text_submission.executing.is_none() {
+            self.status = "Finish pending edits before changing the document".into();
+            return None;
+        }
+        if let Err(error) = self.check_text_attempt(self.text_submission.executing) {
+            self.fail_text_attempt(self.text_submission.executing);
+            self.status = format!("Edit failed: {error}");
+            return None;
+        }
         if self.editing.is_some() {
             self.start_edit(batch, done, target_alias);
             return None;
@@ -59,9 +69,11 @@ impl Editor {
             Ok(r) => {
                 self.record_native_publication(before, &r);
                 self.accept_edit(&r, done, target_alias, before_canvas);
+                self.finish_text_attempt(self.text_submission.executing, true);
                 Some(r)
             }
             Err(e) => {
+                self.fail_text_attempt(self.text_submission.executing);
                 self.status = format!("Edit failed: {e}");
                 None
             }

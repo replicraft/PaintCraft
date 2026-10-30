@@ -55,6 +55,8 @@ mod shape_mask;
 mod strokes;
 #[path = "controller/text.rs"]
 mod text;
+#[path = "controller/text_submission.rs"]
+mod text_submission;
 #[path = "controller/transactions.rs"]
 mod transactions;
 
@@ -97,6 +99,7 @@ pub struct Editor {
     image_paste: Option<image_paste::Placing>,
     floating_commit_on_release: bool,
     text_renderer: Option<crate::text::Shared>,
+    text_submission: text_submission::Tracker,
     target: Option<Uuid>,
     outbox: native_publication::Activations,
     actions: std::collections::VecDeque<background::Queued>,
@@ -172,6 +175,7 @@ impl Editor {
             image_paste: None,
             floating_commit_on_release: true,
             text_renderer: None,
+            text_submission: Default::default(),
             target,
             outbox: native_publication::Activations::default(),
             actions: Default::default(),
@@ -425,28 +429,10 @@ impl Editor {
     pub fn is_editing_text(&self) -> bool {
         self.tools.is_editing_text()
     }
-    pub fn type_text(&mut self, typed: &str) {
-        let skipped = self.tools.type_text(typed);
-        if skipped > 0 {
-            self.status = format!("Skipped {skipped} character(s) the built-in font cannot draw");
-        }
-    }
-    pub fn backspace(&mut self) {
-        self.tools.backspace();
-    }
-    pub fn commit_text(&mut self) {
-        if let Some((token, action)) = self.tools.commit_text()
-            && self
-                .outbox
-                .push(token, action, self.native_activation.clone())
-        {
-            self.preview_queue_revision.advance();
-        }
-    }
-    pub fn cancel_text(&mut self) {
-        self.tools.cancel_text();
-    }
     pub fn select_tool(&mut self, tool: Tool) {
+        if tool != self.tool {
+            self.cancel_next_text_pointer();
+        }
         if self.has_image_paste() {
             self.status = "Finish placing the pasted image before editing or saving.".into();
             return;
@@ -491,7 +477,11 @@ impl Editor {
             return 0;
         }
         let before = self.publications();
+        self.reconcile_text_submission();
         self.poll_edit();
+        if self.text_placement_failed() {
+            return self.publications() - before;
+        }
         self.retry_waiting_dispatch();
         self.retry_waiting_edit();
         if self.waiting_edit.is_some() || self.waiting_dispatch.is_some() {
@@ -504,7 +494,13 @@ impl Editor {
         if self.file_barrier.is_some() {
             return self.publications() - before;
         }
-        while !self.has_inflight_edit() {
+        while !self.has_inflight_edit() && !self.text_placement_failed() {
+            if let Some(background::Queued::TextCaptureFailure(stamp)) = self.actions.front() {
+                let stamp = *stamp;
+                self.actions.pop_front();
+                self.reach_text_capture_failure(stamp);
+                break;
+            }
             if let Some(background::Queued::FileBarrier(_)) = self.actions.front() {
                 if let Some(background::Queued::FileBarrier(id)) = self.actions.pop_front() {
                     self.file_barrier = Some(id);
