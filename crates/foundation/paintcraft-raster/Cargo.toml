@@ -11,6 +11,7 @@ publish.workspace = true
 paintcraft-core.workspace = true
 
 font8x8.workspace = true
+sha2.workspace = true
 
 [lints]
 workspace = true

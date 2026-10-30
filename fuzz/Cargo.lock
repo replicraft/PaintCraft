@@ -966,6 +966,7 @@ version = "0.1.1"
 dependencies = [
  "font8x8",
  "paintcraft-core",
+ "sha2",
 ]
 
 [[package]]

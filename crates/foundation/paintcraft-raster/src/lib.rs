@@ -1,4 +1,5 @@
 //! Raster storage, selection coverage and exact scalar pixel kernels.
+pub mod coverage_mask;
 pub mod flood;
 pub mod font;
 pub mod raster;

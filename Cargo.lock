@@ -3669,6 +3669,7 @@ dependencies = [
  "criterion",
  "font8x8",
  "paintcraft-core",
+ "sha2",
 ]
 
 [[package]]
