@@ -2,6 +2,7 @@
 use crate::{PIXELS_MAX, Target};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_formats::{icons, image, tiff_pages};
+mod bmp;
 mod png;
 
 fn invariant(message: &str) -> Error {
@@ -44,6 +45,8 @@ pub(crate) fn exercise(target: Target, bytes: &[u8], check: &dyn Fn() -> Result<
             }
             if decoded.format == image::ImageFormat::Png {
                 png::exercise(bytes, &decoded, check)?;
+            } else if decoded.format == image::ImageFormat::Bmp {
+                bmp::exercise(bytes, &decoded, check)?;
             }
         }
         Target::TiffPages => {
