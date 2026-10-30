@@ -201,6 +201,7 @@ pub fn tr_status(ctx: &egui::Context, source: &str) -> String {
             "Scaled display used CPU: { $detail }",
         ),
         ("Cannot render: ", "Cannot render: { $detail }"),
+        ("Cannot place text: ", "Cannot place text: { $detail }"),
         (
             "Cannot render viewport: ",
             "Cannot render viewport: { $detail }",
@@ -278,6 +279,38 @@ pub fn picker(ui: &mut egui::Ui, lang: &mut Language) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn retained_text_statuses_translate_without_changing_diagnostic_details() {
+        let context = egui::Context::default();
+        let detail = "resource.limit: /private/Pencil Size.pcnd";
+        let status = format!("Cannot place text: {detail}");
+        for language in Language::ALL {
+            set_language(&context, language);
+            let translated = tr_status(&context, &status);
+            assert!(
+                translated.ends_with(detail),
+                "{}: {translated}",
+                language.id()
+            );
+            for source in [
+                "Finish pending edits before saving",
+                "Finish pending edits before changing the document",
+            ] {
+                let value = tr_status(&context, source);
+                if language == Language::English {
+                    assert_eq!(value, source);
+                } else {
+                    assert_ne!(value, source, "{}: {source}", language.id());
+                }
+            }
+            if language == Language::English {
+                assert_eq!(translated, status);
+            } else {
+                assert_ne!(translated, status, "{}", language.id());
+            }
+        }
+    }
+
     #[test]
     fn every_interface_catalog_is_valid_and_complete_in_every_language() {
         for language in Language::ALL {

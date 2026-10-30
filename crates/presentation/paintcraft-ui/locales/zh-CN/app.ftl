@@ -225,3 +225,7 @@ crash-recovery-discovery-failed-existing-recovery-copies-were-kept = 崩溃恢�
 some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = 部分恢复副本需要更新版本的 PaintCraft。这些副本已保留。
 
 image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = 此标签页的图像处理已暂停。请下载项目，然后重新加载此标签页以重试。
+
+finish-pending-edits-before-saving = 请先完成待处理的编辑再保存
+finish-pending-edits-before-changing-the-document = 请先完成待处理的编辑再更改文档
+format-cannot-place-text-detail = 无法放置文本：{ $detail }

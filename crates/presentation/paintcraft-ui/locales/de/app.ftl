@@ -225,3 +225,7 @@ crash-recovery-discovery-failed-existing-recovery-copies-were-kept = Die Suche n
 some-recovery-copies-need-a-newer-paintcraft-version-those-copies-were-kept = Einige Wiederherstellungskopien benötigen eine neuere PaintCraft-Version. Diese Kopien wurden beibehalten.
 
 image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = Die Bildverarbeitung ist für diesen Tab angehalten. Lade dein Projekt herunter und diesen Tab neu, um es erneut zu versuchen.
+
+finish-pending-edits-before-saving = Schließen Sie ausstehende Änderungen vor dem Speichern ab
+finish-pending-edits-before-changing-the-document = Schließen Sie ausstehende Änderungen ab, bevor Sie das Dokument ändern
+format-cannot-place-text-detail = Text kann nicht platziert werden: { $detail }
