@@ -469,3 +469,11 @@ remove-mask = मास्क हटाएँ
 empty-mask-no-pixels-affected = खाली मास्क: कोई पिक्सेल प्रभावित नहीं।
 filter-uses-the-saved-selection = फ़िल्टर सहेजे गए चयन का उपयोग करता है।
 mask-disabled-whole-layer-affected = मास्क अक्षम: पूरी परत प्रभावित।
+
+# Additional encoded RGB point-filter controls.
+black-white = श्वेत-श्याम
+threshold = सीमा
+posterize = पोस्टराइज़
+solarize = सोलराइज़
+strength = तीव्रता (%)
+levels = स्तरों की संख्या

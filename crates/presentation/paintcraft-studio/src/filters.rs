@@ -1,7 +1,7 @@
 //! Filter presentation only. Hosts own snapshots, preview admission and publication.
 use paintcraft_core::types::{
     Result,
-    filters::{BrightnessContrastV1, Descriptor},
+    filters::{BlackWhiteV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1},
 };
 use paintcraft_ui::t;
 use std::hash::Hash;
@@ -10,18 +10,38 @@ use std::hash::Hash;
 pub enum Kind {
     Invert,
     BrightnessContrast,
+    BlackWhite,
+    Threshold,
+    Posterize,
+    Solarize,
 }
 impl Kind {
+    pub const ALL: [Self; 6] = [
+        Self::Invert,
+        Self::BrightnessContrast,
+        Self::BlackWhite,
+        Self::Threshold,
+        Self::Posterize,
+        Self::Solarize,
+    ];
     pub fn label(self) -> &'static str {
         match self {
             Self::Invert => "Invert",
             Self::BrightnessContrast => "Brightness / Contrast",
+            Self::BlackWhite => "Black & White",
+            Self::Threshold => "Threshold",
+            Self::Posterize => "Posterize",
+            Self::Solarize => "Solarize",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
         match descriptor {
             Descriptor::InvertRgbV1 => Self::Invert,
             Descriptor::BrightnessContrastV1(_) => Self::BrightnessContrast,
+            Descriptor::BlackWhiteRgbV1(_) => Self::BlackWhite,
+            Descriptor::ThresholdLumaV1(_) => Self::Threshold,
+            Descriptor::PosterizeRgbV1(_) => Self::Posterize,
+            Descriptor::SolarizeRgbV1 => Self::Solarize,
         }
     }
 }
@@ -66,7 +86,7 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
         ui.strong(t!(ui.ctx(), "Filters"));
         ui.add_enabled_ui(can_add, |ui| {
             ui.menu_button(t!(ui.ctx(), "Add filter"), |ui| {
-                for kind in [Kind::Invert, Kind::BrightnessContrast] {
+                for kind in Kind::ALL {
                     if ui.button(t!(ui.ctx(), kind.label())).clicked() {
                         actions.push(Action::Add(kind));
                         ui.close();
@@ -182,6 +202,9 @@ pub struct Parameters {
     pub kind: Kind,
     pub brightness: i16,
     pub contrast: i16,
+    pub strength: i16,
+    pub threshold: i16,
+    pub levels: i16,
     pub preview: bool,
 }
 impl Parameters {
@@ -190,14 +213,23 @@ impl Parameters {
             kind,
             brightness: 0,
             contrast: 0,
+            strength: 100,
+            threshold: 128,
+            levels: 6,
             preview: true,
         }
     }
     pub fn from_descriptor(descriptor: Descriptor) -> Self {
         let mut draft = Self::new(Kind::of(descriptor));
-        if let Descriptor::BrightnessContrastV1(p) = descriptor {
-            draft.brightness = p.brightness();
-            draft.contrast = p.contrast();
+        match descriptor {
+            Descriptor::BrightnessContrastV1(p) => {
+                draft.brightness = p.brightness();
+                draft.contrast = p.contrast();
+            }
+            Descriptor::BlackWhiteRgbV1(p) => draft.strength = i16::from(p.strength()),
+            Descriptor::ThresholdLumaV1(p) => draft.threshold = i16::from(p.level()),
+            Descriptor::PosterizeRgbV1(p) => draft.levels = i16::from(p.levels()),
+            Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
     }
@@ -206,6 +238,12 @@ impl Parameters {
             Kind::Invert => Ok(Descriptor::InvertRgbV1),
             Kind::BrightnessContrast => BrightnessContrastV1::new(self.brightness, self.contrast)
                 .map(Descriptor::BrightnessContrastV1),
+            Kind::BlackWhite => BlackWhiteV1::new(self.strength).map(Descriptor::BlackWhiteRgbV1),
+            Kind::Threshold => {
+                ThresholdLumaV1::new(self.threshold).map(Descriptor::ThresholdLumaV1)
+            }
+            Kind::Posterize => PosterizeRgbV1::new(self.levels).map(Descriptor::PosterizeRgbV1),
+            Kind::Solarize => Ok(Descriptor::SolarizeRgbV1),
         }
     }
 }
@@ -270,6 +308,26 @@ fn draw_parameters(
                         .text(t!(ui.ctx(), "Contrast")),
                 );
             }
+            match values.kind {
+                Kind::BlackWhite => {
+                    ui.add(
+                        egui::Slider::new(&mut values.strength, 0..=100)
+                            .text(t!(ui.ctx(), "Strength (%)")),
+                    );
+                }
+                Kind::Threshold => {
+                    ui.add(
+                        egui::Slider::new(&mut values.threshold, 0..=255)
+                            .text(t!(ui.ctx(), "Threshold")),
+                    );
+                }
+                Kind::Posterize => {
+                    ui.add(
+                        egui::Slider::new(&mut values.levels, 2..=32).text(t!(ui.ctx(), "Levels")),
+                    );
+                }
+                Kind::Invert | Kind::BrightnessContrast | Kind::Solarize => {}
+            }
             ui.checkbox(&mut values.preview, t!(ui.ctx(), "Preview"));
             mask_summary(ui, mask);
             ui.weak(t!(ui.ctx(), "Source pixels remain unchanged."));
@@ -314,3 +372,7 @@ pub fn mask_summary(ui: &mut egui::Ui, mask: Option<MaskSummary>) {
         ui.weak(t!(ui.ctx(), "Applies to the whole layer."));
     }
 }
+
+#[cfg(test)]
+#[path = "filters/tests.rs"]
+mod tests;

@@ -469,3 +469,11 @@ remove-mask = 移除蒙版
 empty-mask-no-pixels-affected = 空蒙版：不影响任何像素。
 filter-uses-the-saved-selection = 滤镜使用已保存的选区。
 mask-disabled-whole-layer-affected = 蒙版已禁用：影响整个图层。
+
+# Additional encoded RGB point-filter controls.
+black-white = 黑白
+threshold = 阈值
+posterize = 色调分离
+solarize = 曝光反转
+strength = 强度（%）
+levels = 色阶数

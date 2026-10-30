@@ -469,3 +469,11 @@ remove-mask = マスクを削除
 empty-mask-no-pixels-affected = 空のマスク：影響を受けるピクセルはありません。
 filter-uses-the-saved-selection = フィルターは保存済みの選択範囲を使用します。
 mask-disabled-whole-layer-affected = マスクは無効：レイヤー全体に適用。
+
+# Additional encoded RGB point-filter controls.
+black-white = 白黒
+threshold = しきい値
+posterize = ポスタリゼーション
+solarize = ソラリゼーション
+strength = 強さ（%）
+levels = 階調数

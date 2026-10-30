@@ -469,3 +469,11 @@ remove-mask = Maske entfernen
 empty-mask-no-pixels-affected = Leere Maske: keine Pixel betroffen.
 filter-uses-the-saved-selection = Der Filter verwendet die gespeicherte Auswahl.
 mask-disabled-whole-layer-affected = Maske deaktiviert: gesamte Ebene betroffen.
+
+# Additional encoded RGB point-filter controls.
+black-white = Schwarzweiß
+threshold = Schwellenwert
+posterize = Tontrennung
+solarize = Solarisation
+strength = Stärke (%)
+levels = Stufen
