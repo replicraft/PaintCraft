@@ -7,6 +7,12 @@ with its staged-adoption and performance contracts. The performance pack is
 queued work, not a claim of implementation or measured gains; it does not
 replace the canonical 37-task roadmap or transplant new contracts wholesale.
 
+[Palette integration](architecture/PALETTE_INTEGRATION.md) is now a requested
+extension of the engine roadmap: editable ordered filters over retained source
+pixels, followed by masks and layer styles. The source review maps the author's
+catalog to document/history/PCND, rendering and Studio acceptance gates. This is
+planned integration, not a claim that the catalog is available in PaintCraft.
+
 [Stock raster conversion safety](RASTER_SOURCE_IMPORT.md) now captures native
 source identity through consent and adoption, retains overwrite guards after
 PCND Save, and revalidates regular CLI/MCP sources before publication. PNG/BMP

@@ -1,0 +1,118 @@
+# Palette integration: persistent nondestructive filters
+
+Status: design only, reviewed 2026-10-29. This document adds no filters, dependencies or runtime qualification. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
+
+## Evidence and upstream identity
+
+The reviewed repository is [spiffyfitz/palette](https://github.com/spiffyfitz/palette), commit [`aefc84fe9233e66344147078de866860326d8cfa`](https://github.com/spiffyfitz/palette/commit/aefc84fe9233e66344147078de866860326d8cfa). GitHub reference verification identified root tree `862c118edfc402f66ae34aea34d940b1a7d119c9`. The read-only source snapshot and individual blob hashes are recorded under `docs/validation/palette-source/`.
+
+Evidence labels below mean:
+
+- **Author inventory:** described in [IMPLEMENTED_FUNCTIONS.md](../temp/IMPLEMENTED_FUNCTIONS.md), including 132 conventional filters across 15 categories, ten effect families, nine brushes and 19 blend modes. The pinned source also declares 132 Filter variants and ten Effect families plus a configuration wrapper. Neither count is an independently executed catalog qualification.
+- **Read source:** directly inspected files in the pinned snapshot establish the stated structure or algorithm. No Palette build, benchmark, original-application comparison or GPU execution was performed for this design.
+- **Proposed:** PaintCraft implementation and acceptance gates still required. Source availability does not establish feature parity, exact proprietary output, performance or compatibility.
+
+Pinned [document enums](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/document.rs#L343) independently enumerate **132 Filter variants** and **11 Effect alternatives**, including a Configured wrapper and ten families. This establishes the source surface, not runtime correctness of every entry. The supplied author inventory uses a newer split-module layout in places; the pinned snapshot retains implementations in monolithic `processing.rs`. A differing file path is not evidence that a feature is absent.
+
+| Capability | Evidence actually read | PaintCraft consequence |
+|---|---|---|
+| Immutable source versus editable processing | [Layer/FilterInstance definitions](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/document.rs#L1313): source raster, ordered filters, stable IDs, enabled state and individual masks | Persist descriptors and masks separately from raster pixels; painting remains an edit of source data. |
+| Ordered layer appearance | [processing/layer.rs](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing/layer.rs#L530): filters, color overlays, layer mask, inner/outer styles | Adopt explicit stage order; layer styles and backdrop-dependent exterior effects require separate contracts. |
+| Invert and Brightness/Contrast | [processing/point.rs](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing/point.rs#L212): invert RGB with alpha preserved; contrast gain `(1+c)/(1-c)` | Version encoded-RGB arithmetic, parameter range, rounding and hidden RGB before shipping. |
+| Registry and validation | [processing.rs](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing.rs#L490): defaults and contrast range `[-0.99,0.99]` | Share validated descriptors across UI, command schemas and evaluation. Do not admit the singular contrast endpoint. |
+| Private parameter editing | [app/processing.rs](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/src/app/processing.rs#L66): isolated candidate, cancellation ticket, session/generation checks; Apply changes document descriptors | A slider preview must not publish history or overwrite source pixels; Apply submits one atomic edit. |
+| Appearance caching | [same_appearance](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing/layer.rs#L373) and [CPU compositor](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/composite.rs#L91) | Reuse resolved appearances when dependencies match; presentation request freshness is an additional check. |
+| GPU and full catalog | Author inventory describes CPU filter evaluation, GPU composition, CPU export, 2048-side reduced previews and cache budgets | GPU filter kernels are not established by the inspected subset. Do not transplant budget constants or claim all 132 filters from this review. |
+| Persistence, mask editing and advanced styles | Inventory lists native preservation and selection-derived masks, but also unfinished mask painting/linking and per-effect masks | These remain separate acceptance gates, not implied by a FilterInstance field. |
+
+## Existing PaintCraft boundaries
+
+[Document/Layer](../../crates/foundation/paintcraft-document/src/lib.rs) currently persist raster, origin, visibility and opacity, with no filter stack. `same_semantics` compares complete layers. Selection belongs to the session; it is not a persistent document mask. Original source ICC/resolution is provenance, not an active working profile.
+
+[The renderer](../../crates/services/paintcraft-render/src/lib.rs) composes ordered straight RGBA8 layers with fixed intermediate rounding. [Cache keys](../../crates/services/paintcraft-render/src/cache/key.rs) currently use layer geometry/opacity, raster default pixels and source region versions. A parameter-only stack edit would be invisible to those keys without integration.
+
+[Cold history](../../crates/editing/paintcraft-history/src/archive.rs) records explicit layer fields and raster payload references; adding only a live Document field would lose the stack during packing/restoration. PCND currently distinguishes legacy v1 and source-metadata v2; neither may silently acquire an unreadable filter extension. The proposed `paintcraft-effects` crate is not yet present.
+
+The normative [effect-region contract](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md) remains authoritative: `required_input` and `affected_output` are separate functions; masks apply once; tiles are not image boundaries; admission and cancellation precede publication.
+
+## Persistent model and arithmetic
+
+Proposed placement:
+
+| Owner | Responsibility |
+|---|---|
+| `paintcraft-core::types::filters` | Stable kind/profile IDs and validated typed parameters, no renderer/UI dependency |
+| `crates/services/paintcraft-effects` | Pure point kernels first, then declared ROI/halo/global-analysis implementations |
+| `paintcraft-document` | Ordered immutable per-layer instances: stable UUID, enabled state, descriptor, optional persistent coverage mask |
+| `paintcraft-commands` / editor | Typed add/update/toggle/duplicate/remove/reorder operations, validation, atomic preparation and publication |
+| render/runtime/history/formats | Evaluation, resource leases/cache keys, snapshot restoration and canonical PCND persistence respectively |
+
+Use a versioned encoded-RGB8 policy, not an assumed color-managed or linear-light result. Alpha is unchanged; **hidden RGB is transformed even when alpha is zero**. Final source-over composition retains its existing transparent-pixel behavior. Original ICC bytes stay attached as provenance and are not activated by a filter.
+
+First descriptors use integer hundredths: brightness `[-100,100]`, contrast `[-99,99]`. For channel byte `x`, brightness `b`, contrast `c`, the proposed reference is:
+
+`clamp_round(127.5 + (x - 127.5) * (100 + c)/(100 - c) + 255*b/100)`
+
+Compute this as checked exact rational/integer arithmetic; clamp to `[0,255]`, then round nearest with ties upward. `b=0,c=0` is byte identity. Reject contrast `100` before storage/evaluation; adding that endpoint later needs an explicitly versioned policy, not infinity, a byte cast or silent clamping. Invert is exactly `255-x` for RGB. Palette's float implementation is a reference for intent, not proof of byte-identical output to this rational policy or another application.
+
+Each filter operates only within its layer's finite source extent. It also transforms the raster's **implicit default pixel** within that extent: iterating allocated tiles alone is incorrect. It does not generate coverage on the unbounded plane. Default-color output must remain implicit where possible rather than allocating every untouched source tile.
+
+An instance mask is persistent source-local coverage, independent of the live selection and layer opacity. Capturing a selection creates a fixed mask snapshot with admitted immutable payloads; later selection edits cannot change the filter. For these alpha-preserving kernels, blend original and candidate RGB once using canonical integer coverage, keeping alpha exact. Define zero/full/fractional coverage and outside-mask default explicitly. Palette's point path mixes RGB while its spatial path uses a separate mixing helper; that is not a general alpha-changing mask specification.
+
+## Staged adoption and completion gates
+
+### 1. Descriptors and pure kernels
+
+Implementation status: this foundation has been delegated and is in progress; it is not shipped or runtime-qualified by this document.
+
+Implement the two validated descriptors and bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths/overlap before writing; callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
+
+Gate: independent literal channels including 0/127/128/255, hidden RGB, all alpha extremes, brightness/contrast boundaries, tie rounding, identity, illegal endpoint, hostile geometry, cancellation and unchanged source on failure. This stage alone is **kernel foundation, not nondestructive filter support**.
+
+### 2. Persistent stack, commands, history and PCND
+
+Add immutable ordered instances and fixed selection-derived masks; retain source tile sharing. Descriptor order, enablement, IDs, mask bytes/default and arithmetic version enter document equality and semantic identities. IDs remain stable across edits; duplicate receives a new ID; a UI label is not the semantic key.
+
+Prepare typed stack edits against an exact document/session/history base. Validate descriptor count/bytes, UUID uniqueness, target layer, parameter ranges, mask bounds and canonical-save viability before atomic publication. Parameter edits change metadata, not raster payloads. Existing source attachments survive unchanged, and host-owned metadata admission includes stacks/masks, pending candidates, history and reopen.
+
+Extend hot history and cold archive/restoration together, including unique shared-mask accounting and cancellation. Undo/Redo restores recorded descriptors/masks without rerunning filters. Extend duplicate/delete/crop/resize/rotate/merge contracts explicitly: source-local transforms must transform or deliberately bake/refuse dependent masks, never leave them silently misaligned.
+
+Proposed conditional PCND v3/document3 stores canonical bounded stack records with explicit profile versions and mask payload framing; v1/v2 bytes remain unchanged for documents without stacks. Final schema names are implementation decisions, not existing format identifiers. Older readers must refuse v3; unknown kinds/versions, even disabled nodes, cannot be silently skipped. Update inspector/capability rows, preflight counter, raw/compact readers/writers, recovery and fuzz harness together.
+
+Gate: unchanged raw raster/tile identities; order-dependent Invert→Brightness/Contrast versus reverse; edit/toggle/reorder/duplicate/remove Undo/Redo; cold spill/reopen; independent PCND fixtures; resource/cancel failures leave history/document/source unchanged. No persistent feature claim until this gate and the renderer gate pass.
+
+### 3. One appearance pipeline for every consumer
+
+Evaluate source-local filters before layer opacity and root composition. Add typed evaluation to CPU flat/region rendering, display tiles, thumbnails, clipboard/merged sampling, print and flat exports. Raw-layer sampling remains explicitly raw; merged/visible sampling uses evaluated appearances. Layered exports must preserve supported stacks or require an explicit bake/omission conversion with a real preview; preserving writers must refuse unsupported stacks.
+
+Extend content cache keys with ordered semantic descriptors, profile version, mask dependencies, source default/dimensions and required source region versions. Parameter/enable/reorder edits invalidate appearances even when no raster tile changes. Compute input dependency and output damage through the stack. Pointwise first nodes have no halo; later finite/global/spatial nodes must supply the stronger contract before regional reuse.
+
+Placement-only reuse is permitted for these source-local point filters. Position-dependent materials, transformed masks, global statistics, backdrop-dependent styles and resampling require additional keys/bounds. Sharing an appearance does not authorize presenting a stale session/generation/request. Bound caches, queued jobs, scratch and upload copies under caller-owned realms; eviction cannot destroy committed descriptors/source.
+
+Initial PDN/PAINT/PSD/PSB/ORA preserving writers must reject effect-bearing documents before allocation: a rendered ORA merged preview does not preserve an editable stack in its raw layers. A future **Bake Effects Copy** needs a frozen owner, stack/assets digest, target/operation and explicit conversion-loss receipt. Source-metadata Omit consent never authorizes dropping effects. Flat render callbacks, including DDS/MSP workers, must evaluate full resolution; update their PCND transfer framing/digests when the stack schema lands. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
+
+GPU presentation may consume CPU-evaluated tiles initially. Never bypass active filters in a GPU fast path, picker, preview or export because the backend has no matching kernel. CPU fallback preserves correctness; unsupported resource sizes yield a typed failure rather than source-only rendering. Do not import Palette's whole-layer clones or fixed LRU limits as PaintCraft's resource policy.
+
+Gate: full versus regional/tile-split equality, negative origins, finite source edge versus tile edge, implicit defaults, mask-once, distant invalidation for future global nodes, cold tile restoration, canceled/stale jobs, CPU/GPU-presented sample parity and export/print/clipboard consistency. Retain [ROI-01 through ROI-07](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md#tests).
+
+### 4. Studio, native/web hosts and automation
+
+Studio gets an ordered stack under each layer: add, edit, enable, reorder, duplicate and delete. Brightness/Contrast uses a private parameter draft, live preview and Apply/Cancel. Apply adds/edits the descriptor once; it never replaces the layer source with preview pixels. Freeze session, layer, document base, instance ID and draft generation; tab/layer/tool changes, cancellation and stale source retire the candidate without touching newer work.
+
+Use the shared action outbox and captured host ownership across desktop and web; do not port Palette's desktop worker/channel code into browser hosts. A reduced preview must disclose its scale and cannot serve as exact full-resolution output qualification. An admitted actual visible preview precedes any destructive bake/export decision. Settings/language controls share existing localization and font infrastructure.
+
+CLI/MCP expose typed stack operations and descriptor inspection with expected-state checks, atomic batches and the same validation/admission. File import/export, desktop, browser and automation use the same CPU appearance policy. Browser PCND save/reopen preserves editable stacks; explicit flat copies bake the evaluated view while retaining the project and its source-metadata privacy authority.
+
+Gate: real native and production-browser add/edit/reorder/Cancel/Apply/Undo/save/reopen flows, actual CLI and stdio MCP exact descriptor/pixel comparisons, source unchanged after preview/export, default unsupported-preserving-export refusal and explicit conversion consent. Do not advertise UI, web or automation parity from core tests alone.
+
+### 5. Grow the catalog through declared contracts
+
+Add neighborhood filters only with halo/border/scratch/dirty-region proofs; global-analysis filters need immutable full-dependency analysis objects; geometric filters need mapped footprints and interpolation support. Masks, effect styles/shared lighting, generators, imported LUTs/patterns and plugins each require bounded payloads and distinct semantics. Continue from the author's [15-category inventory](../temp/IMPLEMENTED_FUNCTIONS.md#12-complete-implemented-filter-catalog), qualifying each family rather than claiming 132 integrations at once.
+
+The first feature milestone is the real ordered two-filter stack, fixed masks, editable history/persistence, live Studio preview and consistent native/web/CLI output. Mask painting/linking, advanced styles and the remaining catalog are subsequent required roadmap work, not hidden as completed by this foundation.
+
+## Attribution and copying policy
+
+The pinned [LICENSE](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/LICENSE) is MIT, copyright © 2026 Palette contributors. For copied/adapted code or substantial documentation, preserve its copyright and full permission/warranty notice with the material and in distributed third-party notices; record repository, commit, source path/blob and modifications. Audit any separately licensed assets/dependencies before adopting them. A comment or GitHub link alone is not the full notice required for copied substantial portions.
+
+Prefer small attributed algorithm/interaction adaptations over importing the application or its dependency stack. Independently implement PaintCraft's persistent types, admission, typed errors, concurrency guards, canonical formats and ROI contracts. No third-party code has been copied into product source by this design document, and no new dependency or runtime result is claimed.

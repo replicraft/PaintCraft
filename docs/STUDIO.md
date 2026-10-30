@@ -52,6 +52,12 @@ remain session-only.
 
 ## Next Studio work
 
+[Palette integration](architecture/PALETTE_INTEGRATION.md) defines the requested
+editable filter stack and private preview workflow. The first milestone is
+Invert and Brightness/Contrast with persistent settings and consistent rendered
+output, followed by the remaining filters, masks and layer styles. It is planned
+work; the existing Studio UI does not yet expose a live filter stack.
+
 1. Expand the shared action registry with the remaining Studio menus and working
    workflows described in the supplied reference plan.
 2. Expand history storage and metadata admission, then qualified branching/spill
