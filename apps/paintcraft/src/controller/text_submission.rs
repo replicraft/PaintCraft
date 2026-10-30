@@ -379,6 +379,9 @@ impl Editor {
     }
     /// Saves must never capture an older canvas while authored text is retained.
     pub(crate) fn text_save_ready(&self) -> bool {
+        if self.filter_edit_open {
+            return false;
+        }
         if self.file_barrier.is_some()
             && !self.text_placement_failed()
             && self
@@ -405,7 +408,8 @@ impl Editor {
     /// A failed FIFO boundary excludes its blocked suffix from private exports.
     /// Its own older worker must have completed, not merely received cancellation.
     pub(crate) fn can_capture_export(&self) -> bool {
-        !self.has_image_paste()
+        !self.filter_edit_open
+            && !self.has_image_paste()
             && if self.text_placement_failed() {
                 !self.has_inflight_edit() && self.maintenance.is_none()
             } else {

@@ -63,6 +63,7 @@ pub(super) struct Deferred {
 #[derive(Debug)]
 pub(super) struct Waiting {
     pub(super) text: Option<text_submission::Attempt>,
+    pub(super) filter: Option<Uuid>,
     pub(super) native_activation: Option<native_publication::Scope>,
     pub(super) deferred: Deferred,
     pub(super) done: String,
@@ -182,8 +183,11 @@ impl Editor {
         };
         if waiting.deferred.base != self.session.history_ticket()
             || self.check_text_attempt(waiting.text).is_err()
+            || self.check_filter_attempt(waiting.filter).is_err()
         {
-            self.fail_text_attempt(waiting.text);
+            let (text, filter) = (waiting.text, waiting.filter);
+            self.fail_text_attempt(text);
+            self.finish_filter_attempt(filter, false);
             self.waiting_edit = None;
             self.publication_preview = None;
             self.preview_queue_revision.advance();
@@ -226,10 +230,12 @@ impl Editor {
                 .with_paint_metadata_budget(waiting.deferred.realms.metadata.clone())
         };
         let text = waiting.text;
+        let filter = waiting.filter;
         let preparation = match self.session.preparation() {
             Ok(preparation) => preparation,
             Err(error) => {
                 self.fail_text_attempt(text);
+                self.finish_filter_attempt(filter, false);
                 self.waiting_edit = None;
                 self.publication_preview = None;
                 self.preview_queue_revision.advance();
@@ -260,6 +266,7 @@ impl Editor {
             Ok(mut pending) => {
                 pending.native_activation = waiting.native_activation.clone();
                 pending.text = text;
+                pending.filter = filter;
                 self.waiting_edit = None;
                 self.pending_edit = Some(pending);
                 self.status = "Retrying edit after memory capacity became available…".into();
@@ -267,6 +274,7 @@ impl Editor {
             Err(error) if error.code == ErrorCode::ResourceLimit => {} // Retain across worker-admission races.
             Err(error) => {
                 self.fail_text_attempt(text);
+                self.finish_filter_attempt(filter, false);
                 self.waiting_edit = None;
                 self.publication_preview = None;
                 self.preview_queue_revision.advance();

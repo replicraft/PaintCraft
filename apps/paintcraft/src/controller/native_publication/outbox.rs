@@ -27,6 +27,10 @@ impl Activations {
     pub(in crate::controller) fn push_queued(&mut self, token: Token, queued: QueuedEdit) -> bool {
         self.0.push(token, queued)
     }
+    pub(in crate::controller) fn revoke_filter(&mut self, edit: &paintcraft_tools::FilterEdit) {
+        self.0
+            .retain(|queued| queued.action != Action::Filter(edit.clone()));
+    }
     pub(in crate::controller) fn revoke_text(&mut self, token: u64) {
         self.0
             .retain(|queued| queued.text.is_none_or(|attempt| attempt.token != token));
@@ -79,6 +83,9 @@ impl Editor {
             check(queued.scope.as_ref()).and_then(|_| self.start_text_attempt(queued.text))
         {
             self.fail_text_attempt(queued.text);
+            if let Action::Filter(edit) = &queued.action {
+                self.fail_queued_filter(edit);
+            }
             self.status = error.to_string();
             return;
         }

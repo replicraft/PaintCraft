@@ -111,7 +111,7 @@ impl Editor {
     /// Later painting can overlap a paint-only prefix. Any operation that could
     /// change layout, target validity, selection or publication identity blocks it.
     pub(crate) fn painting_blocked(&self) -> bool {
-        if self.retained_text_blocks_actions() {
+        if self.filter_edit_open || self.retained_text_blocks_actions() {
             return true;
         }
         if self.editing.is_none() {

@@ -17,6 +17,17 @@ impl Editor {
         if self.outbox.has_seen(token) {
             return false;
         }
+        if let Action::Filter(edit) = &action
+            && let Err(error) = self.validate_filter_edit(edit)
+        {
+            self.status = error.to_string();
+            return false;
+        }
+        if self.filter_edit_open
+            && !matches!(&action, Action::Filter(edit) if self.filter_request_allowed(token, edit))
+        {
+            return false;
+        }
         if self.has_image_paste() {
             if matches!(action, Action::Undo) {
                 self.cancel_image_paste();

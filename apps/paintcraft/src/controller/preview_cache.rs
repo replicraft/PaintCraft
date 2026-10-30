@@ -18,6 +18,24 @@ pub(crate) struct Stamp {
 pub(super) struct Cache(Mutex<Option<(Stamp, Option<Weak<Preview>>)>>);
 
 impl Editor {
+    fn collect_preview(&self) -> Option<Preview> {
+        self.filter_preview_current()
+            .or_else(|| self.paint_preview())
+            .or_else(|| self.queued_move_preview())
+            .or_else(|| {
+                let published = self
+                    .publication_preview
+                    .as_ref()
+                    .filter(|preview| self.move_preview_current(preview))
+                    .cloned();
+                if self.editing.is_some() && self.painting_blocked() {
+                    published
+                } else {
+                    self.floating_preview().or(published)
+                }
+            })
+    }
+
     pub(crate) fn selection_preview_size(&self) -> Option<(i64, i64)> {
         self.tools
             .selection_preview_size(self.document().canvas_rect())

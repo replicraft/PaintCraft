@@ -13,6 +13,9 @@ mod canvas;
 #[path = "controller/dispatch.rs"]
 mod dispatch;
 mod files;
+mod filter_editing;
+mod filter_submission;
+pub(crate) use filter_submission::Feedback as FilterFeedback;
 mod flatten;
 mod floating;
 mod floating_feedback;
@@ -94,6 +97,9 @@ pub struct Editor {
     canvas_size_edit: Option<(u32, u32)>,
     tools: ToolState,
     resource_shape: Option<resource_shape::Captured>,
+    filter_preview: Option<paintcraft_tools::FilterEdit>,
+    filter_edit_open: bool,
+    filter_submission: filter_submission::Tracker,
     pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
     image_paste: Option<image_paste::Placing>,
@@ -173,6 +179,9 @@ impl Editor {
             floating_source: None,
             adopted_brush: None,
             resource_shape: None,
+            filter_preview: None,
+            filter_edit_open: false,
+            filter_submission: Default::default(),
             image_paste: None,
             floating_commit_on_release: true,
             text_renderer: None,
@@ -389,7 +398,7 @@ impl Editor {
 
     /// Choose the editing target explicitly; it must be an existing layer.
     pub fn set_target(&mut self, id: Uuid) -> bool {
-        if self.has_image_paste() {
+        if self.filter_edit_open || self.has_image_paste() {
             return false;
         }
         let ok = self.document().layers.contains_key(&id);
@@ -431,6 +440,9 @@ impl Editor {
         self.tools.is_editing_text()
     }
     pub fn select_tool(&mut self, tool: Tool) {
+        if self.filter_edit_open {
+            return;
+        }
         if tool != self.tool {
             self.cancel_next_text_pointer();
         }
@@ -446,22 +458,6 @@ impl Editor {
         self.finish_selection_move();
         self.cancel_gesture();
         self.tools.choose_tool(tool);
-    }
-    fn collect_preview(&self) -> Option<Preview> {
-        self.paint_preview()
-            .or_else(|| self.queued_move_preview())
-            .or_else(|| {
-                let published = self
-                    .publication_preview
-                    .as_ref()
-                    .filter(|preview| self.move_preview_current(preview))
-                    .cloned();
-                if self.editing.is_some() && self.painting_blocked() {
-                    published
-                } else {
-                    self.floating_preview().or(published)
-                }
-            })
     }
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.tools.gesture_points()
@@ -544,6 +540,7 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::Filter(edit) => self.execute_filter(edit),
             Action::MoveSelection {
                 layer,
                 offset,

@@ -64,6 +64,7 @@ impl Editor {
             shape_target_valid,
             preview,
             ticket: self.session.ticket(),
+            owner: self.session.owner_id(),
             canvas: self.document().canvas_rect(),
             empty: self.document().layers.is_empty(),
             fonts: self.text_renderer.clone(),
@@ -105,6 +106,7 @@ impl Editor {
 pub(crate) struct PreviewPreparation {
     preview: Option<Arc<Preview>>,
     ticket: paintcraft_editor::session::Ticket,
+    owner: Uuid,
     canvas: paintcraft_core::types::Rect,
     empty: bool,
     fonts: Option<crate::text::Shared>,
@@ -136,6 +138,18 @@ impl PreviewPreparation {
     pub(crate) fn build(self, check: impl Fn() -> Result<()>) -> Result<Option<Batch>> {
         check()?;
         let operations = match self.preview.as_deref() {
+            Some(Preview::Filter(edit)) => {
+                if edit.owner != self.owner
+                    || edit.state_id != self.ticket.state_id
+                    || edit.publication_epoch != self.ticket.publication_epoch
+                {
+                    return Err(paintcraft_core::types::Error::new(
+                        paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                        "Filter preview source changed",
+                    ));
+                }
+                vec![edit.operation.to_value()?]
+            }
             Some(Preview::MoveSelection {
                 layer,
                 offset,

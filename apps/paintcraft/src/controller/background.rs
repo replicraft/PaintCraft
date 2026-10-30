@@ -58,6 +58,7 @@ pub(super) struct Pending {
     target_alias: Option<&'static str>,
     pub(super) native_activation: Option<native_publication::Scope>,
     pub(super) text: Option<text_submission::Attempt>,
+    pub(super) filter: Option<Uuid>,
 }
 impl Pending {
     pub(super) fn cancel(&self) {
@@ -207,6 +208,7 @@ impl Service {
             target_alias,
             native_activation: None,
             text: None,
+            filter: None,
         })
     }
 }
@@ -263,7 +265,8 @@ impl Editor {
         self.file_barrier.is_some()
     }
     pub(crate) fn can_capture_file(&self) -> bool {
-        !self.has_image_paste()
+        !self.filter_edit_open
+            && !self.has_image_paste()
             && !self.text_placement_failed()
             && (self.file_barrier.is_some() || !self.has_pending_edits())
     }
@@ -389,7 +392,11 @@ impl Editor {
             return;
         };
         let pending = self.pending_edit.take().expect("pending edit");
-        if let Err(error) = self.check_text_attempt(pending.text) {
+        if let Err(error) = self
+            .check_text_attempt(pending.text)
+            .and_then(|_| self.check_filter_attempt(pending.filter))
+        {
+            self.finish_filter_attempt(pending.filter, false);
             self.finish_text_attempt(pending.text, false);
             self.publication_preview = None;
             self.preview_queue_revision.advance();
@@ -407,6 +414,7 @@ impl Editor {
                     target_alias: pending.target_alias,
                     native_activation: pending.native_activation.clone(),
                     text: pending.text,
+                    filter: pending.filter,
                 });
                 return;
             }
@@ -495,6 +503,7 @@ impl Editor {
             Err(error) => Err(error),
         };
         self.finish_text_attempt(pending.text, result.is_ok());
+        self.finish_filter_attempt(pending.filter, result.is_ok());
         if let Err(error) = result {
             self.preview_lineage = Uuid::new_v4();
             self.status = if pending.done == picker::STATUS {
@@ -514,6 +523,7 @@ impl Editor {
 
 pub(super) fn preview(action: &Action) -> Option<Preview> {
     match action {
+        Action::Filter(edit) => Some(Preview::Filter(edit.clone())),
         Action::MoveSelection {
             layer,
             offset,
