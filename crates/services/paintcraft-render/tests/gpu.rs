@@ -680,3 +680,6 @@ mod single;
 mod filters;
 #[path = "gpu/masks.rs"]
 mod masks;
+
+#[path = "gpu/point_profiles.rs"]
+mod point_profiles;
