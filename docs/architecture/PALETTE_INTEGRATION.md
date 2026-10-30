@@ -1,6 +1,6 @@
 # Palette integration: persistent nondestructive filters
 
-Status: document/history, PCND persistence and renderer foundations implemented; commands and interface integration remain in progress. Reviewed 2026-10-29. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
+Status: document/history, PCND persistence and renderer foundations implemented; typed command and automation support implemented; interface integration remains in progress. Reviewed 2026-10-29. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
 
 ## Evidence and upstream identity
 
@@ -71,7 +71,7 @@ Gate: independent literal channels including 0/127/128/255, hidden RGB, all alph
 
 ### 2. Persistent stack, commands, history and PCND
 
-Implemented foundation: each layer has a bounded immutable ordered stack with cached semantic digest. Source tiles remain shared and unchanged; hot/cold history records the stack and accounts for its owned storage. Nineteen document tests and twenty history tests pass. Typed editing commands and persistent masks remain separate work.
+Implemented foundation: each layer has a bounded immutable ordered stack with cached semantic digest. Source tiles remain shared and unchanged; hot/cold history records the stack and accounts for its owned storage. Nineteen document tests and twenty history tests pass. [Six typed editing operations](../FILTER_COMMANDS.md) now support atomic history, aliases and inspection in CLI/MCP. Persistent masks remain separate work.
 
 Add immutable ordered instances and fixed selection-derived masks; retain source tile sharing. Descriptor order, enablement, IDs, mask bytes/default and arithmetic version enter document equality and semantic identities. IDs remain stable across edits; duplicate receives a new ID; a UI label is not the semantic key.
 

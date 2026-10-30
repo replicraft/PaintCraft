@@ -13,9 +13,10 @@ pixels, followed by masks and layer styles. The source review maps the author's
 catalog to document/history/PCND, rendering and Studio acceptance gates. Ordered
 point-filter storage, cold history, PCND3 and CPU/GPU-prepared appearances are
 implemented for Invert and Brightness/Contrast. All 95 renderer tests pass on
-required offscreen Metal, including 32 GPU controls. Commands, Studio controls,
-masks and complete export/browser authority remain work; the catalog is not
-available in PaintCraft yet.
+required offscreen Metal, including 32 GPU controls. [Typed editing and CLI/MCP inspection](FILTER_COMMANDS.md) are also implemented,
+with strict versioned result profiles and real metadata-limit refusal controls.
+Studio controls, masks and complete export/browser authority remain work; the
+full catalog is not available in PaintCraft yet.
 
 [Stock raster conversion safety](RASTER_SOURCE_IMPORT.md) now captures native
 source identity through consent and adoption, retains overwrite guards after

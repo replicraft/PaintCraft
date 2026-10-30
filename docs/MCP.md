@@ -23,6 +23,11 @@ Configure your MCP client with the absolute path to that binary:
 
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
+[Editable point filters](FILTER_COMMANDS.md) are available through `apply_operations`
+and `get_batch_schema`. Invert and Brightness/Contrast retain their parameters
+through Undo/Redo and PCND save/reopen; `inspect_document` exposes the ordered
+instances. This does not add Studio filter controls or the complete catalog.
+
 `export_layered` is registered for explicit fresh PSD/PSB/PDN/PAINT copies but currently
 returns a capability refusal: the original Photoshop/Paint.NET/Windows Paint open/re-edit qualification
 required by the format plan is not yet recorded. Acknowledging title loss cannot
