@@ -4,6 +4,14 @@ Status: implementation contract for the next Palette integration stage,
 2026-10-30. Persistent filter masks are not yet exposed or saved. The initial
 Invert and Brightness/Contrast stacks still affect whole layers.
 
+Implemented foundations: `paintcraft_raster::coverage_mask::A8Mask` stores
+fractional fields as canonical repeated row bands with charged shared storage.
+Eight focused groups cover construction, sparse uniform fields, canonical
+identity, clipping/reframing, shared views, refusal and cancellation; Raster
+strict checks pass. `paintcraft_effects::mix_point_coverage` implements the rule
+below, checked against independent real interpolation for all 16,777,216 byte
+pair/coverage combinations. These foundations are not yet attached to filters.
+
 This extends [Palette integration](PALETTE_INTEGRATION.md) and follows the
 canonical [effect-region contract](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md).
 It does not change the deliberately binary live-selection type.

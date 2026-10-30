@@ -19,11 +19,24 @@ Explicit filter-bake consent now covers native/web dialogs and CLI/MCP copies,
 with independent source-metadata authority. Actual production Worker and browser
 PNG/DDS/MSP flows preserve the source project and verify refusal, revocation and
 literal output pixels. Installed JPEG XR copies also pass their golden control.
-Desktop Studio now exposes stack editing with private previews and one-step
-Apply/Undo. Host tests cover actual background preparation, Cancel, stale
-ownership, metadata-limit failures and retry. Browser captured-command dispatch
-is implemented; its Studio controls and background previews, masks and the
-remaining catalog are still work.
+Desktop and browser Studio expose stack editing with private previews and
+one-step Apply/Undo. Native host tests cover actual background preparation,
+Cancel, stale ownership, metadata-limit failures and retry. Browser host tests
+cover captured edits, compact snapshot boundaries and regional-texture
+cancellation. Its persistent renderer passes 16 actual Chrome controls, including
+retained ICC and resolution-only projects; private
+parameter previews, Cancel, canvas navigation, preview-off Apply, Undo/Redo,
+editing existing parameters, direct enable/reorder and fresh reopen/save also
+have actual browser UI coverage,
+with independent descriptor order and raw-pixel checks. Initial browser source
+capture and ordinary drawing previews remain
+synchronous; per-patch cancellation has no strict latency guarantee. Persistent
+masks, layer styles and the remaining catalog are still work.
+
+Actual browser metadata-limit refusal retains parameters for retry and preserves
+the compact source/profile byte-for-byte after Cancel and fresh reopen. Host
+regressions also cover late base frames during five private preview routes,
+disjoint-view cancellation and rejecting stale private textures as dialog bases.
 
 [Stock raster conversion safety](RASTER_SOURCE_IMPORT.md) now captures native
 source identity through consent and adoption, retains overwrite guards after

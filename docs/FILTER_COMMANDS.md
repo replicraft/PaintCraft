@@ -3,10 +3,10 @@
 The engine, CLI and MCP support an ordered filter stack on each raster layer.
 The first algorithms are Invert and Brightness/Contrast. They preserve source
 pixels and alpha, participate in one-step Undo/Redo, and remain editable after
-saving and reopening a PCND project. Desktop Studio exposes stack editing;
-browser Studio controls and selection-derived filter masks remain work.
+saving and reopening a PCND project. Desktop and browser Studio expose stack
+editing. Selection-derived filter masks remain work.
 
-## Desktop Studio
+## Studio
 
 Choose **Interface**, switch to **Studio**, and open your project there. Select
 a layer in **Layers** to add, edit, enable, reorder, duplicate or remove its
@@ -17,6 +17,15 @@ parameters for retry or cancellation. Filters currently affect the whole layer.
 The parameter window allows middle-button canvas panning and Ctrl/Cmd-scroll
 zooming. Save as PCND to keep the stack editable. Exporting another image format
 requires the separate baking consent described below.
+
+Browser parameter previews and committed filtered views use a persistent
+background Worker with one frozen source and bounded latest-request scheduling.
+Results must match the exact owner, document, draft, parameters and viewport.
+The browser editor retains its existing 4-megapixel canvas limit. Initial source
+serialization, hashing and bridge copying remain synchronous and bounded by a
+64 MiB wire limit; ordinary brush/text/floating previews also retain their
+existing synchronous renderer. One output patch or metadata stage can delay
+Worker cancellation, so this is not a strict frame-latency qualification.
 
 Each layer supports up to 256 instances, including disabled instances. IDs,
 order, enabled state and parameters are persistent document meaning. Filter
@@ -112,8 +121,8 @@ or spilled.
 CPU composition and GPU source uploads use the same point-filter appearance,
 before layer opacity. Visible sampling, thumbnails and visible-image copies use
 that appearance; explicitly raw layer sampling reads the original pixels.
-GPU filter kernels, the remaining catalog, masks and browser Studio controls remain
-work. Layered foreign writers refuse these stacks.
+GPU filter kernels, the remaining catalog and masks remain work. Layered foreign
+writers refuse these stacks.
 
 ## Exporting a rendered copy
 
@@ -147,5 +156,18 @@ writer also have focused runtime coverage.
 
 Desktop Studio stack editing has host coverage for private previews, actual
 background preparation, Apply/Cancel/Undo, stale ownership, metadata-limit
-failure and retry. Browser editing has captured-command dispatch coverage;
-its interactive controls and background preview service remain separate work.
+failure and retry. Browser editing has captured-command dispatch and host
+lifecycle coverage. The built persistent renderer passes 16 actual Chrome
+controls with independent PCND fixtures and pixel expectations, including source
+reuse, preview-off preparation, typed refusal and retirement acknowledgements,
+including valid retained ICC and resolution-only attachments.
+Actual browser UI coverage also verifies private parameter previews, Cancel,
+canvas navigation, preview-off Apply, Undo/Redo, editing existing parameters,
+direct enable/reorder, and a
+fresh application reopening and saving the editable stack. Independent PCND
+decoding checks filter identities/order and unchanged raw source pixels.
+An actual compact-boundary project also verifies metadata-limit refusal and
+retry with parameters retained, fenced Save while the draft is active, and
+byte-identical Save/reopen after Cancel. Host controls prevent late committed
+frames from replacing brush, text, IME, floating or paste previews, including
+Cancel after a viewport change and immediate reopening of a filter dialog.
