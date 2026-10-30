@@ -1,6 +1,6 @@
 # Palette integration: persistent nondestructive filters
 
-Status: document/history, PCND persistence and renderer foundations implemented; typed command and automation support implemented; interface integration remains in progress. Reviewed 2026-10-29. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
+Status: document/history, PCND persistence, renderer foundations, typed automation and explicit exported-copy consent are implemented. Native controls, installed JPEG XR output, production browser Worker and PNG/DDS/MSP consent flows are qualified locally. Studio stack editing remains in progress. Updated 2026-10-30. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
 
 ## Evidence and upstream identity
 
@@ -93,13 +93,15 @@ Extend content cache keys with ordered semantic descriptors, profile version, ma
 
 Placement-only reuse is permitted for these source-local point filters. Position-dependent materials, transformed masks, global statistics, backdrop-dependent styles and resampling require additional keys/bounds. Sharing an appearance does not authorize presenting a stale session/generation/request. Bound caches, queued jobs, scratch and upload copies under caller-owned realms; eviction cannot destroy committed descriptors/source.
 
-Initial PDN/PAINT/PSD/PSB/ORA preserving writers must reject effect-bearing documents before allocation: a rendered ORA merged preview does not preserve an editable stack in its raw layers. A future **Bake Effects Copy** needs a frozen owner, stack/assets digest, target/operation and explicit conversion-loss receipt. Source-metadata Omit consent never authorizes dropping effects. Flat render callbacks, including DDS/MSP workers, must evaluate full resolution; update their PCND transfer framing/digests when the stack schema lands. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
+PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP browser protocol v3 binds the policy and canonical inventory through PCND3 transfer and validates the returned copy. Actual Worker and UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
 
 GPU presentation may consume CPU-evaluated tiles initially. Never bypass active filters in a GPU fast path, picker, preview or export because the backend has no matching kernel. CPU fallback preserves correctness; unsupported resource sizes yield a typed failure rather than source-only rendering. Do not import Palette's whole-layer clones or fixed LRU limits as PaintCraft's resource policy.
 
 Gate: full versus regional/tile-split equality, negative origins, finite source edge versus tile edge, implicit defaults, mask-once, distant invalidation for future global nodes, cold tile restoration, canceled/stale jobs, CPU/GPU-presented sample parity and export/print/clipboard consistency. Retain [ROI-01 through ROI-07](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md#tests).
 
 ### 4. Studio, native/web hosts and automation
+
+The shared Studio presenter and seven-language labels exist; apps do not yet expose its stack controls. A host audit also found two preview gaps to fix: the native preview whitelist excludes sampled/pen/resource/move previews despite staging support, and browser IME preedit uses a direct painter overlay rather than layer rendering. Ordinary native brush/shape/text and browser staged tool previews already pass through filtered document appearance. Host preview/commit/cancel coverage must verify the remaining paths.
 
 Studio gets an ordered stack under each layer: add, edit, enable, reorder, duplicate and delete. Brightness/Contrast uses a private parameter draft, live preview and Apply/Cancel. Apply adds/edits the descriptor once; it never replaces the layer source with preview pixels. Freeze session, layer, document base, instance ID and draft generation; tab/layer/tool changes, cancellation and stale source retire the candidate without touching newer work.
 

@@ -127,6 +127,11 @@ continue to refuse filters. Changing the stack, document state or target format
 invalidates the captured bake policy. PCND saves preserve filters directly and
 do not use this conversion policy.
 
-Desktop/browser consent controls and the browser Worker binding are being
-qualified as part of the same integration. Studio stack editing remains separate
-work; a successful rendered export does not establish an editable filter UI.
+Desktop and browser export dialogs start with baking unchecked. Changing the
+choice retires the prepared copy; another download needs fresh consent. Actual
+Chrome PNG/DDS/MSP flows verify refusal, revocation, exact exported pixels and
+an unchanged project. Native controls, CLI/MCP exports and the installed JPEG XR
+writer also have focused runtime coverage.
+
+Studio stack editing remains separate work; a successful rendered export does
+not establish an editable filter UI.
