@@ -1,12 +1,24 @@
 //! One full candidate from the immutable incoming tuple, before any A8 blend.
-use paintcraft_core::types::{Rgba, filters::Descriptor};
+use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, filters::Descriptor};
+pub(super) fn require_point(filter: Descriptor) -> Result<()> {
+    if filter.is_spatial() {
+        return Err(spatial_error());
+    }
+    Ok(())
+}
+fn spatial_error() -> Error {
+    Error::new(
+        ErrorCode::CapabilityUnsupported,
+        "Spatial filter requires admitted finite-source evaluation",
+    )
+}
 fn round(n: u64, d: u64) -> u8 {
     ((n + d / 2) / d) as u8
 }
 fn luma(rgb: [u8; 3]) -> u64 {
     u64::from(rgb[0]) * 2126 + u64::from(rgb[1]) * 7152 + u64::from(rgb[2]) * 722
 }
-pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Rgba {
+pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Result<Rgba> {
     let [r, g, b, alpha] = pixel.0;
     let rgb = [r, g, b];
     let candidate = match filter {
@@ -47,6 +59,7 @@ pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Rgba {
             })
         }
         Descriptor::SolarizeRgbV1 => rgb.map(|v| if v >= 128 { 255 - v } else { v }),
+        Descriptor::BoxBlurV1(_) => return Err(spatial_error()),
     };
-    Rgba([candidate[0], candidate[1], candidate[2], alpha])
+    Ok(Rgba([candidate[0], candidate[1], candidate[2], alpha]))
 }

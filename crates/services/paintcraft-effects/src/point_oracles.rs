@@ -76,14 +76,18 @@ fn all_445554_independent_records_match_six_frozen_stream_hashes() {
     let mut total = 0;
     let mut solar = Stream::default();
     for c in 0..=255u8 {
-        solar.add(&evaluate_pixel(&[Descriptor::SolarizeRgbV1], Rgba([c, c, c, 0])).0[..1]);
+        solar.add(
+            &evaluate_pixel(&[Descriptor::SolarizeRgbV1], Rgba([c, c, c, 0]))
+                .unwrap()
+                .0[..1],
+        );
     }
     total += solar.finish(&oracle, "solarize_all_channels");
     let mut poster = Stream::default();
     for n in 2..=32 {
         let d = Descriptor::PosterizeRgbV1(PosterizeRgbV1::new(n).unwrap());
         for c in 0..=255u8 {
-            poster.add(&evaluate_pixel(&[d], Rgba([c, c, c, 0])).0[..1]);
+            poster.add(&evaluate_pixel(&[d], Rgba([c, c, c, 0])).unwrap().0[..1]);
         }
     }
     total += poster.finish(&oracle, "posterize_all_parameters_channels");
@@ -92,7 +96,7 @@ fn all_445554_independent_records_match_six_frozen_stream_hashes() {
         let d = Descriptor::BlackWhiteRgbV1(BlackWhiteV1::new(s).unwrap());
         for c in 0..=255u8 {
             for a in [0, 1, 128, 255] {
-                gray.add(&evaluate_pixel(&[d], Rgba([c, c, c, a])).0);
+                gray.add(&evaluate_pixel(&[d], Rgba([c, c, c, a])).unwrap().0);
             }
         }
     }
@@ -102,7 +106,7 @@ fn all_445554_independent_records_match_six_frozen_stream_hashes() {
         let d = Descriptor::ThresholdLumaV1(ThresholdLumaV1::new(t).unwrap());
         for c in 0..=255u8 {
             for a in [0, 1, 128, 255] {
-                threshold.add(&evaluate_pixel(&[d], Rgba([c, c, c, a])).0);
+                threshold.add(&evaluate_pixel(&[d], Rgba([c, c, c, a])).unwrap().0);
             }
         }
     }
@@ -131,7 +135,8 @@ fn all_445554_independent_records_match_six_frozen_stream_hashes() {
                 blue.sort_unstable();
                 blue.dedup();
                 for b in blue {
-                    let result = evaluate_pixel(&[d], Rgba([r as u8, g as u8, b as u8, 0]));
+                    let result =
+                        evaluate_pixel(&[d], Rgba([r as u8, g as u8, b as u8, 0])).unwrap();
                     brackets.add(&[t as u8, r as u8, g as u8, b as u8, result.0[0]]);
                 }
             }
@@ -145,7 +150,7 @@ fn all_445554_independent_records_match_six_frozen_stream_hashes() {
             for g in [0, 127, 128, 255] {
                 for b in [0, 127, 128, 255] {
                     for a in [0, 1, 128, 255] {
-                        cross.add(&evaluate_pixel(&[d], Rgba([r, g, b, a])).0);
+                        cross.add(&evaluate_pixel(&[d], Rgba([r, g, b, a])).unwrap().0);
                     }
                 }
             }
@@ -159,14 +164,14 @@ fn independent_literals_masks_ties_and_stage_order_are_exact() {
     let o = oracle();
     for row in o.get("literal_controls").unwrap().as_array().unwrap() {
         assert_eq!(
-            evaluate_pixel(&[descriptor(row)], rgba(row.get("rgba").unwrap())),
+            evaluate_pixel(&[descriptor(row)], rgba(row.get("rgba").unwrap())).unwrap(),
             rgba(row.get("expected").unwrap())
         );
     }
     let context = o.get("context").unwrap();
     for row in context.get("mask_samples").unwrap().as_array().unwrap() {
         let source = rgba(row.get("rgba").unwrap());
-        let candidate = evaluate_pixel(&[descriptor(row)], source);
+        let candidate = evaluate_pixel(&[descriptor(row)], source).unwrap();
         assert_eq!(
             mix_point_coverage(
                 source,
@@ -181,34 +186,34 @@ fn independent_literals_masks_ties_and_stage_order_are_exact() {
     let order = context.get("order").unwrap();
     let source = rgba(order.get("rgba").unwrap());
     assert_eq!(
-        evaluate_pixel(&[bw, threshold], source),
+        evaluate_pixel(&[bw, threshold], source).unwrap(),
         rgba(order.get("black_white100_then_threshold128").unwrap())
     );
     assert_eq!(
-        evaluate_pixel(&[threshold], source),
+        evaluate_pixel(&[threshold], source).unwrap(),
         rgba(order.get("direct_threshold128").unwrap())
     );
     let tie = context.get("rounded_candidate_before_mask").unwrap();
     let source = rgba(tie.get("rgba").unwrap());
     assert_eq!(
-        mix_point_coverage(source, evaluate_pixel(&[bw], source), 128),
+        mix_point_coverage(source, evaluate_pixel(&[bw], source).unwrap(), 128),
         rgba(tie.get("expected").unwrap())
     );
     let poster = Descriptor::PosterizeRgbV1(PosterizeRgbV1::new(3).unwrap());
     let input = Rgba([127, 128, 255, 0]);
     assert_ne!(
-        evaluate_pixel(&[poster, Descriptor::SolarizeRgbV1], input),
-        evaluate_pixel(&[Descriptor::SolarizeRgbV1, poster], input)
+        evaluate_pixel(&[poster, Descriptor::SolarizeRgbV1], input).unwrap(),
+        evaluate_pixel(&[Descriptor::SolarizeRgbV1, poster], input).unwrap()
     );
     let input = Rgba([200, 200, 200, 0]);
     let first = mix_point_coverage(
         input,
-        evaluate_pixel(&[Descriptor::SolarizeRgbV1], input),
+        evaluate_pixel(&[Descriptor::SolarizeRgbV1], input).unwrap(),
         64,
     );
     let second = mix_point_coverage(
         first,
-        evaluate_pixel(&[Descriptor::SolarizeRgbV1], first),
+        evaluate_pixel(&[Descriptor::SolarizeRgbV1], first).unwrap(),
         64,
     );
     assert_eq!(

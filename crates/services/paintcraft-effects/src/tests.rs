@@ -24,7 +24,7 @@ fn independently_calculated_numeric_controls_and_rounding() {
     ] {
         for (input, expected) in values.into_iter().zip(expected) {
             assert_eq!(
-                evaluate_pixel(&[bc(b, c)], Rgba([input; 4])),
+                evaluate_pixel(&[bc(b, c)], Rgba([input; 4])).unwrap(),
                 Rgba([expected, expected, expected, input]),
                 "b={b},c={c},v={input}"
             );
@@ -35,24 +35,24 @@ fn independently_calculated_numeric_controls_and_rounding() {
 fn no_op_inversion_alpha_hidden_rgb_and_order_are_exact() {
     for v in 0..=255 {
         let source = Rgba([v, 255 - v, 73, 0]);
-        assert_eq!(evaluate_pixel(&[], source), source);
-        assert_eq!(evaluate_pixel(&[bc(0, 0)], source), source);
+        assert_eq!(evaluate_pixel(&[], source).unwrap(), source);
+        assert_eq!(evaluate_pixel(&[bc(0, 0)], source).unwrap(), source);
         assert_eq!(
-            evaluate_pixel(&[Descriptor::InvertRgbV1], source),
+            evaluate_pixel(&[Descriptor::InvertRgbV1], source).unwrap(),
             Rgba([255 - v, v, 182, 0])
         );
         assert_eq!(
-            evaluate_pixel(&[Descriptor::InvertRgbV1; 2], source),
+            evaluate_pixel(&[Descriptor::InvertRgbV1; 2], source).unwrap(),
             source
         );
     }
     let input = Rgba([0, 100, 255, 31]);
     assert_eq!(
-        evaluate_pixel(&[bc(10, 0), Descriptor::InvertRgbV1], input),
+        evaluate_pixel(&[bc(10, 0), Descriptor::InvertRgbV1], input).unwrap(),
         Rgba([229, 129, 0, 31])
     );
     assert_eq!(
-        evaluate_pixel(&[Descriptor::InvertRgbV1, bc(10, 0)], input),
+        evaluate_pixel(&[Descriptor::InvertRgbV1, bc(10, 0)], input).unwrap(),
         Rgba([255, 181, 26, 31])
     );
 }
@@ -170,7 +170,7 @@ fn row_partitions_and_empty_rows_match_scalar_pipeline() {
     let filters = [bc(-19, 23), Descriptor::InvertRgbV1, bc(2, -17)];
     let expected = source
         .iter()
-        .map(|p| evaluate_pixel(&filters, *p))
+        .map(|p| evaluate_pixel(&filters, *p).unwrap())
         .collect::<Vec<_>>();
     for partition in [1, 2, 3, 64, 128, 256] {
         let mut output = vec![Rgba([0; 4]); source.len()];

@@ -75,13 +75,13 @@ mod tests {
         let source = Rgba([0, 0, 0, 17]);
         let first = mix_point_coverage(
             source,
-            evaluate_pixel(&[Descriptor::InvertRgbV1], source),
+            evaluate_pixel(&[Descriptor::InvertRgbV1], source).unwrap(),
             128,
         );
         assert_eq!(first, Rgba([128, 128, 128, 17]));
         let second = mix_point_coverage(
             first,
-            evaluate_pixel(&[Descriptor::InvertRgbV1], first),
+            evaluate_pixel(&[Descriptor::InvertRgbV1], first).unwrap(),
             128,
         );
         assert_eq!(second, Rgba([127, 127, 127, 17]));

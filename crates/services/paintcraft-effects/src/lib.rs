@@ -9,14 +9,15 @@ mod point;
 pub mod spatial;
 pub use coverage::mix_point_coverage;
 
-/// Apply ordered descriptors. Every stage rounds independently and preserves
+/// Apply ordered point descriptors. Every stage rounds independently and preserves
 /// alpha, including RGB hidden under alpha zero. This convenience function is
 /// synchronous and has no cancellation checkpoints; use evaluate_row for work.
-pub fn evaluate_pixel(filters: &[Descriptor], mut pixel: Rgba) -> Rgba {
+/// Spatial descriptors, including radius-zero Box, return typed unsupported.
+pub fn evaluate_pixel(filters: &[Descriptor], mut pixel: Rgba) -> Result<Rgba> {
     for filter in filters {
-        pixel = point::evaluate(*filter, pixel);
+        pixel = point::evaluate(*filter, pixel)?;
     }
-    pixel
+    Ok(pixel)
 }
 
 /// Evaluate into caller-owned private storage, with no image-sized allocation.
@@ -25,6 +26,8 @@ pub fn evaluate_pixel(filters: &[Descriptor], mut pixel: Rgba) -> Rgba {
 /// it. Checks bound both row and stack work: before each 64-pixel chunk and
 /// each descriptor within that chunk, plus initial/final checks. Safe Rust
 /// requires source/output disjoint borrows; unsafe-created aliases are unsupported.
+/// The entire descriptor list is checked before callbacks or writes. A spatial
+/// descriptor never evaluates a partial point prefix into the output.
 pub fn evaluate_row(
     filters: &[Descriptor],
     source: &[Rgba],
@@ -37,6 +40,9 @@ pub fn evaluate_row(
             "Filter row lengths differ",
         ));
     }
+    for filter in filters {
+        point::require_point(*filter)?;
+    }
     check()?;
     for (source, output) in source.chunks(64).zip(output.chunks_mut(64)) {
         check()?;
@@ -44,7 +50,7 @@ pub fn evaluate_row(
         for filter in filters {
             check()?;
             for pixel in output.iter_mut() {
-                *pixel = evaluate_pixel(std::slice::from_ref(filter), *pixel);
+                *pixel = point::evaluate(*filter, *pixel)?;
             }
         }
     }
@@ -56,3 +62,5 @@ mod tests;
 
 #[cfg(test)]
 mod point_oracles;
+#[cfg(test)]
+mod spatial_boundary_tests;
