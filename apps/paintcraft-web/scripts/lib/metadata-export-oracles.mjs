@@ -4,7 +4,14 @@ import { createHash } from 'node:crypto';
 import { inflateSync } from 'node:zlib';
 
 const digest = (bytes) => createHash('sha256').update(bytes).digest();
-export function projectAttachment(bytes, source, profile, width, height) {
+export function projectAttachment(
+	bytes,
+	source,
+	profile,
+	width,
+	height,
+	expected = { format: 1, density: [3780, 3779], rawUnit: 1 },
+) {
 	assert.deepEqual(
 		bytes.subarray(0, 8),
 		Buffer.from('50434e44020d0a1a', 'hex'),
@@ -35,7 +42,7 @@ export function projectAttachment(bytes, source, profile, width, height) {
 	assert.equal(header.length, 192);
 	assert.equal(header.subarray(0, 8).toString(), 'PCSMETA1');
 	assert.equal(header.readUInt16BE(8), 1);
-	assert.equal(header[10], 1, 'Original PNG format');
+	assert.equal(header[10], expected.format, 'Original source format');
 	assert.equal(header[11], 0, 'No container selection');
 	assert.equal(header.readBigUInt64BE(12), BigInt(source.length));
 	assert.deepEqual(header.subarray(20, 52), digest(source));
@@ -43,17 +50,23 @@ export function projectAttachment(bytes, source, profile, width, height) {
 		[56, 60, 64, 68].map((p) => header.readUInt32BE(p)),
 		[width, height, width, height],
 	);
-	assert.equal(header[72], 0, 'PNG has no source orientation');
+	assert.equal(header[72], 0, 'No source orientation');
 	assert.equal(header[73], 0, 'No orientation transform');
 	assert.equal(header[74], 1);
 	assert.equal(header[75], 3, 'Original pixels per metre, not active DPI');
-	assert.equal(header.readBigInt64BE(76), 3780n);
+	assert.equal(header.readBigInt64BE(76), BigInt(expected.density[0]));
 	assert.equal(header.readBigUInt64BE(84), 1n);
-	assert.equal(header.readBigInt64BE(92), 3779n);
+	assert.equal(header.readBigInt64BE(92), BigInt(expected.density[1]));
 	assert.equal(header.readBigUInt64BE(100), 1n);
-	assert.equal(header[108], 1);
-	assert.equal(header.readUInt32BE(184), 1, 'Original PNG pHYs unit');
-	assert.equal(header[109], 1);
+	assert.equal(header[108], Number(expected.rawUnit !== null));
+	assert.equal(
+		header.readUInt32BE(184),
+		expected.rawUnit ?? 0,
+		'Exact original unit declaration; BMP has no unit tag',
+	);
+	assert.equal(header[109], 1, 'Original ICC present, not an active profile');
+	assert.equal(header[111], 0);
+	assert.deepEqual(header.subarray(188), Buffer.alloc(4));
 	assert.equal(header[110], 2, 'RGB source model');
 	assert.equal(header.readBigUInt64BE(112), BigInt(profile.length));
 	const retained = bytes.subarray(
@@ -78,7 +91,13 @@ export function projectAttachment(bytes, source, profile, width, height) {
 		attachmentDigest: header.subarray(152, 184).toString('hex'),
 		width,
 		height,
-		resolution: [3780, 3779, 'metre'],
+		resolution: [...expected.density, 'metre'],
+		physicalResolution: expected.density.every((n) => n > 0),
+		rawUnit: expected.rawUnit,
+		sourceFormat: header[10],
+		// PCND source attachments describe provenance, not an active CMS/DPI.
+		profileApplied: false,
+		resolutionApplied: false,
 	};
 }
 function crc32(bytes) {

@@ -19,9 +19,19 @@ if (!base || !process.env.PLAYWRIGHT_MODULE)
 fs.mkdirSync(base, { recursive: true });
 const out = fs.mkdtempSync(path.join(base, 'attempt-'));
 const phase = process.env.METADATA_BROWSER_PHASE ?? 'finish';
+const sourceKind = process.env.METADATA_BROWSER_SOURCE ?? 'png';
+assert.ok(['png', 'bmp'].includes(sourceKind), 'Source must be png or bmp');
+const fixtureName =
+	sourceKind === 'bmp' ? 'rgb24-v124-profile-negative.bmp' : 'rgb8.png';
+const attachmentFacts =
+	sourceKind === 'bmp'
+		? { format: 4, density: [-3780, 0], rawUnit: null }
+		: { format: 1, density: [3780, 3779], rawUnit: 1 };
 const evidence = {
 	status: 'started',
 	phase,
+	sourceKind,
+	attachmentFacts,
 	sources: {},
 	assets: {},
 	checks: [],
@@ -46,6 +56,14 @@ for (const name of [
 	'apps/paintcraft-web/src/paintcraft-web/app/exporting.rs',
 	'apps/paintcraft-web/src/paintcraft-web/app/exporting/frozen.rs',
 	'apps/paintcraft-web/src/paintcraft-web/files.rs',
+	'apps/paintcraft-web/src/paintcraft-web/files/loading.rs',
+	'apps/paintcraft-web/src/paintcraft-web/importing/raster_review.rs',
+	'crates/services/paintcraft-formats/src/image.rs',
+	'crates/services/paintcraft-formats/src/image/png_retention.rs',
+	'crates/services/paintcraft-formats/src/image/bmp_retention.rs',
+	'crates/services/paintcraft-formats/src/image/bmp_retention/capture.rs',
+	'crates/services/paintcraft-formats/src/image/retained_raster.rs',
+	'crates/services/paintcraft-formats/src/source_inspection.rs',
 	'apps/paintcraft-web/src/paintcraft-web/files/flat_export.rs',
 	'apps/paintcraft-web/src/paintcraft-web/text_ui.rs',
 	'crates/services/paintcraft-formats/src/export.rs',
@@ -56,9 +74,9 @@ for (const name of [
 	evidence.sources[name] = sha(fs.readFileSync(path.join(root, name)));
 const fixtures = path.join(
 	root,
-	'crates/services/paintcraft-formats/tests/png-retention-fixtures',
+	`crates/services/paintcraft-formats/tests/${sourceKind}-retention-fixtures`,
 );
-const source = path.join(fixtures, 'rgb8.png');
+const source = path.join(fixtures, fixtureName);
 const expected = fs.readFileSync(`${source}.rgba`);
 const original = fs.readFileSync(source);
 const profile = fs.readFileSync(
@@ -66,16 +84,30 @@ const profile = fs.readFileSync(
 );
 const oracle = JSON.parse(
 	fs.readFileSync(path.join(fixtures, 'oracle.json')),
-).fixtures.find((row) => row.file === 'rgb8.png');
+).fixtures.find((row) => row.file === fixtureName);
 assert.equal(sha(original), oracle.sha256);
 assert.equal(sha(expected), oracle.rgba_sha256);
 assert.equal(sha(profile), oracle.profile_sha256);
+if (sourceKind === 'bmp') {
+	assert.equal(original.subarray(0, 2).toString(), 'BM');
+	assert.equal(original.readUInt32LE(14), 124);
+	assert.equal(original.readUInt16LE(28), 24);
+	assert.deepEqual(
+		[original.readInt32LE(38), original.readInt32LE(42)],
+		[-3780, 0],
+	);
+	assert.deepEqual(oracle.density, attachmentFacts.density);
+	assert.equal(oracle.source_model, 'rgb');
+	const at = 14 + original.readUInt32LE(126);
+	assert.equal(original.readUInt32LE(130), profile.length);
+	assert.deepEqual(original.subarray(at, at + profile.length), profile);
+}
 evidence.input = { path: path.relative(root, source), ...oracle };
 for (const name of [
 	'apps/paintcraft-web/scripts/lib/metadata-export-oracles.mjs',
-	'crates/services/paintcraft-formats/tests/png-retention-fixtures/rgb8.png',
-	'crates/services/paintcraft-formats/tests/png-retention-fixtures/rgb8.png.rgba',
-	'crates/services/paintcraft-formats/tests/png-retention-fixtures/oracle.json',
+	path.relative(root, source),
+	path.relative(root, `${source}.rgba`),
+	path.relative(root, path.join(fixtures, 'oracle.json')),
 	'assets/profiles/sRGB2014.icc',
 ])
 	evidence.sources[name] = sha(fs.readFileSync(path.join(root, name)));
@@ -199,6 +231,7 @@ try {
 			profile,
 			oracle.width,
 			oracle.height,
+			attachmentFacts,
 		);
 		await page.close();
 		await freshPage();
@@ -222,6 +255,7 @@ try {
 			profile,
 			oracle.width,
 			oracle.height,
+			attachmentFacts,
 		);
 
 		async function openExport() {
@@ -276,7 +310,7 @@ try {
 			assert.equal(evidence.pageErrors?.length ?? 0, 0);
 			evidence.status = 'passed';
 			evidence.checks.push(
-				'Real PNG visible consent adopts unsaved exact-ICC/resolution metadata; PCND2 save/reopen retains exact attachment; unchecked export blocks; Cancel and explicit numeric PNG copy preserve PCND/title/dirty',
+				`Real ${sourceKind.toUpperCase()} visible consent adopts unsaved exact-ICC/resolution metadata; PCND2 save/reopen retains exact attachment; unchecked export blocks; Cancel and explicit numeric PNG copy preserve PCND/title/dirty`,
 			);
 		}
 	}
