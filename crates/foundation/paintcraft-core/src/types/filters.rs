@@ -44,8 +44,22 @@ pub enum Descriptor {
     ThresholdLumaV1(ThresholdLumaV1),
     PosterizeRgbV1(PosterizeRgbV1),
     SolarizeRgbV1,
+    BoxBlurV1(BoxBlurV1),
 }
 impl Descriptor {
+    /// Spatial intentions require a finite source and neighborhood admission.
+    /// Radius zero retains this classification; it grants no point-only API.
+    pub const fn is_spatial(self) -> bool {
+        match self {
+            Self::BoxBlurV1(_) => true,
+            Self::InvertRgbV1
+            | Self::BrightnessContrastV1(_)
+            | Self::BlackWhiteRgbV1(_)
+            | Self::ThresholdLumaV1(_)
+            | Self::PosterizeRgbV1(_)
+            | Self::SolarizeRgbV1 => false,
+        }
+    }
     pub const fn id(self) -> &'static str {
         match self {
             Self::InvertRgbV1 => "invert-rgb-v1",
@@ -54,6 +68,7 @@ impl Descriptor {
             Self::ThresholdLumaV1(_) => "threshold-luma-v1",
             Self::PosterizeRgbV1(_) => "posterize-rgb-v1",
             Self::SolarizeRgbV1 => "solarize-rgb-v1",
+            Self::BoxBlurV1(_) => "box-blur-v1",
         }
     }
     /// Stable inspection/command representation; versions are part of kind.
@@ -79,6 +94,10 @@ impl Descriptor {
             Self::PosterizeRgbV1(p) => Value::object([
                 ("kind", Value::str(self.id())),
                 ("levels", Value::Int(i64::from(p.levels()))),
+            ]),
+            Self::BoxBlurV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                ("radius", Value::Int(i64::from(p.radius()))),
             ]),
         }
     }
@@ -106,3 +125,5 @@ impl Descriptor {
 
 #[cfg(test)]
 mod point_tests;
+#[cfg(test)]
+mod spatial_tests;

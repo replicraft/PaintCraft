@@ -4,7 +4,7 @@ use crate::types::json::Value;
 fn bad() -> Error {
     Error::new(
         ErrorCode::InputSchema,
-        "Invalid point-filter descriptor fields or parameter type",
+        "Invalid filter descriptor fields or parameter type",
     )
 }
 impl Descriptor {
@@ -17,6 +17,7 @@ impl Descriptor {
             "black-white-rgb-v1" => &["kind", "strength"],
             "threshold-luma-v1" => &["kind", "level"],
             "posterize-rgb-v1" => &["kind", "levels"],
+            "box-blur-v1" => &["kind", "radius"],
             _ => {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
@@ -45,6 +46,7 @@ impl Descriptor {
                 Self::ThresholdLumaV1(ThresholdLumaV1::new(parameter("level")?)?)
             }
             "posterize-rgb-v1" => Self::PosterizeRgbV1(PosterizeRgbV1::new(parameter("levels")?)?),
+            "box-blur-v1" => Self::BoxBlurV1(BoxBlurV1::new(parameter("radius")?)?),
             _ => unreachable!("kind and exact field set validated above"),
         })
     }
