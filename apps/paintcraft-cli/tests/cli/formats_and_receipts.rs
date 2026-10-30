@@ -53,6 +53,36 @@ fn schema_capabilities_and_usage() {
     );
     let v2 = run(&["schema", "batch-v2"]);
     assert_eq!(text(&v2.json(), &["$id"]), "urn:paintcraft:schema:batch-v2");
+    for name in ["result-v2", "file-command-v2"] {
+        let expected = json::parse(
+            &fs::read(
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("schemas")
+                    .join(format!("{name}.schema.json")),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        for json_flag in [false, true] {
+            let args = if json_flag {
+                vec!["schema", name, "--json"]
+            } else {
+                vec!["schema", name]
+            };
+            let exported = run(&args);
+            assert_eq!(exported.code, 0, "{}", exported.stderr);
+            assert_eq!(
+                exported.json(),
+                expected,
+                "{name} must match the shipping closed schema"
+            );
+            if !json_flag && let Some(path) = std::env::var_os("PAINTCRAFT_FILTER_SCHEMA_EXPORTS") {
+                let root = PathBuf::from(path);
+                fs::create_dir_all(&root).unwrap();
+                fs::write(root.join(format!("{name}.json")), exported.stdout).unwrap();
+            }
+        }
+    }
     assert_eq!(run(&["schema", "result"]).code, 2);
     let caps = run(&["capabilities", "--json"]).json();
     let rows = caps.get("capabilities").unwrap().as_array().unwrap();

@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection"])]
+    #[arg(value_parser = ["batch", "batch-v2", "result-v2", "file-command-v2", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection"])]
     schema: String,
 }
 
@@ -23,6 +23,8 @@ pub fn run(a: Options, _json: bool) -> Reply {
             let text = match a.schema.as_str() {
                 "batch" => BATCH_SCHEMA,
                 "batch-v2" => BATCH_V2_SCHEMA,
+                "result-v2" => include_str!("../../schemas/result-v2.schema.json"),
+                "file-command-v2" => include_str!("../../schemas/file-command-v2.schema.json"),
                 "palette-inspection" => {
                     include_str!("../../schemas/palette-inspection.schema.json")
                 }

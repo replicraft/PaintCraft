@@ -323,7 +323,7 @@ impl PaintingServer {
         }).await
     }
     #[tool(
-        description = "Get the engine batch schema, including all brushes, shapes, layer operations, flood fill, text, selections and transforms."
+        description = "Get the engine batch schema, including all brushes, shapes, layer operations, editable filters, flood fill, text, selections and transforms."
     )]
     async fn get_batch_schema(&self) -> CallToolResult {
         CallToolResult::success(vec![ContentBlock::text(BATCH_V2_SCHEMA)])
