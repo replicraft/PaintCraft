@@ -1,6 +1,15 @@
 # Palette integration: persistent nondestructive filters
 
-Status: ordered document/history, PCND persistence, rendering, typed automation and explicit exported-copy consent are implemented for **Invert and Brightness/Contrast**, including fixed per-filter masks. Desktop and browser Studio expose stack editing and saved-selection mask controls. Private browser previews, Apply/Cancel, history, enable/reorder, fractional-mask presentation and fresh reopen/save have actual UI coverage. Updated 2026-10-30. Layer masks, layer styles and the remaining catalog are still open; a destructive adjustment endpoint is not completion of this integration.
+Status: ordered document/history, PCND persistence, rendering, typed automation
+and explicit exported-copy consent support **six point profiles**: Invert,
+Brightness/Contrast, Black & White, Threshold, Posterize and Solarize, including
+fixed per-filter masks. Desktop and browser Studio expose the shared controls.
+The initial two-kind UI/mask evidence below remains qualified. The four additions
+have qualified host controls, actual CLI/MCP, Formats, required Metal rendering
+and production Chrome Worker/export controls. Their four visible Studio UI flows
+also pass the scoped checks below. Updated 2026-10-30. Layer masks, layer styles and the
+remaining 132-entry source inventory remain open; six profiles do not establish
+catalog parity or a wholesale port.
 
 ## Evidence and upstream identity
 
@@ -37,7 +46,7 @@ The normative [effect-region contract](../temp/paintcraft-implementation-spec-v5
 
 ## Persistent model and arithmetic
 
-Proposed placement:
+Implemented ownership for the point-filter slice:
 
 | Owner | Responsibility |
 |---|---|
@@ -49,7 +58,7 @@ Proposed placement:
 
 Use a versioned encoded-RGB8 policy, not an assumed color-managed or linear-light result. Alpha is unchanged; **hidden RGB is transformed even when alpha is zero**. Final source-over composition retains its existing transparent-pixel behavior. Original ICC bytes stay attached as provenance and are not activated by a filter.
 
-First descriptors use integer hundredths: brightness `[-100,100]`, contrast `[-99,99]`. For channel byte `x`, brightness `b`, contrast `c`, the proposed reference is:
+First descriptors use integer hundredths: brightness `[-100,100]`, contrast `[-99,99]`. For channel byte `x`, brightness `b`, contrast `c`, the versioned exact reference is:
 
 `clamp_round(127.5 + (x - 127.5) * (100 + c)/(100 - c) + 255*b/100)`
 
@@ -63,15 +72,20 @@ An instance mask is persistent source-local coverage, independent of the live se
 
 ### 1. Descriptors and pure kernels
 
-Implementation status: validated descriptors and scalar pixel/row kernels are implemented in `paintcraft-core::types::filters` and `paintcraft-effects`. Six initial focused tests and strict Clippy pass. Document stacks, renderer adoption and PCND persistence have since been implemented in the stages below; desktop and browser Studio controls have host qualification, with actual browser preview/navigation coverage.
+Validated descriptors and scalar pixel/row kernels are implemented in
+`paintcraft-core::types::filters` and `paintcraft-effects`. The initial two kernels
+retain their exact byte contracts; the four additions have independent numeric
+oracles and typed-domain checks. See [all six exact profiles](POINT_FILTER_PROFILES.md)
+for required parameters, encoded RGB, hidden RGB, per-stage rounding and mask-once
+semantics. Completed historical two-kind tests below are not six-kind UI counts.
 
-Implement the two validated descriptors and bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths before writing; safe Rust slice borrowing requires disjoint source/output storage. Callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
+All six descriptors use bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths before writing; safe Rust slice borrowing requires disjoint source/output storage. Callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
 
 Gate: independent literal channels including 0/127/128/255, hidden RGB, all alpha extremes, brightness/contrast boundaries, tie rounding, identity, illegal endpoint, hostile geometry, cancellation and unchanged source on failure. This stage alone is **kernel foundation, not nondestructive filter support**.
 
 ### 2. Persistent stack, commands, history and PCND
 
-Implemented foundation: each layer has a bounded immutable ordered stack with cached semantic digest. Source tiles remain shared and unchanged; hot/cold history records the stack and accounts for its owned storage. Nineteen document tests and twenty history tests pass. [Six typed editing operations](../FILTER_COMMANDS.md) now support atomic history, aliases and inspection in CLI/MCP. Persistent masks remain separate work.
+Implemented foundation: each layer has a bounded immutable ordered stack with cached semantic digest. Source tiles remain shared and unchanged; hot/cold history records the stack and accounts for its owned storage. Nineteen document tests and twenty history tests pass. [Six typed editing operations](../FILTER_COMMANDS.md) support atomic history, aliases and inspection in CLI/MCP. Fixed persistent masks are implemented, with their distinct capture and coverage contracts.
 
 Add immutable ordered instances and fixed selection-derived masks; retain source tile sharing. Descriptor order, enablement, IDs, mask bytes/default and arithmetic version enter document equality and semantic identities. IDs remain stable across edits; duplicate receives a new ID; a UI label is not the semantic key.
 
@@ -85,7 +99,7 @@ Gate: unchanged raw raster/tile identities; order-dependent Invert→Brightness/
 
 ### 3. One appearance pipeline for every consumer
 
-Implemented foundation: CPU regional/parallel composition, uniform display reduction, thumbnails, visible sampling/copy and cache keys use evaluated point appearances. GPU source uploads prepare those same CPU appearances for composition and display. All 95 renderer tests pass with an M1 Pro Metal adapter required, including 32 GPU tests. This is local offscreen correctness evidence, not GPU filter execution, a performance gain, physical UI qualification or six-target conformance. Layered PDN/PAINT/PSD/PSB/ORA copies explicitly refuse nonempty stacks, including disabled entries, before output. Named flat-copy losses and browser snapshot accounting still need integration.
+Implemented foundation: CPU regional/parallel composition, uniform display reduction, thumbnails, visible sampling/copy and cache keys use evaluated point appearances. GPU source uploads prepare those same CPU appearances for composition and display. The current six-kind checkpoint passes all 108 renderer tests with offscreen Metal required, including 36 GPU controls. This is local offscreen correctness evidence, not GPU filter execution, a performance gain, physical UI qualification or six-target conformance. Layered PDN/PAINT/PSD/PSB/ORA copies explicitly refuse nonempty stacks, including disabled entries, before output. Named flat-copy losses and browser snapshot accounting are integrated with separately captured policies.
 
 Evaluate source-local filters before layer opacity and root composition. Add typed evaluation to CPU flat/region rendering, display tiles, thumbnails, clipboard/merged sampling, print and flat exports. Raw-layer sampling remains explicitly raw; merged/visible sampling uses evaluated appearances. Layered exports must preserve supported stacks or require an explicit bake/omission conversion with a real preview; preserving writers must refuse unsupported stacks.
 
@@ -93,7 +107,7 @@ Extend content cache keys with ordered semantic descriptors, profile version, ma
 
 Placement-only reuse is permitted for these source-local point filters. Position-dependent materials, transformed masks, global statistics, backdrop-dependent styles and resampling require additional keys/bounds. Sharing an appearance does not authorize presenting a stale session/generation/request. Bound caches, queued jobs, scratch and upload copies under caller-owned realms; eviction cannot destroy committed descriptors/source.
 
-PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP browser protocol v3 binds the policy and canonical inventory through PCND3 transfer and validates the returned copy. Actual Worker and UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
+PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP browser protocol v4 binds the policy and canonical filter/mask inventory through PCND3/4 transfer and validates the returned copy. Actual Worker and UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
 
 GPU presentation may consume CPU-evaluated tiles initially. Never bypass active filters in a GPU fast path, picker, preview or export because the backend has no matching kernel. CPU fallback preserves correctness; unsupported resource sizes yield a typed failure rather than source-only rendering. Do not import Palette's whole-layer clones or fixed LRU limits as PaintCraft's resource policy.
 
@@ -126,7 +140,32 @@ Gate: real native and production-browser add/edit/reorder/Cancel/Apply/Undo/save
 
 Add neighborhood filters only with halo/border/scratch/dirty-region proofs; global-analysis filters need immutable full-dependency analysis objects; geometric filters need mapped footprints and interpolation support. Masks, effect styles/shared lighting, generators, imported LUTs/patterns and plugins each require bounded payloads and distinct semantics. Continue from the author's [15-category inventory](../temp/IMPLEMENTED_FUNCTIONS.md#12-complete-implemented-filter-catalog), qualifying each family rather than claiming 132 integrations at once.
 
-The first feature milestone now includes the ordered two-filter stack, fixed per-filter masks, editable history/persistence, live Studio preview and consistent native/web/CLI output. The [mask qualification](FILTER_MASKS.md) distinguishes host tests, offscreen Metal rendering, actual Chrome controls and exported-copy checks. Mask painting/linking, layer masks, advanced styles and the remaining catalog remain required roadmap work. The [next four point-profile contracts](POINT_FILTER_PROFILES.md) and their independent oracle are proposed arithmetic only, not additional implemented filters.
+The ordered stack now has six implemented point profiles, fixed per-filter
+masks, editable history/persistence and consistent native/web/CLI appearance.
+The [mask qualification](FILTER_MASKS.md) retains its historical two-kind scope.
+For the four additions, Commands has 21 passing tests; actual CLI/stdio-MCP has
+five groups plus 61 schema controls over 32 genuine receipts and 43 legacy
+regressions. The full Formats suite passes 769 tests. Renderer qualification
+passes 108 tests, including 36 required Metal controls. The production Chrome
+probe passes 305 persistent Worker cases plus 32 DDS/MSP protocol4 export cases;
+nine positive artifacts independently decode to exact fixture pixels. These
+controls preserve explicit baking and source-metadata privacy authority.
+
+Four actual Chrome Studio flows pass for the added kinds, with seven evidence
+records per flow: Add, numeric parameter change for three profiles, Cancel, Apply,
+exact Undo/Redo and fresh reopen/save. The independent red/green source makes
+every default causal, confirmed by exact two-color screenshot markers at the
+same canvas geometry. Changed Threshold's uniform black has exact Worker-plane
+evidence only. Apply legitimately promotes its admitted private texture; fresh
+reopen separately verifies strict committed BASE source/state/ROI binding.
+These runs do not newly qualify existing-instance Edit, duplicate or preview-off.
+Calibration and failed attempts remain separate from the four final passes.
+The full Node suite passes 185 tests and independent JS oracle controls pass 63;
+raw Worker, host and visible UI evidence are distinct.
+[Point profiles](POINT_FILTER_PROFILES.md#integration-and-qualification) record
+that distinction and the immutable production evidence. Mask painting/linking,
+layer masks, spatial/global effects, advanced styles and the rest of the pinned
+132-entry source inventory remain required roadmap work.
 
 ## Attribution and copying policy
 
