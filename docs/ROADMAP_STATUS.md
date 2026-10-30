@@ -19,7 +19,11 @@ Explicit filter-bake consent now covers native/web dialogs and CLI/MCP copies,
 with independent source-metadata authority. Actual production Worker and browser
 PNG/DDS/MSP flows preserve the source project and verify refusal, revocation and
 literal output pixels. Installed JPEG XR copies also pass their golden control.
-Studio editing controls, masks and the remaining catalog are still work.
+Desktop Studio now exposes stack editing with private previews and one-step
+Apply/Undo. Host tests cover actual background preparation, Cancel, stale
+ownership, metadata-limit failures and retry. Browser captured-command dispatch
+is implemented; its Studio controls and background previews, masks and the
+remaining catalog are still work.
 
 [Stock raster conversion safety](RASTER_SOURCE_IMPORT.md) now captures native
 source identity through consent and adoption, retains overwrite guards after

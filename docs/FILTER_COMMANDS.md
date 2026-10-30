@@ -3,8 +3,20 @@
 The engine, CLI and MCP support an ordered filter stack on each raster layer.
 The first algorithms are Invert and Brightness/Contrast. They preserve source
 pixels and alpha, participate in one-step Undo/Redo, and remain editable after
-saving and reopening a PCND project. Studio controls and selection-derived
-filter masks are not available yet.
+saving and reopening a PCND project. Desktop Studio exposes stack editing;
+browser Studio controls and selection-derived filter masks remain work.
+
+## Desktop Studio
+
+Choose **Interface**, switch to **Studio**, and open your project there. Select
+a layer in **Layers** to add, edit, enable, reorder, duplicate or remove its
+filters. Parameters preview privately: **Apply** records one undoable edit,
+while **Cancel** leaves the document unchanged. A failed Apply retains the
+parameters for retry or cancellation. Filters currently affect the whole layer.
+
+The parameter window allows middle-button canvas panning and Ctrl/Cmd-scroll
+zooming. Save as PCND to keep the stack editable. Exporting another image format
+requires the separate baking consent described below.
 
 Each layer supports up to 256 instances, including disabled instances. IDs,
 order, enabled state and parameters are persistent document meaning. Filter
@@ -100,7 +112,7 @@ or spilled.
 CPU composition and GPU source uploads use the same point-filter appearance,
 before layer opacity. Visible sampling, thumbnails and visible-image copies use
 that appearance; explicitly raw layer sampling reads the original pixels.
-GPU filter kernels, the remaining catalog, masks and Studio controls remain
+GPU filter kernels, the remaining catalog, masks and browser Studio controls remain
 work. Layered foreign writers refuse these stacks.
 
 ## Exporting a rendered copy
@@ -133,5 +145,7 @@ Chrome PNG/DDS/MSP flows verify refusal, revocation, exact exported pixels and
 an unchanged project. Native controls, CLI/MCP exports and the installed JPEG XR
 writer also have focused runtime coverage.
 
-Studio stack editing remains separate work; a successful rendered export does
-not establish an editable filter UI.
+Desktop Studio stack editing has host coverage for private previews, actual
+background preparation, Apply/Cancel/Undo, stale ownership, metadata-limit
+failure and retry. Browser editing has captured-command dispatch coverage;
+its interactive controls and background preview service remain separate work.
