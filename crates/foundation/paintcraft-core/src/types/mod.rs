@@ -30,3 +30,5 @@ pub mod pen;
 
 pub mod canvas;
 pub mod clipboard;
+
+pub mod filters;

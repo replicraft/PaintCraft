@@ -39,6 +39,7 @@ paintcraft-tools = { path = "crates/editing/paintcraft-tools" }
 
 # Services: rendering, scheduling, formats and OS integration.
 paintcraft-render = { path = "crates/services/paintcraft-render" }
+paintcraft-effects = { path = "crates/services/paintcraft-effects" }
 paintcraft-runtime = { path = "crates/services/paintcraft-runtime" }
 paintcraft-formats = { path = "crates/services/paintcraft-formats" }
 paintcraft-platform = { path = "crates/services/paintcraft-platform" }
