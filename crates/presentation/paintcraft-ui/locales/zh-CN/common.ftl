@@ -537,3 +537,7 @@ original-image-resolution-will-be-kept-as-source-information-not-used-as-active-
 original-source-metadata-is-omitted-from-this-exported-copy = 此导出副本已省略原始来源元数据。
 some-png-metadata-will-not-be-retained = 部分 PNG 元数据将不会保留。
 other-png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG 的其他颜色声明将不会保留，也不会用于色彩管理。
+
+bake-editable-filters-into-this-exported-copy = 将可编辑滤镜合并到此导出副本
+the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-filter-settings-including-disabled-filters-save-a-paintcraft-project-to-keep-them = 导出副本会保留渲染外观，但不会保留可编辑的滤镜设置，包括已禁用的滤镜。请保存 PaintCraft 项目以保留这些设置。
+editable-filters-are-baked-into-this-exported-copy = 可编辑滤镜已合并到此导出副本中。

@@ -6,6 +6,7 @@ pub mod composition;
 pub mod confirmation;
 pub mod dds_export;
 pub mod entry_import;
+pub mod filter_bake_export;
 pub mod fonts;
 pub mod icns_export;
 pub mod icns_import;

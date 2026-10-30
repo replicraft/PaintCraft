@@ -209,6 +209,7 @@ pub fn loss_description(code: &str) -> Option<&'static str> {
     Some(match code {
         "flatten" => "Visible layers will be flattened into one picture.",
         "hidden-rgb" => "Invisible color information will not be retained.",
+        "filters-baked" => crate::filter_bake_export::BAKED_DESCRIPTION,
         "icon-resized" => "Entry dimensions will change to fit the selected sizes.",
         _ => return None,
     })

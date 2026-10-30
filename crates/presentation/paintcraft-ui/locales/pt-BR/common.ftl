@@ -537,3 +537,7 @@ original-image-resolution-will-be-kept-as-source-information-not-used-as-active-
 original-source-metadata-is-omitted-from-this-exported-copy = Os metadados originais são omitidos nesta cópia exportada.
 some-png-metadata-will-not-be-retained = Parte dos metadados PNG não será mantida.
 other-png-color-declarations-will-not-be-retained-or-used-for-color-management = As demais declarações de cor PNG não serão mantidas nem usadas no gerenciamento de cores.
+
+bake-editable-filters-into-this-exported-copy = Aplicar permanentemente os filtros editáveis nesta cópia exportada
+the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-filter-settings-including-disabled-filters-save-a-paintcraft-project-to-keep-them = A cópia exportada mantém a aparência, mas não preserva as configurações dos filtros editáveis, incluindo os desativados. Salve um projeto do PaintCraft para mantê-las.
+editable-filters-are-baked-into-this-exported-copy = Os filtros editáveis são aplicados permanentemente nesta cópia exportada.

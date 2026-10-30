@@ -537,3 +537,7 @@ original-image-resolution-will-be-kept-as-source-information-not-used-as-active-
 original-source-metadata-is-omitted-from-this-exported-copy = この書き出しコピーでは元の画像のメタデータが除外されます。
 some-png-metadata-will-not-be-retained = PNG メタデータの一部は保持されません。
 other-png-color-declarations-will-not-be-retained-or-used-for-color-management = PNG のその他の色宣言は保持されず、カラーマネジメントにも使用されません。
+
+bake-editable-filters-into-this-exported-copy = この書き出しコピーに編集可能なフィルターを統合する
+the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-filter-settings-including-disabled-filters-save-a-paintcraft-project-to-keep-them = 書き出しコピーでは見た目が保持されますが、無効なフィルターを含む編集設定は保持されません。設定を保持するには、PaintCraftプロジェクトを保存してください。
+editable-filters-are-baked-into-this-exported-copy = この書き出しコピーでは編集可能なフィルターが統合されます。

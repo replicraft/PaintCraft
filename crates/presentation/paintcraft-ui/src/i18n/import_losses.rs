@@ -37,6 +37,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
             "Original image resolution will be kept as source information, not used as active print settings."
         }
         "source-metadata-omitted" => "Original source metadata is omitted from this exported copy.",
+        "filters-baked" => crate::filter_bake_export::BAKED_DESCRIPTION,
         "bmp-metadata-ignored" => "Some BMP metadata will not be retained.",
         "resolution-metadata-ignored" => {
             "Image resolution metadata will not be retained; pixel dimensions will stay unchanged."
@@ -154,6 +155,7 @@ mod tests {
             "icc-source-retained-unapplied",
             "resolution-source-retained-inactive",
             "source-metadata-omitted",
+            "filters-baked",
             "bmp-metadata-ignored",
             "resolution-metadata-ignored",
             "dds-other-mips-not-imported",
