@@ -55,6 +55,47 @@ impl App {
     }
 
     pub(super) fn pump_interface_switch(&mut self, ctx: &egui::Context) {
+        // Quiescent retained text deliberately remains "pending" for saves.
+        // Handle the explicit switch choice before that ordinary work gate.
+        if let Some((discard, origin)) = self
+            .switching
+            .as_ref()
+            .map(|switch| (switch.discard, switch.origin))
+        {
+            let ids: Vec<_> = self
+                .tabs
+                .iter()
+                .filter(|tab| {
+                    let editor = if tab.id == self.active_tab_id() {
+                        Some(&self.editor)
+                    } else {
+                        tab.state.as_ref().map(|state| &state.editor)
+                    };
+                    editor.is_some_and(|editor| {
+                        if discard {
+                            editor.is_editing_text() || editor.failed_text_retained()
+                        } else {
+                            editor.failed_text_retained()
+                        }
+                    })
+                })
+                .map(|tab| tab.id)
+                .collect();
+            if !ids.is_empty() && !discard {
+                self.switching = None;
+                self.cancel_interface_switch(origin, "Interface unchanged: saving was cancelled, failed, or newer edits remain unsaved.");
+                return;
+            }
+            if discard {
+                let active = self.active_tab_id();
+                for id in ids {
+                    self.swap_tab_state(id);
+                    self.editor.cancel_text();
+                    self.drop_revoked_text_files();
+                }
+                self.swap_tab_state(active);
+            }
+        }
         if self.any_pending_edits()
             || self.any_deferred_files()
             || self.confirm.is_some()
@@ -240,3 +281,7 @@ mod tests {
         assert!(app.other_workspace.is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "switching/text_submission_tests.rs"]
+mod text_submission_tests;

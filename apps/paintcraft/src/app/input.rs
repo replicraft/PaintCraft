@@ -94,8 +94,11 @@ impl App {
                             );
                         }
                         self.editor.cancel_gesture();
+                        let text = self.editor.is_editing_text();
                         self.editor.cancel_text();
-                        self.editor.cancel_pending_edits();
+                        if !text {
+                            self.editor.cancel_pending_edits();
+                        }
                     }
                     _ => {
                         if let Some(action) = paintcraft_ui::actions::Action::from_shortcut_for(

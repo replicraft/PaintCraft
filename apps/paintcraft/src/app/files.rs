@@ -577,6 +577,13 @@ impl App {
     }
 
     pub(super) fn capture_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        if !self.editor.text_save_ready() {
+            self.save_activation = None;
+            self.close_after_edits = false;
+            self.tab_save_close = None;
+            self.editor.set_status("Finish pending edits before saving");
+            return;
+        }
         // Recheck after a confirmation or deferred editor transaction. The
         // destination may have become an alias of a loaded resource meanwhile.
         if let Err(error) = self.guard_save_destination(&path) {

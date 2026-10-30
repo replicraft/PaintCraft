@@ -155,6 +155,7 @@ impl App {
     }
 
     pub(super) fn resolve_tab_input(&mut self, ctx: &egui::Context) {
+        self.editor.cancel_next_text_pointer();
         self.editor.cancel_gesture();
         self.editor.commit_text();
         if let Some((_, _, field)) = &mut self.name_edit {

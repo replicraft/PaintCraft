@@ -19,6 +19,7 @@ pub(super) struct DeferredFile {
     barrier: Uuid,
     request: FileRequest,
     started: bool,
+    text_epoch: Uuid,
 }
 
 impl App {
@@ -70,6 +71,12 @@ impl App {
         }
     }
     pub(super) fn defer_file(&mut self, request: FileRequest, activation: u64) {
+        if self.editor.failed_text_retained() {
+            self.save_activation = None;
+            self.close_after_edits = false;
+            self.tab_save_close = None;
+            return;
+        }
         if self
             .deferred_files
             .iter()
@@ -88,10 +95,24 @@ impl App {
             barrier,
             request,
             started: false,
+            text_epoch: self.editor.text_file_epoch(),
         });
         self.editor
             .set_status("Waiting for earlier edits before capturing the file request…");
         self.context.request_repaint();
+    }
+    pub(super) fn drop_revoked_text_files(&mut self) {
+        let epoch = self.editor.text_file_epoch();
+        if self.deferred_files.iter().any(|request| {
+            request.text_epoch != epoch || !self.editor.file_barrier_live(request.barrier)
+        }) {
+            self.deferred_files.retain(|request| {
+                request.text_epoch == epoch && self.editor.file_barrier_live(request.barrier)
+            });
+            self.save_activation = None;
+            self.close_after_edits = false;
+            self.tab_save_close = None;
+        }
     }
     /// Poll every document, including inactive tabs. Targeted runtime polling
     /// keeps results and admission charged to their originating controller.
@@ -116,6 +137,7 @@ impl App {
                 ctx.request_repaint();
             }
             self.remember_published_canvas_size();
+            self.drop_revoked_text_files();
             let can_run_file = (self.confirm.is_none()
                 || self.jxr_waiting_for_edits()
                 || self.dds_waiting_for_edits()
@@ -213,7 +235,13 @@ impl App {
         }
         self.swap_tab_state(original);
         self.update_capacity_interest();
-        if self.any_pending_edits() || self.any_deferred_files() {
+        let processing = self.editor.has_processing_edits()
+            || self.tabs.iter().any(|tab| {
+                tab.state
+                    .as_ref()
+                    .is_some_and(|state| state.editor.has_processing_edits())
+            });
+        if processing || self.any_deferred_files() {
             ctx.request_repaint_after(Duration::from_millis(16));
         } else if self.close_after_edits {
             self.close_after_edits = false;
@@ -239,3 +267,7 @@ pub(super) fn native_worker_budget() -> paintcraft_runtime::SharedBudget {
 #[cfg(test)]
 #[path = "editing/admission_tests.rs"]
 mod admission_tests;
+
+#[cfg(test)]
+#[path = "editing/text_submission_tests.rs"]
+pub(crate) mod text_submission_tests;

@@ -39,7 +39,12 @@ impl App {
             return;
         }
         self.editor.run_pending();
-        if self.editing.is_some() {
+        if (self.editing.is_some() && !self.editor.failed_text_retained())
+            || !self.editor.can_capture_export()
+        {
+            if self.editor.failed_text_retained() {
+                return;
+            }
             self.defer_file(
                 editing::FileRequest::Export(path, settings),
                 token(&self.context, code::EXPORT),

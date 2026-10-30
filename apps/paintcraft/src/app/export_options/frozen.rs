@@ -37,6 +37,6 @@ impl Frozen {
         self.owner == app.active_tab_id()
             && self.source == app.editor.preview_stamp()
             && self.frontend == app.format_frontend()
-            && app.editor.can_capture_file()
+            && app.editor.can_capture_export()
     }
 }

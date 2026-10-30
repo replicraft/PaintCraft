@@ -122,7 +122,7 @@ impl State {
                     && c.bound == app.bound
                     && c.path.as_deref() == app.editor.path()
                     && c.text == app.path_text
-                    && !app.editor.has_pending_edits()
+                    && app.editor.can_capture_export()
             })
     }
     fn has_source_metadata(&self) -> bool {
@@ -157,6 +157,10 @@ impl App {
         frozen: export_options::Frozen,
         intent: Intent,
     ) {
+        if self.editor.failed_text_retained() && !self.editor.can_capture_export() {
+            return;
+        }
+
         self.begin_dds_export_source(settings, Some(frozen), intent);
     }
     fn begin_dds_export_source(

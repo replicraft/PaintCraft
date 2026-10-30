@@ -158,7 +158,7 @@ impl NativeSaving {
         bound: Option<&Path>,
         ctx: egui::Context,
     ) -> Result<()> {
-        if !editor.can_capture_file() {
+        if !editor.can_capture_file() || !editor.text_save_ready() {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
                 "finish pending edits before capturing a save",

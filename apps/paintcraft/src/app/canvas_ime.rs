@@ -181,7 +181,7 @@ impl App {
                         "",
                     ),
                     egui::Key::Enter if modifiers.command => {
-                        self.editor.commit_text();
+                        self.editor.place_text();
                         Ok(())
                     }
                     egui::Key::Enter => self.canvas_replace(0, "\n"),

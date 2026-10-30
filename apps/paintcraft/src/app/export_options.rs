@@ -108,7 +108,10 @@ impl App {
         }
         self.editor.cancel_gesture();
         self.editor.run_pending();
-        if !self.editor.can_capture_file() {
+        if !self.editor.can_capture_export() {
+            if self.editor.failed_text_retained() {
+                return;
+            }
             self.defer_file(
                 editing::FileRequest::ExportOptions(format),
                 token(&self.context, code::EXPORT),

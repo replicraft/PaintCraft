@@ -64,7 +64,7 @@ impl State {
                     && capture.bound == app.bound
                     && capture.editor_path.as_deref() == app.editor.path()
                     && capture.path_text == app.path_text
-                    && !app.editor.has_pending_edits()
+                    && app.editor.can_capture_export()
             })
     }
     fn has_source_metadata(&self) -> bool {
@@ -121,6 +121,10 @@ impl App {
         self.begin_jxr_export_source(Some(frozen), intent);
     }
     fn begin_jxr_export_source(&mut self, frozen: Option<export_options::Frozen>, intent: Intent) {
+        if self.editor.failed_text_retained() && !self.editor.can_capture_export() {
+            return;
+        }
+
         if self.jxr_export.is_some()
             || self.confirm.is_some()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
