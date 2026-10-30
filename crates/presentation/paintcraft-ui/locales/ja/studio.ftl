@@ -442,3 +442,17 @@ format-tiff-pages-count = TIFF のページ数: { $count }
 this-page-uses-an-unsupported-tiff-profile = このページは未対応の TIFF プロファイルを使用しています。
 
 this-page-cannot-be-imported = このページは読み込めません。
+
+filters = フィルター
+add-filter = フィルターを追加
+invert = 色の反転
+brightness-contrast = 明るさ / コントラスト
+no-filters-on-this-layer = このレイヤーにフィルターはありません。
+filters-are-applied-from-top-to-bottom = フィルターは上から順に適用されます。
+filter-actions = フィルターの操作
+duplicate = 複製
+remove-filter = フィルターを削除
+brightness = 明るさ
+contrast = コントラスト
+preview = プレビュー
+source-pixels-remain-unchanged = 元のピクセルは変更されません。

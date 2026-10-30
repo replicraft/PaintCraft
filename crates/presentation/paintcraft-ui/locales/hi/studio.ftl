@@ -442,3 +442,17 @@ format-tiff-pages-count = TIFF पृष्ठ: { $count }
 this-page-uses-an-unsupported-tiff-profile = यह पृष्ठ असमर्थित TIFF प्रोफ़ाइल का उपयोग करता है।
 
 this-page-cannot-be-imported = यह पृष्ठ आयात नहीं किया जा सकता।
+
+filters = फ़िल्टर
+add-filter = फ़िल्टर जोड़ें
+invert = रंग उलटें
+brightness-contrast = चमक / कंट्रास्ट
+no-filters-on-this-layer = इस परत पर कोई फ़िल्टर नहीं है।
+filters-are-applied-from-top-to-bottom = फ़िल्टर ऊपर से नीचे लागू होते हैं।
+filter-actions = फ़िल्टर की कार्रवाइयाँ
+duplicate = प्रतिलिपि बनाएँ
+remove-filter = फ़िल्टर हटाएँ
+brightness = चमक
+contrast = कंट्रास्ट
+preview = पूर्वावलोकन
+source-pixels-remain-unchanged = मूल पिक्सेल अपरिवर्तित रहते हैं।

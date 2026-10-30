@@ -442,3 +442,17 @@ format-tiff-pages-count = TIFF-Seiten: { $count }
 this-page-uses-an-unsupported-tiff-profile = Diese Seite verwendet ein nicht unterstütztes TIFF-Profil.
 
 this-page-cannot-be-imported = Diese Seite kann nicht importiert werden.
+
+filters = Filter
+add-filter = Filter hinzufügen
+invert = Umkehren
+brightness-contrast = Helligkeit / Kontrast
+no-filters-on-this-layer = Diese Ebene hat keine Filter.
+filters-are-applied-from-top-to-bottom = Filter werden von oben nach unten angewendet.
+filter-actions = Filteraktionen
+duplicate = Duplizieren
+remove-filter = Filter entfernen
+brightness = Helligkeit
+contrast = Kontrast
+preview = Vorschau
+source-pixels-remain-unchanged = Die ursprünglichen Pixel bleiben unverändert.

@@ -442,3 +442,17 @@ format-tiff-pages-count = TIFF 页数：{ $count }
 this-page-uses-an-unsupported-tiff-profile = 此页面使用不受支持的 TIFF 配置。
 
 this-page-cannot-be-imported = 此页面无法导入。
+
+filters = 滤镜
+add-filter = 添加滤镜
+invert = 反相
+brightness-contrast = 亮度 / 对比度
+no-filters-on-this-layer = 此图层没有滤镜。
+filters-are-applied-from-top-to-bottom = 滤镜按从上到下的顺序应用。
+filter-actions = 滤镜操作
+duplicate = 复制
+remove-filter = 移除滤镜
+brightness = 亮度
+contrast = 对比度
+preview = 预览
+source-pixels-remain-unchanged = 原始像素保持不变。

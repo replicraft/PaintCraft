@@ -1,6 +1,7 @@
 //! Studio presentation. Actions are executed by the application shell.
 pub mod canvas;
 mod canvas_size;
+pub mod filters;
 pub use canvas_size::{CanvasResponse, CanvasSize, canvas_size_dialog};
 mod colors;
 mod history;
