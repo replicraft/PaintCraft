@@ -205,8 +205,18 @@ pub fn run(a: Options, json: bool) -> Reply {
                     image::DECODE_PIXELS_MAX,
                 )?;
                 (decoded.document(&sha)?, decoded.losses)
-            } else if family == paintcraft_formats::registry::Family::Png && a.page.is_none() {
-                let prepared = super::source_metadata::Realm::default().png(&bytes, &|| Ok(()))?;
+            } else if matches!(
+                family,
+                paintcraft_formats::registry::Family::Png
+                    | paintcraft_formats::registry::Family::Bmp
+            ) && a.page.is_none()
+            {
+                let realm = super::source_metadata::Realm::default();
+                let prepared = if family == paintcraft_formats::registry::Family::Png {
+                    realm.png(&bytes, &|| Ok(()))?
+                } else {
+                    realm.bmp(&bytes, &|| Ok(()))?
+                };
                 let document = prepared.document_with_admission(
                     &mut paintcraft_raster::Admission::new(
                         paintcraft_core::types::policy::STAGED_PIXELS_MAX,

@@ -211,8 +211,12 @@ impl PaintingServer {
                     image::DECODE_PIXELS_MAX,
                 )?;
                 (decoded.document(&sha)?, decoded.losses)
-            } else if family == Family::Png && p.page.is_none() {
-                let prepared = state.metadata_realm.png(&bytes, &check)?;
+            } else if matches!(family, Family::Png | Family::Bmp) && p.page.is_none() {
+                let prepared = if family == Family::Png {
+                    state.metadata_realm.png(&bytes, &check)?
+                } else {
+                    state.metadata_realm.bmp(&bytes, &check)?
+                };
                 let document = prepared.document_with_admission(
                     &mut paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX),
                     &check)?;
