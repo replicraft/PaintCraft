@@ -590,3 +590,6 @@ fn cancelling_an_already_prepared_real_worker_apply_prevents_publication_until_r
     assert!(!h.state().editor.published_is_dirty());
     assert!(h.state().editor.export_snapshot().is_ok());
 }
+
+#[path = "mask_tests.rs"]
+mod mask_tests;

@@ -39,15 +39,39 @@ impl App {
                 id: f.id(),
                 enabled: f.enabled(),
                 descriptor: f.descriptor(),
+                mask: f.mask().map(|m| {
+                    let stats = m.coverage().stats();
+                    filters::MaskSummary {
+                        enabled: m.enabled(),
+                        runs: stats.runs,
+                    }
+                }),
             })
             .collect();
-        let actions = filters::panel(ui, &rows, rows.len() < 256);
+        let actions = filters::panel(
+            ui,
+            &rows,
+            rows.len() < 256,
+            !matches!(
+                self.editor.selection(),
+                paintcraft_editor::execute::Selection::Inactive
+            ),
+        );
         for action in actions {
             self.begin_studio_filter(ui.ctx(), action);
         }
     }
     pub(super) fn begin_studio_filter(&mut self, ctx: &egui::Context, intent: Intent<Uuid>) {
         if self.filter_editing.is_some() || self.confirm.is_some() || self.document_count() == 0 {
+            return;
+        }
+        // Capturing a mask must not cancel a live selection/paint gesture or
+        // commit a text composition whose result has not been accepted yet.
+        if matches!(
+            intent,
+            Intent::UseSelection(_) | Intent::SetMaskEnabled { .. } | Intent::RemoveMask(_)
+        ) && (self.ime_composing || self.editor.gesture_in_progress())
+        {
             return;
         }
         if let Err(error) = self.editor.begin_filter_edit() {
@@ -231,7 +255,27 @@ impl App {
             }
             return;
         }
-        match filters::parameter_dialog(ctx, &mut draft.parameters) {
+        let mask = if let FilterOp::Update {
+            filter: FilterRef::Id(id),
+            ..
+        } = &draft.base.operation
+        {
+            self.editor
+                .document()
+                .layer(&state.layer)
+                .and_then(|l| l.filters.iter().find(|f| f.id() == *id))
+                .and_then(|f| f.mask())
+                .map(|m| {
+                    let stats = m.coverage().stats();
+                    filters::MaskSummary {
+                        enabled: m.enabled(),
+                        runs: stats.runs,
+                    }
+                })
+        } else {
+            None
+        };
+        match filters::parameter_dialog(ctx, &mut draft.parameters, mask) {
             ParameterResponse::Pending => self.filter_editing = Some(state),
             ParameterResponse::Preview(descriptor) => {
                 let preview = descriptor.map(|descriptor| edited(&draft.base, descriptor));
@@ -303,6 +347,21 @@ fn operation(editor: &Editor, layer: Uuid, intent: Intent<Uuid>) -> Option<Filte
             filter: reference(id)?,
             alias: "studio_filter".into(),
             to_index: None,
+        },
+        Intent::UseSelection(id) => FilterOp::Mask {
+            layer,
+            filter: reference(id)?,
+            operation: paintcraft_commands::MaskOp::FromSelection { enabled: true },
+        },
+        Intent::SetMaskEnabled { id, enabled } => FilterOp::Mask {
+            layer,
+            filter: reference(id)?,
+            operation: paintcraft_commands::MaskOp::SetEnabled { enabled },
+        },
+        Intent::RemoveMask(id) => FilterOp::Mask {
+            layer,
+            filter: reference(id)?,
+            operation: paintcraft_commands::MaskOp::Remove,
         },
         Intent::Remove(id) => FilterOp::Remove {
             layer,
