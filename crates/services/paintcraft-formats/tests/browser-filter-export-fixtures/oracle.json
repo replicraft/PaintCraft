@@ -1,0 +1,92 @@
+{
+    "generator": "Python standard-library PCND3 and published canonical digest byte writer",
+    "source_parent_sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1",
+    "document": "33333333-3333-4333-8333-333333333333",
+    "state": "11111111-1111-4111-8111-111111111111",
+    "width": 2,
+    "height": 1,
+    "raw_rgba": [
+        0,
+        0,
+        0,
+        255,
+        255,
+        255,
+        255,
+        255
+    ],
+    "fixtures": [
+        {
+            "file": "disabled.pcnd",
+            "sha256": "dc3739fddc1a085b8a404da2412ec44352f82508f6d697d30e276dc3876d8c2f",
+            "bytes": 141,
+            "enabled": false,
+            "metadata": false,
+            "filter_inventory_sha256": "0719b047af9e76b62480f54779dfd767a1200e530720e87fa0170fccd3f89400",
+            "expected_rgba": [
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "file": "disabled-metadata.pcnd",
+            "sha256": "ec9827c007338a39bbae198b8e1dc132e2006aa3899d831347983488146a6190",
+            "bytes": 3357,
+            "enabled": false,
+            "metadata": true,
+            "filter_inventory_sha256": "0719b047af9e76b62480f54779dfd767a1200e530720e87fa0170fccd3f89400",
+            "expected_rgba": [
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "file": "invert.pcnd",
+            "sha256": "0fa138d7d8899d8c603178029af5a5903c5aa90e732c3b270ada7df9a6d55276",
+            "bytes": 141,
+            "enabled": true,
+            "metadata": false,
+            "filter_inventory_sha256": "de1c184096d2d73f66d707f791c008982c7f1c777f44414cc82dce05cbc1839d",
+            "expected_rgba": [
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "file": "invert-metadata.pcnd",
+            "sha256": "6c3f8c4571bb03a5914601a1b652853be15d0bcd77ba49c87d7260a956d788b0",
+            "bytes": 3357,
+            "enabled": true,
+            "metadata": true,
+            "filter_inventory_sha256": "de1c184096d2d73f66d707f791c008982c7f1c777f44414cc82dce05cbc1839d",
+            "expected_rgba": [
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                255
+            ]
+        }
+    ]
+}
