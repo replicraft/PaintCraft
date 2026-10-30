@@ -14,10 +14,24 @@ fn signed_bytes(value: i64) -> Option<u64> {
         .then(|| integer_bytes(((value << 1) ^ (value >> 63)) as u64))
 }
 
-/// Includes every resident tile's possible raw record, even uniform/default
-/// tiles the real writer can omit. Compression cannot make stored lengths grow.
-/// An unproven document shape falls back to the authoritative raw writer.
+/// Both bounds include resident default tiles the writer can omit. The coarse
+/// path uses only the resident count and dimension-derived maximum record width;
+/// raster construction/installation guarantees finite tile coordinates. It does
+/// not inspect tile coordinates, samples or uniformity. Root validation retains
+/// its existing bounded duplicate checks, so this is a tile-independent bound.
+fn coarse_bound(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Option<u64>> {
+    metadata_bound(doc, check, false)
+}
+
 fn upper_bound(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Option<u64>> {
+    metadata_bound(doc, check, true)
+}
+
+fn metadata_bound(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+    inspect_coordinates: bool,
+) -> Result<Option<u64>> {
     check()?;
     if [doc.canvas.0, doc.canvas.1]
         .iter()
@@ -73,6 +87,21 @@ fn upper_bound(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Option<
             + integer_bytes(u64::from(layer.raster.height()))
             + 4
             + 1;
+        if !inspect_coordinates {
+            let record = 1
+                + integer_bytes(u64::from((layer.raster.width() - 1) / TILE_EDGE))
+                + integer_bytes(u64::from((layer.raster.height() - 1) / TILE_EDGE))
+                + integer_bytes(RasterLayer::TILE_BYTES as u64);
+            let Some(total) = u64::try_from(layer.raster.resident_tiles())
+                .ok()
+                .and_then(|tiles| tiles.checked_mul(record))
+                .and_then(|records| bytes.checked_add(records))
+            else {
+                return Ok(None);
+            };
+            bytes = total;
+            continue;
+        }
         for (coord, _) in layer.raster.tile_leases() {
             check()?;
             let (Ok(bx), Ok(by)) = (u32::try_from(coord.tx), u32::try_from(coord.ty)) else {
@@ -96,11 +125,14 @@ fn upper_bound(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Option<
 }
 
 /// Current-snapshot raw metadata must fit before initial publication. Normal
-/// cases inspect only fields/tile coordinates. Near the limit, the actual raw
+/// cases inspect fields and resident tile counts, then coordinates if needed.
+/// Near the limit, the actual raw
 /// writer counts canonical metadata with payload output and SHA hashing disabled.
 /// This does not guarantee arbitrary future layer/title growth remains savable.
 pub(super) fn check(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
-    if upper_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX) {
+    if coarse_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX)
+        || upper_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX)
+    {
         return check();
     }
     binary::preflight_metadata(doc, check)
@@ -110,7 +142,9 @@ pub(super) fn check(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()
 /// chooses a larger stored block and only its length changes the metadata width.
 /// The rare path must count the actual selected compact lengths, not raw lengths.
 pub(super) fn check_compact(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
-    if upper_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX) {
+    if coarse_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX)
+        || upper_bound(doc, check)?.is_some_and(|bytes| bytes <= DOCUMENT_MAX)
+    {
         return check();
     }
     binary::preflight_compact_metadata(doc, check)
@@ -177,3 +211,6 @@ mod tests {
 
 #[cfg(test)]
 mod compact_tests;
+
+#[cfg(test)]
+mod coarse_tests;
