@@ -3,12 +3,12 @@
   "oracle": {
     "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/oracle.json",
     "bytes": 3203,
-    "sha256": "a846d0b50e8518c58f893137693f4fdd0b2020c0e0857e4b75f6755f0617b79a"
+    "sha256": "37763695feee4f29b101abb97983da4204b2e5ae0fb7530673f459e899903ee9"
   },
   "generator": {
     "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/generate.py",
     "bytes": 3461,
-    "sha256": "b85b883dd6ab851cd0bc30c084895aee011c0c7fd39c6c24ec460c4ccd4d0f0e"
+    "sha256": "ecb3f80812e0e9d9f291e9eb4551f26c9ce4c9c7cdebcf8c1fceb5aa8e08b052"
   },
   "seeds": [
     {
@@ -133,10 +133,10 @@
     },
     {
       "target": "pcnd",
-      "name": "future-v4.pcnd",
-      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/future-v4.pcnd",
+      "name": "future-v5.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/future-v5.pcnd",
       "bytes": 121,
-      "sha256": "4f62798b571e1ebeb0888dde284b6562a3cd15590f11042cd4e1ecf354d1dbda",
+      "sha256": "ce27823f498b43448af94c747a5330a8f93c330bffdb01ccd96895f55b1fca09",
       "accepted": false
     }
   ]

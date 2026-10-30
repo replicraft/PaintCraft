@@ -1,4 +1,4 @@
-//! Pure PCND1/2/3 read and bounded canonical roundtrip; no files or helpers.
+//! Pure PCND1/2/3/4 read and bounded canonical roundtrip; no files or helpers.
 use crate::{INPUT_MAX, PIXELS_MAX};
 use paintcraft_core::types::{Error, ErrorCode, Result, resources::SharedBudget};
 use paintcraft_formats::pcnd;
@@ -6,9 +6,13 @@ use sha2::{Digest as _, Sha256};
 use std::io::{self, Write};
 pub const STAGED_PIXELS_MAX: u64 = 131_072;
 pub const METADATA_BYTES_MAX: u64 = 16 << 10;
+// One case-owned coverage realm spans both simultaneously retained snapshots.
+pub const MASK_BYTES_MAX: u64 = 128 << 10;
+pub const MASK_BANDS_MAX: usize = 256;
+pub const MASK_RUNS_MAX: usize = 1024;
 // Two admitted tiles are at most 512 KiB raw. Source strings/headers/profile
-// and canonical PCND3 UUID/flag/tag/parameter records consume at most the
-// 256 KiB input; minimal filter integers do not expand on raw serialization.
+// and canonical PCND3/4 descriptor and A8 band/run records consume at most the
+// 256 KiB input; canonical filter/mask integers do not expand on raw serialization.
 // Length-prefix growth is far below the remaining 256 KiB slack of OUTPUT_MAX.
 // This is serialized output, not a total live/RSS or stack-allocation budget.
 pub const OUTPUT_MAX: usize = 1 << 20;
@@ -62,15 +66,13 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
         ));
     }
     let first = SharedBudget::new(METADATA_BYTES_MAX);
-    let doc = pcnd::read_with_metadata_admission_checked(
+    let coverage = SharedBudget::new(2 * MASK_BYTES_MAX);
+    let doc = pcnd::read_with_admission_checked(
         bytes,
         PIXELS_MAX,
         STAGED_PIXELS_MAX,
         LAYERS_MAX,
-        pcnd::MetadataAdmission {
-            bytes: METADATA_BYTES_MAX,
-            budget: &first,
-        },
+        admission(&first, &coverage),
         check,
     )?;
     if doc.canvas.0 == 0
@@ -101,8 +103,18 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
         }
     }
     let has_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
-    if (bytes.get(4) == Some(&3)) != has_filters {
+    let has_masks = doc
+        .layers
+        .values()
+        .any(|layer| layer.filters.iter().any(|f| f.mask().is_some()));
+    if matches!(bytes.get(4), Some(3 | 4)) != has_filters || (bytes.get(4) == Some(&4)) != has_masks
+    {
         return Err(invariant("PCND version/filter-stack presence differs"));
+    }
+    if coverage.usage().reserved > MASK_BYTES_MAX {
+        return Err(invariant(
+            "PCND mask reader exceeded one snapshot admission",
+        ));
     }
     if first.usage().reserved > METADATA_BYTES_MAX {
         return Err(invariant("PCND source metadata admission exceeded realm"));
@@ -126,7 +138,9 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
             "Readable PCND document failed canonical raw serialization",
         ));
     }
-    let expected_version = if has_filters {
+    let expected_version = if has_masks {
+        4
+    } else if has_filters {
         3
     } else if doc.source_metadata.is_some() {
         2
@@ -142,15 +156,12 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
     // Two independently bounded realms avoid charging two retained 16KiB
     // attachments to one 16KiB budget while comparing both immutable snapshots.
     let second = SharedBudget::new(METADATA_BYTES_MAX);
-    let restored = pcnd::read_with_metadata_admission_checked(
+    let restored = pcnd::read_with_admission_checked(
         &output.bytes,
         PIXELS_MAX,
         STAGED_PIXELS_MAX,
         LAYERS_MAX,
-        pcnd::MetadataAdmission {
-            bytes: METADATA_BYTES_MAX,
-            budget: &second,
-        },
+        admission(&second, &coverage),
         check,
     )
     .map_err(|error| {
@@ -168,6 +179,9 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
             "PCND canonical roundtrip changed document/filter/source metadata semantics",
         ));
     }
+    if coverage.usage().reserved > 2 * MASK_BYTES_MAX {
+        return Err(invariant("PCND mask reader exceeded shared case realm"));
+    }
     if second.usage().reserved > METADATA_BYTES_MAX {
         return Err(invariant(
             "PCND roundtrip metadata admission exceeded realm",
@@ -175,7 +189,8 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
     }
     drop(restored);
     drop(doc);
-    if first.usage().reserved != 0 || second.usage().reserved != 0 {
+    if first.usage().reserved != 0 || second.usage().reserved != 0 || coverage.usage().reserved != 0
+    {
         return Err(invariant(
             "PCND attachment lease survived final document drop",
         ));
@@ -217,4 +232,25 @@ pub(crate) fn repair_outer_sha(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> 
     check()?;
     copy.extend_from_slice(&hash.finalize());
     Ok(copy)
+}
+
+fn admission<'a>(
+    metadata: &'a SharedBudget,
+    coverage: &'a SharedBudget,
+) -> pcnd::ReadAdmission<'a> {
+    let mut admission = pcnd::ReadAdmission {
+        metadata: pcnd::MetadataAdmission {
+            bytes: METADATA_BYTES_MAX,
+            budget: metadata,
+        },
+        coverage: pcnd::CoverageAdmission {
+            bytes: MASK_BYTES_MAX,
+            budget: coverage,
+            limits: Default::default(),
+        },
+    };
+    admission.coverage.limits.work = 4096;
+    admission.coverage.limits.bands = MASK_BANDS_MAX;
+    admission.coverage.limits.runs = MASK_RUNS_MAX;
+    admission
 }

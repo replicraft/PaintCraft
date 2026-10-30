@@ -1,14 +1,14 @@
 {
   "schema": "paintcraft.pcnd-fuzz-provenance/v1",
-  "generator_sha256": "622161bce071cc33d27c30319066d6d1d59d33fe5c2029693cf25822c886dde9",
+  "generator_sha256": "e73fd474f687c0be2a82a8a9a2e345320f710db36451b6ce71e440311b087294",
   "reference_writer_sha256": "d7b3c8cee5c23809b89ead66f2a13aedb9183faf75a5f2c2e97d5ef069bc5985",
   "zstd": "*** Zstandard CLI (64-bit) v1.5.7, by Yann Collet ***",
   "derived": [
     {
       "file": "unknown-version.pcnd",
       "parent_sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1",
-      "recipe": "Set container version byte4 to4; recompute trailing outerSHA256.",
-      "sha256": "5f848189d6ee449b34d5a7d41abfc800eb7e6a9dc8ca160d32428b045af6c996"
+      "recipe": "Set container version byte4 to5; recompute trailing outerSHA256.",
+      "sha256": "c97bb54970debae10f5b8cdef4c82aef9c6c0cb29fd64a5e31996ae808a07aec"
     },
     {
       "file": "icc-extent-overflow.pcnd",

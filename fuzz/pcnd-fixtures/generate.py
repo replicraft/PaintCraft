@@ -49,7 +49,7 @@ def main():
     parent=(PARENT/'rgb-profile.pcnd').read_bytes();header=parent.index(b'PCSMETA1')
     def derived(name,data,base,recipe,accepted=True):
         p=HERE/name;p.write_bytes(data);seeds.append(dict(target='pcnd',name=name,source=p.relative_to(ROOT).as_posix(),bytes=len(data),sha256=sha(data),accepted=accepted));provenance.append(dict(file=name,parent_sha256=sha(base),recipe=recipe,sha256=sha(data)))
-    unknown=bytearray(parent);unknown[4]=4;derived('unknown-version.pcnd',framed(unknown),parent,'Set container version byte4 to4; recompute trailing outerSHA256.',False)
+    unknown=bytearray(parent);unknown[4]=5;derived('unknown-version.pcnd',framed(unknown),parent,'Set container version byte4 to5; recompute trailing outerSHA256.',False)
     overflow=bytearray(parent);struct.pack_into('>Q',overflow,header+112,(1<<64)-1);derived('icc-extent-overflow.pcnd',framed(overflow),parent,'Set PCSMETA1 profile extent at header+112 to u64MAX; preserve old inner digest to verify extent admission precedes copy; recompute outerSHA256.',False)
     inner=bytearray(parent);inner[header+152]^=1;derived('inner-digest-mismatch.pcnd',framed(inner),parent,'Flip first attachment digest byte at header+152 only; recompute outerSHA256.',False)
     legacy=(PARENT/'legacy-v1.pcnd').read_bytes();kind,length_at,data_at,raw,suffix=block(legacy)

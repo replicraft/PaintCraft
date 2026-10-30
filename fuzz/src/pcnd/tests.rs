@@ -287,3 +287,83 @@ fn pcnd3_disabled_stack_and_original_pixels_survive_real_reader_writer_and_cance
         assert_eq!(budget.usage().reserved, 0);
     }
 }
+
+#[test]
+fn independent_pcnd4_mask_seeds_reach_admitted_decoder_and_preserve_roundtrip() {
+    let manifest = json::parse(include_bytes!("../../pcnd-mask-seeds.json")).unwrap();
+    let rows = manifest.get("seeds").unwrap().as_array().unwrap();
+    assert_eq!(rows.len(), 24);
+    for row in rows {
+        let source = row.get("source").unwrap().as_str().unwrap();
+        let bytes = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .unwrap()
+                .join(source),
+        )
+        .unwrap();
+        let result = crate::exercise(Target::Pcnd, &bytes);
+        let detail = format!("{result:?}");
+        assert_eq!(
+            classify(result),
+            if row.get("accepted").unwrap().as_bool().unwrap() {
+                Outcome::Accepted
+            } else {
+                Outcome::Rejected
+            },
+            "{source}:{detail}"
+        );
+    }
+}
+#[test]
+fn mask_roundtrip_uses_bounded_case_realm_and_cancellation_is_not_swallowed() {
+    let bytes = std::fs::read(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("crates/services/paintcraft-formats/tests/pcnd-mask-fixtures/repeated.pcnd"),
+    )
+    .unwrap();
+    let count = Cell::new(0);
+    exercise(&bytes, &|| {
+        count.set(count.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for stop in [1, count.get() / 2, count.get()] {
+        let seen = Cell::new(0);
+        assert_eq!(
+            exercise(&bytes, &|| {
+                seen.set(seen.get() + 1);
+                if seen.get() == stop {
+                    Err(Error::new(
+                        ErrorCode::OperationCancelled,
+                        "mask roundtrip stop",
+                    ))
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err()
+            .code,
+            ErrorCode::OperationCancelled
+        );
+    }
+    let metadata = SharedBudget::new(METADATA_BYTES_MAX);
+    let coverage = SharedBudget::new(0);
+    assert_eq!(
+        pcnd::read_with_admission_checked(
+            &bytes,
+            PIXELS_MAX,
+            STAGED_PIXELS_MAX,
+            LAYERS_MAX,
+            admission(&metadata, &coverage),
+            &|| Ok(())
+        )
+        .unwrap_err()
+        .code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(coverage.activity(), 0);
+    assert_eq!(metadata.usage().reserved, 0);
+}

@@ -38,7 +38,7 @@
       "name": "unknown-version.pcnd",
       "source": "fuzz/pcnd-fixtures/unknown-version.pcnd",
       "bytes": 3322,
-      "sha256": "5f848189d6ee449b34d5a7d41abfc800eb7e6a9dc8ca160d32428b045af6c996",
+      "sha256": "c97bb54970debae10f5b8cdef4c82aef9c6c0cb29fd64a5e31996ae808a07aec",
       "accepted": false
     },
     {

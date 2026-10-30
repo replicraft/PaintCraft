@@ -459,3 +459,35 @@ inventory separately passed all sixteen exact original outcomes, raw 4,112
 rejected). Earlier new-runner results without the additional original-outcome
 preflight remain separate evidence. No historical/stock replay, guided driver,
 sanitizer or cross-platform runtime is claimed by this PCND-only follow-up.
+
+## PCND4 coverage-mask adoption (separate current inventory)
+
+`pcnd-mask-seeds.json` binds 24 independently byte-authored fixtures: seven
+accepted controls (finite fractional bands, disabled/zero masks, mixed and
+repeated instances, retained ICC, and an opaque half-strength literal plane)
+and 17 recomputed-outer-SHA canonical/codec/domain/version negatives. This is a
+new inventory; its 6,168-case streams are unrelated to the historical seven-target
+6,168-case stream. The original 14-PCND and 16-filter inventories remain separate.
+Genuine future-version controls now select5; the other13 original PCND and
+15 PCND3 fixture bytes are unchanged. Historical receipts remain historical.
+
+The pure target now uses `pcnd::read_with_admission_checked`. Its existing input,
+pixel, layer, staged-pixel, 16KiB profile and 1MiB output limits are unchanged.
+Coverage uses one case-owned 256KiB realm across both retained snapshots, each
+read admitting at most128KiB plus aggregate256bands/1,024runs/4,096 mask work.
+The existing global checkpoint bound still applies. This prices mask parse
+scratch and retained A8 storage; it does not describe total RSS/stack/allocator
+usage. Canonical PCND4 mask integers and bands do not expand beyond their input
+metadata on serialization, so the prior output proof still holds: ≤512KiB raw
+tiles +≤256KiB input metadata +bounded framing fits the unchanged1MiB sink.
+Exact source/mask/filter semantics and final lease release are checked.
+
+```sh
+python3 fuzz/pcnd_mask_replay_smoke.py --write-inventory
+python3 fuzz/pcnd_mask_replay_smoke.py --replay target/debug/replay
+```
+
+The new runner checks all24 exact original outcomes before24×257raw and24×257
+outer-SHA-aware mutations. Timeout/nonzero subprocess failures retain the exact
+bounded generated batch and propagate failure. These deterministic mutation
+streams are not guided/sanitizer coverage, physical memory or latency evidence.
