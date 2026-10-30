@@ -84,7 +84,8 @@ pub fn run(a: Options, json: bool) -> Reply {
                 &image_sha,
                 "--expect-image-sha256",
             )?;
-            let mut session = Session::new(super::source_metadata::read(&document_bytes)?);
+            let mut session =
+                super::persistence::session(super::source_metadata::read(&document_bytes)?);
             let family = a.profile.admit_import(&a.image, &image_bytes)?;
             if matches!(
                 family,

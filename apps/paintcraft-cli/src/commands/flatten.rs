@@ -28,7 +28,7 @@ pub fn run(options: Options, json: bool) -> Reply {
                     "flatten expects a PCND project",
                 ));
             }
-            let mut session = Session::new(super::source_metadata::read(&bytes)?);
+            let mut session = super::persistence::session(super::source_metadata::read(&bytes)?);
             let engine =
                 session.flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))?;
             let ctx = Context {

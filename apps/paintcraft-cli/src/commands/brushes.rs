@@ -226,7 +226,8 @@ pub fn run(options: Options, json: bool) -> Reply {
                 let (bytes, sha, project_identity) =
                     read_regular_or_bounded(&p.project, INPUT_MAX, "project")?;
                 guard(p.expect_input_sha256.as_deref(), &sha)?;
-                let mut session = Session::new(super::source_metadata::read(&bytes)?);
+                let mut session =
+                    super::persistence::session(super::source_metadata::read(&bytes)?);
                 let (points, _) = read_bounded(&p.points, 4 << 20, "brush points")?;
                 let stroke = Stroke {
                     points: serde_json::from_slice(&points).map_err(|_| {

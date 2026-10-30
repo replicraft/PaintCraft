@@ -1,5 +1,5 @@
 //! Serialized digest-bound float inspection/adoption with original-source guards.
-use super::super::{PathBuf, Session, codec_worker, float_job, float_options::Selection};
+use super::super::{PathBuf, codec_worker, float_job, float_options::Selection};
 use super::{
     PaintingServer, native_codec,
     state::{State, core_json, invalid, reply},
@@ -119,7 +119,7 @@ impl PaintingServer {
                 ));
             }
             let raw_sha = adopted.value.sha256;
-            let mut session = Session::new(adopted.value.document);
+            let mut session = super::super::persistence::session(adopted.value.document);
             session.mark_unsaved();
             let mut candidate = State {
                 metadata_realm: state.metadata_realm.clone(),

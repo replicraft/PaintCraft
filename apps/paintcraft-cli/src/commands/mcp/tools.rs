@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
-    BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, read_captured, read_conversion_source, save,
+    BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, export, image,
+    new_document, read_captured, read_conversion_source, save,
 };
 use super::{
     PaintingServer,
@@ -28,8 +28,13 @@ impl PaintingServer {
             state.replace_allowed(p.discard_changes)?;
             let color = Rgba::parse(p.background.as_deref().unwrap_or("#FFFFFFFF"))
                 .ok_or_else(|| invalid("background must be #RRGGBBAA"))?;
-            let mut session =
-                Session::new(new_document(p.width, p.height, Some(color), 0, POLICY)?);
+            let mut session = super::super::persistence::session(new_document(
+                p.width,
+                p.height,
+                Some(color),
+                0,
+                POLICY,
+            )?);
             session.mark_unsaved();
             state.session = Some(session);
             state.source = None;
@@ -56,7 +61,7 @@ impl PaintingServer {
                 ));
             }
             let doc = state.metadata_realm.read(&bytes, &|| Ok(()))?;
-            state.session = Some(Session::new(doc));
+            state.session = Some(super::super::persistence::session(doc));
             state.source = Some((path, sha));
             state.project_identity = Some(identity);
             state.import_source = None;
@@ -259,7 +264,7 @@ impl PaintingServer {
                 stock_source_tests::before_adoption(&path);
                 identity.verify_bytes(&path, bytes.len() as u64, &raw_sha256, &check)?;
             }
-            let mut session = Session::new(doc);
+            let mut session = super::super::persistence::session(doc);
             session.mark_unsaved();
             state.session = Some(session);
             // A picture is not a native project binding: saving must not replace its source implicitly.

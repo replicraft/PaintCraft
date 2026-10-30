@@ -313,7 +313,7 @@ fn import_with_launch(
     } else {
         prepared.adopt_with_losses(allowed, &*check, &|| Ok(owner(state, empty)))?
     };
-    let mut session = Session::new(adopted.document);
+    let mut session = super::super::persistence::session(adopted.document);
     session.mark_unsaved();
     check()?;
     if owner(state, empty) != captured {
