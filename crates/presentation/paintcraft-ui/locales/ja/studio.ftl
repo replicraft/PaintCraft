@@ -461,3 +461,11 @@ filter-applied = フィルターを適用しました
 format-filter-not-opened-detail = フィルターを開けませんでした: { $detail }
 format-filter-not-applied-detail = フィルターを適用できませんでした: { $detail }
 filter-not-applied-its-document-changed = フィルターを適用できませんでした。ドキュメントが変更されています。
+
+# Persistent per-filter coverage controls.
+use-selection = 選択範囲を使用
+enable-filter-mask = フィルターマスクを有効にする
+remove-mask = マスクを削除
+empty-mask-no-pixels-affected = 空のマスク：影響を受けるピクセルはありません。
+filter-uses-the-saved-selection = フィルターは保存済みの選択範囲を使用します。
+mask-disabled-whole-layer-affected = マスクは無効：レイヤー全体に適用。

@@ -461,3 +461,11 @@ filter-applied = 已应用滤镜
 format-filter-not-opened-detail = 无法打开滤镜：{ $detail }
 format-filter-not-applied-detail = 未应用滤镜：{ $detail }
 filter-not-applied-its-document-changed = 未应用滤镜：文档已更改。
+
+# Persistent per-filter coverage controls.
+use-selection = 使用选区
+enable-filter-mask = 启用滤镜蒙版
+remove-mask = 移除蒙版
+empty-mask-no-pixels-affected = 空蒙版：不影响任何像素。
+filter-uses-the-saved-selection = 滤镜使用已保存的选区。
+mask-disabled-whole-layer-affected = 蒙版已禁用：影响整个图层。

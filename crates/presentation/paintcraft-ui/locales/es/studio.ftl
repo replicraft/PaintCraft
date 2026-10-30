@@ -461,3 +461,11 @@ filter-applied = Filtro aplicado
 format-filter-not-opened-detail = No se pudo abrir el filtro: { $detail }
 format-filter-not-applied-detail = No se aplicó el filtro: { $detail }
 filter-not-applied-its-document-changed = No se aplicó el filtro: el documento ha cambiado.
+
+# Persistent per-filter coverage controls.
+use-selection = Usar selección
+enable-filter-mask = Activar máscara de filtro
+remove-mask = Eliminar máscara
+empty-mask-no-pixels-affected = Máscara vacía: no afecta a ningún píxel.
+filter-uses-the-saved-selection = El filtro usa la selección guardada.
+mask-disabled-whole-layer-affected = Máscara desactivada: afecta a toda la capa.

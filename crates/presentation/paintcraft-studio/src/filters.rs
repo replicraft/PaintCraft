@@ -27,10 +27,17 @@ impl Kind {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub struct MaskSummary {
+    pub enabled: bool,
+    pub runs: usize,
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Row<Id> {
     pub id: Id,
     pub enabled: bool,
     pub descriptor: Descriptor,
+    pub mask: Option<MaskSummary>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -41,6 +48,9 @@ pub enum Action<Id> {
     Reorder { id: Id, to_index: usize },
     Duplicate(Id),
     Remove(Id),
+    UseSelection(Id),
+    SetMaskEnabled { id: Id, enabled: bool },
+    RemoveMask(Id),
 }
 
 /// Rows are in evaluation order. The host checks stable identities and limits
@@ -49,6 +59,7 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
     ui: &mut egui::Ui,
     rows: &[Row<Id>],
     can_add: bool,
+    selection_active: bool,
 ) -> Vec<Action<Id>> {
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
@@ -116,6 +127,34 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
                         actions.push(Action::Duplicate(row.id));
                         ui.close();
                     }
+                    ui.separator();
+                    if ui
+                        .add_enabled(
+                            selection_active,
+                            egui::Button::new(t!(ui.ctx(), "Use Selection")),
+                        )
+                        .clicked()
+                    {
+                        actions.push(Action::UseSelection(row.id));
+                        ui.close();
+                    }
+                    if let Some(mask) = row.mask {
+                        let mut enabled = mask.enabled;
+                        if ui
+                            .checkbox(&mut enabled, t!(ui.ctx(), "Enable filter mask"))
+                            .changed()
+                        {
+                            actions.push(Action::SetMaskEnabled {
+                                id: row.id,
+                                enabled,
+                            });
+                            ui.close();
+                        }
+                        if ui.button(t!(ui.ctx(), "Remove mask")).clicked() {
+                            actions.push(Action::RemoveMask(row.id));
+                            ui.close();
+                        }
+                    }
                     if ui.button(t!(ui.ctx(), "Remove filter")).clicked() {
                         actions.push(Action::Remove(row.id));
                         ui.close();
@@ -127,6 +166,7 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
                 });
                 let _ = menu.response.on_hover_text(title);
             });
+            mask_summary(ui, row.mask);
         });
     }
     if ui.ctx().current_pass_index() != 0 {
@@ -182,10 +222,14 @@ pub enum ParameterResponse {
 /// Opening the draft requires an initial preview submission by the host. This
 /// function emits subsequent changes once per input frame, including removal
 /// of the preview when its checkbox is cleared.
-pub fn parameter_dialog(ctx: &egui::Context, values: &mut Parameters) -> ParameterResponse {
+pub fn parameter_dialog(
+    ctx: &egui::Context,
+    values: &mut Parameters,
+    mask: Option<MaskSummary>,
+) -> ParameterResponse {
     let before = *values;
     let mut staged = before;
-    let response = draw_parameters(ctx, &mut staged);
+    let response = draw_parameters(ctx, &mut staged, mask);
     if ctx.current_pass_index() != 0 {
         return ParameterResponse::Pending;
     }
@@ -201,7 +245,11 @@ pub fn parameter_dialog(ctx: &egui::Context, values: &mut Parameters) -> Paramet
     }
 }
 
-fn draw_parameters(ctx: &egui::Context, values: &mut Parameters) -> ParameterResponse {
+fn draw_parameters(
+    ctx: &egui::Context,
+    values: &mut Parameters,
+    mask: Option<MaskSummary>,
+) -> ParameterResponse {
     let mut response = ParameterResponse::Pending;
     let mut open = true;
     egui::Window::new(t!(ctx, values.kind.label()))
@@ -223,7 +271,7 @@ fn draw_parameters(ctx: &egui::Context, values: &mut Parameters) -> ParameterRes
                 );
             }
             ui.checkbox(&mut values.preview, t!(ui.ctx(), "Preview"));
-            ui.weak(t!(ui.ctx(), "Applies to the whole layer."));
+            mask_summary(ui, mask);
             ui.weak(t!(ui.ctx(), "Source pixels remain unchanged."));
             ui.separator();
             let descriptor = values.descriptor().ok();
@@ -247,4 +295,22 @@ fn draw_parameters(ctx: &egui::Context, values: &mut Parameters) -> ParameterRes
         return ParameterResponse::Cancel;
     }
     response
+}
+
+/// Small presentation facts only; mask payloads never enter the UI model.
+pub fn mask_summary(ui: &mut egui::Ui, mask: Option<MaskSummary>) {
+    if let Some(mask) = mask {
+        ui.small(t!(
+            ui.ctx(),
+            if !mask.enabled {
+                "Mask disabled: whole layer affected."
+            } else if mask.runs == 0 {
+                "Empty mask: no pixels affected."
+            } else {
+                "Filter uses the saved selection."
+            }
+        ));
+    } else {
+        ui.weak(t!(ui.ctx(), "Applies to the whole layer."));
+    }
 }
