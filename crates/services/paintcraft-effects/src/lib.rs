@@ -4,6 +4,9 @@
 //! recorded in docs/architecture/PALETTE_INTEGRATION.md (no source copied here).
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, filters::Descriptor};
 
+mod coverage;
+pub use coverage::mix_point_coverage;
+
 /// Apply ordered descriptors. Every stage rounds independently and preserves
 /// alpha, including RGB hidden under alpha zero. This convenience function is
 /// synchronous and has no cancellation checkpoints; use evaluate_row for work.
