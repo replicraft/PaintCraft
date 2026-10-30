@@ -3,6 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub(crate) struct Frozen {
     pub document: std::sync::Arc<paintcraft_document::Document>,
+    pub has_filters: bool,
     base: std::sync::Arc<paintcraft_document::Document>,
     ticket: paintcraft_editor::session::HistoryTicket,
     preview: paintcraft_tools::PreviewRevision,
@@ -21,6 +22,13 @@ impl Frozen {
         }
         Ok(Self {
             document: app.editor.copy_snapshot()?,
+            has_filters: app
+                .editor
+                .session
+                .document()
+                .layers
+                .values()
+                .any(|l| !l.filters.is_empty()),
             base: app.editor.session.snapshot(),
             ticket: app.editor.session.history_ticket(),
             preview: app.editor.tools.preview_revision(),

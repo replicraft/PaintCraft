@@ -38,9 +38,10 @@ struct Prepared {
 }
 impl Prepared {
     fn requires_consent(&self) -> bool {
-        self.losses
-            .iter()
-            .any(|loss| loss != paintcraft_formats::export::metadata_policy::OMITTED_REASON)
+        self.losses.iter().any(|loss| {
+            loss != paintcraft_formats::export::metadata_policy::OMITTED_REASON
+                && loss != paintcraft_formats::export::filter_bake::BAKED_REASON
+        })
     }
     #[cfg(test)]
     fn bytes(&self) -> &[u8] {
@@ -51,6 +52,7 @@ type Outcome<T> = Rc<RefCell<Option<Result<T>>>>;
 #[derive(Debug)]
 struct Pending {
     omit_source_metadata: bool,
+    bake_filters: bool,
     settings: Settings,
     result: Outcome<Prepared>,
     cancelled: Rc<Cell<bool>>,
@@ -60,6 +62,7 @@ struct Pending {
 struct Review {
     frozen: super::exporting::Frozen,
     omit_source_metadata: bool,
+    bake_filters: bool,
     plan: Option<wire::SourcePlan>,
     owner: crate::importing::Owner,
     name: String,
@@ -91,7 +94,8 @@ impl Review {
             && app.editor.tools.floating_selection().is_none()
     }
     fn waiting_metadata_choice(&self) -> bool {
-        self.frozen.document.source_metadata.is_some() && !self.omit_source_metadata
+        (self.frozen.document.source_metadata.is_some() && !self.omit_source_metadata)
+            || (self.frozen.has_filters && !self.bake_filters)
     }
     fn wire_owner(&self) -> paintcraft_formats::codec_worker::Owner {
         let mut owner = self.owner.wire();
@@ -103,7 +107,8 @@ impl Review {
             && prepared.header.owner == self.wire_owner()
             && self.plan.as_ref().is_some_and(|plan| {
                 plan.metadata_context() == prepared.header.metadata
-                    && plan.validate_metadata_policy(&self.frozen.document).is_ok()
+                    && plan.validate_policies(&self.frozen.document).is_ok()
+                    && plan.bake_intent() == u8::from(self.bake_filters)
             })
     }
     fn revoke_metadata_intent(&mut self) {
@@ -245,6 +250,7 @@ impl WebApp {
             let mut review = Review {
                 frozen,
                 omit_source_metadata: false,
+                bake_filters: false,
                 plan: None,
                 owner,
                 name: self.name.clone(),
@@ -286,11 +292,25 @@ impl WebApp {
                     paintcraft_formats::export::metadata_policy::Intent::Refuse
                 },
             )?;
-            let plan = wire::SourcePlan::capture_with_metadata_policy(
+            let filter_bake = paintcraft_formats::export::filter_bake::Policy::capture(
                 &doc,
-                options(review.settings),
-                policy,
+                paintcraft_formats::export::metadata_policy::Target::new(
+                    paintcraft_formats::registry::Family::Dds,
+                    paintcraft_formats::registry::Operation::ExportFlat,
+                ),
+                if review.bake_filters {
+                    paintcraft_formats::export::filter_bake::Intent::Bake
+                } else {
+                    paintcraft_formats::export::filter_bake::Intent::Refuse
+                },
+                &|| Ok(()),
             )?;
+            let policies = paintcraft_formats::export::CopyPolicies {
+                source_metadata: policy,
+                filter_bake,
+            };
+            let plan =
+                wire::SourcePlan::capture_with_policies(&doc, options(review.settings), policies)?;
             review.plan = Some(plan.clone());
             #[cfg(target_arch = "wasm32")]
             {
@@ -325,6 +345,7 @@ impl WebApp {
                 });
                 review.pending = Some(Pending {
                     omit_source_metadata: review.omit_source_metadata,
+                    bake_filters: review.bake_filters,
                     settings: review.settings,
                     result,
                     cancelled,
@@ -383,6 +404,7 @@ impl WebApp {
             let pending = review.pending.take().unwrap();
             if pending.settings == review.settings
                 && pending.omit_source_metadata == review.omit_source_metadata
+                && pending.bake_filters == review.bake_filters
             {
                 match value {
                     Ok(prepared) if review.matches_prepared(&prepared) => {

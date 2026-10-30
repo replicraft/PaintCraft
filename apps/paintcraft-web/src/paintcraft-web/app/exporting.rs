@@ -37,6 +37,7 @@ impl WebApp {
                 self.export_confirm = None;
                 self.export_frozen = None;
                 self.export_omit_source_metadata = false;
+                self.export_bake_filters = false;
                 self.message = t!(ctx, "The document changed; choose the image again.");
                 return;
             }
@@ -85,6 +86,10 @@ impl WebApp {
                     paintcraft_ui::source_metadata_export::controls(ui, &mut self.export_omit_source_metadata);
                     preview_ready &= self.export_omit_source_metadata;
                 }
+                if !advanced && !msp2 && self.export_frozen.as_ref().is_some_and(|f| f.has_filters) {
+                    paintcraft_ui::filter_bake_export::controls(ui, &mut self.export_bake_filters);
+                    preview_ready &= self.export_bake_filters;
+                }
                 ui.horizontal(|ui| {
                     let caption=if advanced||msp2{t!(ui.ctx(),"Preview export")}else{t!(ui.ctx(),"Download { $format }", &[("format", format.name().into())])};
                     if ui.add_enabled(preview_ready,egui::Button::new(caption)).clicked() {
@@ -98,6 +103,7 @@ impl WebApp {
             self.pcx_preview.clear();
             self.export_frozen = None;
             self.export_omit_source_metadata = false;
+            self.export_bake_filters = false;
         }
     }
 }
@@ -167,3 +173,7 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "exporting/filter_bake_tests.rs"]
+mod filter_bake_tests;

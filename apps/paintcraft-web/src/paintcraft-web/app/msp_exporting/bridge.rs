@@ -29,6 +29,11 @@ pub(super) async fn prepare(
         ("width", size.0.into()),
         ("height", size.1.into()),
         ("sourceFlags", u32::from(plan.source_flags()).into()),
+        ("bakeIntent", u32::from(plan.bake_intent()).into()),
+        (
+            "filterDigest",
+            Uint8Array::from(plan.filter_digest().as_slice()).into(),
+        ),
         (
             "metadataContext",
             Uint8Array::from(plan.metadata_context().encode().as_slice()).into(),

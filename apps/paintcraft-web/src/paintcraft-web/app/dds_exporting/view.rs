@@ -36,6 +36,12 @@ impl WebApp {
                 metadata_changed = previous != review.omit_source_metadata;
                 changed |= metadata_changed;
             }
+            if review.frozen.has_filters {
+                let previous = review.bake_filters;
+                paintcraft_ui::filter_bake_export::controls(ui, &mut review.bake_filters);
+                metadata_changed |= previous != review.bake_filters;
+                changed |= metadata_changed;
+            }
             if let Some(texture) = &review.texture {
                 ui.label(t!(ctx, "Base image preview"));
                 let image = ui.add(egui::Image::new(texture).alt_text(t!(ctx, "Base image preview")));
@@ -70,6 +76,7 @@ impl WebApp {
                         dds::MIP_HIDDEN_RGB_LOSS => "Mip filtering discards invisible colors in smaller images.",
                         paintcraft_formats::export::dds::LINEAR_QUANTIZATION_LOSS => "Converting to linear 8-bit samples loses color precision.",
                         paintcraft_formats::export::metadata_policy::OMITTED_REASON => "Original source metadata is omitted from this exported copy.",
+                        paintcraft_formats::export::filter_bake::BAKED_REASON => "Editable filters are baked into this exported copy.",
                         _ => loss.as_str(),
                     };
                     ui.label(t!(ctx, description));

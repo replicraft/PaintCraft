@@ -51,6 +51,7 @@ pub(crate) struct ExportOptions {
     pub pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pub frontend: Frontend,
     pub source_metadata: paintcraft_formats::export::metadata_policy::Intent,
+    pub filter_bake: paintcraft_formats::export::filter_bake::Policy,
 }
 
 // One source/preview realm per WebApp, shared across parked interfaces, pending
@@ -276,15 +277,7 @@ impl Files {
         if self.busy {
             return;
         }
-        let bytes = match flat_export::encode(
-            document,
-            options.format,
-            options.jpeg_quality,
-            options.frontend,
-            options.pcx_encoding,
-            options.jpeg_matte,
-            options.source_metadata,
-        ) {
+        let bytes = match flat_export::encode_with_options(document, options) {
             Ok(bytes) => bytes,
             Err(error) => {
                 *self.outcome.borrow_mut() = Some(Err(error));

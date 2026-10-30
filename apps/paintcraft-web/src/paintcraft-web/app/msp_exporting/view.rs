@@ -32,6 +32,12 @@ impl WebApp {
                 metadata_changed = previous != review.omit_source_metadata;
                 changed |= metadata_changed;
             }
+            if review.frozen.has_filters {
+                let previous = review.bake_filters;
+                paintcraft_ui::filter_bake_export::controls(ui, &mut review.bake_filters);
+                metadata_changed |= previous != review.bake_filters;
+                changed |= metadata_changed;
+            }
             if let Some(texture) = &review.texture {
                 ui.label(t!(ctx, "Base image preview"));
                 let image = ui.add(egui::Image::new(texture).alt_text(t!(ctx, "Base image preview")));
@@ -63,6 +69,7 @@ impl WebApp {
                         "flatten" => "Visible layers will be flattened into one picture.",
                         "hidden-rgb" => "Invisible color information will not be retained.",
                         paintcraft_formats::export::metadata_policy::OMITTED_REASON => "Original source metadata is omitted from this exported copy.",
+                        paintcraft_formats::export::filter_bake::BAKED_REASON => "Editable filters are baked into this exported copy.",
                         _ => loss.as_str(),
                     };
                     ui.label(t!(ctx, description));

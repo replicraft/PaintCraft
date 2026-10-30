@@ -94,6 +94,31 @@ impl WebApp {
             };
         match snapshot {
             Ok(snapshot) => {
+                let filter_bake = if let Some(format) = format {
+                    let target = paintcraft_formats::export::metadata_policy::Target::new(
+                        paintcraft_formats::registry::Family::from_extension(format.extension())
+                            .expect("registered export family"),
+                        paintcraft_formats::registry::Operation::ExportFlat,
+                    );
+                    match paintcraft_formats::export::filter_bake::Policy::capture(
+                        &snapshot,
+                        target,
+                        if self.export_bake_filters && self.export_frozen.is_some() {
+                            paintcraft_formats::export::filter_bake::Intent::Bake
+                        } else {
+                            paintcraft_formats::export::filter_bake::Intent::Refuse
+                        },
+                        &|| Ok(()),
+                    ) {
+                        Ok(policy) => policy,
+                        Err(error) => {
+                            self.message = error.to_string();
+                            return;
+                        }
+                    }
+                } else {
+                    Default::default()
+                };
                 let name = self.download_name(format);
                 self.files.download(
                     ctx,
@@ -107,6 +132,7 @@ impl WebApp {
                         pcx_encoding: self.export_pcx_encoding,
                         frontend: self.format_profile(),
                         source_metadata,
+                        filter_bake,
                     },
                     &name,
                     self.editor.session.history_ticket().owner,

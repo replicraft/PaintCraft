@@ -64,6 +64,7 @@ pub struct WebApp {
     export_confirm: Option<ImageExport>,
     pub(crate) export_frozen: Option<exporting::Frozen>,
     pub(crate) export_omit_source_metadata: bool,
+    pub(crate) export_bake_filters: bool,
     pub(crate) dds: dds_exporting::State,
     dds_settings: paintcraft_ui::dds_export::Settings,
     pub(crate) msp: msp_exporting::State,
@@ -143,6 +144,7 @@ impl WebApp {
             export_confirm: None,
             export_frozen: None,
             export_omit_source_metadata: false,
+            export_bake_filters: false,
             dds: Default::default(),
             dds_settings: Default::default(),
             msp: Default::default(),
@@ -451,12 +453,14 @@ impl WebApp {
                 self.editor.tools.cancel_gesture();
                 self.export_frozen = None;
                 self.export_omit_source_metadata = false;
+                self.export_bake_filters = false;
                 self.export_confirm = Some(ImageExport::Png);
             }
             Action::ExportImage(format) => {
                 self.editor.tools.cancel_gesture();
                 self.export_frozen = None;
                 self.export_omit_source_metadata = false;
+                self.export_bake_filters = false;
                 self.export_confirm = Some(format);
             }
             Action::ExportIcons => self.begin_icon_export(),

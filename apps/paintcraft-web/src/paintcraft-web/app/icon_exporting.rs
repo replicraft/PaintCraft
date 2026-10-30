@@ -10,10 +10,11 @@ pub(super) struct State {
     frozen: Frozen,
     config: widget::Config,
     omit_metadata: bool,
-    policy: Option<Policy>,
+    bake_filters: bool,
+    policy: Option<paintcraft_formats::export::CopyPolicies>,
     other_losses: Vec<String>,
     draft: widget::Draft,
-    cache: widget::Cache<(widget::Config, bool), icons::Prepared>,
+    cache: widget::Cache<(widget::Config, bool, bool), icons::Prepared>,
 }
 impl State {
     fn current(&self, app: &WebApp) -> bool {
@@ -36,20 +37,38 @@ impl State {
         self.draft.accepted = false;
     }
     fn authorized(&self) -> bool {
-        if self.frozen.document.source_metadata.is_some() && !self.omit_metadata {
+        if (self.frozen.document.source_metadata.is_some() && !self.omit_metadata)
+            || (self.frozen.has_filters && !self.bake_filters)
+        {
             return false;
         }
         self.policy.is_some_and(|policy| {
-            policy
-                .validate(&self.frozen.document, self.target())
-                .is_ok()
+            matches!(
+                policy.filter_bake,
+                paintcraft_formats::export::filter_bake::Policy::Bake(_)
+            ) == self.bake_filters
+                && matches!(policy.source_metadata, Policy::Omit(_)) == self.omit_metadata
         })
+    }
+    // Only at publication: inventory hashing is never part of per-frame readiness.
+    fn policies_current(&self) -> bool {
+        self.authorized()
+            && self.policy.is_some_and(|policy| {
+                policy
+                    .source_metadata
+                    .validate(&self.frozen.document, self.target())
+                    .is_ok()
+                    && policy
+                        .filter_bake
+                        .validate(&self.frozen.document, self.target(), &|| Ok(()))
+                        .is_ok()
+            })
     }
 }
 fn prepare(
     doc: &paintcraft_document::Document,
     config: &widget::Config,
-    policy: Policy,
+    policy: paintcraft_formats::export::CopyPolicies,
 ) -> Result<icons::Prepared, String> {
     let kind = if config.kind == widget::Kind::Icon {
         icons::Kind::Icon
@@ -70,7 +89,7 @@ fn prepare(
             hotspot: (config.kind == widget::Kind::Cursor).then_some(entry.hotspot),
         })
         .collect();
-    icons::prepare_document_with_metadata_policy(
+    icons::prepare_document_with_policies(
         doc,
         kind,
         &specs,
@@ -116,6 +135,7 @@ impl WebApp {
             frozen,
             config: draft.config.clone(),
             omit_metadata: false,
+            bake_filters: false,
             policy: None,
             other_losses: Vec::new(),
             draft,
@@ -147,6 +167,7 @@ impl WebApp {
                         if state.config != config {
                             state.config = config.clone();
                             state.omit_metadata = false;
+                            state.bake_filters = false;
                             state.retire();
                         }
                         let has_metadata = state.frozen.document.source_metadata.is_some();
@@ -156,7 +177,10 @@ impl WebApp {
                                 &mut state.omit_metadata,
                             );
                         }
-                        if has_metadata && !state.omit_metadata {
+                        if state.frozen.has_filters {
+                            paintcraft_ui::filter_bake_export::controls(ui, &mut state.bake_filters);
+                        }
+                        if (has_metadata && !state.omit_metadata) || (state.frozen.has_filters && !state.bake_filters) {
                             state.retire();
                             return false;
                         }
@@ -168,11 +192,14 @@ impl WebApp {
                         };
                         let document = &state.frozen.document;
                         let policy = &mut state.policy;
+                        let bake_filters = state.bake_filters;
                         if state
                             .cache
-                            .update(ctx, (config.clone(), state.omit_metadata), || {
+                            .update(ctx, (config.clone(), state.omit_metadata, state.bake_filters), || {
                                 let captured = Policy::capture(document, target, intent)
                                     .map_err(|error| error.to_string())?;
+                                let filter_bake = paintcraft_formats::export::filter_bake::Policy::capture(document,target,if bake_filters {paintcraft_formats::export::filter_bake::Intent::Bake} else {paintcraft_formats::export::filter_bake::Intent::Refuse},&||Ok(())).map_err(|e|e.to_string())?;
+                                let captured = paintcraft_formats::export::CopyPolicies{source_metadata:captured,filter_bake};
                                 let prepared = prepare(document, &config, captured)?;
                                 *policy = Some(captured);
                                 Ok(prepared)
@@ -184,7 +211,7 @@ impl WebApp {
                                     prepared
                                         .losses()
                                         .iter()
-                                        .filter(|loss| loss.as_str() != OMITTED_REASON)
+                                        .filter(|loss| loss.as_str() != OMITTED_REASON && loss.as_str() != paintcraft_formats::export::filter_bake::BAKED_REASON)
                                         .cloned()
                                         .collect()
                                 });
@@ -220,7 +247,7 @@ impl WebApp {
             return;
         }
         if response.inner.1 {
-            if !state.current(self) || !state.authorized() {
+            if !state.current(self) || !state.policies_current() {
                 return;
             }
             let Some(prepared) = state.cache.value() else {

@@ -1,5 +1,6 @@
 //! Captured browser encoding choices, independent of download ownership.
 use super::*;
+#[cfg(test)]
 pub(super) fn encode(
     document: &Document,
     format: Option<ImageExport>,
@@ -9,6 +10,29 @@ pub(super) fn encode(
     jpeg_matte: Option<image::JpegMatte>,
     source_metadata: paintcraft_formats::export::metadata_policy::Intent,
 ) -> Result<Vec<u8>> {
+    encode_with_options(
+        document,
+        ExportOptions {
+            format,
+            jpeg_quality,
+            frontend,
+            pcx_encoding,
+            jpeg_matte,
+            source_metadata,
+            filter_bake: Default::default(),
+        },
+    )
+}
+pub(super) fn encode_with_options(document: &Document, options: ExportOptions) -> Result<Vec<u8>> {
+    let ExportOptions {
+        format,
+        jpeg_quality,
+        frontend,
+        pcx_encoding,
+        jpeg_matte,
+        source_metadata,
+        filter_bake,
+    } = options;
     if jpeg_matte.is_some() && format != Some(ImageExport::Jpeg) {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -48,6 +72,7 @@ pub(super) fn encode(
         }
         let mut options = paintcraft_formats::export::FlatOptions::new(format, jpeg_quality);
         options.jpeg_matte = jpeg_matte;
+        options.filter_bake = filter_bake;
         options.source_metadata = paintcraft_formats::export::metadata_policy::Policy::capture(
             document,
             paintcraft_formats::export::metadata_policy::Target::new(family, Operation::ExportFlat),
