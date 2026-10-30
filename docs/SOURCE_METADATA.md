@@ -3,7 +3,7 @@
 The document can retain one immutable attachment describing its original source.
 PNG new-document imports create the attachment when iCCP or pHYs is present.
 BMP new-document imports retain embedded V5 ICC bytes and nonzero signed
-pixels-per-metre declarations. Opening PCND2 restores stored attachments. Other foreign importers,
+pixels-per-metre declarations. Opening PCND2/3 restores stored attachments. Other foreign importers,
 palette/index retention, complete EXIF preservation, per-layer provenance and
 color-managed conversion remain separate work.
 
@@ -55,8 +55,10 @@ The canonical wire layout is specified in
 [PCND format, version 2](PCND_FORMAT.md#version-2-source-attachment).
 
 Documents without an attachment still write the existing byte-compatible PCND1.
-Attached documents write PCND2 with `paintcraft.document/v2` and the required
-`source-metadata.v1` feature. Older readers must refuse the newer version.
+Attached documents without filters write PCND2 with `paintcraft.document/v2` and
+the required `source-metadata.v1` feature. A nonempty point-filter stack uses
+PCND3, preserving the same attachment framing and facts. Older readers must
+refuse versions or required features they cannot preserve.
 The attachment is a canonical 192-byte header followed by exact ICC bytes, before
 the existing layer-count/records. Its own SHA256 and the whole-file SHA256 bind
 facts and payload. Parsed ICC header declarations are rederived from the original
@@ -67,6 +69,10 @@ document prelude, title and layer metadata. Readers deduct already consumed
 prelude/title bytes before admitting/copying the profile, and accept a lower
 caller-owned `pcnd::MetadataAdmission` limit/budget. Failure during later layer
 admission releases the attachment lease.
+PCND3 filter records share this aggregate metadata ceiling. The caller-owned
+source-attachment realm accounts for retained ICC storage; filter descriptors
+have separate owned storage and history accounting. It is not a combined hard
+allocation or process-memory limit.
 
 Legacy PCND read wrappers create a per-read bounded realm. Application PCND loads and
 PNG/BMP imports instead pass their host's shared resource realm. Browser pending

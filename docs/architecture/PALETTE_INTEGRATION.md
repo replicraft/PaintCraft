@@ -1,6 +1,6 @@
 # Palette integration: persistent nondestructive filters
 
-Status: integration design with the first scalar kernel foundation, reviewed 2026-10-29. Editable document stacks and UI integration are not implemented yet. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
+Status: document/history, PCND persistence and renderer foundations implemented; commands and interface integration remain in progress. Reviewed 2026-10-29. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
 
 ## Evidence and upstream identity
 
@@ -71,17 +71,21 @@ Gate: independent literal channels including 0/127/128/255, hidden RGB, all alph
 
 ### 2. Persistent stack, commands, history and PCND
 
+Implemented foundation: each layer has a bounded immutable ordered stack with cached semantic digest. Source tiles remain shared and unchanged; hot/cold history records the stack and accounts for its owned storage. Nineteen document tests and twenty history tests pass. Typed editing commands and persistent masks remain separate work.
+
 Add immutable ordered instances and fixed selection-derived masks; retain source tile sharing. Descriptor order, enablement, IDs, mask bytes/default and arithmetic version enter document equality and semantic identities. IDs remain stable across edits; duplicate receives a new ID; a UI label is not the semantic key.
 
 Prepare typed stack edits against an exact document/session/history base. Validate descriptor count/bytes, UUID uniqueness, target layer, parameter ranges, mask bounds and canonical-save viability before atomic publication. Parameter edits change metadata, not raster payloads. Existing source attachments survive unchanged, and host-owned metadata admission includes stacks/masks, pending candidates, history and reopen.
 
 Extend hot history and cold archive/restoration together, including unique shared-mask accounting and cancellation. Undo/Redo restores recorded descriptors/masks without rerunning filters. Extend duplicate/delete/crop/resize/rotate/merge contracts explicitly: source-local transforms must transform or deliberately bake/refuse dependent masks, never leave them silently misaligned.
 
-Proposed conditional PCND v3/document3 stores canonical bounded stack records with explicit profile versions and mask payload framing; v1/v2 bytes remain unchanged for documents without stacks. Final schema names are implementation decisions, not existing format identifiers. Older readers must refuse v3; unknown kinds/versions, even disabled nodes, cannot be silently skipped. Update inspector/capability rows, preflight counter, raw/compact readers/writers, recovery and fuzz harness together.
+[PCND v3](../PCND_FORMAT.md#version-3-live-point-filters) now stores the bounded point-filter stack using schema `paintcraft.document/v3` and required feature `layer-point-filters.v1`. Documents without stacks retain exact v1/v2 bytes, including original source attachments. Sixteen independent fixtures, 45 PCND tests and a future-version recovery control pass. Unknown algorithms, even disabled ones, are refused. Masks are not part of this wire profile; adding them requires an explicit compatible format/feature contract. The fuzz extension keeps its new streams separate from the historical streams.
 
 Gate: unchanged raw raster/tile identities; order-dependent Invert→Brightness/Contrast versus reverse; edit/toggle/reorder/duplicate/remove Undo/Redo; cold spill/reopen; independent PCND fixtures; resource/cancel failures leave history/document/source unchanged. No persistent feature claim until this gate and the renderer gate pass.
 
 ### 3. One appearance pipeline for every consumer
+
+Implemented foundation: CPU regional/parallel composition, uniform display reduction, thumbnails, visible sampling/copy and cache keys use evaluated point appearances. GPU source uploads prepare those same CPU appearances for composition and display. All 95 renderer tests pass with an M1 Pro Metal adapter required, including 32 GPU tests. This is local offscreen correctness evidence, not GPU filter execution, a performance gain, physical UI qualification or six-target conformance. Layered PDN/PAINT/PSD/PSB/ORA copies explicitly refuse nonempty stacks, including disabled entries, before output. Named flat-copy losses and browser snapshot accounting still need integration.
 
 Evaluate source-local filters before layer opacity and root composition. Add typed evaluation to CPU flat/region rendering, display tiles, thumbnails, clipboard/merged sampling, print and flat exports. Raw-layer sampling remains explicitly raw; merged/visible sampling uses evaluated appearances. Layered exports must preserve supported stacks or require an explicit bake/omission conversion with a real preview; preserving writers must refuse unsupported stacks.
 

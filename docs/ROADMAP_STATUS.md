@@ -10,8 +10,12 @@ replace the canonical 37-task roadmap or transplant new contracts wholesale.
 [Palette integration](architecture/PALETTE_INTEGRATION.md) is now a requested
 extension of the engine roadmap: editable ordered filters over retained source
 pixels, followed by masks and layer styles. The source review maps the author's
-catalog to document/history/PCND, rendering and Studio acceptance gates. This is
-planned integration, not a claim that the catalog is available in PaintCraft.
+catalog to document/history/PCND, rendering and Studio acceptance gates. Ordered
+point-filter storage, cold history, PCND3 and CPU/GPU-prepared appearances are
+implemented for Invert and Brightness/Contrast. All 95 renderer tests pass on
+required offscreen Metal, including 32 GPU controls. Commands, Studio controls,
+masks and complete export/browser authority remain work; the catalog is not
+available in PaintCraft yet.
 
 [Stock raster conversion safety](RASTER_SOURCE_IMPORT.md) now captures native
 source identity through consent and adoption, retains overwrite guards after
