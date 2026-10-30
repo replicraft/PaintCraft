@@ -22,3 +22,10 @@ python3 fuzz/pcnd-fixtures/generate.py
 ```
 
 Historical and stock manifests, sources and prior receipts are not regenerated.
+
+PCND3 integration changes only `unknown-version.pcnd` from container byte 3 to 4
+with a recomputed outer SHA-256. The other thirteen manifest-listed source bytes
+are unchanged. Earlier qualification records retain their original v3-negative
+hash and do not describe a run of this migrated inventory. The sixteen new
+filter-stack fixtures have their own `../pcnd-filter-seeds.json` inventory and
+standalone runner; they are not appended to this fourteen-source manifest.

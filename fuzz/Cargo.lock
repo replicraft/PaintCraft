@@ -887,6 +887,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-effects"
+version = "0.1.1"
+dependencies = [
+ "paintcraft-core",
+]
+
+[[package]]
 name = "paintcraft-formats"
 version = "0.1.1"
 dependencies = [
@@ -967,6 +974,7 @@ version = "0.1.1"
 dependencies = [
  "paintcraft-core",
  "paintcraft-document",
+ "paintcraft-effects",
  "paintcraft-raster",
  "rayon",
  "wide",

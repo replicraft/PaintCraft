@@ -1,4 +1,4 @@
-//! Pure PCND1/2 read and bounded canonical roundtrip; no files or helpers.
+//! Pure PCND1/2/3 read and bounded canonical roundtrip; no files or helpers.
 use crate::{INPUT_MAX, PIXELS_MAX};
 use paintcraft_core::types::{Error, ErrorCode, Result, resources::SharedBudget};
 use paintcraft_formats::pcnd;
@@ -7,7 +7,10 @@ use std::io::{self, Write};
 pub const STAGED_PIXELS_MAX: u64 = 131_072;
 pub const METADATA_BYTES_MAX: u64 = 16 << 10;
 // Two admitted tiles are at most 512 KiB raw. Source strings/headers/profile
-// consume at most the 256 KiB input; 1 MiB covers their canonical framing too.
+// and canonical PCND3 UUID/flag/tag/parameter records consume at most the
+// 256 KiB input; minimal filter integers do not expand on raw serialization.
+// Length-prefix growth is far below the remaining 256 KiB slack of OUTPUT_MAX.
+// This is serialized output, not a total live/RSS or stack-allocation budget.
 pub const OUTPUT_MAX: usize = 1 << 20;
 const LAYERS_MAX: usize = 8;
 fn invariant(message: &str) -> Error {
@@ -97,6 +100,10 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
             return Err(invariant("PCND readable layer identity/geometry"));
         }
     }
+    let has_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
+    if (bytes.get(4) == Some(&3)) != has_filters {
+        return Err(invariant("PCND version/filter-stack presence differs"));
+    }
     if first.usage().reserved > METADATA_BYTES_MAX {
         return Err(invariant("PCND source metadata admission exceeded realm"));
     }
@@ -117,6 +124,18 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
         }
         return Err(invariant(
             "Readable PCND document failed canonical raw serialization",
+        ));
+    }
+    let expected_version = if has_filters {
+        3
+    } else if doc.source_metadata.is_some() {
+        2
+    } else {
+        1
+    };
+    if output.bytes.get(4) != Some(&expected_version) {
+        return Err(invariant(
+            "PCND raw output lost canonical filter/version semantics",
         ));
     }
     check()?;
@@ -146,7 +165,7 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
     })?;
     if !doc.same_semantics(&restored) || doc.state_id != restored.state_id {
         return Err(invariant(
-            "PCND canonical roundtrip changed document/source metadata semantics",
+            "PCND canonical roundtrip changed document/filter/source metadata semantics",
         ));
     }
     if second.usage().reserved > METADATA_BYTES_MAX {

@@ -390,7 +390,72 @@ checksum-aware PCND 3,598 cases (601 accepted). All eleven wrappers compiled.
 The actual stable PCND driver completed 2,000 inputs with both routes enabled,
 reporting 31 MiB RSS and warnings for absent sanitizer/coverage instrumentation;
 it reduced its working corpus to one byte. This is mutation smoke, **not** an
-instrumented coverage result or exhaustive hostile-parser qualification. Original
-fourteen seed files and their hashes remain preserved separately from that
-working corpus. The ignored `docs/validation/pcnd-fuzz/` receipt binds exact
+instrumented coverage result or exhaustive hostile-parser qualification. The original qualification's fourteen seed hashes remain preserved in its
+historical receipt separately from that working corpus; the later v3 adoption
+below migrates one current negative fixture. The ignored `docs/validation/pcnd-fuzz/` receipt binds exact
 sources, commands, logs, lock edge and executed driver/replay digests.
+
+## PCND3 filter-stack adoption (separate inventory and streams)
+
+`pcnd-filter-seeds.json` binds sixteen independently byte-authored fixtures from
+`crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/`, their oracle and
+its Python generator. Five are accepted controls: legacy v1/v2, ordered filters,
+source attachment plus filters, and an all-disabled stack. Eleven exercise
+unknown enabled/disabled algorithms, duplicate IDs, bad flags/ranges, empty v3,
+noncanonical/count-limit framing and future v4. The public reader/writer target
+checks ordered stack semantics and canonical output version as well as original
+source pixels/metadata. All-disabled stacks must remain v3.
+
+The existing `pcnd-seeds.json` remains a **separate fourteen-seed inventory**.
+Only its unknown-version negative changed from version 3 to version 4 now that
+v3 is understood. Its other thirteen original input files remain byte-identical;
+the exact generator recipe, provenance and manifest hash were updated. Earlier
+fourteen-seed receipts remain historical, pinned to their original manifest and
+version-3 negative; their accepted/rejected counts are not relabeled as a run of
+this updated source.
+
+The fixed 1 MiB serialized-output allowance still covers both admitted raw tiles
+(at most 512 KiB), input-bounded strings/source attachment/filter records (at most
+256 KiB), and framing growth. UUID/flag/tag bytes and canonical minimal signed
+filter integers do not expand when rewritten. Filter descriptors have a separate
+structural limit of 256 per layer/eight layers. The two 16 KiB metadata realms
+account **only for source attachments**, not stack allocations or total memory.
+Cancellation may reject a roundtrip; it must not turn an invariant failure into
+ordinary rejection. No filesystem/helper/process/network/GPU operation was added
+to the pure parser target, and parser panics are not caught.
+
+Run the new inventory independently, using the existing root target directory:
+
+```sh
+python3 fuzz/pcnd_filter_replay_smoke.py --write-inventory
+CARGO_INCREMENTAL=0 cargo test --locked --offline --manifest-path fuzz/Cargo.toml --target-dir target
+CARGO_INCREMENTAL=0 cargo build --locked --offline --manifest-path fuzz/Cargo.toml --target-dir target --bin replay
+python3 fuzz/pcnd_filter_replay_smoke.py --replay target/debug/replay
+```
+
+The finite runner reports **4,112 raw cases and 4,112 checksum-aware cases
+separately** (sixteen seeds × 257), preceded by sixteen exact original-outcome
+controls reported outside those totals. A stale reader that rejects PCND3 while
+accepting legacy documents cannot pass on aggregate positives alone.
+It uses the existing mutation policy and only
+repairs the outer SHA-256 in the semantic stream. Inventory checks reject
+acceptance swaps even when the total positive count remains five, altered oracle
+or generator hashes, source/target substitution and duplicate inputs. Generated
+mutation files live in ignored validation storage; successful batches are removed,
+while a failing parser process retains its exact input batch and failure receipt.
+
+This runner is standalone; the existing CI helper/configuration is unchanged.
+The historical seven-target 6,168, stock 7,453, and original PCND 3,598-case streams
+retain their separate inventories/receipts. These counts describe deterministic
+mutation smoke, not coverage-guided execution, sanitizers, latency or RSS proof.
+
+The PCND3 adoption was locally checked with the selected stable toolchain on
+Darwin/arm64: 20 Rust controls, 12 Python controls, locked Clippy/format/graph
+checks, and a freshly built canonical-target replay binary passed. The updated
+fourteen-seed inventory produced raw 3,598 cases (28 accepted, 3,570 rejected)
+and checksum-aware 3,598 (601 accepted, 2,997 rejected). The new sixteen-seed
+inventory separately passed all sixteen exact original outcomes, raw 4,112
+(13 accepted, 4,099 rejected), and checksum-aware 4,112 (316 accepted, 3,796
+rejected). Earlier new-runner results without the additional original-outcome
+preflight remain separate evidence. No historical/stock replay, guided driver,
+sanitizer or cross-platform runtime is claimed by this PCND-only follow-up.

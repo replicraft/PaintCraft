@@ -1,0 +1,143 @@
+{
+  "schema": "paintcraft.pcnd-filter-fuzz-seeds/v1",
+  "oracle": {
+    "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/oracle.json",
+    "bytes": 3203,
+    "sha256": "a846d0b50e8518c58f893137693f4fdd0b2020c0e0857e4b75f6755f0617b79a"
+  },
+  "generator": {
+    "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/generate.py",
+    "bytes": 3461,
+    "sha256": "b85b883dd6ab851cd0bc30c084895aee011c0c7fd39c6c24ec460c4ccd4d0f0e"
+  },
+  "seeds": [
+    {
+      "target": "pcnd",
+      "name": "legacy-v1.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/legacy-v1.pcnd",
+      "bytes": 121,
+      "sha256": "affda8ae5ee4ed14b2cc215d95c77409edb201353618e5a9e681c0d015cccf9b",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "legacy-v2.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/legacy-v2.pcnd",
+      "bytes": 3337,
+      "sha256": "bdfbaf1380e10ff2386b486881ee2007459078f09b5382a95ad890c651ea2761",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "stack.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/stack.pcnd",
+      "bytes": 183,
+      "sha256": "8f92caaeb9098e538ccdf25fb20c72ebb428209f402aebbe681dc6a0fb038cb5",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "source-stack.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/source-stack.pcnd",
+      "bytes": 3399,
+      "sha256": "9467cc8bd7c9792d0967ff0cc016eff59f2b47147b87aa4d9be145111ebc77c0",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/disabled.pcnd",
+      "bytes": 141,
+      "sha256": "fefef6934d076e205efe41285981494d0a553cbe73ebd667c5f05e986426365e",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "empty-v3.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/empty-v3.pcnd",
+      "bytes": 123,
+      "sha256": "1ecfe0c2eaa94d6413f656df2f6fbfc64c89c321b1ce1e93f99b7aa3a774762f",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "unknown-disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/unknown-disabled.pcnd",
+      "bytes": 141,
+      "sha256": "8b84768cae1b985f22537190b41001ce3b2677a84d5633b106b66ba291c59636",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "unknown-enabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/unknown-enabled.pcnd",
+      "bytes": 141,
+      "sha256": "cbfbe14df7ef1c4d59e0d8fb70f16f9974f9609477a667bab9106b30e19c2fe4",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "duplicate.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/duplicate.pcnd",
+      "bytes": 167,
+      "sha256": "8f642f70556524146d12640bb5a3d41c411bbe3bbb620dee9292040970f820b8",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-enabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/bad-enabled.pcnd",
+      "bytes": 141,
+      "sha256": "d1ab810dc86da80a50a1d0d81f64bc9a2b140d70c76a5d9a771394bc9d6c3516",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-presence.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/bad-presence.pcnd",
+      "bytes": 183,
+      "sha256": "90a2959c209b45ee5c1e13d1d6325792713d51cdf5f0d8bfdbd8a5f75b68beda",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-brightness.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/bad-brightness.pcnd",
+      "bytes": 144,
+      "sha256": "b28465b458461ca063e88ea3b1940e7ebfd1b520c0a4af916aaff3148f7152f3",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-contrast.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/bad-contrast.pcnd",
+      "bytes": 144,
+      "sha256": "85ed93cf886bc3321cb867eb20edffe631daabc477df64df8cd5c459193f26fe",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "noncanonical-count.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/noncanonical-count.pcnd",
+      "bytes": 184,
+      "sha256": "fcdd6aadcff0b3893bb8beba9b3edffc6f8697604a3770bb0be5c2f9945c917f",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "count257.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/count257.pcnd",
+      "bytes": 124,
+      "sha256": "95abda5b9fd1d3707b6b88b48a05d4a72ce5f8e9b6cf1833972c5894daa5ddd7",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "future-v4.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-filter-fixtures/future-v4.pcnd",
+      "bytes": 121,
+      "sha256": "4f62798b571e1ebeb0888dde284b6562a3cd15590f11042cd4e1ecf354d1dbda",
+      "accepted": false
+    }
+  ]
+}

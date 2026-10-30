@@ -184,3 +184,106 @@ fn wrapper_checksum_branch_reaches_body_without_repairing_inner_attachment() {
         ErrorCode::OperationCancelled
     );
 }
+
+fn filter_fixture(name: &str) -> Vec<u8> {
+    std::fs::read(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("crates/services/paintcraft-formats/tests/pcnd-filter-fixtures")
+            .join(name),
+    )
+    .unwrap()
+}
+#[test]
+fn separately_inventoried_pcnd3_reader_seeds_keep_exact_outcomes_and_roundtrip() {
+    let manifest = json::parse(include_bytes!("../../pcnd-filter-seeds.json")).unwrap();
+    let rows = manifest.get("seeds").unwrap().as_array().unwrap();
+    assert_eq!(rows.len(), 16);
+    for row in rows {
+        let name = row.get("name").unwrap().as_str().unwrap();
+        let bytes = filter_fixture(name);
+        let result = crate::exercise(Target::Pcnd, &bytes);
+        let detail = format!("{result:?}");
+        assert_eq!(
+            classify(result),
+            if row.get("accepted").unwrap().as_bool().unwrap() {
+                Outcome::Accepted
+            } else {
+                Outcome::Rejected
+            },
+            "{name}: {detail}"
+        );
+    }
+}
+#[test]
+fn pcnd3_disabled_stack_and_original_pixels_survive_real_reader_writer_and_cancellation() {
+    use paintcraft_core::types::filters::Descriptor;
+    for name in ["stack.pcnd", "source-stack.pcnd", "disabled.pcnd"] {
+        let bytes = filter_fixture(name);
+        let budget = SharedBudget::new(METADATA_BYTES_MAX);
+        let doc = pcnd::read_with_metadata_admission_checked(
+            &bytes,
+            PIXELS_MAX,
+            STAGED_PIXELS_MAX,
+            8,
+            pcnd::MetadataAdmission {
+                bytes: METADATA_BYTES_MAX,
+                budget: &budget,
+            },
+            &|| Ok(()),
+        )
+        .unwrap();
+        let layer = &doc.layers[&doc.roots[0]];
+        let stack = &layer.filters;
+        assert_eq!(layer.raster.get(0, 0).0, [17, 32, 255, 0]);
+        assert_eq!(layer.raster.get(1, 0).0, [0, 127, 200, 255]);
+        assert_eq!(stack.as_slice()[0].id().as_u128(), 0);
+        assert!(!stack.as_slice()[0].enabled());
+        if name == "disabled.pcnd" {
+            assert_eq!(stack.len(), 1);
+            assert_eq!(stack.as_slice()[0].descriptor(), Descriptor::InvertRgbV1);
+        } else {
+            assert_eq!(stack.len(), 3);
+            assert_eq!(stack.as_slice()[1].descriptor(), Descriptor::InvertRgbV1);
+            let Descriptor::BrightnessContrastV1(p) = stack.as_slice()[0].descriptor() else {
+                panic!("BC")
+            };
+            assert_eq!((p.brightness(), p.contrast()), (-100, 99));
+        }
+        let raw = pcnd::write(&doc).unwrap();
+        assert_eq!(raw[4], 3, "even all-disabled stack stays PCND3");
+        assert_eq!(
+            raw, bytes,
+            "independent canonical specimen must remain byteexact"
+        );
+        let calls = Cell::new(0);
+        exercise(&bytes, &|| {
+            calls.set(calls.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+        for stop in 1..=calls.get() {
+            let at = Cell::new(0);
+            assert_eq!(
+                exercise(&bytes, &|| {
+                    at.set(at.get() + 1);
+                    if at.get() == stop {
+                        Err(Error::new(
+                            ErrorCode::OperationCancelled,
+                            "cancel PCND3 fuzz control",
+                        ))
+                    } else {
+                        Ok(())
+                    }
+                })
+                .unwrap_err()
+                .code,
+                ErrorCode::OperationCancelled
+            );
+        }
+        assert_eq!(bytes, filter_fixture(name));
+        drop(doc);
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}

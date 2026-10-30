@@ -1,4 +1,4 @@
-"""Separate raw PCND1/2 seed inventory and deterministic replay."""
+"""Separate historical PCND seed inventory and deterministic replay."""
 import argparse
 import json
 from pathlib import Path
