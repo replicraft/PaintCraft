@@ -72,10 +72,15 @@ sampling and export through that evaluator. Local transparent/uniform shortcuts
 and cache invalidation must account for upstream halo pixels and masks.
 
 Extend document identities, history, persistence, typed automation, private
-previews and actual UI workflows together. The current unknown-algorithm fixture
-uses tag 7; move active unknown controls to an explicit reserved sentinel before
-assigning that tag, retaining the historical fixture evidence. Do not silently
-reinterpret a formerly negative test as a supported algorithm.
+previews and actual UI workflows together. Current PCND3/4 unknown-algorithm
+fixtures use tag 7. Move those active controls to a reserved sentinel only if
+that same container/profile registry later accepts tag 7, retaining historical
+evidence. The preferred [spatial integration plan](SPATIAL_FILTER_INTEGRATION.md)
+uses conditional PCND5 with distinct spatial grammar support. A PCND5-scoped
+tag 7 would not invalidate unknown-tag-7 refusals in unchanged PCND3/4: gate
+algorithms by their container/profile. No numeric Box tag or PCND5 wire layout
+is frozen by this foundation. Do not reinterpret a legacy negative as supported
+solely because a different container version knows that numeric value.
 
 The independent Python/Fraction oracle under
 `crates/services/paintcraft-effects/tests/box-fixtures` specifies numerical
