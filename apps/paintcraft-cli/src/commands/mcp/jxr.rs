@@ -62,9 +62,29 @@ impl PaintingServer {
             let current = || Ok(super::native_codec::owner(state, empty));
             let intent: paintcraft_formats::export::metadata_policy::Intent =
                 p.source_metadata.unwrap_or_default().into();
-            let policy = super::super::export_metadata::CopyFormat::Jxr.capture(doc, intent)?;
+            let filter_intent = super::super::export_metadata::user_filter_intent(&p.allow_losses);
+            let policies = super::super::export_metadata::CopyFormat::Jxr.capture_policies(
+                doc,
+                intent,
+                filter_intent,
+                &|| check(),
+            )?;
             let (receipt, ok, _, details) =
-                if intent == paintcraft_formats::export::metadata_policy::Intent::Refuse {
+                if filter_intent == paintcraft_formats::export::filter_bake::Intent::Bake {
+                    export_jxr::write_copy_with_policies(
+                        doc,
+                        &path,
+                        p.overwrite,
+                        &p.allow_losses,
+                        None,
+                        captured,
+                        &current,
+                        super::native_codec::preparation_budget(),
+                        &protect,
+                        check.clone(),
+                        policies,
+                    )?
+                } else if intent == paintcraft_formats::export::metadata_policy::Intent::Refuse {
                     export_jxr::write_copy(
                         doc,
                         &path,
@@ -89,7 +109,7 @@ impl PaintingServer {
                         super::native_codec::preparation_budget(),
                         &protect,
                         check,
-                        policy,
+                        policies.source_metadata,
                     )?
                 };
 

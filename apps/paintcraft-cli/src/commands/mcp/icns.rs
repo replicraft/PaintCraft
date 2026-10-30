@@ -139,15 +139,14 @@ impl PaintingServer {
                 Filter::Lanczos3 => icons::Filter::Lanczos3,
             };
             let doc = state.session()?.document();
-            let policy = super::super::export_metadata::CopyFormat::Icns
-                .capture(doc, p.source_metadata.unwrap_or_default().into())?;
-            let prepared = icns::prepare_document_with_metadata_policy(
+            let policy = super::super::export_metadata::CopyFormat::Icns.capture_policies(
                 doc,
-                &kinds,
-                filter,
+                p.source_metadata.unwrap_or_default().into(),
+                super::super::export_metadata::user_filter_intent(&p.allow_losses),
                 &|| Ok(()),
-                policy,
             )?;
+            let prepared =
+                icns::prepare_document_with_policies(doc, &kinds, filter, &|| Ok(()), policy)?;
             let bytes = prepared.encode(&p.allow_losses, &|| Ok(()))?;
             let context = Context {
                 operation: "export",

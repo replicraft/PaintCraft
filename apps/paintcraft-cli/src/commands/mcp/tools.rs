@@ -402,6 +402,7 @@ impl PaintingServer {
                 .ok_or_else(|| invalid("unsupported image extension"))?;
             let metadata_intent: export::metadata_policy::Intent =
                 p.source_metadata.unwrap_or_default().into();
+            let filter_intent = super::super::export_metadata::user_filter_intent(&p.allow_losses);
             let jpeg_matte = p
                 .jpeg_matte
                 .as_deref()
@@ -429,7 +430,27 @@ impl PaintingServer {
                     }
                     Ok(())
                 };
-                return if metadata_intent == export::metadata_policy::Intent::Refuse {
+                return if filter_intent == export::filter_bake::Intent::Bake {
+                    let policies = super::super::export_metadata::capture_copy_policies(
+                        s.session()?.document(),
+                        export::metadata_policy::Target::new(
+                            paintcraft_formats::registry::Family::Msp,
+                            paintcraft_formats::registry::Operation::ExportFlat,
+                        ),
+                        metadata_intent,
+                        filter_intent,
+                        &check,
+                    )?;
+                    super::msp::export_with_policies(
+                        s,
+                        &path,
+                        p.overwrite,
+                        version,
+                        &p.allow_losses,
+                        &check,
+                        policies,
+                    )
+                } else if metadata_intent == export::metadata_policy::Intent::Refuse {
                     super::msp::export(s, &path, p.overwrite, version, &p.allow_losses, &check)
                 } else {
                     super::msp::export_with_metadata_policy(
@@ -456,7 +477,27 @@ impl PaintingServer {
                     }
                     Ok(())
                 };
-                return if metadata_intent == export::metadata_policy::Intent::Refuse {
+                return if filter_intent == export::filter_bake::Intent::Bake {
+                    let policies = super::super::export_metadata::capture_copy_policies(
+                        s.session()?.document(),
+                        export::metadata_policy::Target::new(
+                            paintcraft_formats::registry::Family::Dds,
+                            paintcraft_formats::registry::Operation::ExportFlat,
+                        ),
+                        metadata_intent,
+                        filter_intent,
+                        &check,
+                    )?;
+                    super::dds::export_with_policies(
+                        s,
+                        &path,
+                        p.overwrite,
+                        options,
+                        &p.allow_losses,
+                        &check,
+                        policies,
+                    )
+                } else if metadata_intent == export::metadata_policy::Intent::Refuse {
                     super::dds::export(s, &path, p.overwrite, options, &p.allow_losses, &check)
                 } else {
                     super::dds::export_with_metadata_policy(
@@ -496,6 +537,15 @@ impl PaintingServer {
                 }
                 Ok(())
             };
+            options.filter_bake = export::filter_bake::Policy::capture(
+                doc,
+                export::metadata_policy::Target::new(
+                    family,
+                    paintcraft_formats::registry::Operation::ExportFlat,
+                ),
+                filter_intent,
+                &check,
+            )?;
             let flat = export::export_flat_options_with_check(
                 doc,
                 options,

@@ -34,14 +34,11 @@ pub(super) fn export_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     intent: paintcraft_formats::export::metadata_policy::Intent,
 ) -> Result<CallToolResult> {
-    check()?;
-    msp_export::admit(Frontend::Studio, path, version)?;
     let doc = state
         .session
         .as_ref()
         .ok_or_else(|| invalid("create or open a document first"))?
         .document();
-    let protect = |destination: &Path| state.protect_copy_sources(destination);
     let policy = paintcraft_formats::export::metadata_policy::Policy::capture(
         doc,
         paintcraft_formats::export::metadata_policy::Target::new(
@@ -50,7 +47,38 @@ pub(super) fn export_with_metadata_policy(
         ),
         intent,
     )?;
-    let (receipt, ok, _, details) = msp_export::write_copy_with_metadata_policy(
+    export_with_policies(
+        state,
+        path,
+        overwrite,
+        version,
+        allowed,
+        check,
+        paintcraft_formats::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub(super) fn export_with_policies(
+    state: &State,
+    path: &Path,
+    overwrite: bool,
+    version: msp_options::Version,
+    allowed: &[String],
+    check: &dyn Fn() -> Result<()>,
+    policies: paintcraft_formats::export::CopyPolicies,
+) -> Result<CallToolResult> {
+    check()?;
+    msp_export::admit(Frontend::Studio, path, version)?;
+    let doc = state
+        .session
+        .as_ref()
+        .ok_or_else(|| invalid("create or open a document first"))?
+        .document();
+    let protect = |destination: &Path| state.protect_copy_sources(destination);
+    let (receipt, ok, _, details) = msp_export::write_copy_with_policies(
         doc,
         version,
         path,
@@ -60,7 +88,7 @@ pub(super) fn export_with_metadata_policy(
         super::native_codec::preparation_budget(),
         &protect,
         check,
-        policy,
+        policies,
     )?;
     let value =
         paintcraft_core::types::json::Value::object([("export", details), ("save", receipt)]);

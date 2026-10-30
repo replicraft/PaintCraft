@@ -116,9 +116,13 @@ impl PaintingServer {
                 Resampling::Lanczos3 => icons::Filter::Lanczos3,
             };
             let doc = state.session()?.document();
-            let policy = super::super::export_metadata::CopyFormat::Icon(kind)
-                .capture(doc, p.source_metadata.unwrap_or_default().into())?;
-            let prepared = icons::prepare_document_with_metadata_policy(
+            let policy = super::super::export_metadata::CopyFormat::Icon(kind).capture_policies(
+                doc,
+                p.source_metadata.unwrap_or_default().into(),
+                super::super::export_metadata::user_filter_intent(&p.allow_losses),
+                &|| Ok(()),
+            )?;
+            let prepared = icons::prepare_document_with_policies(
                 doc,
                 kind,
                 &specs,

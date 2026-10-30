@@ -64,9 +64,27 @@ impl PaintingServer {
                 .document();
             let intent: paintcraft_formats::export::metadata_policy::Intent =
                 p.source_metadata.unwrap_or_default().into();
-            let policy = super::super::export_metadata::CopyFormat::Dcx.capture(doc, intent)?;
+            let filter_intent = super::super::export_metadata::user_filter_intent(&p.allow_losses);
+            let policies = super::super::export_metadata::CopyFormat::Dcx.capture_policies(
+                doc,
+                intent,
+                filter_intent,
+                &|| check(),
+            )?;
             let (receipt, ok, _) =
-                if intent == paintcraft_formats::export::metadata_policy::Intent::Refuse {
+                if filter_intent == paintcraft_formats::export::filter_bake::Intent::Bake {
+                    export_dcx::write_copy_with_policies(
+                        doc,
+                        p.pcx_mode,
+                        &path,
+                        p.overwrite,
+                        &p.allow_losses,
+                        None,
+                        &protect,
+                        &check,
+                        policies,
+                    )?
+                } else if intent == paintcraft_formats::export::metadata_policy::Intent::Refuse {
                     export_dcx::write_copy(
                         doc,
                         p.pcx_mode,
@@ -87,7 +105,7 @@ impl PaintingServer {
                         None,
                         &protect,
                         &check,
-                        policy,
+                        policies.source_metadata,
                     )?
                 };
 
