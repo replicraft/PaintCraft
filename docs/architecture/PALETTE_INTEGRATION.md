@@ -1,6 +1,6 @@
 # Palette integration: persistent nondestructive filters
 
-Status: design only, reviewed 2026-10-29. This document adds no filters, dependencies or runtime qualification. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
+Status: integration design with the first scalar kernel foundation, reviewed 2026-10-29. Editable document stacks and UI integration are not implemented yet. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
 
 ## Evidence and upstream identity
 
@@ -8,7 +8,7 @@ The reviewed repository is [spiffyfitz/palette](https://github.com/spiffyfitz/pa
 
 Evidence labels below mean:
 
-- **Author inventory:** described in [IMPLEMENTED_FUNCTIONS.md](../temp/IMPLEMENTED_FUNCTIONS.md), including 132 conventional filters across 15 categories, ten effect families, nine brushes and 19 blend modes. The pinned source also declares 132 Filter variants and ten Effect families plus a configuration wrapper. Neither count is an independently executed catalog qualification.
+- **Author inventory:** described in [IMPLEMENTED_FUNCTIONS.md](../temp/IMPLEMENTED_FUNCTIONS.md), including 132 conventional filters across 15 categories, ten effect families, nine brushes and 19 blend modes. These counts are not an independently executed catalog qualification.
 - **Read source:** directly inspected files in the pinned snapshot establish the stated structure or algorithm. No Palette build, benchmark, original-application comparison or GPU execution was performed for this design.
 - **Proposed:** PaintCraft implementation and acceptance gates still required. Source availability does not establish feature parity, exact proprietary output, performance or compatibility.
 
@@ -31,7 +31,7 @@ Pinned [document enums](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e
 
 [The renderer](../../crates/services/paintcraft-render/src/lib.rs) composes ordered straight RGBA8 layers with fixed intermediate rounding. [Cache keys](../../crates/services/paintcraft-render/src/cache/key.rs) currently use layer geometry/opacity, raster default pixels and source region versions. A parameter-only stack edit would be invisible to those keys without integration.
 
-[Cold history](../../crates/editing/paintcraft-history/src/archive.rs) records explicit layer fields and raster payload references; adding only a live Document field would lose the stack during packing/restoration. PCND currently distinguishes legacy v1 and source-metadata v2; neither may silently acquire an unreadable filter extension. The proposed `paintcraft-effects` crate is not yet present.
+[Cold history](../../crates/editing/paintcraft-history/src/archive.rs) records explicit layer fields and raster payload references; adding only a live Document field would lose the stack during packing/restoration. PCND currently distinguishes legacy v1 and source-metadata v2; neither may silently acquire an unreadable filter extension. The new `paintcraft-effects` crate currently supplies pure point kernels only.
 
 The normative [effect-region contract](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md) remains authoritative: `required_input` and `affected_output` are separate functions; masks apply once; tiles are not image boundaries; admission and cancellation precede publication.
 
@@ -63,9 +63,9 @@ An instance mask is persistent source-local coverage, independent of the live se
 
 ### 1. Descriptors and pure kernels
 
-Implementation status: this foundation has been delegated and is in progress; it is not shipped or runtime-qualified by this document.
+Implementation status: validated descriptors and scalar pixel/row kernels are implemented in `paintcraft-core::types::filters` and `paintcraft-effects`. Six focused tests and strict Clippy pass. This establishes kernel behavior only; no document stack, renderer adoption, PCND extension or Studio controls are available yet.
 
-Implement the two validated descriptors and bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths/overlap before writing; callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
+Implement the two validated descriptors and bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths before writing; safe Rust slice borrowing requires disjoint source/output storage. Callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
 
 Gate: independent literal channels including 0/127/128/255, hidden RGB, all alpha extremes, brightness/contrast boundaries, tie rounding, identity, illegal endpoint, hostile geometry, cancellation and unchanged source on failure. This stage alone is **kernel foundation, not nondestructive filter support**.
 
@@ -115,4 +115,4 @@ The first feature milestone is the real ordered two-filter stack, fixed masks, e
 
 The pinned [LICENSE](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/LICENSE) is MIT, copyright © 2026 Palette contributors. For copied/adapted code or substantial documentation, preserve its copyright and full permission/warranty notice with the material and in distributed third-party notices; record repository, commit, source path/blob and modifications. Audit any separately licensed assets/dependencies before adopting them. A comment or GitHub link alone is not the full notice required for copied substantial portions.
 
-Prefer small attributed algorithm/interaction adaptations over importing the application or its dependency stack. Independently implement PaintCraft's persistent types, admission, typed errors, concurrency guards, canonical formats and ROI contracts. No third-party code has been copied into product source by this design document, and no new dependency or runtime result is claimed.
+Prefer small attributed algorithm/interaction adaptations over importing the application or its dependency stack. Independently implement PaintCraft's persistent types, admission, typed errors, concurrency guards, canonical formats and ROI contracts. The first scalar kernels are independently implemented from the documented mathematical policy. No Palette source or dependency stack has been copied into product code. Core test results qualify these kernels, not Palette or the remaining integration.
