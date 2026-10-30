@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paintcraft:schema:result-v3",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.result/v3"
+    },
+    "committed": {
+      "type": "boolean"
+    },
+    "state_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "publication_epoch": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,19})$"
+    },
+    "history_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "aliases": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 0
+    },
+    "filter_aliases": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "layer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "filter_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "layer_id",
+          "filter_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "document_features": {
+      "oneOf": [
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "source-metadata.v1"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema",
+    "committed",
+    "state_id",
+    "publication_epoch",
+    "history_id",
+    "aliases",
+    "warnings",
+    "document_features"
+  ],
+  "additionalProperties": false,
+  "title": "PaintCraft result for a document with stored filter masks"
+}

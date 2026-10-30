@@ -25,7 +25,7 @@ fn inspect_rejects_unsupported_versions_and_corruption_with_stable_codes() {
     // A version edit without refreshing integrity is corruption, not a new
     // editable document. Consistent future-version rejection is checked below.
     let mut future = spec.clone();
-    future[4] = 4;
+    future[4] = 5;
     let bad = s.path("bad.pcnd");
     fs::write(&bad, &future).unwrap();
     assert_eq!(run(&["inspect", &bad, "--json"]).code, 6);

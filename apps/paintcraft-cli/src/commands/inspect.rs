@@ -50,6 +50,8 @@ fn assessment(sha: &str, m: &pcnd::Header, mode: &str, reasons: &[String]) -> Va
     let profile = match (m.require_supported().is_ok(), m.container_version) {
         (true, 1) => "paintcraft.native/binary1-document1",
         (true, 2) => "paintcraft.native/binary2-document2-source-metadata1",
+        (true, 3) => "paintcraft.native/binary3-document3-point-filters1",
+        (true, 4) => "paintcraft.native/binary4-document4-filter-masks1",
         _ => "paintcraft.native/unrecognized",
     };
     Value::object([
@@ -86,8 +88,17 @@ pub fn run(a: Options, json: bool) -> Reply {
     match super::source_metadata::read(&bytes) {
         Ok(doc) => {
             let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
-            let value = Value::object([
-                ("schema", Value::str("paintcraft.inspect/v1")),
+            let mut value = Value::object([
+                (
+                    "schema",
+                    Value::str(
+                        if paintcraft_editor::session::masked_document_features(&doc).is_empty() {
+                            "paintcraft.inspect/v1"
+                        } else {
+                            "paintcraft.inspect/v2"
+                        },
+                    ),
+                ),
                 ("assessment", assessment(&sha, &header, "editable", &[])),
                 (
                     "document",
@@ -114,6 +125,16 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ),
                 ("input_sha256", Value::str(&sha)),
             ]);
+            let features = paintcraft_editor::session::masked_document_features(&doc);
+            if !features.is_empty() {
+                let Value::Object(fields) = &mut value else {
+                    unreachable!("object")
+                };
+                fields.insert(
+                    "document_features".into(),
+                    Value::Array(features.iter().copied().map(Value::str).collect()),
+                );
+            }
             let text = format!(
                 "{}x{} canvas, {} layer(s), state {}, sha256 {sha}",
                 doc.canvas.0,

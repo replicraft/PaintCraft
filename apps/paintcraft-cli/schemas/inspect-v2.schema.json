@@ -1,0 +1,337 @@
+{
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.inspect/v2"
+    },
+    "document_features": {
+      "oneOf": [
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "source-metadata.v1"
+          ]
+        }
+      ]
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "paintcraft.open-assessment/v1"
+        },
+        "assessment_only": {
+          "const": true
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profile": {
+          "const": "paintcraft.native/binary4-document4-filter-masks1"
+        },
+        "container_version": {
+          "const": 4
+        },
+        "document_schema": {
+          "const": "paintcraft.document/v4"
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "capability_generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        },
+        "mode": {
+          "const": "editable"
+        },
+        "migration_id": {
+          "type": "null"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "assessment_only",
+        "source_sha256",
+        "profile",
+        "container_version",
+        "document_schema",
+        "required_features",
+        "capability_generation",
+        "mode",
+        "migration_id",
+        "reasons"
+      ],
+      "additionalProperties": false
+    },
+    "document": {
+      "type": "object",
+      "properties": {
+        "document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "canvas": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "policy": {
+          "const": "paintcraft.core/default-v1"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "opacity_u8": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "origin": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "default_pixel": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "filters": {
+                "type": "array",
+                "maxItems": 256,
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "descriptor": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "invert-rgb-v1"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "brightness-contrast-v1"
+                            },
+                            "brightness": {
+                              "type": "integer",
+                              "minimum": -100,
+                              "maximum": 100
+                            },
+                            "contrast": {
+                              "type": "integer",
+                              "minimum": -99,
+                              "maximum": 99
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "brightness",
+                            "contrast"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "mask": {
+                      "type": "object",
+                      "properties": {
+                        "schema": {
+                          "const": "a8-bands/v1"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "domain": {
+                          "type": "array",
+                          "minItems": 4,
+                          "maxItems": 4,
+                          "items": {
+                            "type": "integer",
+                            "minimum": -140737488355327,
+                            "maximum": 140737488355327
+                          }
+                        },
+                        "bands": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 262144
+                        },
+                        "runs": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 262144
+                        },
+                        "digest": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "schema",
+                        "enabled",
+                        "domain",
+                        "bands",
+                        "runs",
+                        "digest"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "enabled",
+                    "descriptor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "visible",
+              "opacity_u8",
+              "origin",
+              "width",
+              "height",
+              "default_pixel"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "document_id",
+        "state_id",
+        "canvas",
+        "policy",
+        "layers"
+      ],
+      "additionalProperties": false
+    },
+    "ticket": {
+      "type": "object",
+      "properties": {
+        "state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publication_epoch": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        }
+      },
+      "required": [
+        "state_id",
+        "publication_epoch"
+      ],
+      "additionalProperties": false
+    },
+    "input_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "document_features",
+    "assessment",
+    "document",
+    "ticket",
+    "input_sha256"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paintcraft:schema:inspect-v2"
+}
