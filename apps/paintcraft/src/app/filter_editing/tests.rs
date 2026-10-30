@@ -593,3 +593,6 @@ fn cancelling_an_already_prepared_real_worker_apply_prevents_publication_until_r
 
 #[path = "mask_tests.rs"]
 mod mask_tests;
+
+#[path = "point_filter_tests.rs"]
+mod point_filter_tests;
