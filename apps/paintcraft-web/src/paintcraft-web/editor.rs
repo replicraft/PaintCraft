@@ -373,7 +373,10 @@ impl Editor {
 
     /// Private staging is also used for release; preview never publishes history.
     pub fn display_document(&self) -> Result<Option<Document>> {
-        let operations = match self.tools.preview() {
+        self.display_preview(self.tools.preview())
+    }
+    pub(crate) fn display_preview(&self, preview: Option<Preview>) -> Result<Option<Document>> {
+        let operations = match preview {
             Some(Preview::MoveSelection {
                 layer,
                 offset,

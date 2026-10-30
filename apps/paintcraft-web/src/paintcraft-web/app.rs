@@ -133,13 +133,10 @@ impl WebApp {
             welcome: welcome::State::load(),
             applied_style: None,
             settings_draft: None,
-            text: crate::text_ui::TextUi {
-                style: paintcraft_classic::TextOptions {
-                    family: preferences.default_font.clone(),
-                    ..Default::default()
-                },
+            text: crate::text_ui::TextUi::with_style(paintcraft_classic::TextOptions {
+                family: preferences.default_font.clone(),
                 ..Default::default()
-            },
+            }),
             preferences,
             export_confirm: None,
             export_frozen: None,
@@ -497,7 +494,7 @@ impl WebApp {
             Ok(editor) => {
                 self.editor = editor;
                 self.canvas = Canvas::default();
-                self.text.preedit.clear();
+                self.text.reset_composition();
                 self.name = "Untitled".into();
                 self.update_title();
                 self.message = "New document".into();
@@ -543,7 +540,7 @@ impl WebApp {
     pub(crate) fn install_import_editor(&mut self, editor: Editor, name: String) {
         self.editor = editor;
         self.canvas = Canvas::default();
-        self.text.preedit.clear();
+        self.text.reset_composition();
         self.name = name;
         self.update_title();
         self.message = format!("Opened {}", self.name);
@@ -643,7 +640,7 @@ impl WebApp {
             || self.text.widget_owned_input
             || ctx.egui_wants_keyboard_input()
             || egui::Popup::is_any_open(ctx)
-            || !self.text.preedit.is_empty()
+            || self.text.is_composing()
         {
             return false;
         }

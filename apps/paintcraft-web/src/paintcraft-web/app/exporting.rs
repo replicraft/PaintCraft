@@ -58,9 +58,9 @@ impl WebApp {
                     paintcraft_ui::pcx_export::controls(ui,&mut self.export_pcx_encoding);
                     let editor=&self.editor;
                     let snapshot=self.export_frozen.as_ref().expect("frozen export").document.clone();
-                    let key=format!("{:?}/{:?}/{:?}/{:?}/{}",editor.session.history_ticket(),editor.tools.preview_revision(),editor.tools.pending_text_action(),self.export_pcx_encoding,self.text.preedit);
+                    let key=format!("{:?}/{:?}/{:?}/{:?}/{}",editor.session.history_ticket(),editor.tools.preview_revision(),editor.tools.pending_text_action(),self.export_pcx_encoding,self.text.preedit());
                     let encoding=self.export_pcx_encoding;
-                    let preedit=self.text.preedit.is_empty();
+                    let preedit=!self.text.is_composing();
                     preview_ready=self.pcx_preview.show(ui,key,|| {
                         if !preedit {return Err("text composition pending".into());}
                         let doc=snapshot;

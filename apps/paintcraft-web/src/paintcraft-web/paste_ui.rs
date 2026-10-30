@@ -86,7 +86,7 @@ impl WebApp {
             && !self.editor.tools.is_constructing_shape()
             && !self.editor.tools.is_editing_text()
             && self.editor.tools.floating_selection().is_none()
-            && self.text.preedit.is_empty()
+            && !self.text.is_composing()
     }
     pub(crate) fn paste_requested(&mut self, ctx: &egui::Context) {
         self.paste_requested_kind(ctx, Intent::NewLayer);

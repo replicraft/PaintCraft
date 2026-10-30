@@ -99,7 +99,7 @@ impl WebApp {
             self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
             return;
         }
-        if !self.text.preedit.is_empty() {
+        if self.text.is_composing() {
             self.message = t!(ctx, "Finish text composition before printing.");
             return;
         }

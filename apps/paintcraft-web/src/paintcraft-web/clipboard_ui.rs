@@ -81,7 +81,7 @@ impl WebApp {
             || self.editor.tools.floating_selection().is_some()
             || self.editor.tools.is_constructing_shape()
             || self.editor.tools.is_editing_text()
-            || !self.text.preedit.is_empty()
+            || self.text.is_composing()
             || ctx.egui_wants_keyboard_input()
         {
             self.message = t!(ctx, "Finish the current edit before copying.");
@@ -174,7 +174,7 @@ impl WebApp {
                             && self.editor.tools.floating_selection().is_none()
                             && !self.editor.tools.is_constructing_shape()
                             && !self.editor.tools.is_editing_text()
-                            && self.text.preedit.is_empty();
+                            && !self.text.is_composing();
                         match cut.removal_batch(&self.editor.session, self.editor.target) {
                             Ok(batch) if safe => {
                                 self.message = match self.editor.session.apply(&batch) {

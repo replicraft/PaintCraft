@@ -9,12 +9,11 @@ pub(crate) struct Frozen {
     preview: paintcraft_tools::PreviewRevision,
     frontend: Frontend,
     variant: ClassicVariant,
-    preedit: String,
 }
 impl Frozen {
     pub(crate) fn capture(app: &mut WebApp) -> paintcraft_core::types::Result<Self> {
         app.sync_text();
-        if !app.text.preedit.is_empty() {
+        if app.text.is_composing() {
             return Err(paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::InputSchema,
                 "Finish text composition before downloading",
@@ -34,7 +33,6 @@ impl Frozen {
             preview: app.editor.tools.preview_revision(),
             frontend: app.frontend,
             variant: app.variant,
-            preedit: app.text.preedit.clone(),
         })
     }
     pub(crate) fn current(&self, app: &WebApp) -> bool {
@@ -43,6 +41,6 @@ impl Frozen {
             && self.preview == app.editor.tools.preview_revision()
             && self.frontend == app.frontend
             && self.variant == app.variant
-            && self.preedit == app.text.preedit
+            && !app.text.is_composing()
     }
 }

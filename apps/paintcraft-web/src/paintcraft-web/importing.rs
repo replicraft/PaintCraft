@@ -52,7 +52,7 @@ impl Owner {
             && self.dirty == app.editor.session.is_dirty()
             && !app.editor.tools.gesture_in_progress()
             && !app.editor.tools.is_editing_text()
-            && app.text.preedit.is_empty()
+            && !app.text.is_composing()
     }
 }
 #[derive(Debug)]

@@ -1,6 +1,8 @@
 //! Canvas text uses shared raster masks; the host owns input and draft lifetime.
 use crate::app::WebApp;
-use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
+mod composition;
+pub(crate) use composition::Key as CompositionKey;
+use eframe::egui::{self, Pos2, Rect, Vec2};
 use paintcraft_core::types::text::TextOptions;
 use paintcraft_tools::{Preview, Tool};
 use paintcraft_ui::actions::ImageExport;
@@ -11,7 +13,7 @@ pub(crate) struct TextUi {
     pub(crate) search: String,
     pub(crate) families: Vec<String>,
     pub(crate) font_generation: u64,
-    pub preedit: String,
+    composition: composition::State,
     pub widget_owned_input: bool,
     pub selected_all: bool,
 }
@@ -28,9 +30,18 @@ impl Default for TextUi {
                 .iter()
                 .map(|name| (*name).into())
                 .collect(),
-            preedit: String::new(),
+            composition: Default::default(),
             widget_owned_input: false,
             selected_all: false,
+        }
+    }
+}
+
+impl TextUi {
+    pub(crate) fn with_style(style: TextOptions) -> Self {
+        Self {
+            style,
+            ..Default::default()
         }
     }
 }
@@ -43,7 +54,7 @@ impl WebApp {
     }
     pub(crate) fn finish_text(&mut self) -> bool {
         self.sync_text();
-        if !self.text.preedit.is_empty() {
+        if self.text.is_composing() {
             self.message = "Finish text composition before placing or downloading".into();
             return false;
         }
@@ -74,7 +85,7 @@ impl WebApp {
         }
         self.editor.tools.cancel_gesture();
         self.sync_text();
-        if !self.text.preedit.is_empty() {
+        if self.text.is_composing() {
             self.message = "Finish text composition before downloading".into();
             return;
         }
@@ -144,7 +155,7 @@ impl WebApp {
         }
     }
     pub(crate) fn unsaved(&self) -> bool {
-        self.paste.is_placing() || self.editor.is_dirty() || !self.text.preedit.is_empty()
+        self.paste.is_placing() || self.editor.is_dirty() || self.text.is_composing()
     }
 
     pub(crate) fn text_chrome(&mut self, ui: &mut egui::Ui) {
@@ -175,7 +186,7 @@ impl WebApp {
                     ));
                     if ui
                         .add_enabled(
-                            self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),
+                            self.editor.tools.is_editing_text() && !self.text.is_composing(),
                             egui::Button::new(t!(ui.ctx(), "Place text")),
                         )
                         .clicked()
@@ -190,7 +201,7 @@ impl WebApp {
                         .clicked()
                     {
                         self.editor.tools.cancel_text();
-                        self.text.preedit.clear();
+                        self.text.reset_composition();
                     }
                 });
             });
@@ -199,6 +210,11 @@ impl WebApp {
     }
 
     pub(crate) fn text_event(&mut self, ctx: &egui::Context, event: egui::Event) {
+        self.guard_composition(ctx);
+        if composition::is_disabled(&event) || matches!(event, egui::Event::WindowFocused(false)) {
+            self.composition_event(ctx, &event);
+            return;
+        }
         if self.blocked()
             || self.text.widget_owned_input
             || ctx.egui_wants_keyboard_input()
@@ -207,31 +223,38 @@ impl WebApp {
             return;
         }
         if !self.editor.tools.is_editing_text() {
-            self.text.preedit.clear();
+            self.text.reset_composition();
             self.text.selected_all = false;
             return;
         }
+        if self.composition_event(ctx, &event) {
+            return;
+        }
+        if self.text.is_composing()
+            && let egui::Event::Key {
+                key, pressed: true, ..
+            } = event
+        {
+            if key == egui::Key::Escape {
+                self.text.reset_composition();
+            }
+            ctx.request_repaint();
+            return;
+        }
         match event {
-            egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
-                self.text.preedit = text.chars().take(4096).collect()
-            }
-            egui::Event::Ime(egui::ImeEvent::Commit(text)) => {
-                self.replace_selected_text();
-                self.text.preedit.clear();
-                self.editor.tools.type_text(&text);
-            }
-            egui::Event::Ime(egui::ImeEvent::DeleteSurrounding {
-                before_chars,
-                after_chars: _,
-            }) => {
-                for _ in 0..before_chars.min(4096) {
-                    self.editor.tools.backspace();
-                }
-            }
-            egui::Event::Text(text) | egui::Event::Paste(text) if self.text.preedit.is_empty() => {
-                self.replace_selected_text();
-                if self.editor.tools.type_text(&text) > 0 {
-                    self.message="Some text was omitted: the block allows 4096 characters and printable text".into();
+            egui::Event::Text(text) | egui::Event::Paste(text) if !self.text.is_composing() => {
+                let delete = if self.text.selected_all {
+                    self.editor
+                        .tools
+                        .text_content()
+                        .unwrap_or_default()
+                        .chars()
+                        .count()
+                } else {
+                    0
+                };
+                if let Err(error) = self.replace_text_exact(delete, &text) {
+                    self.message = error.to_string();
                 }
             }
             egui::Event::Key {
@@ -264,7 +287,7 @@ impl WebApp {
                 key: egui::Key::Backspace,
                 pressed: true,
                 ..
-            } if self.text.preedit.is_empty() => {
+            } if !self.text.is_composing() => {
                 if self.text.selected_all {
                     self.replace_selected_text();
                 } else {
@@ -276,11 +299,23 @@ impl WebApp {
                 pressed: true,
                 modifiers,
                 ..
-            } if self.text.preedit.is_empty() => {
+            } if !self.text.is_composing() => {
                 if modifiers.command {
                     self.finish_text();
                 } else {
-                    self.editor.tools.type_text("\n");
+                    let delete = if self.text.selected_all {
+                        self.editor
+                            .tools
+                            .text_content()
+                            .unwrap_or_default()
+                            .chars()
+                            .count()
+                    } else {
+                        0
+                    };
+                    if let Err(error) = self.replace_text_exact(delete, "\n") {
+                        self.message = error.to_string();
+                    }
                 }
             }
             egui::Event::Key {
@@ -288,8 +323,11 @@ impl WebApp {
                 pressed: true,
                 ..
             } => {
-                self.editor.tools.cancel_text();
-                self.text.preedit.clear();
+                if self.text.is_composing() {
+                    self.text.reset_composition();
+                } else {
+                    self.editor.tools.cancel_text();
+                }
             }
             _ => {}
         }
@@ -309,7 +347,7 @@ impl WebApp {
             at,
             text,
             ..
-        }) = self.editor.tools.preview()
+        }) = self.canvas_text_preview().ok().flatten()
         else {
             return;
         };
@@ -338,15 +376,6 @@ impl WebApp {
                 [cursor.left_top(), cursor.left_bottom()],
                 egui::Stroke::new(1.0, ui.visuals().selection.stroke.color),
             );
-            if !self.text.preedit.is_empty() {
-                painter.text(
-                    point,
-                    egui::Align2::LEFT_TOP,
-                    &self.text.preedit,
-                    egui::FontId::proportional(f32::from(style.points) * 96.0 / 72.0 * self.zoom),
-                    Color32::from_rgb(0, 120, 215),
-                );
-            }
             if !ui.ctx().egui_wants_keyboard_input() && !egui::Popup::is_any_open(ui.ctx()) {
                 ui.ctx().output_mut(|out| {
                     out.ime = Some(egui::output::IMEOutput {
@@ -362,7 +391,7 @@ impl WebApp {
                                 cursor.max.y.clamp(rect.top(), rect.bottom()),
                             ),
                         ),
-                        should_interrupt_composition: false,
+                        should_interrupt_composition: self.text.interrupt_composition(),
                     })
                 });
             }

@@ -5,6 +5,15 @@ use paintcraft_editor::session::Ticket;
 use paintcraft_input::PointerButton;
 use paintcraft_tools::{Preview, PreviewRevision, Tool};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct RenderKey {
+    owner: uuid::Uuid,
+    source: Ticket,
+    tool: Option<PreviewRevision>,
+    composition: Option<crate::text_ui::CompositionKey>,
+    fonts: u64,
+}
+
 #[derive(Default)]
 pub(crate) struct Canvas {
     pub(crate) touch: crate::touch_navigation::TouchNavigation,
@@ -14,7 +23,7 @@ pub(crate) struct Canvas {
     pub(crate) bounds: std::cell::RefCell<paintcraft_raster::selection::BoundsCache>,
     fitted: bool,
     pub(crate) pending_center: Option<(f32, f32)>,
-    key: Option<(Ticket, Option<PreviewRevision>)>,
+    key: Option<RenderKey>,
     paste_revision: Option<PreviewRevision>,
     pub rect: Option<Rect>,
     pub viewport: Vec2,
@@ -298,22 +307,29 @@ impl WebApp {
         }
     }
 
+    fn canvas_render_key(&self) -> RenderKey {
+        RenderKey {
+            owner: self.editor.session.owner_id(),
+            source: self.editor.session.ticket(),
+            tool: (!self.editor.tools.gesture_is_selection())
+                .then(|| self.editor.tools.preview_revision()),
+            composition: self.composition_key(),
+            fonts: self.text.font_generation,
+        }
+    }
     fn refresh_texture(&mut self, ctx: &egui::Context) {
+        self.guard_composition(ctx);
         self.editor.validate_floating();
         self.validate_paste_placement(ctx);
         let paste_revision = self.paste_revision();
-        let key = (
-            self.editor.session.ticket(),
-            (!self.editor.tools.gesture_is_selection())
-                .then(|| self.editor.tools.preview_revision()),
-        );
+        let key = self.canvas_render_key();
         if self.canvas.key == Some(key) && self.canvas.paste_revision == paste_revision {
             return;
         }
         let result = (if self.paste.is_placing() {
             self.paste_preview_document()
         } else {
-            self.editor.display_document()
+            self.canvas_preview_document()
         })
         .and_then(|preview| {
             paintcraft_render::render_flat(
@@ -354,11 +370,7 @@ impl WebApp {
                 Some(ctx.load_texture("web-document", image, TextureOptions::NEAREST));
         }
         self.canvas.paste_revision = paste_revision;
-        self.canvas.key = Some((
-            self.editor.session.ticket(),
-            (!self.editor.tools.gesture_is_selection())
-                .then(|| self.editor.tools.preview_revision()),
-        ));
+        self.canvas.key = Some(self.canvas_render_key());
     }
 
     fn canvas_input(&mut self, ui: &egui::Ui, response: &egui::Response) {
@@ -421,6 +433,7 @@ impl WebApp {
         let legacy = self.canvas_events(ui.ctx());
         let events = self.pen_canvas_events(legacy, ui.ctx());
         if !ui.input(|i| i.focused) {
+            self.text.reset_composition();
             self.editor.cancel_floating();
             self.editor.tools.cancel_gesture();
             return;
@@ -428,7 +441,8 @@ impl WebApp {
         self.editor
             .tools
             .constrain_shape(ui.input(|i| i.modifiers.shift));
-        for event in events {
+        let mut events = events.into_iter().peekable();
+        while let Some(event) = events.next() {
             let (event, mouse_sequence) = match event {
                 crate::pen_input::CanvasEvent::Legacy(event) => (event, None),
                 crate::pen_input::CanvasEvent::Mouse { sequence, event } => (event, Some(sequence)),
@@ -439,6 +453,19 @@ impl WebApp {
                     (event, self.pen_sample_sequence(index))
                 }
             };
+            if matches!(
+                event,
+                egui::Event::WindowFocused(false)
+                    | egui::Event::PointerButton { pressed: true, .. }
+            ) {
+                self.text.reset_composition();
+            }
+            if let Some(crate::pen_input::CanvasEvent::Legacy(next)) = events.peek()
+                && self.canvas_text_input_pair(ui.ctx(), &event, next)
+            {
+                events.next();
+                continue;
+            }
             if self.keyboard_event(ui.ctx(), &event) {
                 continue;
             }
@@ -620,11 +647,18 @@ impl WebApp {
                     && !ui.ctx().egui_wants_keyboard_input()
                     && !egui::Popup::is_any_open(ui.ctx()) =>
                 {
-                    self.editor.cancel();
-                    self.text.preedit.clear();
+                    if self.text.is_composing() {
+                        self.text.reset_composition();
+                    } else {
+                        self.editor.cancel();
+                    }
                 }
                 event => self.text_event(ui.ctx(), event),
             }
         }
     }
 }
+
+#[cfg(test)]
+#[path = "canvas/ime_tests.rs"]
+mod ime_tests;

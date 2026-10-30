@@ -75,6 +75,8 @@ impl WebApp {
         if frontend == self.frontend {
             return;
         }
+        let revoke_composition = self.text.is_composing() || self.text.composition_was_revoked();
+        self.text.reset_composition();
         let mut other = if let Some(parked) = self.parked.take() {
             parked
         } else {
@@ -100,13 +102,12 @@ impl WebApp {
                     secondary: WHITE,
                 },
                 workspace: Workspace::default(),
-                text: crate::text_ui::TextUi {
-                    style: paintcraft_core::types::text::TextOptions {
+                text: crate::text_ui::TextUi::with_style(
+                    paintcraft_core::types::text::TextOptions {
                         family: self.preferences.default_font.clone(),
                         ..Default::default()
                     },
-                    ..Default::default()
-                },
+                ),
                 name: "Untitled".into(),
                 zoom: 1.0,
             })
@@ -122,6 +123,9 @@ impl WebApp {
         self.canvas.touch = touch;
         std::mem::swap(&mut self.controls, &mut other.controls);
         std::mem::swap(&mut self.text, &mut other.text);
+        if revoke_composition {
+            self.text.refuse_previous_composition();
+        }
         std::mem::swap(&mut self.workspace, &mut other.workspace);
         std::mem::swap(&mut self.name, &mut other.name);
         std::mem::swap(&mut self.zoom, &mut other.zoom);
@@ -279,3 +283,7 @@ mod touch_tests {
         assert_ne!(h.state().editor.session.ticket(), ticket);
     }
 }
+
+#[cfg(test)]
+#[path = "interfaces/ime_tests.rs"]
+mod ime_tests;

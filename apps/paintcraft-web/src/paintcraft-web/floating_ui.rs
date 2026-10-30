@@ -21,7 +21,7 @@ impl WebApp {
         if self.blocked()
             || self.editor.tools.gesture_in_progress()
             || self.editor.tools.is_editing_text()
-            || !self.text.preedit.is_empty()
+            || self.text.is_composing()
         {
             return true;
         }
