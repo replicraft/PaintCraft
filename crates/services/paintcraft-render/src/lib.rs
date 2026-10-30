@@ -124,23 +124,45 @@ pub(crate) fn compose_row(
     mut row: &mut [u8],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
+    let local_y = y - layer.origin.1;
+    let mut local_x = x - layer.origin.0;
     for span in layer.raster.row_spans(
         (y - layer.origin.1) as u32,
         (x - layer.origin.0) as u32,
         (row.len() / 4) as u32,
     )? {
-        let (dst, rest) = row.split_at_mut(span.pixel_count() * 4);
+        let count = span.pixel_count();
+        let (dst, rest) = row.split_at_mut(count * 4);
         row = rest;
         match span {
             RowSpan::Uniform { color, .. } => {
-                let color = appearance::pixel(layer, color, check)?.with_opacity(layer.opacity);
-                match color.a() {
-                    0 => {}
-                    255 => dst.as_chunks_mut::<4>().0.fill(color.0),
-                    _ => {
-                        for pixel in dst.as_chunks_mut::<4>().0 {
-                            *pixel = color.source_over(Rgba(*pixel)).0;
+                let region = Rect::new(local_x, local_y, count as i64, 1)
+                    .expect("nonempty clipped source span");
+                if let Some(color) = appearance::uniform(layer, region, color, check)? {
+                    let color = color.with_opacity(layer.opacity);
+                    match color.a() {
+                        0 => {}
+                        255 => dst.as_chunks_mut::<4>().0.fill(color.0),
+                        _ => {
+                            for pixel in dst.as_chunks_mut::<4>().0 {
+                                *pixel = color.source_over(Rgba(*pixel)).0;
+                            }
                         }
+                    }
+                } else {
+                    let mut scratch = [[0u8; 4]; 64];
+                    for (index, dst) in dst.chunks_mut(256).enumerate() {
+                        check()?;
+                        let temporary = &mut scratch[..dst.len() / 4];
+                        temporary.fill(color.0);
+                        let temporary = temporary.as_flattened_mut();
+                        appearance::pixels(
+                            layer,
+                            (local_x + (index * 64) as i64, local_y),
+                            temporary,
+                            check,
+                        )?;
+                        kernels::dense(dst, temporary, layer.opacity);
                     }
                 }
             }
@@ -151,16 +173,23 @@ pub(crate) fn compose_row(
                     // Only private bounded scratch is transformed. Source tiles
                     // remain shared and their versions never change for a filter.
                     let mut scratch = [[0u8; 4]; 64];
-                    for (dst, src) in dst.chunks_mut(256).zip(src.chunks(256)) {
+                    for (index, (dst, src)) in dst.chunks_mut(256).zip(src.chunks(256)).enumerate()
+                    {
                         check()?;
                         let temporary = scratch[..src.len() / 4].as_flattened_mut();
                         temporary.copy_from_slice(src);
-                        appearance::pixels(layer, temporary, check)?;
+                        appearance::pixels(
+                            layer,
+                            (local_x + (index * 64) as i64, local_y),
+                            temporary,
+                            check,
+                        )?;
                         kernels::dense(dst, temporary, layer.opacity);
                     }
                 }
             }
         }
+        local_x += count as i64;
     }
     Ok(())
 }

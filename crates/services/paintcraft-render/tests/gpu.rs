@@ -678,3 +678,5 @@ mod single;
 
 #[path = "gpu/filters.rs"]
 mod filters;
+#[path = "gpu/masks.rs"]
+mod masks;

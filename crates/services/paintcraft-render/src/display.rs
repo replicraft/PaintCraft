@@ -131,7 +131,15 @@ pub(crate) fn uniform(
         let Some(pixel) = layer.raster.uniform_region(local, check)? else {
             return Ok(None);
         };
-        let pixel = crate::appearance::pixel(layer, pixel, check)?.with_opacity(layer.opacity);
+        // These point profiles preserve alpha, so hidden RGB cannot contribute
+        // to this composite even when its mask varies over an implicit field.
+        if pixel.a() == 0 {
+            continue;
+        }
+        let Some(pixel) = crate::appearance::uniform(layer, local, pixel, check)? else {
+            return Ok(None);
+        };
+        let pixel = pixel.with_opacity(layer.opacity);
         if pixel.a() == 0 {
             continue;
         }

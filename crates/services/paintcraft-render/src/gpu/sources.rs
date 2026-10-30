@@ -355,7 +355,7 @@ fn gather(layer: &Layer, local: Rect, check: &impl Fn() -> Result<()>) -> Result
     {
         check()?;
         layer.raster.read_span(y, local.x0, row);
-        crate::appearance::pixels(layer, row, check)?;
+        crate::appearance::pixels(layer, (local.x0, y), row, check)?;
     }
     check()?;
     Ok(bytes)
