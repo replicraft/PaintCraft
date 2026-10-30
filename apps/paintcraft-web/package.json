@@ -8,7 +8,7 @@
 		"node": ">=22.23.4"
 	},
 	"scripts": {
-		"build:wasm": "node scripts/build-wasm.mjs && node scripts/build-codec-worker.mjs",
+		"build:wasm": "node scripts/build-wasm.mjs && node scripts/build-codec-worker.mjs && node scripts/build-render-worker.mjs",
 		"build": "pnpm run build:wasm && astro build && node scripts/check-assets.mjs",
 		"dev": "pnpm run build:wasm && astro dev --host 127.0.0.1 --port 8088",
 		"preview": "astro preview --host 127.0.0.1 --port 8088",

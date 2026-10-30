@@ -3793,6 +3793,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-web-render-worker"
+version = "0.1.1"
+dependencies = [
+ "paintcraft-commands",
+ "paintcraft-core",
+ "paintcraft-document",
+ "paintcraft-editor",
+ "paintcraft-formats",
+ "paintcraft-raster",
+ "paintcraft-render",
+ "sha2",
+ "uuid",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "parking"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

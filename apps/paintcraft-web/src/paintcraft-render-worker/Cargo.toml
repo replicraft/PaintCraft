@@ -1,0 +1,29 @@
+[package]
+name = "paintcraft-web-render-worker"
+description = "Persistent private browser filter staging and viewport rendering"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+paintcraft-core.workspace = true
+paintcraft-commands.workspace = true
+paintcraft-document.workspace = true
+paintcraft-raster.workspace = true
+paintcraft-editor.workspace = true
+paintcraft-render.workspace = true
+paintcraft-formats.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen.workspace = true
+uuid = { workspace = true, features = ["js"] }
+
+[lints]
+workspace = true

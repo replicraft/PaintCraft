@@ -8,6 +8,7 @@ members = [
     "crates/presentation/*",
     "apps/*",
     "apps/paintcraft-web/src/paintcraft-codec-worker",
+    "apps/paintcraft-web/src/paintcraft-render-worker",
 ]
 default-members = ["apps/paintcraft"]
 # Third-party codec source has its own manifest and provenance controls.
