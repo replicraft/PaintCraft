@@ -181,9 +181,15 @@ fn hash(instances: &[FilterInstance]) -> [u8; 32] {
         let id = instance.descriptor.id();
         digest.update((id.len() as u16).to_be_bytes());
         digest.update(id.as_bytes());
-        if let Descriptor::BrightnessContrastV1(parameters) = instance.descriptor {
-            digest.update(parameters.brightness().to_be_bytes());
-            digest.update(parameters.contrast().to_be_bytes());
+        match instance.descriptor {
+            Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
+            Descriptor::BrightnessContrastV1(parameters) => {
+                digest.update(parameters.brightness().to_be_bytes());
+                digest.update(parameters.contrast().to_be_bytes());
+            }
+            Descriptor::BlackWhiteRgbV1(p) => digest.update([p.strength()]),
+            Descriptor::ThresholdLumaV1(p) => digest.update([p.level()]),
+            Descriptor::PosterizeRgbV1(p) => digest.update([p.levels()]),
         }
         if masked {
             digest.update([u8::from(instance.mask().is_some())]);
@@ -248,3 +254,6 @@ pub fn inspection(stack: &FilterStack) -> paintcraft_core::types::json::Value {
             .collect(),
     )
 }
+
+#[cfg(test)]
+mod point_tests;
