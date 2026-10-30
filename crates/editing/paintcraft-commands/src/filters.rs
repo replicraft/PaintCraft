@@ -2,6 +2,8 @@
 use super::*;
 use paintcraft_core::types::filters::{BrightnessContrastV1, Descriptor};
 
+mod value;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FilterRef {
     Alias(String),
