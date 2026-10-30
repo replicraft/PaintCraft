@@ -2,6 +2,7 @@
 //! calls `process::exit`.
 
 mod export_metadata;
+mod filter_inspection;
 mod import_source;
 mod persistence;
 mod source_metadata;
@@ -27,6 +28,7 @@ const OPERATIONS_MAX: u64 = 64 << 20;
 const BATCH_SCHEMA: &str = include_str!("../../schemas/batch.schema.json");
 const BATCH_V2_SCHEMA: &str = include_str!("../../schemas/batch-v2.schema.json");
 const BATCH_V3_SCHEMA: &str = include_str!("../../schemas/batch-v3.schema.json");
+const BATCH_V4_SCHEMA: &str = include_str!("../../schemas/batch-v4.schema.json");
 
 pub struct Reply {
     pub stdout: Vec<u8>,

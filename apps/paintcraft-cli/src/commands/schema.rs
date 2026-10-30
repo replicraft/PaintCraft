@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "mcp-inspect-v2", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection"])]
+    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "batch-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection"])]
     schema: String,
 }
 
@@ -24,9 +24,12 @@ pub fn run(a: Options, _json: bool) -> Reply {
                 "batch" => BATCH_SCHEMA,
                 "batch-v2" => BATCH_V2_SCHEMA,
                 "batch-v3" => BATCH_V3_SCHEMA,
+                "batch-v4" => BATCH_V4_SCHEMA,
                 "result-v3" => include_str!("../../schemas/result-v3.schema.json"),
                 "file-command-v3" => include_str!("../../schemas/file-command-v3.schema.json"),
                 "inspect-v2" => include_str!("../../schemas/inspect-v2.schema.json"),
+                "inspect-v3" => include_str!("../../schemas/inspect-v3.schema.json"),
+                "mcp-inspect-v3" => include_str!("../../schemas/mcp-inspect-v3.schema.json"),
                 "mcp-inspect-v2" => include_str!("../../schemas/mcp-inspect-v2.schema.json"),
                 "result-v2" => include_str!("../../schemas/result-v2.schema.json"),
                 "file-command-v2" => include_str!("../../schemas/file-command-v2.schema.json"),

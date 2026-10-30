@@ -91,13 +91,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             let mut value = Value::object([
                 (
                     "schema",
-                    Value::str(
-                        if paintcraft_editor::session::masked_document_features(&doc).is_empty() {
-                            "paintcraft.inspect/v1"
-                        } else {
-                            "paintcraft.inspect/v2"
-                        },
-                    ),
+                    Value::str(super::filter_inspection::cli_schema(&doc)),
                 ),
                 ("assessment", assessment(&sha, &header, "editable", &[])),
                 (

@@ -139,8 +139,11 @@ impl State {
             "layers":layers
         });
         let features = paintcraft_editor::session::masked_document_features(doc);
+        if let Some(schema) = super::super::filter_inspection::mcp_schema(doc, !features.is_empty())
+        {
+            value["schema"] = json!(schema);
+        }
         if !features.is_empty() {
-            value["schema"] = json!("paintcraft.mcp-inspect/v2");
             value["document_features"] = json!(features);
         }
         Ok(value)
@@ -161,16 +164,17 @@ impl State {
     pub fn apply(&mut self, operations: Vec<Json>) -> Result<CallToolResult> {
         let session = self.session()?;
         let ticket = session.ticket();
-        let schema = if operations.iter().any(|value| {
-            value
-                .get("op")
-                .and_then(Json::as_str)
-                .is_some_and(|op| op.starts_with("filter.mask."))
-        }) {
-            "paintcraft.batch/v3"
-        } else {
-            "paintcraft.batch/v2"
-        };
+        let schema = paintcraft_commands::Batch::schema_for_operation_fields(
+            operations.iter().map(|value| {
+                (
+                    value.get("op").and_then(Json::as_str).unwrap_or(""),
+                    value
+                        .get("descriptor")
+                        .and_then(|d| d.get("kind"))
+                        .and_then(Json::as_str),
+                )
+            }),
+        );
         let batch = json!({"schema":schema,"atomic":true,"policy":POLICY,
             "base":{"state_id":ticket.state_id.to_string(),"publication_epoch":ticket.publication_epoch.to_string()},"operations":operations});
         let bytes = serde_json::to_vec(&batch).map_err(|_| invalid("invalid operations"))?;
