@@ -163,6 +163,7 @@ pub fn preflight(
         ));
     }
     check()?;
+    crate::filter_policy::require_unfiltered_layers(doc)?;
     if doc.roots.is_empty() || doc.roots.len() > 64 || doc.layers.len() != doc.roots.len() {
         return Err(unsupported(
             "PDN copy requires a consistent 1..64 raster-layer stack",

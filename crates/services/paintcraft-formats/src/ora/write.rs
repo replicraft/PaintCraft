@@ -19,6 +19,7 @@ pub fn preflight_with_metadata_policy(
     limits: &Limits,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<Vec<String>> {
+    crate::filter_policy::require_unfiltered_layers(doc)?;
     let metadata_omitted = policy.validate(
         doc,
         crate::export::metadata_policy::Target::new(

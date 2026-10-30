@@ -10,6 +10,7 @@ pub mod dds;
 pub mod export;
 pub mod exr;
 pub mod float_import;
+mod filter_policy;
 pub mod heif;
 pub mod icns;
 pub mod icons;

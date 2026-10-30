@@ -98,6 +98,7 @@ pub fn preflight(
         ));
     }
     check()?;
+    crate::filter_policy::require_unfiltered_layers(doc)?;
     let composite_pixels = dimension(doc.canvas.0, doc.canvas.1, version, limits.pixels)?;
     if doc.roots.is_empty() {
         return Err(unsupported(
