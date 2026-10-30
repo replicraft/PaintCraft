@@ -1,0 +1,1981 @@
+{
+  "arithmetic": "straight encoded RGB8; integer rational nearest ties upward; unchanged alpha and transformed hidden RGB",
+  "chromatic_threshold_anchors": [
+    0,
+    1,
+    63,
+    64,
+    127,
+    128,
+    192,
+    254,
+    255
+  ],
+  "context": {
+    "mask_samples": [
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          0
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          0
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          65,
+          121,
+          177,
+          0
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          65,
+          121,
+          177,
+          0
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          113,
+          113,
+          114,
+          0
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          113,
+          113,
+          113,
+          0
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          1
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          1
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          65,
+          121,
+          177,
+          1
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          65,
+          121,
+          177,
+          1
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          113,
+          113,
+          114,
+          1
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          113,
+          113,
+          113,
+          1
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          128
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          128
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          65,
+          121,
+          177,
+          128
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          65,
+          121,
+          177,
+          128
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          113,
+          113,
+          114,
+          128
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          113,
+          113,
+          113,
+          128
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          255
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          255
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          65,
+          121,
+          177,
+          255
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          65,
+          121,
+          177,
+          255
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          113,
+          113,
+          114,
+          255
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          113,
+          113,
+          113,
+          255
+        ],
+        "kind": "black-white-rgb-v1",
+        "parameter": 100,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          0
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          128,
+          240,
+          0
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          65,
+          121,
+          0
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          64,
+          120,
+          0
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          1
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          128,
+          240,
+          1
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          65,
+          121,
+          1
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          64,
+          120,
+          1
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          1,
+          1,
+          1
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          128
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          128,
+          240,
+          128
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          65,
+          121,
+          128
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          64,
+          120,
+          128
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          1,
+          1,
+          128
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          255
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          128,
+          240,
+          255
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          65,
+          121,
+          255
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          64,
+          120,
+          255
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          1,
+          1,
+          255
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          0,
+          0,
+          255
+        ],
+        "kind": "threshold-luma-v1",
+        "parameter": 128,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          0
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          241,
+          0
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          141,
+          248,
+          0
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          141,
+          248,
+          0
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          153,
+          255,
+          0
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          153,
+          255,
+          0
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          1
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          241,
+          1
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          141,
+          248,
+          1
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          141,
+          248,
+          1
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          153,
+          255,
+          1
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          153,
+          255,
+          1
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          128
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          241,
+          128
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          141,
+          248,
+          128
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          141,
+          248,
+          128
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          153,
+          255,
+          128
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          153,
+          255,
+          128
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          255
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          241,
+          255
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          9,
+          141,
+          248,
+          255
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          8,
+          141,
+          248,
+          255
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          0,
+          153,
+          255,
+          255
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          0,
+          153,
+          255,
+          255
+        ],
+        "kind": "posterize-rgb-v1",
+        "parameter": 6,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          0
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          0
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          17,
+          128,
+          128,
+          0
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          17,
+          127,
+          127,
+          0
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          17,
+          126,
+          15,
+          0
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          17,
+          126,
+          14,
+          0
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          0
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          1
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          1
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          17,
+          128,
+          128,
+          1
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          17,
+          127,
+          127,
+          1
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          17,
+          126,
+          15,
+          1
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          17,
+          126,
+          14,
+          1
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          1
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          128
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          128
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          17,
+          128,
+          128,
+          128
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          17,
+          127,
+          127,
+          128
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          17,
+          126,
+          15,
+          128
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          17,
+          126,
+          14,
+          128
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          128
+        ]
+      },
+      {
+        "coverage": 0,
+        "expected": [
+          17,
+          129,
+          241,
+          255
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 1,
+        "expected": [
+          17,
+          129,
+          240,
+          255
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 127,
+        "expected": [
+          17,
+          128,
+          128,
+          255
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 128,
+        "expected": [
+          17,
+          127,
+          127,
+          255
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 254,
+        "expected": [
+          17,
+          126,
+          15,
+          255
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      },
+      {
+        "coverage": 255,
+        "expected": [
+          17,
+          126,
+          14,
+          255
+        ],
+        "kind": "solarize-rgb-v1",
+        "parameter": null,
+        "rgba": [
+          17,
+          129,
+          241,
+          255
+        ]
+      }
+    ],
+    "order": {
+      "black_white100_then_threshold128": [
+        255,
+        255,
+        255,
+        0
+      ],
+      "direct_threshold128": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "rgba": [
+        0,
+        178,
+        4,
+        0
+      ]
+    },
+    "rounded_candidate_before_mask": {
+      "coverage": 128,
+      "expected": [
+        54,
+        101,
+        44,
+        0
+      ],
+      "rgba": [
+        20,
+        115,
+        0,
+        0
+      ],
+      "strength": 100
+    }
+  },
+  "literal_controls": [
+    {
+      "expected": [
+        54,
+        54,
+        54,
+        0
+      ],
+      "kind": "black-white-rgb-v1",
+      "parameter": 100,
+      "rgba": [
+        255,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "expected": [
+        182,
+        182,
+        182,
+        1
+      ],
+      "kind": "black-white-rgb-v1",
+      "parameter": 100,
+      "rgba": [
+        0,
+        255,
+        0,
+        1
+      ]
+    },
+    {
+      "expected": [
+        18,
+        18,
+        18,
+        128
+      ],
+      "kind": "black-white-rgb-v1",
+      "parameter": 100,
+      "rgba": [
+        0,
+        0,
+        255,
+        128
+      ]
+    },
+    {
+      "expected": [
+        155,
+        27,
+        27,
+        255
+      ],
+      "kind": "black-white-rgb-v1",
+      "parameter": 50,
+      "rgba": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "expected": [
+        87,
+        87,
+        87,
+        255
+      ],
+      "kind": "black-white-rgb-v1",
+      "parameter": 100,
+      "rgba": [
+        20,
+        115,
+        0,
+        255
+      ]
+    },
+    {
+      "expected": [
+        13,
+        178,
+        247,
+        0
+      ],
+      "kind": "black-white-rgb-v1",
+      "parameter": 0,
+      "rgba": [
+        13,
+        178,
+        247,
+        0
+      ]
+    },
+    {
+      "expected": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "kind": "threshold-luma-v1",
+      "parameter": 128,
+      "rgba": [
+        0,
+        178,
+        4,
+        0
+      ]
+    },
+    {
+      "expected": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "kind": "threshold-luma-v1",
+      "parameter": 128,
+      "rgba": [
+        128,
+        128,
+        128,
+        1
+      ]
+    },
+    {
+      "expected": [
+        255,
+        255,
+        255,
+        128
+      ],
+      "kind": "threshold-luma-v1",
+      "parameter": 0,
+      "rgba": [
+        0,
+        0,
+        0,
+        128
+      ]
+    },
+    {
+      "expected": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "kind": "threshold-luma-v1",
+      "parameter": 255,
+      "rgba": [
+        255,
+        255,
+        254,
+        255
+      ]
+    },
+    {
+      "expected": [
+        255,
+        255,
+        255,
+        0
+      ],
+      "kind": "threshold-luma-v1",
+      "parameter": 255,
+      "rgba": [
+        255,
+        255,
+        255,
+        0
+      ]
+    },
+    {
+      "expected": [
+        0,
+        255,
+        255,
+        0
+      ],
+      "kind": "posterize-rgb-v1",
+      "parameter": 2,
+      "rgba": [
+        127,
+        128,
+        255,
+        0
+      ]
+    },
+    {
+      "expected": [
+        128,
+        128,
+        128,
+        1
+      ],
+      "kind": "posterize-rgb-v1",
+      "parameter": 3,
+      "rgba": [
+        64,
+        127,
+        191,
+        1
+      ]
+    },
+    {
+      "expected": [
+        127,
+        127,
+        0,
+        128
+      ],
+      "kind": "solarize-rgb-v1",
+      "parameter": null,
+      "rgba": [
+        127,
+        128,
+        255,
+        128
+      ]
+    },
+    {
+      "expected": [
+        0,
+        126,
+        1,
+        0
+      ],
+      "kind": "solarize-rgb-v1",
+      "parameter": null,
+      "rgba": [
+        0,
+        129,
+        254,
+        0
+      ]
+    }
+  ],
+  "rejected_domain_controls": 22,
+  "schema": "paintcraft.proposed-point-oracle/v1",
+  "source_reference": {
+    "commit": "aefc84fe9233e66344147078de866860326d8cfa",
+    "path": "crates/palette-core/src/processing/point.rs",
+    "relationship": "independent exact rational contract, not upstream float byte-parity qualification",
+    "repository": "https://github.com/spiffyfitz/palette"
+  },
+  "status": "Proposed independent numerical fixtures; product implementation not started by this checkpoint",
+  "streams": {
+    "black_white_cross_channels": {
+      "bytes": 103424,
+      "order": "strength=0..100; R then G then B in0,127,128,255; alpha=0,1,128,255",
+      "record": "four output RGBA bytes",
+      "records": 25856,
+      "sha256": "fdcaaf4031c330f8890484ef517f10421b4a978caa9c522f695f062e84709c80"
+    },
+    "black_white_gray_identity": {
+      "bytes": 413696,
+      "order": "strength=0..100; gray=0..255; alpha=0,1,128,255",
+      "record": "four output RGBA bytes",
+      "records": 103424,
+      "sha256": "707083cb65c82621933b7c04dfdc7b28b157a165e9a47fad129e90c55e744eb9"
+    },
+    "posterize_all_parameters_channels": {
+      "bytes": 7936,
+      "order": "levels=2..32 outer; input c=0..255 inner",
+      "record": "one output byte",
+      "records": 7936,
+      "sha256": "dee12a868ca74d4838dc85deec4926b83dd94a5b9d4a71a13571dbb4c403d91f"
+    },
+    "solarize_all_channels": {
+      "bytes": 256,
+      "order": "input c=0..255",
+      "record": "one output byte",
+      "records": 256,
+      "sha256": "2f7af69590f99dcbab9b327373195e762d07492a4c4d304f536fd8d82afc3819"
+    },
+    "threshold_all_gray_boundaries": {
+      "bytes": 1048576,
+      "order": "level=0..255; gray=0..255; alpha=0,1,128,255",
+      "record": "four output RGBA bytes",
+      "records": 262144,
+      "sha256": "3e155c7964f04c7198b988f7849fca83d11d279ec0911b7ce240b44c6239a2e3"
+    },
+    "threshold_chromatic_brackets": {
+      "bytes": 229690,
+      "order": "level=0..255; R then G in listed anchors; sorted distinct B={0,255,crossing-1,crossing,crossing+1} clipped0..255",
+      "record": "level,R,G,B,one output gray byte",
+      "records": 45938,
+      "sha256": "f4067bbd5f73b0f0a94490dbd62740ad0a01de9fef93788aa8d2947413b53c9a"
+    }
+  }
+}
