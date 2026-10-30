@@ -1,0 +1,162 @@
+{
+  "schema": "paintcraft.browser-point-ui-fixture/v1",
+  "generator": "Independent UI-only PCND3 red/green specimen and exact Fraction planes.\n\nPython stdlib only. No PaintCraft codec/evaluator imports. Run --write to author,\nthen run without arguments to verify every specimen and manifest byte.\n",
+  "document": "33333333-3333-4333-8333-333333333333",
+  "state": "11111111-1111-4111-8111-111111111111",
+  "layer": "22222222-2222-4222-8222-222222222222",
+  "width": 2,
+  "height": 1,
+  "cases": [
+    {
+      "kind": "bw",
+      "default_parameter": 100,
+      "changed_parameter": 50,
+      "default_rgba": [
+        54,
+        54,
+        54,
+        255,
+        143,
+        143,
+        143,
+        255
+      ],
+      "changed_rgba": [
+        155,
+        27,
+        27,
+        255,
+        72,
+        172,
+        72,
+        255
+      ]
+    },
+    {
+      "kind": "threshold",
+      "default_parameter": 128,
+      "changed_parameter": 200,
+      "default_rgba": [
+        0,
+        0,
+        0,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "changed_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "posterize",
+      "default_parameter": 6,
+      "changed_parameter": 2,
+      "default_rgba": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        204,
+        0,
+        255
+      ],
+      "changed_rgba": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        255,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "solarize",
+      "default_parameter": null,
+      "changed_parameter": null,
+      "default_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        55,
+        0,
+        255
+      ],
+      "changed_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        55,
+        0,
+        255
+      ]
+    }
+  ],
+  "fixtures": [
+    {
+      "file": "red-green.pcnd",
+      "accepted": true,
+      "bytes": 145,
+      "sha256": "6bd9e4e248af12f8a10e93d4f942cdb5edcc6c7f66ac822473a3da921981fabf",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        200,
+        0,
+        255
+      ],
+      "evaluated_rgba": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        200,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        200,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 0
+          },
+          "coverage": null
+        }
+      ]
+    }
+  ]
+}

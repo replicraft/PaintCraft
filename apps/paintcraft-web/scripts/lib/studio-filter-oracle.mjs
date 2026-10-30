@@ -228,7 +228,7 @@ export function project(bytes) {
 			for (let j = 0; j < n; j++) {
 				const f = { id: id(), enabled: take(1)[0], kind: take(1)[0] };
 				assert.ok(f.enabled <= 1);
-				assert.ok([1, 2].includes(f.kind));
+				assert.ok([1, 2, 3, 4, 5, 6].includes(f.kind));
 				if (f.kind === 2) {
 					f.brightness = signed();
 					f.contrast = signed();
@@ -236,6 +236,15 @@ export function project(bytes) {
 						Math.abs(f.brightness) <= 100 &&
 							Math.abs(f.contrast) <= 99,
 					);
+				}
+				if (f.kind === 3) {
+					f.strength = take(1)[0];
+					assert.ok(f.strength <= 100);
+				}
+				if (f.kind === 4) f.level = take(1)[0];
+				if (f.kind === 5) {
+					f.levels = take(1)[0];
+					assert.ok(f.levels >= 2 && f.levels <= 32);
 				}
 				if (version === 4) f.mask = mask();
 				layer.filters.push(f);
@@ -268,7 +277,7 @@ export function project(bytes) {
 	return doc;
 }
 export function maskCoverage(mask, x, y) {
-	if (!mask || !mask.enabled) return 255;
+	if (!mask?.enabled) return 255;
 	const [left, top, right, bottom] = mask.domain;
 	if (x < left || y < top || x >= right || y >= bottom) return 0;
 	const band = mask.bands.find((b) => y >= b.y0 && y < b.y1);
@@ -292,6 +301,53 @@ function adjust(value, b, c) {
 	if (n >= 255n * d) return 255;
 	return Number((n * 2n + d) / (d * 2n));
 }
+// Exact nonnegative rational rounding, with half ties upward.
+function rounded(n, d) {
+	assert.ok(n >= 0n && d > 0n);
+	return Number((2n * n + d) / (2n * d));
+}
+function parameter(value, low, high) {
+	assert.ok(Number.isInteger(value) && value >= low && value <= high);
+	return BigInt(value);
+}
+function candidate(filter, rgb) {
+	const luma = () =>
+		2126n * BigInt(rgb[0]) + 7152n * BigInt(rgb[1]) + 722n * BigInt(rgb[2]);
+	switch (filter.kind) {
+		case 1:
+			return rgb.map((v) => 255 - v);
+		case 2:
+			parameter(filter.brightness, -100, 100);
+			parameter(filter.contrast, -99, 99);
+			return rgb.map((v) =>
+				adjust(v, filter.brightness, filter.contrast),
+			);
+		case 3: {
+			const strength = parameter(filter.strength, 0, 100),
+				y = luma();
+			return rgb.map((v) =>
+				rounded(
+					(100n - strength) * 10000n * BigInt(v) + strength * y,
+					1000000n,
+				),
+			);
+		}
+		case 4:
+			return Array(3).fill(
+				luma() >= 10000n * parameter(filter.level, 0, 255) ? 255 : 0,
+			);
+		case 5: {
+			const k = parameter(filter.levels, 2, 32) - 1n;
+			return rgb.map((v) =>
+				rounded(255n * BigInt(rounded(BigInt(v) * k, 255n)), k),
+			);
+		}
+		case 6:
+			return rgb.map((v) => (v >= 128 ? 255 - v : v));
+		default:
+			throw Error('Unknown point-filter algorithm/version');
+	}
+}
 export function evaluated(doc) {
 	assert.equal(doc.layers.length, 1);
 	const layer = doc.layers[0];
@@ -308,16 +364,11 @@ export function evaluated(doc) {
 				(p / 4) % layer.width,
 				Math.floor(p / 4 / layer.width),
 			);
+			const incomingRgb = [...pixels.subarray(p, p + 3)],
+				candidateRgb = candidate(filter, incomingRgb);
 			for (let c = 0; c < 3; c++) {
-				const incoming = pixels[p + c];
-				const candidate =
-					filter.kind === 1
-						? 255 - pixels[p + c]
-						: adjust(
-								pixels[p + c],
-								filter.brightness,
-								filter.contrast,
-							);
+				const incoming = incomingRgb[c],
+					candidate = candidateRgb[c];
 				pixels[p + c] = Math.floor(
 					((255 - coverage) * incoming + coverage * candidate + 127) /
 						255,
