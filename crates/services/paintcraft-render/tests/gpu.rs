@@ -37,6 +37,7 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
             origin: (0, 0),
             visible: true,
             opacity: 137,
+            filters: Default::default(),
             raster,
         },
     );
@@ -83,6 +84,7 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
                 origin,
                 visible,
                 opacity,
+                filters: Default::default(),
                 raster,
             },
         );
@@ -233,6 +235,7 @@ fn resident_sources_skip_unchanged_uploads_and_patch_clipped_row_strips() {
             origin: (-3, 5),
             visible: true,
             opacity: 173,
+            filters: Default::default(),
             raster: RasterLayer::new(270, 140, Rgba([31, 63, 127, 0])),
         },
     );
@@ -305,6 +308,7 @@ fn source_cache_limits_stream_oversized_layers_and_evict_without_pixel_changes()
             origin: (0, 0),
             visible: true,
             opacity: 123,
+            filters: Default::default(),
             raster: RasterLayer::new(64, 64, Rgba([17, 88, 156, 128])),
         },
     );

@@ -23,6 +23,7 @@ fn source() -> Document {
         origin: (1, 1),
         visible: true,
         opacity: 127,
+        filters: Default::default(),
         raster: RasterLayer::new(2, 2, hidden),
     };
     let b = Layer {
@@ -31,6 +32,7 @@ fn source() -> Document {
         origin: (-1, 0),
         visible: false,
         opacity: 1,
+        filters: Default::default(),
         raster: RasterLayer::from_rgba(3, 2, Rgba([0; 4]), &pixels, &mut Admission::new(65536))
             .unwrap(),
     };

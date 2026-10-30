@@ -65,6 +65,7 @@ fn selected_target_only_clears_and_overwrites_once_with_exact_history_and_off_ca
                     origin: (3, 1),
                     visible: false,
                     opacity: 123,
+                    filters: Default::default(),
                     raster,
                 },
             );
@@ -261,6 +262,7 @@ fn selected_region_outside_offset_layer_rebases_without_turning_new_padding_into
             origin: (3, 1),
             visible: true,
             opacity: 255,
+            filters: Default::default(),
             raster,
         },
     );

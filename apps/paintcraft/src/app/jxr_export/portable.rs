@@ -95,6 +95,7 @@ pub(super) fn guard_document() -> paintcraft_document::Document {
             origin: (0, 0),
             visible: false,
             opacity: 255,
+            filters: Default::default(),
             raster: paintcraft_raster::RasterLayer::new(4, 3, Rgba([19, 71, 201, 0])),
         },
     );

@@ -16,6 +16,8 @@ pub use paintcraft_core::types::policy::COORD_ABS_MAX;
 pub use paintcraft_core::types::policy::LAYER_COUNT_MAX;
 pub use paintcraft_core::types::policy::POLICY;
 mod conversion_identity;
+pub mod filters;
+pub use filters::{FilterInstance, FilterStack};
 pub mod source_metadata;
 pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
 pub use source_metadata::SourceMetadata;
@@ -29,6 +31,8 @@ pub struct Layer {
     pub visible: bool,
     pub opacity: u8,
     pub raster: RasterLayer,
+    /// Ordered non-destructive intentions, independent of the raw source.
+    pub filters: FilterStack,
 }
 
 impl Layer {
@@ -159,6 +163,7 @@ pub fn new_document(
                 origin: (0, 0),
                 visible: true,
                 opacity: 255,
+                filters: Default::default(),
                 raster: RasterLayer::new(width, height, color),
             },
         );
@@ -240,6 +245,7 @@ fn imported_document(
         origin: (0, 0),
         visible: true,
         opacity: 255,
+        filters: Default::default(),
         raster,
     };
     Document {

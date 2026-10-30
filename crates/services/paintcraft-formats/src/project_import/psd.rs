@@ -56,6 +56,7 @@ pub fn decode_psd(
                 origin: (i64::from(info.origin.0), i64::from(info.origin.1)),
                 visible: info.visible,
                 opacity: info.opacity,
+                filters: Default::default(),
                 raster,
             },
         );

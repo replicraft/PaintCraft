@@ -38,6 +38,7 @@ fn layered() -> paintcraft_document::Document {
                 origin,
                 visible,
                 opacity,
+                filters: Default::default(),
                 raster: r,
             },
         );

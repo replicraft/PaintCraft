@@ -163,6 +163,7 @@ fn partial_multiple_and_noncontributing_layers_use_exact_eligibility() {
             origin: (0, 0),
             visible: true,
             opacity: 137,
+            filters: Default::default(),
             raster: RasterLayer::new(19, 13, Rgba([199, 87, 31, 193])),
         },
     );

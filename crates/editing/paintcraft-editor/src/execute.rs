@@ -395,6 +395,7 @@ impl Stage<'_> {
                     origin: *origin,
                     visible: true,
                     opacity: 255,
+                    filters: Default::default(),
                     raster: RasterLayer::new(*width, *height, *default),
                 };
                 self.doc.layers.insert(id, layer);

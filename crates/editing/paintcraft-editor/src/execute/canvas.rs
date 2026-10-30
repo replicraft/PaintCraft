@@ -51,6 +51,7 @@ impl Stage<'_> {
                     origin: (0, 0),
                     visible: true,
                     opacity: 255,
+                    filters: Default::default(),
                     raster: RasterLayer::new(width, height, color),
                 },
             );

@@ -94,6 +94,7 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
             origin: (100, 100),
             visible: true,
             opacity: 128,
+            filters: Default::default(),
             raster: RasterLayer::new(160, 160, Rgba([255, 0, 0, 128])),
         },
     );
@@ -107,6 +108,7 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
             origin: (100, 100),
             visible: false,
             opacity: 0,
+            filters: Default::default(),
             raster: RasterLayer::new(160, 160, Rgba([17, 33, 55, 0])),
         },
     );

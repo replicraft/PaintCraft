@@ -85,6 +85,7 @@ fn convert(
                 origin: (i64::from(layer.origin.0), i64::from(layer.origin.1)),
                 visible: layer.visible,
                 opacity: layer.opacity,
+                filters: Default::default(),
                 raster,
             },
         );

@@ -343,6 +343,7 @@ fn paint_staged_copy_retains_individual_geometry_and_source_identity_with_explic
             origin: (-3, 4),
             visible: true,
             opacity: 255,
+            filters: Default::default(),
             raster: paintcraft_raster::RasterLayer::new(1, 2, Rgba([40, 50, 60, 1])),
         },
     );

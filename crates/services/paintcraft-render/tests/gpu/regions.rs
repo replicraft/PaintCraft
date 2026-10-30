@@ -29,6 +29,7 @@ fn regional_gpu_output_rebases_offsets_and_preserves_source_scope() {
                 origin,
                 visible: true,
                 opacity: 137,
+                filters: Default::default(),
                 raster,
             },
         );

@@ -59,6 +59,7 @@ fn all_orientations_keep_full_layer_extents_metadata_hidden_rgb_and_recorded_his
                 origin: (-2, 3),
                 visible: false,
                 opacity: 123,
+                filters: Default::default(),
                 raster,
             },
         );

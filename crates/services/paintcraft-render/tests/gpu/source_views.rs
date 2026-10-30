@@ -29,6 +29,7 @@ fn fixture() -> Document {
                 origin: (0, 0),
                 visible: true,
                 opacity: 173,
+                filters: Default::default(),
                 raster: RasterLayer::from_rgba(
                     512,
                     256,

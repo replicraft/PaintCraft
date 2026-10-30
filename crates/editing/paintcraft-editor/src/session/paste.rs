@@ -99,6 +99,7 @@ impl Session {
                 origin: draft.origin,
                 visible: true,
                 opacity: 255,
+                filters: Default::default(),
                 raster,
             },
         );

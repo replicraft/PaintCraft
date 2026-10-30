@@ -37,6 +37,7 @@ struct SavedLayer {
     origin: (i64, i64),
     visible: bool,
     opacity: u8,
+    filters: paintcraft_document::FilterStack,
     width: u32,
     height: u32,
     default: Rgba,
@@ -148,6 +149,7 @@ impl Packed {
                 .map(|l| {
                     size_of::<SavedLayer>()
                         + l.name.len()
+                        + l.filters.storage_bytes()
                         + l.raster.resident_tiles() * size_of::<(TileCoord, Arc<Blob>)>()
                 })
                 .sum::<usize>();
@@ -196,6 +198,7 @@ impl Packed {
                 origin: layer.origin,
                 visible: layer.visible,
                 opacity: layer.opacity,
+                filters: layer.filters.clone(),
                 width: layer.raster.width(),
                 height: layer.raster.height(),
                 default: layer.raster.default_pixel(),
@@ -252,6 +255,7 @@ impl Packed {
                     origin: layer.origin,
                     visible: layer.visible,
                     opacity: layer.opacity,
+                    filters: layer.filters.clone(),
                     raster,
                 },
             );
@@ -291,7 +295,9 @@ impl Packed {
                 .layers
                 .iter()
                 .map(|l| {
-                    l.name.capacity() + l.tiles.capacity() * size_of::<(TileCoord, Arc<Blob>)>()
+                    l.name.capacity()
+                        + l.filters.storage_bytes()
+                        + l.tiles.capacity() * size_of::<(TileCoord, Arc<Blob>)>()
                 })
                 .sum::<usize>()
     }
@@ -311,7 +317,7 @@ pub(crate) fn document_metadata(doc: &Document) -> usize {
         + doc
             .layers
             .values()
-            .map(|l| l.name.capacity() + l.raster.metadata_weight())
+            .map(|l| l.name.capacity() + l.filters.storage_bytes() + l.raster.metadata_weight())
             .sum::<usize>()
 }
 

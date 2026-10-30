@@ -40,6 +40,7 @@ fn specimen(profile_bytes: usize, color: Option<Rgba>) -> (Document, SharedBudge
             origin: (0, 0),
             visible: true,
             opacity: 255,
+            filters: Default::default(),
             raster,
         },
     );

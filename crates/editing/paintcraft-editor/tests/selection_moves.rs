@@ -58,6 +58,7 @@ fn setup() -> (Session, Uuid) {
             visible: false,
             opacity: 73,
             origin: (2, 1),
+            filters: Default::default(),
             raster,
         },
     );

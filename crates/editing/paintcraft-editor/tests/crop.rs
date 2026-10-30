@@ -262,6 +262,7 @@ fn crop_matches_independent_world_space_samples_for_kept_partial_hidden_and_offc
                 origin,
                 visible: index % 2 == 0,
                 opacity: 100 + index as u8,
+                filters: Default::default(),
                 raster,
             },
         );

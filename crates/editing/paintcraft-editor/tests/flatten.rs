@@ -40,6 +40,7 @@ fn fixture() -> Session {
                 origin,
                 visible,
                 opacity,
+                filters: Default::default(),
                 raster,
             },
         );

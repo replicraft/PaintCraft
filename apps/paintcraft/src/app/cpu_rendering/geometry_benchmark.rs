@@ -203,6 +203,7 @@ pub(crate) fn fixture_for_base(base: &str) -> Editor {
                 origin: (0, 0),
                 visible: true,
                 opacity: 173,
+                filters: Default::default(),
                 raster,
             },
         );

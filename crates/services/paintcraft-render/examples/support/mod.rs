@@ -93,6 +93,7 @@ pub fn fixture(case: &str) -> Document {
             } else {
                 255
             },
+            filters: Default::default(),
             raster,
         };
         doc.roots.push(id);
