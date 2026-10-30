@@ -44,6 +44,13 @@ impl WebApp {
                                     id: f.id(),
                                     enabled: f.enabled(),
                                     descriptor: f.descriptor(),
+                                    mask: f.mask().map(|m| {
+                                        let stats = m.coverage().stats();
+                                        paintcraft_studio::filters::MaskSummary {
+                                            enabled: m.enabled(),
+                                            runs: stats.runs,
+                                        }
+                                    }),
                                 })
                                 .collect()
                         })
@@ -52,6 +59,10 @@ impl WebApp {
                         ui,
                         &filters,
                         editor.target.is_some() && filters.len() < 256,
+                        !matches!(
+                            editor.session.selection(),
+                            paintcraft_editor::execute::Selection::Inactive
+                        ),
                     )
                 } else {
                     Vec::new()

@@ -5,7 +5,28 @@ impl WebApp {
             return;
         };
         let before = state.draft.parameters;
-        let response = filters::parameter_dialog(ctx, &mut state.draft.parameters);
+        let mask = if let paintcraft_commands::FilterOp::Update {
+            filter: paintcraft_commands::FilterRef::Id(id),
+            ..
+        } = &state.draft.base.operation
+        {
+            state
+                .draft
+                .source
+                .layer(&state.draft.layer)
+                .and_then(|l| l.filters.iter().find(|f| f.id() == *id))
+                .and_then(|f| f.mask())
+                .map(|m| {
+                    let stats = m.coverage().stats();
+                    filters::MaskSummary {
+                        enabled: m.enabled(),
+                        runs: stats.runs,
+                    }
+                })
+        } else {
+            None
+        };
+        let response = filters::parameter_dialog(ctx, &mut state.draft.parameters, mask);
         if before != state.draft.parameters {
             match state.draft.change() {
                 Ok(()) => {

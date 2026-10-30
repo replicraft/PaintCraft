@@ -141,6 +141,21 @@ pub(super) fn operation(app: &WebApp, intent: Intent<Uuid>) -> Option<FilterOp> 
             alias: "studio_filter".into(),
             to_index: None,
         },
+        Intent::UseSelection(id) => FilterOp::Mask {
+            layer,
+            filter: reference(id)?,
+            operation: paintcraft_commands::MaskOp::FromSelection { enabled: true },
+        },
+        Intent::SetMaskEnabled { id, enabled } => FilterOp::Mask {
+            layer,
+            filter: reference(id)?,
+            operation: paintcraft_commands::MaskOp::SetEnabled { enabled },
+        },
+        Intent::RemoveMask(id) => FilterOp::Mask {
+            layer,
+            filter: reference(id)?,
+            operation: paintcraft_commands::MaskOp::Remove,
+        },
         Intent::Remove(id) => FilterOp::Remove {
             layer,
             filter: reference(id)?,

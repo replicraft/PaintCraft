@@ -17,6 +17,8 @@ use state::{Draft, Revision};
 #[cfg(test)]
 mod late_base_tests;
 #[cfg(test)]
+mod mask_tests;
+#[cfg(test)]
 mod tests;
 
 #[derive(Default)]
@@ -439,7 +441,8 @@ fn target(operation: &paintcraft_commands::FilterOp) -> Result<Uuid> {
     | FilterOp::SetEnabled { layer, .. }
     | FilterOp::Reorder { layer, .. }
     | FilterOp::Remove { layer, .. }
-    | FilterOp::Duplicate { layer, .. }) = operation;
+    | FilterOp::Duplicate { layer, .. }
+    | FilterOp::Mask { layer, .. }) = operation;
     match layer {
         LayerRef::Id(id) => Ok(*id),
         _ => Err(Error::new(
