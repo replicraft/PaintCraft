@@ -3730,6 +3730,7 @@ name = "paintcraft-tools"
 version = "0.1.1"
 dependencies = [
  "cosmic-text",
+ "paintcraft-commands",
  "paintcraft-core",
  "paintcraft-document",
  "paintcraft-input",

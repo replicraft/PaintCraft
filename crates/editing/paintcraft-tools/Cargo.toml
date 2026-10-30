@@ -13,6 +13,7 @@ text = ["dep:cosmic-text"]
 
 [dependencies]
 paintcraft-core.workspace = true
+paintcraft-commands.workspace = true
 paintcraft-document.workspace = true
 paintcraft-input.workspace = true
 paintcraft-raster.workspace = true

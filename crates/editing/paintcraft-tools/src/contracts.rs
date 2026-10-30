@@ -210,6 +210,8 @@ pub struct ColorPick {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    /// Captured Studio revision; receiving hosts revalidate at execution.
+    Filter(crate::FilterEdit),
     ToolFailure(&'static str),
     SampledStroke(crate::sampled_brush::SampledStroke),
     PenStroke(crate::pen_stroke::PenStroke),
@@ -322,6 +324,8 @@ pub enum Action {
 /// What the UI should draw for an unpublished gesture.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
+    /// Private candidate only; never publishes an edit or history record.
+    Filter(crate::FilterEdit),
     SampledStroke(crate::sampled_brush::SampledStroke),
     PenStroke(crate::pen_stroke::PenStroke),
     ResourceShape(crate::resource_shape::Placement),

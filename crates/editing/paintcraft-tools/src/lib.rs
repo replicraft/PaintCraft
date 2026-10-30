@@ -11,6 +11,7 @@ mod sampled_gesture;
 pub use floating::{FloatingOptions, FloatingSelection};
 pub mod navigation;
 pub use contracts::*;
+mod filter_edit;
 mod framework_force;
 mod geometry;
 mod path_admission;
@@ -18,6 +19,7 @@ mod pen_gesture;
 pub mod pen_stroke;
 mod picker;
 mod preview_revision;
+pub use filter_edit::FilterEdit;
 mod selection;
 #[cfg(feature = "text")]
 pub mod text;
