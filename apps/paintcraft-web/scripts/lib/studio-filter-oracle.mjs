@@ -80,7 +80,7 @@ function block(kind, input, length) {
 export function project(bytes) {
 	assert.ok(bytes.length >= 43 && bytes.length <= 16 * 1024 * 1024);
 	const version = bytes[4];
-	assert.ok([1, 2, 3].includes(version));
+	assert.ok([1, 2, 3, 4].includes(version));
 	assert.equal(bytes.subarray(0, 4).toString(), 'PCND');
 	assert.equal(bytes.subarray(5, 8).toString('hex'), '0d0a1a');
 	assert.equal(
@@ -133,7 +133,7 @@ export function project(bytes) {
 	const title = take(1)[0];
 	assert.ok(title <= 1);
 	if (title) doc.title = string();
-	const presence = version === 3 ? take(1)[0] : Number(version === 2);
+	const presence = version >= 3 ? take(1)[0] : Number(version === 2);
 	assert.ok(presence <= 1);
 	const metadata = presence === 1;
 	if (metadata) {
@@ -147,6 +147,59 @@ export function project(bytes) {
 			profileSha: sha(profile),
 		};
 	}
+	let maskCount = 0,
+		bandCount = 0,
+		runCount = 0;
+	const mask = () => {
+		const present = take(1)[0];
+		assert.ok(present <= 1);
+		if (!present) return null;
+		maskCount++;
+		const enabled = take(1)[0];
+		assert.ok(enabled <= 1);
+		assert.equal(take(1)[0], 1);
+		const domain = [signed(), signed(), signed(), signed()];
+		const [left, top, right, bottom] = domain;
+		assert.ok(left < right && top < bottom);
+		assert.ok(domain.every((v) => Math.abs(v) <= 140_737_488_355_327));
+		const n = integer(),
+			bands = [];
+		bandCount += n;
+		assert.ok(bandCount <= 262144);
+		let lastY = top;
+		for (let i = 0; i < n; i++) {
+			const y0 = top + integer(),
+				y1 = y0 + integer(),
+				count = integer(),
+				runs = [];
+			assert.ok(y0 >= lastY && y0 < y1 && y1 <= bottom);
+			assert.ok(count > 0);
+			runCount += count;
+			assert.ok(runCount <= 262144);
+			let lastX = left,
+				lastCoverage = 0;
+			for (let j = 0; j < count; j++) {
+				const x0 = left + integer(),
+					x1 = x0 + integer(),
+					coverage = take(1)[0];
+				assert.ok(x0 >= lastX && x0 < x1 && x1 <= right);
+				assert.ok(coverage > 0);
+				assert.ok(x0 !== lastX || coverage !== lastCoverage);
+				runs.push({ x0, x1, coverage });
+				lastX = x1;
+				lastCoverage = coverage;
+			}
+			const previous = bands.at(-1);
+			assert.ok(
+				!previous ||
+					previous.y1 !== y0 ||
+					JSON.stringify(previous.runs) !== JSON.stringify(runs),
+			);
+			bands.push({ y0, y1, runs });
+			lastY = y1;
+		}
+		return { enabled, domain, bands };
+	};
 	const count = integer();
 	assert.ok(count <= 8);
 	for (let i = 0; i < count; i++) {
@@ -169,7 +222,7 @@ export function project(bytes) {
 		);
 		const pixels = Buffer.alloc(layer.width * layer.height * 4);
 		for (let q = 0; q < pixels.length; q += 4) pixels.set(layer.default, q);
-		if (version === 3) {
+		if (version >= 3) {
 			const n = integer();
 			assert.ok(n <= 256);
 			for (let j = 0; j < n; j++) {
@@ -184,6 +237,7 @@ export function project(bytes) {
 							Math.abs(f.contrast) <= 99,
 					);
 				}
+				if (version === 4) f.mask = mask();
 				layer.filters.push(f);
 			}
 		}
@@ -210,7 +264,15 @@ export function project(bytes) {
 		doc.layers.push(layer);
 	}
 	assert.equal(p, end);
+	assert.ok(version !== 4 || maskCount > 0);
 	return doc;
+}
+export function maskCoverage(mask, x, y) {
+	if (!mask || !mask.enabled) return 255;
+	const [left, top, right, bottom] = mask.domain;
+	if (x < left || y < top || x >= right || y >= bottom) return 0;
+	const band = mask.bands.find((b) => y >= b.y0 && y < b.y1);
+	return band?.runs.find((r) => x >= r.x0 && x < r.x1)?.coverage ?? 0;
 }
 function add([an, ad], [bn, bd]) {
 	return [an * bd + bn * ad, ad * bd];
@@ -240,9 +302,15 @@ export function evaluated(doc) {
 	const pixels = Buffer.from(layer.rgba, 'hex');
 	for (const filter of layer.filters) {
 		if (!filter.enabled) continue;
-		for (let p = 0; p < pixels.length; p += 4)
-			for (let c = 0; c < 3; c++)
-				pixels[p + c] =
+		for (let p = 0; p < pixels.length; p += 4) {
+			const coverage = maskCoverage(
+				filter.mask,
+				(p / 4) % layer.width,
+				Math.floor(p / 4 / layer.width),
+			);
+			for (let c = 0; c < 3; c++) {
+				const incoming = pixels[p + c];
+				const candidate =
 					filter.kind === 1
 						? 255 - pixels[p + c]
 						: adjust(
@@ -250,6 +318,12 @@ export function evaluated(doc) {
 								filter.brightness,
 								filter.contrast,
 							);
+				pixels[p + c] = Math.floor(
+					((255 - coverage) * incoming + coverage * candidate + 127) /
+						255,
+				);
+			}
+		}
 	}
 	return pixels;
 }
@@ -264,12 +338,18 @@ export function rawSemantics(doc) {
 	};
 }
 
-// Independent screenshot projection for the tiny white/black canvas marker.
+// Independent screenshot projection for the tiny two-color canvas marker.
 export async function canvasMarker(bytes, colors = [255, 0]) {
+	colors = colors.map((v) => (typeof v === 'number' ? [v, v, v] : v));
 	assert.ok(
 		colors.length === 2 &&
-			colors.every((v) => Number.isInteger(v) && v >= 0 && v <= 255) &&
-			colors[0] !== colors[1],
+			colors.every(
+				(v) =>
+					Array.isArray(v) &&
+					v.length === 3 &&
+					v.every((c) => Number.isInteger(c) && c >= 0 && c <= 255),
+			) &&
+			colors[0].join(',') !== colors[1].join(','),
 	);
 	const [firstColor, secondColor] = colors;
 	const { inflateSync } = await import('node:zlib');
@@ -334,9 +414,9 @@ export async function canvasMarker(bytes, colors = [255, 0]) {
 		if (x < 0 || y < 0 || x >= width || y >= height) return false;
 		const offset = y * stride + x * channels;
 		return (
-			pixels[offset] === v &&
-			pixels[offset + 1] === v &&
-			pixels[offset + 2] === v
+			pixels[offset] === v[0] &&
+			pixels[offset + 1] === v[1] &&
+			pixels[offset + 2] === v[2]
 		);
 	};
 	let best = null;
@@ -380,7 +460,7 @@ export async function canvasMarker(bytes, colors = [255, 0]) {
 		}
 	assert.ok(
 		best,
-		'Find literal white/black source marker outside floating controls',
+		'Find literal two-color source marker outside floating controls',
 	);
 	return best;
 }
