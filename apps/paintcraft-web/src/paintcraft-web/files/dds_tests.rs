@@ -62,7 +62,7 @@ fn actual_browser_dds_open_import_review_preserves_nonempty_document_on_cancel_a
                 }
                 match case {
                     2 => h.state_mut().frontend = paintcraft_ui::actions::Frontend::Classic,
-                    3 => h.state_mut().text.preedit = "draft".into(),
+                    3 => h.state_mut().test_start_preedit("draft"),
                     _ => {}
                 }
                 h.get_by_role_and_label(

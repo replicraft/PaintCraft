@@ -247,7 +247,7 @@ fn cancel_and_stale_owner_release_preview_without_changing_the_existing_document
         if cancel {
             app.resolve_import(&ctx, false);
         } else {
-            app.text.preedit = "composition".into();
+            app.test_start_preedit("composition");
             app.resolve_import(&ctx, true);
         }
         assert!(app.pending_import.is_none());

@@ -78,7 +78,7 @@ fn malformed_classic_cancelled_and_stale_svg_imports_cannot_publish() {
         match case {
             0 => app.pending_svg = None,
             1 => app.frontend = paintcraft_ui::actions::Frontend::Classic,
-            _ => app.text.preedit = "composition".into(),
+            _ => app.test_start_preedit("composition"),
         }
         app.svg_import_dialog(&ctx);
         assert!(app.pending_svg.is_none());

@@ -125,10 +125,13 @@ fn consent_placement_and_browser_growth_limits_are_rechecked_at_commit() {
 fn private_edits_and_copy_jobs_prevent_read_submission() {
     let ctx = egui::Context::default();
     let mut app = fixture(&ctx);
-    app.text.preedit = "composition".into();
+    app.test_start_preedit("composition");
     app.paste_with(&ctx, || panic!("IME must prevent clipboard access"));
     assert!(!app.paste.busy());
-    app.text.preedit.clear();
+    app.text.reset_composition();
+    // IME cancellation preserves the real editable draft. Resolve that draft
+    // explicitly before exercising the unrelated copy-job admission below.
+    app.editor.tools.cancel_text();
     app.paste.activation = None;
     app.copy_requested(&ctx); // native host cannot acknowledge a browser write
     assert!(!app.clipboard.busy());

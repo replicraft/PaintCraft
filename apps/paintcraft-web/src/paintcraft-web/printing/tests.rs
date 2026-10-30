@@ -80,12 +80,12 @@ fn printable_text_is_private_and_cancellation_keeps_the_draft_and_dirty_state() 
     assert_eq!(h.state().editor.tools.text_content(), Some("Keep editable"));
     assert!(h.state().unsaved());
     assert_eq!(h.state().message, "Printing cancelled.");
-    h.state_mut().text.preedit = "変換中".into();
+    h.state_mut().test_start_preedit("変換中");
     h.state_mut().printer.captured = None;
     h.state_mut().print_requested(&ctx);
     assert!(!h.state().printing_pending());
     assert!(h.state().printer.captured.is_none());
-    assert_eq!(h.state().text.preedit, "変換中");
+    assert_eq!(h.state().text.preedit(), "変換中");
     assert_eq!(h.state().editor.session.ticket(), ticket);
 }
 

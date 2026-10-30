@@ -75,7 +75,7 @@ fn cancelled_stale_or_foreign_owner_cannot_publish_a_page() {
             0 => app.cancel_page_import(&ctx),
             1 => app.frontend = paintcraft_ui::actions::Frontend::Classic,
             2 => app.editor = Editor::new(3, 3).unwrap(),
-            3 => app.text.preedit = "composition".into(),
+            3 => app.test_start_preedit("composition"),
             _ => app.variant = paintcraft_classic::ClassicVariant::V7,
         }
         let before = app.editor.session.snapshot();

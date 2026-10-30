@@ -129,7 +129,7 @@ fn interface_skin_composition_gesture_and_replaced_session_invalidate_review() {
         match case {
             0 => candidate.frontend = paintcraft_ui::actions::Frontend::Classic,
             1 => candidate.variant = ClassicVariant::V7,
-            2 => candidate.text.preedit = "composition".into(),
+            2 => candidate.test_start_preedit("composition"),
             3 => {
                 candidate.editor.tools.tool = paintcraft_tools::Tool::Pencil;
                 candidate

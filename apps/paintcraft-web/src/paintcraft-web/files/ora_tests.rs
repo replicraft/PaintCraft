@@ -55,7 +55,7 @@ fn browser_en_ja_group_review_adopts_immutable_pixels_only_with_current_owner_an
                 ));
                 match case {
                     2 => h.state_mut().frontend = paintcraft_ui::actions::Frontend::Classic,
-                    3 => h.state_mut().text.preedit = "draft".into(),
+                    3 => h.state_mut().test_start_preedit("draft"),
                     _ => {}
                 }
                 h.get_by_role_and_label(

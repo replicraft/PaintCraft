@@ -249,7 +249,7 @@ fn jpeg_web_cancel_stale_sessions_profiles_and_drafts_preserve_prior_work() {
         match mode {
             1 => app.variant = paintcraft_classic::ClassicVariant::V7,
             2 => app.frontend = paintcraft_ui::actions::Frontend::Studio,
-            3 => app.text.preedit = "composition".into(),
+            3 => app.test_start_preedit("composition"),
             4 => {
                 app.editor =
                     crate::editor::Editor::from_document(app.editor.session.document().clone())

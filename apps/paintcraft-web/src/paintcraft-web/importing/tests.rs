@@ -50,7 +50,7 @@ fn source_profile_drafts_and_session_replacement_invalidate_pending_or_late_comp
                 let doc = app.editor.session.document().clone();
                 app.editor = Editor::from_document(doc).unwrap();
             }
-            2 => app.text.preedit = "composition".into(),
+            2 => app.test_start_preedit("composition"),
             3 => {
                 app.editor.tools.tool = paintcraft_tools::Tool::Pencil;
                 app.editor
