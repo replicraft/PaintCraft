@@ -6,6 +6,7 @@ use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, filters::Descriptor
 
 mod coverage;
 mod point;
+pub mod spatial;
 pub use coverage::mix_point_coverage;
 
 /// Apply ordered descriptors. Every stage rounds independently and preserves
