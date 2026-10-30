@@ -1,4 +1,4 @@
-//! Typed batch v1 (`paintcraft.batch/v1`). Parsing enforces the schema exactly:
+//! Typed atomic batches v1–v4. Parsing enforces each grammar profile exactly:
 //! unknown fields, wrong types, out-of-range numbers and malformed patterns are
 //! all `input.schema`. Semantic checks (aliases, targets) happen at execution.
 
@@ -198,7 +198,7 @@ pub enum Op {
 
 #[derive(Clone, Debug)]
 pub struct Batch {
-    /// 1 or 2; version 2 adds the brush, fill and shape operations.
+    /// v1 legacy; v2 drawing/initial filters; v3 masks; v4 additional point descriptors.
     pub version: u8,
     pub policy: String,
     pub base_state: Uuid,
@@ -217,14 +217,49 @@ impl Batch {
     /// Select the lowest grammar profile for a generated packet. Parsing still
     /// validates all names, fields and counts; this helper grants no authority.
     pub fn schema_for_operations(operations: &[Value]) -> &'static str {
-        if operations.iter().any(|v| {
-            v.get("op")
-                .and_then(Value::as_str)
-                .is_some_and(|name| name.starts_with("filter.mask."))
-        }) {
-            "paintcraft.batch/v3"
-        } else {
-            "paintcraft.batch/v2"
+        Self::schema_for_operation_fields(operations.iter().map(|value| {
+            (
+                value.get("op").and_then(Value::as_str).unwrap_or(""),
+                value
+                    .get("descriptor")
+                    .and_then(|d| d.get("kind"))
+                    .and_then(Value::as_str),
+            )
+        }))
+    }
+    /// Allocation-free selector for bounded caller-owned JSON projections,
+    /// including hosts using another JSON type. It never validates or authorizes
+    /// the operations; strict parsing still rejects unknown or malformed fields.
+    pub fn schema_for_operation_fields<'a>(
+        operations: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
+    ) -> &'static str {
+        let version = operations
+            .into_iter()
+            .map(|(name, kind)| {
+                if matches!(name, "filter.add" | "filter.update")
+                    && matches!(
+                        kind,
+                        Some(
+                            "black-white-rgb-v1"
+                                | "threshold-luma-v1"
+                                | "posterize-rgb-v1"
+                                | "solarize-rgb-v1"
+                        )
+                    )
+                {
+                    4
+                } else if name.starts_with("filter.mask.") {
+                    3
+                } else {
+                    2
+                }
+            })
+            .max()
+            .unwrap_or(2);
+        match version {
+            4 => "paintcraft.batch/v4",
+            3 => "paintcraft.batch/v3",
+            _ => "paintcraft.batch/v2",
         }
     }
     pub fn from_json(bytes: &[u8]) -> Result<Batch> {
@@ -257,9 +292,10 @@ impl Batch {
             Some("paintcraft.batch/v1") => 1,
             Some("paintcraft.batch/v2") => 2,
             Some("paintcraft.batch/v3") => 3,
+            Some("paintcraft.batch/v4") => 4,
             _ => {
                 return Err(bad(
-                    "schema must be paintcraft.batch/v1, paintcraft.batch/v2 or paintcraft.batch/v3",
+                    "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3 or paintcraft.batch/v4",
                 ));
             }
         };

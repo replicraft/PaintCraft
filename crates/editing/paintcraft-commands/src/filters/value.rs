@@ -1,4 +1,4 @@
-//! Portable typed-to-wire adapter for the existing strict v2 grammar.
+//! Portable typed-to-wire adapter; the caller selects the required batch profile.
 use super::{FilterOp, FilterRef};
 use crate::{LayerRef, Result, Value, bad};
 
@@ -24,7 +24,8 @@ fn index_value(index: usize) -> Result<Value> {
 }
 
 impl FilterOp {
-    /// Produce one operation object for `paintcraft.batch/v2`.
+    /// Produce one strict operation object. Use `required_batch_version()` or
+    /// `Batch::schema_for_operations` to select its batch envelope.
     ///
     /// This validates the same field grammar as parsing, including manually
     /// constructed aliases and final indices. It does not resolve aliases or

@@ -41,7 +41,16 @@ pub(super) fn op(
         )));
     }
     Ok(match name {
-        name if name.starts_with("filter.") => filters::parse_with_coverage(v, budget, check)?,
+        name if name.starts_with("filter.") => {
+            let parsed = filters::parse_with_coverage(v, budget, check)?;
+            let Op::Filter(filter) = &parsed else {
+                unreachable!("filter parser")
+            };
+            if filter.required_batch_version() > version {
+                return Err(bad("new point descriptors require paintcraft.batch/v4"));
+            }
+            parsed
+        }
         "raster.cut_selection" => {
             let o = obj(v, &["op", "layer_ref", "clear"], &[])?;
             Op::CutSelection {

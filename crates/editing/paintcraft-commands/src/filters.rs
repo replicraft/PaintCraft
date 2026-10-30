@@ -1,6 +1,6 @@
-//! Strict v2 filter grammar; selection masks are not implied by these operations.
+//! Strict versioned filter grammar; numeric masks remain separately admitted.
 use super::*;
-use paintcraft_core::types::filters::{BrightnessContrastV1, Descriptor};
+use paintcraft_core::types::filters::Descriptor;
 
 pub(super) mod masks;
 mod value;
@@ -53,10 +53,19 @@ pub enum FilterOp {
 }
 impl FilterOp {
     pub const fn required_batch_version(&self) -> u8 {
-        if matches!(self, Self::Mask { .. }) {
-            3
-        } else {
-            2
+        match self {
+            Self::Mask { .. } => 3,
+            Self::Add { descriptor, .. } | Self::Update { descriptor, .. } => match descriptor {
+                Descriptor::InvertRgbV1 | Descriptor::BrightnessContrastV1(_) => 2,
+                Descriptor::BlackWhiteRgbV1(_)
+                | Descriptor::ThresholdLumaV1(_)
+                | Descriptor::PosterizeRgbV1(_)
+                | Descriptor::SolarizeRgbV1 => 4,
+            },
+            Self::SetEnabled { .. }
+            | Self::Reorder { .. }
+            | Self::Remove { .. }
+            | Self::Duplicate { .. } => 2,
         }
     }
     pub fn references(&self) -> (&LayerRef, Option<&FilterRef>) {
@@ -97,25 +106,7 @@ fn reference(v: &Value) -> Result<FilterRef> {
     })
 }
 fn descriptor(v: &Value) -> Result<Descriptor> {
-    let kind = v
-        .get("kind")
-        .and_then(Value::as_str)
-        .ok_or_else(|| bad("filter descriptor needs kind"))?;
-    match kind {
-        "invert-rgb-v1" => {
-            obj(v, &["kind"], &[])?;
-            Ok(Descriptor::InvertRgbV1)
-        }
-        "brightness-contrast-v1" => {
-            let o = obj(v, &["kind", "brightness", "contrast"], &[])?;
-            let b = int_in(&o["brightness"], -100, 100, "brightness")? as i16;
-            let c = int_in(&o["contrast"], -99, 99, "contrast")? as i16;
-            Ok(Descriptor::BrightnessContrastV1(BrightnessContrastV1::new(
-                b, c,
-            )?))
-        }
-        _ => Err(bad("unknown filter algorithm/version")),
-    }
+    Descriptor::from_value(v)
 }
 pub(super) fn parse(v: &Value) -> Result<Op> {
     let name = v
