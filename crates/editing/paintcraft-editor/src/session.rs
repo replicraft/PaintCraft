@@ -105,7 +105,13 @@ impl Receipt {
         if !self.document_features.is_empty() {
             fields.insert(
                 "document_features".into(),
-                Value::Array(self.document_features.iter().copied().map(Value::str).collect()),
+                Value::Array(
+                    self.document_features
+                        .iter()
+                        .copied()
+                        .map(Value::str)
+                        .collect(),
+                ),
             );
         }
         if !self.filter_aliases.is_empty() {
