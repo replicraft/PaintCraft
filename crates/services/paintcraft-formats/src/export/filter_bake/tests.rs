@@ -333,3 +333,127 @@ fn explicit_metadata_omission_does_not_authorize_baking_filters() {
         ErrorCode::CapabilityUnsupported
     );
 }
+
+#[test]
+fn public_inventory_counts_hidden_disabled_stacks_and_actual_retained_capacity() {
+    let mut doc = layered();
+    let first = doc.roots[0];
+    let second = doc.roots[1];
+    let mut roomy = Vec::with_capacity(128);
+    roomy.push(FilterInstance::new(
+        Uuid::from_u128(5),
+        false,
+        Descriptor::InvertRgbV1,
+    ));
+    let layer = doc.layers.get_mut(&second).unwrap();
+    layer.visible = false;
+    layer.opacity = 0;
+    layer.filters = FilterStack::new(roomy).unwrap();
+    let inventory = inspect(&doc, &|| Ok(())).unwrap();
+    assert!(inventory.has_filters());
+    assert_eq!(inventory.filter_count(), 2);
+    assert_eq!(
+        inventory.filter_storage_bytes(),
+        (doc.layers[&first].filters.storage_bytes() + doc.layers[&second].filters.storage_bytes())
+            as u64
+    );
+    assert!(
+        inventory.filter_storage_bytes() > 2 * std::mem::size_of::<FilterInstance>() as u64,
+        "retained allocation capacity is distinct from logical instance count"
+    );
+    let descriptor = doc.layers[&second].filters.as_slice()[0].clone();
+    doc.layers.get_mut(&second).unwrap().filters = FilterStack::new(vec![descriptor]).unwrap();
+    let compact = inspect(&doc, &|| Ok(())).unwrap();
+    assert_eq!(
+        compact.digest(),
+        inventory.digest(),
+        "capacity is not document meaning"
+    );
+    assert_eq!(compact.filter_count(), inventory.filter_count());
+    assert!(compact.filter_storage_bytes() < inventory.filter_storage_bytes());
+    doc.layers.get_mut(&first).unwrap().filters = stack(false);
+    assert_ne!(
+        inspect(&doc, &|| Ok(())).unwrap().digest(),
+        compact.digest(),
+        "same UUIDs with a changed enabled flag are distinct inventories"
+    );
+}
+
+#[test]
+fn public_inventory_preserves_independent_canonical_digest_and_mints_no_authority() {
+    let mut doc = layered();
+    doc.document_id = Uuid::from_u128(1);
+    doc.state_id = Uuid::from_u128(2);
+    for (position, new) in [Uuid::from_u128(3), Uuid::from_u128(4)]
+        .into_iter()
+        .enumerate()
+    {
+        let old = doc.roots[position];
+        let mut layer = doc.layers.remove(&old).unwrap();
+        layer.id = new;
+        doc.roots[position] = new;
+        doc.layers.insert(new, layer);
+    }
+    let inventory = inspect(&doc, &|| Ok(())).unwrap();
+    // Independently encoded by Python hashlib/struct/uuid: fixed documented
+    // domains, big-endian fields, UUID1/2/3/4, invert1 and empty stack digests.
+    assert_eq!(
+        paintcraft_document::hex(&inventory.digest()),
+        "edafa6835740dd18cbf7e9a0e2e5a294fc505f561c0889ff874774f2c185cc51"
+    );
+    assert_eq!(
+        capture(&doc),
+        Policy::Bake(BakeWitness {
+            document: doc.document_id,
+            state: doc.state_id,
+            inventory: inventory.digest(),
+            target: PNG,
+            has_filters: true
+        })
+    );
+    assert_eq!(
+        Policy::default()
+            .validate(&doc, PNG, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::CapabilityUnsupported,
+        "inspection is not consent"
+    );
+    let empty = inspect(&document(false), &|| Ok(())).unwrap();
+    assert!(!empty.has_filters());
+    assert_eq!(empty.filter_count(), 0);
+    assert_eq!(empty.filter_storage_bytes(), 0);
+}
+
+#[test]
+fn public_inventory_yields_at_every_checkpoint_and_refuses_malformed_roots() {
+    let doc = layered();
+    let calls = Cell::new(0);
+    inspect(&doc, &|| {
+        calls.set(calls.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for stop in 1..=calls.get() {
+        let next = Cell::new(0);
+        let error = inspect(&doc, &|| {
+            next.set(next.get() + 1);
+            if next.get() == stop {
+                Err(Error::new(
+                    ErrorCode::OperationCancelled,
+                    "cancel inventory",
+                ))
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err();
+        assert_eq!(error.code, ErrorCode::OperationCancelled);
+    }
+    let mut malformed = doc.clone();
+    malformed.roots[1] = malformed.roots[0];
+    assert_eq!(
+        inspect(&malformed, &|| Ok(())).unwrap_err().code,
+        ErrorCode::InputSchema
+    );
+}

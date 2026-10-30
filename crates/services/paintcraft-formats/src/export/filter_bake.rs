@@ -56,9 +56,28 @@ fn require_copy(target: Target) -> Result<()> {
         ))
     }
 }
-struct Inventory {
+/// Read-only facts about one exact candidate, not resource admission or consent.
+/// Storage counts retained filter allocations, not raster, scratch or GPU memory.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Inventory {
     digest: [u8; 32],
     has_filters: bool,
+    filter_count: u64,
+    filter_storage_bytes: u64,
+}
+impl Inventory {
+    pub fn digest(self) -> [u8; 32] {
+        self.digest
+    }
+    pub fn has_filters(self) -> bool {
+        self.has_filters
+    }
+    pub fn filter_count(self) -> u64 {
+        self.filter_count
+    }
+    pub fn filter_storage_bytes(self) -> u64 {
+        self.filter_storage_bytes
+    }
 }
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::InputSchema, message)
@@ -67,7 +86,7 @@ fn invalid(message: &str) -> Error {
 /// Linear metadata walk at freeze/backend validation boundaries, not per frame.
 /// The fallibly reserved duplicate-ID set is bounded by the existing document
 /// layer cap. This bounded scratch is not a total process-memory/RSS guarantee.
-fn inventory(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory> {
+pub fn inspect(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory> {
     check()?;
     if doc.roots.len() > LAYER_COUNT_MAX || doc.layers.len() > LAYER_COUNT_MAX {
         return Err(Error::new(
@@ -94,6 +113,8 @@ fn inventory(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory
     digest.update(doc.canvas.1.to_be_bytes());
     digest.update((doc.roots.len() as u64).to_be_bytes());
     let mut has_filters = false;
+    let mut filter_count = 0_u64;
+    let mut filter_storage_bytes = 0_u64;
     for id in &doc.roots {
         check()?;
         if !seen.insert(*id) {
@@ -107,6 +128,23 @@ fn inventory(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory
             return Err(invalid("Filter copy layer key differs from its identity"));
         }
         has_filters |= !layer.filters.is_empty();
+        filter_count = filter_count
+            .checked_add(layer.filters.len() as u64)
+            .ok_or_else(|| {
+                Error::new(ErrorCode::ResourceLimit, "Filter inventory count overflow")
+            })?;
+        let storage = u64::try_from(layer.filters.storage_bytes()).map_err(|_| {
+            Error::new(
+                ErrorCode::ResourceLimit,
+                "Filter storage exceeds inventory address range",
+            )
+        })?;
+        filter_storage_bytes = filter_storage_bytes.checked_add(storage).ok_or_else(|| {
+            Error::new(
+                ErrorCode::ResourceLimit,
+                "Filter inventory storage overflow",
+            )
+        })?;
         digest.update(id.as_bytes());
         digest.update(layer.filters.digest());
         digest.update([u8::from(layer.visible), layer.opacity]);
@@ -120,6 +158,8 @@ fn inventory(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory
     Ok(Inventory {
         digest: digest.finalize().into(),
         has_filters,
+        filter_count,
+        filter_storage_bytes,
     })
 }
 impl Policy {
@@ -135,7 +175,7 @@ impl Policy {
         if intent == Intent::Bake {
             require_copy(target)?;
         }
-        let inventory = inventory(doc, check)?;
+        let inventory = inspect(doc, check)?;
         match intent {
             Intent::Refuse => Ok(Self::Refuse),
             Intent::Bake => Ok(Self::Bake(BakeWitness {
@@ -160,7 +200,7 @@ impl Policy {
         if matches!(self, Self::Bake(_)) {
             require_copy(expected)?;
         }
-        let inventory = inventory(doc, check)?;
+        let inventory = inspect(doc, check)?;
         match self {
             Self::Refuse => {
                 if inventory.has_filters {
