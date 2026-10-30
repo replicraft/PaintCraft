@@ -98,17 +98,44 @@ pub(super) fn write_copy_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: export::metadata_policy::Policy,
 ) -> Result<(Value, bool, String)> {
+    write_copy_with_policies(
+        doc,
+        mode,
+        dest,
+        overwrite,
+        allowed,
+        source_sha,
+        protect,
+        check,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub(super) fn write_copy_with_policies(
+    doc: &Document,
+    mode: Mode,
+    dest: &Path,
+    overwrite: bool,
+    allowed: &[String],
+    source_sha: Option<String>,
+    protect: &dyn Fn() -> Result<()>,
+    check: &dyn Fn() -> Result<()>,
+    policies: export::CopyPolicies,
+) -> Result<(Value, bool, String)> {
     check()?;
     protect()?;
     let limits = dcx::DocumentLimits::default();
-    let prepared = dcx::prepare_document_with_metadata_policy(
+    let prepared = dcx::prepare_document_with_policies(
         doc,
         mode.into(),
         allowed,
         limits,
         check,
         |doc| paintcraft_render::render_cancellable(doc, check),
-        policy,
+        policies,
     )?;
     let context = Context {
         operation: "export",
@@ -166,11 +193,26 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ));
             }
             let doc = super::source_metadata::read(&bytes)?;
-            let policy = a
-                .metadata
-                .capture(&doc, super::export_metadata::CopyFormat::Dcx)?;
+            let policies = a.metadata.capture_policies(
+                &doc,
+                super::export_metadata::CopyFormat::Dcx,
+                a.losses.filter_bake_intent(),
+                &|| Ok(()),
+            )?;
             let (receipt, ok, summary) =
-                if a.metadata.intent == export::metadata_policy::Intent::Refuse {
+                if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
+                    write_copy_with_policies(
+                        &doc,
+                        a.pcx_mode,
+                        dest,
+                        a.output.overwrite,
+                        &allowed,
+                        Some(sha),
+                        &protect,
+                        &|| Ok(()),
+                        policies,
+                    )?
+                } else if a.metadata.intent == export::metadata_policy::Intent::Refuse {
                     write_copy(
                         &doc,
                         a.pcx_mode,
@@ -191,7 +233,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                         Some(sha),
                         &protect,
                         &|| Ok(()),
-                        policy,
+                        policies.source_metadata,
                     )?
                 };
 

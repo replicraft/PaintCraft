@@ -58,13 +58,42 @@ pub(super) fn prepare_with_metadata_policy(
     allowed: Vec<String>,
     policy: export::metadata_policy::Policy,
 ) -> Result<Prepared> {
+    prepare_with_policies(
+        doc,
+        owner,
+        pool,
+        host,
+        allowed,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub(super) fn prepare_with_policies(
+    doc: Document,
+    owner: wire::Owner,
+    pool: SharedBudget,
+    host: Check,
+    allowed: Vec<String>,
+    policies: export::CopyPolicies,
+) -> Result<Prepared> {
     host()?;
-    policy.validate(
+    policies.source_metadata.validate(
         &doc,
         export::metadata_policy::Target::new(
             paintcraft_formats::registry::Family::Jxr,
             paintcraft_formats::registry::Operation::ExportFlat,
         ),
+    )?;
+    policies.filter_bake.validate(
+        &doc,
+        export::metadata_policy::Target::new(
+            paintcraft_formats::registry::Family::Jxr,
+            paintcraft_formats::registry::Operation::ExportFlat,
+        ),
+        host.as_ref(),
     )?;
     let layout = encode::Layout::new(doc.canvas.0, doc.canvas.1, encode::ENCODED_BYTES_MAX)?;
     let rgba = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4;
@@ -102,7 +131,7 @@ pub(super) fn prepare_with_metadata_policy(
                 }
                 Ok(())
             };
-            let prepared = export::jxr::prepare_opaque_rgb_with_metadata_policy(
+            let prepared = export::jxr::prepare_opaque_rgb_with_policies(
                 &doc,
                 encode::ENCODED_BYTES_MAX,
                 &allowed,
@@ -118,7 +147,7 @@ pub(super) fn prepare_with_metadata_policy(
                 },
                 |doc, check| paintcraft_render::render_cancellable(doc, check),
                 &check,
-                policy,
+                policies,
             )?;
             let (layout, rgb, losses) = prepared.into_parts();
             let remaining = DEADLINE

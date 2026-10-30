@@ -271,6 +271,19 @@ struct LossOptions {
     allow_loss: Option<String>,
 }
 impl LossOptions {
+    /// Only the user's raw CLI list grants this intent, never a generated preview list.
+    fn filter_bake_intent(&self) -> export::filter_bake::Intent {
+        if self.allow_loss.as_deref().is_some_and(|codes| {
+            codes
+                .split(',')
+                .any(|code| code == export::filter_bake::BAKED_REASON)
+        }) {
+            export::filter_bake::Intent::Bake
+        } else {
+            export::filter_bake::Intent::Refuse
+        }
+    }
+
     fn allowed(&self) -> Result<Vec<String>> {
         self.allowed_for(&export::KNOWN_LOSSES)
     }

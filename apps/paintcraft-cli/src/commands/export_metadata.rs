@@ -51,3 +51,62 @@ impl Options {
         format.capture(doc, self.intent)
     }
 }
+
+/// Both intents originate in explicit CLI/RPC input, not codec preview losses.
+pub(super) fn capture_copy_policies(
+    doc: &Document,
+    target: metadata_policy::Target,
+    metadata: metadata_policy::Intent,
+    filters: export::filter_bake::Intent,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<export::CopyPolicies> {
+    Ok(export::CopyPolicies {
+        source_metadata: metadata_policy::Policy::capture(doc, target, metadata)?,
+        filter_bake: export::filter_bake::Policy::capture(doc, target, filters, check)?,
+    })
+}
+impl Options {
+    pub(super) fn capture_policies(
+        &self,
+        doc: &Document,
+        format: CopyFormat,
+        filters: export::filter_bake::Intent,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<export::CopyPolicies> {
+        Ok(export::CopyPolicies {
+            source_metadata: self.capture(doc, format)?,
+            filter_bake: export::filter_bake::Policy::capture(
+                doc,
+                format.target(),
+                filters,
+                check,
+            )?,
+        })
+    }
+}
+
+/// Invoke only at the RPC boundary on its unmodified, explicit user loss list.
+pub(super) fn user_filter_intent(losses: &[String]) -> export::filter_bake::Intent {
+    if losses
+        .iter()
+        .any(|loss| loss == export::filter_bake::BAKED_REASON)
+    {
+        export::filter_bake::Intent::Bake
+    } else {
+        export::filter_bake::Intent::Refuse
+    }
+}
+impl CopyFormat {
+    pub(super) fn capture_policies(
+        self,
+        doc: &Document,
+        metadata: metadata_policy::Intent,
+        filters: export::filter_bake::Intent,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<export::CopyPolicies> {
+        Ok(export::CopyPolicies {
+            source_metadata: self.capture(doc, metadata)?,
+            filter_bake: export::filter_bake::Policy::capture(doc, self.target(), filters, check)?,
+        })
+    }
+}

@@ -62,6 +62,36 @@ pub(super) fn write_copy_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: export::metadata_policy::Policy,
 ) -> Result<(Value, bool, String, Value)> {
+    write_copy_with_policies(
+        doc,
+        options,
+        dest,
+        overwrite,
+        allowed,
+        source_sha,
+        pool,
+        protect,
+        check,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn write_copy_with_policies(
+    doc: &Document,
+    options: dds::TextureOptions,
+    dest: &Path,
+    overwrite: bool,
+    allowed: &[String],
+    source_sha: Option<String>,
+    pool: SharedBudget,
+    protect: &dyn Fn(&Path) -> Result<()>,
+    check: &dyn Fn() -> Result<()>,
+    policies: export::CopyPolicies,
+) -> Result<(Value, bool, String, Value)> {
     check()?;
     protect(dest)?;
     save::preflight(dest, overwrite)?;
@@ -77,7 +107,7 @@ pub(super) fn write_copy_with_metadata_policy(
         |sink| {
             check()?;
             protect(dest)?;
-            let value = export::dds::prepare_document_with_metadata_policy(
+            let value = export::dds::prepare_document_with_policies(
                 doc,
                 options,
                 allowed,
@@ -95,7 +125,7 @@ pub(super) fn write_copy_with_metadata_policy(
                 },
                 |doc, check| paintcraft_render::render_cancellable(doc, check),
                 check,
-                policy,
+                policies,
             )?;
             *prepared.borrow_mut() = Some(value);
             let value = prepared.borrow();

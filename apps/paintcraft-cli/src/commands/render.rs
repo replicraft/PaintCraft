@@ -138,6 +138,15 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ),
                 a.source_metadata,
             )?;
+            options.filter_bake = export::filter_bake::Policy::capture(
+                &doc,
+                export::metadata_policy::Target::new(
+                    family,
+                    paintcraft_formats::registry::Operation::ExportFlat,
+                ),
+                a.losses.filter_bake_intent(),
+                &|| Ok(()),
+            )?;
             captured_source.check(dest)?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = if a.render_workers == 1 {
@@ -221,8 +230,33 @@ fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
         ),
         a.source_metadata,
     )?;
+    let policies = export::CopyPolicies {
+        source_metadata: policy,
+        filter_bake: export::filter_bake::Policy::capture(
+            &doc,
+            export::metadata_policy::Target::new(
+                paintcraft_formats::registry::Family::Dds,
+                paintcraft_formats::registry::Operation::ExportFlat,
+            ),
+            a.losses.filter_bake_intent(),
+            &|| Ok(()),
+        )?,
+    };
     let (receipt, ok, summary, details) =
-        if a.source_metadata == export::metadata_policy::Intent::Refuse {
+        if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
+            dds_export::write_copy_with_policies(
+                &doc,
+                a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+                dest,
+                a.output.overwrite,
+                &allowed,
+                Some(sha),
+                paintcraft_runtime::SharedBudget::new(512 << 20),
+                &protect,
+                &|| Ok(()),
+                policies,
+            )?
+        } else if a.source_metadata == export::metadata_policy::Intent::Refuse {
             dds_export::write_copy(
                 &doc,
                 a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
@@ -294,8 +328,33 @@ fn explicit_msp(a: &Options, version: msp_options::Version) -> Result<Written> {
         ),
         a.source_metadata,
     )?;
+    let policies = export::CopyPolicies {
+        source_metadata: policy,
+        filter_bake: export::filter_bake::Policy::capture(
+            &doc,
+            export::metadata_policy::Target::new(
+                paintcraft_formats::registry::Family::Msp,
+                paintcraft_formats::registry::Operation::ExportFlat,
+            ),
+            a.losses.filter_bake_intent(),
+            &|| Ok(()),
+        )?,
+    };
     let (receipt, ok, summary, details) =
-        if a.source_metadata == export::metadata_policy::Intent::Refuse {
+        if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
+            msp_export::write_copy_with_policies(
+                &doc,
+                version,
+                dest,
+                a.output.overwrite,
+                &allowed,
+                Some(sha),
+                paintcraft_runtime::SharedBudget::new(512 << 20),
+                &protect,
+                &|| Ok(()),
+                policies,
+            )?
+        } else if a.source_metadata == export::metadata_policy::Intent::Refuse {
             msp_export::write_copy(
                 &doc,
                 version,

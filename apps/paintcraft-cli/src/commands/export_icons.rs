@@ -130,10 +130,13 @@ pub fn run(a: Options, json: bool) -> Reply {
             } else {
                 icons::Kind::Cursor
             };
-            let policy = a
-                .metadata
-                .capture(&doc, super::export_metadata::CopyFormat::Icon(kind))?;
-            let prepared = icons::prepare_document_with_metadata_policy(
+            let policy = a.metadata.capture_policies(
+                &doc,
+                super::export_metadata::CopyFormat::Icon(kind),
+                a.losses.filter_bake_intent(),
+                &|| Ok(()),
+            )?;
+            let prepared = icons::prepare_document_with_policies(
                 &doc,
                 kind,
                 &a.entry,

@@ -86,10 +86,46 @@ pub(super) fn write_copy_with_metadata_policy(
     check: jxr_export_job::Check,
     policy: export::metadata_policy::Policy,
 ) -> Result<(Value, bool, String, Value)> {
+    write_copy_with_policies(
+        doc,
+        dest,
+        overwrite,
+        allowed,
+        source_sha,
+        owner,
+        current,
+        pool,
+        protect,
+        check,
+        export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub(super) fn write_copy_with_policies(
+    doc: &Document,
+    dest: &Path,
+    overwrite: bool,
+    allowed: &[String],
+    source_sha: Option<String>,
+    owner: wire::Owner,
+    current: &dyn Fn() -> Result<wire::Owner>,
+    pool: SharedBudget,
+    protect: &dyn Fn(&Path) -> Result<()>,
+    check: jxr_export_job::Check,
+    policies: export::CopyPolicies,
+) -> Result<(Value, bool, String, Value)> {
     check()?;
-    policy.validate(
+    policies.source_metadata.validate(
         doc,
         export::metadata_policy::Target::new(Family::Jxr, Operation::ExportFlat),
+    )?;
+    policies.filter_bake.validate(
+        doc,
+        export::metadata_policy::Target::new(Family::Jxr, Operation::ExportFlat),
+        check.as_ref(),
     )?;
     protect(dest)?;
     save::preflight(dest, overwrite)?;
@@ -108,16 +144,16 @@ pub(super) fn write_copy_with_metadata_policy(
                     "JXR export owner changed",
                 ));
             }
-            let value = if policy == export::metadata_policy::Policy::Refuse {
+            let value = if policies == export::CopyPolicies::default() {
                 jxr_export_job::prepare(doc.clone(), owner, pool, check.clone(), allowed.to_vec())?
             } else {
-                jxr_export_job::prepare_with_metadata_policy(
+                jxr_export_job::prepare_with_policies(
                     doc.clone(),
                     owner,
                     pool,
                     check.clone(),
                     allowed.to_vec(),
-                    policy,
+                    policies,
                 )?
             };
             value.check(current)?;
@@ -212,11 +248,28 @@ pub fn run(a: Options, json: bool) -> Reply {
             drop(bytes);
             let mut owner = codec_worker::owner();
             owner.state = doc.state_id;
-            let policy = a
-                .metadata
-                .capture(&doc, super::export_metadata::CopyFormat::Jxr)?;
+            let policies = a.metadata.capture_policies(
+                &doc,
+                super::export_metadata::CopyFormat::Jxr,
+                a.losses.filter_bake_intent(),
+                &|| Ok(()),
+            )?;
             let (receipt, ok, summary, details) =
-                if a.metadata.intent == export::metadata_policy::Intent::Refuse {
+                if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
+                    write_copy_with_policies(
+                        &doc,
+                        dest,
+                        a.output.overwrite,
+                        &allowed,
+                        Some(sha),
+                        owner,
+                        &|| Ok(owner),
+                        SharedBudget::new(512 << 20),
+                        &protect,
+                        Arc::new(|| Ok(())),
+                        policies,
+                    )?
+                } else if a.metadata.intent == export::metadata_policy::Intent::Refuse {
                     write_copy(
                         &doc,
                         dest,
@@ -241,7 +294,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                         SharedBudget::new(512 << 20),
                         &protect,
                         Arc::new(|| Ok(())),
-                        policy,
+                        policies.source_metadata,
                     )?
                 };
 

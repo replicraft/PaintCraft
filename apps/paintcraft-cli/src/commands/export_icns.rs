@@ -85,16 +85,14 @@ pub fn run(a: Options, json: bool) -> Reply {
                 Resampling::Nearest => icons::Filter::Nearest,
                 Resampling::Lanczos3 => icons::Filter::Lanczos3,
             };
-            let policy = a
-                .metadata
-                .capture(&doc, super::export_metadata::CopyFormat::Icns)?;
-            let prepared = icns::prepare_document_with_metadata_policy(
+            let policy = a.metadata.capture_policies(
                 &doc,
-                &a.kinds,
-                filter,
+                super::export_metadata::CopyFormat::Icns,
+                a.losses.filter_bake_intent(),
                 &|| Ok(()),
-                policy,
             )?;
+            let prepared =
+                icns::prepare_document_with_policies(&doc, &a.kinds, filter, &|| Ok(()), policy)?;
             let encoded = prepared.encode(&allowed, &|| Ok(()))?;
             // Check the same captured source immediately before output publication.
             if identity.matches_path(dest)? {
