@@ -207,23 +207,23 @@ try {
 						) {
 							const bytes = new Uint8Array(value.bytes),
 								view = new DataView(value.bytes);
-							if (fault.kind === 'digest') bytes[160] ^= 1;
+							if (fault.kind === 'digest') bytes[192] ^= 1;
 							else if (fault.kind === 'extent')
-								view.setUint32(180, view.getUint32(180) - 1);
-							else if (fault.kind === 'intent') bytes[176] = 1;
+								view.setUint32(212, view.getUint32(212) - 1);
+							else if (fault.kind === 'intent') bytes[208] = 1;
 							else if (fault.kind === 'target')
-								bytes[177] = bytes[177] === 1 ? 2 : 1;
+								bytes[209] = bytes[209] === 1 ? 2 : 1;
 							else if (fault.kind === 'version') {
 								bytes[7] = 49;
 								view.setUint16(8, 1);
 							} else if (fault.kind === 'admission')
 								view.setBigUint64(
-									184,
-									BigInt(view.getUint32(180)),
+									216,
+									BigInt(view.getUint32(212)),
 								);
 							this.record.injectedFault = fault.kind;
 							this.record.dispatchedHeader = Array.from(
-								bytes.slice(0, 192),
+								bytes.slice(0, 224),
 							);
 						}
 						super.postMessage(value, transfer);
@@ -488,13 +488,13 @@ try {
 							} else {
 								const first = await workers();
 								assert.equal(first.length, 1);
-								assert.equal(first[0].request[176], 3);
+								assert.equal(first[0].request[208], 3);
 								assert.equal(
-									first[0].request[177],
+									first[0].request[209],
 									kind === 'dds' ? 1 : 2,
 								);
 								assert.equal(first[0].request[8], 0);
-								assert.equal(first[0].request[9], 2);
+								assert.equal(first[0].request[9], 3);
 								await clickPoint('readyOmit');
 								await page.waitForTimeout(600);
 								assert.equal(
@@ -564,12 +564,12 @@ try {
 								evidence.workers = trace;
 								const mask = kind === 'dds' ? 32 : 4;
 								for (const w of trace) {
-									assert.equal(w.request[176], 3);
-									assert.equal(w.responseBytes[9], 2);
+									assert.equal(w.request[208], 3);
+									assert.equal(w.responseBytes[9], 3);
 									assert.ok(w.responseBytes[193] & mask);
 									assert.deepEqual(
-										w.responseBytes.slice(288, 352),
-										w.request.slice(128, 192),
+										w.responseBytes.slice(320, 384),
+										w.request.slice(160, 224),
 									);
 									assert.equal(w.terminated, true);
 								}

@@ -35,6 +35,7 @@ fn review(app: &mut WebApp) -> Review {
         frozen,
         plan: Some(plan),
         omit_source_metadata: false,
+        bake_filters: false,
         owner,
         name: app.name.clone(),
         filename: "copy.msp".into(),
@@ -173,6 +174,7 @@ fn source_owner_name_modal_or_version_change_cancels_without_adopting_late_resul
         let cancelled = Rc::new(Cell::new(false));
         r.pending = Some(Pending {
             omit_source_metadata: false,
+            bake_filters: false,
             version: Version::RowRleV2,
             result: target.clone(),
             cancelled: cancelled.clone(),
@@ -287,6 +289,7 @@ fn stale_view_and_finish_retire_only_their_own_export_modal() {
                     r.prepared = None;
                     r.pending = Some(Pending {
                         omit_source_metadata: false,
+                        bake_filters: false,
                         version: Version::RowRleV2,
                         result: Rc::new(RefCell::new(None)),
                         cancelled: cancelled.clone(),

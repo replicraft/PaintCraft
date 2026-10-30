@@ -182,6 +182,24 @@ fn text_is_frozen_once_and_kind_config_changes_require_fresh_consent_without_pub
     assert!(std::sync::Arc::ptr_eq(&frozen, &state.frozen.document));
     assert_eq!(state.cache.value().unwrap().entries()[0].rgba(), expected);
     let ico_policy = state.policy.unwrap();
+    assert!(
+        ico_policy
+            .source_metadata
+            .validate(&frozen, state.target())
+            .unwrap()
+    );
+    let checks = std::cell::Cell::new(0);
+    let check = || {
+        checks.set(checks.get() + 1);
+        Ok(())
+    };
+    assert!(
+        !ico_policy
+            .filter_bake
+            .validate(&frozen, state.target(), &check)
+            .unwrap()
+    );
+    assert!(checks.get() > 0);
     h.state_mut()
         .icon_export
         .as_mut()
@@ -192,7 +210,20 @@ fn text_is_frozen_once_and_kind_config_changes_require_fresh_consent_without_pub
     h.run();
     let state = h.state().icon_export.as_ref().unwrap();
     assert!(!state.omit_metadata && state.policy.is_none() && state.cache.value().is_none());
-    assert!(ico_policy.validate(&frozen, state.target()).is_err());
+    assert!(
+        ico_policy
+            .source_metadata
+            .validate(&frozen, state.target())
+            .is_err()
+    );
+    // No-filter Refuse grants no bake authority; omission's original ICO
+    // witness still refuses retargeting to CUR above.
+    assert!(
+        !ico_policy
+            .filter_bake
+            .validate(&frozen, state.target(), &check)
+            .unwrap()
+    );
     h.get_by_label(CHECK).click();
     h.run();
     assert!(h.state().icon_export.as_ref().unwrap().authorized());

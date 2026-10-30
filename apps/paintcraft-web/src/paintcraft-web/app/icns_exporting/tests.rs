@@ -154,3 +154,74 @@ fn changed_export_options_stale_owner_cancel_and_classic_cannot_download_icns() 
     h.state_mut().begin_icns_export();
     assert!(h.state().icns_export.is_none());
 }
+
+#[test]
+fn actual_bake_choice_renders_filters_and_uncheck_retires_asset_authority() {
+    let mut h = Harness::builder()
+        .with_size(egui::vec2(1200., 1200.))
+        .build_eframe(|cc| {
+            let mut app = WebApp::new(&cc.egui_ctx);
+            app.frontend = Frontend::Studio;
+            let mut doc = paintcraft_document::new_document(
+                128,
+                128,
+                Some(paintcraft_core::types::Rgba([17, 31, 47, 255])),
+                0,
+                paintcraft_document::POLICY,
+            )
+            .unwrap();
+            doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+                paintcraft_document::FilterStack::new(vec![
+                    paintcraft_document::FilterInstance::new(
+                        uuid::Uuid::from_u128(1),
+                        true,
+                        paintcraft_core::types::filters::Descriptor::InvertRgbV1,
+                    ),
+                ])
+                .unwrap();
+            app.editor = Editor::from_document(doc).unwrap();
+            app.begin_icns_export();
+            app.icns_export.as_mut().unwrap().draft.config.kinds = vec![widget::Kind::Size128];
+            app
+        });
+    h.run();
+    let original = h.state().editor.session.snapshot();
+    let ticket = h.state().editor.session.history_ticket();
+    assert!(
+        h.state()
+            .icns_export
+            .as_ref()
+            .unwrap()
+            .cache
+            .value()
+            .is_none()
+    );
+    h.get_by_label("Bake editable filters into this exported copy")
+        .click();
+    h.run();
+    let state = h.state().icns_export.as_ref().unwrap();
+    assert!(state.authorized());
+    let prepared = state.cache.value().unwrap();
+    assert_eq!(
+        prepared.entries()[0].rgba(),
+        [238, 224, 208, 255].repeat(128 * 128)
+    );
+    h.get_by_label("Bake editable filters into this exported copy")
+        .click();
+    h.run();
+    assert!(!h.state().icns_export.as_ref().unwrap().authorized());
+    assert!(
+        h.state()
+            .icns_export
+            .as_ref()
+            .unwrap()
+            .cache
+            .value()
+            .is_none()
+    );
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(h.state().icns_export.is_none());
+    assert!(Arc::ptr_eq(&original, &h.state().editor.session.snapshot()));
+    assert_eq!(ticket, h.state().editor.session.history_ticket());
+}
