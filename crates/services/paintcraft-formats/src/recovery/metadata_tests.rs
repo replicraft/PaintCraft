@@ -207,11 +207,11 @@ fn future_versions_are_retained_without_fallback_while_integrity_corruption_stil
     let path = payload_path(&folder.0, id, commit.payload);
     let original = fs::read(&path).unwrap();
     let mut future = original.clone();
-    future[4] = 5;
+    future[4] = 6;
     let end = future.len() - 32;
     let digest = Sha256::digest(&future[..end]);
     future[end..].copy_from_slice(&digest);
-    assert_eq!(crate::pcnd::probe(&future).unwrap().container_version, 5);
+    assert_eq!(crate::pcnd::probe(&future).unwrap().container_version, 6);
     assert_eq!(
         crate::pcnd::probe(&future)
             .unwrap()

@@ -524,3 +524,6 @@ fn pcnd4_mask_checkpoint_scan_and_read_preserve_exact_source_and_coverage() {
     Recovery::discard(&dir, found.session).unwrap();
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[path = "tests/spatial.rs"]
+mod spatial;
