@@ -17,7 +17,7 @@ pub use paintcraft_core::types::policy::LAYER_COUNT_MAX;
 pub use paintcraft_core::types::policy::POLICY;
 mod conversion_identity;
 pub mod filters;
-pub use filters::{FilterInstance, FilterStack};
+pub use filters::{FilterInstance, FilterMask, FilterStack};
 pub mod source_metadata;
 pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
 pub use source_metadata::SourceMetadata;
