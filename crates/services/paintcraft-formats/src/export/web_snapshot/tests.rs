@@ -96,3 +96,80 @@ fn stale_identity_and_codec_layout_checks_precede_snapshot_allocation() {
         .unwrap_err();
     assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
 }
+
+#[test]
+fn full_filter_capacity_has_separate_storage_quote_and_same_id_digest_freshness() {
+    use super::filter_bake::{self, Intent};
+    use paintcraft_core::types::filters::Descriptor;
+    use paintcraft_document::{FilterInstance, FilterStack, filters::FILTERS_MAX};
+    let mut source = doc(1, 1);
+    let first = source.layers[&source.roots[0]].clone();
+    for number in 1..8 {
+        let mut layer = first.clone();
+        layer.id = Uuid::from_u128(number + 100);
+        source.roots.push(layer.id);
+        source.layers.insert(layer.id, layer);
+    }
+    for layer in source.layers.values_mut() {
+        layer.filters = FilterStack::new(
+            (0..FILTERS_MAX)
+                .map(|number| {
+                    FilterInstance::new(
+                        Uuid::from_u128(number as u128),
+                        false,
+                        Descriptor::InvertRgbV1,
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+    }
+    let target = Target::new(
+        crate::registry::Family::Msp,
+        crate::registry::Operation::ExportFlat,
+    );
+    let bake = filter_bake::Policy::capture(&source, target, Intent::Bake, &|| Ok(())).unwrap();
+    let plan = Plan::capture_with_policies(&source, MSP, Policy::default(), bake, target).unwrap();
+    let inventory = plan.filter_inventory();
+    assert_eq!(inventory.filter_count(), (8 * FILTERS_MAX) as u64);
+    assert_eq!(
+        inventory.filter_storage_bytes(),
+        filter_storage_ceiling(8).unwrap()
+    );
+    assert_eq!(plan.flags(), 5); // Flatten and disabled editable intentions.
+    let bytes = plan.snapshot(&source, |_| Ok(())).unwrap();
+    let reopened = crate::pcnd::read(&bytes).unwrap();
+    assert_eq!(
+        filter_bake::inspect(&reopened, &|| Ok(()))
+            .unwrap()
+            .digest(),
+        inventory.digest()
+    );
+    let quote = pre_read_quote(bytes.len(), MSP).unwrap();
+    assert!(
+        quote
+            >= bytes.len() as u64
+                + MSP.resident
+                + (8 << 20)
+                + (1 << 20)
+                + inventory.filter_storage_bytes()
+    );
+    assert_eq!(
+        pre_read_quote(
+            bytes.len(),
+            Limits {
+                resident: u64::MAX,
+                ..MSP
+            }
+        )
+        .unwrap_err()
+        .code,
+        ErrorCode::ResourceLimit
+    );
+    // No source pixels or state UUID change; the cached semantic stack changes.
+    source.layers.get_mut(&source.roots[0]).unwrap().filters = FilterStack::default();
+    assert_eq!(
+        plan.snapshot(&source, |_| Ok(())).unwrap_err().code,
+        ErrorCode::ConflictStaleBase
+    );
+}

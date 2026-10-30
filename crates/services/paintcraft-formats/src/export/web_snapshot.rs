@@ -1,5 +1,6 @@
 //! Shared source inventory/raw serialization for admitted browser export jobs.
 //! No codec settings, rendering, scheduling or public reader policy lives here.
+use super::filter_bake::{self, Inventory};
 use super::{
     SourceMetadataContext,
     metadata_policy::{Policy, Target},
@@ -7,6 +8,8 @@ use super::{
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 use uuid::Uuid;
+mod resources;
+pub(crate) use resources::{filter_storage_ceiling, pre_read_quote};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Limits {
@@ -29,6 +32,8 @@ pub(crate) struct Plan {
     policy: Policy,
     target: Target,
     context: SourceMetadataContext,
+    filters: Inventory,
+    bake: filter_bake::Policy,
 }
 impl Plan {
     #[cfg(test)]
@@ -44,10 +49,20 @@ impl Plan {
             ),
         )
     }
+    #[cfg(test)]
     pub fn capture_with_metadata_policy(
         doc: &Document,
         limits: Limits,
         policy: Policy,
+        target: Target,
+    ) -> Result<Self> {
+        Self::capture_with_policies(doc, limits, policy, filter_bake::Policy::default(), target)
+    }
+    pub fn capture_with_policies(
+        doc: &Document,
+        limits: Limits,
+        policy: Policy,
+        bake: filter_bake::Policy,
         target: Target,
     ) -> Result<Self> {
         let context = SourceMetadataContext::capture(doc, policy, target)?;
@@ -67,6 +82,8 @@ impl Plan {
         {
             return Err(resource("document geometry/layer profile"));
         }
+        bake.validate(doc, target, &|| Ok(()))?;
+        let filters = filter_bake::inspect(doc, &|| Ok(()))?;
         let (mut pixels, mut resident) = (0u64, 0u64);
         let mut metadata = doc.title.as_ref().map_or(0, |s| s.len() as u64);
         for layer in doc.layers.values() {
@@ -84,7 +101,10 @@ impl Plan {
                 .and_then(|n| metadata.checked_add(n))
                 .ok_or_else(|| resource("metadata overflow"))?;
         }
-        if pixels > limits.layer_pixels || resident > limits.resident || metadata > limits.metadata
+        if pixels > limits.layer_pixels
+            || resident > limits.resident
+            || metadata > limits.metadata
+            || filters.filter_storage_bytes() > filter_storage_ceiling(limits.layers)?
         {
             return Err(resource("source workspace profile"));
         }
@@ -93,18 +113,28 @@ impl Plan {
             state: doc.state_id,
             size: doc.canvas,
             flags: u8::from(doc.roots.len() > 1)
-                | u8::from(doc.layers.values().any(|l| l.raster.has_hidden_rgb())) << 1,
+                | u8::from(doc.layers.values().any(|l| l.raster.has_hidden_rgb())) << 1
+                | u8::from(filters.has_filters()) << 2,
             limits,
             policy,
             target,
             context,
+            filters,
+            bake,
         })
+    }
+    pub fn filter_inventory(&self) -> Inventory {
+        self.filters
+    }
+    pub fn bake_intent(&self) -> u8 {
+        u8::from(matches!(self.bake, filter_bake::Policy::Bake(_)))
     }
     pub fn metadata_context(&self) -> SourceMetadataContext {
         self.context
     }
     pub fn validate_policy(&self, doc: &Document) -> Result<()> {
         self.policy.validate(doc, self.target)?;
+        self.bake.validate(doc, self.target, &|| Ok(()))?;
         if SourceMetadataContext::capture(doc, self.policy, self.target)? != self.context {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
@@ -131,12 +161,15 @@ impl Plan {
         check_layout: impl FnOnce((u32, u32)) -> Result<()>,
     ) -> Result<Vec<u8>> {
         self.validate_policy(doc)?;
-        let fresh = Self::capture_with_metadata_policy(doc, self.limits, self.policy, self.target)?;
+        let fresh =
+            Self::capture_with_policies(doc, self.limits, self.policy, self.bake, self.target)?;
         check_layout(doc.canvas)?;
         if fresh.document != self.document
             || fresh.state != self.state
             || fresh.size != self.size
             || fresh.flags != self.flags
+            || fresh.filters.digest() != self.filters.digest()
+            || fresh.filters.filter_count() != self.filters.filter_count()
         {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
