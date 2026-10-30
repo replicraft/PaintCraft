@@ -27,15 +27,20 @@ six-target stock-codec and physical qualification remain open.
 bytes, exact signed resolution and orientation facts through history and PCND2.
 Independent Python serialization matches raw output, and real canvas edits,
 Undo/Redo, cold spill/restoration, admission and export refusal controls pass.
-PNG new-document imports now retain exact decompressed ICC bytes and resolution
+PNG and BMP new-document imports now retain original ICC bytes and resolution
 values through native, browser, CLI and MCP adoption using shared host admission.
-Actual Chrome visible consent, PCND2 save/fresh reopen and explicit PNG privacy
+BMP preserves exact signed pixels-per-metre declarations without activating
+physical print settings.
+Actual Chrome PNG/BMP visible consent, PCND2 save/fresh reopen and explicit PNG privacy
 export preserve the source attachment and numeric pixels; Cancel and export
 leave the project unchanged. Other source attachments, palette/index retention
 and color-managed conversion remain unfinished. Original ICC is not activated
 for working pixels. Documents without attachments keep their exact PCND1
 representation; initial import also checks the current snapshot against PCND's
-actual metadata save limit. Representative DDS/MSP browser Worker flows also
+actual compact metadata save limit. Browser and CLI/MCP sessions now reject
+newly authored metadata growth before publication, preserving history and text
+drafts on refusal. Native activation still awaits the retained text-submission
+lifecycle. Representative DDS/MSP browser Worker flows also
 pass consent, revocation, cancellation and independent output checks, plus 12
 real tampered-request/admission cases. Broader format, browser and native target
 qualification remains separate work.

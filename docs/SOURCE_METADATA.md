@@ -1,8 +1,9 @@
 # Original source metadata
 
 The document can retain one immutable attachment describing its original source.
-PNG new-document imports now create the attachment when iCCP or pHYs is present;
-opening PCND2 restores previously stored attachments. Other foreign importers,
+PNG new-document imports create the attachment when iCCP or pHYs is present.
+BMP new-document imports retain embedded V5 ICC bytes and nonzero signed
+pixels-per-metre declarations. Opening PCND2 restores stored attachments. Other foreign importers,
 palette/index retention, complete EXIF preservation, per-layer provenance and
 color-managed conversion remain separate work.
 
@@ -68,7 +69,7 @@ caller-owned `pcnd::MetadataAdmission` limit/budget. Failure during later layer
 admission releases the attachment lease.
 
 Legacy PCND read wrappers create a per-read bounded realm. Application PCND loads and
-PNG imports instead pass their host's shared resource realm. Browser pending
+PNG/BMP imports instead pass their host's shared resource realm. Browser pending
 loads, parked interfaces and retained snapshots share one 64 MiB logical metadata
 allowance; import previews use that allowance too. This is accounting for these
 allocations, rather than a total process or GPU memory cap.
@@ -79,14 +80,30 @@ EXIF, palette indices, text chunks or unrelated color declarations. Notices
 distinguish retained-but-inactive ICC/resolution from actual omissions. Neither
 retaining a profile nor accepting its notice activates color management.
 
+BMP retention preserves the original embedded profile slice and signed density
+without assigning it to working pixels. An all-zero density pair is unset;
+negative or mixed-zero declarations remain inactive provenance. Palette indices,
+reserved fields, calibrated color and gamma declarations are still omitted.
+The lower-level raster decode and layer insertion paths retain their separate
+omission policy. Native, browser, CLI and MCP adoption controls cover thirteen
+independent retained-metadata specimens. Production Chrome additionally passes
+BMP consent, PCND save/reopen and explicit PNG privacy-copy checks, with exact
+independent pixel and attachment comparisons.
+
 The retained conversion has its own versioned identity binding source bytes,
 geometry, RGBA samples and the attachment digest. The original source SHA256
 remains the file guard. Layer insertion and paste retain their separate omission
 policy; a second picture's profile is not assigned to the whole document.
 Warned new-document conversions become unsaved copies. Before adoption, a PCND
 preflight checks the current snapshot against the actual aggregate metadata
-limit, including the exact boundary. Future layer/title growth must still obey
-ordinary save admission.
+limit, including the exact boundary and the actual selected compact record
+lengths. A tile-count upper bound avoids scanning ordinary resident tiles; near
+the limit, exact compact metadata counting remains authoritative. CLI/MCP and
+browser sessions also check newly authored content before atomic publication,
+so rejected layer or raster growth leaves the document and history unchanged.
+Existing snapshots and history remain readable and navigable. Native session
+activation remains pending its retained text-submission lifecycle; initial
+native import admission is already checked.
 
 Foreign document export defaults to refusing attached metadata. Explicit privacy
 omission is captured against one frozen document ID, state ID, attachment digest,
