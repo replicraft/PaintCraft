@@ -5,6 +5,7 @@ mod legacy;
 mod prepare;
 pub use prepare::{
     Prepared, PreparedEntry, prepare_document, prepare_document_with_metadata_policy,
+    prepare_document_with_policies,
 };
 mod read;
 #[cfg(test)]

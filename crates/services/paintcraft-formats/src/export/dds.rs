@@ -3,7 +3,7 @@ use super::*;
 use crate::dds::{self as texture, EncodedTexture, TextureOptions, TexturePlan};
 mod transfer;
 pub use transfer::{LINEAR_POLICY, LINEAR_QUANTIZATION_LOSS, TransferReceipt};
-/// At most five actual loss names, their Vec/String payloads and bounded missing-
+/// At most seven actual loss names, their Vec/String payloads and bounded missing-
 /// consent diagnostics. This is logical metadata payload, not allocator/RSS.
 pub const METADATA_PAYLOAD_BYTES: u64 = 2048;
 pub fn preparation_reservation_bytes(plan: &TexturePlan) -> Result<u64> {
@@ -102,13 +102,36 @@ pub fn prepare_document_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<PreparedDds> {
+    prepare_document_with_policies(
+        doc,
+        options,
+        allowed,
+        admit,
+        render,
+        check,
+        crate::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub fn prepare_document_with_policies(
+    doc: &Document,
+    options: TextureOptions,
+    allowed: &[String],
+    admit: impl FnOnce(&TexturePlan, u64) -> Result<()>,
+    render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+    policies: crate::export::CopyPolicies,
+) -> Result<PreparedDds> {
     check()?;
-    let metadata_omitted = policy.validate(
+    let (metadata_omitted, filters_baked) = policies.validate(
         doc,
         crate::export::metadata_policy::Target::new(
             crate::registry::Family::Dds,
             crate::registry::Operation::ExportFlat,
         ),
+        check,
     )?;
     check_loss_codes(allowed)?;
     let plan = TexturePlan::new(doc.canvas.0, doc.canvas.1, options)?;
@@ -161,6 +184,9 @@ pub fn prepare_document_with_metadata_policy(
     require_losses("DDS texture", &losses, allowed)?;
     if metadata_omitted {
         losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
+    if filters_baked {
+        losses.push(crate::export::filter_bake::BAKED_REASON.to_owned());
     }
     check()?;
     Ok(PreparedDds {

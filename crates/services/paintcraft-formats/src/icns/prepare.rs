@@ -17,6 +17,7 @@ pub struct Prepared {
     entries: Vec<PreparedEntry>,
     losses: Vec<String>,
     metadata_omitted: bool,
+    filters_baked: bool,
 }
 impl Prepared {
     pub fn entries(&self) -> &[PreparedEntry] {
@@ -31,6 +32,8 @@ impl Prepared {
             !allowed.contains(loss)
                 && !(self.metadata_omitted
                     && loss.as_str() == crate::export::metadata_policy::OMITTED_REASON)
+                && !(self.filters_baked
+                    && loss.as_str() == crate::export::filter_bake::BAKED_REASON)
         }) {
             return Err(unsupported(&format!(
                 "ICNS export requires acknowledgment of {loss}"
@@ -71,14 +74,30 @@ pub fn prepare_document_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<Prepared> {
-    check()?;
-    let metadata_omitted = policy.validate(
+    prepare_document_with_policies(
         doc,
-        crate::export::metadata_policy::Target::new(
-            crate::registry::Family::Icns,
-            crate::registry::Operation::ExportAsset,
-        ),
-    )?;
+        kinds,
+        filter,
+        check,
+        crate::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub fn prepare_document_with_policies(
+    doc: &Document,
+    kinds: &[IconType],
+    filter: crate::icons::Filter,
+    check: &dyn Fn() -> Result<()>,
+    policies: crate::export::CopyPolicies,
+) -> Result<Prepared> {
+    check()?;
+    let target = crate::export::metadata_policy::Target::new(
+        crate::registry::Family::Icns,
+        crate::registry::Operation::ExportAsset,
+    );
+    let metadata_omitted = policies.source_metadata.validate(doc, target)?;
     if kinds.is_empty() || kinds.len() > IconType::WRITABLE.len() {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -96,6 +115,8 @@ pub fn prepare_document_with_metadata_policy(
             ));
         }
     }
+    crate::icons::admit_source(doc)?;
+    let filters_baked = policies.filter_bake.validate(doc, target, check)?;
     let sizes: Vec<_> = kinds
         .iter()
         .map(|kind| {
@@ -106,6 +127,9 @@ pub fn prepare_document_with_metadata_policy(
     let (buffers, mut losses) = crate::icons::prepare_pixels(doc, &sizes, filter, check)?;
     if metadata_omitted {
         losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
+    if filters_baked {
+        losses.push(crate::export::filter_bake::BAKED_REASON.to_owned());
     }
     let entries = kinds
         .iter()
@@ -118,5 +142,6 @@ pub fn prepare_document_with_metadata_policy(
         entries,
         losses,
         metadata_omitted,
+        filters_baked,
     })
 }

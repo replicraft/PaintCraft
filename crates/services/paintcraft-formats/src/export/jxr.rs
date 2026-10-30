@@ -56,13 +56,36 @@ pub fn prepare_opaque_rgb_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<OpaqueRgb> {
+    prepare_opaque_rgb_with_policies(
+        doc,
+        encoded_cap,
+        allowed,
+        admit,
+        render,
+        check,
+        crate::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub fn prepare_opaque_rgb_with_policies(
+    doc: &Document,
+    encoded_cap: u64,
+    allowed: &[String],
+    admit: impl FnOnce(Layout, u64) -> Result<()>,
+    render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+    policies: crate::export::CopyPolicies,
+) -> Result<OpaqueRgb> {
     check()?;
-    let metadata_omitted = policy.validate(
+    let (metadata_omitted, filters_baked) = policies.validate(
         doc,
         crate::export::metadata_policy::Target::new(
             crate::registry::Family::Jxr,
             crate::registry::Operation::ExportFlat,
         ),
+        check,
     )?;
     check_loss_codes(allowed)?;
     let layout = Layout::new(doc.canvas.0, doc.canvas.1, encoded_cap)?;
@@ -88,6 +111,9 @@ pub fn prepare_opaque_rgb_with_metadata_policy(
     require_losses("JXR RGB8", &losses, allowed)?;
     if metadata_omitted {
         losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
+    if filters_baked {
+        losses.push(crate::export::filter_bake::BAKED_REASON.to_owned());
     }
     check()?;
     let length = usize::try_from(layout.rgb_bytes())

@@ -94,13 +94,36 @@ pub fn prepare_document_with_metadata_policy(
     render: impl FnOnce(&Document) -> Result<Vec<u8>>,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<PreparedDocument> {
+    prepare_document_with_policies(
+        doc,
+        mode,
+        allowed,
+        limits,
+        check,
+        render,
+        crate::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub fn prepare_document_with_policies(
+    doc: &Document,
+    mode: pcx::Mode,
+    allowed: &[String],
+    limits: DocumentLimits,
+    check: &dyn Fn() -> Result<()>,
+    render: impl FnOnce(&Document) -> Result<Vec<u8>>,
+    policies: crate::export::CopyPolicies,
+) -> Result<PreparedDocument> {
     check()?;
-    let metadata_omitted = policy.validate(
+    let (metadata_omitted, filters_baked) = policies.validate(
         doc,
         crate::export::metadata_policy::Target::new(
             crate::registry::Family::Dcx,
             crate::registry::Operation::ExportFlat,
         ),
+        check,
     )?;
     export::check_loss_codes(allowed)?;
     let (width, height) = doc.canvas;
@@ -145,7 +168,10 @@ pub fn prepare_document_with_metadata_policy(
     }
     let mut options = export::FlatOptions::new(ImageFormat::Pcx, 100);
     options.pcx_mode = mode;
-    if matches!(policy, crate::export::metadata_policy::Policy::Omit(_)) {
+    if matches!(
+        policies.source_metadata,
+        crate::export::metadata_policy::Policy::Omit(_)
+    ) {
         options.source_metadata = crate::export::metadata_policy::Policy::capture(
             doc,
             crate::export::metadata_policy::Target::new(
@@ -155,10 +181,35 @@ pub fn prepare_document_with_metadata_policy(
             crate::export::metadata_policy::Intent::Omit,
         )?;
     }
+    if matches!(
+        policies.filter_bake,
+        crate::export::filter_bake::Policy::Bake(_)
+    ) {
+        options.filter_bake = crate::export::filter_bake::Policy::capture(
+            doc,
+            crate::export::metadata_policy::Target::new(
+                crate::registry::Family::Pcx,
+                crate::registry::Operation::ExportFlat,
+            ),
+            crate::export::filter_bake::Intent::Bake,
+            check,
+        )?;
+    }
+    debug_assert_eq!(
+        filters_baked,
+        !doc.layers.values().all(|layer| layer.filters.is_empty())
+            && matches!(
+                policies.filter_bake,
+                crate::export::filter_bake::Policy::Bake(_)
+            )
+    );
     debug_assert_eq!(
         metadata_omitted,
         doc.source_metadata.is_some()
-            && matches!(policy, crate::export::metadata_policy::Policy::Omit(_))
+            && matches!(
+                policies.source_metadata,
+                crate::export::metadata_policy::Policy::Omit(_)
+            )
     );
     let flat = export::export_flat_options_with_check(doc, options, allowed, render, check)?;
     check()?;

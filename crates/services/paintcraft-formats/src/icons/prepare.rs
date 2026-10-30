@@ -2,7 +2,12 @@
 use super::*;
 use paintcraft_document::Document;
 
-pub const KNOWN_EXPORT_LOSSES: &[&str] = &["flatten", "hidden-rgb", "icon-resized"];
+pub const KNOWN_EXPORT_LOSSES: &[&str] = &[
+    "flatten",
+    "hidden-rgb",
+    "icon-resized",
+    crate::export::filter_bake::BAKED_REASON,
+];
 
 pub fn check_export_loss_codes(allowed: &[String]) -> Result<()> {
     if let Some(code) = allowed
@@ -55,6 +60,7 @@ pub struct Prepared {
     entries: Vec<PreparedEntry>,
     losses: Vec<String>,
     metadata_omitted: bool,
+    filters_baked: bool,
     limits: WriteLimits,
 }
 impl Prepared {
@@ -74,6 +80,8 @@ impl Prepared {
                 !allowed.contains(code)
                     && !(self.metadata_omitted
                         && code.as_str() == crate::export::metadata_policy::OMITTED_REASON)
+                    && !(self.filters_baked
+                        && code.as_str() == crate::export::filter_bake::BAKED_REASON)
             })
             .collect();
         if !missing.is_empty() {
@@ -150,16 +158,36 @@ pub fn prepare_document_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<Prepared> {
-    let metadata_omitted = policy.validate(
+    prepare_document_with_policies(
         doc,
-        crate::export::metadata_policy::Target::new(
-            match kind {
-                Kind::Icon => crate::registry::Family::Ico,
-                Kind::Cursor => crate::registry::Family::Cur,
-            },
-            crate::registry::Operation::ExportAsset,
-        ),
-    )?;
+        kind,
+        specs,
+        filter,
+        limits,
+        check,
+        crate::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+pub fn prepare_document_with_policies(
+    doc: &Document,
+    kind: Kind,
+    specs: &[EntrySpec],
+    filter: Filter,
+    limits: WriteLimits,
+    check: &dyn Fn() -> Result<()>,
+    policies: crate::export::CopyPolicies,
+) -> Result<Prepared> {
+    let target = crate::export::metadata_policy::Target::new(
+        match kind {
+            Kind::Icon => crate::registry::Family::Ico,
+            Kind::Cursor => crate::registry::Family::Cur,
+        },
+        crate::registry::Operation::ExportAsset,
+    );
+    let metadata_omitted = policies.source_metadata.validate(doc, target)?;
     if specs.is_empty() || specs.len() > limits.entries.min(ENTRIES_MAX) {
         return Err(resource("icon output entry count outside writer budget"));
     }
@@ -172,10 +200,15 @@ pub fn prepare_document_with_metadata_policy(
     {
         return Err(resource("icon output set exceeds preparation budget"));
     }
+    admit_source(doc)?;
+    let filters_baked = policies.filter_bake.validate(doc, target, check)?;
     let sizes: Vec<_> = specs.iter().map(|spec| (spec.width, spec.height)).collect();
     let (buffers, mut losses) = prepare_pixels(doc, &sizes, filter, check)?;
     if metadata_omitted {
         losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
+    if filters_baked {
+        losses.push(crate::export::filter_bake::BAKED_REASON.to_owned());
     }
     let entries: Vec<_> = specs
         .iter()
@@ -191,8 +224,21 @@ pub fn prepare_document_with_metadata_policy(
         entries,
         losses,
         metadata_omitted,
+        filters_baked,
         limits,
     })
+}
+
+/// Pure source-layout admission shared by icon/ICNS preparation, before callback
+/// work or pixel allocation. This does not authorize any editable-data loss.
+pub(crate) fn admit_source(doc: &Document) -> Result<()> {
+    if doc.canvas.0 == 0
+        || doc.canvas.1 == 0
+        || u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > WRITE_PIXELS_MAX
+    {
+        return Err(resource("icon source exceeds preparation pixel budget"));
+    }
+    Ok(())
 }
 
 /// Shared fitted pixel preparation for explicit ICO/CUR and ICNS entry sets.
@@ -218,12 +264,7 @@ pub(crate) fn prepare_pixels(
             .filter(|count| *count <= WRITE_PIXELS_MAX)
             .ok_or_else(|| resource("icon output set exceeds preparation pixel budget"))?;
     }
-    if doc.canvas.0 == 0
-        || doc.canvas.1 == 0
-        || u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > WRITE_PIXELS_MAX
-    {
-        return Err(resource("icon source exceeds preparation pixel budget"));
-    }
+    admit_source(doc)?;
     check()?;
     let rgba = paintcraft_render::render_cancellable(doc, check)?;
     let mut losses = Vec::new();

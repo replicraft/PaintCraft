@@ -74,13 +74,39 @@ pub fn prepare_document_with_metadata_policy(
     check: &dyn Fn() -> Result<()>,
     policy: crate::export::metadata_policy::Policy,
 ) -> Result<PreparedMsp> {
+    prepare_document_with_policies(
+        doc,
+        version,
+        allowed,
+        admit_render,
+        admit_encode,
+        render,
+        check,
+        crate::export::CopyPolicies {
+            source_metadata: policy,
+            ..Default::default()
+        },
+    )
+}
+#[allow(clippy::too_many_arguments)]
+pub fn prepare_document_with_policies(
+    doc: &Document,
+    version: Version,
+    allowed: &[String],
+    admit_render: impl FnOnce(RgbaLayout, u64) -> Result<()>,
+    admit_encode: impl FnOnce(RgbaWritePlan) -> Result<()>,
+    render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+    policies: crate::export::CopyPolicies,
+) -> Result<PreparedMsp> {
     check()?;
-    let metadata_omitted = policy.validate(
+    let (metadata_omitted, filters_baked) = policies.validate(
         doc,
         crate::export::metadata_policy::Target::new(
             crate::registry::Family::Msp,
             crate::registry::Operation::ExportFlat,
         ),
+        check,
     )?;
     check_loss_codes(allowed)?;
     let layout = RgbaLayout::new(version, doc.canvas.0, doc.canvas.1)?;
@@ -102,6 +128,9 @@ pub fn prepare_document_with_metadata_policy(
     require_losses("MSP", &losses, allowed)?;
     if metadata_omitted {
         losses.push(crate::export::metadata_policy::OMITTED_REASON.to_owned());
+    }
+    if filters_baked {
+        losses.push(crate::export::filter_bake::BAKED_REASON.to_owned());
     }
     let plan = codec::preflight_rgba_exact(layout, &rgba, check)?;
     admit_encode(plan)?;

@@ -13,7 +13,7 @@ mod prepare;
 mod write;
 pub use prepare::{
     DocumentLimits, PreparedDocument, prepare_document, prepare_document_with,
-    prepare_document_with_metadata_policy,
+    prepare_document_with_metadata_policy, prepare_document_with_policies,
 };
 pub use write::{
     PagePixels, WriteLimits, WritePage, WritePlan, encode_pages, preflight_write, write_pages_to,

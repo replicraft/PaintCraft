@@ -14,6 +14,25 @@ pub use source_metadata_wire::SourceMetadataContext;
 pub mod msp;
 pub(crate) mod web_snapshot;
 
+/// Independently captured authority for two distinct losses in one exact copy.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CopyPolicies {
+    pub source_metadata: metadata_policy::Policy,
+    pub filter_bake: filter_bake::Policy,
+}
+impl CopyPolicies {
+    pub(crate) fn validate(
+        self,
+        doc: &Document,
+        expected: metadata_policy::Target,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(bool, bool)> {
+        let metadata_omitted = self.source_metadata.validate(doc, expected)?;
+        let filters_baked = self.filter_bake.validate(doc, expected, check)?;
+        Ok((metadata_omitted, filters_baked))
+    }
+}
+
 /// Retained original-source facts require a captured privacy/retention decision.
 /// Until that decision is wired, enumerating all loss names grants no authority.
 pub fn require_metadata_policy(doc: &Document) -> Result<()> {
@@ -27,7 +46,7 @@ pub fn require_metadata_policy(doc: &Document) -> Result<()> {
 }
 
 /// Loss codes a caller may acknowledge.
-pub const KNOWN_LOSSES: [&str; 13] = [
+pub const KNOWN_LOSSES: [&str; 14] = [
     "flatten",
     "hidden-rgb",
     "lossy-jpeg",
@@ -41,6 +60,7 @@ pub const KNOWN_LOSSES: [&str; 13] = [
     crate::dds::MIP_HIDDEN_RGB_LOSS,
     dds::LINEAR_QUANTIZATION_LOSS,
     metadata_policy::OMITTED_REASON,
+    filter_bake::BAKED_REASON,
 ];
 
 #[derive(Debug)]
@@ -58,6 +78,7 @@ pub struct FlatOptions {
     pub jpeg_matte: Option<image::JpegMatte>,
     /// Only explicit source-metadata intent can construct an omission witness.
     pub source_metadata: metadata_policy::Policy,
+    pub filter_bake: filter_bake::Policy,
     pub pcx_mode: crate::pcx::Mode,
     /// None retains the default MSP1 route; explicit versions use guarded monochrome preparation.
     pub msp_version: Option<crate::msp::Version>,
@@ -69,6 +90,7 @@ impl FlatOptions {
             quality,
             jpeg_matte: None,
             source_metadata: metadata_policy::Policy::default(),
+            filter_bake: filter_bake::Policy::default(),
             pcx_mode: crate::pcx::Mode::Rgb24,
             msp_version: None,
         }
@@ -145,6 +167,7 @@ pub fn export_flat_options_with_check(
         quality: jpeg_quality,
         jpeg_matte,
         source_metadata,
+        filter_bake,
         pcx_mode,
         msp_version,
     } = options;
@@ -157,7 +180,11 @@ pub fn export_flat_options_with_check(
         })?,
         crate::registry::Operation::ExportFlat,
     );
-    let metadata_omitted = source_metadata.validate(doc, target)?;
+    let (metadata_omitted, filters_baked) = CopyPolicies {
+        source_metadata,
+        filter_bake,
+    }
+    .validate(doc, target, check)?;
     check_loss_codes(allowed)?;
     if jpeg_matte.is_some() && format != ImageFormat::Jpeg {
         return Err(Error::new(
@@ -180,7 +207,7 @@ pub fn export_flat_options_with_check(
         }
         // Low-level callers own admission, as for the legacy flat facade. Hosts
         // needing retained leases use the two-stage preparation API directly.
-        let prepared = msp::prepare_document_with_metadata_policy(
+        let prepared = msp::prepare_document_with_policies(
             doc,
             version,
             allowed,
@@ -188,7 +215,10 @@ pub fn export_flat_options_with_check(
             |_| Ok(()),
             |doc, _| render(doc),
             check,
-            source_metadata,
+            CopyPolicies {
+                source_metadata,
+                filter_bake,
+            },
         )?;
         let (bytes, losses) = prepared.into_parts();
         return Ok(FlatExport { bytes, losses });
@@ -220,6 +250,9 @@ pub fn export_flat_options_with_check(
     require_losses(format.name(), &losses, allowed)?;
     if metadata_omitted {
         losses.push(metadata_policy::OMITTED_REASON.into());
+    }
+    if filters_baked {
+        losses.push(filter_bake::BAKED_REASON.into());
     }
     let bytes = if let Some(prepared) = prepared {
         prepared.encode(check)?

@@ -3,11 +3,11 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 
 mod payload;
 mod prepare;
-pub(crate) use prepare::prepare_pixels;
 pub use prepare::{
     EntrySpec, Filter, KNOWN_EXPORT_LOSSES, Prepared, PreparedEntry, check_export_loss_codes,
-    prepare_document, prepare_document_with_metadata_policy,
+    prepare_document, prepare_document_with_metadata_policy, prepare_document_with_policies,
 };
+pub(crate) use prepare::{admit_source, prepare_pixels};
 mod write;
 pub use write::{WRITE_PIXELS_MAX, WriteEntry, WriteLimits, encode_entries};
 
