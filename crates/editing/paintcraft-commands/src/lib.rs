@@ -12,6 +12,8 @@ use uuid::Uuid;
 use paintcraft_core::types::ids::parse_uuid;
 use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
+mod filters;
+pub use filters::{FilterOp, FilterRef};
 mod mask;
 pub use mask::{validate_mask_spans, validate_mask_spans_checked};
 mod contour;
@@ -45,6 +47,7 @@ pub enum ShapeKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
+    Filter(FilterOp),
     /// v2: removal half of Cut; hosts must acknowledge their clipboard write first.
     /// Clear only canvas/layer/selection coverage and preserve the selection.
     CutSelection {

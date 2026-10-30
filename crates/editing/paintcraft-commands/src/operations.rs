@@ -6,32 +6,34 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
     if version < 2
-        && matches!(
-            name,
-            "canvas.clear"
-                | "raster.cut_selection"
-                | "selection.set_polygon"
-                | "selection.invert"
-                | "layer.expand"
-                | "raster.stroke_path"
-                | "raster.flood_fill"
-                | "raster.shape"
-                | "raster.contour"
-                | "canvas.crop"
-                | "canvas.transform"
-                | "raster.transform_selection"
-                | "raster.move_selection"
-                | "raster.text"
-                | "raster.mask_spans"
-                | "layer.reorder"
-                | "layer.duplicate"
-        )
+        && (name.starts_with("filter.")
+            || matches!(
+                name,
+                "canvas.clear"
+                    | "raster.cut_selection"
+                    | "selection.set_polygon"
+                    | "selection.invert"
+                    | "layer.expand"
+                    | "raster.stroke_path"
+                    | "raster.flood_fill"
+                    | "raster.shape"
+                    | "raster.contour"
+                    | "canvas.crop"
+                    | "canvas.transform"
+                    | "raster.transform_selection"
+                    | "raster.move_selection"
+                    | "raster.text"
+                    | "raster.mask_spans"
+                    | "layer.reorder"
+                    | "layer.duplicate"
+            ))
     {
         return Err(bad(format!(
             "operation {name:?} requires paintcraft.batch/v2"
         )));
     }
     Ok(match name {
+        name if name.starts_with("filter.") => filters::parse(v)?,
         "raster.cut_selection" => {
             let o = obj(v, &["op", "layer_ref", "clear"], &[])?;
             Op::CutSelection {

@@ -41,6 +41,18 @@ impl Descriptor {
             Self::BrightnessContrastV1(_) => "brightness-contrast-v1",
         }
     }
+    /// Stable inspection/command representation; versions are part of kind.
+    pub fn to_value(self) -> super::json::Value {
+        use super::json::Value;
+        match self {
+            Self::InvertRgbV1 => Value::object([("kind", Value::str(self.id()))]),
+            Self::BrightnessContrastV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                ("brightness", Value::Int(i64::from(p.brightness()))),
+                ("contrast", Value::Int(i64::from(p.contrast()))),
+            ]),
+        }
+    }
     /// Unknown algorithms/versions are never approximated by a known filter.
     pub fn checked(id: &str, brightness: Option<i16>, contrast: Option<i16>) -> Result<Self> {
         match (id, brightness, contrast) {

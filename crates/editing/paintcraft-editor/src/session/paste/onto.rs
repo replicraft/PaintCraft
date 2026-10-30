@@ -127,6 +127,7 @@ impl Session {
             doc,
             selection,
             aliases: BTreeMap::from([("pasted".into(), target)]),
+            filter_aliases: BTreeMap::new(),
         })
     }
 }

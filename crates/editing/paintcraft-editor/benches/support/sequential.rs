@@ -238,6 +238,12 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::Filter(_) => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Historical sequential baseline predates filter operations",
+                ));
+            }
             Op::CutSelection { .. }
             | Op::SelectionSetPolygon { .. }
             | Op::SelectionInvert

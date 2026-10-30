@@ -118,6 +118,7 @@ impl Preparation {
             publication_epoch: self.base.publication_epoch,
             history_id: None,
             aliases: BTreeMap::new(),
+            filter_aliases: BTreeMap::new(),
         };
         Ok(PreparedEdit {
             base: self.base,

@@ -108,6 +108,7 @@ impl Session {
                 doc,
                 selection,
                 aliases: BTreeMap::from([("pasted".into(), id)]),
+                filter_aliases: BTreeMap::new(),
             },
             &digest,
             Label::Paste,

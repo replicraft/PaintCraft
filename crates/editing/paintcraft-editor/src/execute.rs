@@ -5,6 +5,9 @@ mod canvas;
 mod contour;
 mod crop;
 mod fill;
+mod filters;
+mod staged;
+pub use filters::PublishedAliases as FilterAliases;
 mod layers;
 mod mask;
 mod paint;
@@ -54,6 +57,7 @@ pub struct Staged {
     pub selection: Selection,
     /// Layers created by the batch that still exist.
     pub aliases: BTreeMap<String, Uuid>,
+    pub filter_aliases: FilterAliases,
 }
 
 pub fn execute(base: &Document, selection: Selection, batch: &Batch) -> Result<Staged> {
@@ -110,6 +114,7 @@ pub fn execute_with_geometry_cache(
         selections: planning::storage::Store::new(&admission),
         selection_geometries: planning::storage::Store::new(&admission),
         aliases: HashMap::new(),
+        filter_aliases: HashMap::new(),
         planning: Some(planning::Compiler::new(&admission, batch, check)?),
         operation: 0,
         adm: admission,
@@ -143,6 +148,7 @@ pub fn execute_with_geometry_cache(
     s.doc = base.clone();
     s.selection = selection;
     s.aliases.clear();
+    s.filter_aliases.clear();
     s.geometry = None;
     let (_charge, values) = paints.into_parts();
     let mut paints = values.into_iter().peekable();
@@ -199,19 +205,7 @@ pub fn execute_with_geometry_cache(
         ));
     }
     check()?;
-    let aliases = s
-        .aliases
-        .into_iter()
-        .filter_map(|(a, id)| {
-            id.filter(|id| s.doc.layers.contains_key(id))
-                .map(|id| (a, id))
-        })
-        .collect();
-    Ok(Staged {
-        doc: s.doc,
-        selection: s.selection,
-        aliases,
-    })
+    Ok(staged::finish(s))
 }
 
 struct Stage<'a> {
@@ -221,6 +215,7 @@ struct Stage<'a> {
     selection_geometries: planning::storage::Store<(usize, Option<selection_transform::Geometry>)>,
     /// Every alias ever declared in this batch; `None` once its layer is deleted.
     aliases: HashMap<String, Option<Uuid>>,
+    filter_aliases: filters::Aliases,
     adm: Admission,
     pencil_pixels: i128,
     pencil_segments: i128,
@@ -327,6 +322,7 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::Filter(op) => self.edit_filter(index, op)?,
             Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
                 self.mask_selection(index, op)?
             }

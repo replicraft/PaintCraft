@@ -37,7 +37,7 @@ pub use persistence::PersistentValidator;
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
 
-/// `paintcraft.result/v1`.
+/// Legacy receipts use result/v1; nonempty filter aliases require result/v2.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Receipt {
     pub committed: bool,
@@ -45,12 +45,20 @@ pub struct Receipt {
     pub publication_epoch: u64,
     pub history_id: Option<Uuid>,
     pub aliases: BTreeMap<String, Uuid>,
+    pub filter_aliases: crate::execute::FilterAliases,
 }
 
 impl Receipt {
     pub fn to_value(&self) -> Value {
-        Value::object([
-            ("schema", Value::str("paintcraft.result/v1")),
+        let Value::Object(mut fields) = Value::object([
+            (
+                "schema",
+                Value::str(if self.filter_aliases.is_empty() {
+                    "paintcraft.result/v1"
+                } else {
+                    "paintcraft.result/v2"
+                }),
+            ),
             ("committed", Value::Bool(self.committed)),
             ("state_id", Value::str(self.state_id.to_string())),
             (
@@ -72,7 +80,29 @@ impl Receipt {
                 ),
             ),
             ("warnings", Value::Array(Vec::new())),
-        ])
+        ]) else {
+            unreachable!("object constructor");
+        };
+        if !self.filter_aliases.is_empty() {
+            fields.insert(
+                "filter_aliases".into(),
+                Value::Object(
+                    self.filter_aliases
+                        .iter()
+                        .map(|(alias, (layer, filter))| {
+                            (
+                                alias.clone(),
+                                Value::object([
+                                    ("layer_id", Value::str(layer.to_string())),
+                                    ("filter_id", Value::str(filter.to_string())),
+                                ]),
+                            )
+                        })
+                        .collect(),
+                ),
+            );
+        }
+        Value::Object(fields)
     }
 }
 
@@ -323,6 +353,7 @@ impl Session {
                 publication_epoch: self.epoch,
                 history_id: None,
                 aliases: BTreeMap::new(),
+                filter_aliases: BTreeMap::new(),
             });
         }
         let next_epoch = self.next_epoch()?;
@@ -354,6 +385,7 @@ impl Session {
             publication_epoch: self.epoch,
             history_id: Some(history_id),
             aliases: staged.aliases,
+            filter_aliases: staged.filter_aliases,
         })
     }
 

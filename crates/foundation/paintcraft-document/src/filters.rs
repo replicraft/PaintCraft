@@ -125,3 +125,20 @@ fn hash(instances: &[FilterInstance]) -> [u8; 32] {
 
 #[cfg(test)]
 mod tests;
+
+/// Read-only ordered inspection. This cannot authorize evaluation or publication.
+pub fn inspection(stack: &FilterStack) -> paintcraft_core::types::json::Value {
+    use paintcraft_core::types::json::Value;
+    Value::Array(
+        stack
+            .iter()
+            .map(|instance| {
+                Value::object([
+                    ("id", Value::str(instance.id().to_string())),
+                    ("enabled", Value::Bool(instance.enabled())),
+                    ("descriptor", instance.descriptor().to_value()),
+                ])
+            })
+            .collect(),
+    )
+}

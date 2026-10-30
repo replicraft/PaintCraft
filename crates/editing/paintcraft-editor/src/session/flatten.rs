@@ -33,6 +33,7 @@ impl Session {
                 publication_epoch: self.epoch,
                 history_id: None,
                 aliases: BTreeMap::new(),
+                filter_aliases: BTreeMap::new(),
             });
         }
         let (width, height) = self.doc.canvas;
@@ -84,6 +85,7 @@ impl Session {
                 doc,
                 selection: self.selection.clone(),
                 aliases: BTreeMap::from([("flattened".into(), id)]),
+                filter_aliases: BTreeMap::new(),
             },
             &digest,
             Label::FlattenImage,
