@@ -34,14 +34,10 @@ pub(crate) struct Canvas {
 }
 
 impl Canvas {
-    pub(crate) fn committed_texture(
-        &self,
-        owner: uuid::Uuid,
-        ticket: Ticket,
-    ) -> Option<TextureHandle> {
-        self.key
-            .filter(|key| key.owner == owner && key.source == ticket && key.composition.is_none())
-            .and_then(|_| self.texture.clone())
+    fn committed_texture(&self, key: RenderKey) -> Option<TextureHandle> {
+        (self.key == Some(key) && key.composition.is_none())
+            .then(|| self.texture.clone())
+            .flatten()
     }
     pub(crate) fn invalidate(&mut self) {
         self.key = None;
@@ -376,6 +372,12 @@ impl WebApp {
         crate::app::filter_editing::render::View::new(self.editor.session.document(), region, level)
             .ok()
     }
+    pub(crate) fn committed_filter_base_texture(&self) -> Option<TextureHandle> {
+        if self.canvas.paste_revision != self.paste_revision() {
+            return None;
+        }
+        self.canvas.committed_texture(self.canvas_render_key())
+    }
     pub(crate) fn mark_filter_canvas_current(&mut self) {
         self.canvas.key = Some(self.canvas_render_key());
         self.canvas.paste_revision = None;
@@ -393,6 +395,10 @@ impl WebApp {
             Some(ctx.load_texture("web-filter-document", image, TextureOptions::NEAREST));
         self.canvas.filter_footprint = Some(footprint);
         self.mark_filter_canvas_current();
+    }
+    #[cfg(test)]
+    pub(crate) fn test_refresh_texture(&mut self, ctx: &egui::Context) {
+        self.refresh_texture(ctx);
     }
     fn refresh_texture(&mut self, ctx: &egui::Context) {
         if self.worker_filter_canvas(ctx) {

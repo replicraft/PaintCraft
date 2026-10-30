@@ -367,3 +367,25 @@ impl WebApp {
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+impl WebApp {
+    /// Bounded decoded image fixture through the real private placement path.
+    pub(crate) fn test_place_image(
+        &mut self,
+        ctx: &egui::Context,
+        image: paintcraft_core::types::clipboard::Image,
+    ) {
+        self.paste.intent = Intent::CurrentLayer;
+        self.paste_with(ctx, || {
+            Ok(clipboard::Job::completed(Ok(clipboard::Decoded {
+                image,
+                losses: vec![],
+            })))
+        });
+        self.poll_paste(ctx);
+        let ready = self.paste.ready.take().expect("placement fixture admitted");
+        self.accept_paste(ctx, ready);
+        assert!(self.paste.is_placing());
+    }
+}

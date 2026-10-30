@@ -15,6 +15,8 @@ mod view;
 use render::{Capture, Renderer, Request, View};
 use state::{Draft, Revision};
 #[cfg(test)]
+mod late_base_tests;
+#[cfg(test)]
 mod tests;
 
 #[derive(Default)]
@@ -86,15 +88,31 @@ impl WebApp {
         }
         match Draft::capture(self, operation) {
             Ok(draft) => {
-                let base_texture = self.canvas.committed_texture(
-                    self.editor.session.owner_id(),
-                    self.editor.session.ticket(),
-                );
+                let (base_texture, base_footprint, base_view) = if self
+                    .filter_display
+                    .committed
+                    .as_ref()
+                    .is_some_and(|source| self.filter_source_current(source))
+                {
+                    (
+                        self.filter_display.texture.clone(),
+                        self.filter_display.footprint,
+                        self.filter_display.view,
+                    )
+                } else {
+                    let texture = self.committed_filter_base_texture();
+                    let footprint = texture.as_ref().and(self.canvas.filter_footprint);
+                    let view = texture.as_ref().and(self.canvas.filter_view);
+                    (texture, footprint, view)
+                };
+                self.canvas.texture = base_texture.clone();
+                self.canvas.filter_footprint = base_footprint;
+                self.canvas.invalidate();
                 self.filter_editing = Some(State {
                     draft,
                     base_texture,
-                    base_footprint: self.canvas.filter_footprint,
-                    base_view: self.canvas.filter_view,
+                    base_footprint,
+                    base_view,
                 });
                 self.queue_filter_preview();
                 ctx.request_repaint();
@@ -183,41 +201,7 @@ impl WebApp {
             self.message = "Filter not applied: its document changed".into();
         }
         if let Some(reply) = self.filter_display.renderer.poll(ctx) {
-            let current = self.filter_editing.as_ref().is_some_and(|state| {
-                state.draft.current(self) && state.draft.revision == reply.request.revision
-            }) || self.filter_editing.is_none()
-                && self.filter_display.source.as_ref().is_some_and(|source| {
-                    self.filter_source_current(source)
-                        && source.draft == reply.request.revision.draft
-                });
-            if current {
-                if let Some(pixels) = reply.pixels {
-                    self.install_filter_pixels(
-                        ctx,
-                        reply.size,
-                        reply.request.view.footprint,
-                        &pixels,
-                    );
-                    if let Some(state) = &mut self.filter_editing
-                        && !state.draft.parameters.preview
-                        && reply.request.edit.is_none()
-                    {
-                        state.base_texture = self.canvas.texture.clone();
-                        state.base_footprint = self.canvas.filter_footprint;
-                        state.base_view = Some(reply.request.view);
-                    }
-                    if self.filter_editing.is_none() {
-                        self.filter_display.committed = self.filter_display.source.clone();
-                        self.filter_display.texture = self.canvas.texture.clone();
-                        self.filter_display.footprint = self.canvas.filter_footprint;
-                        self.filter_display.view = Some(reply.request.view);
-                    }
-                } else if let Some(state) = &mut self.filter_editing
-                    && reply.request.edit.is_some()
-                {
-                    state.draft.prepared = Some(state.draft.revision);
-                }
-            }
+            self.accept_filter_reply(ctx, reply);
         }
         if let Some(state) = &mut self.filter_editing
             && let Some((revision, error)) = &self.filter_display.renderer.error
@@ -227,6 +211,62 @@ impl WebApp {
             state.draft.apply = None;
         }
         self.finish_filter_apply(ctx);
+    }
+    fn ordinary_filter_preview(&self) -> bool {
+        self.text.is_composing()
+            || self.paste.is_placing()
+            || self.editor.tools.is_editing_text()
+            || self.editor.tools.floating_selection().is_some()
+            || (self.editor.tools.gesture_in_progress()
+                && !self.editor.tools.gesture_is_selection())
+    }
+    fn accept_filter_reply(&mut self, ctx: &egui::Context, reply: render::Reply) {
+        let private = self.filter_editing.as_ref().is_some_and(|state| {
+            state.draft.current(self) && state.draft.revision == reply.request.revision
+        });
+        let committed = self.filter_editing.is_none()
+            && reply.request.edit.is_none()
+            && self.filter_display.source.as_ref().is_some_and(|source| {
+                self.filter_source_current(source) && source.draft == reply.request.revision.draft
+            });
+        if !(private || committed) {
+            return;
+        }
+        if let Some(pixels) = reply.pixels {
+            if committed {
+                // Store this admitted BASE independently. It is not the current
+                // brush/text/IME/floating/paste image, even though the source matches.
+                let image = egui::ColorImage::from_rgba_unmultiplied(
+                    [reply.size.0 as usize, reply.size.1 as usize],
+                    &pixels,
+                );
+                let texture =
+                    ctx.load_texture("web-filter-base", image, egui::TextureOptions::NEAREST);
+                self.filter_display.committed = self.filter_display.source.clone();
+                self.filter_display.texture = Some(texture.clone());
+                self.filter_display.footprint = Some(reply.request.view.footprint);
+                self.filter_display.view = Some(reply.request.view);
+                if !self.ordinary_filter_preview() {
+                    self.canvas.texture = Some(texture);
+                    self.canvas.filter_footprint = self.filter_display.footprint;
+                    self.mark_filter_canvas_current();
+                }
+            } else {
+                self.install_filter_pixels(ctx, reply.size, reply.request.view.footprint, &pixels);
+                if let Some(state) = &mut self.filter_editing
+                    && !state.draft.parameters.preview
+                    && reply.request.edit.is_none()
+                {
+                    state.base_texture = self.canvas.texture.clone();
+                    state.base_footprint = self.canvas.filter_footprint;
+                    state.base_view = Some(reply.request.view);
+                }
+            }
+        } else if let Some(state) = &mut self.filter_editing
+            && reply.request.edit.is_some()
+        {
+            state.draft.prepared = Some(state.draft.revision);
+        }
     }
     pub(super) fn finish_filter_apply(&mut self, ctx: &egui::Context) {
         let Some(state) = &self.filter_editing else {
@@ -298,11 +338,7 @@ impl WebApp {
     }
     pub(crate) fn worker_filter_canvas(&mut self, ctx: &egui::Context) -> bool {
         // Existing ordinary tool previews remain a separate synchronous boundary.
-        if self.filter_editing.is_none()
-            && (self.editor.tools.preview().is_some()
-                || self.text.is_composing()
-                || self.paste.is_placing())
-        {
+        if self.filter_editing.is_none() && self.ordinary_filter_preview() {
             return false;
         }
         if self.filter_editing.is_some() {
@@ -332,22 +368,21 @@ impl WebApp {
             .committed
             .as_ref()
             .is_some_and(|source| self.filter_source_current(source))
-            && self.filter_display.view == self.canvas.filter_view
         {
+            // A valid old-ROI BASE remains honest while the new ROI is pending.
             self.canvas.texture = self.filter_display.texture.clone();
             self.canvas.filter_footprint = self.filter_display.footprint;
-            self.mark_filter_canvas_current();
-            self.pump_filter_editing(ctx);
-            return true;
-        }
-        if self
-            .filter_display
-            .committed
-            .as_ref()
-            .is_some_and(|s| s.owner != self.editor.session.owner_id())
-        {
+            if self.filter_display.view == self.canvas.filter_view {
+                self.mark_filter_canvas_current();
+                self.pump_filter_editing(ctx);
+                return true;
+            }
+            self.canvas.invalidate();
+        } else {
+            // Never leave cancelled private pixels displayed as pending BASE.
             self.canvas.texture = None;
-            self.filter_display.texture = None;
+            self.canvas.filter_footprint = None;
+            self.canvas.invalidate();
         }
         let source = if let Some(source) = &self.filter_display.source
             && self.filter_source_current(source)
