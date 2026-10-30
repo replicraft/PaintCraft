@@ -1,6 +1,8 @@
-//! PCND3 point-filter intentions; no source raster or evaluated pixels are encoded here.
+//! PCND3/4 versioned point-algorithm registry; source/evaluated pixels are separate.
 use super::*;
-use paintcraft_core::types::filters::{BrightnessContrastV1, Descriptor};
+use paintcraft_core::types::filters::{
+    BlackWhiteV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1,
+};
 use paintcraft_document::{FilterInstance, FilterStack, filters::FILTERS_MAX};
 
 pub(super) fn write<W: Write>(
@@ -22,6 +24,16 @@ pub(super) fn write<W: Write>(
                 output.signed(i64::from(parameters.brightness()))?;
                 output.signed(i64::from(parameters.contrast()))?;
             }
+            Descriptor::BlackWhiteRgbV1(parameters) => {
+                output.bytes(&[3, parameters.strength()])?;
+            }
+            Descriptor::ThresholdLumaV1(parameters) => {
+                output.bytes(&[4, parameters.level()])?;
+            }
+            Descriptor::PosterizeRgbV1(parameters) => {
+                output.bytes(&[5, parameters.levels()])?;
+            }
+            Descriptor::SolarizeRgbV1 => output.bytes(&[6])?,
         }
         if masked {
             masks::write(instance.mask(), output, mask_check)?;
@@ -85,6 +97,19 @@ pub(super) fn read(
                         .map_err(|_| codec("invalid brightness/contrast range"))?,
                 )
             }
+            3 => Descriptor::BlackWhiteRgbV1(
+                BlackWhiteV1::new(i16::from(input.byte()?))
+                    .map_err(|_| codec("invalid black and white strength"))?,
+            ),
+            4 => Descriptor::ThresholdLumaV1(
+                ThresholdLumaV1::new(i16::from(input.byte()?))
+                    .map_err(|_| codec("invalid luma threshold"))?,
+            ),
+            5 => Descriptor::PosterizeRgbV1(
+                PosterizeRgbV1::new(i16::from(input.byte()?))
+                    .map_err(|_| codec("invalid posterize level count"))?,
+            ),
+            6 => Descriptor::SolarizeRgbV1,
             _ => return Err(unsupported("unknown PCND filter algorithm/version")),
         };
         if start - input.remaining() > allowance {
@@ -130,6 +155,10 @@ pub(super) fn metadata_bytes(stack: &FilterStack) -> u64 {
                     Descriptor::BrightnessContrastV1(parameters) => {
                         signed_bytes(parameters.brightness()) + signed_bytes(parameters.contrast())
                     }
+                    Descriptor::BlackWhiteRgbV1(_)
+                    | Descriptor::ThresholdLumaV1(_)
+                    | Descriptor::PosterizeRgbV1(_) => 1,
+                    Descriptor::SolarizeRgbV1 => 0,
                 }
             })
             .sum::<u64>()

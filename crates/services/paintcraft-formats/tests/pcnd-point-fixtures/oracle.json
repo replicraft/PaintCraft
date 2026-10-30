@@ -1,0 +1,1483 @@
+{
+  "generator": "Independent PCND3/4 algorithm-registry specimens, Python stdlib only.",
+  "parent_sha256": "affda8ae5ee4ed14b2cc215d95c77409edb201353618e5a9e681c0d015cccf9b",
+  "attachment_parent_sha256": "9467cc8bd7c9792d0967ff0cc016eff59f2b47147b87aa4d9be145111ebc77c0",
+  "arithmetic": "Independent exact Fraction expressions; candidate rounded before per-filter coverage; hidden RGB evaluated, alpha unchanged.",
+  "document": "33333333-3333-4333-8333-333333333333",
+  "state": "11111111-1111-4111-8111-111111111111",
+  "layer": "22222222-2222-4222-8222-222222222222",
+  "width": 2,
+  "height": 1,
+  "profile_bytes": 3024,
+  "metadata_wire_bytes": 3216,
+  "fixtures": [
+    {
+      "file": "tag3-0.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "6d43459d9d10e17bb4214a6110eff02b4d082c330222f6ecb4d2f3e3b4e7e92a",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 0
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "772a425e3a7904e2e7ac5f35c7c0a6cbd2f5f43ccf1e8cce10f86f3e12c06762",
+      "filter_inventory_sha256": "b05bb66f31dcfb42631f2afa1817ba9a2bc3945d73838238c477076bd8c7f0fe",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag3-50.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "d01aeabc97d4e1727d726c3c60f970006dff587e1f992d9739b6d2c83ff17c8b",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        53,
+        101,
+        43,
+        255,
+        64,
+        153,
+        66,
+        255
+      ],
+      "rendered_rgba": [
+        53,
+        101,
+        43,
+        255,
+        64,
+        153,
+        66,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 50
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "a4a1384180e3f60826dc96114349cc68466c925f0921e4a7b5f5295ad44102e4",
+      "filter_inventory_sha256": "573ee1c645cc80ca924cbce93cf0c9da732e5ffb95a07849a7d36fe2bfd7ad3d",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag3-100.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "1b856408bb591ed3ff070a98d977f1ebd50d7925b2aaee6042b882f403cf09c1",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        87,
+        87,
+        87,
+        255,
+        128,
+        128,
+        128,
+        255
+      ],
+      "rendered_rgba": [
+        87,
+        87,
+        87,
+        255,
+        128,
+        128,
+        128,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 100
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "7679bce94740b70bd520f4817380f2455d8f7fc932e84c695295a6a211cd613f",
+      "filter_inventory_sha256": "a5db1be31d416e7216157d013836d197fcef68c0ba2c07d9ce3c49ab91e12fd3",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag3-disabled.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "f67128607e0ef31e36bc7b0cab62824d5c4c10aeb9d355c605f211bbc18632fb",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": false,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 100
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "ecd320c036eb36a93ef3dfaeb814a653364ffa0cb88d3fd0d31ac1b9f3bc3791",
+      "filter_inventory_sha256": "826bfcbe0aeb6cb31a970f2978186e879b437cf4ea10a46d676071a67401b59f",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag3-masked.pcnd",
+      "accepted": true,
+      "bytes": 156,
+      "sha256": "a47e6398c71bcde18073c4d46a957d119687835760a1ba5def9c76a0a6624249",
+      "version": 4,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        54,
+        101,
+        44,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        54,
+        101,
+        44,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 100
+          },
+          "coverage": 128
+        }
+      ],
+      "stack_sha256": "eebf9b78c7343209d7ec05e8800990f1bd1ba4e15bf5e97ec301e4a9c0ffa5d7",
+      "filter_inventory_sha256": "44a0f43f0d7959b407a32997aa39e14610ec9dfc295b3a1b75a6762c5c12cbb3",
+      "mask_sha256": [
+        "ecdebe85d3c1ae0716c5859c8ae1b7e6c33285dafb931d114117e7281c2c15e5"
+      ],
+      "mask_count": 1,
+      "bands": 1,
+      "runs": 1
+    },
+    {
+      "file": "tag4-0.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "84b5207c1c47925121def95e4a5d3e3b3aa784303c2799b3bc0674d0a782ff41",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "rendered_rgba": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 0
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "6058759fb4a04cf35c9f6f5b3464dbbafa14ee8fb1a24656c86d563260550c50",
+      "filter_inventory_sha256": "ffaac6c0aaac5c35268515e104351bf84fb9612be7ddfbdefe6d03a2d74b4a25",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag4-128.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "d0a2b88057a8633e5e90d1d228281472ac6277a2d36592faae22f9fff4e8b849",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "3e34811af891cc01bbaec98956783d084b409accdc8e3efbbe0844c1bb02d33a",
+      "filter_inventory_sha256": "99256d52d14adf2e1bfd18f2feb9d76a1e1f4b23be9153d8a54be07f61bc9d61",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag4-255.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "a816909d00902491a26aeaf35dcafa15754effc73a2e681335887c447c9ffba3",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 255
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "5cf5b7f95489ce472763228eae46aeec8e189a82680afbae3036e057e773a452",
+      "filter_inventory_sha256": "db4582a87460f06975134755a6eb87c313a5399d117a0a5326b1dc8061cf75ce",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag4-disabled.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "08d9dd6d925a1d2941bc433b212553c4946acc7442ce2ee289f6aa230f096fe5",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": false,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "551482157b779fea39150efa25e96dbcb1dfeacc29e3390092fd6c2e05d30e98",
+      "filter_inventory_sha256": "ed44fb38bfd631c1056f1f9554728efb5b749a4a7a826356c906d630792bb8b8",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag4-masked.pcnd",
+      "accepted": true,
+      "bytes": 156,
+      "sha256": "627402f0598e27b2646badc68c81fe6cd1f0a11e4407abedcc786aed81b5b44c",
+      "version": 4,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        10,
+        57,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        10,
+        57,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": 128
+        }
+      ],
+      "stack_sha256": "1a380b4620d3e189aea580fcd5763050d74322f1085f6fc9a0c4b714e52b6366",
+      "filter_inventory_sha256": "8cde164989008b778fd2c2db89f369712e6eb8949b79b8f61c8ec17e8eac4366",
+      "mask_sha256": [
+        "ecdebe85d3c1ae0716c5859c8ae1b7e6c33285dafb931d114117e7281c2c15e5"
+      ],
+      "mask_count": 1,
+      "bands": 1,
+      "runs": 1
+    },
+    {
+      "file": "tag5-2.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "24b951738092af226d11462f21534d585eb90ad9b9e1b8760558f450eaf61b4d",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        255,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        255,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 2
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "59301dc349be49754d78c5174dc93f75fa74dc4a0ab4d508eba0b09e7287ce63",
+      "filter_inventory_sha256": "d3ddd6668d26ef976cbb73c6d8273c5e07b9a15637696a5939abb466bee136f9",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag5-6.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "440c11ef02d9cbda5276bade1a9e527b021eec9237f9a70a8f4f829d5e6a0b2d",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        102,
+        0,
+        255,
+        0,
+        153,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        102,
+        0,
+        255,
+        0,
+        153,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 6
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "d5f436b78218ff89fc88ca288eee388596e5bed511197c7a138387ae16071ae2",
+      "filter_inventory_sha256": "da14871713ee394f1bdb6c98d72552242f9a1a8444b1839c6e1968d4ffb19046",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag5-32.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "8eef869ecf244108a7d778f6d4f885fbfd10b44692b00ed32f583adb1b19c1d0",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        16,
+        115,
+        0,
+        255,
+        0,
+        181,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        16,
+        115,
+        0,
+        255,
+        0,
+        181,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 32
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "afb2045c243ea6744bd27887221a9f41592bef6906fa0b20c19194655543189b",
+      "filter_inventory_sha256": "886d0ff452c5d878d08fa9f36a435061388d1c0ad4f736ce30c185cec134d0bd",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag5-disabled.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "675b08933b24f52c8e6cab16060d5083cb276f4eabb88b5e1999fc0fe26559c8",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": false,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 6
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "07cdd973830876af0949aa05c4b1de4f10b1de52f0fefa4aa92999a67d0db7d9",
+      "filter_inventory_sha256": "bcdb0b888967e6b4a6b41712ef16d2b6eebc630d3351370b7df8beeb0ff632f6",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag5-masked.pcnd",
+      "accepted": true,
+      "bytes": 156,
+      "sha256": "20c235965967304a9aedbc3a55d5fbe2c665a39386d7362c6b9331f4ad3f44b8",
+      "version": 4,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        10,
+        108,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        10,
+        108,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 6
+          },
+          "coverage": 128
+        }
+      ],
+      "stack_sha256": "c1db9a89933f990afc24f469833de22e2696146479e19e0e6b783ebe04378e7b",
+      "filter_inventory_sha256": "2c0d4cdaacbbda1c85643206a59e02dc0cd459d8edf7d8906a414ba10d45e3e3",
+      "mask_sha256": [
+        "ecdebe85d3c1ae0716c5859c8ae1b7e6c33285dafb931d114117e7281c2c15e5"
+      ],
+      "mask_count": 1,
+      "bands": 1,
+      "runs": 1
+    },
+    {
+      "file": "tag6-None.pcnd",
+      "accepted": true,
+      "bytes": 141,
+      "sha256": "5e80ca4c9460b382016bb0783fa29b8516259ab814e90210b0b2d21703351570",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        77,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        77,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "solarize-rgb-v1"
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "6f6b70d436150a580a9536bed5ffb6b06147abf452301bc379c5fcc157c51321",
+      "filter_inventory_sha256": "8831cd89298edc1484cf009af3efd1ce9b5e09838b7f1d5bd9958184455cb7ed",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag6-disabled.pcnd",
+      "accepted": true,
+      "bytes": 141,
+      "sha256": "b917f81886323020baab862c4fdd629d6c9a36034f137a444c00794b25bcd841",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": false,
+          "descriptor": {
+            "kind": "solarize-rgb-v1"
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "87711f450e796f715adf700133278bb21f2b9b92b91d0b6d09a73a786a777012",
+      "filter_inventory_sha256": "434525b4b6de74b5d934c9f7da02224db5e548ca6a608d97d6506ac1a320f796",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "tag6-masked.pcnd",
+      "accepted": true,
+      "bytes": 155,
+      "sha256": "d7ce110a4445d3d0ce7f323ed323155717a866114f8cab4da16cc0941267e603",
+      "version": 4,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "rendered_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "solarize-rgb-v1"
+          },
+          "coverage": 128
+        }
+      ],
+      "stack_sha256": "e64368022620ac9d94809996b58087d7ee3eacba59c329734507504dd123498e",
+      "filter_inventory_sha256": "65b5d06bf78b0377adc04a456cd2f595e0e6509b0575d0f8fa548d2ceaf31f07",
+      "mask_sha256": [
+        "ecdebe85d3c1ae0716c5859c8ae1b7e6c33285dafb931d114117e7281c2c15e5"
+      ],
+      "mask_count": 1,
+      "bands": 1,
+      "runs": 1
+    },
+    {
+      "file": "bw-then-threshold.pcnd",
+      "accepted": true,
+      "bytes": 161,
+      "sha256": "608fa48f211d88942de92a6ffc450a3d4f7e8bfdd6bab9afb5015ca9a9506dfc",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 100
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "1da5ba8552e932990855a822fa59504e40db014686657aa22a3d6d63da1d1fef",
+      "filter_inventory_sha256": "bc9b1a075542476afbc8baa803dc237c5609a0d96011897215f201f10e2750cb",
+      "mask_sha256": [
+        null,
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "threshold-then-bw.pcnd",
+      "accepted": true,
+      "bytes": 161,
+      "sha256": "d6a0fc1334443b280b3b28fd3039ba6cdcf74826841e647aa4c1431df8e8c4b0",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 100
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "ee8452dfd6370e61ef39eae4fd486c98334343f635ba04859a14b72bd7d7d255",
+      "filter_inventory_sha256": "cfeecaaaef8e7d81e2e5629b2e51f0704fa7572de39982f4360c2ee3f3fb9862",
+      "mask_sha256": [
+        null,
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "all-six.pcnd",
+      "accepted": true,
+      "bytes": 236,
+      "sha256": "f9e20feed98033b9fe2b5ba3f5762359c2bff19e819493a7168c6b08c409bca9",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "invert-rgb-v1"
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": true,
+          "descriptor": {
+            "kind": "brightness-contrast-v1",
+            "brightness": 10,
+            "contrast": -7
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000003",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 50
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000004",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000005",
+          "enabled": true,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 6
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000006",
+          "enabled": true,
+          "descriptor": {
+            "kind": "solarize-rgb-v1"
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "7a5aca4508bc61c207b0f2ff4d83996f99dc9992be536e1b75e624ed4029e737",
+      "filter_inventory_sha256": "1f7d83d61d1c238a6eb6b9ee9a2ccfe874c6989813c0a0e25403a43dab23c20e",
+      "mask_sha256": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "source-all-six.pcnd",
+      "accepted": true,
+      "bytes": 3452,
+      "sha256": "5c1ff452ca07e544b9b88746cf7901a67bb591131bfd1f3ca6b360cd66d81632",
+      "version": 3,
+      "attachment": true,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        255,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "invert-rgb-v1"
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": true,
+          "descriptor": {
+            "kind": "brightness-contrast-v1",
+            "brightness": 10,
+            "contrast": -7
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000003",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 50
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000004",
+          "enabled": true,
+          "descriptor": {
+            "kind": "threshold-luma-v1",
+            "level": 128
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000005",
+          "enabled": true,
+          "descriptor": {
+            "kind": "posterize-rgb-v1",
+            "levels": 6
+          },
+          "coverage": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000006",
+          "enabled": true,
+          "descriptor": {
+            "kind": "solarize-rgb-v1"
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "7a5aca4508bc61c207b0f2ff4d83996f99dc9992be536e1b75e624ed4029e737",
+      "filter_inventory_sha256": "1f7d83d61d1c238a6eb6b9ee9a2ccfe874c6989813c0a0e25403a43dab23c20e",
+      "mask_sha256": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "hidden-bw.pcnd",
+      "accepted": true,
+      "bytes": 142,
+      "sha256": "1f02004d342c5bc9cecef438a83e3bd8b7bd5342fb65305a5274137077ba19a9",
+      "version": 3,
+      "attachment": false,
+      "raw_rgba": [
+        20,
+        115,
+        0,
+        0,
+        0,
+        178,
+        4,
+        255
+      ],
+      "evaluated_rgba": [
+        87,
+        87,
+        87,
+        0,
+        128,
+        128,
+        128,
+        255
+      ],
+      "rendered_rgba": [
+        0,
+        0,
+        0,
+        0,
+        128,
+        128,
+        128,
+        255
+      ],
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 100
+          },
+          "coverage": null
+        }
+      ],
+      "stack_sha256": "7679bce94740b70bd520f4817380f2455d8f7fc932e84c695295a6a211cd613f",
+      "filter_inventory_sha256": "a5db1be31d416e7216157d013836d197fcef68c0ba2c07d9ce3c49ab91e12fd3",
+      "mask_sha256": [
+        null
+      ],
+      "mask_count": 0,
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "bad-strength101.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "fe65b203edd3ab1317ca95dc0664ef6e6f70e21ff68aae8b5a40369b282cebdc",
+      "code": "codec.failed"
+    },
+    {
+      "file": "bad-strength255.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "899fa0d1d9b0f45640d95ca6ddc4175429fb72e3775440b2c30def3865eb9fb1",
+      "code": "codec.failed"
+    },
+    {
+      "file": "bad-levels1.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "ce119c4d7a0279b688252f91eb9a90c1651d26b222e1ec9b80eeebf6e064d046",
+      "code": "codec.failed"
+    },
+    {
+      "file": "bad-levels33.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "4d45c71ef9e091e11c311028033d4295920536747fbd2f4dc7274a701820ab72",
+      "code": "codec.failed"
+    },
+    {
+      "file": "unknown-enabled.pcnd",
+      "accepted": false,
+      "bytes": 141,
+      "sha256": "f4a9001a505ddef74f45d891c1da84e05d537f53604f553a789bc15b85b048cf",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "unknown-disabled.pcnd",
+      "accepted": false,
+      "bytes": 141,
+      "sha256": "17f46199187b636f3b1d02a9e1269a7960c66714e313cc20b99a39fc2ab3ba5e",
+      "code": "capability.unsupported"
+    }
+  ]
+}
