@@ -79,8 +79,7 @@ impl Case {
             row.get("width").unwrap().as_i64().unwrap() as u32,
             row.get("height").unwrap().as_i64().unwrap() as u32,
         );
-        let expected =
-            import_image(size.0, size.1, &pixels, &hex(&Sha256::digest(&bytes))).unwrap();
+        let expected = retained_expected(&bytes, size, &pixels);
         Self {
             name: name.into(),
             bytes,
@@ -106,6 +105,15 @@ impl Case {
         }
         losses
     }
+    fn retained_losses(&self) -> Vec<&'static str> {
+        self.losses()
+            .into_iter()
+            .map(|loss| match loss {
+                "icc-profile-ignored" => "icc-source-retained-unapplied",
+                other => other,
+            })
+            .collect()
+    }
     fn assert_doc(&self, doc: &paintcraft_document::Document) {
         assert_eq!(doc.canvas, self.size, "{} imported exactly once", self.name);
         assert_eq!(
@@ -115,6 +123,7 @@ impl Case {
         );
         assert_eq!(doc.state_id, self.expected.state_id);
         assert_eq!(doc.roots, self.expected.roots);
+        assert_eq!(doc.source_metadata, self.expected.source_metadata);
         let layer = &doc.layers[&doc.roots[0]];
         let mut pixels = Vec::new();
         for y in 0..self.size.1 {
@@ -128,6 +137,82 @@ impl Case {
             self.name
         );
     }
+}
+
+fn retained_expected(
+    bytes: &[u8],
+    size: (u32, u32),
+    pixels: &[u8],
+) -> paintcraft_document::Document {
+    use paintcraft_document::{RasterConversionContext, RasterConversionKey, RasterSelection};
+    let source_hash: [u8; 32] = Sha256::digest(bytes).into();
+    let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+    let prepared = paintcraft_formats::image::bmp_retention::decode(
+        bytes,
+        paintcraft_formats::image::DECODE_PIXELS_MAX,
+        paintcraft_formats::pcnd::MetadataAdmission {
+            bytes: paintcraft_document::source_metadata::BYTES_MAX,
+            budget: &budget,
+        },
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!((prepared.image.width, prepared.image.height), size);
+    assert_eq!(
+        prepared.image.rgba, pixels,
+        "independent source pixel oracle"
+    );
+    let dib = u32::from_le_bytes(bytes[14..18].try_into().unwrap());
+    let profile = if dib == 124 {
+        let at = 14 + u32::from_le_bytes(bytes[126..130].try_into().unwrap()) as usize;
+        let len = u32::from_le_bytes(bytes[130..134].try_into().unwrap()) as usize;
+        (len != 0).then(|| &bytes[at..at + len])
+    } else {
+        None
+    };
+    assert_eq!(
+        prepared.attachment.is_some(),
+        profile.is_some(),
+        "zero-density fixture attachment"
+    );
+    if let Some(metadata) = &prepared.attachment {
+        let facts = metadata.descriptor();
+        assert_eq!(facts.source_sha256, source_hash);
+        assert_eq!(facts.source_bytes, bytes.len() as u64);
+        assert_eq!(facts.source_dimensions, size);
+        assert_eq!(facts.output_dimensions, size);
+        assert_eq!(
+            facts.format,
+            paintcraft_document::source_metadata::SourceFormat::Bmp
+        );
+        assert!(
+            facts.resolution.is_none(),
+            "these fixtures declare zero density"
+        );
+        assert_eq!(
+            metadata.profile(),
+            profile,
+            "exact original V5 embedded profile"
+        );
+    }
+    let key = RasterConversionKey::checked(
+        RasterConversionContext {
+            source_sha256: source_hash,
+            profile: "bmp-source-profile-resolution-rgba8-v1",
+            selection: RasterSelection::Image,
+            assessment_sha256: prepared.attachment.as_ref().map(|m| m.digest()),
+        },
+        size.0,
+        size.1,
+        pixels,
+        paintcraft_formats::image::DECODE_PIXELS_MAX,
+        &|| Ok(()),
+    )
+    .unwrap();
+    paintcraft_document::import_image(size.0, size.1, pixels, &key.hex())
+        .unwrap()
+        .with_source_metadata_checked(prepared.attachment, &|| Ok(()))
+        .unwrap()
 }
 
 #[path = "bmp16_tests.rs"]
@@ -156,7 +241,7 @@ fn adopt(
     app.open_path(path).unwrap();
     assert_eq!(
         app.pending_import.as_ref().unwrap().candidate.losses(),
-        case.losses()
+        case.retained_losses()
     );
     let before = app.editor.document_snapshot();
     let ticket = app.editor.render_key();
@@ -175,7 +260,7 @@ fn adopt(
     h.state_mut().resolve_import(&ctx, true);
     assert!(Arc::ptr_eq(&before, &h.state().editor.document_snapshot()));
     assert_eq!(ticket, h.state().editor.render_key());
-    for loss in case.losses() {
+    for loss in case.retained_losses() {
         h.get_by_label(&translate(language, import_loss_description(loss).unwrap()));
     }
     h.get_by_label(&translate(language, "Accept import limitations"))

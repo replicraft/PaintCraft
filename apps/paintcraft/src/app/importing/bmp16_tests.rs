@@ -22,7 +22,7 @@ fn cases() -> Vec<Case> {
                 hex(&Sha256::digest(&pixels)),
                 row.get("expected_sha256").unwrap().as_str().unwrap()
             );
-            let expected = import_image(65, 3, &pixels, &hex(&Sha256::digest(&bytes))).unwrap();
+            let expected = retained_expected(&bytes, (65, 3), &pixels);
             Case {
                 name,
                 bytes,
