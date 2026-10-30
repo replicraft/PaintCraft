@@ -101,6 +101,32 @@ CPU composition and GPU source uploads use the same point-filter appearance,
 before layer opacity. Visible sampling, thumbnails and visible-image copies use
 that appearance; explicitly raw layer sampling reads the original pixels.
 GPU filter kernels, the remaining catalog, masks and Studio controls remain
-work. Layered foreign writers refuse these stacks. Complete flat-copy bake
-consent and browser worker binding are still part of the integration plan;
-source-metadata omission never grants permission to discard filter settings.
+work. Layered foreign writers refuse these stacks.
+
+## Exporting a rendered copy
+
+Foreign image copies refuse nonempty stacks by default. Baking needs a separate
+explicit choice, bound to the frozen document and destination format. It retains
+the rendered appearance in the copy while the open project keeps its editable
+stack and unchanged source pixels. Disabled and hidden filters also count as
+editable information: their removal must be acknowledged even when they do not
+change the exported pixels.
+
+The CLI uses `--allow-loss filters-baked`; MCP uses `"filters-baked"` in the
+request's `allow_losses` array. Other actual losses still need their own consent.
+For example, a document with multiple layers may also need `flatten`. Retained
+source metadata requires its independent `"source_metadata": "omit"` or
+`--source-metadata omit` choice. Neither metadata omission nor a generated list
+of every known loss can authorize baking.
+
+Library callers capture `export::filter_bake::Policy` with explicit
+`Intent::Bake`, then pass it through `FlatOptions::filter_bake` or the specialty
+writer's `prepare_document_with_policies` API. `export::CopyPolicies` combines
+the two independently captured policies. Metadata-only and legacy entry points
+continue to refuse filters. Changing the stack, document state or target format
+invalidates the captured bake policy. PCND saves preserve filters directly and
+do not use this conversion policy.
+
+Desktop/browser consent controls and the browser Worker binding are being
+qualified as part of the same integration. Studio stack editing remains separate
+work; a successful rendered export does not establish an editable filter UI.
