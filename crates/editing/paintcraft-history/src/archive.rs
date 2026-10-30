@@ -61,6 +61,11 @@ impl Transfer<'_> {
     }
 }
 impl Packed {
+    pub(crate) fn filter_mask_storage_usage(&self) -> impl Iterator<Item = (usize, u64)> + '_ {
+        self.layers
+            .iter()
+            .flat_map(|l| l.filters.mask_storage_usage())
+    }
     pub(crate) fn source_metadata(&self) -> Option<&paintcraft_document::SourceMetadata> {
         self.source_metadata.as_ref()
     }

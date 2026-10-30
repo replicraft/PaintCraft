@@ -7,6 +7,9 @@ pub struct MemoryUsage {
     /// Unique declared mask storage retained by hot or cold selection snapshots.
     /// Masks currently stay resident when raster history is packed or spilled.
     pub selection_bytes: u64,
+    /// Unique persistent A8 mask allocations retained by hot/cold snapshots.
+    /// Coverage stays resident when RGBA history is compressed or spilled.
+    pub filter_mask_bytes: u64,
     /// Unique conservative source attachment storage retained by hot/cold
     /// snapshots; exact ICC payloads remain resident during tile spilling.
     pub source_metadata_bytes: u64,
@@ -27,6 +30,7 @@ impl MemoryUsage {
     pub fn retained_weight(self) -> u64 {
         self.decoded_bytes - self.leased_decoded_bytes
             + self.selection_bytes
+            + self.filter_mask_bytes
             + self.source_metadata_bytes
             + self.encoded_bytes
             + self.metadata_weight
@@ -34,6 +38,7 @@ impl MemoryUsage {
     pub fn known_weight(self) -> u64 {
         self.decoded_bytes
             + self.selection_bytes
+            + self.filter_mask_bytes
             + self.source_metadata_bytes
             + self.encoded_bytes
             + self.metadata_weight
@@ -46,6 +51,7 @@ impl History {
         let mut docs = HashSet::new();
         let mut blobs = HashSet::new();
         let mut masks = HashSet::new();
+        let mut filter_masks = HashSet::new();
         let mut source_metadata = HashSet::new();
         let mut usage = MemoryUsage {
             metadata_weight: (self.entries.capacity() * size_of::<Entry>()
@@ -55,6 +61,26 @@ impl History {
             ..Default::default()
         };
         for entry in &self.entries {
+            let mut count_mask = |identity, bytes| {
+                if filter_masks.insert(identity) {
+                    usage.filter_mask_bytes += bytes;
+                }
+            };
+            match &entry.storage {
+                Storage::Hot(snapshot) => {
+                    for layer in snapshot.document.layers.values() {
+                        for (identity, bytes) in layer.filters.mask_storage_usage() {
+                            count_mask(identity, bytes);
+                        }
+                    }
+                }
+                Storage::Cold(packed) => {
+                    for (identity, bytes) in packed.filter_mask_storage_usage() {
+                        count_mask(identity, bytes);
+                    }
+                }
+            }
+
             let attachment = match &entry.storage {
                 Storage::Hot(snapshot) => snapshot.document.source_metadata.as_ref(),
                 Storage::Cold(packed) => packed.source_metadata(),

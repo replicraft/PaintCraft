@@ -512,4 +512,6 @@ pub use residency::ResidencyMaintenance;
 mod selection_tests;
 
 #[cfg(test)]
+mod filter_mask_tests;
+#[cfg(test)]
 mod filter_tests;
