@@ -11,6 +11,7 @@ use uuid::Uuid;
 pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
+pub const LAYER_FILTERS_FEATURE: &str = "layer-point-filters.v1";
 const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
 mod binary;
@@ -82,13 +83,16 @@ impl Header {
     pub fn require_supported(&self) -> Result<()> {
         if !matches!(
             (self.container_version, self.document_schema.as_str()),
-            (1, "paintcraft.document/v1") | (2, "paintcraft.document/v2")
+            (1, "paintcraft.document/v1")
+                | (2, "paintcraft.document/v2")
+                | (3, "paintcraft.document/v3")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(self.container_version == 2 && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 2 | 3) && feature == SOURCE_METADATA_FEATURE)
+                && !(self.container_version == 3 && feature == LAYER_FILTERS_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
         }
@@ -174,3 +178,6 @@ mod source_metadata_history_tests;
 mod source_metadata_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod filter_tests;

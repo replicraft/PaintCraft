@@ -45,11 +45,15 @@ fn metadata_bound(
     {
         return Ok(None);
     }
+    let live_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
     let mut bytes = 8
         + 32
         + integer_bytes(u64::from(doc.canvas.0))
         + integer_bytes(u64::from(doc.canvas.1))
         + 1;
+    if live_filters {
+        bytes += 1; // PCND3 original-source presence flag.
+    }
     if let Some(title) = &doc.title {
         bytes += integer_bytes(title.len() as u64) + title.len() as u64;
     }
@@ -87,6 +91,9 @@ fn metadata_bound(
             + integer_bytes(u64::from(layer.raster.height()))
             + 4
             + 1;
+        if live_filters {
+            bytes += binary::filter_metadata_bytes(&layer.filters);
+        }
         if !inspect_coordinates {
             let record = 1
                 + integer_bytes(u64::from((layer.raster.width() - 1) / TILE_EDGE))

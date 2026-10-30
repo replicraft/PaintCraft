@@ -2,6 +2,7 @@
 //! The whole stream is integrity checked by a trailing SHA-256 before tile inflation.
 use super::*;
 use std::io::Write;
+mod filters;
 mod source_metadata;
 mod wire;
 use wire::{Input, Output};
@@ -68,7 +69,10 @@ fn write_encoded(
         return Err(codec("invalid canvas dimensions"));
     }
     let mut magic = *MAGIC;
-    if doc.source_metadata.is_some() {
+    let live_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
+    if live_filters {
+        magic[4] = 3;
+    } else if doc.source_metadata.is_some() {
         magic[4] = 2;
     }
     output.bytes(&magic)?;
@@ -85,6 +89,9 @@ fn write_encoded(
             output.bytes(&[1])?;
             output.string(title)?;
         }
+    }
+    if live_filters {
+        output.bytes(&[u8::from(doc.source_metadata.is_some())])?;
     }
     if let Some(source) = &doc.source_metadata {
         source_metadata::write(source, &mut output, check)?;
@@ -118,6 +125,9 @@ fn write_encoded(
         output.number(u64::from(layer.raster.width()))?;
         output.number(u64::from(layer.raster.height()))?;
         output.bytes(&layer.raster.default_pixel().0)?;
+        if live_filters {
+            filters::write(&layer.filters, &mut output, check)?;
+        }
         // A terminator avoids a counting pass over decoded tiles. Each record is
         // bounded independently, allowing the sink to apply backpressure.
         for (bx, by, _, _, data) in layer.raster.blocks_iter() {
@@ -171,18 +181,41 @@ fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u
 }
 
 pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
-    payload(bytes, &|| Ok(()))?;
-    Ok(header(bytes[4]))
+    let body = payload(bytes, &|| Ok(()))?;
+    let mut result = header(bytes[4]);
+    if bytes[4] == 3 {
+        let mut input = Input::new(body);
+        input.take(32)?;
+        input.dimension()?;
+        input.dimension()?;
+        match input.byte()? {
+            0 => {}
+            1 => {
+                input.string(4096)?;
+            }
+            _ => return Err(codec("invalid title flag")),
+        }
+        match input.byte()? {
+            0 => {}
+            1 => result
+                .required_features
+                .push(SOURCE_METADATA_FEATURE.into()),
+            _ => return Err(codec("invalid source metadata presence")),
+        }
+    }
+    Ok(result)
 }
 fn header(version: u8) -> Header {
-    let known = matches!(version, 1 | 2);
+    let known = matches!(version, 1..=3);
     Header {
         container_version: i64::from(version),
         document_schema: if known {
             if version == 1 {
                 "paintcraft.document/v1"
-            } else {
+            } else if version == 2 {
                 "paintcraft.document/v2"
+            } else {
+                "paintcraft.document/v3"
             }
         } else {
             "unknown"
@@ -193,6 +226,7 @@ fn header(version: u8) -> Header {
                 .iter()
                 .map(|feature| (*feature).into())
                 .chain((version == 2).then_some(SOURCE_METADATA_FEATURE.to_owned()))
+                .chain((version == 3).then_some(LAYER_FILTERS_FEATURE.to_owned()))
                 .collect()
         } else {
             Vec::new()
@@ -253,7 +287,16 @@ pub(super) fn read_with_metadata(
         1 => Some(input.string(4096)?),
         _ => return Err(codec("invalid title flag")),
     };
-    let source_metadata = if bytes[4] == 2 {
+    let has_source = if bytes[4] == 3 {
+        match input.byte()? {
+            0 => false,
+            1 => true,
+            _ => return Err(codec("invalid source metadata presence")),
+        }
+    } else {
+        bytes[4] == 2
+    };
+    let source_metadata = if has_source {
         let consumed = bytes.len() - 32 - input.remaining();
         let remaining = (DOCUMENT_MAX as usize)
             .checked_sub(consumed)
@@ -283,6 +326,7 @@ pub(super) fn read_with_metadata(
     let mut records = Vec::new();
     let mut seen = HashSet::new();
     let mut tiles = 0u64;
+    let mut any_filters = false;
     let mut metadata = bytes.len() - 32 - input.remaining();
     let mut admission = Admission::new(staged_pixels.min(STAGED_PIXELS_MAX));
     for _ in 0..count {
@@ -303,6 +347,20 @@ pub(super) fn read_with_metadata(
         let width = input.dimension()?;
         let height = input.dimension()?;
         let default = Rgba(input.take(4)?.try_into().unwrap());
+        let layer_filters = if bytes[4] == 3 {
+            let available = (DOCUMENT_MAX as usize)
+                .checked_sub(metadata + start - input.remaining())
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::ResourceLimit,
+                        "PCND aggregate metadata allowance",
+                    )
+                })?;
+            filters::read(&mut input, available, check)?
+        } else {
+            paintcraft_document::FilterStack::default()
+        };
+        any_filters |= !layer_filters.is_empty();
         metadata += start - input.remaining();
         let mut blocks = Vec::new();
         let mut coords = HashSet::new();
@@ -372,6 +430,7 @@ pub(super) fn read_with_metadata(
                 origin,
                 visible,
                 opacity,
+                filters: layer_filters,
                 raster: RasterLayer::new(width, height, default),
             },
             blocks,
@@ -379,6 +438,9 @@ pub(super) fn read_with_metadata(
     }
     if input.remaining() != 0 {
         return Err(codec("trailing compact PCND data"));
+    }
+    if bytes[4] == 3 && !any_filters {
+        return Err(codec("empty filter stacks require legacy PCND encoding"));
     }
     admission.reserve_tiles(tiles)?;
     let mut layers = HashMap::new();
@@ -427,3 +489,7 @@ pub(super) fn read_with_metadata(
 
 #[cfg(test)]
 mod tests;
+
+pub(super) fn filter_metadata_bytes(stack: &paintcraft_document::FilterStack) -> u64 {
+    filters::metadata_bytes(stack)
+}

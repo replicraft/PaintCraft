@@ -2,8 +2,9 @@
 
 PCND describes flat raster documents with the `paintcraft.core/default-v1`
 compositing policy. Documents without retained source metadata use the initial
-version 1 layout. Version 2 adds one immutable original-source attachment; its
-raster semantics and tile encodings remain the same. The unreleased ZIP prototype
+version 1 layout when all layer filter stacks are empty. Version 2 adds one
+immutable original-source attachment. Version 3 preserves ordered point-filter
+intentions without modifying source raster samples. Tile encodings remain the same. The unreleased ZIP prototype
 is not a supported format.
 
 This adopted contract supersedes the ZIP proposal in the original implementation
@@ -20,13 +21,13 @@ The stream consists of:
 
 | Field | Representation |
 |---|---|
-| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01 or 02 |
+| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01, 02 or 03 |
 | Document ID | 16 bytes |
 | State ID | 16 bytes |
 | Canvas width, height | Two positive integers, each at most 1,048,576 |
 | Title presence | One byte, exactly 0 or 1 |
 | Title, if present | UTF-8 string, at most 4,096 characters and 16,384 bytes |
-| Source attachment | Present exactly in version 2, as specified below |
+| Source attachment | Present exactly in version 2; in version 3 a strict 0/1 presence byte precedes the optional attachment |
 | Root layer count | Integer bounded by the editor's layer-count policy |
 | Layers | The following layer records, in root order |
 | Integrity digest | 32 bytes of SHA-256 over every preceding byte |
@@ -42,6 +43,7 @@ A layer record consists of:
 | Origin X, Y | Two ZigZag integers bounded by the coordinate policy |
 | Width, height | Two positive integers, each at most 1,048,576 |
 | Default pixel | Four straight RGBA8 bytes, including hidden RGB |
+| Filter stack | Version 3 only: bounded ordered intentions, as specified below |
 | Tile records | Repeated records, terminated by one zero byte |
 
 A tile starts with a nonzero one-byte encoding tag, followed by tile X, tile Y,
@@ -138,3 +140,48 @@ facts, original profile identity and exact scope.
 The writer streams the header, metadata and tile payloads into a hashing sink,
 then writes the digest. It never publishes a partially failed sink as a saved
 file. The digest supplies corruption detection, not proof of origin or authenticity.
+
+
+## Version 3 live point filters
+
+Version 3 has schema `paintcraft.document/v3` and requires
+`layer-point-filters.v1`. When its optional source attachment is present, header
+assessment also reports `source-metadata.v1`. The source-presence byte immediately
+after the title is exactly 0 or 1; an attachment, if present, uses the unchanged
+version-two framing. It remains original-source information, not an applied
+working profile.
+
+Every layer has the following stack immediately after its default RGBA pixel and
+before its tile records:
+
+| Field | Representation |
+|---|---|
+| Instance count | Canonical integer, 0 through 256; admitted before stack allocation |
+| Instance ID | 16 UUID bytes; unique within its layer, including disabled instances; nil is allowed |
+| Enabled | Exactly one byte, 0 or 1 |
+| Algorithm/version tag | One byte: 1 is `invert-rgb-v1`; 2 is `brightness-contrast-v1` |
+| Brightness, contrast | Tag 2 only: two canonical ZigZag integers in signed hundredths; brightness −100 through 100, contrast −99 through 99 |
+
+Order, IDs, disabled settings and parameters are persistent meaning. The reader
+rejects unknown algorithm/version tags even when disabled, duplicate instance
+IDs, malformed flags or noncanonical/out-of-range parameters. More than 256
+instances is a resource refusal before allocation. Filter bytes count against the
+same aggregate 8 MiB metadata limit; existing decoded tile and caller-owned source
+metadata admission still apply before pixel inflation. The raw and selected
+compact preflights count the same stack encoding.
+
+Version 3 is emitted only when at least one layer stack is nonempty, including a
+stack containing only disabled instances. An all-empty version-three stream is
+noncanonical and refused. Version-one/two readers initialize empty stacks. When
+all stacks are empty, writers retain the exact original version-one/two byte
+layout; clearing the final stack therefore returns to that layout. Older readers
+refuse version three rather than silently ignoring filters. Native filter
+preservation is distinct from rendering qualification or foreign-format baking.
+
+Independent standard-library Python fixtures under
+`crates/services/paintcraft-formats/tests/pcnd-filter-fixtures` pin source samples,
+wire bytes, disabled settings, source attachment preservation and malformed cases.
+Their generator does not call the PaintCraft writer. Tests compare exact raw and
+compact output against those bytes, including original hidden RGB and profile
+bytes. These are native-format wire controls, not external application or GPU
+qualification.

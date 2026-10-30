@@ -1,0 +1,117 @@
+{
+  "generator": "Independent Python standard-library byte writer, no PaintCraft serializer",
+  "source_attachment_parent": "pcnd-metadata-fixtures/rgb-profile.pcnd",
+  "source_attachment_parent_sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1",
+  "pixels": [
+    17,
+    32,
+    255,
+    0,
+    0,
+    127,
+    200,
+    255
+  ],
+  "size": [
+    2,
+    1
+  ],
+  "fixtures": [
+    {
+      "file": "legacy-v1.pcnd",
+      "accepted": true,
+      "sha256": "affda8ae5ee4ed14b2cc215d95c77409edb201353618e5a9e681c0d015cccf9b",
+      "bytes": 121
+    },
+    {
+      "file": "legacy-v2.pcnd",
+      "accepted": true,
+      "sha256": "bdfbaf1380e10ff2386b486881ee2007459078f09b5382a95ad890c651ea2761",
+      "bytes": 3337
+    },
+    {
+      "file": "stack.pcnd",
+      "accepted": true,
+      "sha256": "8f92caaeb9098e538ccdf25fb20c72ebb428209f402aebbe681dc6a0fb038cb5",
+      "bytes": 183
+    },
+    {
+      "file": "source-stack.pcnd",
+      "accepted": true,
+      "sha256": "9467cc8bd7c9792d0967ff0cc016eff59f2b47147b87aa4d9be145111ebc77c0",
+      "bytes": 3399
+    },
+    {
+      "file": "disabled.pcnd",
+      "accepted": true,
+      "sha256": "fefef6934d076e205efe41285981494d0a553cbe73ebd667c5f05e986426365e",
+      "bytes": 141
+    },
+    {
+      "file": "empty-v3.pcnd",
+      "accepted": false,
+      "sha256": "1ecfe0c2eaa94d6413f656df2f6fbfc64c89c321b1ce1e93f99b7aa3a774762f",
+      "bytes": 123
+    },
+    {
+      "file": "unknown-disabled.pcnd",
+      "accepted": false,
+      "sha256": "8b84768cae1b985f22537190b41001ce3b2677a84d5633b106b66ba291c59636",
+      "bytes": 141
+    },
+    {
+      "file": "unknown-enabled.pcnd",
+      "accepted": false,
+      "sha256": "cbfbe14df7ef1c4d59e0d8fb70f16f9974f9609477a667bab9106b30e19c2fe4",
+      "bytes": 141
+    },
+    {
+      "file": "duplicate.pcnd",
+      "accepted": false,
+      "sha256": "8f642f70556524146d12640bb5a3d41c411bbe3bbb620dee9292040970f820b8",
+      "bytes": 167
+    },
+    {
+      "file": "bad-enabled.pcnd",
+      "accepted": false,
+      "sha256": "d1ab810dc86da80a50a1d0d81f64bc9a2b140d70c76a5d9a771394bc9d6c3516",
+      "bytes": 141
+    },
+    {
+      "file": "bad-presence.pcnd",
+      "accepted": false,
+      "sha256": "90a2959c209b45ee5c1e13d1d6325792713d51cdf5f0d8bfdbd8a5f75b68beda",
+      "bytes": 183
+    },
+    {
+      "file": "bad-brightness.pcnd",
+      "accepted": false,
+      "sha256": "b28465b458461ca063e88ea3b1940e7ebfd1b520c0a4af916aaff3148f7152f3",
+      "bytes": 144
+    },
+    {
+      "file": "bad-contrast.pcnd",
+      "accepted": false,
+      "sha256": "85ed93cf886bc3321cb867eb20edffe631daabc477df64df8cd5c459193f26fe",
+      "bytes": 144
+    },
+    {
+      "file": "noncanonical-count.pcnd",
+      "accepted": false,
+      "sha256": "fcdd6aadcff0b3893bb8beba9b3edffc6f8697604a3770bb0be5c2f9945c917f",
+      "bytes": 184
+    },
+    {
+      "file": "count257.pcnd",
+      "accepted": false,
+      "sha256": "95abda5b9fd1d3707b6b88b48a05d4a72ce5f8e9b6cf1833972c5894daa5ddd7",
+      "bytes": 124
+    },
+    {
+      "file": "future-v4.pcnd",
+      "accepted": false,
+      "sha256": "4f62798b571e1ebeb0888dde284b6562a3cd15590f11042cd4e1ecf354d1dbda",
+      "bytes": 121
+    }
+  ]
+}
