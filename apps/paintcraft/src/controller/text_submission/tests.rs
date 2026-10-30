@@ -286,9 +286,10 @@ fn an_earlier_file_barrier_can_save_its_prefix_before_a_later_capture_failure() 
     assert_eq!(e.text_file_epoch(), epoch);
     assert!(!e.failed_text_retained());
     assert!(e.text_save_ready());
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../docs/validation/native-retained-text")
-        .join(format!("prefix-{}.pcnd", Uuid::new_v4()));
+    let path = std::env::temp_dir().join(format!(
+        "paintcraft-retained-text-prefix-{}.pcnd",
+        Uuid::new_v4()
+    ));
     e.set_path(path.clone());
     e.save_captured();
     assert_eq!(e.take_save_outcome(), Some(true));
