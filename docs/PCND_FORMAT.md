@@ -4,7 +4,8 @@ PCND describes flat raster documents with the `paintcraft.core/default-v1`
 compositing policy. Documents without retained source metadata use the initial
 version 1 layout when all layer filter stacks are empty. Version 2 adds one
 immutable original-source attachment. Version 3 preserves ordered point-filter
-intentions without modifying source raster samples. Tile encodings remain the same. The unreleased ZIP prototype
+intentions without modifying source raster samples. Version 4 adds persistent
+per-filter A8 masks. Tile encodings remain the same. The unreleased ZIP prototype
 is not a supported format.
 
 This adopted contract supersedes the ZIP proposal in the original implementation
@@ -13,7 +14,7 @@ bytes; they do not define a current compatibility target.
 
 All integers below are canonical unsigned LEB128 unless specified otherwise.
 Redundant leading zero groups, overflow and truncated integers are invalid.
-A signed origin uses ZigZag: `(value << 1) ^ (value >> 63)`. UUID bytes use UUID
+Signed origins and v4 mask endpoints use ZigZag: `(value << 1) ^ (value >> 63)`. UUID bytes use UUID
 network order, exactly as `Uuid::as_bytes()`. Strings are a byte length followed by
 that many UTF-8 bytes; no terminator or normalization is applied.
 
@@ -21,13 +22,13 @@ The stream consists of:
 
 | Field | Representation |
 |---|---|
-| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01, 02 or 03 |
+| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01, 02, 03 or 04 |
 | Document ID | 16 bytes |
 | State ID | 16 bytes |
 | Canvas width, height | Two positive integers, each at most 1,048,576 |
 | Title presence | One byte, exactly 0 or 1 |
 | Title, if present | UTF-8 string, at most 4,096 characters and 16,384 bytes |
-| Source attachment | Present exactly in version 2; in version 3 a strict 0/1 presence byte precedes the optional attachment |
+| Source attachment | v1 absent; v2 required; versions 3/4 use a strict 0/1 presence byte before the optional attachment |
 | Root layer count | Integer bounded by the editor's layer-count policy |
 | Layers | The following layer records, in root order |
 | Integrity digest | 32 bytes of SHA-256 over every preceding byte |
@@ -43,7 +44,7 @@ A layer record consists of:
 | Origin X, Y | Two ZigZag integers bounded by the coordinate policy |
 | Width, height | Two positive integers, each at most 1,048,576 |
 | Default pixel | Four straight RGBA8 bytes, including hidden RGB |
-| Filter stack | Version 3 only: bounded ordered intentions, as specified below |
+| Filter stack | Versions 3/4: bounded ordered intentions; v4 adds per-instance masks as specified below |
 | Tile records | Repeated records, terminated by one zero byte |
 
 A tile starts with a nonzero one-byte encoding tag, followed by tile X, tile Y,
@@ -170,11 +171,11 @@ same aggregate 8 MiB metadata limit; existing decoded tile and caller-owned sour
 metadata admission still apply before pixel inflation. The raw and selected
 compact preflights count the same stack encoding.
 
-Version 3 is emitted only when at least one layer stack is nonempty, including a
-stack containing only disabled instances. An all-empty version-three stream is
+Version 3 is emitted only when at least one layer stack is nonempty and no
+instance stores a mask, including a stack containing only disabled instances. An all-empty version-three stream is
 noncanonical and refused. Version-one/two readers initialize empty stacks. When
 all stacks are empty, writers retain the exact original version-one/two byte
-layout; clearing the final stack therefore returns to that layout. Older readers
+layout; clearing the final stack therefore returns to that layout. Readers limited to versions one/two
 refuse version three rather than silently ignoring filters. Native filter
 preservation is distinct from rendering qualification or foreign-format baking.
 
@@ -185,3 +186,85 @@ Their generator does not call the PaintCraft writer. Tests compare exact raw and
 compact output against those bytes, including original hidden RGB and profile
 bytes. These are native-format wire controls, not external application or GPU
 qualification.
+
+## Version 4 persistent filter masks
+
+Version 4 has schema `paintcraft.document/v4`. Its header feature order is
+`raster.rgba8`, `canvas.finite`, `layers.flat`, `layer-point-filters.v1`,
+`layer-filter-masks.v1`, then `source-metadata.v1` only when the attachment is
+present. The title/source-presence/attachment and layer framing remain as in
+version 3. The two existing algorithm/version tags and their parameter bytes
+remain unchanged; no additional point algorithms are introduced here.
+
+The writer selects v4 whenever any filter instance stores a mask, including a
+mask on a disabled filter, a disabled mask, or a field with zero coverage.
+A v4 stream with no stored mask is noncanonical. Once no masks remain, the
+writer returns to the unchanged v3 profile for nonempty stacks, or v1/v2 for
+empty stacks. Existing unmasked v1/v2/v3 byte profiles and fixtures are unchanged.
+Readers limited to those versions must refuse v4 instead of discarding masks.
+
+Immediately after **each instance's algorithm and parameters**, v4 stores:
+
+| Field | Representation |
+|---|---|
+| Mask presence | One byte, exactly 0 or 1; 0 ends this mask record |
+| Mask enabled | Present only with a mask; one byte, exactly 0 or 1 |
+| Mask codec/version | Present only with a mask; byte 1 is `a8-bands-v1` |
+| Domain | Four canonical ZigZag integers: `x0,y0,x1,y1` |
+| Band count | Canonical unsigned integer; zero represents an explicit zero field |
+| Each band | Unsigned `y0-domain.y0`, positive height, positive run count |
+| Each run | Unsigned `x0-domain.x0`, positive width, one coverage byte in 1–255 |
+
+The domain is positive and finite, with endpoints bounded by the existing
+absolute coordinate policy (140,737,488,355,327). Coordinates are local to the
+layer source raster. A domain need not equal its raster bounds: negative,
+smaller and latent off-layer fields are legal, while evaluation is confined to
+the finite layer extent. All omitted samples, including outside the domain,
+have coverage zero. A full-coverage rectangle uses a 255 run, not a dense plane.
+No mask and a disabled mask instead mean whole-layer coverage; neither is
+interchangeable with an enabled stored zero field.
+
+Bands are ordered, nonoverlapping and inside the domain. Runs are ordered,
+nonoverlapping and inside their band/domain; they have nonzero coverage and
+positive widths. Adjacent equal-coverage runs merge. Adjacent bands with equal
+run lists merge. Empty bands, zero-width/height records, zero-coverage runs,
+noncanonical integers, unknown codecs and invalid flags are refused. Unknown
+codecs remain unsupported even on disabled masks or disabled filter instances.
+
+Reader and writer enforce **aggregate document** ceilings of 262,144 bands and
+262,144 runs. Sharing one host payload between duplicate instances does not
+reduce serialized counts: each instance is written and decoded independently.
+Coverage work also has a document-wide checked traversal allowance; default
+reader limits use 67,108,864 work units. Callers can inject lower limits.
+All mask framing and coverage records count toward the unchanged aggregate
+**8 MiB serialized metadata ceiling**, alongside layer fields, descriptors and
+original-source attachment bytes. No extra metadata headroom is reserved or
+invented for masks. Raw and selected-compact save preflights use the matching
+record sizes and count guards. Application persistence validators apply these
+checks before publication; rejected edits leave the document and history
+unchanged. Library sessions require the matching host validator.
+
+Library v4 reads require `read_with_admission_checked` with explicit
+`ReadAdmission { metadata, coverage }`. `CoverageAdmission` carries the caller's
+shared byte realm, byte allowance and aggregate band/run/work limits. Each
+mask's borrowed records are validated before allocating charged parse scratch
+and immutable A8 storage. Peak admission includes previously retained masks and
+current decode temporaries. Existing metadata-only reader wrappers deliberately
+refuse v4; they do not silently allocate a private coverage pool. Applications
+use the explicit admission API for normal Open.
+
+Default binary selections and retained A8 masks share one process-wide 256 MiB
+coverage realm. Explicit caller realms remain available. Payload clones/views
+share their unique reservation, and history deduplicates resident coverage
+charges; mask storage remains resident when RGBA history tiles spill. This is
+logical resource accounting, not allocator/RSS interception or qualification of
+mask spilling. The independent source attachment retains its separate realm.
+
+Independent stdlib Python specimens in
+`crates/services/paintcraft-formats/tests/pcnd-mask-fixtures/` pin canonical
+bands, fractional/zero/disabled masks, negative domains, shared-instance counts,
+source attachment retention and malformed records. Their writer does not call
+the product codec. See [the mask contract](architecture/FILTER_MASKS.md) for
+selection capture, source transformations, identity, history, renderer and
+frontend qualification. CLI/MCP summary and conditional result profiles are
+specified in [editable filter commands](FILTER_COMMANDS.md).

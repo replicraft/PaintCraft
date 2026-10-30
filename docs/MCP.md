@@ -23,10 +23,49 @@ Configure your MCP client with the absolute path to that binary:
 
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
-[Editable point filters](FILTER_COMMANDS.md) are available through `apply_operations`
-and `get_batch_schema`. Invert and Brightness/Contrast retain their parameters
-through Undo/Redo and PCND save/reopen; `inspect_document` exposes the ordered
-instances. This does not add Studio filter controls or the complete catalog.
+[Editable point filters and persistent masks](FILTER_COMMANDS.md) are available
+through `apply_operations` and `get_batch_schema`. Invert and Brightness/Contrast
+retain parameters, instance identity and saved coverage through Undo/Redo and
+PCND save/reopen. The server owns its headless document; it does not manipulate
+Desktop or browser Studio, whose separate controls are documented there. Other
+algorithms and mask painting/linking remain separate work.
+
+`get_batch_schema` returns the closed `paintcraft.batch/v3` grammar.
+`filter.mask.set`, `filter.mask.from_selection`, `filter.mask.set_enabled` and
+`filter.mask.remove` use the existing `apply_operations` tool: the server captures
+the current state/publication ticket and selects v3 for these tags. Earlier closed
+batch v1/v2 profiles refuse them. Capture freezes the staged selection once;
+inactive selection errors, while active empty/disjoint selection stores zero
+coverage. Later selection edits do not change it. The
+[selection capture example](FILTER_COMMANDS.md#mcp-example) adds a filter,
+captures its selection and clears the live selection in one atomic Undo step.
+
+A document with any stored mask uses `paintcraft.mcp-inspect/v2` for
+`inspect_document`, with `document_features` in point-filter, mask, then optional
+source-metadata order. Each affected filter row includes only
+`mask: {schema,enabled,domain,bands,runs,digest}`: schema `a8-bands/v1`, signed
+source-local endpoint array `[x0,y0,x1,y1]`, canonical counts and a 64-character
+lowercase SHA-256. It never returns the coverage payload. This closed MCP
+projection retains its dimensions, dirty/history and layer fields and is distinct
+from the CLI's `paintcraft.inspect/v2` document/assessment/ticket projection.
+Unmasked MCP inspection retains its established unversioned shape.
+
+Engine results depend on the **final document**, not merely the request grammar.
+A stored mask, including disabled/zero coverage, requires `paintcraft.result/v3`
+and ordered `document_features`; `filter_aliases` is optional but nonempty when
+present. With no masks, nonempty new filter aliases use result/v2 and other
+results retain exact v1. Removing the last mask therefore does not force a result
+version bump solely because the request used batch v3. CLI file-command envelopes
+select the corresponding v1/v2/v3 nested-result profile; MCP returns the engine
+result directly. All older closed result schemas remain unchanged.
+
+PCND4 preserves stored masks, including disabled/zero fields; unmasked projects
+retain exact PCND1/2/3 profiles. Band/run aggregates are bounded at 262,144 each,
+with checked work/byte admission and the unchanged 8 MiB serialized metadata cap.
+Default binary selections and persistent masks share one 256 MiB resident realm;
+history shares payload charges and keeps coverage resident during RGBA spill.
+See [the wire contract](PCND_FORMAT.md#version-4-persistent-filter-masks) and
+[mask qualification](architecture/FILTER_MASKS.md).
 
 `export_layered` is registered for explicit fresh PSD/PSB/PDN/PAINT copies but currently
 returns a capability refusal: the original Photoshop/Paint.NET/Windows Paint open/re-edit qualification

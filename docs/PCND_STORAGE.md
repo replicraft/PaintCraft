@@ -12,12 +12,21 @@ tiles store only their valid rows and columns. Hidden RGB under zero alpha is
 preserved, along with document/state IDs, layer order, names, origins, visibility,
 opacity and the optional document title.
 
-Version 2 additionally retains one immutable original-source attachment, including
-exact ICC bytes and original resolution/orientation facts. It does not assign
-that profile to working pixels. Documents without an attachment keep their exact
-version-one representation and the sizes below. This storage foundation does
-not yet attach metadata through ordinary image imports or implement color-managed
-editing; those remain separate integration work.
+Current saves select the lowest native profile that retains document meaning:
+
+| Stored meaning | Native profile |
+|---|---|
+| No filters and no original-source attachment | unchanged PCND1 |
+| Attachment, no filters | unchanged PCND2 |
+| Nonempty filter stack, no stored mask | unchanged PCND3, with optional attachment |
+| Any stored per-filter mask | PCND4, including zero/disabled masks and optional attachment |
+
+Version 2 retains exact original ICC bytes and resolution/orientation facts; it
+does not assign that profile to working pixels. Qualified PNG/BMP import paths
+attach this provenance as described in [source metadata](SOURCE_METADATA.md).
+Color-managed editing remains separate work. The size measurements below are
+historical unfiltered, unattached initial-profile specimens; later profiles do
+not retroactively change those bytes or measurements.
 
 ## Measured sizes
 
@@ -82,7 +91,7 @@ being interruptible midway through a call; no cancellation-latency claim is made
 
 `write` and `write_to` emit deterministic raw binary blocks for portable reference
 fixtures. `write_compact`, `write_compact_to` and the checked variant emit the same
-version-1 or source-attached version-2 format with adaptive lossless tile compression. Every normal
+selected version-1/2/3/4 profile with adaptive lossless tile compression. Every normal
 application save selects compact output. The reader accepts only this binary
 format; the unused ZIP codec and the prototype JSON/ZIP reader/writer are removed.
 
@@ -106,12 +115,39 @@ The metadata foundation adds independent Python-serialized version-two fixtures,
 exact ICC/header/digest checks, host admission and cancellation controls, canvas
 edit/Undo/Redo save/reopen tests, and real cold-history spill/restoration checks.
 Shared snapshots retain one immutable resource charge; original source facts
-survive canvas changes. Foreign exports that cannot retain the attachment refuse
-until explicit omission/privacy policy is connected. Raw previews and independent
+survive canvas changes. Foreign exports that cannot retain the attachment refuse by default; supported
+copy routes require captured explicit omission/privacy consent. Editable filters
+separately require captured baking consent. Neither choice grants the other. Raw previews and independent
 palette/shape asset exports do not discard the project's retained attachment.
 See [the version-two layout and accounting limits](PCND_FORMAT.md#version-2-source-attachment).
 
-## Production browser check
+## Filter and mask storage
+
+PCND3 stores ordered instance UUIDs, enabled state and versioned parameters.
+PCND4 adds canonical source-local A8 bands/runs per instance. Source raster
+samples, implicit defaults and hidden RGB remain unchanged; native project saves
+do not bake a rendered appearance. Unknown algorithm or mask codec versions are
+refused, including disabled settings. A stored zero mask is distinct from no
+mask; disabled masks retain their data for later enablement.
+
+Mask bytes share the unchanged 8 MiB serialized metadata cap. Reader and writer
+limit aggregate document counts to 262,144 bands and 262,144 runs, counting each
+serialized instance even when host payloads share storage. Checked readers have
+aggregate work and peak-byte admission, including parse scratch and retained A8
+storage. Normal application readers supply `pcnd::ReadAdmission`; older
+metadata-only library wrappers refuse PCND4 rather than create an uncharged
+coverage realm. See [the canonical v4 layout](PCND_FORMAT.md#version-4-persistent-filter-masks).
+
+Default binary selections and filter masks share one 256 MiB resident realm;
+explicit host/test realms remain injectable. History preserves mask fields and
+deduplicates shared allocations in `filter_mask_bytes`. Coverage stays resident
+when raster history spills: RGBA compression/spill qualification does not imply
+mask payload spilling. These are charged-resource limits, not a process RSS cap.
+Cold restoration, crop/orthogonal transformations, atomic metadata-limit
+refusal, actual CLI/MCP and production browser mask cases have separate evidence
+summarized in [FILTER_MASKS](architecture/FILTER_MASKS.md).
+
+## Historical initial-profile production browser check
 
 Before the initial-version header cleanup, the production Wasm build downloaded a blank 1000 × 486 project at 118 bytes and a
 short horizontal pencil line at 140 bytes. An independent Python wire reader
