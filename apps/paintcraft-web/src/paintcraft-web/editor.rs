@@ -63,7 +63,9 @@ impl Editor {
             ));
         }
         let target = doc.roots.last().copied();
-        let mut session = Session::new(doc);
+        let mut session = Session::new(doc).with_persistent_validator(Some(
+            paintcraft_formats::pcnd::check_compact_metadata_admission,
+        ));
         session.set_staged_pixel_budget(MAX_PIXELS * 4);
         session.set_history_budget(64 * 1024 * 1024);
         session.set_history_retention(HistoryRetention::TrimOldest);
@@ -443,3 +445,6 @@ mod text_tests;
 
 #[cfg(test)]
 mod mask_tests;
+
+#[cfg(test)]
+pub(crate) mod persistence_tests;

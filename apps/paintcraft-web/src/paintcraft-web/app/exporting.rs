@@ -6,6 +6,8 @@ pub(crate) use frozen::Frozen;
 mod matte_tests;
 #[cfg(test)]
 mod metadata_tests;
+#[cfg(test)]
+mod persistence_tests;
 impl WebApp {
     pub(super) fn export_dialog(&mut self, ctx: &egui::Context) {
         if self.dds.reviewing() {

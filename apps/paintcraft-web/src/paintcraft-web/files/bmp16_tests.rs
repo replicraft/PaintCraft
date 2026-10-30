@@ -17,13 +17,7 @@ fn bmp16_web_review_and_loss_free_open_save_reopen_exact_rounded_pixels() {
             paintcraft_document::hex(&Sha256::digest(&pixels)),
             row.get("expected_sha256").unwrap().as_str().unwrap()
         );
-        let expected = paintcraft_document::import_image(
-            65,
-            3,
-            &pixels,
-            &paintcraft_document::hex(&Sha256::digest(&bytes)),
-        )
-        .unwrap();
+        let expected = retained_expected(&bytes, (65, 3), &pixels);
         let case = Case {
             name,
             bytes,
