@@ -34,6 +34,8 @@ mod export_options;
 mod export_sources;
 #[path = "app/files.rs"]
 mod files;
+#[path = "app/filter_editing.rs"]
+mod filter_editing;
 #[path = "app/format_admission.rs"]
 mod format_admission;
 #[path = "app/format_filters.rs"]
@@ -196,6 +198,7 @@ enum Confirm {
     Shapes,
     Brushes,
     LayerProperties(layers::PropertiesDraft),
+    FilterParameters,
     DiscardForNew,
     DiscardForOpen(PathBuf),
     DiscardForRecovery(Found),
@@ -261,6 +264,7 @@ pub struct App {
     chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_ui::chrome::Action>,
     classic: paintcraft_classic::Workspace,
     studio: paintcraft_studio::Workspace,
+    filter_editing: Option<filter_editing::State>,
     other_workspace: Option<Box<tabs::WorkspaceDocuments>>,
     switching: Option<switching::Switch>,
     gpu: Option<Arc<GpuRenderer>>,
@@ -414,6 +418,7 @@ impl App {
             chrome_outbox: Default::default(),
             classic: Default::default(),
             studio: Default::default(),
+            filter_editing: None,
             other_workspace: None,
             switching: None,
             gpu: None,

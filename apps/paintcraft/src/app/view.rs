@@ -55,7 +55,9 @@ impl App {
 
     pub(super) fn handle_canvas_wheel(&mut self, ui: &egui::Ui) {
         let ctx = ui.ctx();
-        if self.document_count() == 0 || self.action_context().blocked {
+        if self.document_count() == 0
+            || (self.action_context().blocked && !self.filter_navigation_ready())
+        {
             return;
         }
         let Some(viewport) = self.canvas_viewport else {

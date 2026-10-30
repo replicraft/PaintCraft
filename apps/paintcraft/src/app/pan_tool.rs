@@ -24,7 +24,7 @@ impl App {
     ) -> Option<egui::Id> {
         let enabled = self.experience() == Experience::Studio
             && ui.is_enabled()
-            && !self.action_context().blocked
+            && (!self.action_context().blocked || self.filter_navigation_ready())
             && !egui::Popup::is_any_open(ui.ctx())
             && ui.input(|input| input.focused);
         let scope = egui::Id::unique((

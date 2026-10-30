@@ -109,16 +109,23 @@ impl App {
 
         self.validate_studio_pan(ui, viewport);
         if first_pass {
+            let navigation_only = self.filter_navigation_ready();
             #[cfg(target_os = "windows")]
             self.framework_force_validate(ui, view);
             let events = ui.input(|i| i.events.clone());
             #[cfg(target_os = "macos")]
             let events = {
                 let mut events = events;
-                self.tablet_canvas_input(&mut events, first_pass, painter.layer_id(), controls);
+                if !navigation_only {
+                    self.tablet_canvas_input(&mut events, first_pass, painter.layer_id(), controls);
+                }
                 events
             };
             for event in events {
+                if navigation_only {
+                    self.studio_pan_event(ui, &painter, viewport, &event);
+                    continue;
+                }
                 #[cfg(target_os = "windows")]
                 if self.framework_force_event(
                     ui,
@@ -438,7 +445,8 @@ impl App {
         let overlay = snapshot.as_deref().filter(|preview| {
             !matches!(
                 preview,
-                Preview::ResourceShape(_)
+                Preview::Filter(_)
+                    | Preview::ResourceShape(_)
                     | Preview::SampledStroke(_)
                     | Preview::PenStroke(_)
                     | Preview::Path(_)
@@ -450,7 +458,8 @@ impl App {
         });
         match overlay.cloned() {
             Some(
-                Preview::ResourceShape(_)
+                Preview::Filter(_)
+                | Preview::ResourceShape(_)
                 | Preview::SampledStroke(_)
                 | Preview::PenStroke(_)
                 | Preview::Path(_)

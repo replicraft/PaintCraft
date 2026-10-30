@@ -130,7 +130,8 @@ impl App {
         let preview = self.canvas_text_preview().filter(|p| {
             matches!(
                 p.as_ref(),
-                Preview::SampledStroke(_)
+                Preview::Filter(_)
+                    | Preview::SampledStroke(_)
                     | Preview::PenStroke(_)
                     | Preview::ResourceShape(_)
                     | Preview::MoveSelection { .. }

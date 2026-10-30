@@ -97,6 +97,7 @@ impl App {
                 });
             } else {
                 self.layer_controls(ui);
+                self.studio_filter_panel(ui);
             }
         });
     }

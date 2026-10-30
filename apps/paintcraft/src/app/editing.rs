@@ -139,6 +139,7 @@ impl App {
             self.remember_published_canvas_size();
             self.drop_revoked_text_files();
             let can_run_file = (self.confirm.is_none()
+                || self.filter_waiting_prefix()
                 || self.jxr_waiting_for_edits()
                 || self.dds_waiting_for_edits()
                 || self.msp_waiting_for_edits())

@@ -34,6 +34,10 @@ impl App {
                 self.window_title = title;
             }
             self.poll_edits(&ctx);
+            self.pump_filter_edit(&ctx);
+            if self.filter_navigation_ready() {
+                self.handle_canvas_wheel(ui);
+            }
             self.poll_jxr_export(&ctx);
             self.poll_dds_export(&ctx);
             self.poll_msp_export(&ctx);
@@ -77,10 +81,14 @@ impl App {
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
         {
             ctx.request_repaint_after(Duration::from_millis(50));
-            ui.disable();
+            if !self.filter_navigation_ready() {
+                ui.disable();
+            }
         }
         self.apply_style(&ctx);
-        egui::Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
+        egui::Panel::top("toolbar").show(ui, |ui| {
+            ui.add_enabled_ui(!self.filter_navigation_ready(), |ui| self.toolbar(ui));
+        });
         if self.experience() == Experience::Studio || self.document_count() > 1 {
             egui::Panel::top("documents").show(ui, |ui| {
                 if self.experience() == Experience::Classic {
@@ -152,7 +160,11 @@ impl App {
             )
             .show(ui, |ui| {
                 if self.document_count() > 0 {
-                    self.canvas(ui, accept_input && self.tab_closing.is_none());
+                    self.canvas(
+                        ui,
+                        (accept_input || (first_pass && self.filter_navigation_ready()))
+                            && self.tab_closing.is_none(),
+                    );
                 } else {
                     ui.centered_and_justified(|ui| {
                         ui.label(t!(ui.ctx(), "Open an image or create a new document."))
