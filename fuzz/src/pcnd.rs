@@ -198,6 +198,8 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
     check()
 }
 #[cfg(test)]
+mod point_tests;
+#[cfg(test)]
 mod tests;
 
 /// No source-file mutation: one bounded fallible copy for the fuzz wrapper only.

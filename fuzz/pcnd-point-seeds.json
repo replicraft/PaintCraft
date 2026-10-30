@@ -1,0 +1,247 @@
+{
+  "schema": "paintcraft.pcnd-point-fuzz-seeds/v1",
+  "oracle": {
+    "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/oracle.json",
+    "bytes": 31810,
+    "sha256": "4c57309745bac32bb9a4c2e4b74d245b8800791cd560d06c60c7a612f42ca611"
+  },
+  "generator": {
+    "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/generate.py",
+    "bytes": 8426,
+    "sha256": "724439195450dc2747736866e9dc9f28006b5ba32ad38fb4d6d1ff2a0ae9cb5d"
+  },
+  "seeds": [
+    {
+      "target": "pcnd",
+      "name": "tag3-0.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag3-0.pcnd",
+      "bytes": 142,
+      "sha256": "6d43459d9d10e17bb4214a6110eff02b4d082c330222f6ecb4d2f3e3b4e7e92a",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag3-50.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag3-50.pcnd",
+      "bytes": 142,
+      "sha256": "d01aeabc97d4e1727d726c3c60f970006dff587e1f992d9739b6d2c83ff17c8b",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag3-100.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag3-100.pcnd",
+      "bytes": 142,
+      "sha256": "1b856408bb591ed3ff070a98d977f1ebd50d7925b2aaee6042b882f403cf09c1",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag3-disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag3-disabled.pcnd",
+      "bytes": 142,
+      "sha256": "f67128607e0ef31e36bc7b0cab62824d5c4c10aeb9d355c605f211bbc18632fb",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag3-masked.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag3-masked.pcnd",
+      "bytes": 156,
+      "sha256": "a47e6398c71bcde18073c4d46a957d119687835760a1ba5def9c76a0a6624249",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag4-0.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag4-0.pcnd",
+      "bytes": 142,
+      "sha256": "84b5207c1c47925121def95e4a5d3e3b3aa784303c2799b3bc0674d0a782ff41",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag4-128.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag4-128.pcnd",
+      "bytes": 142,
+      "sha256": "d0a2b88057a8633e5e90d1d228281472ac6277a2d36592faae22f9fff4e8b849",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag4-255.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag4-255.pcnd",
+      "bytes": 142,
+      "sha256": "a816909d00902491a26aeaf35dcafa15754effc73a2e681335887c447c9ffba3",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag4-disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag4-disabled.pcnd",
+      "bytes": 142,
+      "sha256": "08d9dd6d925a1d2941bc433b212553c4946acc7442ce2ee289f6aa230f096fe5",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag4-masked.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag4-masked.pcnd",
+      "bytes": 156,
+      "sha256": "627402f0598e27b2646badc68c81fe6cd1f0a11e4407abedcc786aed81b5b44c",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag5-2.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag5-2.pcnd",
+      "bytes": 142,
+      "sha256": "24b951738092af226d11462f21534d585eb90ad9b9e1b8760558f450eaf61b4d",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag5-6.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag5-6.pcnd",
+      "bytes": 142,
+      "sha256": "440c11ef02d9cbda5276bade1a9e527b021eec9237f9a70a8f4f829d5e6a0b2d",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag5-32.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag5-32.pcnd",
+      "bytes": 142,
+      "sha256": "8eef869ecf244108a7d778f6d4f885fbfd10b44692b00ed32f583adb1b19c1d0",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag5-disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag5-disabled.pcnd",
+      "bytes": 142,
+      "sha256": "675b08933b24f52c8e6cab16060d5083cb276f4eabb88b5e1999fc0fe26559c8",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag5-masked.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag5-masked.pcnd",
+      "bytes": 156,
+      "sha256": "20c235965967304a9aedbc3a55d5fbe2c665a39386d7362c6b9331f4ad3f44b8",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag6-None.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag6-None.pcnd",
+      "bytes": 141,
+      "sha256": "5e80ca4c9460b382016bb0783fa29b8516259ab814e90210b0b2d21703351570",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag6-disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag6-disabled.pcnd",
+      "bytes": 141,
+      "sha256": "b917f81886323020baab862c4fdd629d6c9a36034f137a444c00794b25bcd841",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "tag6-masked.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/tag6-masked.pcnd",
+      "bytes": 155,
+      "sha256": "d7ce110a4445d3d0ce7f323ed323155717a866114f8cab4da16cc0941267e603",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "bw-then-threshold.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/bw-then-threshold.pcnd",
+      "bytes": 161,
+      "sha256": "608fa48f211d88942de92a6ffc450a3d4f7e8bfdd6bab9afb5015ca9a9506dfc",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "threshold-then-bw.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/threshold-then-bw.pcnd",
+      "bytes": 161,
+      "sha256": "d6a0fc1334443b280b3b28fd3039ba6cdcf74826841e647aa4c1431df8e8c4b0",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "all-six.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/all-six.pcnd",
+      "bytes": 236,
+      "sha256": "f9e20feed98033b9fe2b5ba3f5762359c2bff19e819493a7168c6b08c409bca9",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "source-all-six.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/source-all-six.pcnd",
+      "bytes": 3452,
+      "sha256": "5c1ff452ca07e544b9b88746cf7901a67bb591131bfd1f3ca6b360cd66d81632",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "hidden-bw.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/hidden-bw.pcnd",
+      "bytes": 142,
+      "sha256": "1f02004d342c5bc9cecef438a83e3bd8b7bd5342fb65305a5274137077ba19a9",
+      "accepted": true
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-strength101.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/bad-strength101.pcnd",
+      "bytes": 142,
+      "sha256": "fe65b203edd3ab1317ca95dc0664ef6e6f70e21ff68aae8b5a40369b282cebdc",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-strength255.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/bad-strength255.pcnd",
+      "bytes": 142,
+      "sha256": "899fa0d1d9b0f45640d95ca6ddc4175429fb72e3775440b2c30def3865eb9fb1",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-levels1.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/bad-levels1.pcnd",
+      "bytes": 142,
+      "sha256": "ce119c4d7a0279b688252f91eb9a90c1651d26b222e1ec9b80eeebf6e064d046",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "bad-levels33.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/bad-levels33.pcnd",
+      "bytes": 142,
+      "sha256": "4d45c71ef9e091e11c311028033d4295920536747fbd2f4dc7274a701820ab72",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "unknown-enabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/unknown-enabled.pcnd",
+      "bytes": 141,
+      "sha256": "f4a9001a505ddef74f45d891c1da84e05d537f53604f553a789bc15b85b048cf",
+      "accepted": false
+    },
+    {
+      "target": "pcnd",
+      "name": "unknown-disabled.pcnd",
+      "source": "crates/services/paintcraft-formats/tests/pcnd-point-fixtures/unknown-disabled.pcnd",
+      "bytes": 141,
+      "sha256": "17f46199187b636f3b1d02a9e1269a7960c66714e313cc20b99a39fc2ab3ba5e",
+      "accepted": false
+    }
+  ]
+}
