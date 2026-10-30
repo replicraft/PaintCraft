@@ -1,4 +1,4 @@
-//! Immutable ordered point-filter intentions and source-local coverage.
+//! Immutable ordered filter intentions and source-local coverage.
 use paintcraft_core::types::{Error, ErrorCode, Result, filters::Descriptor};
 use sha2::{Digest, Sha256};
 use std::mem::size_of;
@@ -190,6 +190,7 @@ fn hash(instances: &[FilterInstance]) -> [u8; 32] {
             Descriptor::BlackWhiteRgbV1(p) => digest.update([p.strength()]),
             Descriptor::ThresholdLumaV1(p) => digest.update([p.level()]),
             Descriptor::PosterizeRgbV1(p) => digest.update([p.levels()]),
+            Descriptor::BoxBlurV1(p) => digest.update([p.radius()]),
         }
         if masked {
             digest.update([u8::from(instance.mask().is_some())]);
@@ -204,6 +205,8 @@ fn hash(instances: &[FilterInstance]) -> [u8; 32] {
 
 #[cfg(test)]
 mod mask_tests;
+#[cfg(test)]
+mod spatial_tests;
 #[cfg(test)]
 mod tests;
 
