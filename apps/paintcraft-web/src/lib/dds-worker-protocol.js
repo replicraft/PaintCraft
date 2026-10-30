@@ -1,4 +1,4 @@
-// Browser-only protocol2. Native/JXL decoder2 stays independent.
+// Browser-only protocol3. Native/JXL decoder2 stays independent.
 import {
 	equal,
 	matchesOwner,
@@ -13,9 +13,9 @@ import {
 export const DDS_SOURCE_MAX = 32 * 1024 * 1024;
 export const DDS_ENCODED_MAX = 24 * 1024 * 1024 + 4096;
 export const DDS_PREVIEW_MAX = 192 * 192 * 4;
-export const DDS_PROTOCOL_VERSION = 2;
-export const DDS_REQUEST_HEADER = 192;
-export const DDS_RESPONSE_HEADER = 352;
+export const DDS_PROTOCOL_VERSION = 3;
+export const DDS_REQUEST_HEADER = 224;
+export const DDS_RESPONSE_HEADER = 384;
 export const DDS_OUTPUT_MAX =
 	DDS_RESPONSE_HEADER + DDS_ENCODED_MAX + DDS_PREVIEW_MAX + 4096;
 export const DDS_RESERVATION = 640 * 1024 * 1024;
@@ -37,7 +37,15 @@ function utf8(bytes) {
 export function freezeDdsPlan(plan) {
 	if (plan && frozenPlans.has(plan)) return plan;
 	if (!plan) throw refusal('InputSchema', 'Invalid browser DDS profile');
-	const { width, height, sourceFlags, settings, metadataContext } = plan;
+	const {
+		width,
+		height,
+		sourceFlags,
+		settings,
+		metadataContext,
+		filterDigest,
+		bakeIntent,
+	} = plan;
 	if (
 		!Number.isInteger(width) ||
 		!Number.isInteger(height) ||
@@ -48,7 +56,12 @@ export function freezeDdsPlan(plan) {
 		width * height > 4194304 ||
 		!Number.isInteger(sourceFlags) ||
 		sourceFlags < 0 ||
-		sourceFlags > 3 ||
+		sourceFlags > 7 ||
+		!Number.isInteger(bakeIntent) ||
+		bakeIntent < 0 ||
+		bakeIntent > 1 ||
+		!(filterDigest instanceof Uint8Array) ||
+		filterDigest.length !== 32 ||
 		!(settings instanceof Uint8Array) ||
 		settings.length !== 8
 	)
@@ -75,6 +88,10 @@ export function freezeDdsPlan(plan) {
 		height,
 		sourceFlags,
 		metadataContext: metadata,
+		filterDigest: Object.freeze(
+			Array.from({ length: 32 }, (_, index) => filterDigest[index]),
+		),
+		bakeIntent,
 		settings: Object.freeze([...s]),
 	});
 	frozenPlans.add(frozen);
@@ -96,7 +113,7 @@ export async function captureDds(
 	plan = freezeDdsPlan(plan);
 	const frozen = source.slice();
 	const header = new Uint8Array(DDS_REQUEST_HEADER);
-	header.set(encoder.encode('PCDDSQ02'));
+	header.set(encoder.encode('PCDDSQ03'));
 	const view = new DataView(header.buffer);
 	view.setUint16(8, DDS_PROTOCOL_VERSION);
 	view.setUint32(12, frozen.length);
@@ -110,7 +127,9 @@ export async function captureDds(
 	);
 	header.set(plan.settings, 113);
 	header[121] = plan.sourceFlags;
-	header.set(plan.metadataContext, 128);
+	header[122] = plan.bakeIntent;
+	header.set(plan.filterDigest, 128);
+	header.set(plan.metadataContext, 160);
 	const captured = { source: frozen, header, plan };
 	proofs.set(captured, {});
 	return captured;
@@ -154,12 +173,12 @@ export async function decodeDdsResponse(
 		count = view.getUint32(194),
 		versionLength = bytes[198],
 		detail = view.getUint16(263);
-	require(equal(bytes.subarray(0, 8), encoder.encode('PCDDSR02')) &&
+	require(equal(bytes.subarray(0, 8), encoder.encode('PCDDSR03')) &&
 		view.getUint16(8) === DDS_PROTOCOL_VERSION &&
 		status <= 5 &&
 		!bytes[11] &&
 		bytes
-			.subarray(266, 288)
+			.subarray(267, 288)
 			.every((b) => b === 0), 'Browser DDS response framing');
 	require(width === captured.plan.width &&
 		height === captured.plan.height &&
@@ -169,7 +188,9 @@ export async function decodeDdsResponse(
 		equal(bytes.subarray(89, 121), captured.header.subarray(81, 113)) &&
 		equal(bytes.subarray(121, 129), captured.header.subarray(113, 121)) &&
 		bytes[265] === captured.plan.sourceFlags &&
-		equal(bytes.subarray(288, 352), captured.header.subarray(128, 192)) &&
+		bytes[266] === captured.plan.bakeIntent &&
+		equal(bytes.subarray(288, 320), captured.header.subarray(128, 160)) &&
+		equal(bytes.subarray(320, 384), captured.header.subarray(160, 224)) &&
 		versionLength > 0 &&
 		versionLength <= 64 &&
 		utf8(bytes.subarray(199, 199 + versionLength)) === version &&
@@ -228,9 +249,11 @@ export async function decodeDdsResponse(
 		!detail &&
 		pw === expectedW &&
 		ph === expectedH &&
-		mask <= 63 &&
+		mask <= 127 &&
 		Boolean(mask & 32) === metadataOmitted(captured.plan.metadataContext) &&
-		(mask & 3) === captured.plan.sourceFlags &&
+		(mask & 3) === (captured.plan.sourceFlags & 3) &&
+		Boolean(mask & 64) === Boolean(captured.plan.sourceFlags & 4) &&
+		(!(captured.plan.sourceFlags & 4) || captured.plan.bakeIntent === 1) &&
 		Boolean(mask & 4) === (s[0] !== 0) &&
 		(!(mask & 8) || (s[4] === 1 && s[3] > 1)) &&
 		count <= width * height * 3 &&

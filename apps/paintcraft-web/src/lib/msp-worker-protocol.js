@@ -1,4 +1,4 @@
-// Browser-only protocol2. Native/JXL decoder2 stays independent.
+// Browser-only protocol3. Native/JXL decoder2 stays independent.
 import {
 	equal,
 	matchesOwner,
@@ -13,9 +13,9 @@ import {
 export const MSP_SOURCE_MAX = 32 * 1024 * 1024 + 128 * 1024;
 export const MSP_ENCODED_MAX = 1024 * 1024;
 export const MSP_PREVIEW_MAX = 192 * 192 * 4;
-export const MSP_PROTOCOL_VERSION = 2;
-export const MSP_REQUEST_HEADER = 192;
-export const MSP_RESPONSE_HEADER = 352;
+export const MSP_PROTOCOL_VERSION = 3;
+export const MSP_REQUEST_HEADER = 224;
+export const MSP_RESPONSE_HEADER = 384;
 export const MSP_OUTPUT_MAX =
 	MSP_RESPONSE_HEADER + MSP_ENCODED_MAX + MSP_PREVIEW_MAX + 4096;
 export const MSP_RESERVATION = 512 * 1024 * 1024;
@@ -37,7 +37,15 @@ function utf8(bytes) {
 export function freezeMspPlan(plan) {
 	if (plan && frozenPlans.has(plan)) return plan;
 	if (!plan) throw refusal('InputSchema', 'Invalid browser MSP2 profile');
-	const { width, height, sourceFlags, version, metadataContext } = plan;
+	const {
+		width,
+		height,
+		sourceFlags,
+		version,
+		metadataContext,
+		filterDigest,
+		bakeIntent,
+	} = plan;
 	if (
 		!Number.isInteger(width) ||
 		!Number.isInteger(height) ||
@@ -48,7 +56,12 @@ export function freezeMspPlan(plan) {
 		width * height > 4194304 ||
 		!Number.isInteger(sourceFlags) ||
 		sourceFlags < 0 ||
-		sourceFlags > 3 ||
+		sourceFlags > 7 ||
+		!Number.isInteger(bakeIntent) ||
+		bakeIntent < 0 ||
+		bakeIntent > 1 ||
+		!(filterDigest instanceof Uint8Array) ||
+		filterDigest.length !== 32 ||
 		version !== 2
 	)
 		throw refusal('InputSchema', 'Invalid browser MSP2 profile');
@@ -58,6 +71,10 @@ export function freezeMspPlan(plan) {
 		height,
 		sourceFlags,
 		metadataContext: metadata,
+		filterDigest: Object.freeze(
+			Array.from({ length: 32 }, (_, index) => filterDigest[index]),
+		),
+		bakeIntent,
 		version,
 	});
 	frozenPlans.add(frozen);
@@ -79,7 +96,7 @@ export async function captureMsp(
 	plan = freezeMspPlan(plan);
 	const frozen = source.slice();
 	const header = new Uint8Array(MSP_REQUEST_HEADER);
-	header.set(encoder.encode('PCMSPQ02'));
+	header.set(encoder.encode('PCMSPQ03'));
 	const view = new DataView(header.buffer);
 	view.setUint16(8, MSP_PROTOCOL_VERSION);
 	view.setUint32(12, frozen.length);
@@ -93,7 +110,9 @@ export async function captureMsp(
 	);
 	header[113] = 2;
 	header[114] = plan.sourceFlags;
-	header.set(plan.metadataContext, 128);
+	header[122] = plan.bakeIntent;
+	header.set(plan.filterDigest, 128);
+	header.set(plan.metadataContext, 160);
 	const captured = { source: frozen, header, plan };
 	proofs.set(captured, {});
 	return captured;
@@ -136,12 +155,12 @@ export async function decodeMspResponse(
 	const mask = bytes[193],
 		versionLength = bytes[198],
 		detail = view.getUint16(263);
-	require(equal(bytes.subarray(0, 8), encoder.encode('PCMSPR02')) &&
+	require(equal(bytes.subarray(0, 8), encoder.encode('PCMSPR03')) &&
 		view.getUint16(8) === MSP_PROTOCOL_VERSION &&
 		status <= 5 &&
 		!bytes[11] &&
 		bytes
-			.subarray(266, 288)
+			.subarray(267, 288)
 			.every((b) => b === 0), 'Browser MSP2 response framing');
 	require(width === captured.plan.width &&
 		height === captured.plan.height &&
@@ -153,7 +172,9 @@ export async function decodeMspResponse(
 		bytes.subarray(122, 129).every((b) => b === 0) &&
 		bytes.subarray(194, 198).every((b) => b === 0) &&
 		bytes[265] === captured.plan.sourceFlags &&
-		equal(bytes.subarray(288, 352), captured.header.subarray(128, 192)) &&
+		bytes[266] === captured.plan.bakeIntent &&
+		equal(bytes.subarray(288, 320), captured.header.subarray(128, 160)) &&
+		equal(bytes.subarray(320, 384), captured.header.subarray(160, 224)) &&
 		versionLength > 0 &&
 		versionLength <= 64 &&
 		utf8(bytes.subarray(199, 199 + versionLength)) === version &&
@@ -210,8 +231,10 @@ export async function decodeMspResponse(
 		!detail &&
 		pw === expectedW &&
 		ph === expectedH &&
-		mask <= 7 &&
-		(mask & 3) === captured.plan.sourceFlags &&
+		mask <= 15 &&
+		(mask & 3) === (captured.plan.sourceFlags & 3) &&
+		Boolean(mask & 8) === Boolean(captured.plan.sourceFlags & 4) &&
+		(!(captured.plan.sourceFlags & 4) || captured.plan.bakeIntent === 1) &&
 		Boolean(mask & 4) ===
 			metadataOmitted(
 				captured.plan.metadataContext,

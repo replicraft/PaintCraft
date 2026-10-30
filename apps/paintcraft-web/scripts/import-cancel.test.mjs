@@ -21,6 +21,8 @@ const mono = () => ({
 	width: 1,
 	height: 1,
 	sourceFlags: 0,
+	filterDigest: new Uint8Array(32).fill(17),
+	bakeIntent: 0,
 	version: 2,
 	metadataContext: context(2),
 });
@@ -28,6 +30,8 @@ const dds = () => ({
 	width: 1,
 	height: 1,
 	sourceFlags: 0,
+	filterDigest: new Uint8Array(32).fill(17),
+	bakeIntent: 0,
 	metadataContext: context(1),
 	settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 });
@@ -56,8 +60,8 @@ async function refusal(kind, request) {
 		bytes.set(app, header);
 		bytes.set(detail, header + app.length);
 	} else {
-		bytes.set(text.encode(kind === 'dds-export' ? 'PCDDSR02' : 'PCMSPR02'));
-		v.setUint16(8, 2);
+		bytes.set(text.encode(kind === 'dds-export' ? 'PCDDSR03' : 'PCMSPR03'));
+		v.setUint16(8, 3);
 		bytes.set(request.subarray(16, 24), 12);
 		bytes.set(request.subarray(12, 16), 20);
 		bytes.set(request.subarray(24, 65), 32);
@@ -74,7 +78,9 @@ async function refusal(kind, request) {
 		bytes.set(app, 199);
 		v.setUint16(263, detail.length);
 		bytes[265] = request[kind === 'dds-export' ? 121 : 114];
-		bytes.set(request.subarray(128, 192), 288);
+		bytes[266] = request[122];
+		bytes.set(request.subarray(128, 160), 288);
+		bytes.set(request.subarray(160, 224), 320);
 		bytes.set(detail, header);
 	}
 	return bytes;

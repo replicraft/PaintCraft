@@ -25,6 +25,8 @@ function plan() {
 		width: 1,
 		height: 1,
 		sourceFlags: 0,
+		filterDigest: new Uint8Array(32).fill(17),
+		bakeIntent: 0,
 		metadataContext: context(2),
 		version: 2,
 	};
@@ -52,8 +54,8 @@ async function response(
 			MSP_RESPONSE_HEADER + encoded.length + preview.length + msg.length,
 		),
 		v = new DataView(bytes.buffer);
-	bytes.set(text.encode('PCMSPR02'));
-	v.setUint16(8, 2);
+	bytes.set(text.encode('PCMSPR03'));
+	v.setUint16(8, 3);
 	bytes[10] = status;
 	bytes.set(header.subarray(16, 24), 12);
 	bytes.set(header.subarray(12, 16), 20);
@@ -72,12 +74,18 @@ async function response(
 		new Uint8Array(await crypto.subtle.digest('SHA-256', preview)),
 		161,
 	);
-	bytes[193] = status ? 0 : header[114] | ((header[176] & 3) === 3 ? 4 : 0);
+	bytes[193] = status
+		? 0
+		: (header[114] & 3) |
+			(header[114] & 4 ? 8 : 0) |
+			((header[208] & 3) === 3 ? 4 : 0);
 	bytes[198] = app.length;
 	bytes.set(app, 199);
 	v.setUint16(263, msg.length);
 	bytes[265] = header[114];
-	bytes.set(header.subarray(128, 192), 288);
+	bytes[266] = header[122];
+	bytes.set(header.subarray(128, 160), 288);
+	bytes.set(header.subarray(160, 224), 320);
 	bytes.set(encoded, MSP_RESPONSE_HEADER);
 	bytes.set(preview, MSP_RESPONSE_HEADER + encoded.length);
 	bytes.set(msg, MSP_RESPONSE_HEADER + encoded.length + preview.length);
@@ -144,7 +152,7 @@ test('public capture freezes source, owner, plan and options before digest await
 			p.version = 1;
 		},
 		(p) => {
-			p.sourceFlags = 4;
+			p.sourceFlags = 8;
 		},
 		(p) => {
 			p.width = 2049;
@@ -169,7 +177,7 @@ test('two-phase admission precedes serialization and returns only a Rust-validat
 	assert.equal(raw.requiresRustValidation, true);
 	assert.equal(raw.encoded, undefined);
 	assert.equal(raw.preview, undefined);
-	assert.equal(raw.requestHeader.length, 192);
+	assert.equal(raw.requestHeader.length, 224);
 	assert.equal(raw.sourceSha256.length, 32);
 	assert.ok(raw.responseBytes.length > MSP_RESPONSE_HEADER);
 	assert.equal(m.codecWorkerBudget().reservedBytes, MSP_RESERVATION);
@@ -355,7 +363,7 @@ test('bridge admission cannot rebind a stale owner and keeps the service exclusi
 	const { createCodecService } = await import('../src/lib/codec-bridge.js');
 	const service = createCodecService(version);
 	service.setOwner(owner);
-	assert.equal(service.mspExportProtocolVersion(), 2);
+	assert.equal(service.mspExportProtocolVersion(), 3);
 	assert.throws(
 		() => service.beginMspExport({ ...owner, epoch: 9n }, plan(), nonce),
 		{ code: 'ConflictStaleBase' },
@@ -503,6 +511,8 @@ test('MSP, DDS and legacy decode share one reservation and caller options cannot
 			width: 1,
 			height: 1,
 			sourceFlags: 0,
+			filterDigest: new Uint8Array(32).fill(17),
+			bakeIntent: 0,
 			metadataContext: context(1),
 			settings: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0]),
 		},
@@ -531,7 +541,7 @@ test('MSP, DDS and legacy decode share one reservation and caller options cannot
 	assert.equal(m.codecWorkerBudget().reservedBytes, 0);
 });
 
-test('v2 freezes explicit source intent and rejects metadata, target and old-version echoes', async () => {
+test('v3 freezes explicit source intent and rejects metadata, target and old-version echoes', async () => {
 	for (const present of [false, true]) {
 		const p = plan();
 		p.metadataContext = context(2, { present, omit: true });
@@ -539,11 +549,11 @@ test('v2 freezes explicit source intent and rejects metadata, target and old-ver
 		const pending = captureMsp(new Uint8Array([1]), owner, p, nonce);
 		p.metadataContext.fill(0); // Mutation after capture cannot change intent.
 		const captured = await pending;
-		assert.deepEqual(captured.header.subarray(128, 192), original);
+		assert.deepEqual(captured.header.subarray(160, 224), original);
 		const valid = await response(captured.header);
 		const result = await decodeMspResponse(valid, captured, owner, version);
 		assert.equal(Boolean(result.lossMask & 4), present);
-		for (const at of [288, 304, 336, 337, 338, 339, 340, 344]) {
+		for (const at of [320, 336, 368, 369, 370, 371, 372, 376]) {
 			const changed = valid.slice();
 			changed[at] ^= 1;
 			await assert.rejects(
