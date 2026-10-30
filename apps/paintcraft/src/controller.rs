@@ -157,7 +157,8 @@ impl Editor {
     /// Use `open` for an existing file so its acquired content is guarded.
     pub fn with_document(doc: Document, path: Option<PathBuf>) -> Editor {
         let target = doc.roots.last().copied();
-        let mut session = Session::new(doc);
+        let mut session = Session::new(doc)
+            .with_persistent_validator(Some(pcnd::check_compact_metadata_admission));
         if let Ok(store) = paintcraft_platform::spill::NativeSpillStore::new(
             &std::env::temp_dir().join("paintcraft-history"),
             8 << 30,
