@@ -1,7 +1,8 @@
 # Editable point filters
 
 The engine, CLI and MCP support an ordered filter stack on each raster layer.
-The first algorithms are Invert and Brightness/Contrast. They preserve source
+The six algorithms are Invert, Brightness/Contrast, Black & White, Threshold,
+Posterize and Solarize. They preserve source
 pixels and alpha, participate in one-step Undo/Redo, and remain editable after
 saving and reopening a PCND project. Desktop and browser Studio expose stack
 editing and per-filter selection-derived masks. Mask painting/linking and the
@@ -39,9 +40,13 @@ failure publishes neither edits nor aliases and leaves history unchanged.
 
 ## Operations
 
-The six stack operations below use batch v2; batch v3 also accepts them. Mask
-operations require batch v3. Every operation takes `layer_ref`, using the existing `{ "id":
-"UUID" }` or batch-local `{ "ref": "alias" }` form.
+The six stack operations below use batch v2 except `filter.add` and
+`filter.update` carrying one of the four new descriptors, which require batch v4.
+Mask operations require batch v3. Batch v4 accepts all of these operations; closed
+batch v2/v3 grammars remain unchanged. Scalar enable/reorder/remove/duplicate
+operations still require only v2, even when their target stores a newer kind.
+Every operation takes `layer_ref`, using the existing `{ "id": "UUID" }` or
+batch-local `{ "ref": "alias" }` form.
 
 | Operation | Additional fields |
 |---|---|
@@ -58,7 +63,7 @@ later batches use the instance IDs returned by inspection. Removed aliases
 cannot be reused within the same batch. Unknown fields, references, algorithms,
 out-of-range indices and invalid parameters are rejected atomically.
 
-Descriptors are either `{ "kind": "invert-rgb-v1" }` or:
+The original descriptors are `{ "kind": "invert-rgb-v1" }` and:
 
 ```json
 {
@@ -73,10 +78,29 @@ are hundredths, not channel bytes. The [versioned arithmetic](architecture/PALET
 works on encoded RGB and preserves alpha, including transforming hidden RGB.
 Retained original ICC profiles are not activated by filters.
 
+The additional descriptors require batch v4 only for Add/Update:
+
+| Kind | Required parameter | Inclusive integer range | New-draft default |
+|---|---|---|---|
+| `black-white-rgb-v1` | `strength` | 0–100 | 100 |
+| `threshold-luma-v1` | `level` | 0–255 | 128 |
+| `posterize-rgb-v1` | `levels` | 2–32 | 6 |
+| `solarize-rgb-v1` | none | fixed threshold 128 | none |
+
+For example, `{ "kind": "posterize-rgb-v1", "levels": 6 }` is a complete
+descriptor. Required fields cannot be omitted to request defaults. Unknown fields,
+versions, fractional values and invalid domains are refused. All six kernels use
+encoded RGB, preserve alpha and hidden source RGB, have source-local halo zero,
+and apply an instance mask once after rounding that stage's candidate. Exact
+[point-profile arithmetic](architecture/POINT_FILTER_PROFILES.md) defines unrounded
+Threshold luma, Posterize's two rounding steps and Black & White strength zero
+identity. These are independent PaintCraft byte contracts, not Photoshop or
+Palette floating-point byte-parity claims.
+
 ## Persistent mask operations
 
 Masks are immutable source-local A8 fields, independent of the live selection.
-The current Invert and Brightness/Contrast filters preserve alpha and mix their
+All six supported filters preserve alpha and mix their
 candidate RGB once per instance using its coverage, including hidden RGB. No
 mask or a disabled mask means full coverage; an enabled zero mask means no
 visual effect. Descriptor updates, instance enablement, reorder and duplication
@@ -170,18 +194,22 @@ a new ID; changing parameters preserves the existing ID.
 ## CLI and result contracts
 
 `apply` accepts these operations through an ordinary atomic batch file. MCP
-`apply_operations` supplies the current ticket and selects v3 when mask tags are
-present; `get_batch_schema` returns the v3 grammar. Retrieve the closed profiles:
+`apply_operations` supplies the current ticket and selects the lowest required
+grammar: v4 for Add/Update with a new kind, otherwise v3 when mask tags are
+present, otherwise v2. `get_batch_schema` returns the closed v4 grammar. Retrieve the closed profiles:
 
 ```sh
 paintcraft-cli schema batch-v2
 paintcraft-cli schema batch-v3
+paintcraft-cli schema batch-v4
 paintcraft-cli schema result-v2
 paintcraft-cli schema result-v3
 paintcraft-cli schema file-command-v2
 paintcraft-cli schema file-command-v3
 paintcraft-cli schema inspect-v2
+paintcraft-cli schema inspect-v3
 paintcraft-cli schema mcp-inspect-v2
+paintcraft-cli schema mcp-inspect-v3
 ```
 
 Output selects the lowest necessary profile from the **final document and
@@ -199,15 +227,20 @@ requires `document_features` in canonical order:
 `["layer-point-filters.v1","layer-filter-masks.v1"]`, followed by
 `"source-metadata.v1"` only when an original-source attachment exists. A no-op
 on an already masked document still uses v3. Removing the final mask returns to
-v1 or v2 according to aliases, even when the input is batch v3. Closed legacy
+v1 or v2 according to aliases, even when the input is batch v3 or v4. New
+algorithm kinds alone do not introduce result/v4, envelope/v4 or new feature names. Closed legacy
 result/envelope schemas are unchanged; error-only envelopes retain v1.
 
-Masked CLI inspection uses `paintcraft.inspect/v2`; masked MCP
-`inspect_document` uses the distinct `paintcraft.mcp-inspect/v2` shape. The CLI
+If any stored instance uses one of the four new kinds, including a disabled
+instance, CLI inspection uses `paintcraft.inspect/v3` and MCP uses the distinct
+`paintcraft.mcp-inspect/v3`. Otherwise, masked CLI inspection uses
+`paintcraft.inspect/v2`; masked MCP uses `paintcraft.mcp-inspect/v2`. The CLI
 includes its source assessment, document and ticket; MCP retains its dimensions,
 dirty/history and layer projection. Their separate closed schemas must not be
-interchanged. Unmasked CLI inspection remains v1, and unmasked MCP inspection
-retains its established unversioned output.
+interchanged. With only the original kinds and no masks, CLI inspection remains
+v1 and MCP inspection retains its established unversioned output. Inspection v3
+includes the same ordered `document_features` only when masks are stored; new
+kinds alone do not add it. Mask summaries retain their existing bounded shape.
 
 A stored mask adds only this bounded summary to its filter row:
 
@@ -228,7 +261,10 @@ A stored mask selects [PCND4](PCND_FORMAT.md#version-4-persistent-filter-masks),
 including disabled and all-zero fields. Unmasked nonempty stacks use
 [PCND3](PCND_FORMAT.md#version-3-live-point-filters), even when instances are
 disabled; empty stacks retain exact PCND1/2 profiles. Unknown algorithm or mask
-codec versions are refused rather than dropped. The unchanged 8 MiB metadata
+codec versions are refused rather than dropped, even for disabled instances.
+The additive [algorithm registry](PCND_FORMAT.md#version-3-live-point-filters)
+uses tags 3–6 for the new kinds within PCND3/4; no container version bump is
+needed, and tags 1/2 retain their exact original parameter bytes. The unchanged 8 MiB metadata
 ceiling includes mask records. Aggregate serialized counts are limited to
 262,144 bands and 262,144 runs; shared host payloads count per serialized instance.
 Default binary selections and retained A8 coverage share one 256 MiB resident
@@ -293,5 +329,24 @@ Cancel after a viewport change and immediate reopening of a filter dialog.
 
 Current persistent-mask renderer, host, CLI/MCP, wire and production browser
 qualification is summarized in [FILTER_MASKS](architecture/FILTER_MASKS.md).
-Those results cover fixed saved masks on the two initial algorithms, not mask
-painting, layer masks/styles or the proposed next point-filter family.
+Those completed browser results cover fixed saved masks on the two initial
+algorithms. The six-kind extension has qualified Core/Effects/Document,
+Commands, actual CLI/MCP and Native/Web host UI controls and strict checks.
+Independent CLI/stdio-MCP controls exercise literal and fractional-mask pixels,
+order, unchanged raw source rasters, exact result profiles, disabled-kind
+inspection and PCND save/reopen. The full Formats suite passes 769 tests and
+all 108 renderer tests pass, including 36 required offscreen Metal controls.
+Actual production Chrome passes 305 render Worker and 32 DDS/MSP protocol4
+export cases; nine positive export files independently decode to exact fixture
+pixels. Four actual Chrome UI flows now pass Add, Cancel, Apply, exact Undo/Redo
+and fresh reopen/save for the new kinds, plus parameter changes for the three
+numeric profiles. All four defaults have causal two-color screenshot markers;
+changed Threshold's uniform output is an exact Worker-plane check only. Apply
+can promote its admitted private texture; fresh reopen independently verifies
+strict committed BASE binding to the saved source/state and ROI. These flows do
+not newly qualify existing-instance Edit, duplicate or preview-off. Host checks,
+raw Worker frames and visible UI execution remain separate evidence. The full
+Node suite passes 185 tests and independent JS oracle controls pass 63. See the
+[profile qualification scope](architecture/POINT_FILTER_PROFILES.md#integration-and-qualification).
+Mask painting, layer styles and the rest of the pinned 132-entry source catalog
+remain separate work; six profiles do not establish catalog parity.

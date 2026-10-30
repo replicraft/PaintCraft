@@ -160,8 +160,29 @@ before its tile records:
 | Instance count | Canonical integer, 0 through 256; admitted before stack allocation |
 | Instance ID | 16 UUID bytes; unique within its layer, including disabled instances; nil is allowed |
 | Enabled | Exactly one byte, 0 or 1 |
-| Algorithm/version tag | One byte: 1 is `invert-rgb-v1`; 2 is `brightness-contrast-v1` |
-| Brightness, contrast | Tag 2 only: two canonical ZigZag integers in signed hundredths; brightness −100 through 100, contrast −99 through 99 |
+| Algorithm/version tag | One byte, from the additive registry below |
+| Parameters | Exactly the fields associated with that tag; no parameter defaults are inferred |
+
+The registry applies to both version 3 and version 4 containers:
+
+| Tag | Algorithm | Following parameter bytes |
+|---|---|---|
+| 1 | `invert-rgb-v1` | None |
+| 2 | `brightness-contrast-v1` | Two canonical ZigZag integers: brightness −100…100, contrast −99…99 |
+| 3 | `black-white-rgb-v1` | One unsigned byte, strength 0…100 |
+| 4 | `threshold-luma-v1` | One unsigned byte, level 0…255 |
+| 5 | `posterize-rgb-v1` | One unsigned byte, levels 2…32 |
+| 6 | `solarize-rgb-v1` | None |
+
+Tags 3–6 are an explicit additive algorithm-registry extension within existing
+PCND3/4 framing, not a container-version change. Tags 1/2 and their parameter
+bytes remain exactly unchanged, as do existing PCND1/2/3/4 specimens containing
+only the original kinds. A reader lacking a known algorithm implementation must
+return a typed refusal, even for a disabled instance; it must not reinterpret,
+drop or skip that intention. Unknown tags and invalid parameter bytes likewise
+refuse. [Point profiles](architecture/POINT_FILTER_PROFILES.md) define exact
+encoded-RGB arithmetic, unchanged alpha/hidden RGB and once-per-instance masking.
+These algorithms share `layer-point-filters.v1`; they add no feature-list names.
 
 Order, IDs, disabled settings and parameters are persistent meaning. The reader
 rejects unknown algorithm/version tags even when disabled, duplicate instance
@@ -193,8 +214,9 @@ Version 4 has schema `paintcraft.document/v4`. Its header feature order is
 `raster.rgba8`, `canvas.finite`, `layers.flat`, `layer-point-filters.v1`,
 `layer-filter-masks.v1`, then `source-metadata.v1` only when the attachment is
 present. The title/source-presence/attachment and layer framing remain as in
-version 3. The two existing algorithm/version tags and their parameter bytes
-remain unchanged; no additional point algorithms are introduced here.
+version 3. The shared additive algorithm registry above applies before each
+mask field. Original tags 1/2 retain their exact parameter bytes; tags 3–6 do not
+require a new mask framing or container version.
 
 The writer selects v4 whenever any filter instance stores a mask, including a
 mask on a disabled filter, a disabled mask, or a field with zero coverage.
@@ -268,3 +290,22 @@ the product codec. See [the mask contract](architecture/FILTER_MASKS.md) for
 selection capture, source transformations, identity, history, renderer and
 frontend qualification. CLI/MCP summary and conditional result profiles are
 specified in [editable filter commands](FILTER_COMMANDS.md).
+
+## Six-profile extension qualification
+
+Core/Effects/Document, Commands, actual CLI/stdio-MCP consumers, independent
+closed-schema controls and Native/Web host UI checks are qualified for the four
+additional profiles. The full Formats suite passes 769 tests, and all 108
+renderer tests pass, including 36 required offscreen Metal controls. The actual
+production Chrome probe passes 305 render Worker and 32 DDS/MSP protocol4 export
+cases against independent sources and planes; nine positive artifacts independently
+decode to the expected pixels. Four actual Chrome Studio flows also pass Add,
+parameter changes for the three numeric kinds, Cancel, Apply, exact Undo/Redo and
+fresh reopen/save. Independent default screenshots are causal for all four;
+changed Threshold's uniform plane has Worker-only exact-pixel evidence. Fresh
+reopen verifies strict committed BASE binding against the saved PCND source and
+state after Apply legitimately promotes its admitted private texture. Existing
+Edit, duplicate and preview-off are not newly qualified by these four runs.
+Registering tags and passing these local checks do not
+establish reader deployment, upstream application compatibility or full Palette
+catalog coverage. Existing older byte-profile evidence retains its original scope.

@@ -1,17 +1,20 @@
-# Proposed next point-filter profiles
+# Versioned point-filter profiles
 
-Status: **specification and independent oracle only**. These four descriptors are
-not implemented or exposed by this checkpoint. The existing Invert and
-Brightness/Contrast kernels remain unchanged. This document does not establish
-Palette catalog coverage, Photoshop parity, GPU filter execution or a completed
-Studio feature.
+The six supported typed profiles are Invert, Brightness/Contrast, Black & White,
+Threshold, Posterize and Solarize. The four additions are implemented through
+Core/Effects, persistent document descriptors, Commands and CLI/MCP; Native/Web
+Studio host controls are also qualified. Formats I/O, renderer/required Metal
+and actual production Chrome Worker/export controls pass for these additions.
+All four visible Studio UI flows also pass in actual Chrome; their exact
+interaction and appearance scope is recorded below, separately from raw Worker checks. See [integration and qualification](#integration-and-qualification).
 
-The next finite slice is Black & White, Threshold, Posterize and Solarize. Their
-reference intent comes from Palette commit
+Black & White, Threshold, Posterize and Solarize extend the first two profiles.
+Their reference intent comes from Palette commit
 [`aefc84fe9233e66344147078de866860326d8cfa`](https://github.com/spiffyfitz/palette/tree/aefc84fe9233e66344147078de866860326d8cfa),
 specifically its [point kernels](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing/point.rs)
 and [registry/defaults](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing.rs).
-The retained source manifest hashes were checked before this proposal. Its
+The retained source manifest hashes were checked for the independent
+specification. Its
 `Filter` enum has 132 variants; that source inventory is not 132 PaintCraft
 implementations or an executed upstream qualification. See
 [Palette integration](PALETTE_INTEGRATION.md) for the broader boundaries.
@@ -19,7 +22,9 @@ implementations or an executed upstream qualification. See
 These are independent exact arithmetic contracts. Palette's floating point
 implementation motivates their intent; bit-for-bit equivalence to that
 implementation or another application is not claimed. No upstream source was
-copied into the oracle.
+copied into the oracle or adopted wholesale as the product implementation. Layer
+styles and the rest of that fixed 132-entry inventory remain open; six exact
+profiles do not establish broad catalog parity.
 
 ## Shared meaning
 
@@ -34,9 +39,11 @@ integer `n` and positive integer `d`:
 `round(n/d) = floor((2*n + d)/(2*d))`.
 
 There is no intermediate byte cast, floating point rounding or implicit channel
-clamp unless a profile explicitly specifies one. The proposed parameter domains
-keep every result within `[0,255]`. A future Rust implementation must validate
-before evaluation and use checked, sufficiently wide integer arithmetic.
+clamp unless a profile explicitly specifies one. The additional-profile parameter
+domains
+keep every result within `[0,255]`. Typed construction validates the domains;
+scalar evaluation uses sufficiently wide integer arithmetic. The original
+Brightness/Contrast profile retains its explicit clamp and exact rational rule.
 
 Each filter consumes the preceding stage's rounded RGBA result. It computes all
 three candidate channels from that same input tuple before writing any channel.
@@ -64,10 +71,13 @@ See [persistent filter masks](FILTER_MASKS.md).
 
 All parameters are integers; floats, NaN, booleans, missing required parameters,
 unknown fields, unknown kind versions and out-of-domain values must be refused.
-The wire IDs below are proposed semantic IDs, not currently accepted commands.
+These accepted semantic IDs are versioned contracts. Required wire fields remain
+required even when a UI draft has a default.
 
-| Proposed kind | Studio label | Parameter | Inclusive range | Default |
+| Kind | Studio label | Parameter | Inclusive range | Default |
 |---|---|---|---|---|
+| `invert-rgb-v1` | Invert | none | none | none |
+| `brightness-contrast-v1` | Brightness/Contrast | `brightness`, `contrast` | −100…100; −99…99 | 0; 0 |
 | `black-white-rgb-v1` | Black & White | `strength`, shown as Strength (%) | 0–100 | 100 |
 | `threshold-luma-v1` | Threshold | `level`, shown as Threshold | 0–255 | 128 |
 | `posterize-rgb-v1` | Posterize | `levels`, shown as Levels | 2–32 | 6 |
@@ -76,10 +86,21 @@ The wire IDs below are proposed semantic IDs, not currently accepted commands.
 Defaults describe a newly created descriptor/UI draft; they do not authorize
 omitting required wire fields.
 
-The first three are Palette's Adjustments entries; Solarize is its Stylize
-entry. Black & White is a single weighted desaturation control, not Photoshop's
+Black & White, Threshold and Posterize are Palette's Adjustments entries;
+Solarize is its Stylize entry. Black & White is a single weighted desaturation control, not Photoshop's
 six-color-channel mixer. Posterize intentionally follows the pinned 2–32 range;
 256 levels is not an identity option in this profile.
+
+### Original profiles
+
+`invert-rgb-v1` maps each channel `c` to `255-c`. It has no whole-domain
+identity setting. `brightness-contrast-v1` uses signed integer hundredths
+brightness `b` and contrast `c`, with gain `(100+c)/(100-c)`, midpoint `127.5`
+and offset `255*b/100`. Clamp the exact rational result to 0…255, then round
+nearest with ties upward. Contrast 100 is refused. Brightness and contrast both
+zero are byte identity. Both profiles preserve alpha and hidden RGB and retain
+their original parameter hashing and PCND byte representation. See the
+[original arithmetic contract](PALETTE_INTEGRATION.md#persistent-model-and-arithmetic).
 
 ### Black & White
 
@@ -162,38 +183,89 @@ The current numerical checkpoint covers:
   specimens, fractional mask samples and rejected parameter domains.
 
 The chromatic set is deliberately disclosed: it is not all 16,777,216 RGB
-triples. Frozen hashes are expected-reference evidence, not proof that a future
-product matches them. The Python `Fraction` cross-check evaluates separate
+triples. Frozen hashes are expected-reference evidence, not proof that a
+product matches them. Qualified scalar tests now compare the implementation to
+these frozen streams and literal controls; separate integration checks below
+exercise actual command consumers. The Python `Fraction` cross-check evaluates
+separate
 rational expressions for literal controls, unary quantization and selected
 cross-channel/boundary samples; no binary float is used for expected outputs.
 
-## Required implementation gates
+## Integration and qualification
 
-Implementation has **not started** in this checkpoint. It must reuse the ordered
-nondestructive stack, atomic editor preparation, persistent masks, history,
-source-preserving PCND persistence and captured exported-copy consent. A
-destructive endpoint alone does not satisfy this slice.
+All six profiles use the existing ordered nondestructive stack, atomic editor
+preparation, persistent masks, history, source-preserving PCND persistence and
+captured exported-copy consent. Descriptor updates preserve existing saved masks.
+They do not rewrite source pixels. Changed parameters participate in stack/cache
+and consent identity; hidden and disabled stored intentions remain persistent.
 
-Before adding descriptors, settle the next closed input and inspection profiles;
-do not silently widen already frozen batch v2/v3 or mask inspection profiles.
-Assign unambiguous persistence tags and retain typed refusal for unknown
-algorithms, including disabled instances. A container version change is a
-separate format decision, not implied by these proposed semantic IDs.
+The input grammar selects the lowest version needed by the operations:
 
-The current scalar evaluator updates channels in place for channel-independent
-kernels. New cross-channel kernels must first capture the original RGB tuple.
-Descriptor parameter hashing must become exhaustive: the current special case
-for Brightness/Contrast must not omit new strength/level/levels values. Preserve
-all existing Invert/BC hashes and byte results, and bind every new parameter to
-stack/cache/policy identity, serialization and inspection.
+- New-kind `filter.add`/`filter.update` require closed `paintcraft.batch/v4`.
+- Original-kind Add/Update and scalar enable/reorder/remove/duplicate require v2.
+- Mask operations require v3 unless another operation in the batch requires v4.
 
-Qualification must compare product output against these independent specimens,
-then cover order, identity/no-op behavior, alpha and hidden RGB, mask 0/128/255,
-sparse defaults, CPU/regional display/required GPU composition, current Worker
-frames, atomic failure/cancel/stale publication, Undo/cold history, PCND
-save/reopen, CLI/MCP and Native/Web UI. The existing metadata cap and resource
-admission remain in force. No completed integration, performance gain, shader
-execution or application-parity claim follows from this document.
+Frozen batch v2/v3 reject new-kind Add/Update. Inspection uses CLI
+`paintcraft.inspect/v3` or distinct MCP `paintcraft.mcp-inspect/v3` iff any
+stored instance has a new kind, including disabled instances. Otherwise original
+masked inspect/v2 and old unmasked shapes remain unchanged. Results and
+file-command envelopes still select only v1/v2/v3 from final masks and published
+aliases; there is no result/v4, envelope/v4 or new feature name for these kinds.
+The point-filter, mask and optional source-metadata feature order is unchanged.
+See [automation contracts](../FILTER_COMMANDS.md#cli-and-result-contracts).
+
+PCND's algorithm registry explicitly adds tags 3–6 within existing PCND3/4:
+Black & White strength byte 0…100; Threshold level byte 0…255; Posterize levels
+byte 2…32; Solarize with no parameter bytes. Original tags 1/2 and existing
+specimens are unchanged. Unknown or unavailable algorithm versions must return a
+typed refusal even when disabled. A mask still selects PCND4, an unmasked
+nonempty stack PCND3, and an empty stack exact PCND1/2. The unchanged 8 MiB
+metadata cap includes intentions and masks; adding a kind does not bypass it.
+
+Qualified checks at this checkpoint include Core/Effects/Document numeric and
+persistence-meaning controls; 21 Commands tests; five actual CLI/stdio-MCP groups;
+61 independent schema controls over 32 genuine receipts; 43 legacy CLI/filter/
+mask/persistence regressions; Native/Web/Studio host controls and strict/Wasm
+checks. Actual consumers compare literal and fractional-mask pixels against the
+independent oracle, including implicit defaults, ordering, disabled inspection,
+PCND save/reopen, raw-source preservation and unchanged result profiles.
+The locally retained consumer receipt is
+`docs/validation/point-profile-consumers/final-freeze.json`; it records original
+harness failures separately from corrected passes. UI host Worker readiness is
+simulated in those host tests; it is not an actual Worker/browser proof.
+Independent JS oracle controls (63) and the full Node suite (185) also pass;
+Node execution does not establish production-browser execution.
+
+The full Formats suite passes 769 tests. All 108 renderer tests pass, including
+36 required offscreen Metal controls. The actual Chrome 156.0.8078.79 production
+probe passes 305 persistent render Worker cases and 32 DDS/MSP protocol4 export
+cases. Nine positive export artifacts (eight DDS and one exact bilevel MSP) are
+independently decoded with Pillow 10.3.0 and match the fixture planes. The other
+MSP profiles retain their defined bilevel refusal; acknowledgment does not widen
+that capability. The 27 production assets are frozen in
+`docs/validation/point-filter-production/final-freeze.json`; raw browser evidence
+is retained under `browser/attempt-xsCYSS/production.json` in that directory.
+
+Four final actual Chrome Studio flows pass for Black & White, Threshold,
+Posterize and Solarize, with seven evidence records per flow. Each verifies Add,
+Cancel with byte-identical project/source, Apply, exact Undo/Redo states and fresh
+reopen/save. The three numeric profiles also verify changed parameters; Solarize
+has no numeric parameter. Independent red/green fixtures make every default
+preview causally different from the source, with exact two-color screenshot
+markers at the same canvas geometry. Changed Threshold 200 produces uniform
+black: its exact bound Worker plane is verified without a two-color screenshot
+causality claim. Apply may legitimately promote the already admitted private
+texture; fresh reopen separately checks a strict committed BASE response bound
+to the saved source SHA/state, null operation/target and exact full ROI.
+
+Final UI receipts under `docs/validation/point-filter-production/ui` are
+`attempt-EXAZqE`, `attempt-bjAaVV`, `attempt-SzoTzH` and `attempt-lpUwEY`.
+Calibration and earlier failed attempts remain retained separately. These four
+flows do not newly qualify existing-instance Edit, duplicate or preview-off;
+older two-kind evidence for those interactions keeps its original scope.
+No strict frame-latency, new GPU shader, external-application parity or complete
+Palette coverage claim follows from these checks. Layer styles and the remaining
+inventory are separate milestones.
 
 Brightness alone can reuse the existing BC descriptor with contrast zero as an
 explicit preset; it need not duplicate a kernel or inflate the algorithm count.

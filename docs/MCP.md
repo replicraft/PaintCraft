@@ -24,44 +24,81 @@ Configure your MCP client with the absolute path to that binary:
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
 [Editable point filters and persistent masks](FILTER_COMMANDS.md) are available
-through `apply_operations` and `get_batch_schema`. Invert and Brightness/Contrast
-retain parameters, instance identity and saved coverage through Undo/Redo and
+through `apply_operations` and `get_batch_schema`. Invert, Brightness/Contrast,
+Black & White, Threshold, Posterize and Solarize retain parameters, instance
+identity and saved coverage through Undo/Redo and
 PCND save/reopen. The server owns its headless document; it does not manipulate
 Desktop or browser Studio, whose separate controls are documented there. Other
-algorithms and mask painting/linking remain separate work.
+catalog entries, layer styles and mask painting/linking remain separate work.
 
-`get_batch_schema` returns the closed `paintcraft.batch/v3` grammar.
+`get_batch_schema` returns the closed `paintcraft.batch/v4` grammar.
+Add/Update with `black-white-rgb-v1` (`strength` 0–100), `threshold-luma-v1`
+(`level` 0–255), `posterize-rgb-v1` (`levels` 2–32) or parameterless
+`solarize-rgb-v1` require v4. Their defaults for new drafts are 100, 128 and 6;
+wire fields remain required. Old-kind Add/Update and scalar stack actions still
+need only v2. Closed batch v2/v3 profiles reject new-kind Add/Update. The server
+selects the lowest required version for the actual operation list. All six
+[exact profiles](architecture/POINT_FILTER_PROFILES.md) use encoded RGB,
+preserve alpha/hidden RGB and apply source-local masks once; these are not
+Photoshop or upstream Palette floating-point byte-parity claims.
+
 `filter.mask.set`, `filter.mask.from_selection`, `filter.mask.set_enabled` and
 `filter.mask.remove` use the existing `apply_operations` tool: the server captures
-the current state/publication ticket and selects v3 for these tags. Earlier closed
+the current state/publication ticket and selects v3 for these tags unless a
+new-kind Add/Update in the same batch requires v4. Earlier closed
 batch v1/v2 profiles refuse them. Capture freezes the staged selection once;
 inactive selection errors, while active empty/disjoint selection stores zero
 coverage. Later selection edits do not change it. The
 [selection capture example](FILTER_COMMANDS.md#mcp-example) adds a filter,
 captures its selection and clears the live selection in one atomic Undo step.
 
-A document with any stored mask uses `paintcraft.mcp-inspect/v2` for
-`inspect_document`, with `document_features` in point-filter, mask, then optional
+A document with any stored new kind, including disabled instances, uses the
+distinct closed `paintcraft.mcp-inspect/v3` for `inspect_document`. Otherwise a
+document with a stored mask uses `paintcraft.mcp-inspect/v2`. Both include
+`document_features` only for stored masks, in point-filter, mask, then optional
 source-metadata order. Each affected filter row includes only
 `mask: {schema,enabled,domain,bands,runs,digest}`: schema `a8-bands/v1`, signed
 source-local endpoint array `[x0,y0,x1,y1]`, canonical counts and a 64-character
 lowercase SHA-256. It never returns the coverage payload. This closed MCP
 projection retains its dimensions, dirty/history and layer fields and is distinct
 from the CLI's `paintcraft.inspect/v2` document/assessment/ticket projection.
-Unmasked MCP inspection retains its established unversioned shape.
+Unmasked documents containing only the original two kinds retain the established
+unversioned MCP shape. CLI inspection separately selects `paintcraft.inspect/v3`
+for new kinds and v2 for legacy masked documents; its schema is not the MCP schema.
 
 Engine results depend on the **final document**, not merely the request grammar.
 A stored mask, including disabled/zero coverage, requires `paintcraft.result/v3`
 and ordered `document_features`; `filter_aliases` is optional but nonempty when
 present. With no masks, nonempty new filter aliases use result/v2 and other
 results retain exact v1. Removing the last mask therefore does not force a result
-version bump solely because the request used batch v3. CLI file-command envelopes
+version bump solely because the request used batch v3 or v4. New algorithms
+alone do not add features or introduce result/v4 or file-command/v4. CLI
+file-command envelopes
 select the corresponding v1/v2/v3 nested-result profile; MCP returns the engine
 result directly. All older closed result schemas remain unchanged.
 
 PCND4 preserves stored masks, including disabled/zero fields; unmasked projects
-retain exact PCND1/2/3 profiles. Band/run aggregates are bounded at 262,144 each,
+retain PCND1/2/3 selection. Additive PCND3/4 tags 3–6 store the new algorithms;
+tags 1/2 and existing older byte profiles are unchanged. Unknown or unavailable
+algorithm versions must be refused even when disabled. Band/run aggregates are
+bounded at 262,144 each,
 with checked work/byte admission and the unchanged 8 MiB serialized metadata cap.
+
+Actual CLI/stdio controls qualify all four new profiles against independent
+pixels, source preservation and schema boundaries. Native/Web host UI and Wasm
+checks are qualified. The full Formats suite passes 769 tests; 108 renderer
+controls pass, including 36 required offscreen Metal cases. Actual production
+Chrome passes 305 render Worker and 32 DDS/MSP protocol4 export cases, with nine
+positive output artifacts independently decoded to exact fixture pixels.
+Four separate actual Chrome Studio flows also pass Add, numeric parameter
+changes where applicable, Cancel, Apply, Undo/Redo and fresh reopen/save. Every
+default preview has a causal two-color screenshot marker; changed Threshold's
+uniform plane is checked through the exact bound Worker response only. Fresh
+reopen verifies strict committed BASE binding after legitimate private-texture
+promotion on Apply. These flows do not newly qualify existing Edit, duplicate or
+preview-off. Node's full suite passes 185 tests, with 63 independent JS oracle
+controls; those counts are separate from browser execution.
+
 Default binary selections and persistent masks share one 256 MiB resident realm;
 history shares payload charges and keeps coverage resident during RGBA spill.
 See [the wire contract](PCND_FORMAT.md#version-4-persistent-filter-masks) and
