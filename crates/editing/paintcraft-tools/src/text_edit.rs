@@ -51,6 +51,7 @@ impl ToolState {
         result.push_str(typed);
         if result != draft.text {
             draft.text = result;
+            draft.revision.advance();
             self.preview_revision.advance();
         }
         Ok(())
@@ -59,6 +60,7 @@ impl ToolState {
         if let Some(t) = &mut self.text
             && t.text.pop().is_some()
         {
+            t.revision.advance();
             self.preview_revision.advance();
         }
     }
@@ -74,6 +76,7 @@ impl ToolState {
             && !text.text.is_empty()
         {
             text.text.clear();
+            text.revision.advance();
             self.preview_revision.advance();
         }
     }
@@ -137,6 +140,7 @@ impl ToolState {
             }
         }
         if t.text.len() != previous_len {
+            t.revision.advance();
             self.preview_revision.advance();
         }
         skipped

@@ -22,7 +22,9 @@ mod selection;
 #[cfg(feature = "text")]
 pub mod text;
 mod text_edit;
+mod text_stamp;
 pub use preview_revision::PreviewRevision;
+pub use text_stamp::{TextStamp, TextSubmission};
 
 use paintcraft_core::types::{Rgba, text::TextOptions};
 pub use paintcraft_core::types::{policy::BlendMode, shapes::ShapePreset};
@@ -33,6 +35,7 @@ const OPS_PER_BATCH: usize = 1024;
 /// Text being typed; it becomes one transaction when committed.
 #[derive(Debug)]
 struct TextEdit {
+    revision: PreviewRevision,
     style: Option<TextOptions>,
     background: Rgba,
     token: u64,
@@ -124,6 +127,7 @@ impl ToolState {
             text.style = Some(style);
             text.color = self.color;
             text.background = self.secondary;
+            text.revision.advance();
             self.preview_revision.advance();
         }
     }
@@ -136,6 +140,7 @@ impl ToolState {
         }
         self.next_gesture += 1;
         self.text = Some(TextEdit {
+            revision: PreviewRevision::default(),
             style: self.text_style.clone(),
             background: self.secondary,
             token: self.next_gesture,
