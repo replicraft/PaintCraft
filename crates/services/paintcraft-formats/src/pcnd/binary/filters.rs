@@ -1,14 +1,14 @@
-//! PCND3/4 versioned point-algorithm registry; source/evaluated pixels are separate.
+//! PCND3/4 point registry and PCND5 spatial registry; source/evaluated pixels are separate.
 use super::*;
 use paintcraft_core::types::filters::{
-    BlackWhiteV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1,
+    BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1,
 };
 use paintcraft_document::{FilterInstance, FilterStack, filters::FILTERS_MAX};
 
 pub(super) fn write<W: Write>(
     stack: &FilterStack,
     output: &mut Output<W>,
-    masked: bool,
+    version: u8,
     check: &dyn Fn() -> Result<()>,
     mask_check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
@@ -34,8 +34,12 @@ pub(super) fn write<W: Write>(
                 output.bytes(&[5, parameters.levels()])?;
             }
             Descriptor::SolarizeRgbV1 => output.bytes(&[6])?,
+            Descriptor::BoxBlurV1(parameters) if version == 5 => {
+                output.bytes(&[7, parameters.radius()])?
+            }
+            Descriptor::BoxBlurV1(_) => return Err(unsupported("Spatial filters require PCND5")),
         }
-        if masked {
+        if version >= 4 {
             masks::write(instance.mask(), output, mask_check)?;
         }
     }
@@ -45,6 +49,7 @@ pub(super) fn write<W: Write>(
 pub(super) fn read(
     input: &mut Input<'_>,
     allowance: usize,
+    version: u8,
     mut coverage: Option<&mut super::super::coverage::CoverageReader<'_>>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<FilterStack> {
@@ -110,6 +115,10 @@ pub(super) fn read(
                     .map_err(|_| codec("invalid posterize level count"))?,
             ),
             6 => Descriptor::SolarizeRgbV1,
+            7 if version == 5 => Descriptor::BoxBlurV1(
+                BoxBlurV1::new(i16::from(input.byte()?))
+                    .map_err(|_| codec("invalid box radius"))?,
+            ),
             _ => return Err(unsupported("unknown PCND filter algorithm/version")),
         };
         if start - input.remaining() > allowance {
@@ -157,7 +166,8 @@ pub(super) fn metadata_bytes(stack: &FilterStack) -> u64 {
                     }
                     Descriptor::BlackWhiteRgbV1(_)
                     | Descriptor::ThresholdLumaV1(_)
-                    | Descriptor::PosterizeRgbV1(_) => 1,
+                    | Descriptor::PosterizeRgbV1(_)
+                    | Descriptor::BoxBlurV1(_) => 1,
                     Descriptor::SolarizeRgbV1 => 0,
                 }
             })

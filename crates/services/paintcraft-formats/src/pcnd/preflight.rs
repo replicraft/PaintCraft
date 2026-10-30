@@ -47,10 +47,11 @@ fn metadata_bound(
     }
     super::coverage::validate_counts(doc, check)?;
     let live_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
-    let masked = doc
-        .layers
-        .values()
-        .any(|layer| layer.filters.iter().any(|filter| filter.mask().is_some()));
+    let masked = binary::has_spatial(doc)
+        || doc
+            .layers
+            .values()
+            .any(|layer| layer.filters.iter().any(|filter| filter.mask().is_some()));
     let mut bytes = 8
         + 32
         + integer_bytes(u64::from(doc.canvas.0))

@@ -12,6 +12,7 @@ pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
 pub const LAYER_MASKS_FEATURE: &str = "layer-filter-masks.v1";
+pub const LAYER_SPATIAL_FILTERS_FEATURE: &str = "layer-spatial-filters.v1";
 pub const LAYER_FILTERS_FEATURE: &str = "layer-point-filters.v1";
 const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
@@ -90,16 +91,38 @@ impl Header {
                 | (2, "paintcraft.document/v2")
                 | (3, "paintcraft.document/v3")
                 | (4, "paintcraft.document/v4")
+                | (5, "paintcraft.document/v5")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(matches!(self.container_version, 2..=4) && feature == SOURCE_METADATA_FEATURE)
-                && !(matches!(self.container_version, 3 | 4) && feature == LAYER_FILTERS_FEATURE)
-                && !(self.container_version == 4 && feature == LAYER_MASKS_FEATURE)
+                && !(matches!(self.container_version, 2..=5) && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 3..=5) && feature == LAYER_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 4 | 5) && feature == LAYER_MASKS_FEATURE)
+                && !(self.container_version == 5 && feature == LAYER_SPATIAL_FILTERS_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
+        }
+        if self.container_version == 5
+            && SUPPORTED_FEATURES
+                .iter()
+                .copied()
+                .chain([
+                    LAYER_FILTERS_FEATURE,
+                    LAYER_MASKS_FEATURE,
+                    LAYER_SPATIAL_FILTERS_FEATURE,
+                ])
+                .any(|required| {
+                    !self
+                        .required_features
+                        .iter()
+                        .any(|feature| feature == required)
+                })
+        {
+            return Err(unsupported(
+                "PCND5 header omits required grammar capability",
+            ));
         }
         Ok(())
     }
@@ -216,3 +239,6 @@ mod filter_tests;
 
 #[cfg(test)]
 mod mask_tests;
+
+#[cfg(test)]
+mod spatial_tests;

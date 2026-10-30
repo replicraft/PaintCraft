@@ -76,7 +76,10 @@ fn write_encoded(
         .layers
         .values()
         .any(|layer| layer.filters.iter().any(|filter| filter.mask().is_some()));
-    if masked {
+    let spatial = has_spatial(doc);
+    if spatial {
+        magic[4] = 5;
+    } else if masked {
         magic[4] = 4;
     } else if live_filters {
         magic[4] = 3;
@@ -142,7 +145,7 @@ fn write_encoded(
         output.number(u64::from(layer.raster.height()))?;
         output.bytes(&layer.raster.default_pixel().0)?;
         if live_filters {
-            filters::write(&layer.filters, &mut output, masked, check, &mask_check)?;
+            filters::write(&layer.filters, &mut output, magic[4], check, &mask_check)?;
         }
         // A terminator avoids a counting pass over decoded tiles. Each record is
         // bounded independently, allowing the sink to apply backpressure.
@@ -199,7 +202,7 @@ fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u
 pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
     let body = payload(bytes, &|| Ok(()))?;
     let mut result = header(bytes[4]);
-    if matches!(bytes[4], 3 | 4) {
+    if matches!(bytes[4], 3..=5) {
         let mut input = Input::new(body);
         input.take(32)?;
         input.dimension()?;
@@ -222,7 +225,7 @@ pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
     Ok(result)
 }
 fn header(version: u8) -> Header {
-    let known = matches!(version, 1..=4);
+    let known = matches!(version, 1..=5);
     Header {
         container_version: i64::from(version),
         document_schema: if known {
@@ -232,8 +235,10 @@ fn header(version: u8) -> Header {
                 "paintcraft.document/v2"
             } else if version == 3 {
                 "paintcraft.document/v3"
-            } else {
+            } else if version == 4 {
                 "paintcraft.document/v4"
+            } else {
+                "paintcraft.document/v5"
             }
         } else {
             "unknown"
@@ -245,7 +250,8 @@ fn header(version: u8) -> Header {
                 .map(|feature| (*feature).into())
                 .chain((version == 2).then_some(SOURCE_METADATA_FEATURE.to_owned()))
                 .chain((version >= 3).then_some(LAYER_FILTERS_FEATURE.to_owned()))
-                .chain((version == 4).then_some(LAYER_MASKS_FEATURE.to_owned()))
+                .chain((version >= 4).then_some(LAYER_MASKS_FEATURE.to_owned()))
+                .chain((version == 5).then_some(LAYER_SPATIAL_FILTERS_FEATURE.to_owned()))
                 .collect()
         } else {
             Vec::new()
@@ -310,9 +316,9 @@ pub(super) fn read_admitted(
 ) -> Result<Document> {
     let body = payload(bytes, check)?;
     header(bytes[4]).require_supported()?;
-    if bytes[4] == 4 && coverage.is_none() {
+    if matches!(bytes[4], 4 | 5) && coverage.is_none() {
         return Err(unsupported(
-            "PCND4 requires explicit shared coverage admission",
+            "PCND4/5 requires explicit shared coverage admission",
         ));
     }
     let mut coverage = coverage.map(super::coverage::CoverageReader::new);
@@ -331,7 +337,7 @@ pub(super) fn read_admitted(
         1 => Some(input.string(4096)?),
         _ => return Err(codec("invalid title flag")),
     };
-    let has_source = if matches!(bytes[4], 3 | 4) {
+    let has_source = if matches!(bytes[4], 3..=5) {
         match input.byte()? {
             0 => false,
             1 => true,
@@ -372,6 +378,7 @@ pub(super) fn read_admitted(
     let mut tiles = 0u64;
     let mut any_filters = false;
     let mut any_masks = false;
+    let mut any_spatial = false;
     let mut metadata = bytes.len() - 32 - input.remaining();
     let mut admission = Admission::new(staged_pixels.min(STAGED_PIXELS_MAX));
     for _ in 0..count {
@@ -392,7 +399,7 @@ pub(super) fn read_admitted(
         let width = input.dimension()?;
         let height = input.dimension()?;
         let default = Rgba(input.take(4)?.try_into().unwrap());
-        let layer_filters = if matches!(bytes[4], 3 | 4) {
+        let layer_filters = if matches!(bytes[4], 3..=5) {
             let available = (DOCUMENT_MAX as usize)
                 .checked_sub(metadata + start - input.remaining())
                 .ok_or_else(|| {
@@ -404,7 +411,8 @@ pub(super) fn read_admitted(
             filters::read(
                 &mut input,
                 available,
-                if bytes[4] == 4 {
+                bytes[4],
+                if matches!(bytes[4], 4 | 5) {
                     coverage.as_mut()
                 } else {
                     None
@@ -414,6 +422,12 @@ pub(super) fn read_admitted(
         } else {
             paintcraft_document::FilterStack::default()
         };
+        any_spatial |= layer_filters.iter().any(|filter| {
+            matches!(
+                filter.descriptor(),
+                paintcraft_core::types::filters::Descriptor::BoxBlurV1(_)
+            )
+        });
         any_filters |= !layer_filters.is_empty();
         any_masks |= layer_filters.iter().any(|filter| filter.mask().is_some());
         metadata += start - input.remaining();
@@ -494,6 +508,9 @@ pub(super) fn read_admitted(
     if input.remaining() != 0 {
         return Err(codec("trailing compact PCND data"));
     }
+    if bytes[4] == 5 && !any_spatial {
+        return Err(codec("PCND5 requires a stored spatial filter"));
+    }
     if bytes[4] == 4 && !any_masks {
         return Err(codec("unmasked documents require legacy PCND encoding"));
     }
@@ -558,4 +575,16 @@ pub(super) fn mask_metadata_bound(mask: Option<&paintcraft_document::FilterMask>
 
 pub(super) fn coverage_decode_quote(bands: usize, runs: usize) -> Result<u64> {
     masks::decode_quote(bands, runs)
+}
+
+/// Container capability is selected by stored descriptors, including disabled/r0.
+pub(super) fn has_spatial(doc: &Document) -> bool {
+    doc.layers.values().any(|layer| {
+        layer.filters.iter().any(|filter| {
+            matches!(
+                filter.descriptor(),
+                paintcraft_core::types::filters::Descriptor::BoxBlurV1(_)
+            )
+        })
+    })
 }
