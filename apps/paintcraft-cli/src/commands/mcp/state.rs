@@ -127,11 +127,16 @@ impl State {
     pub fn inspection(&mut self) -> Result<Json> {
         let session = self.session()?;
         let doc = session.document();
+        let layers = doc.layers_in_order().map(|layer| {
+            let mut value = json!({"id":layer.id.to_string(),"name":layer.name,"visible":layer.visible,"opacity":layer.opacity});
+            if !layer.filters.is_empty() {value["filters"] = core_json(&paintcraft_document::filters::inspection(&layer.filters))?;}
+            Ok(value)
+        }).collect::<Result<Vec<_>>>()?;
         Ok(json!({
             "document_id":doc.document_id.to_string(), "state_id":doc.state_id.to_string(),
             "width":doc.canvas.0,"height":doc.canvas.1,"dirty":session.is_dirty(),
             "undo_depth":session.undo_depth(),"redo_depth":session.redo_depth(),
-            "layers":doc.layers_in_order().map(|l|json!({"id":l.id.to_string(),"name":l.name,"visible":l.visible,"opacity":l.opacity})).collect::<Vec<_>>()
+            "layers":layers
         }))
     }
     pub fn layer(&mut self, id: Option<String>) -> Result<Json> {

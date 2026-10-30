@@ -10,26 +10,36 @@ pub struct Options {
 fn layer_info(doc: &Document) -> Value {
     Value::Array(
         doc.layers_in_order()
-            .map(|l| {
-                Value::object([
-                    ("id", Value::str(l.id.to_string())),
-                    ("name", Value::str(&l.name)),
-                    ("visible", Value::Bool(l.visible)),
-                    ("opacity_u8", Value::Int(i64::from(l.opacity))),
+            .map(|layer| {
+                let mut fields = std::collections::BTreeMap::from([
+                    ("id".into(), Value::str(layer.id.to_string())),
+                    ("name".into(), Value::str(&layer.name)),
+                    ("visible".into(), Value::Bool(layer.visible)),
+                    ("opacity_u8".into(), Value::Int(i64::from(layer.opacity))),
                     (
-                        "origin",
+                        "origin".into(),
                         Value::object([
-                            ("x", Value::Int(l.origin.0)),
-                            ("y", Value::Int(l.origin.1)),
+                            ("x", Value::Int(layer.origin.0)),
+                            ("y", Value::Int(layer.origin.1)),
                         ]),
                     ),
-                    ("width", Value::Int(i64::from(l.raster.width()))),
-                    ("height", Value::Int(i64::from(l.raster.height()))),
+                    ("width".into(), Value::Int(i64::from(layer.raster.width()))),
                     (
-                        "default_pixel",
-                        Value::str(l.raster.default_pixel().to_hex()),
+                        "height".into(),
+                        Value::Int(i64::from(layer.raster.height())),
                     ),
-                ])
+                    (
+                        "default_pixel".into(),
+                        Value::str(layer.raster.default_pixel().to_hex()),
+                    ),
+                ]);
+                if !layer.filters.is_empty() {
+                    fields.insert(
+                        "filters".into(),
+                        paintcraft_document::filters::inspection(&layer.filters),
+                    );
+                }
+                Value::Object(fields)
             })
             .collect(),
     )

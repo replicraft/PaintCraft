@@ -86,6 +86,23 @@ fn actual_stdio_preserves_state_on_growth_and_allows_fitting_edits_history_and_c
         );
         assert_eq!(client.ok("inspect_document", json!({})), before);
         if with_layer {
+            let rejected = client.call(
+                "apply_operations",
+                json!({"operations":[{
+                    "op":"filter.add","layer_ref":{"id":doc.roots[0].to_string()},
+                    "ref":"blocked-filter","descriptor":{"kind":"invert-rgb-v1"}
+                }]}),
+            );
+            assert_eq!(rejected["isError"], true, "{rejected}");
+            assert!(
+                rejected.to_string().contains("resource.limit"),
+                "{rejected}"
+            );
+            assert_eq!(
+                client.ok("inspect_document", json!({})),
+                before,
+                "no filter aliases, history, metadata or publication may leak"
+            );
             let rejected = client.call("paint_stroke", json!({"points":[{"x":0,"y":0},{"x":1,"y":1}],"color":"#000000FF","size":1,"brush":"round"}));
             assert_eq!(rejected["isError"], true, "{rejected}");
             assert!(

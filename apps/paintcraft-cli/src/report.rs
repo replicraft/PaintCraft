@@ -19,11 +19,24 @@ pub fn error_value(e: &Error) -> Value {
     Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect())
 }
 
-/// `paintcraft.file-command/v1`: the engine result and the external file receipt,
+/// File-command/v2 carries result/v2; all older engine profiles retain v1.
+/// The engine result and external file receipt are
 /// reported independently.
 pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_code: u8) -> Value {
+    let version_two = engine
+        .as_ref()
+        .and_then(|value| value.get("schema"))
+        .and_then(Value::as_str)
+        == Some("paintcraft.result/v2");
     Value::object([
-        ("schema", Value::str("paintcraft.file-command/v1")),
+        (
+            "schema",
+            Value::str(if version_two {
+                "paintcraft.file-command/v2"
+            } else {
+                "paintcraft.file-command/v1"
+            }),
+        ),
         ("engine", engine.unwrap_or(Value::Null)),
         ("file", file.unwrap_or(Value::Null)),
         ("outcome", Value::str(outcome)),
