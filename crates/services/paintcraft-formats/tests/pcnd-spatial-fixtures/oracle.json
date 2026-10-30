@@ -1,0 +1,901 @@
+{
+  "schema": "paintcraft.independent-pcnd5/v1",
+  "generator": "Independent PCND5 spatial descriptor preservation; Python stdlib byte writer.\n\nNo PaintCraft codecs or evaluator imports. Existing PCND1/2/3/4 fixtures are read\nonly. This set qualifies stored source/wire facts, not spatial rendering.\n",
+  "document": "33333333-3333-4333-8333-333333333333",
+  "state": "11111111-1111-4111-8111-111111111111",
+  "layer": "22222222-2222-4222-8222-222222222222",
+  "width": 2,
+  "height": 1,
+  "attachment_parent_sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1",
+  "attachment_digest": "8b266e15742e248a78397bbb68e03193481fc1bb660efbe1e47515dbb7bca69a",
+  "profile_sha256": "384b832de3412066743b52a75ee906b6fb9fb8d9e09e936fc2c43223815c6e0a",
+  "source_header_hex": "5043534d4554413100010501000000000000002d247666e8108c413140f4935d6b8f0627c2c3e0c63cd2506f3aeee367fee29cbe00000007000000030000000200000002000000030601010100000000000075300000000000000064fffffffffffff13c0000000000000001010102000000000000000bd0384b832de3412066743b52a75ee906b6fb9fb8d9e09e936fc2c43223815c6e0a8b266e15742e248a78397bbb68e03193481fc1bb660efbe1e47515dbb7bca69a0000000200000000",
+  "fixtures": [
+    {
+      "file": "box-r0.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "04957cf6f187217d0839711a7bf248677bea2f4d197a188bc3f138554dbf55d1",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "73f962230cd418786bed4f6aacfa3c1c469341ebdf9cf70cd87b15bc12283ffc",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 0
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "box-r2.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "6d3efe5ce9ec0e7aab1e1191d6e64acd0b1bd336f8be6ac4eeb5b084f9812663",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "6da7b0e53b4ad410afdd2767e16887773724528a2f901d104a1f97433115f2d4",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "box-r32.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "37dbc0b06f4f4b51b638a17d89af869dc3482083acf0a81b2b5e2196ab585af0",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "ba1a63c17a5ae950ba61749bf532a3c0bb0a496208a18714eaf2c4dfe26a8be7",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 32
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "box-disabled-r0.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "02a69a32a1f08de07a44f929f96f03fa6aae83e3482f0db353ff57ec27772781",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "3e6ee0ce3d08a697fcb6b794595bd836cdaab0d2a14a577fb17692d883ee42ab",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": false,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 0
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "box-disabled-r2.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "e6ecf95cde7aa8048323b4c561f29b537715e8ed9c473d4436850a2f5538e1aa",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "33c8bec7f732787890b2907f7f384cf0d7ca77e4a28e80eec47a0d02b93c5d98",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": false,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "box-half-mask.pcnd",
+      "accepted": true,
+      "bytes": 156,
+      "sha256": "1de7268a1e6840ae847d66842f70bf09944b95fb1b15c5e3e848e9d9bfaeff2c",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "209d135f62ccf047b5183c649a57cc94b269458e9285263c3ed07532ae1142e8",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": {
+            "enabled": true,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": [
+              {
+                "y0": 0,
+                "y1": 1,
+                "runs": [
+                  {
+                    "x0": 0,
+                    "x1": 1,
+                    "coverage": 128
+                  }
+                ]
+              }
+            ]
+          },
+          "mask_sha256": "4b708869df9ba197cd23faddba17583ac365f5209da4893ce41d9ac4267d933a"
+        }
+      ]
+    },
+    {
+      "file": "box-zero-mask.pcnd",
+      "accepted": true,
+      "bytes": 150,
+      "sha256": "38b17a64130abad934c8fe38866379e6b9fe833316810e4765a442a948f24250",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "33985e8ff86a8cfa62e32419da802fb477140de1701a9628108d45b08b6d6a01",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": {
+            "enabled": true,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": []
+          },
+          "mask_sha256": "c3a811b2871fc78a302ee772281a59a51c442d2b433263a44e282a2c7046a7f2"
+        }
+      ]
+    },
+    {
+      "file": "box-disabled-mask.pcnd",
+      "accepted": true,
+      "bytes": 156,
+      "sha256": "db98cf0930aa71733955c9d175ac1a852c691b7da905db2ffcc0ad6e877a9d25",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "f413324c78b0bef4a5b2c0338de621b69947a967f97392f862c6ed34438863ff",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": {
+            "enabled": false,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": [
+              {
+                "y0": 0,
+                "y1": 1,
+                "runs": [
+                  {
+                    "x0": 0,
+                    "x1": 1,
+                    "coverage": 128
+                  }
+                ]
+              }
+            ]
+          },
+          "mask_sha256": "4b708869df9ba197cd23faddba17583ac365f5209da4893ce41d9ac4267d933a"
+        }
+      ]
+    },
+    {
+      "file": "point-box-point.pcnd",
+      "accepted": true,
+      "bytes": 181,
+      "sha256": "6806bd662363cc6bc5080b26db7173d14f82cddce24e767fd3e4c087fddb3d2f",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "3be5c92065a26b6d8920c9b80bf3ece9e4943bf93c2ffc24284c305b38720a67",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "invert-rgb-v1"
+          },
+          "mask": null,
+          "mask_sha256": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": null,
+          "mask_sha256": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000003",
+          "enabled": true,
+          "descriptor": {
+            "kind": "solarize-rgb-v1"
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "point-disabled-box-r0.pcnd",
+      "accepted": true,
+      "bytes": 184,
+      "sha256": "15ff270f70059a36c95a67613cd1ed1c8c5495b5e19c9e1f2fa611a0b526248b",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "d2c0b7ac72c357b56356b407ea815053136c1aa9e4c07b617574582c74a796f1",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "brightness-contrast-v1",
+            "brightness": -19,
+            "contrast": 23
+          },
+          "mask": null,
+          "mask_sha256": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": true,
+          "descriptor": {
+            "kind": "black-white-rgb-v1",
+            "strength": 50
+          },
+          "mask": null,
+          "mask_sha256": null
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000003",
+          "enabled": false,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 0
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "source-box.pcnd",
+      "accepted": true,
+      "bytes": 3359,
+      "sha256": "7425da0f7cd8d32f7c09b7d4cbc446dd7b0b3276acb60e741a8016689f662f94",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": true,
+      "stack_sha256": "6da7b0e53b4ad410afdd2767e16887773724528a2f901d104a1f97433115f2d4",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "source-box-mask.pcnd",
+      "accepted": true,
+      "bytes": 3372,
+      "sha256": "0042c1de92fe2b2bfb706fcaae2b24dba5ff72083d59e7f98d7fc754c521e236",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": true,
+      "stack_sha256": "209d135f62ccf047b5183c649a57cc94b269458e9285263c3ed07532ae1142e8",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": {
+            "enabled": true,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": [
+              {
+                "y0": 0,
+                "y1": 1,
+                "runs": [
+                  {
+                    "x0": 0,
+                    "x1": 1,
+                    "coverage": 128
+                  }
+                ]
+              }
+            ]
+          },
+          "mask_sha256": "4b708869df9ba197cd23faddba17583ac365f5209da4893ce41d9ac4267d933a"
+        }
+      ]
+    },
+    {
+      "file": "hidden-source-box.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "5f0898bcfd2e32868374b7bd1585cbd03b1ee97c055c5d92bdf38dca98efae00",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        0,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "ba1a63c17a5ae950ba61749bf532a3c0bb0a496208a18714eaf2c4dfe26a8be7",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 32
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "two-box-shared-wire-masks.pcnd",
+      "accepted": true,
+      "bytes": 189,
+      "sha256": "eda28c839b22a94948df6940a6cfefc4f5905d037e09d0e547669db0a8677644",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "df56d16e42151b453bbf5568ad3bf6c7e97ae256d0ad7eeaeec123b5405a951c",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": {
+            "enabled": true,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": [
+              {
+                "y0": 0,
+                "y1": 1,
+                "runs": [
+                  {
+                    "x0": 0,
+                    "x1": 1,
+                    "coverage": 128
+                  }
+                ]
+              }
+            ]
+          },
+          "mask_sha256": "4b708869df9ba197cd23faddba17583ac365f5209da4893ce41d9ac4267d933a"
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": false,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 32
+          },
+          "mask": {
+            "enabled": true,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": [
+              {
+                "y0": 0,
+                "y1": 1,
+                "runs": [
+                  {
+                    "x0": 0,
+                    "x1": 1,
+                    "coverage": 128
+                  }
+                ]
+              }
+            ]
+          },
+          "mask_sha256": "4b708869df9ba197cd23faddba17583ac365f5209da4893ce41d9ac4267d933a"
+        }
+      ]
+    },
+    {
+      "file": "point-mask-disabled-box.pcnd",
+      "accepted": true,
+      "bytes": 175,
+      "sha256": "3b7f16557fd154deaca820c72e1cc46cdadef89cb7b4b0bb3d053f9f67f2ff9a",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        0,
+        0
+      ],
+      "attachment": false,
+      "stack_sha256": "fde7d23111d99c6ddcb8c5415f9cc401e6f62b51ab77d92987c8c9fcfa2e6e05",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "invert-rgb-v1"
+          },
+          "mask": {
+            "enabled": true,
+            "codec": 1,
+            "domain": [
+              -2,
+              -1,
+              4,
+              2
+            ],
+            "bands": [
+              {
+                "y0": 0,
+                "y1": 1,
+                "runs": [
+                  {
+                    "x0": 0,
+                    "x1": 1,
+                    "coverage": 128
+                  }
+                ]
+              }
+            ]
+          },
+          "mask_sha256": "4b708869df9ba197cd23faddba17583ac365f5209da4893ce41d9ac4267d933a"
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "enabled": false,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 0
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "box-negative-origin.pcnd",
+      "accepted": true,
+      "bytes": 143,
+      "sha256": "494d2b2519dff91973fb3b1a4b0e4ec3f7e339f09092ead8ff039c13459ad61a",
+      "version": 5,
+      "raw_rgba": [
+        255,
+        0,
+        0,
+        255,
+        7,
+        211,
+        93,
+        0
+      ],
+      "origin": [
+        -5,
+        2
+      ],
+      "attachment": false,
+      "stack_sha256": "6da7b0e53b4ad410afdd2767e16887773724528a2f901d104a1f97433115f2d4",
+      "filters": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "enabled": true,
+          "descriptor": {
+            "kind": "box-blur-v1",
+            "radius": 2
+          },
+          "mask": null,
+          "mask_sha256": null
+        }
+      ]
+    },
+    {
+      "file": "bad-radius33.pcnd",
+      "accepted": false,
+      "bytes": 143,
+      "sha256": "b2418739042afef53ce2316657a72565f2033ad1f1936ecbba0b601cef940f2d",
+      "code": "codec.failed"
+    },
+    {
+      "file": "bad-disabled-radius33.pcnd",
+      "accepted": false,
+      "bytes": 143,
+      "sha256": "d06f90443c6d52877f236bc2d5988bb64e5c8562324580757dd44a25e7af81c5",
+      "code": "codec.failed"
+    },
+    {
+      "file": "bad-radius255.pcnd",
+      "accepted": false,
+      "bytes": 143,
+      "sha256": "f1647cfa2d15cda38d3735f80cb4653cb8d2071b9df0a03a3427ed75a446a729",
+      "code": "codec.failed"
+    },
+    {
+      "file": "bad-disabled-radius255.pcnd",
+      "accepted": false,
+      "bytes": 143,
+      "sha256": "98d6673d51b4e98e6295289b517fedab4621c4edb3655c640f14100dacf5c68c",
+      "code": "codec.failed"
+    },
+    {
+      "file": "unknown8-enabled0.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "aee1c46f2653eda569d1836c06e57d23f67da4ac2d963af336a9ed3d1e1e1071",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "old-v3-box-enabled0.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "f11db6eec06119a5e34565cae28444d796cf32fe36b96c3036c81b610f1e3510",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "old-v4-box-enabled0.pcnd",
+      "accepted": false,
+      "bytes": 156,
+      "sha256": "049e66265ac9973368a653b89c8b246ae1452f747b196ee0c49c3dcfd17f4f2a",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "unknown8-enabled1.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "3e277d3b6e2fa64e122d521d95d84637be54e62f04fbce06e3ead29e5cad75c1",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "old-v3-box-enabled1.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "aa9556e2c615a4312193620df286a04359e1a28911190de8e089a79141a1d48e",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "old-v4-box-enabled1.pcnd",
+      "accepted": false,
+      "bytes": 156,
+      "sha256": "2ed65d3124a37278500ca8083e92c6c73883cdab4f0cdc45b5817c7ae61789a1",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "v5-no-box.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "d0ae64559dd120aa4369c0368eeb699d25832396e2cd5e5ef9e2f7cee30dff44",
+      "code": "codec.failed"
+    },
+    {
+      "file": "v5-mask-no-box.pcnd",
+      "accepted": false,
+      "bytes": 155,
+      "sha256": "e4c3b2723d3a211b4c6661c9a93d186333521524a06e9c737659a509499a0f9a",
+      "code": "codec.failed"
+    },
+    {
+      "file": "v5-empty.pcnd",
+      "accepted": false,
+      "bytes": 123,
+      "sha256": "901418f7cc681e09627ccd54f2c6e3c7cb08b542a6f48a86028c8939edaad36a",
+      "code": "codec.failed"
+    },
+    {
+      "file": "future-v6.pcnd",
+      "accepted": false,
+      "bytes": 143,
+      "sha256": "fb98ba43f832034491a29152c05072efa38441821632724f3e2df31b63b5be20",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "disabled-unknown-mask-codec.pcnd",
+      "accepted": false,
+      "bytes": 156,
+      "sha256": "6d2d46c93b3e26738aa5d94d520b9b7edde46b3cd03945b441027bf327f9de8b",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "bad-enabled2.pcnd",
+      "accepted": false,
+      "bytes": 143,
+      "sha256": "f5ce9ca34c934e2f675faa8e1f380afbabc77d2c412df02efa2fa347395c1da4",
+      "code": "codec.failed"
+    },
+    {
+      "file": "trailing.pcnd",
+      "accepted": false,
+      "code": "codec.failed",
+      "bytes": 144,
+      "sha256": "f0ea3b10825a5533dfcca4d7137f0940d1ab29fb70402abb1bfac0ee9c70d02e"
+    },
+    {
+      "file": "bad-sha.pcnd",
+      "accepted": false,
+      "code": "codec.failed",
+      "bytes": 143,
+      "sha256": "726233296bee7a22083eb5831a36ca611fc4dc3245a322e187bf0537749efe73"
+    }
+  ]
+}
