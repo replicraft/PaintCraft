@@ -1,6 +1,6 @@
 # Palette integration: persistent nondestructive filters
 
-Status: document/history, PCND persistence, renderer foundations, typed automation and explicit exported-copy consent are implemented. Native controls, installed JPEG XR output, production browser Worker and PNG/DDS/MSP consent flows are qualified locally. Desktop and browser Studio expose stack editing; private browser previews, Apply/Cancel, history, enable/reorder and fresh reopen/save have actual UI coverage. Updated 2026-10-30. The target is an editable ordered stack over unchanged layer source pixels, beginning with **Invert and Brightness/Contrast**. A destructive adjustment endpoint is not completion of this work.
+Status: ordered document/history, PCND persistence, rendering, typed automation and explicit exported-copy consent are implemented for **Invert and Brightness/Contrast**, including fixed per-filter masks. Desktop and browser Studio expose stack editing and saved-selection mask controls. Private browser previews, Apply/Cancel, history, enable/reorder, fractional-mask presentation and fresh reopen/save have actual UI coverage. Updated 2026-10-30. Layer masks, layer styles and the remaining catalog are still open; a destructive adjustment endpoint is not completion of this integration.
 
 ## Evidence and upstream identity
 
@@ -101,6 +101,11 @@ Gate: full versus regional/tile-split equality, negative origins, finite source 
 
 ### 4. Studio, native/web hosts and automation
 
+The full App-suite and original browser-UI counts below describe the initial
+two-filter checkpoint, before persistent masks. The subsequent mask checkpoint
+adds native/browser host checks, actual fractional-mask UI presentation and
+PCND4 reopen; its current scope is recorded in [FILTER_MASKS.md](FILTER_MASKS.md).
+
 Desktop Studio exposes the shared presenter with seven-language labels. Private parameter previews use the admitted renderer, and captured edits pass through the normal FIFO. Eleven host groups cover real controls, live preview pixels, all stack actions, Apply/Cancel/Undo, retained metadata-limit failures with retry, stale ownership, cancellation during preparation and canvas navigation. The full native App suite passes (733 tests; 29 existing ignored), with strict checks. Browser controls use the same presenter, captured-edit guard and private Apply/Cancel semantics. Ten host groups cover lifecycle, compact snapshot boundaries and regional-texture cancellation; the full Web suite passes (378 tests; three existing ignored), with native and Wasm strict checks.
 
 The separate persistent browser render Worker passes 16 actual Chrome controls against independent PCND fixtures and literal pixel expectations, including retained ICC and resolution-only attachments. Fifteen actual browser UI checks cover private parameter previews and displayed screenshot pixels, byte-identical source after Cancel, screenshot-measured Ctrl/Cmd zoom and middle-button panning while parameters stay open, preview-off Apply, background Undo/Redo, direct enable/reorder with noncommutative pixels, editing existing parameters without changing filter identity, and fresh application reopen/save. Independent PCND decoding checks filter UUIDs/order and raw pixels; fresh Save is byte-identical. These do not establish physical-device qualification or all remaining interactive gates. Parameter and committed filtered-view rendering leave the UI thread; initial bounded source serialization/hash/copy and ordinary tool previews remain synchronous. One synchronous metadata stage or output patch can delay cancellation; no maximum frame-latency claim follows.
@@ -121,7 +126,7 @@ Gate: real native and production-browser add/edit/reorder/Cancel/Apply/Undo/save
 
 Add neighborhood filters only with halo/border/scratch/dirty-region proofs; global-analysis filters need immutable full-dependency analysis objects; geometric filters need mapped footprints and interpolation support. Masks, effect styles/shared lighting, generators, imported LUTs/patterns and plugins each require bounded payloads and distinct semantics. Continue from the author's [15-category inventory](../temp/IMPLEMENTED_FUNCTIONS.md#12-complete-implemented-filter-catalog), qualifying each family rather than claiming 132 integrations at once.
 
-The first feature milestone is the real ordered two-filter stack, fixed masks, editable history/persistence, live Studio preview and consistent native/web/CLI output. Mask painting/linking, advanced styles and the remaining catalog are subsequent required roadmap work, not hidden as completed by this foundation.
+The first feature milestone now includes the ordered two-filter stack, fixed per-filter masks, editable history/persistence, live Studio preview and consistent native/web/CLI output. The [mask qualification](FILTER_MASKS.md) distinguishes host tests, offscreen Metal rendering, actual Chrome controls and exported-copy checks. Mask painting/linking, layer masks, advanced styles and the remaining catalog remain required roadmap work. The [next four point-profile contracts](POINT_FILTER_PROFILES.md) and their independent oracle are proposed arithmetic only, not additional implemented filters.
 
 ## Attribution and copying policy
 

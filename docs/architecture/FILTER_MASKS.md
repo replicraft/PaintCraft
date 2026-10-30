@@ -1,16 +1,55 @@
 # Persistent point-filter masks
 
-Status: implementation contract for the next Palette integration stage,
-2026-10-30. Persistent filter masks are not yet exposed or saved. The initial
-Invert and Brightness/Contrast stacks still affect whole layers.
+Status: implemented and locally qualified, 2026-10-30.
+Instances retain masks through history and PCND4. Typed batch v3, CLI and MCP
+can capture selections, set numeric coverage, enable masks and remove them.
+Desktop and browser Studio expose selection capture, enable/disable and removal
+through each filter's actions menu. Their parameter dialogs show whether the
+filter uses a saved selection, an empty mask or the whole layer.
 
-Implemented foundations: `paintcraft_raster::coverage_mask::A8Mask` stores
-fractional fields as canonical repeated row bands with charged shared storage.
-Eight focused groups cover construction, sparse uniform fields, canonical
-identity, clipping/reframing, shared views, refusal and cancellation; Raster
-strict checks pass. `paintcraft_effects::mix_point_coverage` implements the rule
-below, checked against independent real interpolation for all 16,777,216 byte
-pair/coverage combinations. These foundations are not yet attached to filters.
+`paintcraft_raster::coverage_mask::A8Mask` stores fractional fields as canonical
+repeated row bands with charged shared storage. Selection capture, source
+transforms, shared views, admission refusal and cancellation have focused
+coverage. `paintcraft_effects::mix_point_coverage` implements the rule below,
+checked against independent real interpolation for all 16,777,216 byte
+pair/coverage combinations. Both initial point filters evaluate retained masks.
+
+The local renderer suite passes 104 tests, including 34 required offscreen GPU
+controls on Apple M1 Pro/Metal. Two new GPU groups compare masked presentation
+and display reductions against independent literal pixels. Seven CPU groups
+cover fractional coverage, ordered filters, tile boundaries, negative origins,
+cache invalidation, sparse implicit pixels and cancellation. This establishes
+the tested CPU-evaluated GPU upload path, not GPU filter kernels or other GPUs.
+
+Editor tests cover atomic selection capture, Undo/Redo, crop, orthogonal
+transforms and selected-content rebasing. CLI and actual stdio MCP tests exercise
+PCND4, immutable source pixels and metadata-limit rollback; 26 independent
+JSON Schema controls validate genuine outputs and reject malformed variants.
+Binary reader, worker, frontend and export qualification retain their separate
+scope; these results do not establish physical-device or full catalog parity.
+
+The complete local format suite passes 767 tests, with 28 existing ignored
+tests. Bounded PCND4 replay passes 6,168 raw and 6,168 checksum-aware mutation
+cases, separately inventoried from legacy corpora; this is not coverage-guided
+or sanitizer qualification. Native and browser host suites exercise mask
+publication, active empty selections, history, private drafts, stale edits and
+real PCND4 opening, with strict and Wasm checks.
+
+Production Chrome checks cover five visible-control lifecycle groups and four
+fractional-mask presentation states. Downloaded projects are decoded
+independently; removing the last mask returns PCND3, Undo restores PCND4, and a
+fresh application reopens and byte-identically saves the project. The fractional
+case binds full-resolution Worker pixels to the exact serialized source SHA,
+state, region and null operation, and checks literal screenshot colors at the
+same canvas marker through mask disable/Undo/Redo. Saved projects alone do not
+prove a live selection was cleared; host tests cover selection independence.
+
+Ten masked persistent-Worker cases and 66 browser export outcomes exercise
+private previews, source admission, default bake refusal, metadata authority and
+exact masked output. Eighteen new encoded copies are decoded independently.
+Sixteen legacy render and 24 unmasked export controls pass on the same production
+assets. These results qualify the two initial point filters and fixed masks;
+mask painting/linking, layer masks/styles and the remaining catalog are open.
 
 This extends [Palette integration](PALETTE_INTEGRATION.md) and follows the
 canonical [effect-region contract](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md).
@@ -98,11 +137,37 @@ hash-map iteration order or spare capacity. Owned-byte accounting remains
 separate from semantic hashing.
 
 History records the full instance and retains coverage ownership through hot,
-cold and restored states. PCND encoding must declare a versioned mask feature;
-unknown masks must be refused even when disabled. Existing unmasked PCND1/2/3
-encodings keep their established profiles. Final version/tag choices belong to
-the format implementation and independent decoding fixtures, not a silent
-optional field in an older closed schema.
+cold and restored states. `filter_mask_bytes` deduplicates shared resident
+coverage allocations. Coverage remains resident when raster history spills;
+RGBA spill tests do not establish spilling mask payloads.
+
+PCND4 declares `layer-filter-masks.v1` and is selected whenever any instance
+stores a mask, including disabled and all-zero masks. Without a stored mask,
+the writer retains the existing PCND1/2/3 selection and byte profiles. A v4
+file without any stored mask is noncanonical. Unknown mask codecs are refused
+even when the instance or mask is disabled.
+
+After each descriptor, v4 records mask presence, enabled state, codec
+`a8-bands-v1`, a signed finite domain and canonical repeated row bands. Positive
+run widths and nonzero coverage omit implicit zero areas. Ordered bands/runs
+cannot overlap; adjacent equal records must merge. Reader and writer both
+enforce aggregate document limits of 262,144 bands and 262,144 runs, alongside
+the unchanged 8 MiB wire metadata limit. Shared host payloads serialize per
+instance, so admission counts each decoded instance independently.
+
+`ReadAdmission` carries separate caller-owned source-metadata and coverage
+realms. The reader validates borrowed mask records before allocating parse
+scratch and retained coverage, with aggregate work/count and peak byte limits.
+Default selections and filter coverage share one 256 MiB resident realm;
+explicit caller realms remain injectable. These are charged-resource limits,
+not measurements or guarantees of process RSS.
+
+Typed batches use `paintcraft.batch/v3` for `filter.mask.set`,
+`filter.mask.from_selection`, `filter.mask.set_enabled` and
+`filter.mask.remove`. Earlier closed batch schemas refuse these tags. Inspection
+returns enabled state, domain, canonical digest and band/run counts, rather
+than dumping coverage payloads. Masked CLI and MCP inspection use separate
+closed v2 schemas; unmasked outputs retain their established profiles.
 
 Editable-copy bake consent includes mask semantics in its frozen inventory.
 Foreign layered exports that cannot preserve a mask refuse by default. Explicit

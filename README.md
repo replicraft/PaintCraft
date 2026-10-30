@@ -4,7 +4,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 
 - Windows 7, 10 and 11 Classic skins.
 - Studio with document tabs, Save All and floating panels.
-- Editable layer filters with live previews in Studio.
+- Editable layer filters and saved selection masks, with live previews in Studio.
 - Desktop, browser and command-line apps.
 - **MCP support:** let AI assistants paint, edit layers, preview images and save projects.
 - Nine brushes, pencil, eraser, fill and color picker.
@@ -39,7 +39,7 @@ cargo run --release -p paintcraft-cli -- mcp
 
 ## File formats
 
-**PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency and canvas size intact, while being compressed and lightweight. Save as PCND to keep working on your project.
+**PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency, editable filters, their masks and canvas size intact, while being compressed and lightweight. Save as PCND to keep working on your project.
 
 - **Classic and Studio:** open and export PNG, JPEG, BMP, still GIF and single-page TIFF.
 - **PNG source details:** keep original profile and resolution information in projects, or omit it from exported PNG copies.
