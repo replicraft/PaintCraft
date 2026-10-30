@@ -4,7 +4,7 @@ use paintcraft_commands::{FilterOp, FilterRef, LayerRef};
 use paintcraft_tools::FilterEdit;
 
 impl Editor {
-    pub(super) fn filter_operation(&self, edit: &FilterEdit) -> Result<Value> {
+    pub(crate) fn filter_operation(&self, edit: &FilterEdit) -> Result<Value> {
         let ticket = self.session.ticket();
         if !edit.matches_base(
             self.session.owner_id(),
