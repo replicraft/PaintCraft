@@ -88,7 +88,10 @@ impl Editor {
     pub fn batch(&self, operations: Vec<Value>) -> Result<Batch> {
         let ticket = self.session.ticket();
         Batch::from_value(&Value::object([
-            ("schema", Value::str("paintcraft.batch/v2")),
+            (
+                "schema",
+                Value::str(Batch::schema_for_operations(&operations)),
+            ),
             ("atomic", Value::Bool(true)),
             ("policy", Value::str(POLICY)),
             (

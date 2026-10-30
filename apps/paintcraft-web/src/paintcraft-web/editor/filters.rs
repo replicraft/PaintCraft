@@ -1,6 +1,6 @@
 //! Captured filter edits never resolve or discard another private tool draft.
 use super::*;
-use paintcraft_commands::{FilterOp, FilterRef, LayerRef};
+use paintcraft_commands::{FilterRef, LayerRef};
 use paintcraft_tools::FilterEdit;
 
 impl Editor {
@@ -25,14 +25,7 @@ impl Editor {
                 "Finish or cancel the private tool draft before editing filters",
             ));
         }
-        let (layer, filter) = match &edit.operation {
-            FilterOp::Add { layer, .. } => (layer, None),
-            FilterOp::Update { layer, filter, .. }
-            | FilterOp::SetEnabled { layer, filter, .. }
-            | FilterOp::Reorder { layer, filter, .. }
-            | FilterOp::Remove { layer, filter }
-            | FilterOp::Duplicate { layer, filter, .. } => (layer, Some(filter)),
-        };
+        let (layer, filter) = edit.operation.references();
         let LayerRef::Id(layer) = layer else {
             return Err(Error::new(
                 ErrorCode::InputSchema,

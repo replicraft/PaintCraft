@@ -86,24 +86,15 @@ impl Editor {
 
 impl Editor {
     pub(super) fn validate_filter_edit(&self, edit: &FilterEdit) -> Result<()> {
-        use paintcraft_commands::{FilterOp, FilterRef, LayerRef};
-        let (layer, filter) = match &edit.operation {
-            FilterOp::Add { layer, .. } => (layer, None),
-            FilterOp::Update { layer, filter, .. }
-            | FilterOp::SetEnabled { layer, filter, .. }
-            | FilterOp::Reorder { layer, filter, .. }
-            | FilterOp::Remove { layer, filter }
-            | FilterOp::Duplicate { layer, filter, .. } => (layer, Some(filter)),
-        };
-        let layer = match layer {
-            LayerRef::Id(id) => self.document().layer(id),
-            _ => None,
-        };
         let valid = self.filter_base_current(edit)
-            && layer.is_some_and(|layer| {
-                filter.is_none_or(|filter|
-            matches!(filter, FilterRef::Id(id) if layer.filters.iter().any(|f|f.id()==*id)))
-            });
+            && edit
+                .operation
+                .stable_uuid_refs()
+                .is_some_and(|(id, filter)| {
+                    self.document().layer(&id).is_some_and(|layer| {
+                        filter.is_none_or(|id| layer.filters.iter().any(|f| f.id() == id))
+                    })
+                });
         if valid {
             Ok(())
         } else {

@@ -1,4 +1,5 @@
 use super::*;
+use paintcraft_commands::FilterOp;
 use paintcraft_core::types::{Rect, filters::Descriptor};
 use paintcraft_input::PointerButton;
 use paintcraft_tools::Tool;
