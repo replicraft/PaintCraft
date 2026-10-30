@@ -30,12 +30,39 @@ impl WebApp {
                         preview: layers::Preview::Unavailable,
                     })
                     .collect();
-                layers::panel(ui, &rows, editor.target, &mut Vec::new())
+                let actions = layers::panel(ui, &rows, editor.target, &mut Vec::new());
+                let filter_actions = if !classic {
+                    ui.separator();
+                    let filters: Vec<_> = editor
+                        .target
+                        .and_then(|id| doc.layer(&id))
+                        .map(|layer| {
+                            layer
+                                .filters
+                                .iter()
+                                .map(|f| paintcraft_studio::filters::Row {
+                                    id: f.id(),
+                                    enabled: f.enabled(),
+                                    descriptor: f.descriptor(),
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    paintcraft_studio::filters::panel(
+                        ui,
+                        &filters,
+                        editor.target.is_some() && filters.len() < 256,
+                    )
+                } else {
+                    Vec::new()
+                };
+                (actions, filter_actions)
             })
             .inner
         };
-        let actions = if self.frontend == paintcraft_ui::actions::Frontend::Studio {
-            let mut actions = Vec::new();
+        let (actions, filter_actions) = if self.frontend == paintcraft_ui::actions::Frontend::Studio
+        {
+            let mut actions = (Vec::new(), Vec::new());
             paintcraft_studio::layers_window(
                 ui.ctx(),
                 &mut self.studio.layers,
@@ -52,6 +79,9 @@ impl WebApp {
                 .show(ui, draw)
                 .inner
         };
+        for intent in filter_actions {
+            self.begin_studio_filter(ui.ctx(), intent);
+        }
         for action in actions {
             if !matches!(action, Action::Close) && !self.finish_text() {
                 continue;

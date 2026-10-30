@@ -11,6 +11,7 @@ mod crop_tests;
 mod dds_exporting;
 mod documents;
 mod exporting;
+pub(crate) mod filter_editing;
 #[cfg(test)]
 #[path = "floating_tests.rs"]
 mod floating_tests;
@@ -45,6 +46,8 @@ use paintcraft_ui::i18n::{set_language, tr_status};
 pub struct WebApp {
     pub(crate) frontend: Frontend,
     pub(crate) studio: paintcraft_studio::Workspace,
+    filter_editing: Option<filter_editing::State>,
+    filter_display: filter_editing::Display,
     parked: Option<Box<interfaces::Parked>>,
     fullscreen: crate::fullscreen::State,
     pub(crate) printer: crate::printing::State,
@@ -107,6 +110,8 @@ impl WebApp {
         Self {
             frontend: Frontend::Classic,
             studio: Default::default(),
+            filter_editing: None,
+            filter_display: Default::default(),
             parked: None,
             fullscreen: Default::default(),
             printer: Default::default(),
@@ -201,7 +206,7 @@ impl WebApp {
             .collect()
     }
     pub(crate) fn blocked(&self) -> bool {
-        self.canvas.touch.block_ui || self.modal_blocked()
+        self.canvas.touch.block_ui || self.modal_blocked() || self.filter_edit_active()
     }
     pub(crate) fn modal_blocked(&self) -> bool {
         self.welcome.open()
@@ -280,6 +285,9 @@ impl WebApp {
     }
 
     pub(crate) fn edit(&mut self, action: Edit) {
+        if self.filter_edit_active() {
+            return;
+        }
         if self.welcome.open() || self.canvas.touch.block_ui {
             return;
         }
@@ -327,6 +335,9 @@ impl WebApp {
     }
 
     fn action(&mut self, ctx: &egui::Context, action: Action) {
+        if self.filter_edit_active() && !matches!(action, Action::View(_)) {
+            return;
+        }
         if self.welcome.open() || self.canvas.touch.block_ui {
             return;
         }
@@ -598,6 +609,9 @@ impl WebApp {
     }
 
     pub(crate) fn keyboard_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
+        if self.filter_edit_active() {
+            return true;
+        }
         if self.welcome.open() || self.canvas.touch.block_ui {
             return true;
         }

@@ -15,6 +15,7 @@ impl WebApp {
             if self.fullscreen.refresh(&ctx) {
                 self.message = crate::fullscreen::UNAVAILABLE.into();
             }
+            self.pump_filter_editing(&ctx);
             self.poll_files(&ctx);
             self.poll_jxl(&ctx);
             self.poll_tiff(&ctx);
@@ -110,6 +111,7 @@ impl WebApp {
             self.studio_windows(&ctx);
         }
         self.layers(ui);
+        self.studio_filter_dialog(&ctx);
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(paintcraft_classic::workspace_color(
                 self.variant,

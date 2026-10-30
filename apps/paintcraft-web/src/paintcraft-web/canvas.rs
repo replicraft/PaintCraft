@@ -21,6 +21,8 @@ pub(crate) struct Canvas {
     pub(crate) pixel_grid: bool,
     pub(crate) outline: paintcraft_raster::selection::OutlineCache,
     pub(crate) bounds: std::cell::RefCell<paintcraft_raster::selection::BoundsCache>,
+    pub(crate) filter_view: Option<crate::app::filter_editing::render::View>,
+    pub(crate) filter_footprint: Option<paintcraft_core::types::Rect>,
     fitted: bool,
     pub(crate) pending_center: Option<(f32, f32)>,
     key: Option<RenderKey>,
@@ -32,6 +34,15 @@ pub(crate) struct Canvas {
 }
 
 impl Canvas {
+    pub(crate) fn committed_texture(
+        &self,
+        owner: uuid::Uuid,
+        ticket: Ticket,
+    ) -> Option<TextureHandle> {
+        self.key
+            .filter(|key| key.owner == owner && key.source == ticket && key.composition.is_none())
+            .and_then(|_| self.texture.clone())
+    }
     pub(crate) fn invalidate(&mut self) {
         self.key = None;
         self.paste_revision = None;
@@ -117,7 +128,8 @@ impl WebApp {
                 && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
                 && ui.ctx().layer_id_at(pos) == Some(ui.layer_id())
         });
-        if ui.ctx().current_pass_index() == 0 && !self.blocked() {
+        if ui.ctx().current_pass_index() == 0 && (!self.blocked() || self.filter_navigation_ready())
+        {
             let scroll = ui.input(|i| {
                 i.events
                     .iter()
@@ -174,16 +186,41 @@ impl WebApp {
             if ui.ctx().current_pass_index() == 0 {
                 self.canvas_input(ui, &response);
             }
+            let clip = ui.clip_rect().intersect(viewport).intersect(response.rect);
+            self.canvas.filter_view = self.visible_filter_view(ui.ctx(), response.rect, clip);
             self.refresh_texture(ui.ctx());
             painter.rect_filled(response.rect, 0, Color32::WHITE);
             if let Some(texture) = &self.canvas.texture {
-                painter.image(
-                    texture.id(),
-                    response.rect,
-                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                    Color32::WHITE,
+                let image_rect = self
+                    .canvas
+                    .filter_footprint
+                    .map_or(response.rect, |region| {
+                        Rect::from_min_size(
+                            response.rect.min
+                                + Vec2::new(region.x0 as f32, region.y0 as f32) * self.zoom,
+                            Vec2::new(region.width() as f32, region.height() as f32) * self.zoom,
+                        )
+                    });
+                painter
+                    .with_clip_rect(painter.clip_rect().intersect(response.rect))
+                    .image(
+                        texture.id(),
+                        image_rect,
+                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                        Color32::WHITE,
+                    );
+            }
+            if let Some(status) = self.filter_status() {
+                let text = paintcraft_ui::i18n::tr_status(ui.ctx(), &status);
+                painter.text(
+                    response.rect.min + Vec2::splat(8.0),
+                    egui::Align2::LEFT_TOP,
+                    text,
+                    egui::FontId::proportional(14.0),
+                    ui.visuals().text_color(),
                 );
             }
+
             if self.canvas.pixel_grid {
                 paintcraft_ui::view::pixel_grid(
                     &painter,
@@ -317,7 +354,51 @@ impl WebApp {
             fonts: self.text.font_generation,
         }
     }
+    fn visible_filter_view(
+        &self,
+        ctx: &egui::Context,
+        image: Rect,
+        clip: Rect,
+    ) -> Option<crate::app::filter_editing::render::View> {
+        if !clip.is_positive() || !self.zoom.is_finite() || self.zoom <= 0.0 {
+            return None;
+        }
+        let canvas = self.editor.session.document().canvas;
+        let min = (clip.min - image.min) / self.zoom;
+        let max = (clip.max - image.min) / self.zoom;
+        let x0 = (min.x.floor() as i64).clamp(0, i64::from(canvas.0));
+        let y0 = (min.y.floor() as i64).clamp(0, i64::from(canvas.1));
+        let x1 = (max.x.ceil() as i64).clamp(0, i64::from(canvas.0));
+        let y1 = (max.y.ceil() as i64).clamp(0, i64::from(canvas.1));
+        let region = paintcraft_core::types::Rect::new(x0, y0, x1 - x0, y1 - y0)?;
+        let scale = self.zoom * ctx.pixels_per_point();
+        let level = (1.0 / scale).log2().floor().clamp(0.0, 20.0) as u8;
+        crate::app::filter_editing::render::View::new(self.editor.session.document(), region, level)
+            .ok()
+    }
+    pub(crate) fn mark_filter_canvas_current(&mut self) {
+        self.canvas.key = Some(self.canvas_render_key());
+        self.canvas.paste_revision = None;
+    }
+    pub(crate) fn install_filter_pixels(
+        &mut self,
+        ctx: &egui::Context,
+        size: (u32, u32),
+        footprint: paintcraft_core::types::Rect,
+        pixels: &[u8],
+    ) {
+        let image =
+            egui::ColorImage::from_rgba_unmultiplied([size.0 as usize, size.1 as usize], pixels);
+        self.canvas.texture =
+            Some(ctx.load_texture("web-filter-document", image, TextureOptions::NEAREST));
+        self.canvas.filter_footprint = Some(footprint);
+        self.mark_filter_canvas_current();
+    }
     fn refresh_texture(&mut self, ctx: &egui::Context) {
+        if self.worker_filter_canvas(ctx) {
+            return;
+        }
+
         self.guard_composition(ctx);
         self.editor.validate_floating();
         self.validate_paste_placement(ctx);
@@ -326,6 +407,7 @@ impl WebApp {
         if self.canvas.key == Some(key) && self.canvas.paste_revision == paste_revision {
             return;
         }
+        self.detach_committed_filter_texture();
         let result = (if self.paste.is_placing() {
             self.paste_preview_document()
         } else {
@@ -369,6 +451,7 @@ impl WebApp {
             self.canvas.texture =
                 Some(ctx.load_texture("web-document", image, TextureOptions::NEAREST));
         }
+        self.canvas.filter_footprint = None;
         self.canvas.paste_revision = paste_revision;
         self.canvas.key = Some(self.canvas_render_key());
     }
@@ -379,6 +462,12 @@ impl WebApp {
         }
         if self.paste.is_placing() {
             self.paste_canvas_input(ui, response);
+            return;
+        }
+        if self.filter_edit_active() {
+            if self.filter_navigation_ready() {
+                self.navigate_canvas(ui, response);
+            }
             return;
         }
         if self.blocked() {
