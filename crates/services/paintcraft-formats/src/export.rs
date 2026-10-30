@@ -6,6 +6,7 @@ use paintcraft_render::render_flat;
 
 use crate::image::{self, ImageFormat};
 pub mod dds;
+pub mod filter_bake;
 pub mod jxr;
 pub mod metadata_policy;
 mod source_metadata_wire;

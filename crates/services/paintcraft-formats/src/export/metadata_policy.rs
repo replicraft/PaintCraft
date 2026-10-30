@@ -38,15 +38,18 @@ impl Target {
     pub const fn new(family: Family, operation: Operation) -> Self {
         Self { family, operation }
     }
-    fn copy_allowed(self) -> Result<()> {
-        let copy = match self.operation {
-            Operation::ExportFlat | Operation::SaveAsCopy => true,
-            Operation::ExportAsset => {
-                matches!(self.family, Family::Ico | Family::Cur | Family::Icns)
+    pub(super) fn is_foreign_copy(self) -> bool {
+        self.family != Family::Pcnd
+            && match self.operation {
+                Operation::ExportFlat | Operation::SaveAsCopy => true,
+                Operation::ExportAsset => {
+                    matches!(self.family, Family::Ico | Family::Cur | Family::Icns)
+                }
+                _ => false,
             }
-            _ => false,
-        };
-        if self.family == Family::Pcnd || !copy {
+    }
+    fn copy_allowed(self) -> Result<()> {
+        if !self.is_foreign_copy() {
             return Err(Error::new(
                 ErrorCode::InputSchema,
                 "Source metadata omission requires a foreign export copy; PCND and preserving operations retain it",
