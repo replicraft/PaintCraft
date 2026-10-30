@@ -77,13 +77,7 @@ impl Case {
             row["width"].as_u64().unwrap() as u32,
             row["height"].as_u64().unwrap() as u32,
         );
-        let expected = paintcraft_document::import_image(
-            size.0,
-            size.1,
-            &pixels,
-            &paintcraft_document::hex(&Sha256::digest(&bytes)),
-        )
-        .unwrap();
+        let expected = retained_expected(&bytes, size, &pixels);
         Self {
             name: name.into(),
             bytes,
@@ -109,6 +103,15 @@ impl Case {
         }
         losses
     }
+    fn retained_losses(&self) -> Vec<&'static str> {
+        self.losses()
+            .into_iter()
+            .map(|loss| match loss {
+                "icc-profile-ignored" => "icc-source-retained-unapplied",
+                other => other,
+            })
+            .collect()
+    }
     fn assert_doc(&self, doc: &Document) {
         assert_eq!(doc.canvas, self.size, "{} imported exactly once", self.name);
         assert_ids(doc, &self.expected);
@@ -121,6 +124,78 @@ impl Case {
         }
         assert_eq!(rgba, self.pixels, "{} independent raw oracle", self.name);
     }
+}
+
+fn retained_expected(bytes: &[u8], size: (u32, u32), pixels: &[u8]) -> Document {
+    use paintcraft_document::{RasterConversionContext, RasterConversionKey, RasterSelection};
+    let source_hash: [u8; 32] = Sha256::digest(bytes).into();
+    let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+    let prepared = paintcraft_formats::image::bmp_retention::decode(
+        bytes,
+        paintcraft_core::types::policy::STAGED_PIXELS_MAX,
+        pcnd::MetadataAdmission {
+            bytes: paintcraft_document::source_metadata::BYTES_MAX,
+            budget: &budget,
+        },
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!((prepared.image.width, prepared.image.height), size);
+    assert_eq!(
+        prepared.image.rgba, pixels,
+        "independent source pixel oracle"
+    );
+    let dib = u32::from_le_bytes(bytes[14..18].try_into().unwrap());
+    let profile = if dib == 124 {
+        let at = 14 + u32::from_le_bytes(bytes[126..130].try_into().unwrap()) as usize;
+        let len = u32::from_le_bytes(bytes[130..134].try_into().unwrap()) as usize;
+        (len != 0).then(|| &bytes[at..at + len])
+    } else {
+        None
+    };
+    assert_eq!(
+        prepared.attachment.is_some(),
+        profile.is_some(),
+        "zero-density fixture attachment"
+    );
+    if let Some(metadata) = &prepared.attachment {
+        let facts = metadata.descriptor();
+        assert_eq!(facts.source_sha256, source_hash);
+        assert_eq!(facts.source_bytes, bytes.len() as u64);
+        assert_eq!(facts.source_dimensions, size);
+        assert_eq!(facts.output_dimensions, size);
+        assert_eq!(
+            facts.format,
+            paintcraft_document::source_metadata::SourceFormat::Bmp
+        );
+        assert!(
+            facts.resolution.is_none(),
+            "these fixtures declare zero density"
+        );
+        assert_eq!(
+            metadata.profile(),
+            profile,
+            "exact original V5 embedded profile"
+        );
+    }
+    let key = RasterConversionKey::checked(
+        RasterConversionContext {
+            source_sha256: source_hash,
+            profile: "bmp-source-profile-resolution-rgba8-v1",
+            selection: RasterSelection::Image,
+            assessment_sha256: prepared.attachment.as_ref().map(|m| m.digest()),
+        },
+        size.0,
+        size.1,
+        pixels,
+        paintcraft_core::types::policy::STAGED_PIXELS_MAX,
+        &|| Ok(()),
+    )
+    .unwrap();
+    paintcraft_document::import_image(size.0, size.1, pixels, &key.hex())
+        .unwrap()
+        .with_source_metadata_checked(prepared.attachment, &|| Ok(()))
+        .unwrap()
 }
 
 #[path = "support/bmp16_consumer.rs"]
@@ -151,7 +226,7 @@ fn actual_cli_and_stdio_mcp_bmp_rle_copies_match_oracles_and_other_frontend_docu
     let folder = Folder::new();
     for name in names() {
         let case = Case::new(&name);
-        let losses = case.losses();
+        let losses = case.retained_losses();
         let source = folder.0.join(&name);
         fs::write(&source, &case.bytes).unwrap();
         let refused = folder.0.join("no-consent.pcnd");
@@ -227,7 +302,7 @@ fn actual_cli_and_stdio_mcp_bmp_rle_copies_match_oracles_and_other_frontend_docu
         let source = folder.0.join("profile.bmp");
         fs::write(&source, &case.bytes).unwrap();
         let output = folder.0.join(format!("{profile}.pcnd"));
-        let result = cli(&source, &output, &case.losses(), profile);
+        let result = cli(&source, &output, &case.retained_losses(), profile);
         assert!(
             result.status.success(),
             "{}",
@@ -240,7 +315,7 @@ fn actual_cli_and_stdio_mcp_bmp_rle_copies_match_oracles_and_other_frontend_docu
 fn actual_bmp_rle_stdio_refusals_preserve_painting_history_and_original_source_aliases() {
     let folder = Folder::new();
     let case = Case::new("rle8-icc-after-size-zero.bmp");
-    let losses = case.losses();
+    let losses = case.retained_losses();
     let source = folder.0.join("source.bmp");
     fs::write(&source, &case.bytes).unwrap();
     let mut client = mcp_client::Client::at(Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
@@ -251,8 +326,8 @@ fn actual_bmp_rle_stdio_refusals_preserve_painting_history_and_original_source_a
         json!({"path":source,"allow_losses":losses}),
         json!({"path":source,"discard_changes":true}),
         json!({"path":source,"discard_changes":true,"allow_losses":["unknown-bmp_rle-loss"]}),
-        json!({"path":source,"discard_changes":true,"allow_losses":["palette-indices-expanded","icc-profile-ignored","bmp-color-metadata-ignored"]}),
-        json!({"path":source,"discard_changes":true,"allow_losses":["palette-indices-expanded","icc-profile-ignored","bmp-metadata-ignored"]}),
+        json!({"path":source,"discard_changes":true,"allow_losses":["palette-indices-expanded","icc-source-retained-unapplied","bmp-color-metadata-ignored"]}),
+        json!({"path":source,"discard_changes":true,"allow_losses":["palette-indices-expanded","icc-source-retained-unapplied","bmp-metadata-ignored"]}),
     ] {
         assert_eq!(client.call("import_image", args)["isError"], true);
         assert_eq!(client.ok("inspect_document", json!({})), before);

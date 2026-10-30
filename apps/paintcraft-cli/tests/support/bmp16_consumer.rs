@@ -19,13 +19,7 @@ fn bmp16_actual_cli_stdio_imports_keep_exact_rows_ids_and_saved_projects() {
             paintcraft_document::hex(&Sha256::digest(&pixels)),
             row["expected_sha256"].as_str().unwrap()
         );
-        let expected = paintcraft_document::import_image(
-            65,
-            3,
-            &pixels,
-            &paintcraft_document::hex(&Sha256::digest(&bytes)),
-        )
-        .unwrap();
+        let expected = retained_expected(&bytes, (65, 3), &pixels);
         let case = Case {
             name,
             bytes,
@@ -36,7 +30,7 @@ fn bmp16_actual_cli_stdio_imports_keep_exact_rows_ids_and_saved_projects() {
         let source = folder.0.join(&case.name);
         fs::write(&source, &case.bytes).unwrap();
         let output = folder.0.join(format!("cli-{}.pcnd", case.name));
-        let losses = case.losses();
+        let losses = case.retained_losses();
         let result = cli(&source, &output, &losses, "studio");
         assert!(
             result.status.success(),
