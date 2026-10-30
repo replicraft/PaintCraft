@@ -32,14 +32,21 @@ impl Editor {
         // Standalone controllers share the same process-owned metadata realm as
         // App/service controllers; this clone is not a fresh per-read allowance.
         let metadata = paintcraft_raster::Admission::new(0).paint_metadata_budget();
-        let document = pcnd::read_with_metadata_admission_checked(
+        let document = pcnd::read_with_admission_checked(
             &bytes,
             u64::MAX,
             paintcraft_core::types::policy::STAGED_PIXELS_MAX,
             paintcraft_document::LAYER_COUNT_MAX,
-            pcnd::MetadataAdmission {
-                bytes: paintcraft_document::source_metadata::BYTES_MAX,
-                budget: &metadata,
+            pcnd::ReadAdmission {
+                metadata: pcnd::MetadataAdmission {
+                    bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                    budget: &metadata,
+                },
+                coverage: pcnd::CoverageAdmission {
+                    bytes: 256 << 20,
+                    budget: &paintcraft_core::types::resources::default_coverage_budget(),
+                    limits: paintcraft_raster::coverage_mask::Limits::default(),
+                },
             },
             &|| Ok(()),
         )?;
@@ -140,5 +147,37 @@ mod export_preview_tests {
             paintcraft_render::render_flat(editor.document()).unwrap(),
             preview
         );
+    }
+}
+
+#[cfg(test)]
+mod mask_open_tests {
+    use super::*;
+    #[test]
+    fn native_pcnd4_open_retains_mask_and_original_pixels_under_shared_admission() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+            "../../crates/services/paintcraft-formats/tests/pcnd-mask-fixtures/opaque-half.pcnd",
+        );
+        let original = std::fs::read(&path).unwrap();
+        let first = Editor::open(&path).unwrap();
+        let second = Editor::open(&path).unwrap();
+        for editor in [&first, &second] {
+            let doc = editor.document();
+            let layer = &doc.layers[&doc.roots[0]];
+            assert_eq!(
+                layer.raster.get(0, 0),
+                paintcraft_core::types::Rgba([255, 0, 0, 255])
+            );
+            assert_eq!(
+                layer.filters.as_slice()[0]
+                    .mask()
+                    .unwrap()
+                    .coverage()
+                    .coverage(0, 0),
+                128
+            );
+            assert_eq!(pcnd::write_compact(doc).unwrap(), original);
+            assert!(!editor.is_dirty());
+        }
     }
 }

@@ -43,12 +43,19 @@ impl<'a> Context<'a> {
         self.failure.borrow().clone().unwrap_or(error)
     }
     pub(super) fn read(&self, bytes: &[u8]) -> Result<Document> {
-        crate::pcnd::read_with_metadata_admission_checked(
+        crate::pcnd::read_with_admission_checked(
             bytes,
             u64::MAX,
             paintcraft_core::types::policy::STAGED_PIXELS_MAX,
             paintcraft_document::LAYER_COUNT_MAX,
-            self.metadata,
+            crate::pcnd::ReadAdmission {
+                metadata: self.metadata,
+                coverage: crate::pcnd::CoverageAdmission {
+                    bytes: 256 << 20,
+                    budget: &paintcraft_core::types::resources::default_coverage_budget(),
+                    limits: paintcraft_raster::coverage_mask::Limits::default(),
+                },
+            },
             &|| self.check(),
         )
     }

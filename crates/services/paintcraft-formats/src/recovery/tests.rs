@@ -488,3 +488,39 @@ fn a_claim_cannot_relabel_an_arbitrary_file_as_a_recovery_payload() {
     assert!(unrelated.exists());
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn pcnd4_mask_checkpoint_scan_and_read_preserve_exact_source_and_coverage() {
+    let bytes = include_bytes!("../../tests/pcnd-mask-fixtures/opaque-half.pcnd");
+    let profile = paintcraft_core::types::resources::SharedBudget::new(0);
+    let coverage = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+    let doc = crate::pcnd::read_with_admission_checked(
+        bytes,
+        2,
+        65536,
+        1,
+        crate::pcnd::ReadAdmission {
+            metadata: crate::pcnd::MetadataAdmission {
+                bytes: 0,
+                budget: &profile,
+            },
+            coverage: crate::pcnd::CoverageAdmission {
+                bytes: 1 << 20,
+                budget: &coverage,
+                limits: paintcraft_raster::coverage_mask::Limits::default(),
+            },
+        },
+        &|| Ok(()),
+    )
+    .unwrap();
+    let dir = scratch();
+    let owner = Recovery::start(&dir).unwrap();
+    owner.checkpoint_document(&doc, None).unwrap();
+    drop(owner);
+    let found = only(&dir);
+    let restored = Recovery::read_checkpoint(&found.checkpoint).unwrap();
+    assert!(doc.same_semantics(&restored));
+    assert_eq!(crate::pcnd::write_compact(&restored).unwrap(), bytes);
+    Recovery::discard(&dir, found.session).unwrap();
+    fs::remove_dir_all(dir).unwrap();
+}

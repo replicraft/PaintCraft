@@ -18,12 +18,19 @@ impl Realm {
         }
     }
     pub fn read(&self, bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Document> {
-        pcnd::read_with_metadata_admission_checked(
+        pcnd::read_with_admission_checked(
             bytes,
             u64::MAX,
             paintcraft_core::types::policy::STAGED_PIXELS_MAX,
             paintcraft_document::LAYER_COUNT_MAX,
-            self.admission(),
+            pcnd::ReadAdmission {
+                metadata: self.admission(),
+                coverage: pcnd::CoverageAdmission {
+                    bytes: 256 << 20,
+                    budget: &paintcraft_core::types::resources::default_coverage_budget(),
+                    limits: paintcraft_raster::coverage_mask::Limits::default(),
+                },
+            },
             check,
         )
     }
@@ -116,5 +123,35 @@ mod tests {
         assert_eq!(realm.0.usage().reserved, bmp_charge);
         drop(opened);
         assert_eq!(realm.0.usage().reserved, 0);
+    }
+}
+
+#[cfg(test)]
+mod mask_tests {
+    use super::*;
+    #[test]
+    fn cli_and_mcp_shared_project_reader_accepts_pcnd4_without_relabeling_raw_pixels() {
+        let bytes = include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../crates/services/paintcraft-formats/tests/pcnd-mask-fixtures/opaque-half.pcnd"
+        ));
+        let realm = Realm(SharedBudget::new(0));
+        for _ in 0..2 {
+            let doc = realm.read(bytes, &|| Ok(())).unwrap();
+            let layer = &doc.layers[&doc.roots[0]];
+            assert_eq!(
+                layer.raster.get(0, 0),
+                paintcraft_core::types::Rgba([255, 0, 0, 255])
+            );
+            assert_eq!(
+                layer.filters.as_slice()[0]
+                    .mask()
+                    .unwrap()
+                    .coverage()
+                    .coverage(0, 0),
+                128
+            );
+            assert_eq!(pcnd::write_compact(&doc).unwrap(), bytes);
+        }
     }
 }

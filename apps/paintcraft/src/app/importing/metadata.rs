@@ -12,14 +12,21 @@ impl App {
         bytes: &[u8],
     ) -> Result<paintcraft_document::Document> {
         let budget = self.source_metadata_budget();
-        paintcraft_formats::pcnd::read_with_metadata_admission_checked(
+        paintcraft_formats::pcnd::read_with_admission_checked(
             bytes,
             u64::MAX,
             paintcraft_core::types::policy::STAGED_PIXELS_MAX,
             paintcraft_document::LAYER_COUNT_MAX,
-            paintcraft_formats::pcnd::MetadataAdmission {
-                bytes: paintcraft_document::source_metadata::BYTES_MAX,
-                budget: &budget,
+            paintcraft_formats::pcnd::ReadAdmission {
+                metadata: paintcraft_formats::pcnd::MetadataAdmission {
+                    bytes: paintcraft_document::source_metadata::BYTES_MAX,
+                    budget: &budget,
+                },
+                coverage: paintcraft_formats::pcnd::CoverageAdmission {
+                    bytes: 256 << 20,
+                    budget: &paintcraft_core::types::resources::default_coverage_budget(),
+                    limits: paintcraft_raster::coverage_mask::Limits::default(),
+                },
             },
             &|| Ok(()),
         )
