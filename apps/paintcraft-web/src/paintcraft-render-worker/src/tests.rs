@@ -556,3 +556,6 @@ fn parameter_channel_refuses_mask_mutations_without_consuming_base() {
     assert!(service.frame.is_none());
     assert_eq!(pcnd::write(&service.base).unwrap(), before);
 }
+
+#[path = "tests/point_profiles.rs"]
+mod point_profiles;

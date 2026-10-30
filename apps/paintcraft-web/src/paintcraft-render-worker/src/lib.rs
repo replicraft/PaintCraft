@@ -6,7 +6,7 @@ pub mod protocol;
 mod wasm;
 use paintcraft_commands::{Batch, FilterOp, FilterRef, LayerRef, Op};
 use paintcraft_core::types::{
-    Result,
+    Error, ErrorCode, Result,
     json::Value,
     policy::hex,
     resources::{BudgetLease, SharedBudget},
@@ -176,8 +176,21 @@ impl Service {
         let target = field(&value, "target")?;
         if *operation != Value::Null {
             let target = uuid(target)?;
+            let name = field(operation, "op")?
+                .as_str()
+                .ok_or_else(|| bad("Filter operation needs a name"))?;
+            // A private parameter update cannot allocate or publish coverage.
+            // Refuse before even decoding an A8 command input.
+            if name.starts_with("filter.mask.") {
+                return Err(mask_preview_error());
+            }
+            let kind = operation
+                .get("descriptor")
+                .and_then(|descriptor| descriptor.get("kind"))
+                .and_then(Value::as_str);
+            let schema = Batch::schema_for_operation_fields([(name, kind)]);
             let batch = Batch::from_value(&Value::object([
-                ("schema", Value::str("paintcraft.batch/v2")),
+                ("schema", Value::str(schema)),
                 ("atomic", Value::Bool(true)),
                 ("policy", Value::str(paintcraft_document::POLICY)),
                 (
@@ -329,14 +342,15 @@ impl Service {
         self.cache.clear_preview();
     }
 }
+fn mask_preview_error() -> Error {
+    Error::new(
+        ErrorCode::CapabilityUnsupported,
+        "Mask edits require separately admitted editor publication",
+    )
+}
 fn stable_target(op: &FilterOp, target: Uuid) -> Result<()> {
     let (layer, filter) = match op {
-        FilterOp::Mask { .. } => {
-            return Err(paintcraft_core::types::Error::new(
-                paintcraft_core::types::ErrorCode::CapabilityUnsupported,
-                "Mask edits require separately admitted editor publication",
-            ));
-        }
+        FilterOp::Mask { .. } => return Err(mask_preview_error()),
         FilterOp::Add { layer, .. } => (layer, None),
         FilterOp::Update { layer, filter, .. }
         | FilterOp::SetEnabled { layer, filter, .. }
