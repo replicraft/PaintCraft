@@ -37,7 +37,23 @@ pub use persistence::PersistentValidator;
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
 
-/// Legacy receipts use result/v1; nonempty filter aliases require result/v2.
+/// Stored masks require result/v3; otherwise preserve the minimal v1/v2 profile.
+/// Extensions disclose inherited point-filter semantics in canonical feature order.
+pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
+    if !doc
+        .layers
+        .values()
+        .any(|layer| layer.filters.iter().any(|entry| entry.mask().is_some()))
+    {
+        return Vec::new();
+    }
+    let mut features = vec!["layer-point-filters.v1", "layer-filter-masks.v1"];
+    if doc.source_metadata.is_some() {
+        features.push("source-metadata.v1");
+    }
+    features
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Receipt {
     pub committed: bool,
@@ -46,6 +62,7 @@ pub struct Receipt {
     pub history_id: Option<Uuid>,
     pub aliases: BTreeMap<String, Uuid>,
     pub filter_aliases: crate::execute::FilterAliases,
+    pub document_features: Vec<&'static str>,
 }
 
 impl Receipt {
@@ -53,7 +70,9 @@ impl Receipt {
         let Value::Object(mut fields) = Value::object([
             (
                 "schema",
-                Value::str(if self.filter_aliases.is_empty() {
+                Value::str(if !self.document_features.is_empty() {
+                    "paintcraft.result/v3"
+                } else if self.filter_aliases.is_empty() {
                     "paintcraft.result/v1"
                 } else {
                     "paintcraft.result/v2"
@@ -83,6 +102,12 @@ impl Receipt {
         ]) else {
             unreachable!("object constructor");
         };
+        if !self.document_features.is_empty() {
+            fields.insert(
+                "document_features".into(),
+                Value::Array(self.document_features.iter().copied().map(Value::str).collect()),
+            );
+        }
         if !self.filter_aliases.is_empty() {
             fields.insert(
                 "filter_aliases".into(),
@@ -354,6 +379,7 @@ impl Session {
                 history_id: None,
                 aliases: BTreeMap::new(),
                 filter_aliases: BTreeMap::new(),
+                document_features: masked_document_features(&self.doc),
             });
         }
         let next_epoch = self.next_epoch()?;
@@ -386,6 +412,7 @@ impl Session {
             history_id: Some(history_id),
             aliases: staged.aliases,
             filter_aliases: staged.filter_aliases,
+            document_features: masked_document_features(&self.doc),
         })
     }
 

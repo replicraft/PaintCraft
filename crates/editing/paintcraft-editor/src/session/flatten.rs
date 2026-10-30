@@ -34,6 +34,7 @@ impl Session {
                 history_id: None,
                 aliases: BTreeMap::new(),
                 filter_aliases: BTreeMap::new(),
+                document_features: masked_document_features(&self.doc),
             });
         }
         let (width, height) = self.doc.canvas;

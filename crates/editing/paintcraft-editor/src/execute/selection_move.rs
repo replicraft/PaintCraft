@@ -141,7 +141,7 @@ impl Stage<'_> {
             &self.adm,
             self.check,
         )?;
-        self.install_selection_geometry(id, &geometry);
+        self.install_selection_geometry(id, &geometry)?;
         Ok(())
     }
 }

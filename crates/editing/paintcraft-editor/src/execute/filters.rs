@@ -7,7 +7,7 @@ pub(super) type Aliases = HashMap<String, Option<(Uuid, Uuid)>>;
 pub type PublishedAliases = BTreeMap<String, (Uuid, Uuid)>;
 
 impl Stage<'_> {
-    fn filter_position(&self, layer: Uuid, reference: &FilterRef) -> Result<usize> {
+    pub(super) fn filter_position(&self, layer: Uuid, reference: &FilterRef) -> Result<usize> {
         let id = match reference {
             FilterRef::Id(id) => *id,
             FilterRef::Alias(alias) => {
@@ -61,7 +61,7 @@ impl Stage<'_> {
         }
         Ok(id)
     }
-    fn filter_instances(&self, layer: Uuid, grow: bool) -> Result<Vec<FilterInstance>> {
+    pub(super) fn filter_instances(&self, layer: Uuid, grow: bool) -> Result<Vec<FilterInstance>> {
         let stack = &self.doc.layers[&layer].filters;
         let size = stack.len() + usize::from(grow);
         if size > FILTERS_MAX {
@@ -79,16 +79,16 @@ impl Stage<'_> {
     }
     pub(super) fn edit_filter(&mut self, index: usize, op: &FilterOp) -> Result<()> {
         (self.check)()?;
-        let layer = match op {
-            FilterOp::Add { layer, .. }
-            | FilterOp::Update { layer, .. }
-            | FilterOp::SetEnabled { layer, .. }
-            | FilterOp::Reorder { layer, .. }
-            | FilterOp::Remove { layer, .. }
-            | FilterOp::Duplicate { layer, .. } => self.resolve(layer)?,
-        };
+        let layer = self.resolve(op.references().0)?;
+        if let FilterOp::Mask {
+            filter, operation, ..
+        } = op
+        {
+            return self.edit_filter_mask(layer, filter, operation);
+        }
         let mut instances;
         match op {
+            FilterOp::Mask { .. } => unreachable!("handled mask operation"),
             FilterOp::Add {
                 alias,
                 descriptor,
@@ -126,7 +126,7 @@ impl Stage<'_> {
                 }
                 let original = &self.doc.layers[&layer].filters.as_slice()[source];
                 let id = self.filter_id(layer, index)?;
-                let copy = FilterInstance::new(id, original.enabled(), original.descriptor());
+                let copy = original.with_id(id);
                 instances = self.filter_instances(layer, true)?;
                 instances.insert(position, copy);
                 self.filter_aliases.insert(alias.clone(), Some((layer, id)));
@@ -139,8 +139,7 @@ impl Stage<'_> {
                 if original.descriptor() == *descriptor {
                     return Ok(());
                 }
-                let replacement =
-                    FilterInstance::new(original.id(), original.enabled(), *descriptor);
+                let replacement = original.with_descriptor(*descriptor);
                 instances = self.filter_instances(layer, false)?;
                 instances[position] = replacement;
             }
@@ -152,8 +151,7 @@ impl Stage<'_> {
                 if original.enabled() == *enabled {
                     return Ok(());
                 }
-                let replacement =
-                    FilterInstance::new(original.id(), *enabled, original.descriptor());
+                let replacement = original.with_enabled(*enabled);
                 instances = self.filter_instances(layer, false)?;
                 instances[position] = replacement;
             }

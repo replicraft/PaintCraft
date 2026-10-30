@@ -72,8 +72,14 @@ impl Stage<'_> {
         Ok(())
     }
     pub(super) fn transform_layout(&mut self, t: OrthogonalTransform) -> Result<()> {
-        for layer in self.doc.layers.values_mut() {
+        for id in self.doc.roots.clone() {
             (self.check)()?;
+            let source = &self.doc.layers[&id].raster;
+            self.map_filter_masks(
+                id,
+                filter_masks::Mapping::Orthogonal((source.width(), source.height()), t),
+            )?;
+            let layer = self.doc.layers.get_mut(&id).unwrap();
             layer.origin = origin(t, self.doc.canvas, layer.extent())?;
             layer.raster = raster(t, &layer.raster);
         }
@@ -82,6 +88,11 @@ impl Stage<'_> {
     pub(super) fn transform_canvas(&mut self, t: OrthogonalTransform) -> Result<()> {
         for id in self.doc.roots.clone() {
             (self.check)()?;
+            let source = &self.doc.layers[&id].raster;
+            self.map_filter_masks(
+                id,
+                filter_masks::Mapping::Orthogonal((source.width(), source.height()), t),
+            )?;
             let layer = &self.doc.layers[&id];
             let p = origin(t, self.doc.canvas, layer.extent())?;
             let target = raster(t, &layer.raster);

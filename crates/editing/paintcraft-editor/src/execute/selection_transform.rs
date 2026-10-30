@@ -74,11 +74,19 @@ impl Stage<'_> {
             selection,
         }))
     }
-    pub(super) fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) {
+    pub(super) fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) -> Result<()> {
+        let origin = self.doc.layers[&id].origin;
+        self.map_filter_masks(
+            id,
+            filter_masks::Mapping::Rebase {
+                offset: (origin.0 - g.origin.0, origin.1 - g.origin.1),
+            },
+        )?;
         let l = self.doc.layers.get_mut(&id).unwrap();
         l.raster = RasterLayer::new(g.size.0, g.size.1, l.raster.default_pixel());
         l.origin = g.origin;
         self.selection = g.selection.clone();
+        Ok(())
     }
     pub(super) fn selection_geometry_layout(&mut self, layer: &LayerRef) -> Result<()> {
         let id = self.resolve(layer)?;
@@ -96,7 +104,7 @@ impl Stage<'_> {
             .1
             .clone();
         if let Some(g) = geometry {
-            self.install_selection_geometry(id, &g);
+            self.install_selection_geometry(id, &g)?;
         }
         Ok(())
     }
@@ -159,7 +167,7 @@ impl Stage<'_> {
             &self.adm,
             self.check,
         )?;
-        self.install_selection_geometry(id, &g);
+        self.install_selection_geometry(id, &g)?;
         Ok(())
     }
 }

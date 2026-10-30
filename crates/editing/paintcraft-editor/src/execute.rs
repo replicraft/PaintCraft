@@ -5,6 +5,7 @@ mod canvas;
 mod contour;
 mod crop;
 mod fill;
+mod filter_masks;
 mod filters;
 mod staged;
 pub use filters::PublishedAliases as FilterAliases;
@@ -113,6 +114,9 @@ pub fn execute_with_geometry_cache(
         selection: selection.clone(),
         selections: planning::storage::Store::new(&admission),
         selection_geometries: planning::storage::Store::new(&admission),
+        filter_masks: planning::storage::Store::new(&admission),
+        coverage_work: SELECTION_FILTER_WORK_MAX,
+        mask_replay: 0,
         aliases: HashMap::new(),
         filter_aliases: HashMap::new(),
         planning: Some(planning::Compiler::new(&admission, batch, check)?),
@@ -198,6 +202,12 @@ pub fn execute_with_geometry_cache(
             }
         })?;
     }
+    if s.mask_replay != s.filter_masks.values.len() {
+        return Err(Error::new(
+            ErrorCode::InvariantViolation,
+            "Compiled filter masks were not replayed",
+        ));
+    }
     if paints.next().is_some() {
         return Err(Error::new(
             ErrorCode::InvariantViolation,
@@ -213,6 +223,9 @@ struct Stage<'a> {
     selection: Selection,
     selections: planning::storage::Store<(usize, Selection)>,
     selection_geometries: planning::storage::Store<(usize, Option<selection_transform::Geometry>)>,
+    filter_masks: planning::storage::Store<filter_masks::Captured>,
+    coverage_work: u64,
+    mask_replay: usize,
     /// Every alias ever declared in this batch; `None` once its layer is deleted.
     aliases: HashMap<String, Option<Uuid>>,
     filter_aliases: filters::Aliases,

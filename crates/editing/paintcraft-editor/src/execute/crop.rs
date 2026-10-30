@@ -55,9 +55,17 @@ impl Stage<'_> {
     }
     pub(super) fn crop_layout(&mut self, rect: Rect) -> Result<()> {
         self.validate_crop(rect)?;
-        for layer in self.doc.layers.values_mut() {
+        for id in self.doc.roots.clone() {
             (self.check)()?;
-            let (action, origin) = mapping(layer, rect);
+            let (action, origin) = mapping(&self.doc.layers[&id], rect);
+            match action {
+                LayerCrop::Keep => {}
+                LayerCrop::Empty => self.map_filter_masks(id, filter_masks::Mapping::Empty)?,
+                LayerCrop::Clip(area) => {
+                    self.map_filter_masks(id, filter_masks::Mapping::Crop(area))?
+                }
+            }
+            let layer = self.doc.layers.get_mut(&id).unwrap();
             match action {
                 LayerCrop::Keep => {}
                 LayerCrop::Empty => layer.raster = RasterLayer::new(1, 1, Rgba::TRANSPARENT),
@@ -73,8 +81,15 @@ impl Stage<'_> {
         self.validate_crop(rect)?;
         for id in self.doc.roots.clone() {
             (self.check)()?;
+            let (action, origin) = mapping(&self.doc.layers[&id], rect);
+            match action {
+                LayerCrop::Keep => {}
+                LayerCrop::Empty => self.map_filter_masks(id, filter_masks::Mapping::Empty)?,
+                LayerCrop::Clip(area) => {
+                    self.map_filter_masks(id, filter_masks::Mapping::Crop(area))?
+                }
+            }
             let layer = &self.doc.layers[&id];
-            let (action, origin) = mapping(layer, rect);
             match action {
                 LayerCrop::Keep => {}
                 LayerCrop::Empty => {
