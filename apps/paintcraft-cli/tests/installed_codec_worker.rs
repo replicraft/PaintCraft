@@ -661,3 +661,6 @@ mod jxl_integer;
 
 #[path = "installed_codec_worker/source_metadata.rs"]
 mod source_metadata;
+
+#[path = "installed_codec_worker/filter_copy.rs"]
+mod filter_copy;

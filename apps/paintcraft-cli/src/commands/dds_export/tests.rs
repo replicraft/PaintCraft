@@ -9,10 +9,10 @@ fn cancellation_stale_destination_and_actual_alias_preserve_files_and_drop_lease
     let doc = new_document(3, 2, Some(Rgba([17, 51, 93, 255])), 0, POLICY).unwrap();
     let options = dds_options::Options::default().resolve(3, 2).unwrap();
     let pool = SharedBudget::new(64 << 20);
-    let calls = std::cell::Cell::new(0);
+    let cancellation_observed = std::cell::Cell::new(false);
     let cancelled = || {
-        calls.set(calls.get() + 1);
-        if calls.get() == 5 {
+        if pool.usage().reserved > 0 {
+            cancellation_observed.set(true);
             Err(Error::new(
                 ErrorCode::OperationCancelled,
                 "cancel during preparation",
@@ -34,6 +34,7 @@ fn cancellation_stale_destination_and_actual_alias_preserve_files_and_drop_lease
     )
     .unwrap();
     assert!(!ok);
+    assert!(cancellation_observed.get());
     assert_eq!(pool.usage().reserved, 0);
     assert!(pool.usage().peak > 0);
     assert_eq!(std::fs::read(&dest).unwrap(), original);

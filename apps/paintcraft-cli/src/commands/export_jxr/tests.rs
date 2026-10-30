@@ -1,5 +1,5 @@
 use super::*;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 struct Scratch(PathBuf);
 impl Scratch {
     fn new() -> Self {
@@ -43,10 +43,13 @@ fn transparent_preparation_and_cancellation_leave_existing_destination_and_sessi
     .unwrap();
     assert!(!ok);
     assert_eq!(std::fs::read(&dest).unwrap(), original);
-    let calls = Arc::new(AtomicUsize::new(0));
-    let observed = calls.clone();
+    let pool = SharedBudget::new(512 << 20);
+    let admitted = pool.clone();
+    let cancelled = Arc::new(AtomicBool::new(false));
+    let observed = cancelled.clone();
     let check: jxr_export_job::Check = Arc::new(move || {
-        if observed.fetch_add(1, Ordering::Relaxed) >= 3 {
+        if admitted.usage().reserved > 0 {
+            observed.store(true, Ordering::Relaxed);
             return Err(Error::new(
                 ErrorCode::OperationCancelled,
                 "preparation cancelled",
@@ -62,13 +65,15 @@ fn transparent_preparation_and_cancellation_leave_existing_destination_and_sessi
         None,
         owner,
         &|| Ok(owner),
-        SharedBudget::new(512 << 20),
+        pool.clone(),
         &|_| Ok(()),
         check,
     )
     .unwrap();
     assert!(!ok);
-    assert!(calls.load(Ordering::Relaxed) >= 4);
+    assert!(cancelled.load(Ordering::Relaxed));
+    assert!(pool.usage().peak > 0);
+    assert_eq!(pool.usage().reserved, 0);
     assert_eq!(std::fs::read(&dest).unwrap(), original);
     assert_eq!(std::fs::read_dir(&root.0).unwrap().count(), 1);
     assert_eq!(session.document().state_id, state);
