@@ -32,7 +32,11 @@ impl FilterOp {
     /// Missing optional final indices remain absent; explicit disabled state is
     /// retained. Hosts still supply the batch's base and publication epoch.
     pub fn to_value(&self) -> Result<Value> {
+        if matches!(self, Self::Mask { .. }) {
+            return super::masks::to_value(self);
+        }
         let (name, layer, mut fields) = match self {
+            Self::Mask { .. } => unreachable!("mask adapter handled above"),
             Self::Add {
                 layer,
                 alias,

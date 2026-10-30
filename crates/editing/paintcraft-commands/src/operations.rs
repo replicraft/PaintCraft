@@ -1,10 +1,18 @@
 //! Versioned operation grammar.
 use super::*;
-pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
+pub(super) fn op(
+    v: &Value,
+    version: u8,
+    budget: &paintcraft_core::types::resources::SharedBudget,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Op> {
     let name = v
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if name.starts_with("filter.mask.") && version < 3 {
+        return Err(bad("filter mask operations require paintcraft.batch/v3"));
+    }
     if version < 2
         && (name.starts_with("filter.")
             || matches!(
@@ -33,7 +41,7 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         )));
     }
     Ok(match name {
-        name if name.starts_with("filter.") => filters::parse(v)?,
+        name if name.starts_with("filter.") => filters::parse_with_coverage(v, budget, check)?,
         "raster.cut_selection" => {
             let o = obj(v, &["op", "layer_ref", "clear"], &[])?;
             Op::CutSelection {

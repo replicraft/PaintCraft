@@ -2,7 +2,9 @@
 use super::*;
 use paintcraft_core::types::filters::{BrightnessContrastV1, Descriptor};
 
+pub(super) mod masks;
 mod value;
+pub use masks::MaskOp;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FilterRef {
@@ -11,6 +13,11 @@ pub enum FilterRef {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FilterOp {
+    Mask {
+        layer: LayerRef,
+        filter: FilterRef,
+        operation: MaskOp,
+    },
     Add {
         layer: LayerRef,
         alias: String,
@@ -43,6 +50,38 @@ pub enum FilterOp {
         alias: String,
         to_index: Option<usize>,
     },
+}
+impl FilterOp {
+    pub const fn required_batch_version(&self) -> u8 {
+        if matches!(self, Self::Mask { .. }) {
+            3
+        } else {
+            2
+        }
+    }
+    pub fn references(&self) -> (&LayerRef, Option<&FilterRef>) {
+        match self {
+            Self::Add { layer, .. } => (layer, None),
+            Self::Mask { layer, filter, .. }
+            | Self::Update { layer, filter, .. }
+            | Self::SetEnabled { layer, filter, .. }
+            | Self::Reorder { layer, filter, .. }
+            | Self::Remove { layer, filter }
+            | Self::Duplicate { layer, filter, .. } => (layer, Some(filter)),
+        }
+    }
+    /// Host captures must not resolve a changing active target or batch alias.
+    pub fn stable_uuid_refs(&self) -> Option<(Uuid, Option<Uuid>)> {
+        let (LayerRef::Id(layer), filter) = self.references() else {
+            return None;
+        };
+        let filter = match filter {
+            None => None,
+            Some(FilterRef::Id(id)) => Some(*id),
+            Some(FilterRef::Alias(_)) => return None,
+        };
+        Some((*layer, filter))
+    }
 }
 fn boolean(v: &Value) -> Result<bool> {
     v.as_bool().ok_or_else(|| bad("enabled must be boolean"))
@@ -135,6 +174,21 @@ pub(super) fn parse(v: &Value) -> Result<Op> {
         _ => unreachable!("validated operation"),
     };
     Ok(Op::Filter(op))
+}
+
+pub(super) fn parse_with_coverage(
+    v: &Value,
+    budget: &paintcraft_core::types::resources::SharedBudget,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Op> {
+    if v.get("op")
+        .and_then(Value::as_str)
+        .is_some_and(|name| name.starts_with("filter.mask."))
+    {
+        masks::parse(v, budget, check)
+    } else {
+        parse(v)
+    }
 }
 
 #[cfg(test)]

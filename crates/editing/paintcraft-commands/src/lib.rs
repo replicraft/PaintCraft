@@ -13,7 +13,7 @@ use paintcraft_core::types::ids::parse_uuid;
 use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
 mod filters;
-pub use filters::{FilterOp, FilterRef};
+pub use filters::{FilterOp, FilterRef, MaskOp};
 mod mask;
 pub use mask::{validate_mask_spans, validate_mask_spans_checked};
 mod contour;
@@ -214,12 +214,40 @@ fn bad(m: impl Into<String>) -> Error {
 }
 
 impl Batch {
+    /// Select the lowest grammar profile for a generated packet. Parsing still
+    /// validates all names, fields and counts; this helper grants no authority.
+    pub fn schema_for_operations(operations: &[Value]) -> &'static str {
+        if operations.iter().any(|v| {
+            v.get("op")
+                .and_then(Value::as_str)
+                .is_some_and(|name| name.starts_with("filter.mask."))
+        }) {
+            "paintcraft.batch/v3"
+        } else {
+            "paintcraft.batch/v2"
+        }
+    }
     pub fn from_json(bytes: &[u8]) -> Result<Batch> {
         let value = json::parse(bytes).map_err(|e| bad(format!("invalid JSON: {e}")))?;
         Batch::from_value(&value)
     }
 
     pub fn from_value(v: &Value) -> Result<Batch> {
+        Self::from_value_with_coverage(
+            v,
+            &paintcraft_core::types::resources::default_coverage_budget(),
+            &|| Ok(()),
+        )
+    }
+
+    /// Only numeric mask DTO storage is admitted here. The input JSON Value and
+    /// canonical digest buffer remain caller-owned transport allocations.
+    pub fn from_value_with_coverage(
+        v: &Value,
+        budget: &paintcraft_core::types::resources::SharedBudget,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Batch> {
+        check()?;
         let top = obj(
             v,
             &["schema", "atomic", "policy", "base", "operations"],
@@ -228,9 +256,10 @@ impl Batch {
         let version = match top["schema"].as_str() {
             Some("paintcraft.batch/v1") => 1,
             Some("paintcraft.batch/v2") => 2,
+            Some("paintcraft.batch/v3") => 3,
             _ => {
                 return Err(bad(
-                    "schema must be paintcraft.batch/v1 or paintcraft.batch/v2",
+                    "schema must be paintcraft.batch/v1, paintcraft.batch/v2 or paintcraft.batch/v3",
                 ));
             }
         };
@@ -256,7 +285,10 @@ impl Batch {
         }
         let operations = ops
             .iter()
-            .map(|o| op(o, version))
+            .map(|o| {
+                check()?;
+                op(o, version, budget, check)
+            })
             .collect::<Result<Vec<_>>>()?;
         let digest = hex(&Sha256::digest(json::canonical(v)));
         Ok(Batch {
