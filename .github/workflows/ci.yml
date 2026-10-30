@@ -78,6 +78,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python3 fuzz/replay_smoke.py --replay target/debug/replay
+          python3 fuzz/pcnd_point_replay_smoke.py --replay target/debug/replay
           python3 fuzz/check_lock.py
   x11-clipboard:
     runs-on: ubuntu-latest

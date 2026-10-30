@@ -491,3 +491,51 @@ The new runner checks all24 exact original outcomes before24×257raw and24×257
 outer-SHA-aware mutations. Timeout/nonzero subprocess failures retain the exact
 bounded generated batch and propagate failure. These deterministic mutation
 streams are not guided/sanitizer coverage, physical memory or latency evidence.
+
+## Six-profile PCND point registry (separate current inventory)
+
+`pcnd-point-seeds.json` binds the existing 29 independently authored specimens
+in `pcnd-point-fixtures`, their exact Python generator and oracle hashes.
+Twenty-three controls cover all six stored kinds, new parameter boundaries,
+disabled instances, four fractional masks, ordered cross-channel stages, hidden
+RGB and a retained original source profile. Six negatives cover illegal strength
+and level counts plus unknown enabled/disabled algorithm tag 7. Tag7 is unknown
+in this registry checkpoint; a future tag 7 implementation must explicitly migrate
+active unknown controls and their manifest while preserving these fixture bytes
+and receipts as historical evidence. This is not a permanent product rejection
+of future algorithms.
+
+The existing pure `pcnd` target and its raw/outer-checksum-aware wrapper routes
+are reused without changing dependencies, admission or serialization bounds.
+The runner verifies every original outcome (23 accepted, six refused) before
+**7,453 raw and 7,453 outer-SHA-only mutation cases**. These are separately named
+point-profile streams, not the unrelated historical stock 7,453-case stream.
+All prior inventories, generators, mutation ordering and receipts stay separate.
+No pixel renderer, editor, GPU or helper is added to the pure parser target;
+roundtrip checks preserve the stored descriptors, masks, source metadata and
+original samples rather than qualifying rendered appearance.
+
+```sh
+python3 fuzz/pcnd_point_replay_smoke.py --write-inventory
+python3 fuzz/pcnd_point_replay_smoke.py --replay target/debug/replay
+```
+
+Timeout and nonzero mutation failures retain the exact bounded generated batch
+before propagating failure. This configuration describes deterministic mutation
+smoke, not sanitizer or coverage-guided qualification. Runtime qualification of
+this new stream is recorded separately from the historical results above.
+
+Local stable qualification of this stream passed four Python inventory/failure
+retention controls, three new Rust controls and all twelve PCND controls, nested
+all-target strict checks and the unchanged dependency-edge checker. Exact
+originals were 23 accepted/six refused. Raw replay completed 7,453 cases
+(73 accepted/7,380 returned errors), and outer-SHA-only replay separately completed
+7,453cases (2,088 accepted/5,365 returned errors). Returned errors are rejections,
+not assertions that every rejected input is harmless. No invariant finding was
+reported in these streams. The first new semantic test had a wrong fixture
+premise (right-pixel coverage 128 instead of the independently authored0); its
+failure evidence is retained. No product or fixture semantics were changed.
+No new libFuzzer build/run, sanitizer, guided-coverage, rendered-pixel or CI-run
+qualification is claimed for this addendum. See the separately scoped ignored
+`docs/validation/pcnd-point-fuzz/final-freeze.json` receipt for exact sources,
+commands, executable hashes and historical-inventory preservation.
