@@ -130,7 +130,11 @@ impl App {
         let preview = self.canvas_text_preview().filter(|p| {
             matches!(
                 p.as_ref(),
-                Preview::Path(_)
+                Preview::SampledStroke(_)
+                    | Preview::PenStroke(_)
+                    | Preview::ResourceShape(_)
+                    | Preview::MoveSelection { .. }
+                    | Preview::Path(_)
                     | Preview::Paths(_)
                     | Preview::Shape { .. }
                     | Preview::Contour(_)
@@ -604,3 +608,7 @@ mod shape_scheduling_tests;
 #[cfg(test)]
 #[path = "rendering/image_paste_tests.rs"]
 mod image_paste_tests;
+
+#[cfg(test)]
+#[path = "rendering/filter_preview_tests.rs"]
+mod filter_preview_tests;

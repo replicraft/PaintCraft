@@ -7,6 +7,11 @@ use paintcraft_editor::session::{HistoryTicket, HistoryView, Ticket};
 mod tests;
 
 impl Editor {
+    #[cfg(test)]
+    pub(crate) fn published_is_dirty(&self) -> bool {
+        self.session.is_dirty()
+    }
+
     pub fn history_view(&self) -> HistoryView {
         self.session.history_view()
     }
