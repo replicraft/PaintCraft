@@ -107,9 +107,11 @@ lengths. A tile-count upper bound avoids scanning ordinary resident tiles; near
 the limit, exact compact metadata counting remains authoritative. CLI/MCP and
 browser sessions also check newly authored content before atomic publication,
 so rejected layer or raster growth leaves the document and history unchanged.
-Existing snapshots and history remain readable and navigable. Native session
-activation remains pending its retained text-submission lifecycle; initial
-native import admission is already checked.
+Existing snapshots and history remain readable and navigable. Native sessions
+now apply the same publication check by default. Refused text placement retains
+the editable draft, blocks dependent saves and leaves published history intact.
+An explicitly authorized private export can still render that draft without
+acknowledging its placement or changing the original document.
 
 Foreign document export defaults to refusing attached metadata. Explicit privacy
 omission is captured against one frozen document ID, state ID, attachment digest,

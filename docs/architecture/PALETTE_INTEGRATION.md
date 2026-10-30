@@ -63,7 +63,7 @@ An instance mask is persistent source-local coverage, independent of the live se
 
 ### 1. Descriptors and pure kernels
 
-Implementation status: validated descriptors and scalar pixel/row kernels are implemented in `paintcraft-core::types::filters` and `paintcraft-effects`. Six focused tests and strict Clippy pass. This establishes kernel behavior only; no document stack, renderer adoption, PCND extension or Studio controls are available yet.
+Implementation status: validated descriptors and scalar pixel/row kernels are implemented in `paintcraft-core::types::filters` and `paintcraft-effects`. Six focused tests and strict Clippy pass. Document stacks, renderer adoption and PCND persistence have since been implemented in the stages below; Studio controls remain in progress.
 
 Implement the two validated descriptors and bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths before writing; safe Rust slice borrowing requires disjoint source/output storage. Callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
 

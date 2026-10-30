@@ -50,8 +50,9 @@ for working pixels. Documents without attachments keep their exact PCND1
 representation; initial import also checks the current snapshot against PCND's
 actual compact metadata save limit. Browser and CLI/MCP sessions now reject
 newly authored metadata growth before publication, preserving history and text
-drafts on refusal. Native activation still awaits the retained text-submission
-lifecycle. Representative DDS/MSP browser Worker flows also
+drafts on refusal. Native sessions now enable the same check by default, with
+retained text placement, guarded dependent saves and private export recovery.
+Representative DDS/MSP browser Worker flows also
 pass consent, revocation, cancellation and independent output checks, plus 12
 real tampered-request/admission cases. Broader format, browser and native target
 qualification remains separate work.
