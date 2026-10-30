@@ -2,9 +2,11 @@
 use super::{Error, ErrorCode, Result};
 mod coverage;
 mod point_params;
+mod spatial_params;
 mod value;
 pub use coverage::{A8Band, A8Input, A8InputBuilder, A8Run, MaskInputLimits};
 pub use point_params::{BlackWhiteV1, PosterizeRgbV1, ThresholdLumaV1};
+pub use spatial_params::BoxBlurV1;
 
 /// Brightness is a signed hundredth of the full channel range; contrast is a
 /// signed hundredth in the rational gain (100+c)/(100-c).
