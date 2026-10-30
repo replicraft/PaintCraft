@@ -59,6 +59,7 @@ state, flatten a large sparse field, or walk every implicit canvas pixel.
 |---|---|
 | Move layer / change its document origin | Keep source-local coverage unchanged. |
 | Paint or erase source pixels | Keep mask coverage unchanged; evaluate the updated source through it. |
+| Move or transform selected pixels | Keep the mask fixed to the layer's coordinate space. If the operation rebases the layer's local origin, compensate the mask view by the same rebase so its document position stays fixed. |
 | Change canvas bounds without remapping source | Keep coverage unchanged. |
 | Crop a layer's source to local rectangle `R` | Clip the field to `R`, then translate by `(-R.x0, -R.y0)` with the source. Apply the same mapping in preparation and replay. |
 | Crop removes the entire layer source | Preserve the retained filter intent, but replace active coverage with the canonical zero field for the replacement transparent source. |

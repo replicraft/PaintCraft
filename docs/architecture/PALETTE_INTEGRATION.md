@@ -25,13 +25,13 @@ Pinned [document enums](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e
 | GPU and full catalog | Author inventory describes CPU filter evaluation, GPU composition, CPU export, 2048-side reduced previews and cache budgets | GPU filter kernels are not established by the inspected subset. Do not transplant budget constants or claim all 132 filters from this review. |
 | Persistence, mask editing and advanced styles | Inventory lists native preservation and selection-derived masks, but also unfinished mask painting/linking and per-effect masks | These remain separate acceptance gates, not implied by a FilterInstance field. |
 
-## Existing PaintCraft boundaries
+## PaintCraft boundaries at the start of integration
 
-[Document/Layer](../../crates/foundation/paintcraft-document/src/lib.rs) currently persist raster, origin, visibility and opacity, with no filter stack. `same_semantics` compares complete layers. Selection belongs to the session; it is not a persistent document mask. Original source ICC/resolution is provenance, not an active working profile.
+[Document/Layer](../../crates/foundation/paintcraft-document/src/lib.rs) initially persisted raster, origin, visibility and opacity, with no filter stack. `same_semantics` compares complete layers. Selection belongs to the session; it is not a persistent document mask. Original source ICC/resolution is provenance, not an active working profile. The implemented stacks and their persistence are described below.
 
-[The renderer](../../crates/services/paintcraft-render/src/lib.rs) composes ordered straight RGBA8 layers with fixed intermediate rounding. [Cache keys](../../crates/services/paintcraft-render/src/cache/key.rs) currently use layer geometry/opacity, raster default pixels and source region versions. A parameter-only stack edit would be invisible to those keys without integration.
+[The renderer](../../crates/services/paintcraft-render/src/lib.rs) composes ordered straight RGBA8 layers with fixed intermediate rounding. Original [cache keys](../../crates/services/paintcraft-render/src/cache/key.rs) used layer geometry/opacity, raster default pixels and source region versions. Integration added stack identities so parameter-only edits invalidate the evaluated appearance.
 
-[Cold history](../../crates/editing/paintcraft-history/src/archive.rs) records explicit layer fields and raster payload references; adding only a live Document field would lose the stack during packing/restoration. PCND currently distinguishes legacy v1 and source-metadata v2; neither may silently acquire an unreadable filter extension. The new `paintcraft-effects` crate currently supplies pure point kernels only.
+[Cold history](../../crates/editing/paintcraft-history/src/archive.rs) records explicit layer fields and raster payload references; adding only a live Document field would lose the stack during packing/restoration. Integration preserves the stack in cold history and adds PCND3 for nonempty stacks, retaining legacy v1 and source-metadata v2 profiles. The `paintcraft-effects` crate supplies pure point kernels; persistent meaning belongs to document/history/formats.
 
 The normative [effect-region contract](../temp/paintcraft-implementation-spec-v5-hyperfine/docs/architecture/EFFECT_REGIONS.md) remains authoritative: `required_input` and `affected_output` are separate functions; masks apply once; tiles are not image boundaries; admission and cancellation precede publication.
 
@@ -63,7 +63,7 @@ An instance mask is persistent source-local coverage, independent of the live se
 
 ### 1. Descriptors and pure kernels
 
-Implementation status: validated descriptors and scalar pixel/row kernels are implemented in `paintcraft-core::types::filters` and `paintcraft-effects`. Six focused tests and strict Clippy pass. Document stacks, renderer adoption and PCND persistence have since been implemented in the stages below; Studio controls remain in progress.
+Implementation status: validated descriptors and scalar pixel/row kernels are implemented in `paintcraft-core::types::filters` and `paintcraft-effects`. Six initial focused tests and strict Clippy pass. Document stacks, renderer adoption and PCND persistence have since been implemented in the stages below; desktop Studio controls have host qualification while browser controls remain in progress.
 
 Implement the two validated descriptors and bounded checked row evaluation. State format, input/output extents, supported aliasing, scratch quote and cancellation partition. Reject inconsistent lengths before writing; safe Rust slice borrowing requires disjoint source/output storage. Callers publish only complete accepted results. Start with scalar integer reference; SIMD/GPU are later differential implementations of the same policy.
 
