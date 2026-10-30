@@ -1,4 +1,5 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
+mod filters;
 mod floating;
 mod pen;
 mod resource_shape;
@@ -148,6 +149,14 @@ impl Editor {
     }
 
     pub fn apply(&mut self, action: Action) -> Result<()> {
+        if let Action::Filter(edit) = &action {
+            let operation = self.filter_operation(edit)?;
+            // Command output aliases identify filters, not a new active layer.
+            let target = self.target;
+            self.commit(vec![operation])?;
+            self.target = target;
+            return Ok(());
+        }
         if let Action::MoveSelection {
             layer,
             offset,
@@ -377,6 +386,7 @@ impl Editor {
     }
     pub(crate) fn display_preview(&self, preview: Option<Preview>) -> Result<Option<Document>> {
         let operations = match preview {
+            Some(Preview::Filter(edit)) => vec![self.filter_operation(&edit)?],
             Some(Preview::MoveSelection {
                 layer,
                 offset,
