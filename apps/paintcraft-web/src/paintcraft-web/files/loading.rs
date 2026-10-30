@@ -65,8 +65,13 @@ pub(super) fn decode_input_with_metadata(
             losses: Vec::new(),
         });
     }
-    if family == Family::Png {
-        let prepared = image::png_retention::decode(
+    if matches!(family, Family::Png | Family::Bmp) {
+        let decode = if family == Family::Png {
+            image::png_retention::decode
+        } else {
+            image::bmp_retention::decode
+        };
+        let prepared = decode(
             bytes,
             MAX_PIXELS,
             pcnd::MetadataAdmission {

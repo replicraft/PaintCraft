@@ -739,5 +739,9 @@ mod metadata_tests;
 mod png_metadata_tests;
 
 #[cfg(test)]
+#[path = "files/bmp_metadata_tests.rs"]
+mod bmp_metadata_tests;
+
+#[cfg(test)]
 #[path = "files/metadata_export_tests.rs"]
 mod metadata_export_tests;
