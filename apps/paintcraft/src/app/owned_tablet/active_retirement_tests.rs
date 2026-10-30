@@ -91,7 +91,8 @@ fn typed_framework_interval_waits_for_receipt_then_precedes_later_pen() {
         modifiers: Default::default(),
     });
     host.snapshot(DeliveryHealth::Ready).unwrap();
-    let step = host.step(&ctx, typed).unwrap();
+    let mut step = host.step(&ctx, typed).unwrap();
+    step.output.textures_delta.clear();
     assert_eq!(step.progress, Progress::WaitingForOwnEdit);
     assert!(!ctx.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::Text(_)))));
     pen(&host, 2, Phase::Down, (34., 18.));
