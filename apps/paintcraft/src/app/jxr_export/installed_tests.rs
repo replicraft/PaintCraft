@@ -363,3 +363,6 @@ mod metadata;
 
 #[path = "preview_refusals.rs"]
 mod preview_refusals;
+
+#[path = "bake_installed.rs"]
+mod bake;

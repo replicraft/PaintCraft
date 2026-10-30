@@ -180,3 +180,82 @@ fn private_text_is_frozen_once_and_later_edits_revoke_the_asset_copy() {
     assert!(Arc::ptr_eq(&frozen, &state.copy.frozen.document));
     assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
 }
+
+#[test]
+fn bake_checkbox_is_separate_from_metadata_and_revokes_old_prepared_copy() {
+    let path = std::env::temp_dir().join(format!("paintcraft-asset-bake-{}.icns", Uuid::new_v4()));
+    let mut app = app(&path);
+    let mut doc = (*app.editor.document_snapshot()).clone();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+        paintcraft_document::FilterStack::new(vec![paintcraft_document::FilterInstance::new(
+            Uuid::from_u128(1),
+            true,
+            paintcraft_core::types::filters::Descriptor::InvertRgbV1,
+        )])
+        .unwrap();
+    app.editor = Editor::with_document(doc, None);
+    app.begin_icns_export();
+    app.icns_export.as_mut().unwrap().draft.config.kinds = vec![widget::Kind::Size128];
+    let original = app.editor.document_snapshot();
+    let ticket = app.editor.history_view().ticket;
+    let mut h = harness(app, Language::English);
+    h.run();
+    h.get_by_label(CHECK).click();
+    h.run();
+    assert!(
+        h.state()
+            .icns_export
+            .as_ref()
+            .unwrap()
+            .cache
+            .value()
+            .is_none(),
+        "metadata consent cannot authorize baking"
+    );
+    h.get_by_label("Bake editable filters into this exported copy")
+        .click();
+    h.run();
+    let prepared = h
+        .state()
+        .icns_export
+        .as_ref()
+        .unwrap()
+        .cache
+        .value()
+        .unwrap();
+    assert_eq!(
+        prepared.entries()[0].rgba(),
+        [0, 0, 0, 255].repeat(128 * 128)
+    );
+    assert!(
+        prepared
+            .losses()
+            .iter()
+            .any(|s| s == export::filter_bake::BAKED_REASON)
+    );
+    h.get_by_label("Bake editable filters into this exported copy")
+        .click();
+    h.run();
+    assert!(
+        h.state()
+            .icns_export
+            .as_ref()
+            .unwrap()
+            .cache
+            .value()
+            .is_none()
+    );
+    assert!(
+        h.get_by_label("Choose destination…")
+            .accesskit_node()
+            .is_disabled()
+    );
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(!path.exists());
+    assert!(Arc::ptr_eq(
+        &original,
+        &h.state().editor.document_snapshot()
+    ));
+    assert_eq!(ticket, h.state().editor.history_view().ticket);
+}
