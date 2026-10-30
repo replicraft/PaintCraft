@@ -57,7 +57,7 @@ Compute this as checked exact rational/integer arithmetic; clamp to `[0,255]`, t
 
 Each filter operates only within its layer's finite source extent. It also transforms the raster's **implicit default pixel** within that extent: iterating allocated tiles alone is incorrect. It does not generate coverage on the unbounded plane. Default-color output must remain implicit where possible rather than allocating every untouched source tile.
 
-An instance mask is persistent source-local coverage, independent of the live selection and layer opacity. Capturing a selection creates a fixed mask snapshot with admitted immutable payloads; later selection edits cannot change the filter. For these alpha-preserving kernels, blend original and candidate RGB once using canonical integer coverage, keeping alpha exact. Define zero/full/fractional coverage and outside-mask default explicitly. Palette's point path mixes RGB while its spatial path uses a separate mixing helper; that is not a general alpha-changing mask specification.
+An instance mask is persistent source-local coverage, independent of the live selection and layer opacity. Capturing a selection creates a fixed mask snapshot with admitted immutable payloads; later selection edits cannot change the filter. For these alpha-preserving kernels, blend original and candidate RGB once using canonical integer coverage, keeping alpha exact. The [filter-mask contract](FILTER_MASKS.md) specifies zero/full/fractional coverage, outside defaults, capture, transformations, ownership and completion gates. Palette's point path mixes RGB while its spatial path uses a separate mixing helper; that is not a general alpha-changing mask specification.
 
 ## Staged adoption and completion gates
 
