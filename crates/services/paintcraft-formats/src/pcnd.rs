@@ -11,11 +11,14 @@ use uuid::Uuid;
 pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
+pub const LAYER_MASKS_FEATURE: &str = "layer-filter-masks.v1";
 pub const LAYER_FILTERS_FEATURE: &str = "layer-point-filters.v1";
 const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
 mod binary;
 mod compression;
+mod coverage;
+pub use coverage::{CoverageAdmission, CoverageFacts, ReadAdmission, coverage_facts};
 mod preflight;
 mod runs;
 
@@ -86,13 +89,15 @@ impl Header {
             (1, "paintcraft.document/v1")
                 | (2, "paintcraft.document/v2")
                 | (3, "paintcraft.document/v3")
+                | (4, "paintcraft.document/v4")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(matches!(self.container_version, 2 | 3) && feature == SOURCE_METADATA_FEATURE)
-                && !(self.container_version == 3 && feature == LAYER_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 2..=4) && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 3 | 4) && feature == LAYER_FILTERS_FEATURE)
+                && !(self.container_version == 4 && feature == LAYER_MASKS_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
         }
@@ -127,6 +132,33 @@ pub fn read_with_metadata_admission_checked(
         staged_pixels,
         layer_limit,
         metadata,
+        check,
+    )
+}
+/// Read with caller-owned shared source-profile and coverage realms. Coverage
+/// admission includes aggregate retained A8 storage and current parser scratch.
+pub fn read_with_admission_checked(
+    bytes: &[u8],
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    layer_limit: usize,
+    admission: ReadAdmission<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
+    check()?;
+    if layer_limit > LAYER_COUNT_MAX {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid host PCND layer limit",
+        ));
+    }
+    binary::read_admitted(
+        bytes,
+        canvas_pixels,
+        staged_pixels,
+        layer_limit,
+        admission.metadata,
+        Some(admission.coverage),
         check,
     )
 }
@@ -181,3 +213,6 @@ mod tests;
 
 #[cfg(test)]
 mod filter_tests;
+
+#[cfg(test)]
+mod mask_tests;

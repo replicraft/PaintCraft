@@ -45,7 +45,12 @@ fn metadata_bound(
     {
         return Ok(None);
     }
+    super::coverage::validate_counts(doc, check)?;
     let live_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
+    let masked = doc
+        .layers
+        .values()
+        .any(|layer| layer.filters.iter().any(|filter| filter.mask().is_some()));
     let mut bytes = 8
         + 32
         + integer_bytes(u64::from(doc.canvas.0))
@@ -93,6 +98,17 @@ fn metadata_bound(
             + 1;
         if live_filters {
             bytes += binary::filter_metadata_bytes(&layer.filters);
+            if masked {
+                for filter in layer.filters.iter() {
+                    let Some(bound) = binary::mask_metadata_bound(filter.mask()) else {
+                        return Ok(None);
+                    };
+                    let Some(total) = bytes.checked_add(bound) else {
+                        return Ok(None);
+                    };
+                    bytes = total;
+                }
+            }
         }
         if !inspect_coordinates {
             let record = 1

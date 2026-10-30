@@ -68,7 +68,7 @@ fixtures = {
     "bad-contrast.pcnd": (make(3, instance(0, 1, 2, (0, 100)), count=b"\x01"), False),
     "noncanonical-count.pcnd": (make(3, stack, count=b"\x83\x00"), False),
     "count257.pcnd": (make(3, count=number(257)), False),
-    "future-v4.pcnd": (make(4), False),
+    "future-v5.pcnd": (make(5), False),
 }
 rows = []
 for name, (data, accepted) in fixtures.items():

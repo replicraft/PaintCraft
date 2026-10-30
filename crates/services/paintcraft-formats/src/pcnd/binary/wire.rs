@@ -79,12 +79,16 @@ impl<W: Write> Output<W> {
     }
 }
 
+#[derive(Clone, Copy)]
 pub(super) struct Input<'a> {
     bytes: &'a [u8],
 }
 impl<'a> Input<'a> {
     pub fn new(bytes: &'a [u8]) -> Self {
         Self { bytes }
+    }
+    pub fn rest(&self) -> &'a [u8] {
+        self.bytes
     }
     pub fn remaining(&self) -> usize {
         self.bytes.len()

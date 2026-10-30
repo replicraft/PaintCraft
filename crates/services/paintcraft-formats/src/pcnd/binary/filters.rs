@@ -6,7 +6,9 @@ use paintcraft_document::{FilterInstance, FilterStack, filters::FILTERS_MAX};
 pub(super) fn write<W: Write>(
     stack: &FilterStack,
     output: &mut Output<W>,
+    masked: bool,
     check: &dyn Fn() -> Result<()>,
+    mask_check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     output.number(stack.len() as u64)?;
     for instance in stack.iter() {
@@ -21,6 +23,9 @@ pub(super) fn write<W: Write>(
                 output.signed(i64::from(parameters.contrast()))?;
             }
         }
+        if masked {
+            masks::write(instance.mask(), output, mask_check)?;
+        }
     }
     Ok(())
 }
@@ -28,6 +33,7 @@ pub(super) fn write<W: Write>(
 pub(super) fn read(
     input: &mut Input<'_>,
     allowance: usize,
+    mut coverage: Option<&mut super::super::coverage::CoverageReader<'_>>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<FilterStack> {
     check()?;
@@ -87,7 +93,17 @@ pub(super) fn read(
                 "PCND filter metadata allowance",
             ));
         }
-        instances.push(FilterInstance::new(id, enabled, descriptor));
+        let mask = if let Some(reader) = coverage.as_deref_mut() {
+            let remaining = allowance
+                .checked_sub(start - input.remaining())
+                .ok_or_else(|| {
+                    Error::new(ErrorCode::ResourceLimit, "PCND filter metadata allowance")
+                })?;
+            masks::read(input, remaining, reader, check)?
+        } else {
+            None
+        };
+        instances.push(FilterInstance::new(id, enabled, descriptor).with_mask(mask));
     }
     FilterStack::new(instances)
 }

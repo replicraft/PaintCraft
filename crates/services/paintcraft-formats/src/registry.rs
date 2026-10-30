@@ -201,7 +201,7 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
             Some("ag-psd-csh-exact-i32")
         }
         Family::Tiff if raster_operation && operation.is_write() => Some("tiff-rgba8"),
-        Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1-v2-v3"),
+        Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1-v2-v3-v4"),
         Family::Png
         | Family::Jpeg
         | Family::Bmp

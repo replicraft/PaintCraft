@@ -90,7 +90,7 @@ fn unknown_disabled_algorithms_malformed_counts_flags_params_and_versions_refuse
     for (name, code) in [
         ("unknown-disabled.pcnd", ErrorCode::CapabilityUnsupported),
         ("unknown-enabled.pcnd", ErrorCode::CapabilityUnsupported),
-        ("future-v4.pcnd", ErrorCode::CapabilityUnsupported),
+        ("future-v5.pcnd", ErrorCode::CapabilityUnsupported),
         ("count257.pcnd", ErrorCode::ResourceLimit),
         ("empty-v3.pcnd", ErrorCode::CodecFailed),
         ("duplicate.pcnd", ErrorCode::CodecFailed),

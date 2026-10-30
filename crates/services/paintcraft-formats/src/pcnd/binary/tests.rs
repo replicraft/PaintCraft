@@ -228,11 +228,11 @@ fn portable_encoder_reads_identically_and_compresses_run_descriptors() {
 #[test]
 fn future_versions_are_assessable_but_never_editable_and_archives_are_not_pcnd() {
     let mut bytes = write_compact(&document()).unwrap();
-    bytes[4] = 4;
+    bytes[4] = 5;
     assert_eq!(probe(&bytes).unwrap_err().code, ErrorCode::CodecFailed);
     let bytes = seal(bytes);
     let header = probe(&bytes).unwrap();
-    assert_eq!(header.container_version, 4);
+    assert_eq!(header.container_version, 5);
     assert!(header.required_features.is_empty());
     assert_eq!(
         header.require_supported().unwrap_err().code,

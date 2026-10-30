@@ -1,0 +1,220 @@
+{
+  "generator": "Independent PCND4 A8-band wire specimens; Python stdlib, no product encoder.",
+  "parent_sha256": "affda8ae5ee4ed14b2cc215d95c77409edb201353618e5a9e681c0d015cccf9b",
+  "domain": [
+    -2,
+    -1,
+    4,
+    2
+  ],
+  "samples": [
+    [
+      -2,
+      -1,
+      128
+    ],
+    [
+      0,
+      -1,
+      0
+    ],
+    [
+      1,
+      -1,
+      255
+    ],
+    [
+      0,
+      1,
+      64
+    ],
+    [
+      4,
+      1,
+      0
+    ]
+  ],
+  "fixtures": [
+    {
+      "file": "bands.pcnd",
+      "accepted": true,
+      "bytes": 164,
+      "sha256": "0f45eaa809e0aba6c6b260ca164168d9f49e78a6514487fbdf4851ffeaf6ff26",
+      "bands": 2,
+      "runs": 3
+    },
+    {
+      "file": "source-bands.pcnd",
+      "accepted": true,
+      "bytes": 3380,
+      "sha256": "f3288464054f1e367dcdd78c4f8ee0522deaceaced5814bc33a5ee6f578577b2",
+      "bands": 2,
+      "runs": 3,
+      "source_parent_sha256": "a9351583b51374ffb6373317949c0b977de840edb05ec2c1a0089cf2802b46a1"
+    },
+    {
+      "file": "opaque-half.pcnd",
+      "accepted": true,
+      "bytes": 155,
+      "sha256": "91e4d951c2411fd0371e4560a1d56e8f26af230037516a26bae7fb911265420c",
+      "bands": 1,
+      "runs": 1,
+      "rgba": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        255,
+        0,
+        255
+      ],
+      "rendered_rgba": [
+        127,
+        128,
+        128,
+        255,
+        0,
+        255,
+        0,
+        255
+      ]
+    },
+    {
+      "file": "disabled.pcnd",
+      "accepted": true,
+      "bytes": 164,
+      "sha256": "1492b2cd2f9fe6c312d0c0d27af86d8c6c2e3fc2d3362611812d322ea5b26bb4",
+      "bands": 2,
+      "runs": 3
+    },
+    {
+      "file": "zero.pcnd",
+      "accepted": true,
+      "bytes": 149,
+      "sha256": "706996ddf04210ccfa14f9183704014f4c72a1a7bb79bb18264e664296ef8ad8",
+      "bands": 0,
+      "runs": 0
+    },
+    {
+      "file": "mixed.pcnd",
+      "accepted": true,
+      "bytes": 183,
+      "sha256": "ba7cd737fdb8fd411a5383709ed323950cf5d7405364d223449ce7474b193474",
+      "bands": 2,
+      "runs": 3
+    },
+    {
+      "file": "repeated.pcnd",
+      "accepted": true,
+      "bytes": 246,
+      "sha256": "3d7186c81a9a33d992fd274f0779e3d1bc1b25124e51491b2a31d28ba5413d38",
+      "bands": 6,
+      "runs": 9
+    },
+    {
+      "file": "unknown-disabled.pcnd",
+      "accepted": false,
+      "bytes": 149,
+      "sha256": "a103c31e3d9ddcd024e52c4eb5934b1ae2ad53575923f23d3ecf98e80687278a",
+      "code": "capability.unsupported"
+    },
+    {
+      "file": "bad-presence.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "8dd3ed2cf52846b6f3bdb64ff517673aa2f31e7f930ccdacda2c80bfec639b6a"
+    },
+    {
+      "file": "bad-enabled.pcnd",
+      "accepted": false,
+      "bytes": 149,
+      "sha256": "9e59852adebfbe4446429ee4b975e649d2487705da758826e9288c5dc1af906d"
+    },
+    {
+      "file": "empty-v4.pcnd",
+      "accepted": false,
+      "bytes": 142,
+      "sha256": "45aa576cbe067875bc7bc93d6047eac76b6c89f480d7cf7319944772392645d7"
+    },
+    {
+      "file": "bad-domain.pcnd",
+      "accepted": false,
+      "bytes": 149,
+      "sha256": "020d1962b9439e1b45f9558393136e0f436b54962b40385d3a96d343acd8d8dc"
+    },
+    {
+      "file": "out-domain.pcnd",
+      "accepted": false,
+      "bytes": 155,
+      "sha256": "bc7abddde3adb231f81a24b148630b959c4cc3e381e233c9a24cefae6a1999a1"
+    },
+    {
+      "file": "overlap-runs.pcnd",
+      "accepted": false,
+      "bytes": 158,
+      "sha256": "c22680d80c1b7b3c4b5edcfdfeaf43b173983e49f881e6f29141934101899cd3"
+    },
+    {
+      "file": "merge-runs.pcnd",
+      "accepted": false,
+      "bytes": 158,
+      "sha256": "36c0ec15b55e4f459a33004220616dd0a95fe95f3eabd795e559fe83a634a0fe"
+    },
+    {
+      "file": "zero-coverage.pcnd",
+      "accepted": false,
+      "bytes": 155,
+      "sha256": "52ea394de1d423dd5324d0ad009344391a0fbedfd0eeeb5e6aa51709f417347b"
+    },
+    {
+      "file": "zero-width.pcnd",
+      "accepted": false,
+      "bytes": 155,
+      "sha256": "16e7f946f3dc87999bda0c029acae49641429bf9252f940fff41bdea4a4acabd"
+    },
+    {
+      "file": "zero-height.pcnd",
+      "accepted": false,
+      "bytes": 155,
+      "sha256": "2256179d04e2fc227c9420be30dfbbdb7e372a1c4089ba52e808e0c7674736f9"
+    },
+    {
+      "file": "empty-band.pcnd",
+      "accepted": false,
+      "bytes": 152,
+      "sha256": "84a7f851b1667c6902bad909574c4c642f2785fb0bc87cd9621f5ae6d7284f01"
+    },
+    {
+      "file": "overlap-bands.pcnd",
+      "accepted": false,
+      "bytes": 161,
+      "sha256": "32691fbd148d13b9b17125e3c80344903f808de7996b5e89e2415fd4af47bc56"
+    },
+    {
+      "file": "merge-bands.pcnd",
+      "accepted": false,
+      "bytes": 161,
+      "sha256": "7ecfe990cce20bfc9674aea0e2a0364312572e12771db4bd7ae180813e8d4fa0"
+    },
+    {
+      "file": "noncanonical-count.pcnd",
+      "accepted": false,
+      "bytes": 150,
+      "sha256": "4442fe38795daaaff38e67c4a368b964f17d613d76c84deb605c35faa280f9f7"
+    },
+    {
+      "file": "truncated.pcnd",
+      "accepted": false,
+      "bytes": 163,
+      "sha256": "a3e53e97a05bbaacdb911100f629e7516fe301a5b99a78d7b5d5129173afcf86"
+    },
+    {
+      "file": "future-v5.pcnd",
+      "accepted": false,
+      "bytes": 164,
+      "sha256": "8c9f45abd34a748acdb5abeee10a3423e1e134ee182b77ca38292440be0c8aba",
+      "code": "capability.unsupported"
+    }
+  ]
+}
