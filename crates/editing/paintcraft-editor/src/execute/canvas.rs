@@ -13,6 +13,7 @@ impl Stage<'_> {
                     && layer.origin == (0, 0)
                     && layer.visible
                     && layer.opacity == 255
+                    && layer.filters.is_empty()
                     && layer.raster.width() == width
                     && layer.raster.height() == height
                     && layer.raster.default_pixel() == color
