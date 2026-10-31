@@ -1,5 +1,6 @@
 //! Calls an admitted, real dedicated Worker; no rendering runs in spawn_local.
 use super::render::{Capture, Reply, Request, View};
+mod programs;
 use js_sys::{Array, Function, Reflect, Uint8Array};
 use paintcraft_core::types::{Error, ErrorCode, Result, json};
 use sha2::{Digest, Sha256};
@@ -169,6 +170,7 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
     capture.spatial |= spatial_count > 0;
     let catalog_count = super::render::stored_catalog(&capture.document);
     capture.catalog |= catalog_count > 0;
+    capture.programs |= super::render::stored_programs(&capture.document);
     let doc = &capture.document;
     let resident = doc
         .layers
@@ -201,7 +203,10 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
         ("maskRuns", (masks.runs as f64).into()),
         ("maskDecodeBytes", (masks.decode_bytes as f64).into()),
     ])?;
-    if capture.spatial || capture.catalog {
+    if capture.programs {
+        let source = super::requirements::capture(doc, None)?;
+        programs::open(&plan, &source.source)?;
+    } else if capture.spatial || capture.catalog {
         for (key, value) in [
             ("protocol", if capture.catalog { 4u64 } else { 3u64 }),
             ("spatialCount", spatial_count),
@@ -211,7 +216,7 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
             Reflect::set(&plan, &key.into(), &JsValue::from_f64(value as f64)).map_err(error)?;
         }
     }
-    if capture.catalog {
+    if capture.catalog && !capture.programs {
         Reflect::set(
             &plan,
             &"catalogCount".into(),
@@ -264,10 +269,24 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
             return Err(failed("Filter mask source admission changed"));
         }
     }
-    if client.capture.spatial || client.capture.catalog {
+    if client.capture.programs {
+        number(&binding, "protocol", 5)?;
+        number(&binding, "registryContract", 1)?;
+        let requirements = super::requirements::capture(&client.capture.document, None)?;
+        programs::validate(&binding, &requirements)?;
+    }
+    if client.capture.spatial || client.capture.catalog || client.capture.programs {
         for (key, expected) in [
-            ("protocol", if client.capture.catalog { 4u64 } else { 3u64 }),
-            ("spatialCount", spatial_count),
+            (
+                "protocol",
+                if client.capture.programs {
+                    5u64
+                } else if client.capture.catalog {
+                    4u64
+                } else {
+                    3u64
+                },
+            ),
             ("workspaceBytes", 64 << 20),
             ("workLimit", 268435456),
             ("layers", client.capture.document.layers.len() as u64),
@@ -280,7 +299,14 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
             }
         }
     }
+    if !client.capture.programs
+        && (client.capture.spatial || client.capture.catalog)
+        && field(&binding, "spatialCount")?.as_f64() != Some(spatial_count as f64)
+    {
+        return Err(failed("Spatial source binding changed"));
+    }
     if client.capture.catalog
+        && !client.capture.programs
         && field(&binding, "catalogCount")?.as_f64() != Some(catalog_count as f64)
     {
         return Err(failed("Catalog source binding changed"));
@@ -350,33 +376,41 @@ impl Client {
             } else {
                 None
             };
-            let pending = if let Some(operation) = operation {
-                call(
-                    &value,
-                    "update",
-                    &[object(&[
-                        ("generation", generation.clone().into()),
-                        ("operation", operation),
-                        (
-                            "target",
-                            target
-                                .ok_or_else(|| failed("Filter target missing"))?
-                                .to_string()
-                                .into(),
-                        ),
-                        ("view", view(request.view)?),
-                        ("render", request.render.into()),
-                    ])?],
-                )?
+            let requirements = if capture.programs {
+                Some(super::requirements::capture(
+                    &capture.document,
+                    request.edit.as_ref().map(|edit| &edit.operation),
+                )?)
             } else {
-                call(
-                    &value,
-                    "base",
-                    &[object(&[
-                        ("generation", generation.clone().into()),
-                        ("view", view(request.view)?),
-                    ])?],
-                )?
+                None
+            };
+            let pending = if let Some(operation) = operation {
+                let plan = object(&[
+                    ("generation", generation.clone().into()),
+                    ("operation", operation),
+                    (
+                        "target",
+                        target
+                            .ok_or_else(|| failed("Filter target missing"))?
+                            .to_string()
+                            .into(),
+                    ),
+                    ("view", view(request.view)?),
+                    ("render", request.render.into()),
+                ])?;
+                if let Some(requirements) = &requirements {
+                    programs::attach(&plan, requirements)?;
+                }
+                call(&value, "update", &[plan])?
+            } else {
+                let plan = object(&[
+                    ("generation", generation.clone().into()),
+                    ("view", view(request.view)?),
+                ])?;
+                if let Some(requirements) = &requirements {
+                    programs::attach(&plan, requirements)?;
+                }
+                call(&value, "base", &[plan])?
             };
             let result = promise(pending).await?;
             let parsed = (|| {
@@ -385,6 +419,9 @@ impl Client {
                 validate_owner(&field(&result, "owner")?, &capture)?;
                 string(&result, "draft", &capture.draft.to_string())?;
                 string(&result, "sourceSha256", &sha)?;
+                if let Some(requirements) = &requirements {
+                    programs::validate(&result, requirements)?;
+                }
                 match target {
                     Some(id) => string(&result, "target", &id.to_string())?,
                     None => {

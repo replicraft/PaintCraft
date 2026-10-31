@@ -22,6 +22,7 @@ pub(super) struct Capture {
     pub document: Arc<Document>,
     pub spatial: bool,
     pub catalog: bool,
+    pub programs: bool,
 }
 impl Capture {
     pub fn same(&self, other: &Self) -> bool {
@@ -31,6 +32,7 @@ impl Capture {
             && Arc::ptr_eq(&self.document, &other.document)
             && self.spatial == other.spatial
             && self.catalog == other.catalog
+            && self.programs == other.programs
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -106,6 +108,8 @@ impl Renderer {
     pub fn want(&mut self, mut capture: Capture, request: Request) {
         capture.spatial |= request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor.is_spatial()));
         capture.catalog |= request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor.is_catalog_only()));
+        capture.programs |= stored_programs(&capture.document)
+            || request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation, paintcraft_commands::FilterOp::Add { descriptor, .. } | paintcraft_commands::FilterOp::Update { descriptor, .. } if descriptor_programs(*descriptor)));
         let work = Work { capture, request };
         if self.wanted.as_ref().is_none_or(|w| !w.same(&work)) {
             self.accepted = None;
@@ -314,6 +318,16 @@ pub(super) fn stored_catalog(doc: &Document) -> u64 {
                 .count() as u64
         })
         .sum()
+}
+
+
+pub(super) fn stored_programs(doc: &Document) -> bool {
+    paintcraft_formats::export::prepared_capabilities::requires_generic(doc, &|| Ok(()))
+        .unwrap_or(true)
+}
+pub(super) fn descriptor_programs(descriptor: paintcraft_core::types::filters::Descriptor) -> bool {
+    paintcraft_formats::export::prepared_capabilities::descriptor_requires_generic(descriptor)
+        .unwrap_or(true)
 }
 
 #[cfg(test)]

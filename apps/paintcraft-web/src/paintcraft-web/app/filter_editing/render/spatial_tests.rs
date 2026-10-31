@@ -19,6 +19,7 @@ fn source() -> Capture {
         document,
         spatial: false,
         catalog: false,
+        programs: false,
     }
 }
 fn request(capture: &Capture, descriptor: Descriptor) -> Request {
@@ -65,4 +66,34 @@ fn adding_box_upgrades_capture_identity_and_base_requests_retain_the_chosen_prof
     renderer.want(upgraded.clone(), base);
     assert!(renderer.wanted.as_ref().unwrap().capture.same(&upgraded));
     assert!(renderer.wanted.as_ref().unwrap().capture.spatial);
+}
+
+#[test]
+fn exposure_requires_generic_source_but_levels_retains_closed_source4() {
+    use paintcraft_core::types::filters::{ExposureSrgbV1, LevelsRgbV1};
+    let original = source();
+    let mut renderer = Renderer::default();
+    renderer.want(
+        original.clone(),
+        request(
+            &original,
+            Descriptor::LevelsRgbV1(LevelsRgbV1::new(0, 255, 100, 0, 255).unwrap()),
+        ),
+    );
+    let legacy = &renderer.wanted.as_ref().unwrap().capture;
+    assert!(legacy.catalog);
+    assert!(!legacy.programs);
+    let mut edit = request(
+        &original,
+        Descriptor::ExposureSrgbV1(ExposureSrgbV1::new(0).unwrap()),
+    );
+    edit.render = false;
+    renderer.want(original.clone(), edit);
+    let generic = renderer.wanted.as_ref().unwrap().capture.clone();
+    assert!(generic.programs);
+    assert!(!original.same(&generic));
+    let mut base = request(&generic, Descriptor::InvertRgbV1);
+    base.edit = None;
+    renderer.want(generic, base);
+    assert!(renderer.wanted.as_ref().unwrap().capture.programs);
 }

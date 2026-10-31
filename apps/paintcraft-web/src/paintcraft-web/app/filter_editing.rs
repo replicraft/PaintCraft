@@ -9,6 +9,8 @@ use uuid::Uuid;
 mod bridge;
 pub(crate) mod render;
 #[cfg(any(target_arch = "wasm32", test))]
+mod requirements;
+#[cfg(any(target_arch = "wasm32", test))]
 mod snapshot;
 mod state;
 mod view;
@@ -139,6 +141,11 @@ impl WebApp {
                         owner: draft.base.owner,
                         ticket: draft.ticket(),
                         draft: draft.revision.draft,
+                        programs: render::stored_programs(&draft.source)
+                            || draft
+                                .parameters
+                                .descriptor()
+                                .is_ok_and(render::descriptor_programs),
                         catalog: draft.source_catalog
                             || draft
                                 .parameters
@@ -164,6 +171,11 @@ impl WebApp {
                     owner: draft.base.owner,
                     ticket: draft.ticket(),
                     draft: draft.revision.draft,
+                    programs: render::stored_programs(&draft.source)
+                        || draft
+                            .parameters
+                            .descriptor()
+                            .is_ok_and(render::descriptor_programs),
                     catalog: draft.source_catalog
                         || draft
                             .parameters
@@ -200,6 +212,7 @@ impl WebApp {
                     owner: state.draft.base.owner,
                     ticket: state.draft.ticket(),
                     draft: state.draft.revision.draft,
+                    programs: render::stored_programs(&state.draft.source),
                     catalog: state.draft.source_catalog,
                     spatial: state.draft.source_spatial,
                     document: state.draft.source,
@@ -348,6 +361,7 @@ impl WebApp {
             owner: self.editor.session.owner_id(),
             ticket: self.editor.session.ticket(),
             draft: Uuid::new_v4(),
+            programs: render::stored_programs(self.editor.session.document()),
             catalog: render::stored_catalog(self.editor.session.document()) > 0,
             spatial: render::stored_spatial(self.editor.session.document()) > 0,
             document: self.editor.session.snapshot(),
