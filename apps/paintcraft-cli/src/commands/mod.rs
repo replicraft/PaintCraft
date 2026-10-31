@@ -5,6 +5,8 @@ mod export_metadata;
 mod filter_inspection;
 mod import_source;
 mod persistence;
+mod render_workspace;
+pub(crate) use render_workspace::command as with_render_workspace;
 mod source_metadata;
 mod tiff_page;
 use import_source::read_conversion_source;
@@ -29,6 +31,7 @@ const BATCH_SCHEMA: &str = include_str!("../../schemas/batch.schema.json");
 const BATCH_V2_SCHEMA: &str = include_str!("../../schemas/batch-v2.schema.json");
 const BATCH_V3_SCHEMA: &str = include_str!("../../schemas/batch-v3.schema.json");
 const BATCH_V4_SCHEMA: &str = include_str!("../../schemas/batch-v4.schema.json");
+const BATCH_V5_SCHEMA: &str = include_str!("../../schemas/batch-v5.schema.json");
 
 pub struct Reply {
     pub stdout: Vec<u8>,

@@ -48,7 +48,7 @@ impl PaintingServer {
             let mut state = state
                 .lock()
                 .map_err(|_| state::invalid("painting session unavailable"))?;
-            job(&mut state)
+            super::render_workspace::run(|| job(&mut state))
         })
         .await
         {

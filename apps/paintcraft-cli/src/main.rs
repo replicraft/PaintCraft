@@ -76,10 +76,14 @@ enum Command {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    let reply = match cli.command {
+    let command = match cli.command {
+        Command::Mcp(options) => return commands::mcp::run(options),
+        command => command,
+    };
+    let reply = commands::with_render_workspace(cli.json, || match command {
         Command::CodecImport(options) => commands::codec_import::run(options, cli.json),
         Command::CodecInspect(options) => commands::codec_worker::run(options, cli.json),
-        Command::Mcp(options) => return commands::mcp::run(options),
+        Command::Mcp(_) => unreachable!("MCP is dispatched before synchronous command context"),
         Command::Flatten(a) => commands::flatten::run(a, cli.json),
         Command::New(a) => commands::new::run(a, cli.json),
         Command::Inspect(a) => commands::inspect::run(a, cli.json),
@@ -101,7 +105,7 @@ fn main() -> ExitCode {
         Command::Palette(a) => commands::palette::run(a, cli.json),
         Command::Shape(a) => commands::shapes::run(a, cli.json),
         Command::Brush(a) => commands::brushes::run(a, cli.json),
-    };
+    });
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);
     ExitCode::from(reply.exit)
