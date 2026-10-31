@@ -5,7 +5,9 @@ use paintcraft_core::types::{
 };
 use paintcraft_effects::{levels, mix_point_coverage};
 mod compiler;
+mod job;
 pub use compiler::{CompileWork, LevelsBackend};
+pub use job::{LevelsJobQuote, PreparedLevelsJob, quote_levels_job};
 
 pub const LEVELS_TABLE_BYTES: u64 = 256;
 
