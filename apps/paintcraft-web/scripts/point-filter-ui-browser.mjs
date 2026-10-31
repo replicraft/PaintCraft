@@ -21,11 +21,17 @@ const legacyFixtures = path.join(
 	root,
 	'crates/services/paintcraft-formats/tests/pcnd-point-fixtures',
 );
+const boxCase = {
+	kind: 'box',
+	default_rgba: [153, 80, 0, 255, 102, 120, 0, 255],
+	changed_rgba: [170, 67, 0, 255, 85, 133, 0, 255],
+};
 const kinds = {
 	bw: { kind: 3, field: 'strength', initial: 100, value: 50 },
 	threshold: { kind: 4, field: 'level', initial: 128, value: 200 },
 	posterize: { kind: 5, field: 'levels', initial: 6, value: 2 },
 	solarize: { kind: 6 },
+	box: { kind: 7, field: 'radius', initial: 2, value: 1 },
 };
 const kind = process.env.POINT_UI_KIND,
 	config = kinds[kind];
@@ -194,6 +200,17 @@ try {
 		assert.equal(plan.layers, 1);
 		assert.equal(plan.owner.state, state);
 		assert.equal(plan.owner.frontend, 3);
+		if (kind === 'box') {
+			assert.equal(plan.protocol, 3);
+			assert.equal(
+				plan.spatialCount,
+				project(bytes)
+					.layers.flatMap((l) => l.filters)
+					.filter((f) => f.kind === 7).length,
+			);
+			assert.equal(plan.workspaceBytes, 64 * 1024 * 1024);
+			assert.equal(plan.workLimit, 268435456);
+		}
 		assert.match(plan.owner.session, /^[0-9a-f-]{36}$/i);
 		assert.match(plan.owner.epoch, /^(0|[1-9][0-9]*)$/);
 		assert.match(plan.draft, /^[0-9a-f-]{36}$/i);
@@ -397,6 +414,7 @@ try {
 		const doc = structuredClone(before),
 			filter = { kind: config.kind, enabled: 1 };
 		if (config.field) filter[config.field] = parameter;
+		if (config.kind === 7) doc.version = 5;
 		doc.layers[0].filters.push(filter);
 		return [...evaluated(doc)];
 	};
@@ -414,6 +432,7 @@ try {
 			4: 'threshold-luma-v1',
 			5: 'posterize-rgb-v1',
 			6: 'solarize-rgb-v1',
+			7: 'box-blur-v1',
 		}[config.kind],
 		...(config.field ? { [config.field]: value } : {}),
 	});
@@ -440,9 +459,10 @@ try {
 			JSON.stringify(defaultPixels) !==
 			JSON.stringify(authoredFixture.evaluated_rgba);
 		if (name === 'red-green.pcnd') {
-			const independent = manifest.cases.find(
-				(entry) => entry.kind === kind,
-			);
+			const independent =
+				kind === 'box'
+					? boxCase
+					: manifest.cases.find((entry) => entry.kind === kind);
 			assert.ok(independent);
 			assert.deepEqual(defaultPixels, independent.default_rgba);
 			assert.equal(
@@ -468,8 +488,10 @@ try {
 		if (name === 'red-green.pcnd')
 			assert.deepEqual(
 				expected,
-				manifest.cases.find((entry) => entry.kind === kind)
-					.changed_rgba,
+				(kind === 'box'
+					? boxCase
+					: manifest.cases.find((entry) => entry.kind === kind)
+				).changed_rgba,
 			);
 		await frame(
 			expected,
@@ -527,11 +549,13 @@ try {
 			enabled: 1,
 			kind: config.kind,
 			...(config.field ? { [config.field]: config.value } : {}),
-			...(doc.version === 4 ? { mask: null } : {}),
+			...(doc.version >= 4 ? { mask: null } : {}),
 		};
 		// Check the entire ordered stack before consulting any saved evaluation.
 		assert.deepEqual(doc.layers[0].filters, [
-			...authored.layers[0].filters,
+			...authored.layers[0].filters.map((f) =>
+				doc.version >= 4 ? { ...f, mask: f.mask ?? null } : f,
+			),
 			expectedAdded,
 		]);
 		assert.deepEqual(rawSemantics(doc), rawSemantics(authored));
