@@ -36,10 +36,19 @@ lowest grammar required by the actual operation list:
 
 | Operations | Required batch |
 |---|---|
+| Complete Levels Add/Update, with all five required integer parameters | `paintcraft.batch/catalog-v1` |
 | Box Blur Add/Update, `{"kind":"box-blur-v1","radius":2}`; integer radius 0–32 | v5 |
 | Black & White/Threshold/Posterize/Solarize Add/Update | v4 |
 | `filter.mask.set`, `.from_selection`, `.set_enabled`, `.remove` | v3 |
 | Original two-kind Add/Update; scalar enable/reorder/remove/duplicate | v2 |
+
+The local Levels extension has separate discovery: call `get_catalog_schema`
+with `{}` for the immutable bundle manifest, or `{"kind":"batch"}` for its
+resolved command schema. Other kinds are `result`, `file-command`, `inspect`
+and `mcp-inspect`. `get_batch_schema` stays exactly v5. MCP supplies the current
+ticket and exact sorted Add/Update requirement inventory when it builds a
+catalog request; it does not relax validation for directly submitted batches.
+All five Levels parameters persist as integers, including gamma in hundredths.
 
 Parameter fields are required on the wire; draft defaults do not fill omissions.
 Earlier closed profiles reject algorithms or tags they do not define. Mask
@@ -54,7 +63,15 @@ alpha-changing coverage once after the candidate. Radius zero is exact RGBA
 identity but remains a spatial intention. No ICC activation or Photoshop/Palette
 byte parity is implied.
 
-`inspect_document` selects distinct closed `paintcraft.mcp-inspect/v4` whenever
+When Levels is stored, `inspect_document` selects
+`paintcraft.mcp-inspect/catalog-v1` before the older branches. Its
+`required_filters` lists all stored numerical profile IDs in sorted order,
+including disabled instances and legacy kinds. Results similarly select
+`paintcraft.result/catalog-v1` from the final document; removing the last Levels
+restores the applicable older result. These lists describe document intent,
+not PCND6's separate profile/codec manifest or an operation list.
+
+Otherwise `inspect_document` selects distinct closed `paintcraft.mcp-inspect/v4` whenever
 any Box is stored, including disabled/radius zero. Otherwise the four newer point
 kinds select v3, stored masks select v2, and original unmasked projects retain the
 established unversioned shape. CLI uses its separate `paintcraft.inspect/v1…v4`

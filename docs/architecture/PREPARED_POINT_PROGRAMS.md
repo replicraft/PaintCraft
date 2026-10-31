@@ -1,9 +1,10 @@
 # Prepared point programs
 
-Status: standalone admitted Levels ownership and row evaluation, without a new
-Descriptor, document format, command, UI option or global cache. This foundation
-prepares the renderer for the [complete Levels policy](LEVELS_FILTER_FOUNDATION.md).
-The existing seven editable filters retain their current paths.
+Status: admitted Levels ownership and row evaluation are connected to frozen
+document jobs, CPU cache and GPU entry points, catalog persistence/automation,
+and Studio previews. The [complete Levels integration](LEVELS_FILTER_FOUNDATION.md)
+tracks current qualification; browser export checks remain open. No global cache
+is introduced, and the existing seven filters retain their numerical policies.
 
 ## Admission and lifetime
 
@@ -112,13 +113,14 @@ and native unit checks, not new GPU, browser UI or frontend execution evidence.
 The receipt is `docs/validation/levels-planning/job-final-freeze.json`, SHA-256
 `6d7d26f9b3f082a2fd7fa3c1bbb54953c8aebc627b43cffc528feee19ac14c81`.
 
-Before exposing the filter, hosts must construct the eager job from their frozen
-parameter inventory and retain it across all tiles. The standalone job API does
-not itself connect an existing frontend or renderer invocation. It intentionally
-supplies no implicit cache.
+Hosts construct the eager job from their frozen parameter inventory and retain
+it across all tiles. The standalone job API alone does not connect a frontend;
+the document collector and host integration now supply that binding. Unique
+policies are canonically ordered before quoting and preparation so layer-map
+iteration cannot change the admission peak. No implicit cache is supplied.
 Any later cross-job cache needs bounded ownership, eviction, cancellation and
-retained-charge tests. Then connect document/history semantics, the catalog
-boundary, host job admission and all native/browser/CLI appearance consumers.
-Old worker profiles must stay closed until their own prepared-work contracts are
-implemented. The [Levels integration gates](LEVELS_FILTER_FOUNDATION.md#prepared-execution-and-remaining-integration)
+retained-charge tests. Document/history semantics, the catalog boundary and host
+admission are implemented locally. Preview source4 and export6 negotiate their
+own prepared-work contracts; older worker profiles remain closed. Their separate
+execution evidence and the [Levels integration gates](LEVELS_FILTER_FOUNDATION.md#prepared-execution-and-remaining-integration)
 remain authoritative.

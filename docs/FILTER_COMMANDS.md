@@ -49,6 +49,22 @@ operations still require only v2, even when their target stores a newer kind.
 Every operation takes `layer_ref`, using the existing `{ "id": "UUID" }` or
 batch-local `{ "ref": "alias" }` form.
 
+Complete Levels Add/Update uses the separate `paintcraft.batch/catalog-v1`
+envelope. It requires all five integer fields: `input_black`, `input_white`,
+`gamma_hundredths`, `output_black` and `output_white`, with kind
+`levels-rgb-v1`. A submitted batch must include `required_filters`: sorted,
+unique numerical profile IDs exactly matching its Add/Update payloads, including
+legacy profiles in a mixed batch. Scalar operations do not infer requirements
+from their target. Old batch/v1 through v5 remain closed.
+
+Discover the immutable resolved bundle with `paintcraft-cli schema catalog`,
+then request `schema batch-catalog`, `result-catalog`, `file-command-catalog`,
+`inspect-catalog` or `mcp-inspect-catalog`. Catalog result/inspection requirements
+describe every stored profile when Levels is retained, including disabled
+instances; they differ from the operation inventory above and PCND6's transport
+profile/codec pairs. Removing the last Levels restores the applicable older
+result and project profile. See the [catalog contract](architecture/PCND_FILTER_CATALOG.md).
+
 | Operation | Additional fields |
 |---|---|
 | `filter.add` | `ref`, `descriptor`; optional `enabled` (default true) and `to_index` (default end) |
