@@ -201,5 +201,14 @@ build, both historical/stock/PCND replay suites and final lock validation. All
 `docs/validation/noise-foundation/parser-lock-fix/attempt-20261031T184248Z-6cf084dd/final-freeze.json`,
 SHA256 `cf18b5993d7468add1d393117abcee497440b7abbba23bc8e60ca8cff9d663c7`.
 This verifies the isolated parser linkage and existing parser cases; it does not
-claim persistent Noise codec fuzzing or a successful Linux CI retry. The corrected
-head requires its own CI result.
+claim persistent Noise codec fuzzing.
+All seven [corrected-head CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41231000555)
+pass for exact commit `a8d21c9c6b46d9f5c2fb32057739beacff03f9cc`.
+Receipt SHA256 `150c3f3e3cb89ad8d3d2d8e59f3820def615746809d10b55a32092e6708e1d08`
+is recorded under `docs/validation/noise-foundation/ci-41231000555/`. This result
+excludes later benchmark additions and editable Noise integration.
+
+The [native kernel baseline](../benchmarks/noise-kernel-2026-10-31/DECISION.md)
+now records three statistical/process sessions for the default canvas and actual
+1080p. These timings qualify the measured scalar workloads only; they do not
+replace Wasm or real host responsiveness gates.
