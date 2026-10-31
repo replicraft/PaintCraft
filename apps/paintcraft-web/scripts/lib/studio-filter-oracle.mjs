@@ -1,10 +1,11 @@
-// Independent bounded tiny-PCND reader and rational point-filter oracle.
-// Qualification fixtures only: flat, opaque, origin-zero layers up to256×256.
+// Independent bounded tiny-PCND1..5 reader and point/spatial fixture oracle.
+// Tiny flat qualification sources only; never a general interchange decoder.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { zstdDecompressSync } from 'node:zlib';
+import { boxPlane, spatialMix } from './studio-box-oracle.mjs';
 export const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 function lz4(input, length) {
 	assert.ok(length <= 393216);
@@ -80,7 +81,7 @@ function block(kind, input, length) {
 export function project(bytes) {
 	assert.ok(bytes.length >= 43 && bytes.length <= 16 * 1024 * 1024);
 	const version = bytes[4];
-	assert.ok([1, 2, 3, 4].includes(version));
+	assert.ok([1, 2, 3, 4, 5].includes(version));
 	assert.equal(bytes.subarray(0, 4).toString(), 'PCND');
 	assert.equal(bytes.subarray(5, 8).toString('hex'), '0d0a1a');
 	assert.equal(
@@ -147,6 +148,7 @@ export function project(bytes) {
 			profileSha: sha(profile),
 		};
 	}
+	let spatialCount = 0;
 	let maskCount = 0,
 		bandCount = 0,
 		runCount = 0;
@@ -228,7 +230,15 @@ export function project(bytes) {
 			for (let j = 0; j < n; j++) {
 				const f = { id: id(), enabled: take(1)[0], kind: take(1)[0] };
 				assert.ok(f.enabled <= 1);
-				assert.ok([1, 2, 3, 4, 5, 6].includes(f.kind));
+				assert.ok(
+					[1, 2, 3, 4, 5, 6].includes(f.kind) ||
+						(version === 5 && f.kind === 7),
+				);
+				if (f.kind === 7) {
+					f.radius = take(1)[0];
+					assert.ok(f.radius <= 32);
+					spatialCount++;
+				}
 				if (f.kind === 2) {
 					f.brightness = signed();
 					f.contrast = signed();
@@ -246,7 +256,7 @@ export function project(bytes) {
 					f.levels = take(1)[0];
 					assert.ok(f.levels >= 2 && f.levels <= 32);
 				}
-				if (version === 4) f.mask = mask();
+				if (version >= 4) f.mask = mask();
 				layer.filters.push(f);
 			}
 		}
@@ -274,6 +284,7 @@ export function project(bytes) {
 	}
 	assert.equal(p, end);
 	assert.ok(version !== 4 || maskCount > 0);
+	assert.ok(version !== 5 || spatialCount > 0);
 	return doc;
 }
 export function maskCoverage(mask, x, y) {
@@ -351,13 +362,48 @@ function candidate(filter, rgb) {
 export function evaluated(doc) {
 	assert.equal(doc.layers.length, 1);
 	const layer = doc.layers[0];
+	if (layer.filters.some((f) => f.kind === 7))
+		assert.equal(
+			doc.version,
+			5,
+			'Unknown point-filter algorithm/version outside PCND5',
+		);
 	assert.deepEqual(layer.origin, [0, 0]);
 	assert.equal(layer.visible, 1);
 	assert.equal(layer.opacity, 255);
 	assert.deepEqual([layer.width, layer.height], [doc.width, doc.height]);
-	const pixels = Buffer.from(layer.rgba, 'hex');
+	return appearance(layer);
+}
+export function appearance(layer) {
+	let pixels = Buffer.from(layer.rgba, 'hex');
 	for (const filter of layer.filters) {
 		if (!filter.enabled) continue;
+		if (filter.kind === 7) {
+			const candidate = boxPlane(
+				pixels,
+				layer.width,
+				layer.height,
+				filter.radius,
+			);
+			const output = Buffer.alloc(pixels.length);
+			for (let p = 0; p < pixels.length; p += 4) {
+				const m = maskCoverage(
+					filter.mask,
+					(p / 4) % layer.width,
+					Math.floor(p / 4 / layer.width),
+				);
+				output.set(
+					spatialMix(
+						pixels.subarray(p, p + 4),
+						candidate.subarray(p, p + 4),
+						m,
+					),
+					p,
+				);
+			}
+			pixels = output;
+			continue;
+		}
 		for (let p = 0; p < pixels.length; p += 4) {
 			const coverage = maskCoverage(
 				filter.mask,
