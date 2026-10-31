@@ -1,8 +1,9 @@
 # Exact Levels integer-backend comparison
 
-Status: isolated experiment, not a selected production backend. The current
-[Levels foundation](LEVELS_FILTER_FOUNDATION.md) still uses its qualified u32
-implementation. The complete numerical policy and fixture bytes are unchanged.
+Status: historical isolated experiment. Its prototype is not the selected code;
+the later [shared-engine implementation and selection](LEVELS_BACKEND_SELECTION.md)
+has separate actual-artifact measurements. The complete numerical policy and
+fixture bytes are unchanged. The explicit u32 reference API is retained.
 
 The candidate replaces 320 u32 limbs/u64 intermediates with 160 u64 limbs/u128
 intermediates, retaining 10,240-bit capacity. Five caller-owned integer slots and

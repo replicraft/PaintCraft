@@ -152,6 +152,12 @@ separate u64/u128 prototype in native and Chrome Wasm execution. Its large-gamma
 gains and small-power regressions do not change this production baseline or
 establish a universal replacement.
 
+The subsequent [shared-engine selection](LEVELS_BACKEND_SELECTION.md) preserves
+the explicit u32 API, adds a separately typed u64 API, and qualifies selection in
+the standalone prepared owner against newly built native/Wasm artifacts. Its
+actual results and tail limitation supersede prototype-based performance claims;
+they do not register the editable filter.
+
 ## Prepared execution and remaining integration
 
 Lookup application is cheap; repeated construction per pixel or per rendered

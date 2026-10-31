@@ -11,8 +11,14 @@ replace the canonical 37-task roadmap or transplant new contracts wholesale.
 extension of the engine roadmap: editable ordered filters over retained source
 pixels, followed by masks and layer styles. The source review maps the author's
 catalog to document/history/PCND, rendering and Studio acceptance gates. Ordered
-point-filter storage, cold history, PCND3 and CPU/GPU-prepared appearances are
-implemented for Invert and Brightness/Contrast. All 95 renderer tests pass on
+filter storage, cold history, PCND3/4/5 and CPU/GPU-prepared appearances now cover
+seven editable profiles: Invert, Brightness/Contrast, Black & White, Threshold,
+Posterize, Solarize and Box Blur, with fixed per-filter coverage masks. The
+[spatial integration record](architecture/SPATIAL_FILTER_INTEGRATION.md) covers
+the later native and production-browser checks. Complete Levels arithmetic and
+[prepared backend selection](architecture/LEVELS_BACKEND_SELECTION.md) are
+qualified components; Levels is not yet registered in documents, PCND or UI.
+The initial 95 renderer tests passed on
 required offscreen Metal, including 32 GPU controls. [Typed editing and CLI/MCP inspection](FILTER_COMMANDS.md) are also implemented,
 with strict versioned result profiles and real metadata-limit refusal controls.
 Explicit filter-bake consent now covers native/web dialogs and CLI/MCP copies,
@@ -31,7 +37,7 @@ have actual browser UI coverage,
 with independent descriptor order and raw-pixel checks. Initial browser source
 capture and ordinary drawing previews remain
 synchronous; per-patch cancellation has no strict latency guarantee. Persistent
-masks, layer styles and the remaining catalog are still work.
+whole-layer masks, layer styles and the remaining catalog are still work.
 
 Actual browser metadata-limit refusal retains parameters for retry and preserves
 the compact source/profile byte-for-byte after Cancel and fresh reopen. Host
