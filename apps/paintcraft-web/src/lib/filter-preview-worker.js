@@ -1,20 +1,33 @@
 import {
-	SOURCE_BYTES_MAX,
+	BEGIN_BYTES_MAX,
+	encodeProgram,
+	freezeSource5,
+	OPEN_BYTES_MAX,
+	PROGRAM_CONTROL_BYTES,
+	requirementDigests,
+	unionPairs,
+	validateCapabilities,
+	validateReady5,
+} from './filter-preview-program-protocol.js';
+import {
+	canonical,
+	fail,
 	OUTPUT_PIXELS_MAX,
 	RESERVATION_BYTES,
-	fail,
-	canonical,
-	sha,
-	validatePlan,
-	validateBinding,
-	validateResult,
-	validateRequest,
-} from './filter-preview-protocol.js';
-export {
 	SOURCE_BYTES_MAX,
-	OUTPUT_PIXELS_MAX,
-	LINEAR_MEMORY_BYTES,
+	sha,
+	validateBinding,
+	validatePlan,
+	validateRequest,
+	validateResult,
 } from './filter-preview-protocol.js';
+
+export {
+	LINEAR_MEMORY_BYTES,
+	OUTPUT_PIXELS_MAX,
+	SOURCE_BYTES_MAX,
+} from './filter-preview-protocol.js';
+
 const typedRustErrors = new Set([
 	'input.schema',
 	'policy.unknown',
@@ -29,20 +42,27 @@ const typedRustErrors = new Set([
 	'storage.failed',
 	'invariant.violation',
 ]);
+let reservationBytes = RESERVATION_BYTES;
 let reserved = false,
 	quarantined = false;
 export function filterPreviewUsage() {
-	return { reserved: reserved ? RESERVATION_BYTES : 0, quarantined };
+	return { reserved: reserved ? reservationBytes : 0, quarantined };
 }
 export function beginFilterPreview(input) {
 	validatePlan(input);
-	const frozen = JSON.parse(canonical(input));
+	const frozen = JSON.parse(
+		input?.protocol === 5
+			? encodeProgram(input, OPEN_BYTES_MAX)
+			: canonical(input),
+	);
 	if (reserved || quarantined)
 		throw fail(
 			'ResourceLimit',
 			'Filter render service is busy or quarantined',
 		);
 	reserved = true;
+	reservationBytes =
+		RESERVATION_BYTES + (input?.protocol === 5 ? PROGRAM_CONTROL_BYTES : 0);
 	let used = false;
 	return {
 		cancel() {
@@ -174,7 +194,11 @@ export function beginFilterPreview(input) {
 							typedRustErrors.has(data.code) &&
 							typeof data.message === 'string' &&
 							data.message.length <= 4096;
-						if (p.kind === 'open' && completed)
+						if (
+							(p.kind === 'open' ||
+								(plan.protocol === 5 && p.kind === 'hello')) &&
+							completed
+						)
 							completedOpenRefusals.add(error);
 						if (
 							!completed ||
@@ -192,6 +216,54 @@ export function beginFilterPreview(input) {
 						);
 					else p.resolve(data);
 				};
+				let capabilities = null;
+				async function resolveSubset(pairs, expected) {
+					let entries = pairs.map((p) =>
+						(capabilities ?? []).find(
+							(e) =>
+								e.profile_id === p.profile_id &&
+								e.codec_id === p.codec_id,
+						),
+					);
+					if (capabilities === null || entries.some((e) => !e)) {
+						const reply = await send('hello', {
+							registryContract: 1,
+							pairs,
+						});
+						try {
+							entries = await validateCapabilities(
+								reply,
+								pairs,
+								expected,
+							);
+						} catch (error) {
+							hardFail(error);
+							throw error;
+						}
+						// Retain only one bounded subset, never an accumulating
+						// history of all algorithms requested during this owner.
+						capabilities = entries;
+					} else {
+						const actual = await requirementDigests(pairs, entries);
+						if (
+							JSON.stringify(actual) !==
+							JSON.stringify({
+								count: expected.count,
+								requiredSha256: expected.requiredSha256,
+								resolutionSha256: expected.resolutionSha256,
+							})
+						)
+							throw fail(
+								'CodecFailed',
+								'Prepared cached capability subset mismatch',
+							);
+					}
+				}
+				if (plan.protocol === 5)
+					await resolveSubset(
+						plan.sourceRequirements.pairs,
+						plan.sourceRequirements,
+					);
 				const bytes = source.slice();
 				const ready = await send(
 					'open',
@@ -204,6 +276,7 @@ export function beginFilterPreview(input) {
 						'Missing render source acknowledgment',
 					);
 				validateBinding(ready.binding, plan);
+				if (plan.protocol === 5) validateReady5(ready, plan);
 				function cancelled() {
 					return fail(
 						'OperationCancelled',
@@ -266,6 +339,14 @@ export function beginFilterPreview(input) {
 								canonical(job.request.operation),
 							),
 						);
+						if (plan.protocol === 5)
+							await resolveSubset(
+								unionPairs(
+									plan.sourceRequirements.pairs,
+									job.request.operation,
+								),
+								job.request.unionRequirements,
+							);
 						if (
 							closing ||
 							closed ||
@@ -318,6 +399,7 @@ export function beginFilterPreview(input) {
 						schedulePump();
 					}
 				}
+				if (plan.protocol === 5) freezeSource5(ready.binding);
 				Object.freeze(ready.binding.owner);
 				Object.freeze(ready.binding.size);
 				const client = {
@@ -342,7 +424,13 @@ export function beginFilterPreview(input) {
 									'Filter generation did not advance',
 								);
 							const request = JSON.parse(
-								canonical({
+								(plan.protocol === 5
+									? (value) =>
+											encodeProgram(
+												value,
+												BEGIN_BYTES_MAX,
+											)
+									: canonical)({
 									...options,
 									owner: plan.owner,
 									draft: plan.draft,

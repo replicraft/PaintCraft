@@ -1,9 +1,18 @@
 // Persistent visual Worker; separate from the one-shot format codec instance.
 import initialize, {
 	linear_memory_ceiling,
+	prepared_capabilities,
+	prepared_protocol_version,
 	protocol_version,
 	RenderWorker,
 } from '../../render-worker-pkg/paintcraft_web_render_worker.js';
+import {
+	BEGIN_BYTES_MAX,
+	CAPABILITY_BYTES_MAX,
+	encodeProgram,
+	OPEN_BYTES_MAX,
+	validatePairs,
+} from './filter-preview-program-protocol.js';
 import {
 	canonical,
 	fail,
@@ -12,6 +21,7 @@ import {
 	validatePlan,
 } from './filter-preview-protocol.js';
 
+let sourceProtocol = 2;
 let service = null,
 	current = null,
 	desired = null,
@@ -94,7 +104,11 @@ function pump() {
 			current = desired;
 			desired = null;
 			current.binding = JSON.parse(
-				service.prepare(canonical(current.request)),
+				service.prepare(
+					sourceProtocol === 5
+						? encodeProgram(current.request, BEGIN_BYTES_MAX)
+						: canonical(current.request),
+				),
 			);
 			if (!current.request.render) {
 				post({ ...current.binding, id: current.id });
@@ -120,6 +134,27 @@ function pump() {
 self.onmessage = async ({ data }) => {
 	let ownsOpening = false;
 	try {
+		if (data.kind === 'hello') {
+			if (data.registryContract !== 1)
+				throw fail('InputSchema', 'Prepared registry contract');
+			validatePairs(data.pairs);
+			const control = encodeProgram(
+				{ registryContract: 1, pairs: data.pairs },
+				CAPABILITY_BYTES_MAX,
+			);
+			const wasm = await initialize();
+			if (
+				prepared_protocol_version() !== 5 ||
+				linear_memory_ceiling() !== LINEAR_MEMORY_BYTES ||
+				wasm.memory.buffer.byteLength > LINEAR_MEMORY_BYTES
+			)
+				throw fail('CodecFailed', 'Prepared Worker contract mismatch');
+			post({
+				...JSON.parse(prepared_capabilities(control)),
+				id: data.id,
+			});
+			return;
+		}
 		if (data.kind === 'open') {
 			if (service || opening)
 				throw fail('InputSchema', 'Source already open');
@@ -132,10 +167,15 @@ self.onmessage = async ({ data }) => {
 			)
 				throw fail('ResourceLimit', 'Filter source extent');
 			validatePlan(data.plan);
-			const encoded = canonical(data.plan);
+			const generic = data.plan.protocol === 5;
+			const encoded = generic
+				? encodeProgram(data.plan, OPEN_BYTES_MAX)
+				: canonical(data.plan);
 			const wasm = await initialize();
 			if (
-				![2, 3, 4].includes(protocol_version()) ||
+				(generic
+					? prepared_protocol_version() !== 5
+					: ![2, 3, 4].includes(protocol_version())) ||
 				(data.plan.protocol === 3 &&
 					![3, 4].includes(protocol_version())) ||
 				(data.plan.protocol === 4 && protocol_version() !== 4) ||
@@ -143,7 +183,13 @@ self.onmessage = async ({ data }) => {
 				wasm.memory.buffer.byteLength > LINEAR_MEMORY_BYTES
 			)
 				throw fail('CodecFailed', 'Render Worker contract mismatch');
-			service = new RenderWorker(new Uint8Array(data.source), encoded);
+			service = generic
+				? RenderWorker.openPrograms(
+						new Uint8Array(data.source),
+						encoded,
+					)
+				: new RenderWorker(new Uint8Array(data.source), encoded);
+			sourceProtocol = data.plan.protocol ?? 2;
 			opening = false;
 			post({
 				kind: 'ready',

@@ -1,3 +1,9 @@
+import {
+	validateBinding5,
+	validatePlan5,
+	validateRequest5,
+	validateResult5,
+} from './filter-preview-program-protocol.js';
 export const SOURCE_BYTES_MAX = 64 * 1024 * 1024;
 export const OUTPUT_PIXELS_MAX = 4_194_304;
 export const LINEAR_MEMORY_BYTES = 256 * 1024 * 1024;
@@ -127,6 +133,7 @@ export function same(a, b) {
 	return canonical(a) === canonical(b);
 }
 export function validatePlan(plan) {
+	if (plan?.protocol === 5) return validatePlan5(plan, validatePlan);
 	shape(
 		plan,
 		[
@@ -213,6 +220,8 @@ export function validatePlan(plan) {
 		throw fail('InputSchema', 'Invalid filter preview source facts');
 }
 export function validateBinding(binding, plan) {
+	if (plan?.protocol === 5)
+		return validateBinding5(binding, plan, validatePlan);
 	validatePlan(binding);
 	if ((binding.protocol ?? 2) !== (plan.protocol ?? 2))
 		throw fail('CodecFailed', 'Render Worker source profile mismatch');
@@ -245,6 +254,8 @@ export function validateBinding(binding, plan) {
 			throw fail('CodecFailed', 'Render Worker source binding mismatch');
 }
 export function validateRequest(options, plan) {
+	if (plan?.protocol === 5)
+		return validateRequest5(options, plan, validateRequest, canonical);
 	shape(options, ['generation', 'operation', 'target', 'view', 'render']);
 	if (
 		![3, 4].includes(plan.protocol) &&
@@ -274,6 +285,8 @@ export function validateRequest(options, plan) {
 	canonical(options.operation);
 }
 export function validateResult(result, request, plan) {
+	if (plan?.protocol === 5)
+		return validateResult5(result, request, plan, validateResult);
 	shape(
 		result,
 		[
