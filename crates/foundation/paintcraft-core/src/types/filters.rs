@@ -60,6 +60,7 @@ pub enum Descriptor {
     ExposureSrgbV1(ExposureSrgbV1),
     CurvesRgbV1(CurvesRgbV1),
     VibranceRgbV1(VibranceRgbV1),
+    HueSaturationRgbV1(HueSaturationRgbV1),
 }
 impl Descriptor {
     /// Spatial intentions require a finite source and neighborhood admission.
@@ -76,7 +77,8 @@ impl Descriptor {
             | Self::LevelsRgbV1(_)
             | Self::ExposureSrgbV1(_)
             | Self::CurvesRgbV1(_)
-            | Self::VibranceRgbV1(_) => false,
+            | Self::VibranceRgbV1(_)
+            | Self::HueSaturationRgbV1(_) => false,
         }
     }
     /// Requires the explicit catalog constructor/persistence boundary. The old
@@ -86,7 +88,8 @@ impl Descriptor {
             Self::LevelsRgbV1(_)
             | Self::ExposureSrgbV1(_)
             | Self::CurvesRgbV1(_)
-            | Self::VibranceRgbV1(_) => true,
+            | Self::VibranceRgbV1(_)
+            | Self::HueSaturationRgbV1(_) => true,
             Self::InvertRgbV1
             | Self::BrightnessContrastV1(_)
             | Self::BlackWhiteRgbV1(_)
@@ -109,6 +112,7 @@ impl Descriptor {
             Self::ExposureSrgbV1(_) => "exposure-srgb-v1",
             Self::CurvesRgbV1(_) => "curves-rgb-v1",
             Self::VibranceRgbV1(_) => "vibrance-rgb-v1",
+            Self::HueSaturationRgbV1(_) => "hue-saturation-rgb-v1",
         }
     }
     /// Canonical semantic bytes for the finite registered numerical profiles.
@@ -150,6 +154,10 @@ impl Descriptor {
             Self::ExposureSrgbV1(p) => {
                 bytes[..2].copy_from_slice(&p.semantic_bytes());
                 2
+            }
+            Self::HueSaturationRgbV1(p) => {
+                bytes.copy_from_slice(&p.semantic_bytes());
+                6
             }
             Self::VibranceRgbV1(p) => {
                 bytes[..2].copy_from_slice(&p.semantic_bytes());
@@ -206,6 +214,18 @@ impl Descriptor {
                 (
                     "stops_hundredths",
                     Value::Int(i64::from(p.stops_hundredths())),
+                ),
+            ]),
+            Self::HueSaturationRgbV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                ("hue_degrees", Value::Int(i64::from(p.hue_degrees()))),
+                (
+                    "saturation_hundredths",
+                    Value::Int(i64::from(p.saturation_hundredths())),
+                ),
+                (
+                    "lightness_hundredths",
+                    Value::Int(i64::from(p.lightness_hundredths())),
                 ),
             ]),
             Self::VibranceRgbV1(p) => Value::object([

@@ -108,7 +108,7 @@ mod tests {
         }
     }
     #[test]
-    fn standalone_type_grants_no_legacy_or_catalog_descriptor_capability() {
+    fn typed_catalog_is_explicit_while_legacy_descriptor_boundaries_stay_closed() {
         use super::super::Descriptor;
         use crate::types::json::Value;
         let v = Value::object([
@@ -122,8 +122,8 @@ mod tests {
             ErrorCode::InputSchema
         );
         assert_eq!(
-            Descriptor::from_catalog_value(&v).unwrap_err().code,
-            ErrorCode::InputSchema
+            Descriptor::from_catalog_value(&v).unwrap(),
+            Descriptor::HueSaturationRgbV1(HueSaturationRgbV1::default())
         );
         assert_eq!(
             Descriptor::checked("hue-saturation-rgb-v1", None, None)

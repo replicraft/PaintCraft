@@ -22,6 +22,12 @@ impl Descriptor {
             Some("exposure-srgb-v1") => &["kind", "stops_hundredths"],
             Some("curves-rgb-v1") => &["kind", "outputs"],
             Some("vibrance-rgb-v1") => &["kind", "amount_hundredths"],
+            Some("hue-saturation-rgb-v1") => &[
+                "kind",
+                "hue_degrees",
+                "saturation_hundredths",
+                "lightness_hundredths",
+            ],
             _ => return Self::from_value(value),
         };
         let bad = || {
@@ -42,6 +48,11 @@ impl Descriptor {
                 .ok_or_else(bad)
         };
         Ok(match kind {
+            Some("hue-saturation-rgb-v1") => Self::HueSaturationRgbV1(HueSaturationRgbV1::new(
+                parameter("hue_degrees")?,
+                parameter("saturation_hundredths")?,
+                parameter("lightness_hundredths")?,
+            )?),
             Some("vibrance-rgb-v1") => {
                 Self::VibranceRgbV1(VibranceRgbV1::new(parameter("amount_hundredths")?)?)
             }
@@ -89,3 +100,7 @@ mod curves_tests;
 #[cfg(test)]
 #[path = "catalog_value/vibrance_tests.rs"]
 mod vibrance_tests;
+
+#[cfg(test)]
+#[path = "catalog_value/hue_saturation_tests.rs"]
+mod hue_saturation_tests;
