@@ -4,7 +4,9 @@ use crate::pcnd::coverage::CoverageReader;
 use paintcraft_core::types::Rect;
 use paintcraft_document::FilterMask;
 use paintcraft_raster::coverage_mask::{Run, Visit};
+mod assessment;
 mod decode;
+pub(super) use assessment::skip as skip_requirements_checked;
 
 pub(super) const CODEC: u8 = 1; // a8-bands-v1
 pub(super) fn write<W: Write>(
@@ -64,7 +66,7 @@ fn add(origin: i64, value: u64) -> Result<i64> {
 fn inspect(
     input: &mut Input<'_>,
     allowance: usize,
-    reader: &CoverageReader<'_>,
+    reader: &impl assessment::MaskAssessment,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<Header>> {
     reader.step(check)?;

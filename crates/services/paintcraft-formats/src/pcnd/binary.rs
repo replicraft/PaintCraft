@@ -5,6 +5,7 @@ use std::io::Write;
 pub(super) mod catalog;
 mod filters;
 mod masks;
+pub(super) mod requirements;
 mod source_metadata;
 mod wire;
 use wire::{Input, Output};
@@ -199,10 +200,15 @@ struct Record<'a> {
     blocks: Vec<Block<'a>>,
 }
 
+#[cfg(test)]
+thread_local! { static PAYLOAD_HASH_PASSES: std::cell::Cell<usize> = const { std::cell::Cell::new(0) }; }
+
 fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u8]> {
     if bytes.len() < MAGIC.len() + 32 || &bytes[..4] != b"PCND" || bytes[5..8] != MAGIC[5..8] {
         return Err(codec("invalid compact PCND header"));
     }
+    #[cfg(test)]
+    PAYLOAD_HASH_PASSES.with(|passes| passes.set(passes.get() + 1));
     let (body, digest) = bytes.split_at(bytes.len() - 32);
     let mut hash = Sha256::new();
     for part in body.chunks(65_536) {
@@ -216,7 +222,11 @@ fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u
 }
 
 pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
-    let body = payload(bytes, &|| Ok(()))?;
+    requirements::CheckedContainer::verify(bytes, &|| Ok(()))?.header()
+}
+fn probe_verified(verified: &requirements::CheckedContainer<'_>) -> Result<Header> {
+    let bytes = verified.bytes();
+    let body = verified.body();
     let mut result = header(bytes[4]);
     if matches!(bytes[4], 3..=6) {
         let mut input = Input::new(body);
@@ -336,8 +346,31 @@ pub(super) fn read_admitted(
     coverage: Option<CoverageAdmission<'_>>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Document> {
-    let body = payload(bytes, check)?;
-    header(bytes[4]).require_supported()?;
+    let verified = requirements::CheckedContainer::verify(bytes, check)?;
+    read_verified_admitted(
+        &verified,
+        canvas_pixels,
+        staged_pixels,
+        layer_limit,
+        metadata_admission,
+        coverage,
+        check,
+    )
+}
+fn read_verified_admitted(
+    verified: &requirements::CheckedContainer<'_>,
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    layer_limit: usize,
+    metadata_admission: MetadataAdmission<'_>,
+    coverage: Option<CoverageAdmission<'_>>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
+    let bytes = verified.bytes();
+    let body = verified.body();
+    if !matches!(verified.version(), 1..=6) {
+        return Err(unsupported("unknown native document version"));
+    }
     if matches!(bytes[4], 4..=6) && coverage.is_none() {
         return Err(unsupported(if bytes[4] == 6 {
             "PCND6 requires explicit shared coverage admission"

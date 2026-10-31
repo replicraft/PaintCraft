@@ -18,6 +18,7 @@ pub const LAYER_FILTERS_FEATURE: &str = "layer-point-filters.v1";
 const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
 mod binary;
+pub use binary::requirements::{CheckedContainer, REQUIREMENTS_CONTROL_BYTES, RequirementsLimits};
 mod compression;
 mod coverage;
 pub use coverage::{CoverageAdmission, CoverageFacts, ReadAdmission, coverage_facts};
