@@ -54,6 +54,7 @@ pub enum Descriptor {
     BoxBlurV1(BoxBlurV1),
     LevelsRgbV1(LevelsRgbV1),
     ExposureSrgbV1(ExposureSrgbV1),
+    CurvesRgbV1(CurvesRgbV1),
 }
 impl Descriptor {
     /// Spatial intentions require a finite source and neighborhood admission.
@@ -68,14 +69,15 @@ impl Descriptor {
             | Self::PosterizeRgbV1(_)
             | Self::SolarizeRgbV1
             | Self::LevelsRgbV1(_)
-            | Self::ExposureSrgbV1(_) => false,
+            | Self::ExposureSrgbV1(_)
+            | Self::CurvesRgbV1(_) => false,
         }
     }
     /// Requires the explicit catalog constructor/persistence boundary. The old
     /// seven-profile parser and container registries do not gain this capability.
     pub const fn is_catalog_only(self) -> bool {
         match self {
-            Self::LevelsRgbV1(_) | Self::ExposureSrgbV1(_) => true,
+            Self::LevelsRgbV1(_) | Self::ExposureSrgbV1(_) | Self::CurvesRgbV1(_) => true,
             Self::InvertRgbV1
             | Self::BrightnessContrastV1(_)
             | Self::BlackWhiteRgbV1(_)
@@ -96,6 +98,7 @@ impl Descriptor {
             Self::BoxBlurV1(_) => "box-blur-v1",
             Self::LevelsRgbV1(_) => "levels-rgb-v1",
             Self::ExposureSrgbV1(_) => "exposure-srgb-v1",
+            Self::CurvesRgbV1(_) => "curves-rgb-v1",
         }
     }
     /// Canonical semantic bytes for the finite registered numerical profiles.
@@ -137,6 +140,10 @@ impl Descriptor {
             Self::ExposureSrgbV1(p) => {
                 bytes[..2].copy_from_slice(&p.semantic_bytes());
                 2
+            }
+            Self::CurvesRgbV1(p) => {
+                bytes[..5].copy_from_slice(&p.semantic_bytes());
+                5
             }
         };
         (bytes, length)
@@ -185,6 +192,18 @@ impl Descriptor {
                 (
                     "stops_hundredths",
                     Value::Int(i64::from(p.stops_hundredths())),
+                ),
+            ]),
+            Self::CurvesRgbV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                (
+                    "outputs",
+                    Value::Array(
+                        p.outputs()
+                            .into_iter()
+                            .map(|value| Value::Int(i64::from(value)))
+                            .collect(),
+                    ),
                 ),
             ]),
         }

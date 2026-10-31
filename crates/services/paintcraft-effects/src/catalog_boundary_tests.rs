@@ -33,3 +33,23 @@ fn assert_prepared_required(descriptor: Descriptor) {
     assert_eq!(out, [Rgba([7, 8, 9, 10]); 2]);
     assert_eq!(source, before);
 }
+
+#[test]
+fn standalone_point_facade_refuses_curves_even_identity_before_row_callbacks_or_writes() {
+    use paintcraft_core::types::filters::CurvesRgbV1;
+    for outputs in [
+        [0, 64, 128, 192, 255],
+        [0; 5],
+        [255, 0, 255, 0, 255],
+        [23, 9, 240, 73, 201],
+    ] {
+        let descriptor = Descriptor::CurvesRgbV1(CurvesRgbV1::new(outputs));
+        assert_prepared_required(descriptor);
+        assert_eq!(
+            evaluate_pixel(&[descriptor], Rgba([64, 16, 128, 0]))
+                .unwrap_err()
+                .message,
+            "Curves filter requires its admitted prepared program"
+        );
+    }
+}

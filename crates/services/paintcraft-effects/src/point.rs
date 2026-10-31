@@ -17,6 +17,7 @@ fn prepared_error(filter: Descriptor) -> Error {
             Descriptor::ExposureSrgbV1(_) => {
                 "Exposure filter requires its admitted prepared program"
             }
+            Descriptor::CurvesRgbV1(_) => "Curves filter requires its admitted prepared program",
             _ => "Catalog filter requires an admitted prepared program",
         },
     )
@@ -75,6 +76,7 @@ pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Result<Rgba> {
         }
         Descriptor::SolarizeRgbV1 => rgb.map(|v| if v >= 128 { 255 - v } else { v }),
         Descriptor::BoxBlurV1(_) => return Err(spatial_error()),
+        Descriptor::CurvesRgbV1(_) => return Err(prepared_error(filter)),
         Descriptor::LevelsRgbV1(_) | Descriptor::ExposureSrgbV1(_) => {
             return Err(prepared_error(filter));
         }

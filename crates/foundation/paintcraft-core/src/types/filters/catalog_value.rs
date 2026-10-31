@@ -20,6 +20,7 @@ impl Descriptor {
                 "output_white",
             ],
             Some("exposure-srgb-v1") => &["kind", "stops_hundredths"],
+            Some("curves-rgb-v1") => &["kind", "outputs"],
             _ => return Self::from_value(value),
         };
         let bad = || {
@@ -40,6 +41,21 @@ impl Descriptor {
                 .ok_or_else(bad)
         };
         Ok(match kind {
+            Some("curves-rgb-v1") => {
+                let values = object
+                    .get("outputs")
+                    .and_then(Value::as_array)
+                    .filter(|values| values.len() == 5)
+                    .ok_or_else(bad)?;
+                let mut outputs = [0; 5];
+                for (output, value) in outputs.iter_mut().zip(values) {
+                    *output = value
+                        .as_i64()
+                        .and_then(|value| u8::try_from(value).ok())
+                        .ok_or_else(bad)?;
+                }
+                Self::CurvesRgbV1(CurvesRgbV1::new(outputs))
+            }
             Some("exposure-srgb-v1") => {
                 Self::ExposureSrgbV1(ExposureSrgbV1::new(parameter("stops_hundredths")?)?)
             }
@@ -61,3 +77,7 @@ mod tests;
 #[cfg(test)]
 #[path = "catalog_value/exposure_tests.rs"]
 mod exposure_tests;
+
+#[cfg(test)]
+#[path = "catalog_value/curves_tests.rs"]
+mod curves_tests;
