@@ -242,6 +242,8 @@ impl App {
             let doc = self.editor.document_snapshot();
             let mut preparation = self.editor.capture_preview(self.rendered_preview.clone());
             let selection = self.editor.selection();
+            let spatial =
+                spatial_workspace::needed(&doc) || preparation.requires_spatial_workspace();
             let tiles = doc
                 .layers
                 .values()
@@ -255,7 +257,8 @@ impl App {
                 } else {
                     0
                 }
-                + cpu_rendering::ADMISSION_BYTES;
+                + cpu_rendering::ADMISSION_BYTES
+                + if spatial { spatial_workspace::BYTES } else { 0 };
             let reservation = reservation.saturating_add(self.gpu.as_ref().map_or(0, |gpu| {
                 gpu.source_cache_admission_bytes()
                     .saturating_add(gpu.output_pool_admission_bytes())
@@ -275,89 +278,99 @@ impl App {
             match renderer.submit(
                 reservation,
                 move |cancel| {
-                    cancel.check()?;
-                    let image = preparation.build_paste(&|| cancel.check())?;
-                    let batch = preparation.build(|| cancel.check())?;
-                    let is_preview = image.is_some() || batch.is_some();
-                    let staged;
-                    let doc = if let Some(image) = image {
-                        cpu.clear_geometry();
-                        staged = image;
-                        &staged
-                    } else if let Some(batch) = batch {
-                        staged = cpu.stage(&doc, selection, &batch, &|| cancel.check())?.doc;
-                        &staged
-                    } else {
-                        cpu.clear_geometry();
-                        doc.as_ref()
-                    };
-                    cancel.check()?;
-                    let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
-                    let (pixels, gpu_texture, fallback) = if key.4 != 0 && !gpu_scaled_display {
-                        (
-                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())?,
-                            None,
-                            None,
-                        )
-                    } else if let Some(gpu) = gpu {
-                        let render = || {
-                            if native_display {
-                                let request = paintcraft_render::display::DisplayRequest::new(
-                                    doc, key.3, key.4,
-                                )?;
-                                gpu.render_display_texture(doc, request, || cancel.check())
-                                    .map(|texture| (Vec::new(), Some(texture)))
-                            } else if key.4 == 0 {
-                                gpu.render_region_with_stats(doc, key.3, || cancel.check())
-                                    .map(|frame| (frame.pixels, None))
-                            } else {
-                                // A headless readback consumer still requires straight
-                                // pixels, not lossy unpremultiplication of display bytes.
-                                cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())
-                                    .map(|pixels| (pixels, None))
-                            }
-                        };
-                        let lease = cancel.resource_lease().ok_or_else(|| {
-                            paintcraft_core::types::Error::new(
-                                paintcraft_core::types::ErrorCode::InvariantViolation,
-                                "render job lost its admission charge",
-                            )
-                        })?;
-                        let result = if let Some(driver) = completion.as_ref() {
-                            paintcraft_render::gpu::with_admission_progress(lease, driver, render)
+                    spatial_workspace::with_job(spatial, || {
+                        cancel.check()?;
+                        let image = preparation.build_paste(&|| cancel.check())?;
+                        let batch = preparation.build(|| cancel.check())?;
+                        let is_preview = image.is_some() || batch.is_some();
+                        let staged;
+                        let doc = if let Some(image) = image {
+                            cpu.clear_geometry();
+                            staged = image;
+                            &staged
+                        } else if let Some(batch) = batch {
+                            staged = cpu.stage(&doc, selection, &batch, &|| cancel.check())?.doc;
+                            &staged
                         } else {
-                            paintcraft_render::gpu::with_admission(lease, render)
+                            cpu.clear_geometry();
+                            doc.as_ref()
                         };
-                        match result {
-                            Ok((pixels, texture)) => (pixels, texture, None),
-                            Err(error) => {
-                                cancel.check()?;
-                                (
+                        cancel.check()?;
+                        let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
+                        let (pixels, gpu_texture, fallback) = if key.4 != 0 && !gpu_scaled_display {
+                            (
+                                cpu.render_display(doc, key.3, key.4, is_preview, || {
+                                    cancel.check()
+                                })?,
+                                None,
+                                None,
+                            )
+                        } else if let Some(gpu) = gpu {
+                            let render = || {
+                                if native_display {
+                                    let request = paintcraft_render::display::DisplayRequest::new(
+                                        doc, key.3, key.4,
+                                    )?;
+                                    gpu.render_display_texture(doc, request, || cancel.check())
+                                        .map(|texture| (Vec::new(), Some(texture)))
+                                } else if key.4 == 0 {
+                                    gpu.render_region_with_stats(doc, key.3, || cancel.check())
+                                        .map(|frame| (frame.pixels, None))
+                                } else {
+                                    // A headless readback consumer still requires straight
+                                    // pixels, not lossy unpremultiplication of display bytes.
                                     cpu.render_display(doc, key.3, key.4, is_preview, || {
                                         cancel.check()
-                                    })?,
-                                    None,
-                                    Some(if key.4 == 0 {
-                                        format!("Using CPU rendering: {error}")
-                                    } else {
-                                        format!("Scaled display used CPU: {error}")
-                                    }),
+                                    })
+                                    .map(|pixels| (pixels, None))
+                                }
+                            };
+                            let lease = cancel.resource_lease().ok_or_else(|| {
+                                paintcraft_core::types::Error::new(
+                                    paintcraft_core::types::ErrorCode::InvariantViolation,
+                                    "render job lost its admission charge",
                                 )
+                            })?;
+                            let result = if let Some(driver) = completion.as_ref() {
+                                paintcraft_render::gpu::with_admission_progress(
+                                    lease, driver, render,
+                                )
+                            } else {
+                                paintcraft_render::gpu::with_admission(lease, render)
+                            };
+                            match result {
+                                Ok((pixels, texture)) => (pixels, texture, None),
+                                Err(error) => {
+                                    cancel.check()?;
+                                    (
+                                        cpu.render_display(doc, key.3, key.4, is_preview, || {
+                                            cancel.check()
+                                        })?,
+                                        None,
+                                        Some(if key.4 == 0 {
+                                            format!("Using CPU rendering: {error}")
+                                        } else {
+                                            format!("Scaled display used CPU: {error}")
+                                        }),
+                                    )
+                                }
                             }
-                        }
-                    } else {
-                        (
-                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())?,
-                            None,
-                            None,
-                        )
-                    };
-                    Ok(RenderedFrame {
-                        key,
-                        pixels,
-                        gpu_texture,
-                        fallback,
-                        device_epoch,
+                        } else {
+                            (
+                                cpu.render_display(doc, key.3, key.4, is_preview, || {
+                                    cancel.check()
+                                })?,
+                                None,
+                                None,
+                            )
+                        };
+                        Ok(RenderedFrame {
+                            key,
+                            pixels,
+                            gpu_texture,
+                            fallback,
+                            device_epoch,
+                        })
                     })
                 },
                 move || wake.request_repaint(),
@@ -373,7 +386,9 @@ impl App {
             return;
         }
         let mut preparation = self.editor.capture_preview(self.rendered_preview.clone());
-        let pixels = (|| {
+        let spatial = spatial_workspace::needed(self.editor.document())
+            || preparation.requires_spatial_workspace();
+        let pixels = spatial_workspace::with_job(spatial, || {
             if let Some(image) = preparation.build_paste(&|| Ok(()))? {
                 self.cpu_renderer.clear_geometry();
                 return self
@@ -401,7 +416,7 @@ impl App {
                     || Ok(()),
                 ),
             }
-        })();
+        });
         self.install_render(ctx, key, pixels);
     }
 

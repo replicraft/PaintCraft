@@ -143,6 +143,11 @@ impl Thumbnail {
             return;
         };
         let reservation = WORK_BYTES
+            + if source.requires_spatial_workspace() {
+                spatial_workspace::BYTES
+            } else {
+                0
+            }
             + source_bytes
             + if source.has_preview() {
                 PREVIEW_BYTES

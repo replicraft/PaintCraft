@@ -82,34 +82,45 @@ impl Source {
             .is_some_and(|preparation| preparation.possible_preview())
     }
 
+    pub fn requires_spatial_workspace(&self) -> bool {
+        spatial_workspace::needed(&self.doc)
+            || self
+                .preparation
+                .as_ref()
+                .is_some_and(|preparation| preparation.requires_spatial_workspace())
+    }
+
     pub fn render(
         self,
         check: impl Fn() -> paintcraft_core::types::Result<()>,
     ) -> paintcraft_core::types::Result<DisplayFrame> {
-        check()?;
-        let staged;
-        let doc = match self
-            .preparation
-            .map(|preparation| preparation.build(&check))
-            .transpose()?
-            .flatten()
-        {
-            Some(batch) => {
-                staged = paintcraft_editor::execute::execute_with_admission_checked(
-                    &self.doc,
-                    self.selection,
-                    &batch,
-                    paintcraft_raster::Admission::new(
-                        paintcraft_core::types::policy::STAGED_PIXELS_MAX,
-                    ),
-                    &check,
-                )?;
-                &staged.doc
-            }
-            None => self.doc.as_ref(),
-        };
-        check()?;
-        paintcraft_render::thumbnail::render_document(doc, SIDE, check)
+        let spatial = self.requires_spatial_workspace();
+        spatial_workspace::with_job(spatial, || {
+            check()?;
+            let staged;
+            let doc = match self
+                .preparation
+                .map(|preparation| preparation.build(&check))
+                .transpose()?
+                .flatten()
+            {
+                Some(batch) => {
+                    staged = paintcraft_editor::execute::execute_with_admission_checked(
+                        &self.doc,
+                        self.selection,
+                        &batch,
+                        paintcraft_raster::Admission::new(
+                            paintcraft_core::types::policy::STAGED_PIXELS_MAX,
+                        ),
+                        &check,
+                    )?;
+                    &staged.doc
+                }
+                None => self.doc.as_ref(),
+            };
+            check()?;
+            paintcraft_render::thumbnail::render_document(doc, SIDE, check)
+        })
     }
 }
 

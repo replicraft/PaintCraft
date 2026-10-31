@@ -99,6 +99,8 @@ mod selection_ui;
 pub mod settings;
 #[path = "app/shapes.rs"]
 mod shapes;
+#[path = "app/spatial_workspace.rs"]
+mod spatial_workspace;
 #[path = "app/status.rs"]
 mod status;
 #[path = "app/studio_canvas.rs"]

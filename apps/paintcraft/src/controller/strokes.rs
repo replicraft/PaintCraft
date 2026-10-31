@@ -115,6 +115,24 @@ pub(crate) struct PreviewPreparation {
     shape_target_valid: bool,
 }
 impl PreviewPreparation {
+    /// Quote before command parsing/staging. Stored spatial intentions are
+    /// checked separately by the host, including disabled/radius-zero entries.
+    pub(crate) fn requires_spatial_workspace(&self) -> bool {
+        match self.preview.as_deref() {
+            Some(Preview::Filter(edit)) => match &edit.operation {
+                paintcraft_commands::FilterOp::Add { descriptor, .. }
+                | paintcraft_commands::FilterOp::Update { descriptor, .. } => {
+                    descriptor.is_spatial()
+                }
+                paintcraft_commands::FilterOp::SetEnabled { .. }
+                | paintcraft_commands::FilterOp::Reorder { .. }
+                | paintcraft_commands::FilterOp::Remove { .. }
+                | paintcraft_commands::FilterOp::Duplicate { .. }
+                | paintcraft_commands::FilterOp::Mask { .. } => false,
+            },
+            _ => false,
+        }
+    }
     pub(crate) fn build_paste(
         &mut self,
         check: &dyn Fn() -> Result<()>,

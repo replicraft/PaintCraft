@@ -121,7 +121,7 @@ impl Service {
                 Limits {
                     workers: 1,
                     pending_jobs: 1,
-                    transient_bytes: PREPARATION_CHARGE,
+                    transient_bytes: PREPARATION_CHARGE + crate::spatial_workspace::BYTES,
                 },
                 budget,
             )?)),
@@ -175,12 +175,49 @@ impl Service {
         self.submit_retained(Box::new(task), done, empty, target_alias)
             .map_err(|rejected| rejected.error)
     }
+    pub(super) fn submit_with_workspace(
+        &self,
+        task: impl FnOnce(Cancellation) -> Result<Completion> + Send + 'static,
+        done: String,
+        empty: &'static str,
+        target_alias: Option<&'static str>,
+        spatial: bool,
+    ) -> Result<Pending> {
+        let task: dispatch::Task =
+            Box::new(move |cancel| crate::spatial_workspace::with_job(spatial, || task(cancel)));
+        self.submit_retained_with_workspace(task, done, empty, target_alias, spatial)
+            .map_err(|rejected| rejected.error)
+    }
     pub(super) fn submit_retained(
         &self,
         task: dispatch::Task,
         done: String,
         empty: &'static str,
         target_alias: Option<&'static str>,
+    ) -> std::result::Result<Pending, dispatch::Rejected> {
+        self.submit_retained_with_workspace(task, done, empty, target_alias, false)
+    }
+    pub(super) fn spatial_request_fits(&self, spatial: bool) -> bool {
+        self.lock()
+            .map(|executor| {
+                executor.request_fits(
+                    PREPARATION_CHARGE
+                        + if spatial {
+                            crate::spatial_workspace::BYTES
+                        } else {
+                            0
+                        },
+                )
+            })
+            .unwrap_or(true)
+    }
+    pub(super) fn submit_retained_with_workspace(
+        &self,
+        task: dispatch::Task,
+        done: String,
+        empty: &'static str,
+        target_alias: Option<&'static str>,
+        spatial: bool,
     ) -> std::result::Result<Pending, dispatch::Rejected> {
         #[cfg(test)]
         let task = self.gate_completion(task);
@@ -189,9 +226,16 @@ impl Service {
             Ok(executor) => executor,
             Err(error) => return Err(dispatch::Rejected { error, task }),
         };
-        let handle = match executor
-            .submit_retained(PREPARATION_CHARGE, task, move || context.request_repaint())
-        {
+        let handle = match executor.submit_retained(
+            PREPARATION_CHARGE
+                + if spatial {
+                    crate::spatial_workspace::BYTES
+                } else {
+                    0
+                },
+            task,
+            move || context.request_repaint(),
+        ) {
             Ok(handle) => handle,
             Err(rejected) => {
                 return Err(dispatch::Rejected {

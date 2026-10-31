@@ -156,10 +156,15 @@ impl LayerThumbnails {
         let Some(source_layer) = doc.layers.get(&layer) else {
             return;
         };
-        let reservation = WORK_BYTES.saturating_add(
-            source_layer.raster.resident_tiles() as u64
-                * paintcraft_raster::RasterLayer::TILE_BYTES as u64,
-        );
+        let spatial = source_layer
+            .filters
+            .iter()
+            .any(|filter| filter.descriptor().is_spatial());
+        let reservation = (WORK_BYTES + if spatial { spatial_workspace::BYTES } else { 0 })
+            .saturating_add(
+                source_layer.raster.resident_tiles() as u64
+                    * paintcraft_raster::RasterLayer::TILE_BYTES as u64,
+            );
         if reservation > SOURCE_LIMIT {
             self.failed.insert(layer);
             return;
@@ -180,13 +185,17 @@ impl LayerThumbnails {
         match executor.submit(
             reservation,
             move |cancel| {
-                let layer = source.layers.get(&layer).ok_or_else(|| {
-                    paintcraft_core::types::Error::new(
-                        paintcraft_core::types::ErrorCode::TargetInvalid,
-                        "thumbnail layer no longer exists",
-                    )
-                })?;
-                paintcraft_render::thumbnail::render_layer(&source, layer, SIDE, || cancel.check())
+                spatial_workspace::with_job(spatial, || {
+                    let layer = source.layers.get(&layer).ok_or_else(|| {
+                        paintcraft_core::types::Error::new(
+                            paintcraft_core::types::ErrorCode::TargetInvalid,
+                            "thumbnail layer no longer exists",
+                        )
+                    })?;
+                    paintcraft_render::thumbnail::render_layer(&source, layer, SIDE, || {
+                        cancel.check()
+                    })
+                })
             },
             move || wake.request_repaint_after(Duration::from_millis(50)),
         ) {
