@@ -277,7 +277,8 @@ contracts and editable catalog integration. [Vibrance](VIBRANCE_FILTER_FOUNDATIO
 now has separately qualified native/Wasm arithmetic and locally qualified editable
 catalog, persistence, rendering and browser delivery.
 [Hue/Saturation](HUE_SATURATION_FILTER_FOUNDATION.md) has a separately qualified
-native/Wasm foundation but no editable catalog registration. Seeded noise still
+native/Wasm foundation and locally qualified editable catalog, persistence,
+priced rendering and native/CLI/MCP plus actual-browser preview/export delivery. Seeded noise still
 needs an explicit coordinate contract. HSL/Vibrance couples all three
 RGB channels; independent per-channel lookup tables cannot represent it.
 

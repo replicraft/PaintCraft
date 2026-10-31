@@ -1,12 +1,13 @@
 # Palette integration: persistent nondestructive filters
 
 Status: ordered history, PCND persistence, regional rendering, typed automation
-and explicit copy consent support **eleven editable profiles**: Invert,
+and explicit copy consent support **twelve editable profiles**: Invert,
 Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
-Levels, Exposure, Curves and Vibrance. Fixed per-filter masks remain independent of live selection.
+Levels, Exposure, Curves, Vibrance and Hue/Saturation. Fixed per-filter masks
+remain independent of live selection.
 Native and Web Studio share controls. Updated 2026-10-31.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
-eleven profiles do not establish parity or a wholesale port.
+twelve profiles do not establish parity or a wholesale port.
 
 Whole-RGB [Vibrance](VIBRANCE_FILTER_FOUNDATION.md) is locally qualified through
 native and Web Studio controls, CLI/MCP, PCND6 and direct CPU filtering with Metal
@@ -24,8 +25,17 @@ pass for commit `b00bcce2`.
 
 [Hue/Saturation](HUE_SATURATION_FILTER_FOUNDATION.md) now has a separately
 qualified native/Wasm numerical foundation with three bounded signed parameters.
-It remains outside the eleven-profile editable catalog; persistence, renderer
-admission, Studio controls and automation registration are the next slice.
+Editable integration now passes native Studio, PCND6, cold history, CLI/MCP,
+priced CPU rendering and actual Metal presentation. Fresh production browser
+Source5 passes 24 cases/229 checks, Studio ten lifecycle
+records, and DDS/MSP sixteen fresh worker replays each, including real Main
+consent/revocation/download and independently decoded causal pixels. All 3,574
+producer inputs and 27 assets remain exact, with ignored font metadata included
+from the first snapshot. Full regression passes 405 web tests (three ignored)
+and 240 CLI/MCP tests (fifteen ignored), retaining the original disk-full failure
+and later source-identical recovery as separate observations. The
+native/actual-browser twelve-profile slice is qualified; new integrated-head CI
+remains a separate gate.
 
 Five-point [Curves](CURVES_FILTER_FOUNDATION.md) is locally integrated through
 typed catalog commands, PCND6, prepared CPU filtering, Metal presentation,
