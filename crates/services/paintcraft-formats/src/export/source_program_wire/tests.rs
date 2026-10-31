@@ -74,3 +74,48 @@ fn complete_parameter_keys_deduplicate_programs_without_changing_instance_counts
     );
     assert_eq!(context.work(), quote.compile_work + region.work());
 }
+
+#[test]
+fn legacy_export_refuses_noise_before_region_quotes_even_when_disabled_or_zero() {
+    use paintcraft_core::types::{
+        ErrorCode,
+        filters::{AddNoiseRgbV1, NoiseDistribution},
+    };
+    for enabled in [false, true] {
+        for amount in [0, 10] {
+            let descriptor = Descriptor::AddNoiseRgbV1(
+                AddNoiseRgbV1::new(amount, 1, true, NoiseDistribution::Uniform).unwrap(),
+            );
+            let doc = document(vec![(enabled, descriptor)]);
+            let requirements = Requirements::capture(&doc, &|| Ok(())).unwrap();
+            // A captured empty region/fabricated context cannot bypass the
+            // authenticated requirement check. No rendering grant is installed.
+            let region = SourceSpatialContext::default();
+            assert_eq!(
+                SourceProgramContext::capture(&doc, region, &|| Ok(()))
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported,
+            );
+            assert_eq!(
+                SourceProgramContext::default()
+                    .validate_requirements(&requirements, &|| Ok(()))
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported,
+            );
+            assert_eq!(
+                SourceSpatialContext::capture_programs(&doc, 0, &|| Ok(()))
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported,
+            );
+            assert_eq!(
+                SourceSpatialContext::capture_catalog(&doc, 0, &|| Ok(()))
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported,
+            );
+        }
+    }
+}

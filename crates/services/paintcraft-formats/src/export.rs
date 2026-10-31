@@ -9,6 +9,7 @@ pub mod dds;
 pub mod filter_bake;
 pub mod jxr;
 pub mod metadata_policy;
+pub mod noise_workload;
 pub mod prepared_capabilities;
 mod source_snapshot_contexts;
 pub use source_snapshot_contexts::SourceSnapshotContexts;

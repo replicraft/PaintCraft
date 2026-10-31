@@ -1,5 +1,5 @@
 //! Export7 generic prepared facts; decoding support alone never grants execution.
-use super::prepared_capabilities::Requirements;
+use super::prepared_capabilities::{RegistryContract, Requirements};
 use super::*;
 const WORKSPACE_MAX: u64 = 64 << 20;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -36,6 +36,9 @@ impl SourceProgramContext {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
         let requirements = Requirements::capture(doc, check)?;
+        // Capture/digest already own the bounded cancellation checks. Contract
+        // validation must not add callbacks to unchanged legacy export facts.
+        requirements.validate_contract(RegistryContract::Legacy1, &|| Ok(()))?;
         let (required_digest, resolution_digest) = requirements.digests(check)?;
         let mut value = Self {
             required: u32::try_from(requirements.len()).map_err(|_| limit())?,
@@ -72,6 +75,9 @@ impl SourceProgramContext {
         requirements: &Requirements,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<()> {
+        // Capture/digest already own the bounded cancellation checks. Contract
+        // validation must not add callbacks to unchanged legacy export facts.
+        requirements.validate_contract(RegistryContract::Legacy1, &|| Ok(()))?;
         let (required, resolution) = requirements.digests(check)?;
         if self.required as usize != requirements.len()
             || self.required_digest != required

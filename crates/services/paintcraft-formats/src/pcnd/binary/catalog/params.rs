@@ -20,6 +20,7 @@ pub(super) fn require(profile: &str, encoding: &str) -> Result<()> {
                 | "curves-rgb-v1"
                 | "vibrance-rgb-v1"
                 | "hue-saturation-rgb-v1"
+                | "add-noise-rgb-v1"
         )
     {
         return Err(unsupported("unknown PCND catalog algorithm/codec"));
@@ -29,6 +30,24 @@ pub(super) fn require(profile: &str, encoding: &str) -> Result<()> {
 pub(super) fn decode(profile: &str, bytes: &[u8]) -> Result<Descriptor> {
     let invalid = || codec("invalid PCND catalog parameters");
     Ok(match (profile, bytes) {
+        ("add-noise-rgb-v1", [a, b, c, d, m, t]) => {
+            use paintcraft_core::types::filters::{AddNoiseRgbV1, NoiseDistribution};
+            let amount = i16::try_from(u16::from_be_bytes([*a, *b])).map_err(|_| invalid())?;
+            let mono = match m {
+                0 => false,
+                1 => true,
+                _ => return Err(invalid()),
+            };
+            let distribution = match t {
+                0 => NoiseDistribution::Uniform,
+                1 => NoiseDistribution::Gaussian,
+                _ => return Err(invalid()),
+            };
+            Descriptor::AddNoiseRgbV1(
+                AddNoiseRgbV1::new(amount, u16::from_be_bytes([*c, *d]), mono, distribution)
+                    .map_err(|_| invalid())?,
+            )
+        }
         ("invert-rgb-v1", []) => Descriptor::InvertRgbV1,
         ("solarize-rgb-v1", []) => Descriptor::SolarizeRgbV1,
         ("brightness-contrast-v1", [a, b, c, d]) => Descriptor::BrightnessContrastV1(
@@ -80,3 +99,7 @@ pub(super) fn decode(profile: &str, bytes: &[u8]) -> Result<Descriptor> {
 pub(super) fn encode(descriptor: Descriptor) -> ([u8; 6], usize) {
     descriptor.semantic_parameter_bytes()
 }
+
+#[cfg(test)]
+#[path = "params/noise_tests.rs"]
+mod noise_tests;

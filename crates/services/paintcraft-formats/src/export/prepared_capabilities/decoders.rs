@@ -107,3 +107,25 @@ pub(super) fn hue_saturation(bytes: &[u8]) -> Result<Descriptor> {
         .map_err(|_| bad())?,
     ))
 }
+
+pub(super) fn noise(bytes: &[u8]) -> Result<Descriptor> {
+    use paintcraft_core::types::filters::{AddNoiseRgbV1, NoiseDistribution};
+    let [a, b, c, d, m, t] = bytes else {
+        return Err(bad());
+    };
+    let amount = i16::try_from(u16::from_be_bytes([*a, *b])).map_err(|_| bad())?;
+    let mono = match m {
+        0 => false,
+        1 => true,
+        _ => return Err(bad()),
+    };
+    let distribution = match t {
+        0 => NoiseDistribution::Uniform,
+        1 => NoiseDistribution::Gaussian,
+        _ => return Err(bad()),
+    };
+    Ok(Descriptor::AddNoiseRgbV1(
+        AddNoiseRgbV1::new(amount, u16::from_be_bytes([*c, *d]), mono, distribution)
+            .map_err(|_| bad())?,
+    ))
+}

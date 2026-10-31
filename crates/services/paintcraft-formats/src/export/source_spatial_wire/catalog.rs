@@ -11,6 +11,13 @@ impl SourceSpatialContext {
             check()?;
             for filter in layer.filters.iter() {
                 check()?;
+                // Legacy Export6/7 cannot adopt the scoped workload, even when
+                // disabled or neutral. Reuse this existing bounded scan/check.
+                super::super::prepared_capabilities::resolve_for(
+                    super::super::prepared_capabilities::RegistryContract::Legacy1,
+                    filter.descriptor().id(),
+                    "params-v1",
+                )?;
                 if filter.descriptor().is_spatial() {
                     value.stored = value.stored.checked_add(1).ok_or_else(limit)?;
                 }

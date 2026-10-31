@@ -42,7 +42,8 @@ pub(super) fn write<W: Write>(
             | Descriptor::ExposureSrgbV1(_)
             | Descriptor::CurvesRgbV1(_)
             | Descriptor::VibranceRgbV1(_)
-            | Descriptor::HueSaturationRgbV1(_) => {
+            | Descriptor::HueSaturationRgbV1(_)
+            | Descriptor::AddNoiseRgbV1(_) => {
                 return Err(unsupported("Catalog filters require PCND6"));
             }
         }
@@ -181,6 +182,7 @@ pub(super) fn metadata_bytes(stack: &FilterStack) -> u64 {
                     Descriptor::CurvesRgbV1(_) => 5,
                     Descriptor::VibranceRgbV1(_) => 2,
                     Descriptor::HueSaturationRgbV1(_) => 6,
+                    Descriptor::AddNoiseRgbV1(_) => 6,
                 }
             })
             .sum::<u64>()

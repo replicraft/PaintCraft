@@ -3,7 +3,9 @@
 use paintcraft_core::types::{Error, ErrorCode, Result, filters::Descriptor};
 use paintcraft_document::Document;
 use sha2::{Digest, Sha256};
+mod contract;
 mod decoders;
+pub use contract::{RegistryContract, requires_scoped_noise, resolve_for};
 const PAIRS_MAX: usize = 257;
 pub const CONTROL_BYTES: u64 =
     crate::pcnd::REQUIREMENTS_CONTROL_BYTES + std::mem::size_of::<ResolvedRequirements>() as u64;
@@ -16,6 +18,7 @@ pub enum Execution {
     PreparedCurves,
     DirectVibrance,
     DirectHueSaturation,
+    DirectNoise,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct Registration {
@@ -45,7 +48,7 @@ impl Registration {
 }
 // Every entry names an actual strict decoder, execution route and priced model.
 // A new general reader arm cannot extend this table implicitly.
-static REGISTRY: [Registration; 12] = [
+static REGISTRY: [Registration; 13] = [
     entry(
         "invert-rgb-v1",
         decoders::invert,
@@ -117,6 +120,12 @@ static REGISTRY: [Registration; 12] = [
         decoders::hue_saturation,
         Execution::DirectHueSaturation,
         "direct-hue-saturation-rgba8-work128-v1",
+    ),
+    entry(
+        "add-noise-rgb-v1",
+        decoders::noise,
+        Execution::DirectNoise,
+        "direct-source-noise-rgba8-u512-g4096-v1",
     ),
 ];
 const fn entry(
