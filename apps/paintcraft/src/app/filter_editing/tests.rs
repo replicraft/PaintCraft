@@ -596,3 +596,6 @@ mod mask_tests;
 
 #[path = "point_filter_tests.rs"]
 mod point_filter_tests;
+
+#[path = "box_tests.rs"]
+mod box_tests;
