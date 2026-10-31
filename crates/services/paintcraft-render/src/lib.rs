@@ -314,3 +314,7 @@ mod tests {
 
 #[cfg(feature = "gpu")]
 pub mod gpu;
+
+#[cfg(test)]
+#[path = "hue_saturation_tests.rs"]
+mod hue_saturation_tests;
