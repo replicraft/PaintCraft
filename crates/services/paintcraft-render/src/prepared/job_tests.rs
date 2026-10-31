@@ -385,3 +385,24 @@ fn reconciled_index_must_leave_room_for_following_family_before_any_compile() {
     drop((job, c, e));
     assert_eq!(realm.usage().reserved, 0);
 }
+
+#[test]
+fn actual_levels_index_prices_exposure_retention_and_curves_tail_before_compile() {
+    use paintcraft_core::types::filters::ExposureSrgbV1;
+    let l = LevelsRgbV1::default();
+    let e = super::super::quote_exposure(ExposureSrgbV1::default());
+    let q = quote_levels_job(&[l]).unwrap();
+    let curves_tail = 38 * 256 + 256;
+    let following = e.peak_bytes.max(e.retained_bytes + curves_tail);
+    let bytes = q.index_bytes + 256 + following;
+    let b = SharedBudget::new(bytes);
+    let a = factory(&b, bytes, q.compile_work);
+    assert_eq!(
+        PreparedLevelsJob::new_with_capacity(&[l], a.clone(), &|| Ok(()), following, q, 2)
+            .unwrap_err()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(a.work_used(), 0);
+    assert_eq!(b.usage().reserved, 0);
+}

@@ -4,16 +4,21 @@ use paintcraft_core::types::{
     Error, ErrorCode, Result, Rgba, filters::LevelsRgbV1, resources::BudgetAccount,
 };
 use paintcraft_effects::{levels, mix_point_coverage};
+mod curves;
+mod curves_document;
+mod curves_job;
 mod exposure;
 mod point_job;
 mod programs;
+pub use curves::{CurvesQuote, PreparedCurves, quote_curves};
+pub use curves_document::{
+    prepare_document_programs, quote_document_programs, with_document_programs,
+};
+pub use curves_job::PreparedCurvesJob;
 pub use exposure::{ExposureQuote, PreparedExposure, quote_exposure};
 pub use point_job::PreparedPointJob;
+pub use programs::DocumentProgramsQuote;
 pub(crate) use programs::validate_layer_programs;
-pub use programs::{
-    DocumentProgramsQuote, prepare_document_programs, quote_document_programs,
-    with_document_programs,
-};
 mod compiler;
 mod document;
 pub(crate) use document::validate_layer_levels;

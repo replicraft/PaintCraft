@@ -99,6 +99,27 @@ impl PreparedPointJob {
         admission: WorkspaceAdmission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        Self::new_with_tail(levels, exposures, admission, check, 0)
+    }
+    pub(super) fn new_with_tail(
+        levels: &[LevelsRgbV1],
+        exposures: &[ExposureSrgbV1],
+        admission: WorkspaceAdmission,
+        check: &dyn Fn() -> Result<()>,
+        following_peak: u64,
+    ) -> Result<Self> {
+        Self::new_with_capacity(levels, exposures, admission, check, following_peak, None)
+    }
+    // Production requests the exact index. A child test can exercise a larger
+    // real allocation without an allocator hook or a fake resource quote.
+    fn new_with_capacity(
+        levels: &[LevelsRgbV1],
+        exposures: &[ExposureSrgbV1],
+        admission: WorkspaceAdmission,
+        check: &dyn Fn() -> Result<()>,
+        following_peak: u64,
+        requested: Option<usize>,
+    ) -> Result<Self> {
         let plan = quote(levels, exposures)?;
         if plan.peak_bytes > admission.bytes_limit()
             || admission
@@ -108,12 +129,22 @@ impl PreparedPointJob {
         {
             return Err(limit("Prepared program job exceeds aggregate allowance"));
         }
+        if following_peak != 0
+            && plan
+                .retained_bytes
+                .checked_add(following_peak)
+                .is_none_or(|n| n > admission.bytes_limit())
+        {
+            return Err(limit(
+                "Prepared following family exceeds aggregate allowance",
+            ));
+        }
         check()?;
         let mut charge = admission.scope().account();
         charge.resize(plan.index_bytes)?;
         let mut programs = Vec::new();
         programs
-            .try_reserve_exact(plan.exposures)
+            .try_reserve_exact(requested.unwrap_or(plan.exposures))
             .map_err(|_| limit("Prepared Exposure index allocation failed"))?;
         let actual = pointer_bytes(programs.capacity())?;
         let actual_peak = plan
@@ -121,6 +152,20 @@ impl PreparedPointJob {
             .checked_sub(plan.index_bytes)
             .and_then(|n| n.checked_add(actual))
             .ok_or_else(|| limit("Prepared program actual peak overflows"))?;
+        if following_peak != 0 {
+            charge.resize(actual)?;
+            if plan
+                .retained_bytes
+                .checked_sub(plan.index_bytes)
+                .and_then(|n| n.checked_add(actual))
+                .and_then(|n| n.checked_add(following_peak))
+                .is_none_or(|n| n > admission.bytes_limit())
+            {
+                return Err(limit(
+                    "Prepared actual index leaves no following-family allowance",
+                ));
+            }
+        }
         if actual_peak > admission.bytes_limit() {
             return Err(limit("Prepared program actual index exceeds allowance"));
         }
@@ -129,6 +174,18 @@ impl PreparedPointJob {
             .bytes_limit()
             .checked_sub(actual)
             .ok_or_else(|| limit("Prepared program index exceeds allowance"))?;
+        // Every later family follows final E retention. E/Curves indexes and
+        // capture arrays are already live outside this tail and not counted twice.
+        let exposure_tail = if following_peak == 0 {
+            plan.exposure_tail
+        } else {
+            plan.exposure_tail.max(
+                (plan.exposures as u64)
+                    .checked_mul(super::exposure::EXPOSURE_TABLE_BYTES)
+                    .and_then(|n| n.checked_add(following_peak))
+                    .ok_or_else(|| limit("Prepared following-family tail overflows"))?,
+            )
+        };
         // E index is already charged/live. The following tail excludes it.
         let levels = if levels.is_empty() {
             None
@@ -137,7 +194,7 @@ impl PreparedPointJob {
                 levels,
                 admission.clone().with_byte_limit(available),
                 check,
-                plan.exposure_tail,
+                exposure_tail,
             )?))
         };
         let mut job = Self {
@@ -147,7 +204,7 @@ impl PreparedPointJob {
         };
         let live_levels = job.levels().map_or(0, PreparedLevelsJob::retained_bytes);
         if live_levels
-            .checked_add(plan.exposure_tail)
+            .checked_add(exposure_tail)
             .is_none_or(|n| n > available)
         {
             return Err(limit("Prepared Exposure following phase exceeds allowance"));
@@ -195,5 +252,35 @@ impl PreparedPointJob {
         self.levels().map_or(0, PreparedLevelsJob::retained_bytes)
             + self._index_charge.bytes()
             + self.exposures.len() as u64 * super::exposure::EXPOSURE_TABLE_BYTES
+    }
+}
+
+#[cfg(test)]
+mod tail_tests {
+    use super::*;
+    use paintcraft_core::types::{
+        ErrorCode,
+        resources::{AllocationClass, SharedBudget},
+    };
+    #[test]
+    fn actual_exposure_index_must_leave_following_curves_tail_before_compilation() {
+        let e = ExposureSrgbV1::default();
+        let q = quote(&[], &[e]).unwrap();
+        let tail = 38 * 256 + 256;
+        let bytes = q.retained_bytes + tail;
+        let b = SharedBudget::new(bytes);
+        let a = WorkspaceAdmission::new(
+            b.scope(AllocationClass::SharedBudget),
+            bytes,
+            q.compile_work,
+        );
+        assert_eq!(
+            PreparedPointJob::new_with_capacity(&[], &[e], a.clone(), &|| Ok(()), tail, Some(2))
+                .unwrap_err()
+                .code,
+            ErrorCode::ResourceLimit
+        );
+        assert_eq!(a.work_used(), 0);
+        assert_eq!(b.usage().reserved, 0);
     }
 }
