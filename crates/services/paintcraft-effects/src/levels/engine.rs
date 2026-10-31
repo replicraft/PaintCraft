@@ -173,3 +173,17 @@ pub(super) fn build_lut<W: Word, const N: usize>(
     output.copy_from_slice(&scratch.table);
     Ok(budget.used)
 }
+
+// The adapter preserves the original charge implementation and diagnostic text.
+impl crate::exact::Budget for Budget<'_> {
+    fn charge(&mut self, units: u64) -> Result<()> {
+        Budget::charge(self, units)
+    }
+    fn resource(&self, fault: crate::exact::Fault) -> Error {
+        resource(match fault {
+            crate::exact::Fault::ScalarPower => "Levels scalar power capacity",
+            crate::exact::Fault::IntegerCapacity => "Levels integer capacity",
+            crate::exact::Fault::ProductCapacity => "Levels product capacity",
+        })
+    }
+}
