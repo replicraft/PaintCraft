@@ -698,3 +698,6 @@ mod curves;
 
 #[path = "gpu/vibrance.rs"]
 mod vibrance;
+
+#[path = "gpu/hue_saturation.rs"]
+mod hue_saturation;
