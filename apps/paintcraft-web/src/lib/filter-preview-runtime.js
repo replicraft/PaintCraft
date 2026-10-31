@@ -135,8 +135,10 @@ self.onmessage = async ({ data }) => {
 			const encoded = canonical(data.plan);
 			const wasm = await initialize();
 			if (
-				![2, 3].includes(protocol_version()) ||
-				(data.plan.protocol === 3 && protocol_version() !== 3) ||
+				![2, 3, 4].includes(protocol_version()) ||
+				(data.plan.protocol === 3 &&
+					![3, 4].includes(protocol_version())) ||
+				(data.plan.protocol === 4 && protocol_version() !== 4) ||
 				linear_memory_ceiling() !== LINEAR_MEMORY_BYTES ||
 				wasm.memory.buffer.byteLength > LINEAR_MEMORY_BYTES
 			)

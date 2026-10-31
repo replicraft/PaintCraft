@@ -60,16 +60,42 @@ impl Service {
             if source.spatial.is_none() && version == 5 {
                 return Err(protocol::spatial::refused());
             }
-            let maximum = if source.spatial.is_some() { 5 } else { 4 };
+            let maximum = if source
+                .spatial
+                .is_some_and(|profile| profile.catalog_count.is_some())
+            {
+                6
+            } else if source.spatial.is_some() {
+                5
+            } else {
+                4
+            };
             if !(1..=maximum).contains(&version) {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
                     if maximum == 4 {
                         "Preview source2 admits only PCND1 through PCND4"
-                    } else {
+                    } else if maximum == 5 {
                         "Preview source3 admits only PCND1 through PCND5"
+                    } else {
+                        "Preview source4 admits only PCND1 through PCND6"
                     },
                 ));
+            }
+        }
+        if source
+            .spatial
+            .is_some_and(|profile| profile.catalog_count.is_some())
+        {
+            for requirement in pcnd::catalog_manifest(bytes)? {
+                if !protocol::spatial::catalog_kind_allowed(&requirement.profile_id)
+                    || requirement.codec_id != "params-v1"
+                {
+                    return Err(Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "Preview source4 catalog capability is closed",
+                    ));
+                }
             }
         }
         let workspace = source
@@ -116,6 +142,17 @@ impl Service {
             &|| Ok(()),
         )?;
         let count = protocol::spatial::stored(&base);
+        let catalog_count = protocol::spatial::stored_catalog(&base);
+        if let Some(expected) = source.spatial.and_then(|profile| profile.catalog_count) {
+            if expected != catalog_count {
+                return Err(stale());
+            }
+        } else if catalog_count != 0 {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Catalog filters require preview source4",
+            ));
+        }
         if source.spatial.is_some_and(|profile| profile.count != count) {
             return Err(stale());
         }
@@ -226,11 +263,33 @@ impl Service {
                 .get("descriptor")
                 .and_then(|descriptor| descriptor.get("kind"))
                 .and_then(Value::as_str);
+            if self
+                .source
+                .spatial
+                .is_some_and(|profile| profile.catalog_count.is_some())
+                && kind.is_some_and(|kind| !protocol::spatial::catalog_kind_allowed(kind))
+            {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Preview source4 catalog capability is closed",
+                ));
+            }
             if self.source.spatial.is_none() && kind == Some("box-blur-v1") {
                 return Err(protocol::spatial::refused());
             }
+            if kind == Some("levels-rgb-v1")
+                && self
+                    .source
+                    .spatial
+                    .is_none_or(|profile| profile.catalog_count.is_none())
+            {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Catalog filter preview requires prepared-program admission",
+                ));
+            }
             let schema = Batch::schema_for_operation_fields([(name, kind)]);
-            let batch = Batch::from_value(&Value::object([
+            let batch = Batch::from_generated_value(Value::object([
                 ("schema", Value::str(schema)),
                 ("atomic", Value::Bool(true)),
                 ("policy", Value::str(paintcraft_document::POLICY)),

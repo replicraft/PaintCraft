@@ -130,6 +130,7 @@ export function validatePlan(plan) {
 	shape(
 		plan,
 		[
+			...(plan?.protocol === 4 ? ['catalogCount'] : []),
 			...(Object.hasOwn(plan ?? {}, 'protocol')
 				? ['protocol', 'spatialCount', 'workspaceBytes', 'workLimit']
 				: []),
@@ -153,7 +154,8 @@ export function validatePlan(plan) {
 	const integer = (x) => Number.isSafeInteger(x) && x >= 0;
 	if (Object.hasOwn(plan, 'protocol')) {
 		if (
-			plan.protocol !== 3 ||
+			![3, 4].includes(plan.protocol) ||
+			(plan.protocol === 4 && !integer(plan.catalogCount)) ||
 			!integer(plan.spatialCount) ||
 			!integer(plan.workspaceBytes) ||
 			!integer(plan.workLimit)
@@ -164,6 +166,7 @@ export function validatePlan(plan) {
 			);
 		if (
 			plan.spatialCount > plan.layers * 256 ||
+			(plan.protocol === 4 && plan.catalogCount > plan.layers * 256) ||
 			plan.workspaceBytes > SPATIAL_WORKSPACE_BYTES_MAX ||
 			plan.workLimit > SPATIAL_JOB_WORK_MAX
 		)
@@ -214,7 +217,8 @@ export function validateBinding(binding, plan) {
 	if ((binding.protocol ?? 2) !== (plan.protocol ?? 2))
 		throw fail('CodecFailed', 'Render Worker source profile mismatch');
 	for (const key of [
-		...(plan.protocol === 3
+		...(plan.protocol === 4 ? ['catalogCount'] : []),
+		...([3, 4].includes(plan.protocol)
 			? [
 					'protocol',
 					'spatialCount',
@@ -243,12 +247,20 @@ export function validateBinding(binding, plan) {
 export function validateRequest(options, plan) {
 	shape(options, ['generation', 'operation', 'target', 'view', 'render']);
 	if (
-		plan.protocol !== 3 &&
+		![3, 4].includes(plan.protocol) &&
 		options.operation?.descriptor?.kind === 'box-blur-v1'
 	)
 		throw fail(
 			'CapabilityUnsupported',
 			'Box preview requires source protocol3',
+		);
+	if (
+		plan.protocol !== 4 &&
+		options.operation?.descriptor?.kind === 'levels-rgb-v1'
+	)
+		throw fail(
+			'CapabilityUnsupported',
+			'Levels preview requires source protocol4',
 		);
 	view(options.view, plan);
 	if (

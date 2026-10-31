@@ -560,5 +560,7 @@ fn parameter_channel_refuses_mask_mutations_without_consuming_base() {
 #[path = "tests/point_profiles.rs"]
 mod point_profiles;
 
+#[path = "tests/catalog.rs"]
+mod catalog;
 #[path = "tests/spatial.rs"]
 mod spatial;

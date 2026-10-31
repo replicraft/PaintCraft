@@ -61,8 +61,9 @@ struct Quote {
     other: u64,
     peak: u64,
     tiles: u64,
+    retained: u64,
 }
-fn quote_tile(doc: &Document, tile: Rect, resolve: u64) -> Result<Quote> {
+fn quote_tile(doc: &Document, tile: Rect, resolve: u64, catalog: bool) -> Result<Quote> {
     let mut result = Quote {
         spatial: 0,
         other: (tile.area() as u64)
@@ -70,6 +71,7 @@ fn quote_tile(doc: &Document, tile: Rect, resolve: u64) -> Result<Quote> {
             .ok_or_else(|| resource("Native tile work overflows"))?,
         peak: 0,
         tiles: 1,
+        retained: 0,
     };
     for layer in doc
         .layers_in_order()
@@ -87,13 +89,23 @@ fn quote_tile(doc: &Document, tile: Rect, resolve: u64) -> Result<Quote> {
             .other
             .checked_add(clipped.area() as u64)
             .ok_or_else(|| resource("Composite work overflows"))?;
-        let target = if paintcraft_render::spatial::active(layer) {
+        let spatial = paintcraft_render::spatial::active(layer);
+        // Source4 prices both the uniform proof and possible dense fallback.
+        // Spatial workspaces evaluate each stage once; source3 stays unchanged.
+        let layer_work = if catalog && !spatial {
+            plan.work
+                .checked_mul(2)
+                .ok_or_else(|| resource("Point proof work overflows"))?
+        } else {
+            plan.work
+        };
+        let target = if spatial {
             &mut result.spatial
         } else {
             &mut result.other
         };
         *target = target
-            .checked_add(plan.work)
+            .checked_add(layer_work)
             .ok_or_else(|| resource("Layer work overflows"))?;
     }
     if result
@@ -122,9 +134,10 @@ fn quote(doc: &Document, request: DisplayRequest, profile: SpatialProfile) -> Re
         other: 0,
         peak: 0,
         tiles: 0,
+        retained: 0,
     };
     each_tile(request, |tile, resolve| {
-        let next = quote_tile(doc, tile, resolve)?;
+        let next = quote_tile(doc, tile, resolve, profile.catalog_count.is_some())?;
         total.peak = total.peak.max(next.peak);
         total.spatial = total
             .spatial
@@ -148,6 +161,25 @@ fn quote(doc: &Document, request: DisplayRequest, profile: SpatialProfile) -> Re
         }
         Ok(())
     })?;
+    let prepared = paintcraft_render::prepared::quote_document_levels(doc, &|| Ok(()))?;
+    total.spatial = total
+        .spatial
+        .checked_add(prepared.compile_work)
+        .ok_or_else(|| resource("Prepared filter work overflows"))?;
+    total.peak = total
+        .peak
+        .checked_add(prepared.retained_bytes)
+        .ok_or_else(|| resource("Prepared filter workspace overflows"))?
+        .max(prepared.preparation_peak_bytes);
+    total.retained = prepared.retained_bytes;
+    if total.peak > profile.bytes
+        || total
+            .other
+            .checked_add(total.spatial)
+            .is_none_or(|work| work > profile.work)
+    {
+        return Err(resource("Prepared filter frame exceeds its profile"));
+    }
     Ok(total)
 }
 #[derive(Debug)]
@@ -157,6 +189,7 @@ pub(super) struct NativeFrame {
     admission: WorkspaceAdmission,
     other_used: u64,
     other_limit: u64,
+    catalog: bool,
     #[cfg(test)]
     pub tiles: u64,
 }
@@ -179,6 +212,20 @@ impl NativeFrame {
         if !render {
             return Ok(None);
         }
+        let admission =
+            paintcraft_render::prepared::prepare_document_levels(doc, admission, &|| Ok(()))?;
+        let retained = admission
+            .prepared_levels()
+            .map_or(0, |job| job.retained_bytes());
+        if quote
+            .peak
+            .checked_add(retained.saturating_sub(quote.retained))
+            .is_none_or(|peak| peak > profile.bytes)
+        {
+            return Err(resource(
+                "Prepared filter actual capacity exceeds frame profile",
+            ));
+        }
         let mut sums = Vec::new();
         sums.try_reserve_exact(1024)
             .map_err(|_| resource("Display accumulator allocation"))?;
@@ -189,6 +236,7 @@ impl NativeFrame {
             admission,
             other_used: 0,
             other_limit: quote.other,
+            catalog: profile.catalog_count.is_some(),
             #[cfg(test)]
             tiles: quote.tiles,
         }))
@@ -215,7 +263,7 @@ impl NativeFrame {
         } else {
             0
         };
-        let other = quote_tile(doc, tile, resolve)?.other;
+        let other = quote_tile(doc, tile, resolve, self.catalog)?.other;
         self.other_used = self
             .other_used
             .checked_add(other)

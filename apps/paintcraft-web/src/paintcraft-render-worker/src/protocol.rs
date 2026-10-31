@@ -111,6 +111,9 @@ impl Source {
         if value.get("protocol").is_some() {
             names.extend(["protocol", "spatialCount", "workspaceBytes", "workLimit"]);
         }
+        if value.get("protocol").and_then(Value::as_i64) == Some(4) {
+            names.push("catalogCount");
+        }
         object(&value, &names)?;
         let owner = field(&value, "owner")?;
         object(owner, &["session", "state", "epoch", "frontend"])?;

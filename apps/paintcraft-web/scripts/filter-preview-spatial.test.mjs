@@ -85,7 +85,7 @@ test('spatial profile admits zero stored source for AddBox but binds every works
 	assert.throws(() => validateBinding(spatial, legacy));
 	assert.throws(() => validateBinding(legacy, spatial));
 });
-test('spatial source rejects unknown profiles, partial facts and excessive bounded declarations', () => {
+test('spatial source rejects unknown or incomplete profiles and excessive bounded declarations', () => {
 	for (const protocol of [1, 2, 4, '3'])
 		assert.throws(() => validatePlan({ ...spatial, protocol }));
 	for (const key of ['spatialCount', 'workspaceBytes', 'workLimit']) {
@@ -103,4 +103,43 @@ test('spatial source rejects unknown profiles, partial facts and excessive bound
 			() => validatePlan({ ...spatial, [key]: value }),
 			(e) => e.code === 'ResourceLimit',
 		);
+});
+
+test('catalog source4 is explicit, authenticates stored intent and keeps legacy requests closed', () => {
+	const catalog = { ...spatial, protocol: 4, catalogCount: 0 };
+	const levels = {
+		...request,
+		operation: {
+			op: 'filter.add',
+			descriptor: {
+				kind: 'levels-rgb-v1',
+				input_black: 0,
+				input_white: 255,
+				gamma_hundredths: 999,
+				output_black: 255,
+				output_white: 0,
+			},
+		},
+	};
+	validatePlan(catalog);
+	validateBinding(catalog, catalog);
+	validateRequest(levels, catalog);
+	validateRequest(request, catalog);
+	for (const old of [legacy, spatial]) {
+		assert.throws(
+			() => validateRequest(levels, old),
+			(e) => e.code === 'CapabilityUnsupported',
+		);
+		assert.throws(() => validateBinding(catalog, old));
+		assert.throws(() => validateBinding(old, catalog));
+		assert.throws(() => validatePlan({ ...old, catalogCount: 0 }));
+	}
+	assert.throws(() =>
+		validateBinding({ ...catalog, catalogCount: 1 }, catalog),
+	);
+	assert.throws(() => validatePlan({ ...catalog, catalogCount: -1 }));
+	assert.throws(
+		() => validatePlan({ ...catalog, catalogCount: 257 }),
+		(e) => e.code === 'ResourceLimit',
+	);
 });
