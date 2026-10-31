@@ -564,3 +564,6 @@ mod point_profiles;
 mod catalog;
 #[path = "tests/spatial.rs"]
 mod spatial;
+
+#[path = "tests/programs.rs"]
+mod programs;

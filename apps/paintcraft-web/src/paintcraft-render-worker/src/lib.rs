@@ -1,6 +1,8 @@
 //! Persistent private render service. No Session or History is constructed.
 //! Staging and each output patch are synchronous; cancellation is acknowledged
 //! between patches. Large sparse reduction may delay one patch (not a time cap).
+mod generic_frame;
+mod programs;
 pub mod protocol;
 mod spatial;
 #[cfg(target_arch = "wasm32")]
@@ -30,6 +32,7 @@ struct Frame {
     column: u32,
     row: u32,
     spatial: Option<spatial::NativeFrame>,
+    programs: Option<generic_frame::GenericFrame>,
 }
 #[derive(Debug)]
 pub struct Service {
@@ -41,6 +44,7 @@ pub struct Service {
     generation: Option<u64>,
     _lease: BudgetLease,
     workspace: Option<BudgetScope>,
+    programs: Option<programs::State>,
 }
 impl Service {
     pub fn open(bytes: &[u8], control: &str) -> Result<Self> {
@@ -212,12 +216,25 @@ impl Service {
             generation: None,
             _lease: lease,
             workspace,
+            programs: None,
         })
     }
+    pub fn open_programs(bytes: &[u8], control: &str) -> Result<Self> {
+        programs::open(bytes, control, &|| Ok(()))
+    }
+    pub fn capabilities(control: &str) -> Result<Value> {
+        protocol::programs::hello(control)
+    }
     pub fn context(&self) -> Value {
+        if self.programs.is_some() {
+            return programs::binding(self);
+        }
         self.source.value.clone()
     }
     pub fn prepare(&mut self, control: &str) -> Result<Value> {
+        if self.programs.is_some() {
+            return programs::prepare(self, control);
+        }
         let value = parse(control)?;
         object(
             &value,
@@ -383,6 +400,7 @@ impl Service {
                 column: 0,
                 row: 0,
                 spatial: native,
+                programs: None,
             });
         }
         Ok(binding)
@@ -393,6 +411,12 @@ impl Service {
             .frame
             .as_mut()
             .ok_or_else(|| bad("No filter frame active"))?;
+        if let Some(mut native) = f.programs.take() {
+            let doc = self.candidate.as_ref().unwrap_or(&self.base);
+            let result = native.step(doc, f);
+            f.programs = Some(native);
+            return result;
+        }
         if let Some(mut native) = f.spatial.take() {
             let doc = self.candidate.as_ref().unwrap_or(&self.base);
             let result = native.step(doc, f);

@@ -19,6 +19,15 @@ impl RenderWorker {
             service: Service::open(source, control).map_err(error)?,
         })
     }
+    #[wasm_bindgen(js_name = openPrograms)]
+    pub fn open_programs(
+        source: &[u8],
+        control: &str,
+    ) -> std::result::Result<RenderWorker, JsValue> {
+        Ok(Self {
+            service: Service::open_programs(source, control).map_err(error)?,
+        })
+    }
     pub fn prepare(&mut self, control: &str) -> std::result::Result<String, JsValue> {
         self.service
             .prepare(control)
@@ -49,4 +58,15 @@ pub fn application_version() -> String {
 #[wasm_bindgen]
 pub fn linear_memory_ceiling() -> u32 {
     LINEAR_MEMORY_BYTES as u32
+}
+
+#[wasm_bindgen]
+pub fn prepared_protocol_version() -> u32 {
+    5
+}
+#[wasm_bindgen]
+pub fn prepared_capabilities(control: &str) -> std::result::Result<String, JsValue> {
+    Service::capabilities(control)
+        .map(|v| text(&v))
+        .map_err(error)
 }

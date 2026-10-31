@@ -4,6 +4,7 @@ use paintcraft_core::types::{
     json::{self, Value},
 };
 use uuid::Uuid;
+pub mod programs;
 pub mod spatial;
 pub const SOURCE_BYTES_MAX: u64 = 64 << 20;
 pub const LINEAR_MEMORY_BYTES: u64 = 256 << 20;
