@@ -272,3 +272,6 @@ fn protocol4_understated_decode_admission_and_old3_future5_refuse() {
         );
     }
 }
+
+#[path = "browser_mask_export/version_guards.rs"]
+mod version_guards;

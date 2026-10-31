@@ -9,10 +9,17 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
     let result = (|| {
         let source = &bytes[REQUEST_HEADER..];
         request.check_source(source)?;
-        if pcnd::probe(source)?.container_version == 5 {
+        let container_version = pcnd::probe(source)?.container_version;
+        if container_version == 5 {
             return Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
                 "Export Worker4 does not admit PCND5 spatial source",
+            ));
+        }
+        if !matches!(container_version, 1..=4) {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Export Worker4 source profile admits only PCND1 through PCND4",
             ));
         }
         // Price retained profile/control payload before the reader can allocate.
