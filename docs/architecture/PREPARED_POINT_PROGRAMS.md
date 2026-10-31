@@ -41,6 +41,28 @@ owner retains only its table charge. Its last owner releases those bytes.
 The program may be reused in a new explicitly admitted job without recompilation.
 It is derived data; owning it grants no document-adoption, bake or privacy consent.
 
+## Frozen job reuse
+
+`PreparedLevelsJob::new` eagerly prepares each distinct complete typed policy
+before returning an immutable job. `quote_levels_job` reports unique programs,
+pointer-index bytes, ordered peak payload and total compile allowance. Both
+input and unique counts are bounded to 256 for this initial host API; this is
+not a document-model limit. Equality includes all five parameters, even when
+different policies produce identical constant tables.
+
+The index's requested capacity is admitted before allocation and actual capacity
+is reconciled before compilation. Each unique table retains its existing
+256-byte account in the same supplied scope and cumulative work counter.
+Allocator and Arc bookkeeping retain the exclusions above. Bounded index
+comparisons are separate from the LUT compile-work metric.
+
+Lookup only borrows an existing program; it cannot compile, allocate or spend
+work. Callers may share an Arc of the complete job across tile workers. No
+admission factory or unused reservation capacity is retained by the job.
+Cancellation, failure or unwind during construction returns no partial job;
+successful ownership releases index and tables with its last owner. Separate
+jobs prepare independently, with no implicit process cache.
+
 ## Row execution
 
 `evaluate_row` borrows immutable source and optional byte coverage, plus disjoint
@@ -81,10 +103,19 @@ source and command receipt is
 `docs/validation/levels-optimization/refactor/functional-freeze.json`; see
 [backend selection](LEVELS_BACKEND_SELECTION.md) for actual-artifact measurements.
 
-Before exposing the filter, the frozen job's point program must prepare once per
-distinct complete parameter/profile set and retain that owner across its tiles.
-The key includes all five validated parameters and the numerical profile, not
-only resulting table bytes. This API intentionally supplies no implicit cache.
+The subsequent eager-job checkpoint passes all 17 prepared tests, including
+eight new controls for complete-key deduplication, pure lookup, aggregate denial,
+cancellation at every check, panic cleanup, last-owner release, reserved-capacity
+retirement and mixed spatial work. Native all-target GPU compilation Clippy and
+actual Web-consumer Wasm Clippy pass with warnings denied. These are compilation
+and native unit checks, not new GPU, browser UI or frontend execution evidence.
+The receipt is `docs/validation/levels-planning/job-final-freeze.json`, SHA-256
+`6d7d26f9b3f082a2fd7fa3c1bbb54953c8aebc627b43cffc528feee19ac14c81`.
+
+Before exposing the filter, hosts must construct the eager job from their frozen
+parameter inventory and retain it across all tiles. The standalone job API does
+not itself connect an existing frontend or renderer invocation. It intentionally
+supplies no implicit cache.
 Any later cross-job cache needs bounded ownership, eviction, cancellation and
 retained-charge tests. Then connect document/history semantics, the catalog
 boundary, host job admission and all native/browser/CLI appearance consumers.

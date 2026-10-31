@@ -161,24 +161,27 @@ they do not register the editable filter.
 ## Prepared execution and remaining integration
 
 Lookup application is cheap; repeated construction per pixel or per rendered
-tile is not an acceptable integration. A future prepared point program must
-construct the table once per admitted parameter set, retain its resource charge
-for its lifetime, and reuse it across a frozen render job. Any cross-job cache
+tile is not an acceptable integration. The standalone prepared owner and eager
+job construct each unique admitted parameter set once and retain its resource
+charge for its lifetime. Hosts still need to connect that job to their frozen
+render inputs and tile workers. Any cross-job cache
 needs explicit runtime ownership, eviction, complete parameter/profile keys and
 tests that release charges. A derived table is not authoritative document state.
 
-The remaining gates are:
+Integration gates and current status:
 
-1. Validated parameters and an independent reproducible integer oracle.
-2. A bounded exact builder, full-domain boundary controls, cancellation and
+1. Qualified: validated parameters and an independent reproducible integer oracle.
+2. Qualified: bounded exact builders, full-domain boundary controls, cancellation and
    output preservation, native/Wasm checks and quantified construction cost.
 3. Prepared point execution with admitted table lifetime and row application.
    The [standalone ownership foundation](PREPARED_POINT_PROGRAMS.md) is qualified;
-   frozen-job program construction and integration into existing consumers remain.
+   eager frozen-job reuse is implemented separately. Existing consumers still
+   need to collect and bind that job's complete parameter inventory.
 4. A catalog-capable persistence and automation boundary. PCND3/4 stay closed to
    tags 1 to 6; PCND5 retains its stored-Box invariant. Levels cannot silently
    enter either grammar. Future algorithm IDs, parameter framing and required
-   capabilities need independent specimens and early unknown-profile refusal.
+   capabilities follow the [planned catalog contract](PCND_FILTER_CATALOG.md);
+   its reader, writer and automation integration remain unimplemented.
 5. Document/history/commands, all appearance consumers and explicit flat-copy
    consent, including default/disabled intentions and final-document downgrades.
 6. Real Studio controls, private Apply/Cancel, Undo/Redo, save/reopen, CLI/MCP,

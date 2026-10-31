@@ -73,8 +73,9 @@ was retained. Historical prototype sources, binaries and receipts stay immutable
 
 ## Remaining work
 
-This completes a prepared-table component, not the editable filter. Frozen-job
-program reuse, catalog persistence, typed commands/history/inspection and all
+This completes a prepared-table component, not the editable filter. The later
+[eager job API](PREPARED_POINT_PROGRAMS.md#frozen-job-reuse) supplies bounded reuse;
+host wiring, catalog persistence, typed commands/history/inspection and all
 native/browser/CLI appearance consumers still need integration. Existing old
 worker profiles stay explicitly closed. Actual UI, save/reopen, bake consent and
 CPU/Metal display parity must be qualified before reporting an eighth filter.
