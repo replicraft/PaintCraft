@@ -1,10 +1,12 @@
 //! Versioned encoded-RGB filter descriptors. These do not change composition policy.
 use super::{Error, ErrorCode, Result};
 mod coverage;
+mod levels_params;
 mod point_params;
 mod spatial_params;
 mod value;
 pub use coverage::{A8Band, A8Input, A8InputBuilder, A8Run, MaskInputLimits};
+pub use levels_params::LevelsRgbV1;
 pub use point_params::{BlackWhiteV1, PosterizeRgbV1, ThresholdLumaV1};
 pub use spatial_params::BoxBlurV1;
 
