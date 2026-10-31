@@ -317,6 +317,7 @@ impl LossOptions {
 }
 pub mod apply;
 pub mod capabilities;
+mod catalog_schemas;
 mod dds_export;
 mod dds_options;
 pub mod export_dcx;
@@ -340,7 +341,6 @@ pub mod paste_image;
 pub mod pcx_options;
 pub mod render;
 pub mod schema;
-mod catalog_schemas;
 pub mod svg_options;
 
 pub mod mcp;
