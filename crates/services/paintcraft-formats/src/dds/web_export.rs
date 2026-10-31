@@ -7,10 +7,12 @@ use paintcraft_document::Document;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 mod catalog;
+mod programs;
 mod request;
 mod response;
 pub mod v5;
 pub mod v6;
+pub mod v7;
 mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
@@ -68,6 +70,7 @@ pub struct SourcePlan {
     source: SnapshotPlan,
     spatial: export::SourceSpatialContext,
     catalog: Option<export::SourceCatalogContext>,
+    programs: Option<export::SourceProgramContext>,
     pub(crate) settings: [u8; 8],
 }
 impl SourcePlan {
@@ -118,7 +121,12 @@ impl SourcePlan {
             settings,
             spatial: export::SourceSpatialContext::default(),
             catalog: None,
+            programs: None,
         };
+        if export::prepared_capabilities::requires_generic(doc, check)? {
+            value.capture_programs(doc, check)?;
+            return Ok(value);
+        }
         if doc
             .layers
             .values()
@@ -137,7 +145,9 @@ impl SourcePlan {
         Ok(value)
     }
     pub fn protocol_version(&self) -> u16 {
-        if self.catalog.is_some() {
+        if self.programs.is_some() {
+            7
+        } else if self.catalog.is_some() {
             6
         } else if self.spatial.has_spatial() {
             5
@@ -147,6 +157,9 @@ impl SourcePlan {
     }
     /// Finalize private ABI-local resource facts only after frozen PCND bytes exist.
     pub fn spatial_context(&self, source_len: usize) -> Result<[u8; 64]> {
+        if self.programs.is_some() {
+            return Ok(self.finalized_program_region(source_len)?.encode_programs());
+        }
         if self.catalog.is_some() {
             return Ok(self.finalized_catalog_region(source_len)?.encode_catalog());
         }
