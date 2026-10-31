@@ -203,3 +203,11 @@ ignored. These are not a new full all-targets total. Historical six-point counts
 retain their original scope. Calibration and failed attempts remain preserved.
 No full 132-catalog, GPU blur shader, performance, external-application or
 all-target compatibility claim follows from these local and browser controls.
+
+[CI run 41153720980](https://github.com/replicraft/PaintCraft/actions/runs/41153720980)
+passes all seven jobs for `326f7f851955b00bdce8b962246debec32df8461`, including
+the production web build, Ubuntu/macOS workspace checks, three native filesystem
+targets and X11 clipboard checks. Its structured final receipt is retained under
+`docs/validation/box-production/ci-41153720980-final.json`. CI does not replace
+the separately scoped browser/Metal evidence or physical-device and
+original-application qualification.
