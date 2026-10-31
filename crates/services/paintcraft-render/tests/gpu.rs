@@ -695,3 +695,6 @@ mod exposure;
 
 #[path = "gpu/curves.rs"]
 mod curves;
+
+#[path = "gpu/vibrance.rs"]
+mod vibrance;
