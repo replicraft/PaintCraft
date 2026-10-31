@@ -118,12 +118,14 @@ impl WebApp {
         let source = self.editor.session.snapshot();
         let selection = self.editor.session.selection();
         let result = if visible {
-            paintcraft_render::clipboard::capture_visible(
-                &source,
-                &selection,
-                &self.clipboard.budget,
-                &|| Ok(()),
-            )
+            crate::spatial_host::with_document(&source, || {
+                paintcraft_render::clipboard::capture_visible(
+                    &source,
+                    &selection,
+                    &self.clipboard.budget,
+                    &|| Ok(()),
+                )
+            })
             .map(|image| {
                 image.map(|(image, origin)| Capture {
                     image,

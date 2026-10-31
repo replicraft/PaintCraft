@@ -81,11 +81,13 @@ pub(super) fn encode_with_options(document: &Document, options: ExportOptions) -
         if format == image::ImageFormat::Pcx {
             options.pcx_mode = pcx_mode(pcx_encoding);
         }
-        return Ok(paintcraft_formats::export::export_flat_options(
-            document,
-            options,
-            &paintcraft_formats::export::KNOWN_LOSSES.map(str::to_owned),
-        )?
+        return Ok(crate::spatial_host::with_document(document, || {
+            paintcraft_formats::export::export_flat_options(
+                document,
+                options,
+                &paintcraft_formats::export::KNOWN_LOSSES.map(str::to_owned),
+            )
+        })?
         .bytes);
     }
     // Project saves always preserve attachments. Even an empty project must not

@@ -20,6 +20,7 @@ mod pen_input;
 mod preferences;
 mod printing;
 mod selection_ui;
+mod spatial_host;
 mod text_ui;
 mod touch_navigation;
 pub use app::WebApp;

@@ -420,13 +420,21 @@ impl WebApp {
             self.canvas_preview_document()
         })
         .and_then(|preview| {
-            paintcraft_render::render_flat(
-                preview.as_ref().unwrap_or(self.editor.session.document()),
-            )
+            let doc = preview.as_ref().unwrap_or(self.editor.session.document());
+            crate::spatial_host::with_document(doc, || paintcraft_render::render_flat(doc))
         });
         let pixels = match result {
             Ok(pixels) => pixels,
             Err(error) => {
+                if error.code == paintcraft_core::types::ErrorCode::ResourceLimit {
+                    self.message = paintcraft_ui::i18n::tr_status(
+                        ctx,
+                        &format!("Preview unavailable: {error}"),
+                    );
+                    self.canvas.texture = None;
+                    self.canvas.key = None;
+                    return;
+                }
                 // Never leave a failed speculative image presented as committed.
                 self.editor.cancel_floating();
                 self.editor.tools.cancel_gesture();
@@ -438,7 +446,9 @@ impl WebApp {
                 } else {
                     format!("Preview unavailable: {error}")
                 };
-                match paintcraft_render::render_flat(self.editor.session.document()) {
+                match crate::spatial_host::with_document(self.editor.session.document(), || {
+                    paintcraft_render::render_flat(self.editor.session.document())
+                }) {
                     Ok(pixels) => pixels,
                     Err(error) => {
                         self.canvas.texture = None;

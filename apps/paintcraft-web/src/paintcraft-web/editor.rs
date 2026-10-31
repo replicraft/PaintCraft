@@ -224,13 +224,15 @@ impl Editor {
                             )?)
                         }
                     };
-                let color = paintcraft_render::sampling::sample_color(
-                    self.session.document(),
-                    layer,
-                    pick.at,
-                    pick.size,
-                    || Ok(()),
-                )?;
+                let color = crate::spatial_host::with_document(self.session.document(), || {
+                    paintcraft_render::sampling::sample_color(
+                        self.session.document(),
+                        layer,
+                        pick.at,
+                        pick.size,
+                        || Ok(()),
+                    )
+                })?;
                 if !self.resource_shape_owner(pick.return_resource_shape) {
                     return Err(Error::new(
                         ErrorCode::ConflictStaleBase,
@@ -318,9 +320,11 @@ impl Editor {
             }]),
             Action::FlattenImage => {
                 self.tools.cancel_gesture();
-                let receipt = self
-                    .session
-                    .flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))?;
+                let receipt = self.session.flatten(|doc, check| {
+                    crate::spatial_host::with_document(doc, || {
+                        paintcraft_render::render_cancellable(doc, check)
+                    })
+                })?;
                 self.target = receipt.aliases.get("flattened").copied().or(self.target);
                 self.retarget();
                 Ok(())

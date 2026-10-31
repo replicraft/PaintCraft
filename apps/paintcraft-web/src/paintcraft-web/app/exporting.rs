@@ -64,7 +64,7 @@ impl WebApp {
                     preview_ready=self.pcx_preview.show(ui,key,|| {
                         if !preedit {return Err("text composition pending".into());}
                         let doc=snapshot;
-                        let rgba=paintcraft_render::render_flat(&doc).map_err(|error|error.to_string())?;
+                        let rgba=crate::spatial_host::with_document(&doc, || paintcraft_render::render_flat(&doc)).map_err(|error|error.to_string())?;
                         let prepared=paintcraft_formats::pcx::prepare_rgba(doc.canvas.0,doc.canvas.1,&rgba,crate::files::pcx_mode(encoding),&||Ok(())).map_err(|error|error.to_string())?;
                         let preview=prepared.preview(192,&||Ok(())).map_err(|error|error.to_string())?;
                         Ok(paintcraft_ui::pcx_export::Preview{width:preview.width,height:preview.height,rgba:preview.rgba,quantized:prepared.is_quantized()})

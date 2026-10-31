@@ -22,15 +22,16 @@ pub(crate) fn capture(document: &Document) -> Result<Vec<u8>> {
             "Browser canvas limit is 4 megapixels",
         ));
     }
-    paintcraft_render::render_flat(document).and_then(|rgba| {
-        encode(
-            ImageFormat::Png,
-            document.canvas.0,
-            document.canvas.1,
-            &rgba,
-            90,
-        )
-    })
+    crate::spatial_host::with_document(document, || paintcraft_render::render_flat(document))
+        .and_then(|rgba| {
+            encode(
+                ImageFormat::Png,
+                document.canvas.0,
+                document.canvas.1,
+                &rgba,
+                90,
+            )
+        })
 }
 
 impl Drop for State {
