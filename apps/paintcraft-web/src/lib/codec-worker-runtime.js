@@ -1,5 +1,7 @@
 import * as ddsSpatial from './dds-spatial-worker-protocol.js';
 import * as mspSpatial from './msp-spatial-worker-protocol.js';
+import * as ddsCatalog from './dds-catalog-worker-protocol.js';
+import * as mspCatalog from './msp-catalog-worker-protocol.js';
 // One isolated job per Worker. Never imported by the editor's main Wasm module.
 import initialize, {
 	application_version,
@@ -7,12 +9,16 @@ import initialize, {
 	dds_export_request,
 	dds_spatial_export_protocol_version,
 	dds_spatial_export_request,
+	dds_catalog_export_protocol_version,
+	dds_catalog_export_request,
 	decode_request,
 	linear_memory_ceiling,
 	msp_export_protocol_version,
 	msp_export_request,
 	msp_spatial_export_protocol_version,
 	msp_spatial_export_request,
+	msp_catalog_export_protocol_version,
+	msp_catalog_export_request,
 	protocol_version,
 	tiff_page_protocol_version,
 	tiff_page_request,
@@ -43,6 +49,22 @@ import {
 } from './tiff-page-worker-protocol.js';
 
 const operations = Object.freeze({
+	'dds-catalog-export': Object.freeze({
+		header: ddsCatalog.DDS_REQUEST_HEADER,
+		input: ddsCatalog.DDS_SOURCE_MAX,
+		output: ddsCatalog.DDS_OUTPUT_MAX,
+		version: dds_catalog_export_protocol_version,
+		expectedVersion: ddsCatalog.DDS_PROTOCOL_VERSION,
+		execute: dds_catalog_export_request,
+	}),
+	'msp-catalog-export': Object.freeze({
+		header: mspCatalog.MSP_REQUEST_HEADER,
+		input: mspCatalog.MSP_SOURCE_MAX,
+		output: mspCatalog.MSP_OUTPUT_MAX,
+		version: msp_catalog_export_protocol_version,
+		expectedVersion: mspCatalog.MSP_PROTOCOL_VERSION,
+		execute: msp_catalog_export_request,
+	}),
 	'tiff-pages': Object.freeze({
 		header: TIFF_REQUEST_HEADER,
 		input: TIFF_SOURCE_MAX,

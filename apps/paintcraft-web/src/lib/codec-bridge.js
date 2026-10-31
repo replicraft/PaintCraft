@@ -1,5 +1,7 @@
 import { DDS_PROTOCOL_VERSION as DDS_SPATIAL_PROTOCOL_VERSION } from './dds-spatial-worker-protocol.js';
 import { MSP_PROTOCOL_VERSION as MSP_SPATIAL_PROTOCOL_VERSION } from './msp-spatial-worker-protocol.js';
+import { DDS_PROTOCOL_VERSION as DDS_CATALOG_PROTOCOL_VERSION } from './dds-catalog-worker-protocol.js';
+import { MSP_PROTOCOL_VERSION as MSP_CATALOG_PROTOCOL_VERSION } from './msp-catalog-worker-protocol.js';
 // Vite owns the actual modules/Worker/Wasm. wasm-bindgen receives this object,
 // avoiding copied snippets with missing relative module dependencies.
 import {
@@ -157,11 +159,13 @@ export function createCodecService(applicationVersion) {
 		},
 		ddsExportProtocolVersion: () => DDS_PROTOCOL_VERSION,
 		ddsSpatialExportProtocolVersion: () => DDS_SPATIAL_PROTOCOL_VERSION,
+		ddsCatalogExportProtocolVersion: () => DDS_CATALOG_PROTOCOL_VERSION,
 		beginDdsExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitDdsInWorker);
 		},
 		mspExportProtocolVersion: () => MSP_PROTOCOL_VERSION,
 		mspSpatialExportProtocolVersion: () => MSP_SPATIAL_PROTOCOL_VERSION,
+		mspCatalogExportProtocolVersion: () => MSP_CATALOG_PROTOCOL_VERSION,
 		beginMspExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitMspInWorker);
 		},

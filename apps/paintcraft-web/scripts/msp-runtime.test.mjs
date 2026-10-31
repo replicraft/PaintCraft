@@ -1,5 +1,7 @@
 import * as ddsSpatial from '../src/lib/dds-spatial-worker-protocol.js';
 import * as mspSpatial from '../src/lib/msp-spatial-worker-protocol.js';
+import * as ddsCatalog from '../src/lib/dds-catalog-worker-protocol.js';
+import * as mspCatalog from '../src/lib/msp-catalog-worker-protocol.js';
 // Execute the actual runtime source with only its Wasm imports substituted.
 // This exercises dispatch/copy caps, not real Wasm or browser qualification.
 
@@ -54,6 +56,8 @@ function runtime(extra = {}) {
 		self,
 		ddsSpatial,
 		mspSpatial,
+		ddsCatalog,
+		mspCatalog,
 		Uint8Array,
 		ArrayBuffer,
 		RangeError,
@@ -68,6 +72,10 @@ function runtime(extra = {}) {
 		msp_spatial_export_protocol_version: () => 5,
 		dds_spatial_export_request: execute('dds-spatial-export'),
 		msp_spatial_export_request: execute('msp-spatial-export'),
+		dds_catalog_export_protocol_version: () => 6,
+		msp_catalog_export_protocol_version: () => 6,
+		dds_catalog_export_request: execute('dds-catalog-export'),
+		msp_catalog_export_request: execute('msp-catalog-export'),
 		msp_export_protocol_version: () => MSP_PROTOCOL_VERSION,
 		tiff_page_protocol_version: () => 2,
 		decode_request: execute('decode'),
@@ -206,5 +214,33 @@ test('spatial5 has independent exact version getters and never falls back to4', 
 		});
 		assert.equal(r.calls.length, 0);
 		assert.equal(r.messages[0].value.kind, 'failure');
+	}
+});
+
+test('catalog6 selects only its exact runtime and refuses older worker getters', async () => {
+	for (const kind of ['dds', 'msp']) {
+		const refused = runtime({
+			[`${kind}_catalog_export_protocol_version`]: () => 5,
+		});
+		await refused.self.onmessage({
+			data: {
+				kind: `${kind}-catalog-export`,
+				bytes: new ArrayBuffer(385),
+			},
+		});
+		assert.equal(refused.calls.length, 0);
+		assert.equal(refused.messages[0].value.kind, 'failure');
+		const accepted = runtime();
+		await accepted.self.onmessage({
+			data: {
+				kind: `${kind}-catalog-export`,
+				bytes: new ArrayBuffer(385),
+			},
+		});
+		assert.deepEqual(
+			accepted.calls.map((call) => call.kind),
+			[`${kind}-catalog-export`],
+		);
+		assert.equal(accepted.messages[0].value.kind, 'result');
 	}
 });

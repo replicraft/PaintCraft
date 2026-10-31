@@ -1,5 +1,7 @@
 import * as ddsSpatial from './dds-spatial-worker-protocol.js';
 import * as mspSpatial from './msp-spatial-worker-protocol.js';
+import * as ddsCatalog from './dds-catalog-worker-protocol.js';
+import * as mspCatalog from './msp-catalog-worker-protocol.js';
 // Isolated browser service; UI reader admission is qualified separately.
 import {
 	capture,
@@ -108,6 +110,26 @@ const MSP_SPATIAL = Object.freeze({
 	decode: mspSpatial.decodeMspResponse,
 	completed: mspSpatial.isCompletedMspRefusal,
 	finalize: mspSpatial.freezeMspPlan,
+});
+const DDS_CATALOG = Object.freeze({
+	...DDS,
+	kind: 'dds-catalog-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		ddsCatalog.captureDds(source, owner, plan, nonce),
+	encode: ddsCatalog.encodeDdsRequest,
+	decode: ddsCatalog.decodeDdsResponse,
+	completed: ddsCatalog.isCompletedDdsRefusal,
+	finalize: ddsCatalog.freezeDdsPlan,
+});
+const MSP_CATALOG = Object.freeze({
+	...MSP,
+	kind: 'msp-catalog-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		mspCatalog.captureMsp(source, owner, plan, nonce),
+	encode: mspCatalog.encodeMspRequest,
+	decode: mspCatalog.decodeMspResponse,
+	completed: mspCatalog.isCompletedMspRefusal,
+	finalize: mspCatalog.freezeMspPlan,
 });
 const TIFF = Object.freeze({
 	kind: 'tiff-pages',
@@ -449,20 +471,28 @@ export function tiffFileInWorker({ file, plan, ...options }) {
 export function admitDdsInWorker(options) {
 	return admitExportInWorker(
 		options,
-		options.plan?.protocolVersion === 5 ? DDS_SPATIAL : DDS,
+		options.plan?.protocolVersion === 6
+			? DDS_CATALOG
+			: options.plan?.protocolVersion === 5
+				? DDS_SPATIAL
+				: DDS,
 		freezeDdsPlan,
 	);
 }
 export function admitMspInWorker(options) {
 	return admitExportInWorker(
 		options,
-		options.plan?.protocolVersion === 5 ? MSP_SPATIAL : MSP,
+		options.plan?.protocolVersion === 6
+			? MSP_CATALOG
+			: options.plan?.protocolVersion === 5
+				? MSP_SPATIAL
+				: MSP,
 		freezeMspPlan,
 	);
 }
 function admitExportInWorker(options, operation, freezePlan) {
 	const protocol = options.plan?.protocolVersion ?? 4;
-	if (protocol !== 4 && protocol !== 5)
+	if (![4, 5, 6].includes(protocol))
 		throw refusal('InputSchema', 'Unsupported export protocol version');
 	const plan = freezePlan(options.plan);
 	ownerBytes(options.owner);
