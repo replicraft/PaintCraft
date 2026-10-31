@@ -1,0 +1,117 @@
+use super::*;
+pub(crate) const EDGE: i64 = 64;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TiledQuote {
+    /// Maximum intermediate bytes of one serial tile/layer evaluation.
+    pub bytes: u64,
+    /// Aggregate work for all tiles, including repeated halos.
+    pub work: u64,
+    pub tiles: u64,
+}
+
+fn each(rect: Rect, mut visit: impl FnMut(Rect) -> Result<()>) -> Result<()> {
+    pixels(rect)?;
+    let mut y = rect.y0;
+    while y < rect.y1 {
+        let height = EDGE.min(rect.y1 - y);
+        let mut x = rect.x0;
+        while x < rect.x1 {
+            let width = EDGE.min(rect.x1 - x);
+            visit(
+                Rect::new(x, y, width, height).ok_or_else(|| invalid("Spatial tile overflows"))?,
+            )?;
+            x += width;
+        }
+        y += height;
+    }
+    Ok(())
+}
+
+/// Exact aggregate tile work and conservative serial peak, without allocation.
+pub fn quote_layer(
+    layer: &Layer,
+    local: Rect,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<TiledQuote> {
+    let mut quote = TiledQuote::default();
+    each(local, |tile| {
+        let plan = LayerAppearancePlan::new(layer, tile, check)?;
+        quote.bytes = quote.bytes.max(plan.quote().bytes);
+        quote.work = quote
+            .work
+            .checked_add(plan.quote().work)
+            .ok_or_else(|| limit("Spatial tiled work overflows"))?;
+        quote.tiles = quote
+            .tiles
+            .checked_add(1)
+            .ok_or_else(|| limit("Spatial tile count overflows"))?;
+        Ok(())
+    })?;
+    Ok(quote)
+}
+
+pub(crate) fn visit(
+    layer: &Layer,
+    local: Rect,
+    check: &dyn Fn() -> Result<()>,
+    mut consume: impl FnMut(Rect, &[Rgba]) -> Result<()>,
+) -> Result<()> {
+    let admission = context::current().ok_or_else(|| {
+        Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Spatial rendering requires an explicit shared workspace admission",
+        )
+    })?;
+    let quote = quote_layer(layer, local, check)?;
+    if quote.bytes > admission.bytes_limit || quote.work > admission.work_limit {
+        return Err(limit("Spatial tiled appearance exceeds its request limit"));
+    }
+    each(local, |tile| {
+        check()?;
+        let plan = LayerAppearancePlan::new(layer, tile, check)?;
+        plan.with_pixels(&admission, check, |pixels| consume(tile, pixels))
+    })
+}
+
+pub(crate) fn preflight(
+    doc: &paintcraft_document::Document,
+    region: Rect,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<TiledQuote> {
+    let mut total = TiledQuote::default();
+    for layer in doc
+        .layers_in_order()
+        .filter(|layer| layer.visible && layer.opacity != 0 && active(layer))
+    {
+        check()?;
+        let Some(area) = region.intersect(&layer.extent()) else {
+            continue;
+        };
+        let local = area
+            .translated(-layer.origin.0, -layer.origin.1)
+            .ok_or_else(|| invalid("Spatial source coordinates overflow"))?;
+        let quote = quote_layer(layer, local, check)?;
+        total.bytes = total.bytes.max(quote.bytes);
+        total.work = total
+            .work
+            .checked_add(quote.work)
+            .ok_or_else(|| limit("Spatial request work overflows"))?;
+        total.tiles = total
+            .tiles
+            .checked_add(quote.tiles)
+            .ok_or_else(|| limit("Spatial request tile count overflows"))?;
+    }
+    if total.tiles != 0 {
+        let admission = context::current().ok_or_else(|| {
+            Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Spatial rendering requires an explicit shared workspace admission",
+            )
+        })?;
+        if total.bytes > admission.bytes_limit || total.work > admission.work_limit {
+            return Err(limit("Spatial request exceeds its workspace or work limit"));
+        }
+    }
+    Ok(total)
+}
