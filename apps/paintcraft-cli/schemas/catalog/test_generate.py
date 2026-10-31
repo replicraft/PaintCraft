@@ -89,11 +89,12 @@ class CatalogSchemas(unittest.TestCase):
         for name, expected in ENCODED.items():
             self.assertEqual((HERE / SHA / name).read_bytes(), expected)
 
-    def test_all_nine_complete_descriptors_and_closed_legacy_input(self):
+    def test_all_ten_complete_descriptors_and_closed_legacy_input(self):
         values = [{"kind": "invert-rgb-v1"}, {"kind": "brightness-contrast-v1", "brightness": -100, "contrast": 99},
                   {"kind": "black-white-rgb-v1", "strength": 100}, {"kind": "threshold-luma-v1", "level": 0},
                   {"kind": "posterize-rgb-v1", "levels": 32}, {"kind": "solarize-rgb-v1"},
-                  {"kind": "box-blur-v1", "radius": 32}, LEVELS, {"kind":"exposure-srgb-v1","stops_hundredths":-800}]
+                  {"kind": "box-blur-v1", "radius": 32}, LEVELS, {"kind":"exposure-srgb-v1","stops_hundredths":-800},
+                  {"kind":"curves-rgb-v1","outputs":[0,64,128,192,255]}]
         for descriptor in values:
             self.valid("batch", batch(descriptor))
         old = GEN["legacy"]("batch")
@@ -215,6 +216,57 @@ class CatalogSchemas(unittest.TestCase):
         for kind,value in [("batch",batch()),("result",result()),("inspect",inspection()),("mcp-inspect",inspection(True))]:
             self.valid(kind,value)
             Draft202012Validator(json.loads((old_root / (kind+".schema.json")).read_bytes())).validate(value)
+
+    def test_curves_strict_array_shape_and_old_catalog_bundles_remain_closed(self):
+        old_bundles = [HERE / digest for digest in [
+            "d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6",
+            "cac612d12ffbfd5bd8826fb6fd9e78d727e94f5186626867a58305ac56f20453"]]
+        for folder in old_bundles:
+            self.assertNotEqual(folder.name, SHA)
+            manifest = json.loads((folder / "manifest.json").read_bytes())
+            for row in manifest["schemas"]:
+                self.assertEqual(hashlib.sha256((folder / row["file"]).read_bytes()).hexdigest(), row["sha256"])
+        for outputs in [[0,64,128,192,255], [255,191,127,63,0], [37]*5, [23,9,240,73,201]]:
+            value = batch({"kind":"curves-rgb-v1","outputs":outputs})
+            self.valid("batch", value)
+            for folder in old_bundles:
+                self.assertFalse(Draft202012Validator(json.loads((folder / "batch.schema.json").read_bytes())).is_valid(value))
+        for outputs in [[], [0]*4, [0]*6, None, "identity"]:
+            self.invalid("batch", batch({"kind":"curves-rgb-v1","outputs":outputs}))
+        for index in range(5):
+            for item in [-1,256,None,True,"64",64.5]:
+                outputs = [0,64,128,192,255]; outputs[index] = item
+                self.invalid("batch", batch({"kind":"curves-rgb-v1","outputs":outputs}))
+        for desc in [{"kind":"curves-rgb-v1"}, {"kind":"curves-rgb-v1","outputs":[0]*5,"extra":0}]:
+            self.invalid("batch",batch(desc))
+        def curves_only(value):
+            if isinstance(value, dict):
+                if value.get("kind") == "levels-rgb-v1":
+                    return {"kind":"curves-rgb-v1","outputs":[23,9,240,73,201]}
+                return {key:curves_only(item) for key,item in value.items()}
+            if isinstance(value, list):
+                return [curves_only(item) for item in value]
+            return "curves-rgb-v1" if value == "levels-rgb-v1" else value
+        for flags in itertools.product([False,True], repeat=3):
+            engine = curves_only(result(*flags))
+            values = {"result":engine,
+                      "file-command":{"schema":"paintcraft.file-command/catalog-v1","engine":engine,
+                                      "file":None,"outcome":"success","exit_code":0,"synthetic":True},
+                      "inspect":curves_only(inspection(False,*flags)),
+                      "mcp-inspect":curves_only(inspection(True,*flags))}
+            for kind,value in values.items():
+                self.valid(kind,value)
+                for folder in old_bundles:
+                    self.assertFalse(Draft202012Validator(json.loads((folder / (kind+".schema.json")).read_bytes())).is_valid(value))
+        # Both old bundles continue to accept compatible eight-profile objects.
+        for folder in old_bundles:
+            for kind,value in [("batch",batch()),("result",result()),("inspect",inspection()),("mcp-inspect",inspection(True))]:
+                self.valid(kind,value)
+                Draft202012Validator(json.loads((folder / (kind+".schema.json")).read_bytes())).validate(value)
+        # The frozen nine-profile bundle remains compatible with Exposure.
+        value = batch({"kind":"exposure-srgb-v1","stops_hundredths":-800})
+        self.valid("batch",value)
+        Draft202012Validator(json.loads((old_bundles[1] / "batch.schema.json").read_bytes())).validate(value)
 
     def test_runtime_checks_are_not_falsely_claimed_as_static_schema_guarantees(self):
         # JSON Schema cannot compare two parameter fields or payload inventories.
