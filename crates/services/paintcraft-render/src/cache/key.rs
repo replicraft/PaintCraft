@@ -43,6 +43,16 @@ impl Key {
         let relevant = |layer: &&paintcraft_document::Layer| {
             layer.visible && layer.opacity != 0 && rect.intersect(&layer.extent()).is_some()
         };
+        // Until halo-dependent version keys and dirty patches are qualified,
+        // spatial stacks use the admitted uncached compositor.
+        if doc
+            .layers_in_order()
+            .take(end)
+            .filter(relevant)
+            .any(crate::spatial::active)
+        {
+            return Ok(None);
+        }
         let count = doc.layers_in_order().take(end).filter(relevant).count();
         if count > budget / size_of::<LayerKey>() {
             return Ok(None);

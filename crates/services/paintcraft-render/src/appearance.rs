@@ -2,19 +2,21 @@
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use paintcraft_document::{FilterInstance, Layer};
 
-fn mix(filter: &FilterInstance, local: (i64, i64), incoming: Rgba) -> Rgba {
+fn mix(filter: &FilterInstance, local: (i64, i64), incoming: Rgba) -> Result<Rgba> {
     let coverage = filter
         .mask()
         .filter(|mask| mask.enabled())
         .map_or(255, |mask| mask.coverage().coverage(local.0, local.1));
     if coverage == 0 {
-        return incoming;
+        return Ok(incoming);
     }
-    let candidate = paintcraft_effects::evaluate_pixel(&[filter.descriptor()], incoming);
+    let candidate = paintcraft_effects::evaluate_pixel(&[filter.descriptor()], incoming)?;
     if coverage == 255 {
-        candidate
+        Ok(candidate)
     } else {
-        paintcraft_effects::mix_point_coverage(incoming, candidate, coverage)
+        Ok(paintcraft_effects::mix_point_coverage(
+            incoming, candidate, coverage,
+        ))
     }
 }
 
@@ -26,9 +28,12 @@ pub(crate) fn uniform(
     mut pixel: Rgba,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<Rgba>> {
+    if crate::spatial::active(layer) {
+        return Ok(None);
+    }
     for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
         check()?;
-        let candidate = paintcraft_effects::evaluate_pixel(&[filter.descriptor()], pixel);
+        let candidate = paintcraft_effects::evaluate_pixel(&[filter.descriptor()], pixel)?;
         if candidate == pixel {
             continue;
         }
@@ -64,6 +69,12 @@ pub(crate) fn pixels(
     bytes: &mut [u8],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
+    if crate::spatial::active(layer) {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Spatial appearances require admitted regional evaluation",
+        ));
+    }
     let count = i64::try_from(bytes.len() / 4).map_err(|_| {
         Error::new(
             ErrorCode::ResourceLimit,
@@ -93,7 +104,7 @@ pub(crate) fn pixels(
         for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
             check()?;
             for (x, pixel) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
-                *pixel = mix(filter, (x0 + x as i64, local.1), Rgba(*pixel)).0;
+                *pixel = mix(filter, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
             }
         }
     }

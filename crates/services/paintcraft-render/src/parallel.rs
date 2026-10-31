@@ -27,6 +27,8 @@ pub fn render_in_pool(
 ) -> Result<Vec<u8>> {
     check()?;
     let bytes = region_bytes(doc, region)?;
+    crate::spatial::preflight(doc, region, &check)?;
+    let workspace = crate::spatial::current();
     let edge = match partition {
         Partition::Bands { rows } => rows,
         Partition::Tiles { edge } => edge,
@@ -56,12 +58,20 @@ pub fn render_in_pool(
                         y1: (y0 + i64::from(rows)).min(region.y1),
                         ..region
                     };
-                    compose_roots_into(doc, part, 0..doc.roots.len(), out, &check)
+                    crate::spatial::captured(&workspace, || {
+                        compose_roots_into(doc, part, 0..doc.roots.len(), out, &check)
+                    })
                 })
         }
-        Partition::Tiles { edge } => {
-            tiles::compose(doc, region, edge, view_bytes, &mut pixels, &check)
-        }
+        Partition::Tiles { edge } => tiles::compose(
+            doc,
+            region,
+            edge,
+            view_bytes,
+            &mut pixels,
+            &workspace,
+            &check,
+        ),
     })?;
     check()?;
     Ok(pixels)

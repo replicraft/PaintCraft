@@ -103,6 +103,18 @@ impl CompositeCache {
         check: impl Fn() -> Result<()>,
     ) -> Result<CachedRegion> {
         check()?;
+        if crate::spatial::relevant(doc, region) {
+            let pixels = render_region_cancellable(doc, region, &check)?;
+            return Ok(CachedRegion {
+                pixels,
+                stats: RenderStats {
+                    output_pixels: region.area() as u64,
+                    recomposed_pixels: region.area() as u64,
+                    recomposed_tiles: 1,
+                    ..Default::default()
+                },
+            });
+        }
         let mut pixels = output_buffer(region_bytes(doc, region)?)?;
         let mut stats = RenderStats {
             output_pixels: region.area() as u64,

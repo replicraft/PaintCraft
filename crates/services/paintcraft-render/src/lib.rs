@@ -12,6 +12,7 @@ use paintcraft_raster::RowSpan;
 
 mod appearance;
 mod kernels;
+pub mod spatial;
 
 pub mod parallel;
 
@@ -83,6 +84,7 @@ pub fn render_region_cancellable(
 ) -> Result<Vec<u8>> {
     check()?;
     let bytes = region_bytes(doc, region)?;
+    spatial::preflight(doc, region, &check)?;
     let mut out = output_buffer(bytes)?;
     compose_roots_into(doc, region, 0..doc.roots.len(), &mut out, &check)?;
     Ok(out)
@@ -105,6 +107,35 @@ pub(crate) fn compose_roots_into(
         let Some(area) = region.intersect(&layer.extent()) else {
             continue;
         };
+        if spatial::active(layer) {
+            let local = area
+                .translated(-layer.origin.0, -layer.origin.1)
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::InputSchema,
+                        "Spatial source coordinates overflow",
+                    )
+                })?;
+            spatial::visit(layer, local, check, |tile, pixels| {
+                for (i, source) in pixels.iter().enumerate() {
+                    if i.is_multiple_of(64) {
+                        check()?;
+                    }
+                    let x = tile.x0 + layer.origin.0 + (i % tile.width() as usize) as i64;
+                    let y = tile.y0 + layer.origin.1 + (i / tile.width() as usize) as i64;
+                    let index = ((y - region.y0) as usize * width + (x - region.x0) as usize) * 4;
+                    let destination: [u8; 4] = out[index..index + 4].try_into().unwrap();
+                    out[index..index + 4].copy_from_slice(
+                        &source
+                            .with_opacity(layer.opacity)
+                            .source_over(Rgba(destination))
+                            .0,
+                    );
+                }
+                Ok(())
+            })?;
+            continue;
+        }
         for y in area.y0..area.y1 {
             check()?;
             let row = &mut out

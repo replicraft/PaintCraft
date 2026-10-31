@@ -4,6 +4,8 @@ use crate::{
     *,
 };
 use paintcraft_raster::{REGION_EDGE, RegionCoord, RegionVersion};
+mod accumulator;
+pub use accumulator::DisplayAccumulator;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DisplayRequest {
@@ -86,7 +88,7 @@ pub struct DisplayFrame {
     pub pixels: Vec<u8>,
     pub stats: DisplayStats,
 }
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub(crate) struct Sum(pub(crate) [u64; 4]);
 impl Sum {
     pub(crate) fn add(&mut self, color: Rgba, count: u64) {
@@ -127,6 +129,10 @@ pub(crate) fn uniform(
         let Some(area) = rect.intersect(&layer.extent()) else {
             continue;
         };
+        // A transparent local ROI may receive alpha from a spatial halo.
+        if crate::spatial::active(layer) {
+            return Ok(None);
+        }
         let local = area.translated(-layer.origin.0, -layer.origin.1).unwrap();
         let Some(pixel) = layer.raster.uniform_region(local, check)? else {
             return Ok(None);
@@ -287,6 +293,19 @@ impl DisplayCache {
         check: impl Fn() -> Result<()>,
     ) -> Result<DisplayFrame> {
         let request = DisplayRequest::new(doc, request.region, request.level)?;
+        if crate::spatial::relevant(doc, request.region) {
+            crate::spatial::preflight(doc, request.region, &check)?;
+            let mut stats = DisplayStats {
+                output_pixels: request.bytes() as u64 / 4,
+                ..Default::default()
+            };
+            let pixels = reduce(doc, request, &mut stats, &check)?;
+            return Ok(DisplayFrame {
+                request,
+                pixels,
+                stats,
+            });
+        }
         let mut pixels = output_buffer(request.bytes())?;
         let mut stats = DisplayStats {
             output_pixels: request.bytes() as u64 / 4,
