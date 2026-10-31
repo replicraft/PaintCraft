@@ -13,7 +13,7 @@ pub use coverage::mix_point_coverage;
 /// Apply ordered point descriptors. Every stage rounds independently and preserves
 /// alpha, including RGB hidden under alpha zero. This convenience function is
 /// synchronous and has no cancellation checkpoints; use evaluate_row for work.
-/// Spatial descriptors, including radius-zero Box, return typed unsupported.
+/// Spatial descriptors, including radius-zero Box, and prepared-only Levels return typed unsupported.
 pub fn evaluate_pixel(filters: &[Descriptor], mut pixel: Rgba) -> Result<Rgba> {
     for filter in filters {
         pixel = point::evaluate(*filter, pixel)?;
@@ -65,3 +65,6 @@ mod tests;
 mod point_oracles;
 #[cfg(test)]
 mod spatial_boundary_tests;
+
+#[cfg(test)]
+mod catalog_boundary_tests;

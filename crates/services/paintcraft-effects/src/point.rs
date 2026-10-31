@@ -4,7 +4,16 @@ pub(super) fn require_point(filter: Descriptor) -> Result<()> {
     if filter.is_spatial() {
         return Err(spatial_error());
     }
+    if filter.is_catalog_only() {
+        return Err(prepared_error());
+    }
     Ok(())
+}
+fn prepared_error() -> Error {
+    Error::new(
+        ErrorCode::CapabilityUnsupported,
+        "Levels filter requires its admitted prepared program",
+    )
 }
 fn spatial_error() -> Error {
     Error::new(
@@ -60,6 +69,7 @@ pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Result<Rgba> {
         }
         Descriptor::SolarizeRgbV1 => rgb.map(|v| if v >= 128 { 255 - v } else { v }),
         Descriptor::BoxBlurV1(_) => return Err(spatial_error()),
+        Descriptor::LevelsRgbV1(_) => return Err(prepared_error()),
     };
     Ok(Rgba([candidate[0], candidate[1], candidate[2], alpha]))
 }
