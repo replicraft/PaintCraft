@@ -18,7 +18,9 @@ Fresh production Chrome passes 17 Source5 cases/131 controls, six Studio lifecyc
 records and 16 fresh DDS/MSP Export7 replays per format, including independently
 decoded causal pixels. All 3,491 producer inputs and 27 assets remain unchanged.
 Full package regression passes 405 web tests (three ignored) and 236 CLI/MCP
-tests (fifteen ignored). The integrated revision's CI remains a separate gate.
+tests (fifteen ignored). All seven
+[integrated Vibrance CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41212265055)
+pass for commit `b00bcce2`.
 
 [Hue/Saturation](HUE_SATURATION_FILTER_FOUNDATION.md) now has a separately
 qualified native/Wasm numerical foundation with three bounded signed parameters.
@@ -37,8 +39,8 @@ closed workers and immutable eight/nine-profile schema bundles remain closed.
 All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41199286392)
 pass for integrated Curves commit `fbfd4737`. All seven
 [foundation CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41201386321)
-also pass for standalone Vibrance commit `cdcdfcac`; later editable integration
-does not inherit that revision's CI result.
+also pass for standalone Vibrance commit `cdcdfcac`; editable integration has its
+own passing seven-job run for `b00bcce2`, recorded above.
 
 Exposure is locally integrated through native controls, hot/cold history, PCND6,
 prepared CPU filtering, Metal presentation, CLI/MCP and a new immutable nine-profile

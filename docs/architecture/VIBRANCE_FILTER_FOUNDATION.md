@@ -3,7 +3,7 @@
 Status: standalone arithmetic and editable integration are locally qualified on
 native and actual Rust Wasm. Vibrance is the eleventh Studio filter, with PCND6,
 CLI/MCP, private parameter editing and browser preview/export support. Full
-package regression passes; integrated-head CI remains a separate gate. Earlier
+package regression and all seven integrated CI jobs pass for commit `b00bcce2`. Earlier
 standalone evidence below keeps its original scope.
 
 ## Intent and exact policy
@@ -234,5 +234,11 @@ preimage and are disclosed as a later observation rather than an initial capture
 The full regression receipt is
 `docs/validation/vibrance-integration/full-regression/attempt-20261031T144223Z-f49ed7ce/closeout.json`,
 SHA256 `504994062bcc55681c6832922f9138d23813fce182543b70a8286178567e2eff`.
-Integrated-head CI is pending at this checkpoint. The broader Palette inventory,
-layer styles, layer masks and performance remain separate work.
+All seven [integrated CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41212265055)
+pass for exact commit `b00bcce2eff3d28313323986b0dfe2a1b9c01ded`. The original
+watch exits zero and the final API independently reports success for all seven.
+The push/CI addendum is
+`docs/validation/vibrance-integration/ci-41212265055/push-ci-addendum.json`, SHA256
+`1f9c336d58835403ae3dec3af54e67a4fc033c8143d49cc240d46464a663e45c`.
+Later Hue/Saturation work does not inherit this result. The broader Palette
+inventory, layer styles, layer masks and performance remain separate work.

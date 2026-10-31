@@ -318,5 +318,6 @@ allowed field/layout delta. Fresh actual Chrome passes 17 Source5 cases/131
 controls, six Studio lifecycle groups and sixteen DDS/MSP Export7 replays each,
 including independent causal pixels. All 3,491 producer inputs and 27 assets stay
 exact. See the [Vibrance contract](VIBRANCE_FILTER_FOUNDATION.md) for receipts,
-preserved failures, passing package regressions and the separate pending CI scope. This does not
+preserved failures, passing package regressions and the seven passing CI jobs for
+integrated Vibrance commit `b00bcce2`. This does not
 qualify other catalog entries, future direct transforms or all upstream effects.
