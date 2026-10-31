@@ -1,9 +1,10 @@
-# Editable point filters
+# Editable filters
 
 The engine, CLI and MCP support an ordered filter stack on each raster layer.
-The six algorithms are Invert, Brightness/Contrast, Black & White, Threshold,
-Posterize and Solarize. They preserve source
-pixels and alpha, participate in one-step Undo/Redo, and remain editable after
+The seven algorithms are Invert, Brightness/Contrast, Black & White, Threshold,
+Posterize, Solarize and Box Blur. All preserve editable source pixels; the six
+point profiles preserve alpha, while Box Blur evaluates a premultiplied
+neighborhood and can change alpha. They participate in one-step Undo/Redo and remain editable after
 saving and reopening a PCND project. Desktop and browser Studio expose stack
 editing and per-filter selection-derived masks. Mask painting/linking and the
 remaining algorithm catalog are separate work.
@@ -42,8 +43,8 @@ failure publishes neither edits nor aliases and leaves history unchanged.
 
 The six stack operations below use batch v2 except `filter.add` and
 `filter.update` carrying one of the four new descriptors, which require batch v4.
-Mask operations require batch v3. Batch v4 accepts all of these operations; closed
-batch v2/v3 grammars remain unchanged. Scalar enable/reorder/remove/duplicate
+Box Blur Add/Update requires batch v5. Mask operations require batch v3. Batch
+v5 accepts all these operations; closed batch v2/v3/v4 grammars remain unchanged. Scalar enable/reorder/remove/duplicate
 operations still require only v2, even when their target stores a newer kind.
 Every operation takes `layer_ref`, using the existing `{ "id": "UUID" }` or
 batch-local `{ "ref": "alias" }` form.
@@ -97,11 +98,20 @@ Threshold luma, Posterize's two rounding steps and Black & White strength zero
 identity. These are independent PaintCraft byte contracts, not Photoshop or
 Palette floating-point byte-parity claims.
 
+Box Blur uses `{ "kind": "box-blur-v1", "radius": 2 }`, with required integer
+radius 0–32 and new-draft default 2. Add/Update requires batch v5, even at radius
+zero. Positive radius uses a fixed square with true finite-source CLAMP, not
+tile-edge clamping; radius zero preserves every RGBA byte. Its candidate can
+change alpha and uses the separate once-per-stage premultiplied coverage rule.
+See the [exact spatial contract](architecture/SPATIAL_FILTER_INTEGRATION.md).
+Stored disabled and radius-zero intentions still require spatial support.
+
 ## Persistent mask operations
 
 Masks are immutable source-local A8 fields, independent of the live selection.
-All six supported filters preserve alpha and mix their
-candidate RGB once per instance using its coverage, including hidden RGB. No
+The six point filters preserve alpha and mix candidate RGB once per instance,
+including hidden RGB. Box Blur instead mixes incoming and candidate RGBA once
+with the alpha-changing spatial rule; coverage never limits its input halo. No
 mask or a disabled mask means full coverage; an enabled zero mask means no
 visual effect. Descriptor updates, instance enablement, reorder and duplication
 preserve the mask. See the [mask contract](architecture/FILTER_MASKS.md).
@@ -195,21 +205,26 @@ a new ID; changing parameters preserves the existing ID.
 
 `apply` accepts these operations through an ordinary atomic batch file. MCP
 `apply_operations` supplies the current ticket and selects the lowest required
-grammar: v4 for Add/Update with a new kind, otherwise v3 when mask tags are
-present, otherwise v2. `get_batch_schema` returns the closed v4 grammar. Retrieve the closed profiles:
+grammar: v5 for Box Blur Add/Update, v4 for the four newer point kinds, otherwise
+v3 when mask tags are present, otherwise v2. `get_batch_schema` returns the closed v5 grammar. Retrieve the closed profiles:
 
 ```sh
 paintcraft-cli schema batch-v2
 paintcraft-cli schema batch-v3
 paintcraft-cli schema batch-v4
+paintcraft-cli schema batch-v5
 paintcraft-cli schema result-v2
 paintcraft-cli schema result-v3
+paintcraft-cli schema result-v4
 paintcraft-cli schema file-command-v2
 paintcraft-cli schema file-command-v3
+paintcraft-cli schema file-command-v4
 paintcraft-cli schema inspect-v2
 paintcraft-cli schema inspect-v3
+paintcraft-cli schema inspect-v4
 paintcraft-cli schema mcp-inspect-v2
 paintcraft-cli schema mcp-inspect-v3
+paintcraft-cli schema mcp-inspect-v4
 ```
 
 Output selects the lowest necessary profile from the **final document and
@@ -217,21 +232,29 @@ published aliases**, not merely the input batch version:
 
 | Final result | Engine result | CLI envelope |
 |---|---|---|
-| Any stored mask, including zero/disabled | `paintcraft.result/v3` | `paintcraft.file-command/v3` |
-| No masks, nonempty new filter aliases | `paintcraft.result/v2` | `paintcraft.file-command/v2` |
-| No masks and no new filter aliases | exact `paintcraft.result/v1` | exact `paintcraft.file-command/v1` |
+| Any stored Box Blur, including disabled/radius zero | `paintcraft.result/v4` | `paintcraft.file-command/v4` |
+| No spatial intention, any stored mask, including zero/disabled | `paintcraft.result/v3` | `paintcraft.file-command/v3` |
+| No spatial intentions or masks, nonempty new filter aliases | `paintcraft.result/v2` | `paintcraft.file-command/v2` |
+| No spatial intentions, masks or new filter aliases | exact `paintcraft.result/v1` | exact `paintcraft.file-command/v1` |
 
 The nonempty `filter_aliases` map contains `{layer_id,filter_id}` UUID pairs. It
 is required in v2 and optional, but nonempty when present, in v3. Result v3 also
 requires `document_features` in canonical order:
 `["layer-point-filters.v1","layer-filter-masks.v1"]`, followed by
-`"source-metadata.v1"` only when an original-source attachment exists. A no-op
-on an already masked document still uses v3. Removing the final mask returns to
+`"source-metadata.v1"` only when an original-source attachment exists. When no spatial intention is stored, a no-op on an already masked document
+still uses v3. Removing the final mask in that point-only document returns to
 v1 or v2 according to aliases, even when the input is batch v3 or v4. New
-algorithm kinds alone do not introduce result/v4, envelope/v4 or new feature names. Closed legacy
+point algorithm kinds alone do not introduce a new result profile or feature.
+Stored Box Blur does require result/envelope v4: features are
+`layer-point-filters.v1`, optional `layer-filter-masks.v1` iff a mask is stored,
+`layer-spatial-filters.v1`, then optional `source-metadata.v1`. Removing the last
+spatial intention returns to the minimal v1/v2/v3 profile from the final document.
+A batch v5 request alone never forces result v4. Closed legacy
 result/envelope schemas are unchanged; error-only envelopes retain v1.
 
-If any stored instance uses one of the four new kinds, including a disabled
+If any stored instance is Box Blur, including disabled/radius zero, CLI uses
+`paintcraft.inspect/v4` and MCP uses distinct `paintcraft.mcp-inspect/v4`.
+Otherwise, if any stored instance uses one of the four newer point kinds, including a disabled
 instance, CLI inspection uses `paintcraft.inspect/v3` and MCP uses the distinct
 `paintcraft.mcp-inspect/v3`. Otherwise, masked CLI inspection uses
 `paintcraft.inspect/v2`; masked MCP uses `paintcraft.mcp-inspect/v2`. The CLI
@@ -336,7 +359,7 @@ Independent CLI/stdio-MCP controls exercise literal and fractional-mask pixels,
 order, unchanged raw source rasters, exact result profiles, disabled-kind
 inspection and PCND save/reopen. The full Formats suite passes 769 tests and
 all 108 renderer tests pass, including 36 required offscreen Metal controls.
-Actual production Chrome passes 305 render Worker and 32 DDS/MSP protocol4
+Actual production Chrome passes 305 render Worker and 32 DDS/MSP protocol 4
 export cases; nine positive export files independently decode to exact fixture
 pixels. Four actual Chrome UI flows now pass Add, Cancel, Apply, exact Undo/Redo
 and fresh reopen/save for the new kinds, plus parameter changes for the three
@@ -349,4 +372,19 @@ raw Worker frames and visible UI execution remain separate evidence. The full
 Node suite passes 185 tests and independent JS oracle controls pass 63. See the
 [profile qualification scope](architecture/POINT_FILTER_PROFILES.md#integration-and-qualification).
 Mask painting, layer styles and the rest of the pinned 132-entry source catalog
-remain separate work; six profiles do not establish catalog parity.
+remain separate work; seven profiles do not establish catalog parity.
+
+### Box Blur local qualification; browser execution pending
+
+Core/Effects/Document, typed Commands, PCND5/recovery, actual CLI/stdio closed
+profiles, regional rendering and required offscreen Metal are qualified locally.
+Studio and Native controls cover private preview, Cancel/Apply, CPU sync/FIFO,
+real Metal texture/readback, PCND5 save/reopen and single-layer Flatten/Undo.
+Existing lifecycle regressions, Web host/Worker, protocol 5 codec/backend,
+strict checks and all seven locales pass. The [current spatial qualification
+record](architecture/SPATIAL_FILTER_INTEGRATION.md#current-qualification) gives
+counts and exact boundaries.
+
+**Box production browser runtime and visible UI execution remain pending.**
+Previous six-point browser results above retain their original scope. Higher
+catalog entries, layer masks and styles remain open.

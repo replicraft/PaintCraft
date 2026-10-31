@@ -23,132 +23,72 @@ Configure your MCP client with the absolute path to that binary:
 
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
-[Editable point filters and persistent masks](FILTER_COMMANDS.md) are available
-through `apply_operations` and `get_batch_schema`. Invert, Brightness/Contrast,
-Black & White, Threshold, Posterize and Solarize retain parameters, instance
-identity and saved coverage through Undo/Redo and
-PCND save/reopen. The server owns its headless document; it does not manipulate
-Desktop or browser Studio, whose separate controls are documented there. Other
-catalog entries, layer styles and mask painting/linking remain separate work.
+[Editable filters and persistent masks](FILTER_COMMANDS.md) are available through
+`apply_operations` and `get_batch_schema`. The seven profiles are Invert,
+Brightness/Contrast, Black & White, Threshold, Posterize, Solarize and Box Blur.
+They retain parameters, instance identity, source pixels and saved coverage
+through Undo/Redo and PCND save/reopen. MCP owns its headless document; it does
+not control an open Desktop or browser Studio. Layer masks, styles and the rest
+of the pinned 132-entry catalog remain separate work.
 
-`get_batch_schema` returns the closed `paintcraft.batch/v4` grammar.
-Add/Update with `black-white-rgb-v1` (`strength` 0–100), `threshold-luma-v1`
-(`level` 0–255), `posterize-rgb-v1` (`levels` 2–32) or parameterless
-`solarize-rgb-v1` require v4. Their defaults for new drafts are 100, 128 and 6;
-wire fields remain required. Old-kind Add/Update and scalar stack actions still
-need only v2. Closed batch v2/v3 profiles reject new-kind Add/Update. The server
-selects the lowest required version for the actual operation list. All six
-[exact profiles](architecture/POINT_FILTER_PROFILES.md) use encoded RGB,
-preserve alpha/hidden RGB and apply source-local masks once; these are not
-Photoshop or upstream Palette floating-point byte-parity claims.
+`get_batch_schema` returns closed `paintcraft.batch/v5`. The server selects the
+lowest grammar required by the actual operation list:
 
-`filter.mask.set`, `filter.mask.from_selection`, `filter.mask.set_enabled` and
-`filter.mask.remove` use the existing `apply_operations` tool: the server captures
-the current state/publication ticket and selects v3 for these tags unless a
-new-kind Add/Update in the same batch requires v4. Earlier closed
-batch v1/v2 profiles refuse them. Capture freezes the staged selection once;
-inactive selection errors, while active empty/disjoint selection stores zero
-coverage. Later selection edits do not change it. The
-[selection capture example](FILTER_COMMANDS.md#mcp-example) adds a filter,
-captures its selection and clears the live selection in one atomic Undo step.
+| Operations | Required batch |
+|---|---|
+| Box Blur Add/Update, `{"kind":"box-blur-v1","radius":2}`; integer radius 0–32 | v5 |
+| Black & White/Threshold/Posterize/Solarize Add/Update | v4 |
+| `filter.mask.set`, `.from_selection`, `.set_enabled`, `.remove` | v3 |
+| Original two-kind Add/Update; scalar enable/reorder/remove/duplicate | v2 |
 
-A document with any stored new kind, including disabled instances, uses the
-distinct closed `paintcraft.mcp-inspect/v3` for `inspect_document`. Otherwise a
-document with a stored mask uses `paintcraft.mcp-inspect/v2`. Both include
-`document_features` only for stored masks, in point-filter, mask, then optional
-source-metadata order. Each affected filter row includes only
-`mask: {schema,enabled,domain,bands,runs,digest}`: schema `a8-bands/v1`, signed
-source-local endpoint array `[x0,y0,x1,y1]`, canonical counts and a 64-character
-lowercase SHA-256. It never returns the coverage payload. This closed MCP
-projection retains its dimensions, dirty/history and layer fields and is distinct
-from the CLI's `paintcraft.inspect/v2` document/assessment/ticket projection.
-Unmasked documents containing only the original two kinds retain the established
-unversioned MCP shape. CLI inspection separately selects `paintcraft.inspect/v3`
-for new kinds and v2 for legacy masked documents; its schema is not the MCP schema.
+Parameter fields are required on the wire; draft defaults do not fill omissions.
+Earlier closed profiles reject algorithms or tags they do not define. Mask
+capture freezes the staged selection once: inactive errors, active empty or
+disjoint captures zero. Later selection changes cannot alter it. See the
+[atomic capture example](FILTER_COMMANDS.md#mcp-example).
 
-Engine results depend on the **final document**, not merely the request grammar.
-A stored mask, including disabled/zero coverage, requires `paintcraft.result/v3`
-and ordered `document_features`; `filter_aliases` is optional but nonempty when
-present. With no masks, nonempty new filter aliases use result/v2 and other
-results retain exact v1. Removing the last mask therefore does not force a result
-version bump solely because the request used batch v3 or v4. New algorithms
-alone do not add features or introduce result/v4 or file-command/v4. CLI
-file-command envelopes
-select the corresponding v1/v2/v3 nested-result profile; MCP returns the engine
-result directly. All older closed result schemas remain unchanged.
+The six [point profiles](architecture/POINT_FILTER_PROFILES.md) preserve alpha,
+including transforming hidden RGB. [Box Blur](architecture/SPATIAL_FILTER_INTEGRATION.md)
+uses a true finite-source clamped square, premultiplied neighborhood sums and
+alpha-changing coverage once after the candidate. Radius zero is exact RGBA
+identity but remains a spatial intention. No ICC activation or Photoshop/Palette
+byte parity is implied.
 
-PCND4 preserves stored masks, including disabled/zero fields; unmasked projects
-retain PCND1/2/3 selection. Additive PCND3/4 tags 3–6 store the new algorithms;
-tags 1/2 and existing older byte profiles are unchanged. Unknown or unavailable
-algorithm versions must be refused even when disabled. Band/run aggregates are
-bounded at 262,144 each,
-with checked work/byte admission and the unchanged 8 MiB serialized metadata cap.
+`inspect_document` selects distinct closed `paintcraft.mcp-inspect/v4` whenever
+any Box is stored, including disabled/radius zero. Otherwise the four newer point
+kinds select v3, stored masks select v2, and original unmasked projects retain the
+established unversioned shape. CLI uses its separate `paintcraft.inspect/v1…v4`
+assessment/document/ticket projections; these schemas are not interchangeable.
+Mask summaries remain `{schema,enabled,domain,bands,runs,digest}` with
+`a8-bands/v1`, signed source-local endpoint domain, canonical counts and SHA-256;
+coverage payloads are never returned.
 
-Actual CLI/stdio controls qualify all four new profiles against independent
-pixels, source preservation and schema boundaries. Native/Web host UI and Wasm
-checks are qualified. The full Formats suite passes 769 tests; 108 renderer
-controls pass, including 36 required offscreen Metal cases. Actual production
-Chrome passes 305 render Worker and 32 DDS/MSP protocol4 export cases, with nine
-positive output artifacts independently decoded to exact fixture pixels.
-Four separate actual Chrome Studio flows also pass Add, numeric parameter
-changes where applicable, Cancel, Apply, Undo/Redo and fresh reopen/save. Every
-default preview has a causal two-color screenshot marker; changed Threshold's
-uniform plane is checked through the exact bound Worker response only. Fresh
-reopen verifies strict committed BASE binding after legitimate private-texture
-promotion on Apply. These flows do not newly qualify existing Edit, duplicate or
-preview-off. Node's full suite passes 185 tests, with 63 independent JS oracle
-controls; those counts are separate from browser execution.
+Results depend on the **final document**, not just the request grammar. Stored
+Box requires result/v4; otherwise stored masks require v3, nonempty new filter
+aliases require v2, and other results remain exact v1. The corresponding CLI
+file-command envelope follows the nested result; MCP returns the engine result
+directly. Removing the last Box can downgrade to v1/v2/v3 even in a batch/v5
+request. Error-only envelopes remain v1; older closed schemas are unchanged.
+For spatial results, actual `document_features` are point, optional mask iff
+stored, spatial, then optional source metadata, in that order. A PCND5 header's
+mandatory mask **grammar capability** does not imply an actual stored mask.
 
-Default binary selections and persistent masks share one 256 MiB resident realm;
-history shares payload charges and keeps coverage resident during RGBA spill.
-See [the wire contract](PCND_FORMAT.md#version-4-persistent-filter-masks) and
-[mask qualification](architecture/FILTER_MASKS.md).
+PCND5 stores Box with algorithm tag 7 plus radius byte; PCND3/4 still refuse tag 7,
+even disabled. Point tags 1–6 and older specimen bytes remain unchanged. PCND4
+continues to store point-only masks, including disabled/zero fields. Aggregate
+mask bands/runs remain 262,144 each; the metadata ceiling remains 8 MiB. Explicit
+shared decode and spatial-workspace admission remains required.
 
-`export_layered` is registered for explicit fresh PSD/PSB/PDN/PAINT copies but currently
-returns a capability refusal: the original Photoshop/Paint.NET/Windows Paint open/re-edit qualification
-required by the format plan is not yet recorded. Acknowledging title loss cannot
-bypass that registry gate. It does not flatten, change dirty state or enable
-foreign preserving Save. The CLI `export-layered --format psd|psb|pdn|paint` uses the same
-gate. The implemented staged-copy path is tested separately from public enablement.
-PDN requires an explicit `pdn_background` choice (`ordinary` or `bottom`);
-`pdn_geometry` is `exact` by default, with explicit `materialize` for layer
-translation/padding. Actual title, added background behavior, geometry and
-outside-canvas losses require their named acknowledgments. Ordinary native layers
-do not incur a fabricated background-role loss. Policy/counts accompany successful
-internal preparation without changing the file-operation receipt. These options
-cannot override the current public capability refusal.
-PAINT likewise requires explicit `paint_canvas_fill` (four integers in 0..65535,
-RGBA order) and `paint_names` (`require-empty` or `omit`). The CLI fill option is
-`--paint-canvas-fill 0,0,0,0`. Transparent clear retains native composition; other
-fill, actual name omission and title omission require their named consent. Layer
-sizes/origins and hidden RGB remain exact; hidden/non-full-opacity layers are
-refused instead of silently baked. No item-name/UI-name equivalence is assumed.
+Local Box qualification includes actual CLI/stdio workspace and Box groups,
+closed schemas over genuine outputs, legacy/future-version regressions and
+strict checks. The model, exact Effects kernels, regional renderer with required
+Metal, PCND5, Native/Web host and Worker/codec-entry controls pass locally.
+[Current qualification counts](architecture/SPATIAL_FILTER_INTEGRATION.md#current-qualification)
+keep host, codec and actual browser evidence separate. **Production browser Box
+runtime and visible UI qualification are pending.** Earlier six-point production
+browser evidence remains scoped to those profiles.
 
-Available tools:
-
-- `create_canvas`: create a document with a white or specified background.
-- `open_project`: open a layered PCND project.
-- `import_image`: import a local picture into a new unsaved project, with explicit conversion-loss consent.
-- `inspect_document`: inspect dimensions, layer IDs and history.
-- `inspect_source`: inspect original PNG, BMP or JPEG properties without decoding pixels or changing the painting.
-- `paint_stroke`: paint with the engine's brushes.
-- `draw_shape`: draw filled or outlined shapes.
-- `get_batch_schema`: discover all supported engine operations.
-- `apply_operations`: apply layers, fills, text, selections, transforms and other operations as one atomic batch.
-- `flatten_image`: combine the visible canvas into one layer, with Undo restoring the source stack.
-- `history`: undo or redo.
-- `preview`: return a PNG preview, at most 256 pixels per side.
-- `save_project`: save a layered PCND project.
-- `export_image`: export an image using its filename extension.
-- `export_icons`: export a fresh multi-size ICO/CUR asset set with explicit sizes, PNG/bitmap encodings and cursor hotspots.
-- `inspect_icns`: list ordered ICNS entries, logical sizes, Retina densities and import qualification without changing the painting.
-- `export_icns`: export a fresh ICNS set using explicit qualified PNG tags and independently fitted entry sizes.
-- `inspect_palette`: inspect an ASE palette resource without creating or editing a painting.
-- `export_palette`: write a fresh ASE palette copy while retaining groups, names, color models, swatch types and precise channel values.
-- `inspect_shapes`: inspect a CSH custom shape library, including exact bounds and ordered path records.
-- `export_shapes`: write a fresh CSH resource copy without editing or adopting the open document.
-
-### JPEG background colors
+## JPEG background colors
 
 JPEG exports composite transparency over an explicit RGB background. White is
 the default. Desktop and web export dialogs expose the background color picker;
