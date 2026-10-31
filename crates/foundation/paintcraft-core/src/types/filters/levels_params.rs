@@ -60,6 +60,21 @@ impl LevelsRgbV1 {
     pub const fn output_white(self) -> u8 {
         self.output_white
     }
+
+    /// Canonical numerical intent, independent of transport codec or LUT bytes.
+    /// Field order is input black, input white, big-endian gamma hundredths,
+    /// output black, output white. This grants no document or format capability.
+    pub const fn semantic_bytes(self) -> [u8; 6] {
+        let gamma = self.gamma_hundredths.to_be_bytes();
+        [
+            self.input_black,
+            self.input_white,
+            gamma[0],
+            gamma[1],
+            self.output_black,
+            self.output_white,
+        ]
+    }
 }
 
 impl Default for LevelsRgbV1 {
@@ -77,6 +92,32 @@ impl Default for LevelsRgbV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn semantic_identity_retains_every_parameter_without_lut_collapse() {
+        assert_eq!(
+            LevelsRgbV1::new(17, 201, 999, 240, 16)
+                .unwrap()
+                .semantic_bytes(),
+            [17, 201, 3, 231, 240, 16]
+        );
+        assert_eq!(
+            LevelsRgbV1::default().semantic_bytes(),
+            [0, 255, 0, 100, 0, 255]
+        );
+        // Input/gamma changes share the same constant LUT here; endpoint
+        // changes alter it. Both retain their complete editable intent.
+        let base = LevelsRgbV1::new(0, 255, 100, 73, 73).unwrap();
+        for alternate in [
+            LevelsRgbV1::new(1, 255, 100, 73, 73).unwrap(),
+            LevelsRgbV1::new(0, 254, 100, 73, 73).unwrap(),
+            LevelsRgbV1::new(0, 255, 999, 73, 73).unwrap(),
+            LevelsRgbV1::new(0, 255, 100, 74, 73).unwrap(),
+            LevelsRgbV1::new(0, 255, 100, 73, 74).unwrap(),
+        ] {
+            assert_ne!(base.semantic_bytes(), alternate.semantic_bytes());
+        }
+    }
 
     #[test]
     fn every_input_interval_and_gamma_boundary_retains_exact_user_intent() {
