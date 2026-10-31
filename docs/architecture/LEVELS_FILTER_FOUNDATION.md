@@ -147,6 +147,11 @@ High-gamma construction must be prepared once and reused; it cannot run per
 pixel or per rendered tile. Further implementation comparisons may reduce this
 cost, but no speedup over another implementation is established here.
 
+The later [integer-backend comparison](LEVELS_INTEGER_COMPARISON.md) qualifies a
+separate u64/u128 prototype in native and Chrome Wasm execution. Its large-gamma
+gains and small-power regressions do not change this production baseline or
+establish a universal replacement.
+
 ## Prepared execution and remaining integration
 
 Lookup application is cheap; repeated construction per pixel or per rendered
