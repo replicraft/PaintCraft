@@ -135,3 +135,6 @@ mod flatten;
 
 #[path = "cli/catalog.rs"]
 mod catalog;
+
+#[path = "cli/exposure.rs"]
+mod exposure;

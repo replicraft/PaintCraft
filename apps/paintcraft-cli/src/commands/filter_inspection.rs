@@ -23,7 +23,8 @@ pub(super) fn expanded(doc: &Document) -> bool {
                 | Descriptor::ThresholdLumaV1(_)
                 | Descriptor::PosterizeRgbV1(_)
                 | Descriptor::SolarizeRgbV1
-                | Descriptor::LevelsRgbV1(_) => true,
+                | Descriptor::LevelsRgbV1(_)
+                | Descriptor::ExposureSrgbV1(_) => true,
             })
     })
 }

@@ -252,3 +252,6 @@ mod project_source;
 
 #[path = "mcp/catalog.rs"]
 mod catalog;
+
+#[path = "mcp/exposure.rs"]
+mod exposure;
