@@ -284,3 +284,39 @@ qualification work.
 All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41199286392)
 pass for integrated Curves commit `fbfd4737`. Subsequent standalone Vibrance
 arithmetic does not extend this registry or inherit that head's CI result.
+
+## Direct Vibrance and authoritative snapshot facts
+
+The eleventh entry is `vibrance-rgb-v1`/`params-v1`, with execution
+`DirectVibrance` and resource contract `direct-vibrance-rgba8-work64-v1`, revision1.
+It consumes all incoming RGB channels together; there is no LUT, retained program
+or new prepared family. Candidate arithmetic adds 64 modeled units per slot to
+the existing compositor work. Spatial paths reserve their complete plan once;
+nonspatial uniform/chunk paths debit the captured parent during execution.
+Source5 includes the conservative direct bound in admission and excludes it from
+the initial bulk nonspatial debit. Export7 has no corresponding bulk precharge.
+All previous limits and outer Source5/Export7 versions remain unchanged.
+
+Generic7 finalization uses the actual frozen snapshot bytes. Decoded filter count
+replaces live Vec capacity. An authenticated bounded metadata walk counts ALL
+wire tile records, including explicit default-valued records retained by the
+reader. It skips encoded pixels and shares the body hash pass for PCND integrity
+and complete-source SHA. Header7 and Main use the resulting region/program/hash
+set. Resident replacement occurs before source-length addition and parser-phase
+maximum; workers retain actual decoded-residency validation. No writer-projected
+nondefault count can underprice an explicit default record. Legacy4/5/6 paths
+and live/history storage accounting keep their existing behavior.
+
+Source2/3 now reject generated catalog-schema private operations before staging,
+closing inherited Exposure/Curves quote-only acceptance as well as Vibrance.
+Source4's fixed list is unchanged. Reader-known Vibrance remains refused by old
+export profiles, including Worker5's exact PCND5 InputSchema framing refusal.
+
+The final before/after matrix matches all 27 old-ten records on native and actual
+Wasm separately and all four historical 128-byte Main contexts exactly, with no
+allowed field/layout delta. Fresh actual Chrome passes 17 Source5 cases/131
+controls, six Studio lifecycle groups and sixteen DDS/MSP Export7 replays each,
+including independent causal pixels. All 3,491 producer inputs and 27 assets stay
+exact. See the [Vibrance contract](VIBRANCE_FILTER_FOUNDATION.md) for receipts,
+preserved failures, passing package regressions and the separate pending CI scope. This does not
+qualify other catalog entries, future direct transforms or all upstream effects.

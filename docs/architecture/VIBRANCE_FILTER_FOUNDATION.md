@@ -1,9 +1,10 @@
 # Vibrance numerical foundation
 
-Status: the standalone type and evaluator pass native and actual Rust Wasm
-qualification. No Descriptor, catalog schema, persistence codec, execution
-registry, worker or Studio capability is added. The public supported-filter
-count remains ten. This is the next HSL-family foundation in the Palette plan.
+Status: standalone arithmetic and editable integration are locally qualified on
+native and actual Rust Wasm. Vibrance is the eleventh Studio filter, with PCND6,
+CLI/MCP, private parameter editing and browser preview/export support. Full
+package regression passes; integrated-head CI remains a separate gate. Earlier
+standalone evidence below keeps its original scope.
 
 ## Intent and exact policy
 
@@ -17,7 +18,8 @@ or upstream floating-point byte equality.
 The standalone type `VibranceRgbV1` admits `amount_hundredths` in -100 through
 100, default zero. Invalid values fail rather than clamp. Its semantic bytes are
 the signed two's-complement integer in big-endian order. This type and the
-prospective numerical ID `vibrance-rgb-v1` grant no transport capability.
+numerical ID `vibrance-rgb-v1` identify its policy. Execution and transport
+registration are explicit boundaries described below.
 
 Operate on the immutable incoming straight encoded-RGB tuple. Let:
 
@@ -85,7 +87,7 @@ Fixtures and reproduction instructions live under
 `crates/services/paintcraft-effects/tests/vibrance-fixtures/`.
 
 Registration, canonical persistence, cumulative host admission, ordered-stack
-rendering, UI and automation are separate integration stages. A whole-RGB
+rendering, UI and automation have separate integration evidence below. A whole-RGB
 transform cannot be represented by the existing per-channel lookup tables;
 adding another prepared-LUT family would be incorrect.
 
@@ -119,5 +121,118 @@ through final closeout. The receipt is
 `docs/validation/vibrance-foundation/wasm/final-freeze.json`, SHA256
 `e2b6c18ed95853bc1710f663be5251f5c21756411634de7e93c4ce1950bf46d6`.
 All jobs are terminal and owned browsers/servers are closed. Editable filter,
-frontend/export delivery, performance, new-head CI and upstream parity remain
-separate gates; this checkpoint does not add an eleventh supported filter.
+frontend/export delivery, performance, integrated-head CI and upstream parity are
+not established by this standalone checkpoint. All seven
+[foundation CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41201386321)
+pass for `cdcdfcac`; later editable integration has separate scope.
+
+## Editable integration and pricing
+
+Catalog JSON is exactly
+`{"kind":"vibrance-rgb-v1","amount_hundredths":0}`. Every required parameter is
+an integer; missing/extra fields, coercion and out-of-domain values fail. PCND6
+stores exactly two signed big-endian parameter bytes using profile-scoped
+`params-v1`. Identity and disabled instances retain intent. The immutable
+eleven-profile schema bundle is
+`5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b`;
+all eighteen older eight/nine/ten-profile schema files remain unchanged.
+All 26 genuine new CLI/MCP outputs validate against the new bundle and fail each
+older bundle. Historical Curves26, Exposure26 and Levels6 outputs validate against
+both their original bundle and the new bundle.
+
+The explicit registry entry uses direct execution and resource contract
+`direct-vibrance-rgba8-work64-v1`, revision1. Catalog-only means explicit
+construction and transport; it does not mean LUT compilation. No new prepared
+family, captured key array, compile work or retained table is added. Existing
+Levels/Exposure/Curves owners can coexist with direct arithmetic on the same
+caller admission. Legacy point facades refuse unpriced Vibrance before callbacks
+or output writes.
+
+Spatial plans include 64 additional units per Vibrance stage output pixel using
+the existing reverse halo walk, and bulk-charge the complete plan once. Point
+appearance reserves candidate work per uniform attempt or at most 64-pixel chunk,
+using the captured parent's cumulative counter. Identity and mask-zero slots
+remain conservatively charged. Source5 includes the two-pass direct bound in
+admission, removes it from the initial generic bulk debit, and spends it during
+evaluation. Export7 already uses actual appearance debits and receives no such
+subtraction. Old work limits and memory ceilings are unchanged.
+
+Public CPU/GPU/cache entries require explicit admission before cache lookup.
+Vibrance cache misses render only the priced ROI. Optional display-level uniform
+proofs are skipped for relevant Vibrance content, retaining the normal appearance
+proof and dense fallback within the quoted bound. A causal two-pixel case now
+accepts quote256 and spends192; before correction it needed limit384 and spent320.
+A one-pixel cached ROI accepts quote128 and spends64; below-bound limits refuse
+before spending. Dirty patches, off-ROI layers, LOD, cold/warm caches and actual
+Metal scaled display have separate controls. These are abstract work units,
+not latency or speedup measurements.
+
+All 27 prior ten-profile records match every raw field on native and actual
+Chrome Wasm separately, with no allowed data/layout delta. All four historical
+Main export contexts match their complete 128 bytes in Wasm. Factory storage
+stays native80/Wasm48 and final reservations retire to zero. The final receipt is
+`docs/validation/vibrance-integration/final-post/final-freeze.json`, SHA256
+`79c707c7677bf331a35154509c1d73955b7968996a1fd7b0b647d27333967fd7`.
+
+## Canonical snapshot facts and closed workers
+
+Generic7 export facts describe the actual immutable PCND bytes. Logical decoded
+filter count replaces live Vec capacity in the payload quote. An authenticated
+borrowed metadata walk counts every serialized tile record without inflating
+pixels, including explicit all-default records retained by the reader. Inner
+PCND authentication and whole-source SHA share one body traversal. Producer
+`snapshot_contexts` replaces captured live residency before source-length
+finalization and the parser-phase maximum; Header7 and Main use that returned
+region/program/hash set. Workers continue validating actual decoded residency.
+This avoids both compact default-tile omission mismatches and underpricing an
+explicit default-valued raw record. Live/history capacity accounting remains
+unchanged, as do legacy4/5/6 export paths.
+
+The borrowed scanner passes writer-produced versions1..6, including their
+different source-metadata presence rules, plus integrity, geometry, cancellation
+and encoded-payload skip tests. Explicit raw default residency1 succeeds with
+authentic claims; underclaiming zero refuses. Source2/3 private operations now
+reject all catalog schemas before staging, fixing an inherited quote-only
+Exposure/Curves acceptance gap. Source4 retains its fixed list. Export4/5/6
+remain closed; Worker5's exact PCND5 framing refusal keeps its InputSchema code.
+No outer protocol version or resource cap changes.
+
+## Actual native and production-browser delivery
+
+Local integration passes Core84, legacy Effects boundary4, Commands36 and
+History27 tests. Cold compaction/spill/restore preserves signed parameter bytes,
+raw source, mixed intent and unique mask/metadata accounting. Full renderer191
+includes 46 required GPU tests; three focused controls record actual Apple M1 Pro
+Metal. Native/Wasm strict checks pass. Studio9 and a native control lifecycle test
+cover synchronous/asynchronous preview, Cancel, one-step Apply, fresh PCND6 open
+and Undo/Redo. Real CLI2/MCP2 flows verify exact `[62,4,140]`, explicit bake consent,
+no artifact on refusal and unchanged editable source. These are finite groups,
+not physical-tablet or original-application qualification.
+
+Fresh production Main, Source5 worker, Export7 worker, Astro and asset checks all
+pass. All 3,491 captured producer files, 27 assets and 47 executed successful
+harness inputs remain exact through browser closeout. Source5 passes 17 cases and
+131 controls. Studio records six lifecycle groups using its real signed slider
+and causal two-color screenshots. Actual Main DDS/MSP exports each pass consent,
+revocation, fresh nonce, download and sixteen fresh worker replays. Independent
+Pillow decodes opaque DDS `[62,4,140]` and MSP black; MSP's Vibrance100 followed by
+Threshold30 would be white if Vibrance were skipped.
+
+The aggregate browser receipt is
+`docs/validation/vibrance-catalog-browser/browser-final-freeze.json`, SHA256
+`1a7401798157b5f691d7451a9d927268da107f213827a0fcd3ead870eb5cfb62`.
+First failures, calibration and source preimages remain recorded separately,
+including the inherited Curves negative-forgery premise that needed adjustment
+for zero prepared programs. All browser/server jobs are closed. Full package regression passes 405 web tests
+(404 unit and one preview integration, three ignored) and 236 CLI/MCP tests
+(fifteen ignored), with both original package processes exiting successfully.
+All 4,264 captured regression inputs and 27 production assets match before and
+after both phases. The final postcheck also matches all 3,491 producer inputs;
+sixteen ignored producer files were supplemented from the earlier production
+preimage and are disclosed as a later observation rather than an initial capture.
+
+The full regression receipt is
+`docs/validation/vibrance-integration/full-regression/attempt-20261031T144223Z-f49ed7ce/closeout.json`,
+SHA256 `504994062bcc55681c6832922f9138d23813fce182543b70a8286178567e2eff`.
+Integrated-head CI is pending at this checkpoint. The broader Palette inventory,
+layer styles, layer masks and performance remain separate work.
