@@ -8,12 +8,14 @@ mod levels_params;
 mod point_params;
 mod spatial_params;
 mod value;
+mod vibrance_params;
 pub use coverage::{A8Band, A8Input, A8InputBuilder, A8Run, MaskInputLimits};
 pub use curves_params::CurvesRgbV1;
 pub use exposure_params::ExposureSrgbV1;
 pub use levels_params::LevelsRgbV1;
 pub use point_params::{BlackWhiteV1, PosterizeRgbV1, ThresholdLumaV1};
 pub use spatial_params::BoxBlurV1;
+pub use vibrance_params::VibranceRgbV1;
 
 /// Brightness is a signed hundredth of the full channel range; contrast is a
 /// signed hundredth in the rational gain (100+c)/(100-c).
