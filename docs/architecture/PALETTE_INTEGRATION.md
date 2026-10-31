@@ -1,12 +1,24 @@
 # Palette integration: persistent nondestructive filters
 
 Status: ordered history, PCND persistence, regional rendering, typed automation
-and explicit copy consent support **ten editable profiles**: Invert,
+and explicit copy consent support **eleven editable profiles**: Invert,
 Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
-Levels, Exposure and Curves. Fixed per-filter masks remain independent of live selection.
+Levels, Exposure, Curves and Vibrance. Fixed per-filter masks remain independent of live selection.
 Native and Web Studio share controls. Updated 2026-10-31.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
-ten profiles do not establish parity or a wholesale port.
+eleven profiles do not establish parity or a wholesale port.
+
+Whole-RGB [Vibrance](VIBRANCE_FILTER_FOUNDATION.md) is locally qualified through
+native and Web Studio controls, CLI/MCP, PCND6 and direct CPU filtering with Metal
+presentation. It has no LUT or new prepared-program family. The caller's existing
+scope pays a fixed 64 modeled units per candidate tuple, separately from normal
+compositor work. All 27 old-ten records match every field on native and actual
+Wasm separately; four historical Main export contexts also match exactly.
+Fresh production Chrome passes 17 Source5 cases/131 controls, six Studio lifecycle
+records and 16 fresh DDS/MSP Export7 replays per format, including independently
+decoded causal pixels. All 3,491 producer inputs and 27 assets remain unchanged.
+Full package regression passes 405 web tests (three ignored) and 236 CLI/MCP
+tests (fifteen ignored). The integrated revision's CI remains a separate gate.
 
 Five-point [Curves](CURVES_FILTER_FOUNDATION.md) is locally integrated through
 typed catalog commands, PCND6, prepared CPU filtering, Metal presentation,
@@ -18,9 +30,10 @@ replays per format, including independently decoded exact pixels. Curves adds a
 priced execution registration within existing Source5/Export7 framing. The old
 closed workers and immutable eight/nine-profile schema bundles remain closed.
 All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41199286392)
-pass for integrated Curves commit `fbfd4737`. Later standalone
-[Vibrance](VIBRANCE_FILTER_FOUNDATION.md) passes native and actual Wasm numerical
-qualification but is not registered as an editable filter; its CI is separate.
+pass for integrated Curves commit `fbfd4737`. All seven
+[foundation CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41201386321)
+also pass for standalone Vibrance commit `cdcdfcac`; later editable integration
+does not inherit that revision's CI result.
 
 Exposure is locally integrated through native controls, hot/cold history, PCND6,
 prepared CPU filtering, Metal presentation, CLI/MCP and a new immutable nine-profile

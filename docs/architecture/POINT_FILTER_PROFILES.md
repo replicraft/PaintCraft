@@ -274,8 +274,8 @@ explicit preset; it need not duplicate a kernel or inflate the algorithm count.
 [Levels](LEVELS_FILTER_FOUNDATION.md), [Exposure](EXPOSURE_FILTER_FOUNDATION.md)
 and [Curves](CURVES_FILTER_FOUNDATION.md) now have separately qualified exact
 contracts and editable catalog integration. [Vibrance](VIBRANCE_FILTER_FOUNDATION.md)
-now has a separately qualified native/Wasm foundation but remains unregistered
-for editing or persistence. Hue/Saturation and seeded noise still need explicit
+now has separately qualified native/Wasm arithmetic and locally qualified editable
+catalog, persistence, rendering and browser delivery. Hue/Saturation and seeded noise still need explicit
 deterministic arithmetic or coordinate contracts. HSL/Vibrance couples all three
 RGB channels; independent per-channel lookup tables cannot represent it.
 
