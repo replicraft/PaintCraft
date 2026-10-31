@@ -10,6 +10,7 @@ mod exact;
 pub mod exposure;
 pub mod hue_saturation;
 pub mod levels;
+pub mod noise;
 mod point;
 pub mod spatial;
 pub mod vibrance;

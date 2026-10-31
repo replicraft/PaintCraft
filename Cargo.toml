@@ -121,6 +121,10 @@ windows = { version = "0.62.2", default-features = false }
 # Native Windows executable icon and version metadata.
 winresource = "0.1.34"
 
+# Pinned scalar noise math: visibility-only internals expose generic sqrt;
+# existing transitive libm arch dispatch remains unchanged.
+libm = { version = "=0.2.16", default-features = false, features = ["unstable-public-internals"] }
+
 # Explicit integer SIMD kernels; renderer enables only with its simd feature.
 wide = "1.7.1"
 
