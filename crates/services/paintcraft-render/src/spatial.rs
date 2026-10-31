@@ -11,7 +11,7 @@ mod workspace;
 pub use context::{capture_workspace_or_current, with_workspace, with_workspace_or_current};
 pub(crate) use context::{captured, current};
 pub use plan::{LayerAppearancePlan, WorkspaceQuote};
-pub use tiles::{TiledQuote, quote_layer};
+pub use tiles::{TiledQuote, quote_direct_work, quote_layer};
 pub(crate) use tiles::{preflight, visit};
 
 // Attachment tagging is excluded Rust factory bookkeeping, not payload.

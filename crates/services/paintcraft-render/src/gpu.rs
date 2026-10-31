@@ -257,6 +257,7 @@ impl GpuRenderer {
         let levels_caller_check = &caller_check;
         let caller_check = || levels_caller_check();
         crate::prepared::with_document_programs(doc, &caller_check, || {
+            crate::direct::preflight(doc, region, &caller_check)?;
             let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
                 let mut cache = poisoned.into_inner();
                 cache.clear();

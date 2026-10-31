@@ -178,6 +178,7 @@ pub fn with_document_programs<T>(
     check: &dyn Fn() -> Result<()>,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
+    crate::direct::require_document(doc)?;
     if let Some(a) = crate::spatial::current()
         && a.prepared_curves().is_some()
     {

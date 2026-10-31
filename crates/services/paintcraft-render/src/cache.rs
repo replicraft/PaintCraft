@@ -105,6 +105,7 @@ impl CompositeCache {
         let levels_caller_check = &check;
         let check = || levels_caller_check();
         crate::prepared::with_document_programs(doc, &check, || {
+            crate::direct::preflight(doc, region, &check)?;
             check()?;
             if crate::spatial::relevant(doc, region) {
                 let pixels = render_region_cancellable(doc, region, check)?;
@@ -129,6 +130,9 @@ impl CompositeCache {
                 check()?;
                 return Ok(CachedRegion { pixels, stats });
             }
+            // Any enabled direct filter can lie outside the priced ROI but
+            // inside an expanded cache tile. Never evaluate that extra area.
+            let clip_direct = crate::direct::active_document(doc);
             let edge = i64::from(self.limits.tile_edge);
             for ty in region.y0 / edge..=(region.y1 - 1) / edge {
                 for tx in region.x0 / edge..=(region.x1 - 1) / edge {
@@ -138,6 +142,12 @@ impl CompositeCache {
                         y0: ty * edge,
                         x1: ((tx + 1) * edge).min(i64::from(doc.canvas.0)),
                         y1: ((ty + 1) * edge).min(i64::from(doc.canvas.1)),
+                    };
+                    let rect = if clip_direct {
+                        rect.intersect(&region)
+                            .expect("cache tile overlaps request")
+                    } else {
+                        rect
                     };
                     let tile_bytes = rect.area() as usize * 4;
                     let selected = match domain {

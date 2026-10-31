@@ -51,6 +51,27 @@ pub fn quote_layer(
     Ok(quote)
 }
 
+/// Additional direct arithmetic across actual64-native tiles, including halos.
+/// Zero without callbacks/allocation for old-only layers.
+pub fn quote_direct_work(
+    layer: &Layer,
+    local: Rect,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<u64> {
+    if !crate::direct::active(layer) {
+        return Ok(0);
+    }
+    let mut work = 0u64;
+    each(local, |tile| {
+        let next = LayerAppearancePlan::new(layer, tile, check)?.direct_work(check)?;
+        work = work
+            .checked_add(next)
+            .ok_or_else(|| limit("Direct tiled work overflows"))?;
+        Ok(())
+    })?;
+    Ok(work)
+}
+
 pub(crate) fn visit(
     layer: &Layer,
     local: Rect,
@@ -79,6 +100,25 @@ pub(crate) fn preflight(
     region: Rect,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<TiledQuote> {
+    crate::direct::require_document(doc)?;
+    let mut direct = 0u64;
+    for layer in doc
+        .layers_in_order()
+        .filter(|l| l.visible && l.opacity != 0 && !active(l) && crate::direct::active(l))
+    {
+        if let Some(area) = region.intersect(&layer.extent()) {
+            let local = area
+                .translated(-layer.origin.0, -layer.origin.1)
+                .ok_or_else(|| invalid("Direct source coordinates overflow"))?;
+            direct = direct
+                .checked_add(
+                    quote_direct_work(layer, local, check)?
+                        .checked_mul(2)
+                        .ok_or_else(|| limit("Direct fallback work overflows"))?,
+                )
+                .ok_or_else(|| limit("Direct request work overflows"))?;
+        }
+    }
     let mut total = TiledQuote::default();
     for layer in doc
         .layers_in_order()
@@ -102,14 +142,24 @@ pub(crate) fn preflight(
             .checked_add(quote.tiles)
             .ok_or_else(|| limit("Spatial request tile count overflows"))?;
     }
-    if total.tiles != 0 {
+    if total.tiles != 0 || direct != 0 {
         let admission = context::current().ok_or_else(|| {
             Error::new(
                 ErrorCode::CapabilityUnsupported,
                 "Spatial rendering requires an explicit shared workspace admission",
             )
         })?;
-        if total.bytes > admission.bytes_limit || total.work > admission.work_limit {
+        let prior = if doc.layers.values().any(crate::direct::active) {
+            admission.work_used()
+        } else {
+            0
+        };
+        let required = total
+            .work
+            .checked_add(direct)
+            .and_then(|w| w.checked_add(prior))
+            .ok_or_else(|| limit("Direct cumulative request work overflows"))?;
+        if total.bytes > admission.bytes_limit || required > admission.work_limit {
             return Err(limit("Spatial request exceeds its workspace or work limit"));
         }
     }

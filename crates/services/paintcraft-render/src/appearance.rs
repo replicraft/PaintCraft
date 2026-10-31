@@ -5,6 +5,7 @@ use paintcraft_document::{FilterInstance, Layer};
 /// A candidate binding is resolved once per stage/chunk, never per pixel.
 pub(crate) enum PointProgram<'a> {
     Scalar(paintcraft_core::types::filters::Descriptor),
+    Vibrance(paintcraft_core::types::filters::VibranceRgbV1),
     Levels(&'a crate::prepared::PreparedLevels),
     Exposure(&'a crate::prepared::PreparedExposure),
     Curves(&'a crate::prepared::PreparedCurves),
@@ -15,6 +16,10 @@ impl<'a> PointProgram<'a> {
         admission: Option<&'a crate::spatial::WorkspaceAdmission>,
     ) -> Result<Self> {
         match descriptor {
+            paintcraft_core::types::filters::Descriptor::VibranceRgbV1(p) => {
+                admission.ok_or_else(crate::direct::missing)?;
+                Ok(Self::Vibrance(p))
+            }
             paintcraft_core::types::filters::Descriptor::CurvesRgbV1(p) => admission
                 .and_then(|a| a.prepared_curves())
                 .and_then(|j| j.get(p))
@@ -50,6 +55,9 @@ impl<'a> PointProgram<'a> {
     }
     pub(crate) fn evaluate(&self, incoming: Rgba) -> Result<Rgba> {
         match self {
+            Self::Vibrance(policy) => {
+                paintcraft_effects::vibrance::evaluate_pixel(*policy, incoming)
+            }
             Self::Scalar(descriptor) => {
                 paintcraft_effects::evaluate_pixel(&[*descriptor], incoming)
             }
@@ -98,6 +106,7 @@ pub(crate) fn uniform(
     for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
         check()?;
         let program = PointProgram::new(filter.descriptor(), admission.as_ref())?;
+        crate::direct::reserve(filter.descriptor(), 1, admission.as_ref())?;
         let candidate = program.evaluate(pixel)?;
         if candidate == pixel {
             continue;
@@ -170,6 +179,11 @@ pub(crate) fn pixels(
         for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
             check()?;
             let program = PointProgram::new(filter.descriptor(), admission.as_ref())?;
+            crate::direct::reserve(
+                filter.descriptor(),
+                (chunk.len() / 4) as u64,
+                admission.as_ref(),
+            )?;
             for (x, pixel) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
                 *pixel = mix(filter, &program, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
             }

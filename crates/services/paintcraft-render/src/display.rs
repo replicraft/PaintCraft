@@ -120,6 +120,12 @@ pub(crate) fn uniform(
     rect: Rect,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<Rgba>> {
+    // Optional display-level proofs would evaluate a charged direct prefix
+    // repeatedly before native composition. Its one appearance proof+dense
+    // fallback already has the admitted two-pass bound. Also shared by GPU LOD.
+    if crate::direct::relevant(doc, rect) {
+        return Ok(None);
+    }
     let mut color = Rgba::TRANSPARENT;
     for layer in doc.layers_in_order() {
         check()?;
@@ -295,6 +301,7 @@ impl DisplayCache {
         let levels_caller_check = &check;
         let check = || levels_caller_check();
         crate::prepared::with_document_programs(doc, &check, || {
+            crate::direct::preflight(doc, request.region, &check)?;
             let request = DisplayRequest::new(doc, request.region, request.level)?;
             if crate::spatial::relevant(doc, request.region) {
                 crate::spatial::preflight(doc, request.region, &check)?;
@@ -316,6 +323,7 @@ impl DisplayCache {
             };
             let step = i64::from(request.step());
             let span = step * i64::from(self.limits.tile_edge);
+            let clip_direct = crate::direct::active_document(doc);
             let bounds = request.region;
             for ty in bounds.y0 / span..=(bounds.y1 - 1) / span {
                 for tx in bounds.x0 / span..=(bounds.x1 - 1) / span {
@@ -325,6 +333,14 @@ impl DisplayCache {
                         y0: ty * span,
                         x1: ((tx + 1) * span).min(i64::from(doc.canvas.0)),
                         y1: ((ty + 1) * span).min(i64::from(doc.canvas.1)),
+                    };
+                    // Request/sample grid alignment is retained; keys include
+                    // this clipped rectangle, so partial tiles stay distinct.
+                    let rect = if clip_direct {
+                        rect.intersect(&bounds)
+                            .expect("display tile overlaps request")
+                    } else {
+                        rect
                     };
                     let tile_request = DisplayRequest::new(doc, rect, request.level)?;
                     let partition = match domain {

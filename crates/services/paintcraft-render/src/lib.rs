@@ -11,6 +11,7 @@ use paintcraft_document::Document;
 use paintcraft_raster::RowSpan;
 
 mod appearance;
+mod direct;
 mod kernels;
 pub mod spatial;
 

@@ -44,7 +44,8 @@ fn stage(index: usize, descriptor: Descriptor, source: Rect, output: Rect) -> Re
         | Descriptor::SolarizeRgbV1
         | Descriptor::LevelsRgbV1(_)
         | Descriptor::ExposureSrgbV1(_)
-        | Descriptor::CurvesRgbV1(_) => None,
+        | Descriptor::CurvesRgbV1(_)
+        | Descriptor::VibranceRgbV1(_) => None,
     };
     Ok(Stage {
         index,
@@ -87,6 +88,11 @@ impl<'a> LayerAppearancePlan<'a> {
                 .checked_add(visits)
                 .and_then(|value| value.checked_add(stage.output.area() as u64))
                 .ok_or_else(|| limit("Appearance work overflows"))?;
+            if matches!(filter.descriptor(), Descriptor::VibranceRgbV1(_)) {
+                work = work
+                    .checked_add(crate::direct::work(stage.output.area() as u64)?)
+                    .ok_or_else(|| limit("Direct stage work overflows"))?;
+            }
             scratch = scratch.max(stage.blur.map_or(0, BoxBlurPlan::scratch_elements));
             input = stage.input;
         }
@@ -114,6 +120,33 @@ impl<'a> LayerAppearancePlan<'a> {
                 scratch_elements: scratch,
             },
         })
+    }
+    /// Extra direct arithmetic bound, with the same reverse prefix halos. No
+    /// new priced fields. Old-only layers return zero without callbacks.
+    pub fn direct_work(&self, check: &dyn Fn() -> Result<()>) -> Result<u64> {
+        if !crate::direct::active(self.layer) {
+            return Ok(0);
+        }
+        let mut output = self.output;
+        let mut work = 0u64;
+        for (index, filter) in self
+            .layer
+            .filters
+            .iter()
+            .enumerate()
+            .rev()
+            .filter(|(_, f)| f.enabled())
+        {
+            check()?;
+            let value = stage(index, filter.descriptor(), self.source, output)?;
+            if matches!(filter.descriptor(), Descriptor::VibranceRgbV1(_)) {
+                work = work
+                    .checked_add(crate::direct::work(value.output.area() as u64)?)
+                    .ok_or_else(|| limit("Direct stage work overflows"))?;
+            }
+            output = value.input;
+        }
+        Ok(work)
     }
     pub fn required_input(&self) -> Rect {
         self.input
