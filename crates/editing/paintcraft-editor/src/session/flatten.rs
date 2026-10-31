@@ -11,7 +11,9 @@ impl Session {
     /// Flatten visible composition into one canvas-sized layer. Hidden layers and
     /// off-canvas pixels are removed; Undo retains their complete prior state.
     /// The callback receives this transaction's immutable source, never live UI state.
-    /// With zero or one layer this is a no-op and the callback is not called.
+    /// Empty documents and an already projected single layer are no-ops. A lone
+    /// layer with filters, opacity, hidden content or different bounds still
+    /// requires projection; Undo retains those original intentions and pixels.
     pub fn flatten(
         &mut self,
         render: impl FnOnce(&Document, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
@@ -26,7 +28,21 @@ impl Session {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Receipt> {
         check()?;
-        if self.doc.roots.len() <= 1 {
+        let already_flat = match self.doc.roots.as_slice() {
+            [] => true,
+            [id] => {
+                self.doc.layers.len() == 1
+                    && self.doc.layers.get(id).is_some_and(|layer| {
+                        layer.visible
+                            && layer.opacity == 255
+                            && layer.origin == (0, 0)
+                            && (layer.raster.width(), layer.raster.height()) == self.doc.canvas
+                            && layer.filters.is_empty()
+                    })
+            }
+            _ => false,
+        };
+        if already_flat {
             return Ok(Receipt {
                 committed: false,
                 state_id: self.doc.state_id,
