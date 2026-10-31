@@ -2,7 +2,8 @@
 use paintcraft_core::types::{
     Result,
     filters::{
-        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1,
+        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, LevelsRgbV1, PosterizeRgbV1,
+        ThresholdLumaV1,
     },
 };
 use paintcraft_ui::t;
@@ -17,9 +18,10 @@ pub enum Kind {
     Posterize,
     Solarize,
     BoxBlur,
+    Levels,
 }
 impl Kind {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
@@ -27,6 +29,7 @@ impl Kind {
         Self::Posterize,
         Self::Solarize,
         Self::BoxBlur,
+        Self::Levels,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -37,6 +40,7 @@ impl Kind {
             Self::Posterize => "Posterize",
             Self::Solarize => "Solarize",
             Self::BoxBlur => "Box Blur",
+            Self::Levels => "Levels",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -48,6 +52,15 @@ impl Kind {
             Descriptor::PosterizeRgbV1(_) => Self::Posterize,
             Descriptor::SolarizeRgbV1 => Self::Solarize,
             Descriptor::BoxBlurV1(_) => Self::BoxBlur,
+            Descriptor::LevelsRgbV1(_) => Self::Levels,
+        }
+    }
+    fn title(self, ctx: &egui::Context) -> String {
+        if self == Self::Levels {
+            // Formatting has a distinct Fluent key from Posterize's count label.
+            t!(ctx, "Levels", &[])
+        } else {
+            t!(ctx, self.label())
         }
     }
 }
@@ -93,7 +106,7 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
         ui.add_enabled_ui(can_add, |ui| {
             ui.menu_button(t!(ui.ctx(), "Add filter"), |ui| {
                 for kind in Kind::ALL {
-                    if ui.button(t!(ui.ctx(), kind.label())).clicked() {
+                    if ui.button(kind.title(ui.ctx())).clicked() {
                         actions.push(Action::Add(kind));
                         ui.close();
                     }
@@ -111,7 +124,7 @@ pub fn panel<Id: Copy + Hash + std::fmt::Debug>(
             ui.horizontal(|ui| {
                 let mut enabled = row.enabled;
                 if ui
-                    .checkbox(&mut enabled, t!(ui.ctx(), Kind::of(row.descriptor).label()))
+                    .checkbox(&mut enabled, Kind::of(row.descriptor).title(ui.ctx()))
                     .changed()
                 {
                     actions.push(Action::SetEnabled {
@@ -212,6 +225,11 @@ pub struct Parameters {
     pub threshold: i16,
     pub levels: i16,
     pub radius: i16,
+    pub input_black: i16,
+    pub input_white: i16,
+    pub gamma_hundredths: i16,
+    pub output_black: i16,
+    pub output_white: i16,
     pub preview: bool,
 }
 impl Parameters {
@@ -224,6 +242,11 @@ impl Parameters {
             threshold: 128,
             levels: 6,
             radius: 2,
+            input_black: 0,
+            input_white: 255,
+            gamma_hundredths: 100,
+            output_black: 0,
+            output_white: 255,
             preview: true,
         }
     }
@@ -238,6 +261,13 @@ impl Parameters {
             Descriptor::ThresholdLumaV1(p) => draft.threshold = i16::from(p.level()),
             Descriptor::PosterizeRgbV1(p) => draft.levels = i16::from(p.levels()),
             Descriptor::BoxBlurV1(p) => draft.radius = i16::from(p.radius()),
+            Descriptor::LevelsRgbV1(p) => {
+                draft.input_black = i16::from(p.input_black());
+                draft.input_white = i16::from(p.input_white());
+                draft.gamma_hundredths = p.gamma_hundredths() as i16;
+                draft.output_black = i16::from(p.output_black());
+                draft.output_white = i16::from(p.output_white());
+            }
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
@@ -254,6 +284,14 @@ impl Parameters {
             Kind::Posterize => PosterizeRgbV1::new(self.levels).map(Descriptor::PosterizeRgbV1),
             Kind::Solarize => Ok(Descriptor::SolarizeRgbV1),
             Kind::BoxBlur => BoxBlurV1::new(self.radius).map(Descriptor::BoxBlurV1),
+            Kind::Levels => LevelsRgbV1::new(
+                self.input_black,
+                self.input_white,
+                self.gamma_hundredths,
+                self.output_black,
+                self.output_white,
+            )
+            .map(Descriptor::LevelsRgbV1),
         }
     }
 }
@@ -300,7 +338,7 @@ fn draw_parameters(
 ) -> ParameterResponse {
     let mut response = ParameterResponse::Pending;
     let mut open = true;
-    egui::Window::new(t!(ctx, values.kind.label()))
+    egui::Window::new(values.kind.title(ctx))
         .id(egui::Id::unique("studio-filter-parameters"))
         .open(&mut open)
         .collapsible(false)
@@ -319,6 +357,38 @@ fn draw_parameters(
                 );
             }
             match values.kind {
+                Kind::Levels => {
+                    let white_limit = values.input_white.saturating_sub(1).clamp(0, 254);
+                    ui.add(
+                        egui::Slider::new(&mut values.input_black, 0..=white_limit)
+                            .text(t!(ui.ctx(), "Input black")),
+                    );
+                    let black_limit = values.input_black.saturating_add(1).clamp(1, 255);
+                    ui.add(
+                        egui::Slider::new(&mut values.input_white, black_limit..=255)
+                            .text(t!(ui.ctx(), "Input white")),
+                    );
+                    let mut gamma = f64::from(values.gamma_hundredths) / 100.0;
+                    if ui
+                        .add(
+                            egui::Slider::new(&mut gamma, 0.10..=9.99)
+                                .step_by(0.01)
+                                .fixed_decimals(2)
+                                .text(t!(ui.ctx(), "Gamma")),
+                        )
+                        .changed()
+                    {
+                        values.gamma_hundredths = (gamma * 100.0).round() as i16;
+                    }
+                    ui.add(
+                        egui::Slider::new(&mut values.output_black, 0..=255)
+                            .text(t!(ui.ctx(), "Output black")),
+                    );
+                    ui.add(
+                        egui::Slider::new(&mut values.output_white, 0..=255)
+                            .text(t!(ui.ctx(), "Output white")),
+                    );
+                }
                 Kind::BlackWhite => {
                     ui.add(
                         egui::Slider::new(&mut values.strength, 0..=100)

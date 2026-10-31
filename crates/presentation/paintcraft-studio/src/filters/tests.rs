@@ -2,6 +2,52 @@ use super::*;
 use paintcraft_ui::i18n::{Language, translate};
 
 #[test]
+fn complete_levels_controls_roundtrip_gamma_and_equal_or_inverted_outputs() {
+    assert_eq!(translate(Language::English, Kind::Levels.label()), "Levels");
+    assert_eq!(
+        paintcraft_ui::i18n::format_message(Language::Japanese, Kind::Levels.label(), &[]),
+        "レベル補正"
+    );
+    assert_eq!(
+        Parameters::new(Kind::Levels).descriptor().unwrap(),
+        Descriptor::LevelsRgbV1(LevelsRgbV1::default())
+    );
+    for fields in [
+        [17, 201, 999, 240, 16],
+        [0, 255, 10, 73, 73],
+        [127, 128, 333, 0, 255],
+    ] {
+        let descriptor = Descriptor::LevelsRgbV1(
+            LevelsRgbV1::new(fields[0], fields[1], fields[2], fields[3], fields[4]).unwrap(),
+        );
+        let draft = Parameters::from_descriptor(descriptor);
+        assert_eq!(draft.kind, Kind::Levels);
+        assert_eq!(
+            [
+                draft.input_black,
+                draft.input_white,
+                draft.gamma_hundredths,
+                draft.output_black,
+                draft.output_white
+            ],
+            fields
+        );
+        assert_eq!(draft.descriptor().unwrap(), descriptor);
+    }
+    for language in Language::ALL {
+        for source in [
+            "Input black",
+            "Input white",
+            "Gamma",
+            "Output black",
+            "Output white",
+        ] {
+            assert!(!translate(language, source).trim().is_empty());
+        }
+    }
+}
+
+#[test]
 fn new_parameter_defaults_bounds_and_descriptor_roundtrip_are_exact() {
     let defaults = [
         (

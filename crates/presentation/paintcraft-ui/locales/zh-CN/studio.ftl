@@ -481,3 +481,11 @@ levels = 色阶数
 # Finite spatial filter controls.
 box-blur = 方框模糊
 radius-px = 半径（像素）
+
+# Complete Levels controls.
+format-levels = 色阶
+input-black = 输入黑场
+input-white = 输入白场
+gamma = 伽马
+output-black = 输出黑场
+output-white = 输出白场

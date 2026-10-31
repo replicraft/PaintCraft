@@ -481,3 +481,11 @@ levels = Stufen
 # Finite spatial filter controls.
 box-blur = Box-Weichzeichnung
 radius-px = Radius (Pixel)
+
+# Complete Levels controls.
+format-levels = Tonwertkorrektur
+input-black = Eingangsschwarz
+input-white = Eingangsweiß
+gamma = Gamma
+output-black = Ausgangsschwarz
+output-white = Ausgangsweiß

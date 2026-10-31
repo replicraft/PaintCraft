@@ -481,3 +481,11 @@ levels = 階調数
 # Finite spatial filter controls.
 box-blur = ボックスぼかし
 radius-px = 半径（px）
+
+# Complete Levels controls.
+format-levels = レベル補正
+input-black = 入力の黒レベル
+input-white = 入力の白レベル
+gamma = ガンマ
+output-black = 出力の黒レベル
+output-white = 出力の白レベル

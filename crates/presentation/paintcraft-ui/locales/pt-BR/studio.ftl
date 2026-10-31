@@ -481,3 +481,11 @@ levels = Níveis
 # Finite spatial filter controls.
 box-blur = Desfoque de caixa
 radius-px = Raio (px)
+
+# Complete Levels controls.
+format-levels = Níveis
+input-black = Preto de entrada
+input-white = Branco de entrada
+gamma = Gama
+output-black = Preto de saída
+output-white = Branco de saída

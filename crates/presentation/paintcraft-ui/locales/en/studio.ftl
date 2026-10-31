@@ -481,3 +481,11 @@ levels = Levels
 # Finite spatial filter controls.
 box-blur = Box Blur
 radius-px = Radius (px)
+
+# Complete Levels controls.
+format-levels = Levels
+input-black = Input black
+input-white = Input white
+gamma = Gamma
+output-black = Output black
+output-white = Output white

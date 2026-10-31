@@ -481,3 +481,11 @@ levels = स्तरों की संख्या
 # Finite spatial filter controls.
 box-blur = बॉक्स धुंधलापन
 radius-px = त्रिज्या (पिक्सेल)
+
+# Complete Levels controls.
+format-levels = स्तर समायोजन
+input-black = इनपुट काला
+input-white = इनपुट सफ़ेद
+gamma = गामा
+output-black = आउटपुट काला
+output-white = आउटपुट सफ़ेद
