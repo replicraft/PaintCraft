@@ -1,6 +1,6 @@
 # Versioned point-filter profiles
 
-The six supported typed profiles are Invert, Brightness/Contrast, Black & White,
+The six supported point profiles are Invert, Brightness/Contrast, Black & White,
 Threshold, Posterize and Solarize. The four additions are implemented through
 Core/Effects, persistent document descriptors, Commands and CLI/MCP; Native/Web
 Studio host controls are also qualified. Formats I/O, renderer/required Metal
@@ -41,7 +41,7 @@ integer `n` and positive integer `d`:
 There is no intermediate byte cast, floating point rounding or implicit channel
 clamp unless a profile explicitly specifies one. The additional-profile parameter
 domains
-keep every result within `[0,255]`. Typed construction validates the domains;
+keep every result within `[0, 255]`. Typed construction validates the domains;
 scalar evaluation uses sufficiently wide integer arithmetic. The original
 Brightness/Contrast profile retains its explicit clamp and exact rational rule.
 
@@ -128,10 +128,10 @@ fusing the unrounded luma calculation with the mask would incorrectly give
 
 Compare **unrounded** scaled encoded luma to the integer threshold `t`:
 
-`out.rgb = [255,255,255] if L >= 10000*t, otherwise [0,0,0]`.
+`out.rgb = [255, 255, 255] if L >= 10000*t, otherwise [0,0,0]`.
 
 Equality is white. Level zero makes every RGB input white; level 255 makes only
-`[255,255,255]` white. There is no whole-domain identity setting. Already black
+`[255, 255, 255]` white. There is no whole-domain identity setting. Already black
 and white pixels remain unchanged for levels 1–255, but that is not a reason to
 elide a stored descriptor.
 
@@ -209,8 +209,10 @@ Frozen batch v2/v3 reject new-kind Add/Update. Inspection uses CLI
 `paintcraft.inspect/v3` or distinct MCP `paintcraft.mcp-inspect/v3` iff any
 stored instance has a new kind, including disabled instances. Otherwise original
 masked inspect/v2 and old unmasked shapes remain unchanged. Results and
-file-command envelopes still select only v1/v2/v3 from final masks and published
-aliases; there is no result/v4, envelope/v4 or new feature name for these kinds.
+file-command envelopes select v1/v2/v3 from final masks and published aliases
+when the document has no spatial intentions; these six point kinds themselves
+introduce no new result feature. Stored Box now selects result/envelope v4,
+separate inspect/v4 and PCND5, as documented in the spatial contract.
 The point-filter, mask and optional source-metadata feature order is unchanged.
 See [automation contracts](../FILTER_COMMANDS.md#cli-and-result-contracts).
 
@@ -218,8 +220,8 @@ PCND's algorithm registry explicitly adds tags 3–6 within existing PCND3/4:
 Black & White strength byte 0…100; Threshold level byte 0…255; Posterize levels
 byte 2…32; Solarize with no parameter bytes. Original tags 1/2 and existing
 specimens are unchanged. Unknown or unavailable algorithm versions must return a
-typed refusal even when disabled. A mask still selects PCND4, an unmasked
-nonempty stack PCND3, and an empty stack exact PCND1/2. The unchanged 8 MiB
+typed refusal even when disabled. For point-only documents, a mask selects PCND4, an unmasked nonempty stack
+PCND3, and an empty stack exact PCND1/2. Stored Box takes precedence with PCND5. The unchanged 8 MiB
 metadata cap includes intentions and masks; adding a kind does not bypass it.
 
 Qualified checks at this checkpoint include Core/Effects/Document numeric and
@@ -238,7 +240,7 @@ Node execution does not establish production-browser execution.
 
 The full Formats suite passes 769 tests. All 108 renderer tests pass, including
 36 required offscreen Metal controls. The actual Chrome 156.0.8078.79 production
-probe passes 305 persistent render Worker cases and 32 DDS/MSP protocol4 export
+probe passes 305 persistent render Worker cases and 32 DDS/MSP protocol 4 export
 cases. Nine positive export artifacts (eight DDS and one exact bilevel MSP) are
 independently decoded with Pillow 10.3.0 and match the fixture planes. The other
 MSP profiles retain their defined bilevel refusal; acknowledgment does not widen
@@ -272,3 +274,18 @@ explicit preset; it need not duplicate a kernel or inflate the algorithm count.
 Exposure, Levels gamma, HSL/Vibrance and seeded noise remain later proposals:
 they need explicit deterministic transcendental or coordinate contracts before
 implementation.
+
+## Spatial integration boundary
+
+The seventh editable filter, [Box Blur](SPATIAL_FILTER_INTEGRATION.md), is a
+separate spatial, alpha-changing contract. It does not alter these six halo-zero
+arithmetic profiles or their old registry bytes. Box Add/Update requires batch v5;
+point Add/Update retains v2/v4, masks v3, scalars v2. A mixed document stores Box
+under PCND5 and uses inspect/result spatial profiles even if that Box is disabled
+or radius 0. Point-only documents keep their minimal older profiles.
+
+Box local Core/Effects/Document, Renderer/required Metal, PCND, CLI/stdio and
+Native/Web host/Worker/strict checks pass. Actual production browser Box runtime
+and UI remain pending; the six-point actual browser evidence above does not
+qualify the new spatial profile. The broader 132-entry catalog/styles/layer-mask
+milestones remain open.

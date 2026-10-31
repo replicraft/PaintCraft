@@ -1,15 +1,14 @@
 # Palette integration: persistent nondestructive filters
 
-Status: ordered document/history, PCND persistence, rendering, typed automation
-and explicit exported-copy consent support **six point profiles**: Invert,
-Brightness/Contrast, Black & White, Threshold, Posterize and Solarize, including
-fixed per-filter masks. Desktop and browser Studio expose the shared controls.
-The initial two-kind UI/mask evidence below remains qualified. The four additions
-have qualified host controls, actual CLI/MCP, Formats, required Metal rendering
-and production Chrome Worker/export controls. Their four visible Studio UI flows
-also pass the scoped checks below. Updated 2026-10-30. Layer masks, layer styles and the
-remaining 132-entry source inventory remain open; six profiles do not establish
-catalog parity or a wholesale port.
+Status: ordered history, PCND persistence, regional rendering, typed automation
+and explicit copy consent support **seven editable profiles**: six point filters
+(Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize) and
+Box Blur. Fixed per-filter masks remain independent of live selection. Native
+and Web Studio share controls. The six-point production proofs below remain
+qualified; Box local host/CLI/PCND/required Metal/Worker checks pass, with actual
+production browser Box runtime and visible UI **pending**. Updated 2026-10-30.
+Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
+seven profiles do not establish parity or a wholesale port.
 
 ## Evidence and upstream identity
 
@@ -62,7 +61,7 @@ First descriptors use integer hundredths: brightness `[-100,100]`, contrast `[-9
 
 `clamp_round(127.5 + (x - 127.5) * (100 + c)/(100 - c) + 255*b/100)`
 
-Compute this as checked exact rational/integer arithmetic; clamp to `[0,255]`, then round nearest with ties upward. `b=0,c=0` is byte identity. Reject contrast `100` before storage/evaluation; adding that endpoint later needs an explicitly versioned policy, not infinity, a byte cast or silent clamping. Invert is exactly `255-x` for RGB. Palette's float implementation is a reference for intent, not proof of byte-identical output to this rational policy or another application.
+Compute this as checked exact rational/integer arithmetic; clamp to `[0, 255]`, then round nearest with ties upward. `b=0,c=0` is byte identity. Reject contrast `100` before storage/evaluation; adding that endpoint later needs an explicitly versioned policy, not infinity, a byte cast or silent clamping. Invert is exactly `255-x` for RGB. Palette's float implementation is a reference for intent, not proof of byte-identical output to this rational policy or another application.
 
 Each filter operates only within its layer's finite source extent. It also transforms the raster's **implicit default pixel** within that extent: iterating allocated tiles alone is incorrect. It does not generate coverage on the unbounded plane. Default-color output must remain implicit where possible rather than allocating every untouched source tile.
 
@@ -93,7 +92,7 @@ Prepare typed stack edits against an exact document/session/history base. Valida
 
 Extend hot history and cold archive/restoration together, including unique shared-mask accounting and cancellation. Undo/Redo restores recorded descriptors/masks without rerunning filters. Extend duplicate/delete/crop/resize/rotate/merge contracts explicitly: source-local transforms must transform or deliberately bake/refuse dependent masks, never leave them silently misaligned.
 
-[PCND v3](../PCND_FORMAT.md#version-3-live-point-filters) now stores the bounded point-filter stack using schema `paintcraft.document/v3` and required feature `layer-point-filters.v1`. Documents without stacks retain exact v1/v2 bytes, including original source attachments. Sixteen independent fixtures, 45 PCND tests and a future-version recovery control pass. Unknown algorithms, even disabled ones, are refused. Masks are not part of this wire profile; adding them requires an explicit compatible format/feature contract. The fuzz extension keeps its new streams separate from the historical streams.
+[PCND v3](../PCND_FORMAT.md#version-3-live-point-filters) stores the bounded point-filter stack using schema `paintcraft.document/v3` and required feature `layer-point-filters.v1`. Documents without stacks retain exact v1/v2 bytes, including original source attachments. Sixteen independent fixtures, 45 PCND tests and a future-version recovery control pass. Unknown algorithms, even disabled ones, are refused. Masks use the separately qualified PCND4 grammar; stored Box uses PCND5. The v3 profile itself remains maskless and point-only. The fuzz extension keeps its new streams separate from the historical streams.
 
 Gate: unchanged raw raster/tile identities; order-dependent Invert→Brightness/Contrast versus reverse; edit/toggle/reorder/duplicate/remove Undo/Redo; cold spill/reopen; independent PCND fixtures; resource/cancel failures leave history/document/source unchanged. No persistent feature claim until this gate and the renderer gate pass.
 
@@ -103,11 +102,11 @@ Implemented foundation: CPU regional/parallel composition, uniform display reduc
 
 Evaluate source-local filters before layer opacity and root composition. Add typed evaluation to CPU flat/region rendering, display tiles, thumbnails, clipboard/merged sampling, print and flat exports. Raw-layer sampling remains explicitly raw; merged/visible sampling uses evaluated appearances. Layered exports must preserve supported stacks or require an explicit bake/omission conversion with a real preview; preserving writers must refuse unsupported stacks.
 
-Extend content cache keys with ordered semantic descriptors, profile version, mask dependencies, source default/dimensions and required source region versions. Parameter/enable/reorder edits invalidate appearances even when no raster tile changes. Compute input dependency and output damage through the stack. Pointwise first nodes have no halo; later finite/global/spatial nodes must supply the stronger contract before regional reuse.
+Extend content cache keys with ordered semantic descriptors, profile version, mask dependencies, source default/dimensions and required source region versions. Parameter/enable/reorder edits invalidate appearances even when no raster tile changes. Compute input dependency and output damage through the stack. Pointwise first nodes have no halo; Box now supplies the regional halo/workspace contract; other spatial/global nodes still require their own contracts.
 
 Placement-only reuse is permitted for these source-local point filters. Position-dependent materials, transformed masks, global statistics, backdrop-dependent styles and resampling require additional keys/bounds. Sharing an appearance does not authorize presenting a stale session/generation/request. Bound caches, queued jobs, scratch and upload copies under caller-owned realms; eviction cannot destroy committed descriptors/source.
 
-PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP browser protocol v4 binds the policy and canonical filter/mask inventory through PCND3/4 transfer and validates the returned copy. Actual Worker and UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
+PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP protocol v4 preserves its point/mask contract. Protocol 5 adds PCND5 spatial inventory/workspace binding and passes local codec/backend controls; its Box production browser proof remains pending. Historical actual point Worker/UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
 
 GPU presentation may consume CPU-evaluated tiles initially. Never bypass active filters in a GPU fast path, picker, preview or export because the backend has no matching kernel. CPU fallback preserves correctness; unsupported resource sizes yield a typed failure rather than source-only rendering. Do not import Palette's whole-layer clones or fixed LRU limits as PaintCraft's resource policy.
 
@@ -147,7 +146,7 @@ For the four additions, Commands has 21 passing tests; actual CLI/stdio-MCP has
 five groups plus 61 schema controls over 32 genuine receipts and 43 legacy
 regressions. The full Formats suite passes 769 tests. Renderer qualification
 passes 108 tests, including 36 required Metal controls. The production Chrome
-probe passes 305 persistent Worker cases plus 32 DDS/MSP protocol4 export cases;
+probe passes 305 persistent Worker cases plus 32 DDS/MSP protocol 4 export cases;
 nine positive artifacts independently decode to exact fixture pixels. These
 controls preserve explicit baking and source-metadata privacy authority.
 
@@ -164,8 +163,32 @@ The full Node suite passes 185 tests and independent JS oracle controls pass 63;
 raw Worker, host and visible UI evidence are distinct.
 [Point profiles](POINT_FILTER_PROFILES.md#integration-and-qualification) record
 that distinction and the immutable production evidence. Mask painting/linking,
-layer masks, spatial/global effects, advanced styles and the rest of the pinned
+layer masks, other spatial/global effects, advanced styles and the rest of the pinned
 132-entry source inventory remain required roadmap work.
+
+## First spatial profile: Box Blur
+
+Box Blur is integrated with radius 0–32 (new-draft default 2), true finite-source
+CLAMP and exact premultiplied neighborhood sums. It can change alpha and uses
+once-per-stage spatial coverage against the incoming prefix. The six point
+contracts remain alpha-preserving. This independent policy differs from pinned
+Palette per-axis rounding; it is not a direct source port or parity claim.
+
+The [regional integration](SPATIAL_FILTER_INTEGRATION.md) covers reverse halos,
+implicit defaults, ordered prefix buffers, shared workspace/work, CPU-before-LOD
+and CPU-evaluated GPU uploads. PCND5, batch v5, inspect v4 and result/envelope4 use
+conditional spatial semantics; old closed profiles and PCND1–4 bytes remain
+unchanged. Layered foreign preserving copies still refuse intentions, while
+explicit captured Bake authorizes evaluated flat/specialty copies separately
+from metadata Omit.
+
+The model, Effects, document/history, PCND5, regional renderer with required
+Metal, typed CLI/stdio profiles and Native/Web/Worker controls are qualified
+locally. Native actual Metal readback, PCND5 Save/reopen and single-layer
+Flatten/Undo pass. [Current counts and scope](SPATIAL_FILTER_INTEGRATION.md#current-qualification)
+record these separately from **pending production browser Box runtime and
+visible UI**. Higher catalog entries, layer masks, styles, Gaussian/global
+families and broad performance/compatibility remain open.
 
 ## Attribution and copying policy
 
