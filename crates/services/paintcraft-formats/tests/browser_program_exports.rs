@@ -86,12 +86,17 @@ fn packet(doc: &Document, codec: Codec) -> Vec<u8> {
             assert!(d::v6::Header::capture(&plan, &source, owner(doc), doc.document_id).is_err());
             let header =
                 d::v7::Header::capture(&plan, &source, owner(doc), doc.document_id).unwrap();
+            let described = plan.spatial_context(source.len()).unwrap();
             let extra = plan.spatial_context(source.len() + 1).unwrap();
             assert_eq!(
                 u64::from_be_bytes(extra[40..48].try_into().unwrap())
-                    - header.spatial.payload_bytes(),
+                    - u64::from_be_bytes(described[40..48].try_into().unwrap()),
                 1
             );
+            let actual = plan.snapshot_contexts(&source, &|| Ok(())).unwrap();
+            assert_eq!(header.spatial.encode_programs(), actual.region);
+            assert_eq!(header.programs.encode(), actual.programs);
+            assert_eq!(header.source_sha256, actual.source_sha256);
             assert_eq!(
                 plan.program_context(source.len()).unwrap(),
                 header.programs.encode()
@@ -105,12 +110,17 @@ fn packet(doc: &Document, codec: Codec) -> Vec<u8> {
             assert!(m::v6::Header::capture(&plan, &source, owner(doc), doc.document_id).is_err());
             let header =
                 m::v7::Header::capture(&plan, &source, owner(doc), doc.document_id).unwrap();
+            let described = plan.spatial_context(source.len()).unwrap();
             let extra = plan.spatial_context(source.len() + 1).unwrap();
             assert_eq!(
                 u64::from_be_bytes(extra[40..48].try_into().unwrap())
-                    - header.spatial.payload_bytes(),
+                    - u64::from_be_bytes(described[40..48].try_into().unwrap()),
                 1
             );
+            let actual = plan.snapshot_contexts(&source, &|| Ok(())).unwrap();
+            assert_eq!(header.spatial.encode_programs(), actual.region);
+            assert_eq!(header.programs.encode(), actual.programs);
+            assert_eq!(header.source_sha256, actual.source_sha256);
             assert_eq!(
                 plan.program_context(source.len()).unwrap(),
                 header.programs.encode()
@@ -344,3 +354,6 @@ fn registry_and_inner_integrity_refuse_before_generic_adoption_on_authenticated_
 
 #[path = "browser_program_exports/curves.rs"]
 mod curves;
+
+#[path = "browser_program_exports/vibrance.rs"]
+mod vibrance;

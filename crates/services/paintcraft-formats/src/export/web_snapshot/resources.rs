@@ -15,6 +15,13 @@ pub(crate) fn filter_storage_ceiling(layers: usize) -> Result<u64> {
         .and_then(|n| n.checked_mul(size_of::<FilterInstance>() as u64))
         .ok_or_else(overflow)
 }
+/// Owned FilterInstance Vec storage produced by the canonical PCND reader.
+/// Source/history storage still uses its actual live capacity independently.
+pub(crate) fn decoded_filter_storage_bytes(count: u64) -> Result<u64> {
+    count
+        .checked_mul(size_of::<FilterInstance>() as u64)
+        .ok_or_else(overflow)
+}
 /// The 8MiB is the existing PCND aggregate wire-metadata ceiling, not a new
 /// profile limit. Filter Vec storage is separate: wire descriptors are smaller
 /// than their owned Rust representation. The 1MiB slot covers existing bounded

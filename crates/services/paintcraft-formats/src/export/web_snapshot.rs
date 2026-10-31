@@ -9,7 +9,7 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 use uuid::Uuid;
 mod resources;
-pub(crate) use resources::{filter_storage_ceiling, pre_read_quote};
+pub(crate) use resources::{decoded_filter_storage_bytes, filter_storage_ceiling, pre_read_quote};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Limits {
@@ -33,6 +33,9 @@ pub(crate) struct Plan {
     target: Target,
     context: SourceMetadataContext,
     filters: Inventory,
+    // Captured live source admission; byte-aware generic7 finalization replaces
+    // this addend using authenticated snapshot records, never changes residency.
+    resident_bytes: u64,
     bake: filter_bake::Policy,
     masks: super::SourceMaskContext,
 }
@@ -123,12 +126,16 @@ impl Plan {
             target,
             context,
             filters,
+            resident_bytes: resident,
             bake,
             masks,
         })
     }
     pub fn mask_context(&self) -> super::SourceMaskContext {
         self.masks
+    }
+    pub fn resident_bytes(&self) -> u64 {
+        self.resident_bytes
     }
     pub fn filter_inventory(&self) -> Inventory {
         self.filters

@@ -28,23 +28,24 @@ impl Header {
                 "Browser MSP2 source state changed",
             ));
         }
+        let snapshot = plan.snapshot_contexts(source, &|| Ok(()))?;
         let header = Self {
             source_len: u32::try_from(source.len())
                 .map_err(|_| resource("Browser MSP2 source extent"))?,
             size: plan.size(),
             owner,
             nonce,
-            source_sha256: Sha256::digest(source).into(),
+            source_sha256: snapshot.source_sha256,
             source_flags: plan.source_flags(),
             bake_intent: plan.bake_intent(),
             filter_digest: plan.filter_digest(),
             metadata: plan.metadata_context(),
             masks: plan.mask_context(),
             spatial: export::SourceSpatialContext::decode_programs(
-                &plan.spatial_context(source.len())?,
+                &snapshot.region,
                 WORKER_PAYLOAD_BYTES_MAX,
             )?,
-            programs: export::SourceProgramContext::decode(&plan.program_context(source.len())?)?,
+            programs: export::SourceProgramContext::decode(&snapshot.programs)?,
         };
         header.validate()?;
         Ok(header)

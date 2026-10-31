@@ -11,6 +11,7 @@ use paintcraft_core::types::{
     resources::BudgetScope,
 };
 use std::{cell::Cell, fmt};
+mod shape;
 
 /// Immutable borrowed bytes with a validated outer PCND trailer.
 /// Constructible only by an actual integrity pass; no caller authentication flag.
@@ -29,6 +30,44 @@ impl fmt::Debug for CheckedContainer<'_> {
     }
 }
 impl<'a> CheckedContainer<'a> {
+    /// Authenticate the inner trailer and hash the whole immutable source with
+    /// one traversal of its body. Existing `verify` keeps its callback contract.
+    pub fn verify_with_source_hash(
+        bytes: &'a [u8],
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, [u8; 32])> {
+        if bytes.len() < MAGIC.len() + 32 || &bytes[..4] != b"PCND" || bytes[5..8] != MAGIC[5..8] {
+            return Err(codec("invalid compact PCND header"));
+        }
+        #[cfg(test)]
+        PAYLOAD_HASH_PASSES.with(|passes| passes.set(passes.get() + 1));
+        let (body, trailer) = bytes.split_at(bytes.len() - 32);
+        let mut hash = Sha256::new();
+        for chunk in body.chunks(65_536) {
+            check()?;
+            hash.update(chunk);
+        }
+        if hash.clone().finalize().as_slice() != trailer {
+            return Err(codec("compact PCND SHA-256 mismatch"));
+        }
+        hash.update(trailer);
+        let whole = hash.finalize().into();
+        Ok((
+            Self {
+                bytes,
+                body: &body[MAGIC.len()..],
+                version: bytes[4],
+            },
+            whole,
+        ))
+    }
+
+    /// Count actual encoded tile records without inflating pixels or adopting a
+    /// Document. Includes explicit all-default records: the reader retains them.
+    /// This bounded structural assessment is not full typed document validity.
+    pub fn snapshot_tile_records_checked(&self, check: &dyn Fn() -> Result<()>) -> Result<u64> {
+        shape::tile_records(self, check)
+    }
     pub fn verify(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<Self> {
         let body = payload(bytes, check)?;
         Ok(Self {
