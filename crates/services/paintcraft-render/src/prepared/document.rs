@@ -101,6 +101,15 @@ pub fn prepare_document_levels(
     if !active(doc) {
         return Ok(admission);
     }
+    if admission.prepared_programs().is_some() {
+        // An Exposure-only frozen job must not acquire an ignored legacy
+        // Levels attachment, even when a caller enters through this old API.
+        for layer in doc.layers.values() {
+            check()?;
+            validate_layer_levels(layer, &admission, check)?;
+        }
+        return Ok(admission);
+    }
     if let Some(job) = admission.prepared_levels() {
         for layer in doc.layers.values() {
             check()?;

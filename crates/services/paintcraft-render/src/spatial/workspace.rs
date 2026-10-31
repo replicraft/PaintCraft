@@ -139,10 +139,8 @@ impl Workspace {
                 }
                 std::mem::swap(&mut self.front, &mut self.back);
             } else {
-                let program = crate::appearance::PointProgram::new(
-                    filter.descriptor(),
-                    admission.prepared_levels(),
-                )?;
+                let program =
+                    crate::appearance::PointProgram::new(filter.descriptor(), Some(admission))?;
                 let width = stage.output.width() as usize;
                 for (i, pixel) in self.front[..output_count].iter_mut().enumerate() {
                     if i.is_multiple_of(64) {

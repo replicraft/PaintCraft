@@ -88,7 +88,35 @@ impl PreparedLevelsJob {
         admission: WorkspaceAdmission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        Self::new_with_tail(policies, admission, check, 0)
+    }
+    pub(super) fn new_with_tail(
+        policies: &[LevelsRgbV1],
+        admission: WorkspaceAdmission,
+        check: &dyn Fn() -> Result<()>,
+        following_peak: u64,
+    ) -> Result<Self> {
         let plan = quote_levels_job(policies)?;
+        Self::new_with_capacity(
+            policies,
+            admission,
+            check,
+            following_peak,
+            plan,
+            plan.unique_programs,
+        )
+    }
+    // Private allocation seam: production always requests exactly the plan. A
+    // test can deliberately request a larger real Vec to exercise reconciliation
+    // without depending on accidental allocator over-allocation or global hooks.
+    fn new_with_capacity(
+        policies: &[LevelsRgbV1],
+        admission: WorkspaceAdmission,
+        check: &dyn Fn() -> Result<()>,
+        following_peak: u64,
+        plan: LevelsJobQuote,
+        requested_capacity: usize,
+    ) -> Result<Self> {
         if plan.peak_bytes > admission.bytes_limit()
             || admission
                 .work_used()
@@ -102,7 +130,7 @@ impl PreparedLevelsJob {
         charge.resize(plan.index_bytes)?;
         let mut programs = Vec::new();
         programs
-            .try_reserve_exact(plan.unique_programs)
+            .try_reserve_exact(requested_capacity)
             .map_err(|_| limit("Prepared Levels job index allocation failed"))?;
         // Rust may grant more capacity than requested. Reconcile privately,
         // before compiling any program or publishing any borrowed lookup.
@@ -112,6 +140,12 @@ impl PreparedLevelsJob {
             .checked_sub(plan.index_bytes)
             .and_then(|peak| peak.checked_add(actual_index))
             .ok_or_else(|| limit("Prepared Levels job actual peak overflows"))?;
+        if following_peak != 0 {
+            // Price every actual pointer slot while all captured/index payloads
+            // coexist, before checking the following family or compiling.
+            charge.resize(actual_index)?;
+            check_following_capacity(&plan, actual_index, following_peak, admission.bytes_limit())?;
+        }
         if actual_peak > admission.bytes_limit() {
             return Err(limit(
                 "Prepared Levels job actual index exceeds its allowance",
@@ -161,3 +195,20 @@ impl PreparedLevelsJob {
 #[cfg(test)]
 #[path = "job_tests.rs"]
 mod tests;
+
+fn check_following_capacity(
+    plan: &LevelsJobQuote,
+    actual_index: u64,
+    tail: u64,
+    limit_bytes: u64,
+) -> Result<()> {
+    let retained = actual_index
+        .checked_add(plan.unique_programs as u64 * super::LEVELS_TABLE_BYTES)
+        .ok_or_else(|| limit("Prepared Levels actual following retention overflows"))?;
+    if retained.checked_add(tail).is_none_or(|n| n > limit_bytes) {
+        return Err(limit(
+            "Prepared Levels actual following phase exceeds allowance",
+        ));
+    }
+    Ok(())
+}

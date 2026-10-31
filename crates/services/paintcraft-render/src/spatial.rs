@@ -8,8 +8,8 @@ mod context;
 mod plan;
 mod tiles;
 mod workspace;
+pub use context::{capture_workspace_or_current, with_workspace, with_workspace_or_current};
 pub(crate) use context::{captured, current};
-pub use context::{with_workspace, with_workspace_or_current};
 pub use plan::{LayerAppearancePlan, WorkspaceQuote};
 pub use tiles::{TiledQuote, quote_layer};
 pub(crate) use tiles::{preflight, visit};
@@ -23,6 +23,7 @@ pub struct WorkspaceAdmission {
     work_limit: u64,
     work_used: std::sync::Arc<std::sync::Mutex<u64>>,
     levels: Option<std::sync::Arc<crate::prepared::PreparedLevelsJob>>,
+    programs: Option<std::sync::Arc<crate::prepared::PreparedPointJob>>,
 }
 impl WorkspaceAdmission {
     pub fn new(scope: BudgetScope, bytes_limit: u64, work_limit: u64) -> Self {
@@ -32,11 +33,36 @@ impl WorkspaceAdmission {
             work_limit,
             work_used: std::sync::Arc::new(std::sync::Mutex::new(0)),
             levels: None,
+            programs: None,
         }
     }
     /// Immutable programs captured for this frozen rendering invocation.
     pub fn prepared_levels(&self) -> Option<&crate::prepared::PreparedLevelsJob> {
-        self.levels.as_deref()
+        match &self.programs {
+            Some(job) => job.levels(),
+            None => self.levels.as_deref(),
+        }
+    }
+    pub fn prepared_programs(&self) -> Option<&crate::prepared::PreparedPointJob> {
+        self.programs.as_deref()
+    }
+    /// Actual retained logical program payload, not allocator/Arc bookkeeping.
+    pub fn prepared_retained_bytes(&self) -> u64 {
+        self.prepared_programs().map_or_else(
+            || {
+                self.prepared_levels()
+                    .map_or(0, crate::prepared::PreparedLevelsJob::retained_bytes)
+            },
+            crate::prepared::PreparedPointJob::retained_bytes,
+        )
+    }
+    pub(crate) fn with_programs(
+        mut self,
+        job: std::sync::Arc<crate::prepared::PreparedPointJob>,
+    ) -> Self {
+        self.levels = None;
+        self.programs = Some(job);
+        self
     }
     pub(crate) fn with_levels(
         mut self,
@@ -66,7 +92,9 @@ impl WorkspaceAdmission {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
     }
-    pub(crate) fn reserve_work(&self, work: u64) -> Result<()> {
+    /// Spend modeled work on this same cumulative ledger. Clones share the
+    /// counter; this method cannot reset it, refund work or enlarge its ceiling.
+    pub fn reserve_work(&self, work: u64) -> Result<()> {
         let mut used = self
             .work_used
             .lock()
@@ -162,7 +190,7 @@ impl LayerAppearancePlan<'_> {
                 "Spatial appearance exceeds its workspace or work limit",
             ));
         }
-        crate::prepared::validate_layer_levels(self.layer, admission, check)?;
+        crate::prepared::validate_layer_programs(self.layer, admission, check)?;
         check()?;
         admission.reserve_work(self.quote.work)?;
         let mut workspace = workspace::Workspace::new(self, admission, check)?;

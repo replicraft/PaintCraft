@@ -39,6 +39,31 @@ pub(crate) fn current() -> Option<WorkspaceAdmission> {
             .map(|(admission, _)| admission.clone())
     })
 }
+/// Capture an installed caller for work that must survive synchronous scope
+/// exit. The fallback is constructed only when no caller exists. This retains
+/// the selected realm, cumulative counter and frozen program owner, tightens
+/// limits, and does not install a thread-local scope.
+pub fn capture_workspace_or_current(
+    fallback: impl FnOnce() -> WorkspaceAdmission,
+    byte_limit: u64,
+    work_limit: u64,
+) -> Result<WorkspaceAdmission> {
+    let mut admission = match current() {
+        Some(admission) => {
+            drop(fallback);
+            admission
+        }
+        None => fallback(),
+    };
+    admission.bytes_limit = admission.bytes_limit.min(byte_limit);
+    admission.work_limit = admission.work_limit.min(work_limit);
+    if admission.work_used() > admission.work_limit {
+        return Err(limit(
+            "Caller already exceeds the operation spatial-work ceiling",
+        ));
+    }
+    Ok(admission)
+}
 /// Reuse an installed caller's byte realm and cumulative spatial-work counter.
 /// Only an absent caller scope selects the supplied operation-reserved fallback.
 /// Limits can tighten either factory, never enlarge it. The tighter work ceiling
@@ -80,6 +105,50 @@ pub(crate) fn captured<T>(
 mod tests {
     use super::*;
     use paintcraft_core::types::resources::{AllocationClass, SharedBudget};
+    #[test]
+    fn captured_caller_survives_scope_exit_and_spends_without_constructing_fallback() {
+        let parent_budget = SharedBudget::new(1024);
+        let spare_budget = SharedBudget::new(1024);
+        let parent =
+            WorkspaceAdmission::new(parent_budget.scope(AllocationClass::SharedBudget), 512, 10);
+        parent.reserve_work(3).unwrap();
+        let captured = with_workspace(parent.clone(), || {
+            capture_workspace_or_current(|| panic!("unused fallback constructed"), 128, 5)
+        })
+        .unwrap();
+        assert!(current().is_none());
+        assert_eq!((captured.bytes_limit(), captured.work_limit()), (128, 5));
+        captured.reserve_work(2).unwrap();
+        assert_eq!(parent.work_used(), 5);
+        assert!(captured.reserve_work(1).is_err());
+        assert_eq!(parent.work_used(), 5);
+        let mut charge = captured.scope().account();
+        charge.resize(64).unwrap();
+        assert_eq!(parent_budget.usage().reserved, 64);
+        assert_eq!(spare_budget.usage().reserved, 0);
+        drop(charge);
+        parent.reserve_work(1).unwrap();
+        assert_eq!(parent.work_used(), 6);
+        assert!(
+            with_workspace(parent, || {
+                capture_workspace_or_current(|| panic!("denial chose fallback"), 128, 5)
+            })
+            .is_err()
+        );
+        let fallback = capture_workspace_or_current(
+            || WorkspaceAdmission::new(spare_budget.scope(AllocationClass::SharedBudget), 256, 3),
+            64,
+            2,
+        )
+        .unwrap();
+        fallback.reserve_work(2).unwrap();
+        assert!(fallback.reserve_work(1).is_err());
+        let mut charge = fallback.scope().account();
+        charge.resize(16).unwrap();
+        assert_eq!(spare_budget.usage().reserved, 16);
+        assert_eq!(parent_budget.usage().reserved, 0);
+        assert!(current().is_none());
+    }
     #[test]
     fn absent_captured_owner_cannot_borrow_an_unrelated_worker_scope() {
         let budget = SharedBudget::new(4096);

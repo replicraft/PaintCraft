@@ -337,3 +337,51 @@ fn eager_job_and_spatial_regions_share_the_same_counter_in_both_orders() {
         assert_eq!(realm.usage().reserved, 0);
     }
 }
+
+#[test]
+fn reconciled_index_must_leave_room_for_following_family_before_any_compile() {
+    use crate::prepared::quote_exposure;
+    use paintcraft_core::types::filters::ExposureSrgbV1;
+    let p = LevelsRgbV1::default();
+    let plan = quote_levels_job(&[p]).unwrap();
+    let tail = quote_exposure(ExposureSrgbV1::new(100).unwrap()).peak_bytes;
+    let nominal = plan.index_bytes + 256 + tail;
+    assert!(plan.peak_bytes <= nominal);
+    let capture = 2048;
+    let e_index = std::mem::size_of::<Arc<crate::prepared::PreparedExposure>>() as u64;
+    let realm = SharedBudget::new(capture + e_index + nominal);
+    let scope = realm.scope(AllocationClass::SharedBudget);
+    let mut c = scope.account();
+    c.resize(capture).unwrap();
+    let mut e = scope.account();
+    e.resize(e_index).unwrap();
+    let admission = factory(&realm, nominal, plan.compile_work);
+    let calls = Cell::new(0);
+    // A real two-slot Vec for a one-key plan reproduces allocator excess. The
+    // same constructor path prices/reconciles it before any program reserves
+    // compile work; there is no fake compiler or global allocator override.
+    let result = PreparedLevelsJob::new_with_capacity(
+        &[p],
+        admission.clone(),
+        &|| {
+            calls.set(calls.get() + 1);
+            Ok(())
+        },
+        tail,
+        plan,
+        plan.unique_programs + 1,
+    );
+    assert_eq!(result.unwrap_err().code, ErrorCode::ResourceLimit);
+    assert_eq!(admission.work_used(), 0);
+    assert_eq!(calls.get(), 1);
+    assert_eq!(realm.usage().reserved, capture + e_index);
+    // The exact requested capacity fits and compiles once under that same parent.
+    let job = PreparedLevelsJob::new_with_tail(&[p], admission.clone(), &|| Ok(()), tail).unwrap();
+    assert_eq!(admission.work_used(), plan.compile_work);
+    assert_eq!(
+        realm.usage().reserved,
+        capture + e_index + job.retained_bytes()
+    );
+    drop((job, c, e));
+    assert_eq!(realm.usage().reserved, 0);
+}
