@@ -14,6 +14,8 @@ use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
 mod filters;
 pub use filters::{FilterOp, FilterRef, MaskOp};
+mod catalog;
+pub use catalog::CATALOG_BATCH_SCHEMA;
 mod mask;
 pub use mask::{validate_mask_spans, validate_mask_spans_checked};
 mod contour;
@@ -236,7 +238,11 @@ impl Batch {
         let version = operations
             .into_iter()
             .map(|(name, kind)| {
-                if matches!(name, "filter.add" | "filter.update") && kind == Some("box-blur-v1") {
+                if matches!(name, "filter.add" | "filter.update") && kind == Some("levels-rgb-v1") {
+                    6
+                } else if matches!(name, "filter.add" | "filter.update")
+                    && kind == Some("box-blur-v1")
+                {
                     5
                 } else if matches!(name, "filter.add" | "filter.update")
                     && matches!(
@@ -259,6 +265,7 @@ impl Batch {
             .max()
             .unwrap_or(2);
         match version {
+            6 => CATALOG_BATCH_SCHEMA,
             5 => "paintcraft.batch/v5",
             4 => "paintcraft.batch/v4",
             3 => "paintcraft.batch/v3",
@@ -286,17 +293,27 @@ impl Batch {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Batch> {
         check()?;
-        let top = obj(
-            v,
-            &["schema", "atomic", "policy", "base", "operations"],
-            &["seed"],
-        )?;
+        let catalog = v.get("schema").and_then(Value::as_str) == Some(CATALOG_BATCH_SCHEMA);
+        let required: &[&str] = if catalog {
+            &[
+                "schema",
+                "atomic",
+                "policy",
+                "base",
+                "operations",
+                "required_filters",
+            ]
+        } else {
+            &["schema", "atomic", "policy", "base", "operations"]
+        };
+        let top = obj(v, required, &["seed"])?;
         let version = match top["schema"].as_str() {
             Some("paintcraft.batch/v1") => 1,
             Some("paintcraft.batch/v2") => 2,
             Some("paintcraft.batch/v3") => 3,
             Some("paintcraft.batch/v4") => 4,
             Some("paintcraft.batch/v5") => 5,
+            Some(CATALOG_BATCH_SCHEMA) => 6,
             _ => {
                 return Err(bad(
                     "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3, paintcraft.batch/v4 or paintcraft.batch/v5",
@@ -322,6 +339,9 @@ impl Batch {
             .ok_or_else(|| bad("operations must be an array"))?;
         if ops.is_empty() || ops.len() > MAX_OPERATIONS {
             return Err(bad("operations must contain 1..=1024 items"));
+        }
+        if catalog {
+            catalog::validate(v)?;
         }
         let operations = ops
             .iter()

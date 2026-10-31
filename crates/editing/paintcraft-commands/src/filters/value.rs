@@ -122,7 +122,7 @@ impl FilterOp {
         );
         // Keep a single authority for aliases, references and descriptor bounds.
         // This is operation-only parsing and never recursively calls to_value.
-        super::parse(&value)?;
+        super::parse_catalog(&value)?;
         Ok(value)
     }
 }

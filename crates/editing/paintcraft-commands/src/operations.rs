@@ -42,7 +42,7 @@ pub(super) fn op(
     }
     Ok(match name {
         name if name.starts_with("filter.") => {
-            let parsed = filters::parse_with_coverage(v, budget, check)?;
+            let parsed = filters::parse_with_coverage(v, version, budget, check)?;
             let Op::Filter(filter) = &parsed else {
                 unreachable!("filter parser")
             };

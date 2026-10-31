@@ -56,6 +56,7 @@ impl FilterOp {
         match self {
             Self::Mask { .. } => 3,
             Self::Add { descriptor, .. } | Self::Update { descriptor, .. } => match descriptor {
+                Descriptor::LevelsRgbV1(_) => 6,
                 Descriptor::BoxBlurV1(_) => 5,
                 Descriptor::InvertRgbV1 | Descriptor::BrightnessContrastV1(_) => 2,
                 Descriptor::BlackWhiteRgbV1(_)
@@ -110,6 +111,12 @@ fn descriptor(v: &Value) -> Result<Descriptor> {
     Descriptor::from_value(v)
 }
 pub(super) fn parse(v: &Value) -> Result<Op> {
+    parse_using(v, descriptor)
+}
+pub(super) fn parse_catalog(v: &Value) -> Result<Op> {
+    parse_using(v, Descriptor::from_catalog_value)
+}
+fn parse_using(v: &Value, descriptor: fn(&Value) -> Result<Descriptor>) -> Result<Op> {
     let name = v
         .get("op")
         .and_then(Value::as_str)
@@ -170,6 +177,7 @@ pub(super) fn parse(v: &Value) -> Result<Op> {
 
 pub(super) fn parse_with_coverage(
     v: &Value,
+    version: u8,
     budget: &paintcraft_core::types::resources::SharedBudget,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Op> {
@@ -178,6 +186,8 @@ pub(super) fn parse_with_coverage(
         .is_some_and(|name| name.starts_with("filter.mask."))
     {
         masks::parse(v, budget, check)
+    } else if version >= 6 {
+        parse_catalog(v)
     } else {
         parse(v)
     }
