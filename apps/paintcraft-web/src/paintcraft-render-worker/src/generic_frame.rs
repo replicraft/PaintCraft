@@ -191,8 +191,7 @@ impl GenericFrame {
             profile.bytes,
             profile.work,
         )?;
-        let bound =
-            admission.prepared_programs().is_some() || admission.prepared_levels().is_some();
+        let bound = admission.has_prepared_programs();
         let programs = paintcraft_render::prepared::quote_document_programs(doc, &|| Ok(()))?;
         // An existing bound job is never extended. Validate even quote-only
         // requests, before cache use; this helper cannot compile a missing key.
