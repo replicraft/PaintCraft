@@ -78,6 +78,49 @@ fn assessment(sha: &str, m: &pcnd::Header, mode: &str, reasons: &[String]) -> Va
     ])
 }
 
+fn catalog_assessment(
+    sha: &str,
+    header: &pcnd::Header,
+    mode: &str,
+    reasons: &[String],
+    bytes: &[u8],
+) -> Result<Value> {
+    let mut result = assessment(sha, header, mode, reasons);
+    if header.container_version == 6 {
+        let requirements = pcnd::catalog_manifest(bytes)?;
+        let Value::Object(ref mut fields) = result else {
+            unreachable!("assessment object");
+        };
+        fields.insert(
+            "schema".into(),
+            Value::str("paintcraft.open-assessment/catalog-v1"),
+        );
+        // Header support describes grammar only. A known adoption profile is
+        // reported only after the complete document reader accepted every pair.
+        if mode == "editable" && header.require_supported().is_ok() {
+            fields.insert(
+                "profile".into(),
+                Value::str("paintcraft.native/binary6-document6-filter-catalog1"),
+            );
+        }
+        fields.insert(
+            "required_filters".into(),
+            Value::Array(
+                requirements
+                    .into_iter()
+                    .map(|requirement| {
+                        Value::object([
+                            ("profile_id", Value::str(requirement.profile_id)),
+                            ("codec_id", Value::str(requirement.codec_id)),
+                        ])
+                    })
+                    .collect(),
+            ),
+        );
+    }
+    Ok(result)
+}
+
 pub fn run(a: Options, json: bool) -> Reply {
     let parsed = (|| {
         let (bytes, sha) = read_bounded(&a.input, INPUT_MAX, "input")?;
@@ -91,12 +134,16 @@ pub fn run(a: Options, json: bool) -> Reply {
     match super::source_metadata::read(&bytes) {
         Ok(doc) => {
             let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
+            let assessed = match catalog_assessment(&sha, &header, "editable", &[], &bytes) {
+                Ok(value) => value,
+                Err(error) => return bare(json, Err(error)),
+            };
             let mut value = Value::object([
                 (
                     "schema",
                     Value::str(super::filter_inspection::cli_schema(&doc)),
                 ),
-                ("assessment", assessment(&sha, &header, "editable", &[])),
+                ("assessment", assessed),
                 (
                     "document",
                     Value::object([
@@ -123,6 +170,16 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ("input_sha256", Value::str(&sha)),
             ]);
             let features = paintcraft_editor::session::masked_document_features(&doc);
+            let requirements = paintcraft_editor::session::catalog_document_requirements(&doc);
+            if !requirements.is_empty() {
+                let Value::Object(ref mut fields) = value else {
+                    unreachable!("inspection object");
+                };
+                fields.insert(
+                    "required_filters".into(),
+                    Value::Array(requirements.into_iter().map(Value::str).collect()),
+                );
+            }
             if !features.is_empty() {
                 let Value::Object(fields) = &mut value else {
                     unreachable!("object")
@@ -157,7 +214,16 @@ pub fn run(a: Options, json: bool) -> Reply {
         {
             match pcnd::probe(&bytes) {
                 Ok(m) => {
-                    let value = assessment(&sha, &m, "reject", std::slice::from_ref(&e.message));
+                    let value = match catalog_assessment(
+                        &sha,
+                        &m,
+                        "reject",
+                        std::slice::from_ref(&e.message),
+                        &bytes,
+                    ) {
+                        Ok(value) => value,
+                        Err(error) => return bare(json, Err(error)),
+                    };
                     Reply {
                         stdout: if json { json_line(&value) } else { Vec::new() },
                         stderr: format!("rejected: {e}\n"),
@@ -168,5 +234,72 @@ pub fn run(a: Options, json: bool) -> Reply {
             }
         }
         Err(e) => bare(json, Err(e)),
+    }
+}
+
+#[cfg(test)]
+mod catalog_tests {
+    use super::*;
+    #[test]
+    fn unknown_required_profiles_and_codecs_never_claim_an_adopted_profile() {
+        let oracle = paintcraft_core::types::json::parse(include_bytes!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../crates/services/paintcraft-formats/tests/pcnd-catalog-fixtures/oracle.json"
+        )))
+        .unwrap();
+        for name in [
+            "unknown-profile",
+            "unknown-disabled-profile",
+            "unknown-codec",
+            "unknown-disabled-codec",
+        ] {
+            let fixture = oracle
+                .get("fixtures")
+                .unwrap()
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|fixture| fixture.get("name").and_then(Value::as_str) == Some(name))
+                .unwrap();
+            let hex = fixture.get("hex").unwrap().as_str().unwrap().as_bytes();
+            let (pairs, remainder) = hex.as_chunks::<2>();
+            assert!(remainder.is_empty());
+            let bytes: Vec<u8> = pairs
+                .iter()
+                .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
+                .collect();
+            let header = pcnd::probe(&bytes).unwrap();
+            assert!(header.require_supported().is_ok()); // Grammar is known.
+            assert_eq!(
+                super::super::source_metadata::read(&bytes)
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported
+            );
+            let value = catalog_assessment(
+                "unused",
+                &header,
+                "reject",
+                &["unsupported requirement".into()],
+                &bytes,
+            )
+            .unwrap();
+            assert_eq!(
+                value.get("schema").and_then(Value::as_str),
+                Some("paintcraft.open-assessment/catalog-v1")
+            );
+            assert_eq!(
+                value.get("profile").and_then(Value::as_str),
+                Some("paintcraft.native/unrecognized")
+            );
+            let requirements = value.get("required_filters").unwrap().as_array().unwrap();
+            assert_eq!(requirements.len(), 1);
+            assert!(
+                requirements[0]
+                    .get("profile_id")
+                    .and_then(Value::as_str)
+                    .is_some()
+            );
+        }
     }
 }

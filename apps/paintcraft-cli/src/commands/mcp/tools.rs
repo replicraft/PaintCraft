@@ -329,6 +329,15 @@ impl PaintingServer {
         CallToolResult::success(vec![ContentBlock::text(BATCH_V5_SCHEMA)])
     }
     #[tool(
+        description = "Discover the immutable filter catalog and its resolved schemas, including complete editable Levels. Choose manifest (default), batch, result, file-command, inspect, or mcp-inspect. Discovery grants no rendering or export consent."
+    )]
+    async fn get_catalog_schema(&self, Parameters(p): Parameters<CatalogSchema>) -> CallToolResult {
+        CallToolResult::success(vec![ContentBlock::text(
+            super::super::catalog_schemas::schema(p.kind.name())
+                .expect("all catalog schema enum variants are embedded"),
+        )])
+    }
+    #[tool(
         description = "Apply engine operations as one atomic, undoable batch. Use get_batch_schema for operation definitions. The server captures the current base ticket; failures publish no edits."
     )]
     async fn apply_operations(&self, Parameters(p): Parameters<Batch>) -> CallToolResult {

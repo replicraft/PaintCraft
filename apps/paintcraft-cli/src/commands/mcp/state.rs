@@ -146,6 +146,10 @@ impl State {
         if !features.is_empty() {
             value["document_features"] = json!(features);
         }
+        let requirements = paintcraft_editor::session::catalog_document_requirements(doc);
+        if !requirements.is_empty() {
+            value["required_filters"] = json!(requirements);
+        }
         Ok(value)
     }
     pub fn layer(&mut self, id: Option<String>) -> Result<Json> {
@@ -175,8 +179,29 @@ impl State {
                 )
             }),
         );
-        let batch = json!({"schema":schema,"atomic":true,"policy":POLICY,
+        let requirements = if schema == paintcraft_commands::CATALOG_BATCH_SCHEMA {
+            Some(
+                paintcraft_commands::Batch::catalog_requirements_for_fields(operations.iter().map(
+                    |value| {
+                        (
+                            value.get("op").and_then(Json::as_str).unwrap_or(""),
+                            value
+                                .get("descriptor")
+                                .and_then(|d| d.get("kind"))
+                                .and_then(Json::as_str),
+                        )
+                    },
+                ))
+                .map_err(|error| invalid(&error.to_string()))?,
+            )
+        } else {
+            None
+        };
+        let mut batch = json!({"schema":schema,"atomic":true,"policy":POLICY,
             "base":{"state_id":ticket.state_id.to_string(),"publication_epoch":ticket.publication_epoch.to_string()},"operations":operations});
+        if let Some(requirements) = requirements {
+            batch["required_filters"] = json!(requirements);
+        }
         let bytes = serde_json::to_vec(&batch).map_err(|_| invalid("invalid operations"))?;
         if bytes.len() as u64 > OPERATIONS_MAX {
             return Err(invalid("batch exceeds size limit"));

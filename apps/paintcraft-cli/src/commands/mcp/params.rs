@@ -1,6 +1,36 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum CatalogSchemaKind {
+    #[default]
+    Manifest,
+    Batch,
+    Result,
+    FileCommand,
+    Inspect,
+    McpInspect,
+}
+impl CatalogSchemaKind {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Manifest => "catalog",
+            Self::Batch => "batch-catalog",
+            Self::Result => "result-catalog",
+            Self::FileCommand => "file-command-catalog",
+            Self::Inspect => "inspect-catalog",
+            Self::McpInspect => "mcp-inspect-catalog",
+        }
+    }
+}
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CatalogSchema {
+    #[serde(default)]
+    pub kind: CatalogSchemaKind,
+}
+
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Create {

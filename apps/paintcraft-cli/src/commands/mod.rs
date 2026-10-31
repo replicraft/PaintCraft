@@ -340,6 +340,7 @@ pub mod paste_image;
 pub mod pcx_options;
 pub mod render;
 pub mod schema;
+mod catalog_schemas;
 pub mod svg_options;
 
 pub mod mcp;

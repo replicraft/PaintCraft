@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection"])]
+    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
     schema: String,
 }
 
@@ -11,6 +11,13 @@ pub fn run(a: Options, _json: bool) -> Reply {
     bare(
         true,
         (|| {
+            if let Some(text) = catalog_schemas::schema(&a.schema) {
+                return Ok((
+                    paintcraft_core::types::json::parse(text.as_bytes())
+                        .expect("embedded catalog schema is valid JSON"),
+                    String::new(),
+                ));
+            }
             if a.schema == "source-inspection" {
                 return Ok((inspect_source::schema()?, String::new()));
             }

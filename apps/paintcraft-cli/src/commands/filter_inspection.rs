@@ -22,12 +22,15 @@ pub(super) fn expanded(doc: &Document) -> bool {
                 Descriptor::BlackWhiteRgbV1(_)
                 | Descriptor::ThresholdLumaV1(_)
                 | Descriptor::PosterizeRgbV1(_)
-                | Descriptor::SolarizeRgbV1 => true,
+                | Descriptor::SolarizeRgbV1
+                | Descriptor::LevelsRgbV1(_) => true,
             })
     })
 }
 pub(super) fn cli_schema(doc: &Document) -> &'static str {
-    if spatial(doc) {
+    if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
+        "paintcraft.inspect/catalog-v1"
+    } else if spatial(doc) {
         "paintcraft.inspect/v4"
     } else if expanded(doc) {
         "paintcraft.inspect/v3"
@@ -38,7 +41,9 @@ pub(super) fn cli_schema(doc: &Document) -> &'static str {
     }
 }
 pub(super) fn mcp_schema(doc: &Document, masked: bool) -> Option<&'static str> {
-    if spatial(doc) {
+    if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
+        Some("paintcraft.mcp-inspect/catalog-v1")
+    } else if spatial(doc) {
         Some("paintcraft.mcp-inspect/v4")
     } else if expanded(doc) {
         Some("paintcraft.mcp-inspect/v3")

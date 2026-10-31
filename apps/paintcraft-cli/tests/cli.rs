@@ -132,3 +132,6 @@ mod in_place_conflict;
 
 #[path = "cli/flatten.rs"]
 mod flatten;
+
+#[path = "cli/catalog.rs"]
+mod catalog;

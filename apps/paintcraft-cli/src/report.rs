@@ -30,7 +30,9 @@ pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_
     Value::object([
         (
             "schema",
-            Value::str(if engine_schema == Some("paintcraft.result/v4") {
+            Value::str(if engine_schema == Some("paintcraft.result/catalog-v1") {
+                "paintcraft.file-command/catalog-v1"
+            } else if engine_schema == Some("paintcraft.result/v4") {
                 "paintcraft.file-command/v4"
             } else if engine_schema == Some("paintcraft.result/v3") {
                 "paintcraft.file-command/v3"
