@@ -11,6 +11,13 @@ impl Descriptor {
         };
         let kind = object.get("kind").and_then(Value::as_str);
         let fields: &[&str] = match kind {
+            Some("add-noise-rgb-v1") => &[
+                "kind",
+                "amount_hundredths",
+                "seed",
+                "monochrome",
+                "distribution",
+            ],
             Some("levels-rgb-v1") => &[
                 "kind",
                 "input_black",
@@ -48,6 +55,28 @@ impl Descriptor {
                 .ok_or_else(bad)
         };
         Ok(match kind {
+            Some("add-noise-rgb-v1") => {
+                let seed = object
+                    .get("seed")
+                    .and_then(Value::as_i64)
+                    .and_then(|n| u16::try_from(n).ok())
+                    .ok_or_else(bad)?;
+                let monochrome = object
+                    .get("monochrome")
+                    .and_then(Value::as_bool)
+                    .ok_or_else(bad)?;
+                let distribution = match object.get("distribution").and_then(Value::as_str) {
+                    Some("uniform") => NoiseDistribution::Uniform,
+                    Some("gaussian") => NoiseDistribution::Gaussian,
+                    _ => return Err(bad()),
+                };
+                Self::AddNoiseRgbV1(AddNoiseRgbV1::new(
+                    parameter("amount_hundredths")?,
+                    seed,
+                    monochrome,
+                    distribution,
+                )?)
+            }
             Some("hue-saturation-rgb-v1") => Self::HueSaturationRgbV1(HueSaturationRgbV1::new(
                 parameter("hue_degrees")?,
                 parameter("saturation_hundredths")?,
@@ -104,3 +133,7 @@ mod vibrance_tests;
 #[cfg(test)]
 #[path = "catalog_value/hue_saturation_tests.rs"]
 mod hue_saturation_tests;
+
+#[cfg(test)]
+#[path = "catalog_value/noise_tests.rs"]
+mod noise_tests;

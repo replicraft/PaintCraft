@@ -1,4 +1,4 @@
-//! Continuous coordinates have explicit spaces; integer pixel addressing stays in [`super::Rect`].
+//! Explicit continuous spaces and distinct discrete SOURCE-local pixel addressing.
 //! Glam is an implementation detail, never an on-disk, command or GPU representation.
 use glam::{DAffine2, DVec2};
 use std::marker::PhantomData;

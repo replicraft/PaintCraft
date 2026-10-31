@@ -88,3 +88,22 @@ fn legacy_facade_refuses_hsl_default_and_halfturn_before_callbacks_or_writes() {
         );
     }
 }
+
+#[test]
+fn legacy_coordinate_free_facade_refuses_both_noise_distributions_including_zero() {
+    use paintcraft_core::types::filters::{AddNoiseRgbV1, NoiseDistribution};
+    for distribution in [NoiseDistribution::Uniform, NoiseDistribution::Gaussian] {
+        for amount in [0, 10, 100] {
+            let d = Descriptor::AddNoiseRgbV1(
+                AddNoiseRgbV1::new(amount, u16::MAX, false, distribution).unwrap(),
+            );
+            assert_prepared_required(d);
+            assert_eq!(
+                evaluate_pixel(&[d], Rgba([64, 16, 128, 0]))
+                    .unwrap_err()
+                    .message,
+                "Noise filter requires source-local coordinates and its admitted direct route"
+            );
+        }
+    }
+}

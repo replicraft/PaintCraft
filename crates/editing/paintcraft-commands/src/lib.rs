@@ -242,7 +242,8 @@ impl Batch {
                     && matches!(
                         kind,
                         Some(
-                            "levels-rgb-v1"
+                            "add-noise-rgb-v1"
+                                | "levels-rgb-v1"
                                 | "exposure-srgb-v1"
                                 | "curves-rgb-v1"
                                 | "vibrance-rgb-v1"

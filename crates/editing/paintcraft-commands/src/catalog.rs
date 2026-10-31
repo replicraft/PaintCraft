@@ -3,7 +3,8 @@ use super::*;
 
 pub const CATALOG_BATCH_SCHEMA: &str = "paintcraft.batch/catalog-v1";
 
-const PROFILES: [&str; 12] = [
+const PROFILES: [&str; 13] = [
+    "add-noise-rgb-v1",
     "black-white-rgb-v1",
     "box-blur-v1",
     "brightness-contrast-v1",
@@ -113,3 +114,7 @@ mod vibrance_tests;
 #[cfg(test)]
 #[path = "catalog/hue_saturation_tests.rs"]
 mod hue_saturation_tests;
+
+#[path = "catalog/noise_tests.rs"]
+#[cfg(test)]
+mod noise_tests;

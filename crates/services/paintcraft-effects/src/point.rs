@@ -13,6 +13,9 @@ fn prepared_error(filter: Descriptor) -> Error {
     Error::new(
         ErrorCode::CapabilityUnsupported,
         match filter {
+            Descriptor::AddNoiseRgbV1(_) => {
+                "Noise filter requires source-local coordinates and its admitted direct route"
+            }
             Descriptor::LevelsRgbV1(_) => "Levels filter requires its admitted prepared program",
             Descriptor::ExposureSrgbV1(_) => {
                 "Exposure filter requires its admitted prepared program"
@@ -85,6 +88,7 @@ pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Result<Rgba> {
         Descriptor::CurvesRgbV1(_) => return Err(prepared_error(filter)),
         Descriptor::VibranceRgbV1(_) => return Err(prepared_error(filter)),
         Descriptor::HueSaturationRgbV1(_) => return Err(prepared_error(filter)),
+        Descriptor::AddNoiseRgbV1(_) => return Err(prepared_error(filter)),
         Descriptor::LevelsRgbV1(_) | Descriptor::ExposureSrgbV1(_) => {
             return Err(prepared_error(filter));
         }

@@ -1,4 +1,4 @@
-//! Standalone coordinate-noise intent; no Descriptor or wire registration.
+//! Complete coordinate-noise intent used by the explicit catalog boundary.
 use super::{Error, ErrorCode, Result};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[repr(u8)]

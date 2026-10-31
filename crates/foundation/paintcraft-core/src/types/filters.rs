@@ -63,6 +63,7 @@ pub enum Descriptor {
     CurvesRgbV1(CurvesRgbV1),
     VibranceRgbV1(VibranceRgbV1),
     HueSaturationRgbV1(HueSaturationRgbV1),
+    AddNoiseRgbV1(AddNoiseRgbV1),
 }
 impl Descriptor {
     /// Spatial intentions require a finite source and neighborhood admission.
@@ -80,7 +81,8 @@ impl Descriptor {
             | Self::ExposureSrgbV1(_)
             | Self::CurvesRgbV1(_)
             | Self::VibranceRgbV1(_)
-            | Self::HueSaturationRgbV1(_) => false,
+            | Self::HueSaturationRgbV1(_)
+            | Self::AddNoiseRgbV1(_) => false,
         }
     }
     /// Requires the explicit catalog constructor/persistence boundary. The old
@@ -91,7 +93,8 @@ impl Descriptor {
             | Self::ExposureSrgbV1(_)
             | Self::CurvesRgbV1(_)
             | Self::VibranceRgbV1(_)
-            | Self::HueSaturationRgbV1(_) => true,
+            | Self::HueSaturationRgbV1(_)
+            | Self::AddNoiseRgbV1(_) => true,
             Self::InvertRgbV1
             | Self::BrightnessContrastV1(_)
             | Self::BlackWhiteRgbV1(_)
@@ -115,6 +118,7 @@ impl Descriptor {
             Self::CurvesRgbV1(_) => "curves-rgb-v1",
             Self::VibranceRgbV1(_) => "vibrance-rgb-v1",
             Self::HueSaturationRgbV1(_) => "hue-saturation-rgb-v1",
+            Self::AddNoiseRgbV1(_) => "add-noise-rgb-v1",
         }
     }
     /// Canonical semantic bytes for the finite registered numerical profiles.
@@ -158,6 +162,10 @@ impl Descriptor {
                 2
             }
             Self::HueSaturationRgbV1(p) => {
+                bytes.copy_from_slice(&p.semantic_bytes());
+                6
+            }
+            Self::AddNoiseRgbV1(p) => {
                 bytes.copy_from_slice(&p.semantic_bytes());
                 6
             }
@@ -228,6 +236,22 @@ impl Descriptor {
                 (
                     "lightness_hundredths",
                     Value::Int(i64::from(p.lightness_hundredths())),
+                ),
+            ]),
+            Self::AddNoiseRgbV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                (
+                    "amount_hundredths",
+                    Value::Int(i64::from(p.amount_hundredths())),
+                ),
+                ("seed", Value::Int(i64::from(p.seed()))),
+                ("monochrome", Value::Bool(p.monochrome())),
+                (
+                    "distribution",
+                    Value::str(match p.distribution() {
+                        NoiseDistribution::Uniform => "uniform",
+                        NoiseDistribution::Gaussian => "gaussian",
+                    }),
                 ),
             ]),
             Self::VibranceRgbV1(p) => Value::object([

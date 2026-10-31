@@ -221,3 +221,6 @@ mod vibrance_tests;
 
 #[path = "filter_tests/hue_saturation_tests.rs"]
 mod hue_saturation_tests;
+
+#[path = "filter_tests/noise_tests.rs"]
+mod noise_tests;
