@@ -365,7 +365,12 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
-        && matches!(request.variant, Some(crate::dds::web_export::EXPORT_VARIANT | crate::dds::web_export::v5::EXPORT_VARIANT))
+        && matches!(
+            request.variant,
+            Some(
+                crate::dds::web_export::EXPORT_VARIANT | crate::dds::web_export::v5::EXPORT_VARIANT
+            )
+        )
         && request.extension.is_some_and(|extension| {
             extension
                 .trim_start_matches('.')
@@ -375,7 +380,12 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
-        && matches!(request.variant, Some(crate::msp::web_export::EXPORT_VARIANT | crate::msp::web_export::v5::EXPORT_VARIANT))
+        && matches!(
+            request.variant,
+            Some(
+                crate::msp::web_export::EXPORT_VARIANT | crate::msp::web_export::v5::EXPORT_VARIANT
+            )
+        )
         && request
             .extension
             .is_some_and(|value| value.trim_start_matches('.').eq_ignore_ascii_case("msp"));
