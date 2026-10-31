@@ -502,3 +502,8 @@ white-input-255 = सफेद (इनपुट 255)
 # Signed whole-RGB Vibrance amount; no per-channel LUT.
 vibrance = वाइब्रेंस
 vibrance-amount = वाइब्रेंस की मात्रा (%)
+
+hue-saturation = रंगत / संतृप्ति
+hue-degrees = रंगत (डिग्री)
+saturation-adjustment = संतृप्ति समायोजन (%)
+lightness-adjustment = प्रकाशमानता समायोजन (%)

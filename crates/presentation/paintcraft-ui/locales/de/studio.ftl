@@ -502,3 +502,8 @@ white-input-255 = Weiß (Eingabe 255)
 # Signed whole-RGB Vibrance amount; no per-channel LUT.
 vibrance = Dynamik
 vibrance-amount = Dynamikstärke (%)
+
+hue-saturation = Farbton / Sättigung
+hue-degrees = Farbton (Grad)
+saturation-adjustment = Sättigungsanpassung (%)
+lightness-adjustment = Helligkeitsanpassung (%)

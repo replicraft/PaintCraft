@@ -502,3 +502,8 @@ white-input-255 = 白场（输入 255）
 # Signed whole-RGB Vibrance amount; no per-channel LUT.
 vibrance = 自然饱和度
 vibrance-amount = 自然饱和度强度（%）
+
+hue-saturation = 色相 / 饱和度
+hue-degrees = 色相（度）
+saturation-adjustment = 饱和度调整（%）
+lightness-adjustment = 明度调整（%）

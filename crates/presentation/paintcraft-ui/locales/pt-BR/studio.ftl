@@ -502,3 +502,8 @@ white-input-255 = Brancos (entrada 255)
 # Signed whole-RGB Vibrance amount; no per-channel LUT.
 vibrance = Vivacidade
 vibrance-amount = Intensidade da vivacidade (%)
+
+hue-saturation = Matiz / Saturação
+hue-degrees = Matiz (graus)
+saturation-adjustment = Ajuste de saturação (%)
+lightness-adjustment = Ajuste de luminosidade (%)

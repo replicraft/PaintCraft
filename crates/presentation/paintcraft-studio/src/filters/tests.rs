@@ -304,7 +304,7 @@ fn vibrance_default_signed_amount_roundtrip_and_unclamped_domains() {
         default.descriptor().unwrap(),
         Descriptor::VibranceRgbV1(VibranceRgbV1::default())
     );
-    assert_eq!(Kind::ALL.last(), Some(&Kind::Vibrance));
+    assert_eq!(Kind::ALL[10], Kind::Vibrance);
     for amount in [-100, -99, -1, 0, 1, 99, 100] {
         let descriptor = Descriptor::VibranceRgbV1(VibranceRgbV1::new(amount).unwrap());
         let draft = Parameters::from_descriptor(descriptor);
@@ -327,6 +327,94 @@ fn vibrance_default_signed_amount_roundtrip_and_unclamped_domains() {
             assert!(!translated.trim().is_empty());
             if language != Language::English {
                 assert_ne!(translated, source, "{language:?}: {source}");
+            }
+        }
+    }
+}
+
+#[test]
+fn hue_saturation_controls_preserve_three_signed_units_and_equal_effect_intents() {
+    let default = Parameters::new(Kind::HueSaturation);
+    assert!(default.preview);
+    assert_eq!(
+        default.descriptor().unwrap(),
+        Descriptor::HueSaturationRgbV1(HueSaturationRgbV1::default())
+    );
+    assert_eq!(Kind::ALL.last(), Some(&Kind::HueSaturation));
+    assert_eq!(
+        Kind::ALL
+            .iter()
+            .filter(|&&kind| kind == Kind::HueSaturation)
+            .count(),
+        1
+    );
+    for h in [-180, -1, 0, 1, 180] {
+        for s in [-100, 0, 100] {
+            for l in [-100, 0, 100] {
+                let descriptor =
+                    Descriptor::HueSaturationRgbV1(HueSaturationRgbV1::new(h, s, l).unwrap());
+                let draft = Parameters::from_descriptor(descriptor);
+                assert_eq!(draft.kind, Kind::HueSaturation);
+                assert_eq!(
+                    (
+                        draft.hue_degrees,
+                        draft.saturation_hundredths,
+                        draft.lightness_hundredths
+                    ),
+                    (h, s, l)
+                );
+                assert_eq!(draft.descriptor().unwrap(), descriptor);
+                assert!(!descriptor.is_spatial());
+            }
+        }
+    }
+    let mut negative = default;
+    negative.hue_degrees = -180;
+    let mut positive = default;
+    positive.hue_degrees = 180;
+    assert_ne!(
+        negative.descriptor().unwrap(),
+        positive.descriptor().unwrap()
+    );
+    for (axis, invalid) in [
+        (0, -181),
+        (0, 181),
+        (1, -101),
+        (1, 101),
+        (2, -101),
+        (2, 101),
+        (0, i16::MIN),
+        (1, i16::MAX),
+    ] {
+        let mut draft = default;
+        match axis {
+            0 => draft.hue_degrees = invalid,
+            1 => draft.saturation_hundredths = invalid,
+            2 => draft.lightness_hundredths = invalid,
+            _ => unreachable!(),
+        }
+        assert_eq!(
+            draft.descriptor().unwrap_err().code,
+            paintcraft_core::types::ErrorCode::InputSchema
+        );
+    }
+}
+
+#[test]
+fn hue_saturation_captions_are_distinct_and_translated_in_all_seven_locales() {
+    for language in Language::ALL {
+        let mut labels = std::collections::BTreeSet::new();
+        for source in [
+            "Hue / Saturation",
+            "Hue (degrees)",
+            "Saturation adjustment (%)",
+            "Lightness adjustment (%)",
+        ] {
+            let label = translate(language, source);
+            assert!(!label.trim().is_empty());
+            assert!(labels.insert(label.clone()), "{language:?}: {source}");
+            if language != Language::English {
+                assert_ne!(label, source, "{language:?}: {source}");
             }
         }
     }

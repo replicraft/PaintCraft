@@ -502,3 +502,8 @@ white-input-255 = 白（入力 255）
 # Signed whole-RGB Vibrance amount; no per-channel LUT.
 vibrance = 自然な彩度
 vibrance-amount = 自然な彩度の量（%）
+
+hue-saturation = 色相 / 彩度
+hue-degrees = 色相（度）
+saturation-adjustment = 彩度の調整（%）
+lightness-adjustment = 明度の調整（%）

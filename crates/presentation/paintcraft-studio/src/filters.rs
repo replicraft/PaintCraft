@@ -3,7 +3,7 @@ use paintcraft_core::types::{
     Result,
     filters::{
         BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor, ExposureSrgbV1,
-        LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1, VibranceRgbV1,
+        HueSaturationRgbV1, LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1, VibranceRgbV1,
     },
 };
 use paintcraft_ui::t;
@@ -22,9 +22,10 @@ pub enum Kind {
     Exposure,
     Curves,
     Vibrance,
+    HueSaturation,
 }
 impl Kind {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 12] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
@@ -36,6 +37,7 @@ impl Kind {
         Self::Exposure,
         Self::Curves,
         Self::Vibrance,
+        Self::HueSaturation,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -50,6 +52,7 @@ impl Kind {
             Self::Exposure => "Exposure",
             Self::Curves => "Curves",
             Self::Vibrance => "Vibrance",
+            Self::HueSaturation => "Hue / Saturation",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -65,6 +68,7 @@ impl Kind {
             Descriptor::ExposureSrgbV1(_) => Self::Exposure,
             Descriptor::CurvesRgbV1(_) => Self::Curves,
             Descriptor::VibranceRgbV1(_) => Self::Vibrance,
+            Descriptor::HueSaturationRgbV1(_) => Self::HueSaturation,
         }
     }
     fn title(self, ctx: &egui::Context) -> String {
@@ -245,6 +249,9 @@ pub struct Parameters {
     pub stops_hundredths: i16,
     pub curve_outputs: [u8; 5],
     pub vibrance_amount: i16,
+    pub hue_degrees: i16,
+    pub saturation_hundredths: i16,
+    pub lightness_hundredths: i16,
     pub preview: bool,
 }
 impl Parameters {
@@ -265,6 +272,9 @@ impl Parameters {
             stops_hundredths: 0,
             curve_outputs: [0, 64, 128, 192, 255],
             vibrance_amount: 0,
+            hue_degrees: 0,
+            saturation_hundredths: 0,
+            lightness_hundredths: 0,
             preview: true,
         }
     }
@@ -289,6 +299,11 @@ impl Parameters {
             Descriptor::ExposureSrgbV1(p) => draft.stops_hundredths = p.stops_hundredths(),
             Descriptor::CurvesRgbV1(p) => draft.curve_outputs = p.outputs(),
             Descriptor::VibranceRgbV1(p) => draft.vibrance_amount = p.amount_hundredths(),
+            Descriptor::HueSaturationRgbV1(p) => {
+                draft.hue_degrees = p.hue_degrees();
+                draft.saturation_hundredths = p.saturation_hundredths();
+                draft.lightness_hundredths = p.lightness_hundredths();
+            }
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
@@ -313,6 +328,13 @@ impl Parameters {
                 self.output_white,
             )
             .map(Descriptor::LevelsRgbV1),
+            Kind::HueSaturation => HueSaturationRgbV1::new(
+                self.hue_degrees,
+                self.saturation_hundredths,
+                self.lightness_hundredths,
+            )
+            .map(Descriptor::HueSaturationRgbV1),
+
             Kind::Vibrance => {
                 VibranceRgbV1::new(self.vibrance_amount).map(Descriptor::VibranceRgbV1)
             }
@@ -387,6 +409,20 @@ fn draw_parameters(
                 );
             }
             match values.kind {
+                Kind::HueSaturation => {
+                    ui.add(
+                        egui::Slider::new(&mut values.hue_degrees, -180..=180)
+                            .text(t!(ui.ctx(), "Hue (degrees)")),
+                    );
+                    ui.add(
+                        egui::Slider::new(&mut values.saturation_hundredths, -100..=100)
+                            .text(t!(ui.ctx(), "Saturation adjustment (%)")),
+                    );
+                    ui.add(
+                        egui::Slider::new(&mut values.lightness_hundredths, -100..=100)
+                            .text(t!(ui.ctx(), "Lightness adjustment (%)")),
+                    );
+                }
                 Kind::Vibrance => {
                     ui.add(
                         egui::Slider::new(&mut values.vibrance_amount, -100..=100)
