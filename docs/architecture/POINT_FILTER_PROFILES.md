@@ -275,8 +275,10 @@ explicit preset; it need not duplicate a kernel or inflate the algorithm count.
 and [Curves](CURVES_FILTER_FOUNDATION.md) now have separately qualified exact
 contracts and editable catalog integration. [Vibrance](VIBRANCE_FILTER_FOUNDATION.md)
 now has separately qualified native/Wasm arithmetic and locally qualified editable
-catalog, persistence, rendering and browser delivery. Hue/Saturation and seeded noise still need explicit
-deterministic arithmetic or coordinate contracts. HSL/Vibrance couples all three
+catalog, persistence, rendering and browser delivery.
+[Hue/Saturation](HUE_SATURATION_FILTER_FOUNDATION.md) has a separately qualified
+native/Wasm foundation but no editable catalog registration. Seeded noise still
+needs an explicit coordinate contract. HSL/Vibrance couples all three
 RGB channels; independent per-channel lookup tables cannot represent it.
 
 ## Spatial integration boundary

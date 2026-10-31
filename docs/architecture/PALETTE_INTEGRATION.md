@@ -20,6 +20,11 @@ decoded causal pixels. All 3,491 producer inputs and 27 assets remain unchanged.
 Full package regression passes 405 web tests (three ignored) and 236 CLI/MCP
 tests (fifteen ignored). The integrated revision's CI remains a separate gate.
 
+[Hue/Saturation](HUE_SATURATION_FILTER_FOUNDATION.md) now has a separately
+qualified native/Wasm numerical foundation with three bounded signed parameters.
+It remains outside the eleven-profile editable catalog; persistence, renderer
+admission, Studio controls and automation registration are the next slice.
+
 Five-point [Curves](CURVES_FILTER_FOUNDATION.md) is locally integrated through
 typed catalog commands, PCND6, prepared CPU filtering, Metal presentation,
 native/browser Studio controls and CLI/MCP. Five independently editable output
