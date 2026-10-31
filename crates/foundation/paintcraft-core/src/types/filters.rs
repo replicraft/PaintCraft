@@ -51,6 +51,7 @@ pub enum Descriptor {
     SolarizeRgbV1,
     BoxBlurV1(BoxBlurV1),
     LevelsRgbV1(LevelsRgbV1),
+    ExposureSrgbV1(ExposureSrgbV1),
 }
 impl Descriptor {
     /// Spatial intentions require a finite source and neighborhood admission.
@@ -64,14 +65,15 @@ impl Descriptor {
             | Self::ThresholdLumaV1(_)
             | Self::PosterizeRgbV1(_)
             | Self::SolarizeRgbV1
-            | Self::LevelsRgbV1(_) => false,
+            | Self::LevelsRgbV1(_)
+            | Self::ExposureSrgbV1(_) => false,
         }
     }
     /// Requires the explicit catalog constructor/persistence boundary. The old
     /// seven-profile parser and container registries do not gain this capability.
     pub const fn is_catalog_only(self) -> bool {
         match self {
-            Self::LevelsRgbV1(_) => true,
+            Self::LevelsRgbV1(_) | Self::ExposureSrgbV1(_) => true,
             Self::InvertRgbV1
             | Self::BrightnessContrastV1(_)
             | Self::BlackWhiteRgbV1(_)
@@ -91,9 +93,10 @@ impl Descriptor {
             Self::SolarizeRgbV1 => "solarize-rgb-v1",
             Self::BoxBlurV1(_) => "box-blur-v1",
             Self::LevelsRgbV1(_) => "levels-rgb-v1",
+            Self::ExposureSrgbV1(_) => "exposure-srgb-v1",
         }
     }
-    /// Canonical semantic bytes for the finite initial eight numerical profiles.
+    /// Canonical semantic bytes for the finite registered numerical profiles.
     /// Only the returned used prefix is semantic; zero padding is excluded.
     /// This is independent of any transport codec, JSON or derived lookup table.
     pub fn semantic_parameter_bytes(self) -> ([u8; 6], usize) {
@@ -128,6 +131,10 @@ impl Descriptor {
                 bytes[4] = p.output_black();
                 bytes[5] = p.output_white();
                 6
+            }
+            Self::ExposureSrgbV1(p) => {
+                bytes[..2].copy_from_slice(&p.semantic_bytes());
+                2
             }
         };
         (bytes, length)
@@ -170,6 +177,13 @@ impl Descriptor {
                 ),
                 ("output_black", Value::Int(i64::from(p.output_black()))),
                 ("output_white", Value::Int(i64::from(p.output_white()))),
+            ]),
+            Self::ExposureSrgbV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                (
+                    "stops_hundredths",
+                    Value::Int(i64::from(p.stops_hundredths())),
+                ),
             ]),
         }
     }
