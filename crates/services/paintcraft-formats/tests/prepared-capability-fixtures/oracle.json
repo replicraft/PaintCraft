@@ -1,0 +1,47 @@
+{
+  "recipe": "Independent stdlib binary hash framing. Exact reviewed domains and big-endian lengths; not Rust serialization.",
+  "rows": [
+    {
+      "profiles": [],
+      "required_sha256": "ded9f6320cea35d29463746a3ee5f7c94ec0d8f275bab2bd3c8d0911169da840",
+      "resolution_sha256": "f9eb50503220d9d69a61610c4ad9e54553219e8844ce8b19bba08b7de80044d7"
+    },
+    {
+      "profiles": [
+        "invert-rgb-v1"
+      ],
+      "required_sha256": "2dd4b53cd19405130e35529da80e5b44f82f5cc76587ece4284568d3b3f1e246",
+      "resolution_sha256": "ec39fd1af941c16d4546ed320eeee48921cef89b902f358143524c523801a28b"
+    },
+    {
+      "profiles": [
+        "exposure-srgb-v1"
+      ],
+      "required_sha256": "9919d5aaa3c3ad9d091237d8fc7d2820edfe12070a9fa94ef76ddfc123125a66",
+      "resolution_sha256": "ea109eb8c67431b9efd1852ade094fa13d34a1e98ce6e3a01f2dfee5777e80ac"
+    },
+    {
+      "profiles": [
+        "exposure-srgb-v1",
+        "invert-rgb-v1"
+      ],
+      "required_sha256": "e7d0c7d63d10a5cc280c03b75d83079b438ce220f1b644846edd8eb5e4caf6a6",
+      "resolution_sha256": "ddd1b22b2718555c3f59f2748d67816f3f6392f38d32edfce8aefb0a8d6b24ce"
+    },
+    {
+      "profiles": [
+        "black-white-rgb-v1",
+        "box-blur-v1",
+        "brightness-contrast-v1",
+        "exposure-srgb-v1",
+        "invert-rgb-v1",
+        "levels-rgb-v1",
+        "posterize-rgb-v1",
+        "solarize-rgb-v1",
+        "threshold-luma-v1"
+      ],
+      "required_sha256": "698c6f3a7ab902f51ecae76026e3d734fc94b25dfbde2b4de4b418b8eab2637e",
+      "resolution_sha256": "da3a01a6fc5eadf41b8d7ba1740c4a9c64cda1b60289a2fa8c348d877c3fcaa2"
+    }
+  ]
+}
