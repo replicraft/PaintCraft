@@ -29,6 +29,9 @@ fn inspect_rejects_unsupported_versions_and_corruption_with_stable_codes() {
     let bad = s.path("bad.pcnd");
     fs::write(&bad, &future).unwrap();
     assert_eq!(run(&["inspect", &bad, "--json"]).code, 6);
+    // Preserve the corrupt-v6 control above; a supported-v6 grammar now needs
+    // its catalog prelude. Use a new authenticated v7 for the future control.
+    future[4] = 7;
     let body = future.len() - 32;
     let digest = Sha256::digest(&future[..body]);
     future[body..].copy_from_slice(&digest);

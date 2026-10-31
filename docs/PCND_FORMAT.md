@@ -350,3 +350,26 @@ Edit, duplicate and preview-off are not newly qualified by these four runs.
 Registering tags and passing these local checks do not
 establish reader deployment, upstream application compatibility or full Palette
 catalog coverage. Existing older byte-profile evidence retains its original scope.
+
+## PCND6 catalog integration boundary
+
+The finite catalog layout and initial eight numerical profile/codec pairs are
+specified in [the planned catalog contract](architecture/PCND_FILTER_CATALOG.md).
+The PCND6 reader/writer integration is under qualification; this section does not
+advertise released Levels or browser catalog support. Existing PCND1–5 layout,
+minimal output selection and historical fixture bytes remain unchanged.
+
+PCND6 adds a bounded required-algorithm prelude immediately after the magic,
+strict catalog-indexed parameter records and the existing A8/source/tile framing.
+Assessment exposes actual requirements separately through
+`pcnd::catalog_manifest_checked`; it does not authorize adoption. Unknown required
+profile/codec pairs refuse before document payload retention. Old browser export
+and preview profiles retain explicit closed version allowlists, including when a
+new general reader exists. No old automation schema gains new descriptor kinds.
+
+The version6 Header grammar feature order is `raster.rgba8`, `canvas.finite`,
+`layers.flat`, `layer-point-filters.v1`, `layer-filter-masks.v1`, then
+`layer-filter-catalog.v1`; `source-metadata.v1` follows only when the encoded source
+presence flag is set. There is no unconditional spatial flag. Actual profile
+requirements come from the manifest; actual mask/spatial instance inventory in
+inspection and receipts is a separate disclosure from required wire grammar.

@@ -243,11 +243,16 @@ fn old_tag7_registries_unknown8_disabled_bad_ranges_and_noncanonical5_refuse() {
             Ok(())
         })
         .unwrap_err();
-        assert_eq!(
-            error.code.as_str(),
-            get(row, "code").as_str().unwrap(),
-            "{name}"
-        );
+        // Frozen historical version6 bytes have no catalog prelude. Now that
+        // version6 has defined framing, this specimen is malformed rather than
+        // an unknown version. Its bytes/provenance remain unchanged.
+        let expected = if name == "future-v6.pcnd" {
+            assert_eq!(data[4], 6);
+            "codec.failed"
+        } else {
+            get(row, "code").as_str().unwrap()
+        };
+        assert_eq!(error.code.as_str(), expected, "{name}");
         assert_eq!(profile.usage().reserved, 0);
         assert_eq!(masks.usage().reserved, 0);
     }

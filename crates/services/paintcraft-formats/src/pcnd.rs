@@ -13,6 +13,7 @@ pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "lay
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
 pub const LAYER_MASKS_FEATURE: &str = "layer-filter-masks.v1";
 pub const LAYER_SPATIAL_FILTERS_FEATURE: &str = "layer-spatial-filters.v1";
+pub const LAYER_CATALOG_FEATURE: &str = "layer-filter-catalog.v1";
 pub const LAYER_FILTERS_FEATURE: &str = "layer-point-filters.v1";
 const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
@@ -92,17 +93,28 @@ impl Header {
                 | (3, "paintcraft.document/v3")
                 | (4, "paintcraft.document/v4")
                 | (5, "paintcraft.document/v5")
+                | (6, "paintcraft.document/v6")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(matches!(self.container_version, 2..=5) && feature == SOURCE_METADATA_FEATURE)
-                && !(matches!(self.container_version, 3..=5) && feature == LAYER_FILTERS_FEATURE)
-                && !(matches!(self.container_version, 4 | 5) && feature == LAYER_MASKS_FEATURE)
-                && !(self.container_version == 5 && feature == LAYER_SPATIAL_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 2..=6) && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 3..=6) && feature == LAYER_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 4..=6) && feature == LAYER_MASKS_FEATURE)
+                && !(matches!(self.container_version, 5 | 6)
+                    && feature == LAYER_SPATIAL_FILTERS_FEATURE)
+                && !(self.container_version == 6 && feature == LAYER_CATALOG_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
+        }
+        if self.container_version == 6
+            && !self
+                .required_features
+                .iter()
+                .any(|f| f == LAYER_CATALOG_FEATURE)
+        {
+            return Err(unsupported("PCND6 header omits required catalog framing"));
         }
         if self.container_version == 5
             && SUPPORTED_FEATURES
@@ -242,3 +254,18 @@ mod mask_tests;
 
 #[cfg(test)]
 mod spatial_tests;
+
+/// One bounded, authenticated requirement; assessment does not grant adoption.
+pub use binary::catalog::Requirement;
+/// Report PCND6's actual manifest without decoding document payloads.
+pub fn catalog_manifest(bytes: &[u8]) -> Result<Vec<Requirement>> {
+    catalog_manifest_checked(bytes, &|| Ok(()))
+}
+/// Cancellation-aware manifest assessment. Unknown well-formed requirements are
+/// reported; the adopting reader independently resolves every capability.
+pub fn catalog_manifest_checked(
+    bytes: &[u8],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<Requirement>> {
+    binary::catalog_manifest(bytes, check)
+}

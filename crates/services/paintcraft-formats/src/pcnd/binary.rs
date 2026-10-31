@@ -2,6 +2,7 @@
 //! The whole stream is integrity checked by a trailing SHA-256 before tile inflation.
 use super::*;
 use std::io::Write;
+pub(super) mod catalog;
 mod filters;
 mod masks;
 mod source_metadata;
@@ -77,7 +78,15 @@ fn write_encoded(
         .values()
         .any(|layer| layer.filters.iter().any(|filter| filter.mask().is_some()));
     let spatial = has_spatial(doc);
-    if spatial {
+    let catalog_only = has_catalog(doc);
+    let manifest = if catalog_only {
+        Some(catalog::Manifest::capture(doc, check)?)
+    } else {
+        None
+    };
+    if catalog_only {
+        magic[4] = 6;
+    } else if spatial {
         magic[4] = 5;
     } else if masked {
         magic[4] = 4;
@@ -87,6 +96,9 @@ fn write_encoded(
         magic[4] = 2;
     }
     output.bytes(&magic)?;
+    if let Some(manifest) = &manifest {
+        manifest.write(&mut output, check)?;
+    }
     output.bytes(doc.document_id.as_bytes())?;
     output.bytes(doc.state_id.as_bytes())?;
     output.number(u64::from(doc.canvas.0))?;
@@ -145,7 +157,11 @@ fn write_encoded(
         output.number(u64::from(layer.raster.height()))?;
         output.bytes(&layer.raster.default_pixel().0)?;
         if live_filters {
-            filters::write(&layer.filters, &mut output, magic[4], check, &mask_check)?;
+            if let Some(manifest) = &manifest {
+                catalog::write_stack(manifest, &layer.filters, &mut output, check, &mask_check)?;
+            } else {
+                filters::write(&layer.filters, &mut output, magic[4], check, &mask_check)?;
+            }
         }
         // A terminator avoids a counting pass over decoded tiles. Each record is
         // bounded independently, allowing the sink to apply backpressure.
@@ -202,8 +218,11 @@ fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u
 pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
     let body = payload(bytes, &|| Ok(()))?;
     let mut result = header(bytes[4]);
-    if matches!(bytes[4], 3..=5) {
+    if matches!(bytes[4], 3..=6) {
         let mut input = Input::new(body);
+        if bytes[4] == 6 {
+            catalog::Manifest::read(&mut input, false, &|| Ok(()))?;
+        }
         input.take(32)?;
         input.dimension()?;
         input.dimension()?;
@@ -225,7 +244,7 @@ pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
     Ok(result)
 }
 fn header(version: u8) -> Header {
-    let known = matches!(version, 1..=5);
+    let known = matches!(version, 1..=6);
     Header {
         container_version: i64::from(version),
         document_schema: if known {
@@ -237,8 +256,10 @@ fn header(version: u8) -> Header {
                 "paintcraft.document/v3"
             } else if version == 4 {
                 "paintcraft.document/v4"
-            } else {
+            } else if version == 5 {
                 "paintcraft.document/v5"
+            } else {
+                "paintcraft.document/v6"
             }
         } else {
             "unknown"
@@ -252,6 +273,7 @@ fn header(version: u8) -> Header {
                 .chain((version >= 3).then_some(LAYER_FILTERS_FEATURE.to_owned()))
                 .chain((version >= 4).then_some(LAYER_MASKS_FEATURE.to_owned()))
                 .chain((version == 5).then_some(LAYER_SPATIAL_FILTERS_FEATURE.to_owned()))
+                .chain((version == 6).then_some(LAYER_CATALOG_FEATURE.to_owned()))
                 .collect()
         } else {
             Vec::new()
@@ -316,13 +338,20 @@ pub(super) fn read_admitted(
 ) -> Result<Document> {
     let body = payload(bytes, check)?;
     header(bytes[4]).require_supported()?;
-    if matches!(bytes[4], 4 | 5) && coverage.is_none() {
-        return Err(unsupported(
-            "PCND4/5 requires explicit shared coverage admission",
-        ));
+    if matches!(bytes[4], 4..=6) && coverage.is_none() {
+        return Err(unsupported(if bytes[4] == 6 {
+            "PCND6 requires explicit shared coverage admission"
+        } else {
+            "PCND4/5 requires explicit shared coverage admission"
+        }));
     }
     let mut coverage = coverage.map(super::coverage::CoverageReader::new);
     let mut input = Input::new(body);
+    let mut manifest = if bytes[4] == 6 {
+        Some(catalog::Manifest::read(&mut input, true, check)?)
+    } else {
+        None
+    };
     let document_id = input.id()?;
     let state_id = input.id()?;
     let canvas = (input.dimension()?, input.dimension()?);
@@ -337,7 +366,7 @@ pub(super) fn read_admitted(
         1 => Some(input.string(4096)?),
         _ => return Err(codec("invalid title flag")),
     };
-    let has_source = if matches!(bytes[4], 3..=5) {
+    let has_source = if matches!(bytes[4], 3..=6) {
         match input.byte()? {
             0 => false,
             1 => true,
@@ -379,6 +408,7 @@ pub(super) fn read_admitted(
     let mut any_filters = false;
     let mut any_masks = false;
     let mut any_spatial = false;
+    let mut any_catalog = false;
     let mut metadata = bytes.len() - 32 - input.remaining();
     let mut admission = Admission::new(staged_pixels.min(STAGED_PIXELS_MAX));
     for _ in 0..count {
@@ -399,7 +429,7 @@ pub(super) fn read_admitted(
         let width = input.dimension()?;
         let height = input.dimension()?;
         let default = Rgba(input.take(4)?.try_into().unwrap());
-        let layer_filters = if matches!(bytes[4], 3..=5) {
+        let layer_filters = if matches!(bytes[4], 3..=6) {
             let available = (DOCUMENT_MAX as usize)
                 .checked_sub(metadata + start - input.remaining())
                 .ok_or_else(|| {
@@ -408,17 +438,27 @@ pub(super) fn read_admitted(
                         "PCND aggregate metadata allowance",
                     )
                 })?;
-            filters::read(
-                &mut input,
-                available,
-                bytes[4],
-                if matches!(bytes[4], 4 | 5) {
-                    coverage.as_mut()
-                } else {
-                    None
-                },
-                check,
-            )?
+            if let Some(manifest) = &mut manifest {
+                catalog::read_stack(
+                    manifest,
+                    &mut input,
+                    available,
+                    coverage.as_mut().expect("coverage admission checked"),
+                    check,
+                )?
+            } else {
+                filters::read(
+                    &mut input,
+                    available,
+                    bytes[4],
+                    if matches!(bytes[4], 4 | 5) {
+                        coverage.as_mut()
+                    } else {
+                        None
+                    },
+                    check,
+                )?
+            }
         } else {
             paintcraft_document::FilterStack::default()
         };
@@ -428,6 +468,9 @@ pub(super) fn read_admitted(
                 paintcraft_core::types::filters::Descriptor::BoxBlurV1(_)
             )
         });
+        any_catalog |= layer_filters
+            .iter()
+            .any(|filter| filter.descriptor().is_catalog_only());
         any_filters |= !layer_filters.is_empty();
         any_masks |= layer_filters.iter().any(|filter| filter.mask().is_some());
         metadata += start - input.remaining();
@@ -517,6 +560,12 @@ pub(super) fn read_admitted(
     if bytes[4] == 3 && !any_filters {
         return Err(codec("empty filter stacks require legacy PCND encoding"));
     }
+    if let Some(manifest) = &manifest {
+        manifest.finish()?;
+        if !any_catalog {
+            return Err(codec("legacy-only documents require legacy PCND encoding"));
+        }
+    }
     admission.reserve_tiles(tiles)?;
     let mut layers = HashMap::new();
     for Record { mut layer, blocks } in records {
@@ -587,4 +636,31 @@ pub(super) fn has_spatial(doc: &Document) -> bool {
             )
         })
     })
+}
+
+pub(super) fn has_catalog(doc: &Document) -> bool {
+    doc.layers
+        .values()
+        .any(|l| l.filters.iter().any(|f| f.descriptor().is_catalog_only()))
+}
+pub(super) fn catalog_manifest(
+    bytes: &[u8],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<catalog::Requirement>> {
+    let body = payload(bytes, check)?;
+    if bytes[4] != 6 {
+        header(bytes[4]).require_supported()?;
+        return Ok(Vec::new());
+    }
+    catalog::Manifest::read(&mut Input::new(body), false, check)?.requirements(check)
+}
+
+pub(super) fn catalog_metadata_bytes(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<u64> {
+    Ok(catalog::Manifest::capture(doc, check)?.wire_bytes())
+}
+pub(super) fn catalog_stack_bytes(stack: &paintcraft_document::FilterStack) -> u64 {
+    catalog::stack_bytes(stack)
 }

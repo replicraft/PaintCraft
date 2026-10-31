@@ -47,7 +47,9 @@ fn metadata_bound(
     }
     super::coverage::validate_counts(doc, check)?;
     let live_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
-    let masked = binary::has_spatial(doc)
+    let catalog_only = binary::has_catalog(doc);
+    let masked = catalog_only
+        || binary::has_spatial(doc)
         || doc
             .layers
             .values()
@@ -57,6 +59,9 @@ fn metadata_bound(
         + integer_bytes(u64::from(doc.canvas.0))
         + integer_bytes(u64::from(doc.canvas.1))
         + 1;
+    if catalog_only {
+        bytes += binary::catalog_metadata_bytes(doc, check)?;
+    }
     if live_filters {
         bytes += 1; // PCND3 original-source presence flag.
     }
@@ -98,7 +103,11 @@ fn metadata_bound(
             + 4
             + 1;
         if live_filters {
-            bytes += binary::filter_metadata_bytes(&layer.filters);
+            bytes += if catalog_only {
+                binary::catalog_stack_bytes(&layer.filters)
+            } else {
+                binary::filter_metadata_bytes(&layer.filters)
+            };
             if masked {
                 for filter in layer.filters.iter() {
                     let Some(bound) = binary::mask_metadata_bound(filter.mask()) else {
