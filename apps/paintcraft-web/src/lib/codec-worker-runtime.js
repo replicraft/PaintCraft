@@ -1,12 +1,18 @@
+import * as ddsSpatial from './dds-spatial-worker-protocol.js';
+import * as mspSpatial from './msp-spatial-worker-protocol.js';
 // One isolated job per Worker. Never imported by the editor's main Wasm module.
 import initialize, {
 	application_version,
 	dds_export_protocol_version,
 	dds_export_request,
+	dds_spatial_export_protocol_version,
+	dds_spatial_export_request,
 	decode_request,
 	linear_memory_ceiling,
 	msp_export_protocol_version,
 	msp_export_request,
+	msp_spatial_export_protocol_version,
+	msp_spatial_export_request,
 	protocol_version,
 	tiff_page_protocol_version,
 	tiff_page_request,
@@ -52,6 +58,22 @@ const operations = Object.freeze({
 		version: protocol_version,
 		expectedVersion: 2,
 		execute: decode_request,
+	}),
+	'dds-spatial-export': Object.freeze({
+		header: ddsSpatial.DDS_REQUEST_HEADER,
+		input: ddsSpatial.DDS_SOURCE_MAX,
+		output: ddsSpatial.DDS_OUTPUT_MAX,
+		version: dds_spatial_export_protocol_version,
+		expectedVersion: ddsSpatial.DDS_PROTOCOL_VERSION,
+		execute: dds_spatial_export_request,
+	}),
+	'msp-spatial-export': Object.freeze({
+		header: mspSpatial.MSP_REQUEST_HEADER,
+		input: mspSpatial.MSP_SOURCE_MAX,
+		output: mspSpatial.MSP_OUTPUT_MAX,
+		version: msp_spatial_export_protocol_version,
+		expectedVersion: mspSpatial.MSP_PROTOCOL_VERSION,
+		execute: msp_spatial_export_request,
 	}),
 	'dds-export': Object.freeze({
 		header: DDS_REQUEST_HEADER,

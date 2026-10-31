@@ -1,3 +1,5 @@
+import * as ddsSpatial from './dds-spatial-worker-protocol.js';
+import * as mspSpatial from './msp-spatial-worker-protocol.js';
 // Isolated browser service; UI reader admission is qualified separately.
 import {
 	capture,
@@ -86,6 +88,26 @@ const MSP = Object.freeze({
 	completed: isCompletedMspRefusal,
 	digest: (captured) => captured.header.slice(81, 113),
 	quote: () => MSP_RESERVATION,
+});
+const DDS_SPATIAL = Object.freeze({
+	...DDS,
+	kind: 'dds-spatial-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		ddsSpatial.captureDds(source, owner, plan, nonce),
+	encode: ddsSpatial.encodeDdsRequest,
+	decode: ddsSpatial.decodeDdsResponse,
+	completed: ddsSpatial.isCompletedDdsRefusal,
+	finalize: ddsSpatial.freezeDdsPlan,
+});
+const MSP_SPATIAL = Object.freeze({
+	...MSP,
+	kind: 'msp-spatial-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		mspSpatial.captureMsp(source, owner, plan, nonce),
+	encode: mspSpatial.encodeMspRequest,
+	decode: mspSpatial.decodeMspResponse,
+	completed: mspSpatial.isCompletedMspRefusal,
+	finalize: mspSpatial.freezeMspPlan,
 });
 const TIFF = Object.freeze({
 	kind: 'tiff-pages',
@@ -425,12 +447,23 @@ export function tiffFileInWorker({ file, plan, ...options }) {
 // An unused ticket retains its declaration until the trusted host drops its
 // snapshots and calls release(). A timer/abort alone cannot prove that lifetime.
 export function admitDdsInWorker(options) {
-	return admitExportInWorker(options, DDS, freezeDdsPlan);
+	return admitExportInWorker(
+		options,
+		options.plan?.protocolVersion === 5 ? DDS_SPATIAL : DDS,
+		freezeDdsPlan,
+	);
 }
 export function admitMspInWorker(options) {
-	return admitExportInWorker(options, MSP, freezeMspPlan);
+	return admitExportInWorker(
+		options,
+		options.plan?.protocolVersion === 5 ? MSP_SPATIAL : MSP,
+		freezeMspPlan,
+	);
 }
 function admitExportInWorker(options, operation, freezePlan) {
+	const protocol = options.plan?.protocolVersion ?? 4;
+	if (protocol !== 4 && protocol !== 5)
+		throw refusal('InputSchema', 'Unsupported export protocol version');
 	const plan = freezePlan(options.plan);
 	ownerBytes(options.owner);
 	if (options.nonce !== undefined) nonceBytes(options.nonce);
@@ -459,7 +492,7 @@ function admitExportInWorker(options, operation, freezePlan) {
 		started = performance.now();
 	let used = false;
 	return Object.freeze({
-		async run(source) {
+		async run(source, finalizedPlan) {
 			if (used)
 				throw refusal(
 					'InputSchema',
@@ -467,12 +500,55 @@ function admitExportInWorker(options, operation, freezePlan) {
 				);
 			used = true;
 			try {
+				let finalPlan = plan;
+				if (operation.finalize) {
+					const exactPlan =
+						finalizedPlan ??
+						(typeof captured.finalizePlan === 'function'
+							? captured.finalizePlan(source?.length)
+							: undefined);
+					finalPlan = operation.finalize(exactPlan);
+					for (const key of [
+						'width',
+						'height',
+						'sourceFlags',
+						'bakeIntent',
+						'version',
+					])
+						if (finalPlan[key] !== plan[key])
+							throw refusal(
+								'ConflictStaleBase',
+								'Spatial export plan changed during snapshot',
+							);
+					for (const key of [
+						'filterDigest',
+						'metadataContext',
+						'maskContext',
+						'settings',
+					]) {
+						const before = plan[key],
+							after = finalPlan[key];
+						if (
+							Boolean(before) !== Boolean(after) ||
+							(before &&
+								(before.length !== after.length ||
+									before.some(
+										(value, index) =>
+											value !== after[index],
+									)))
+						)
+							throw refusal(
+								'ConflictStaleBase',
+								'Spatial export authority changed during snapshot',
+							);
+					}
+				}
 				return await runAdmitted(
 					{ ...captured, source, sourceLength: source?.length },
 					operation,
 					lease,
 					started,
-					plan,
+					finalPlan,
 				);
 			} catch (error) {
 				lease.release();
