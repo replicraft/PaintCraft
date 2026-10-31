@@ -3,6 +3,8 @@ use super::*;
 use egui_kittest::{Harness, kittest::Queryable};
 use paintcraft_core::types::filters::BrightnessContrastV1;
 use std::time::Instant;
+#[path = "curves_tests.rs"]
+mod curves_tests;
 #[path = "exposure_tests.rs"]
 mod exposure_tests;
 #[path = "levels_tests.rs"]
