@@ -41,6 +41,7 @@ struct Pending {
     cancelled: Arc<AtomicBool>,
     cut: Option<CutSource>,
     stage: Stage,
+    _spatial_parent: Option<paintcraft_core::types::resources::BudgetLease>,
 }
 impl Drop for Pending {
     fn drop(&mut self) {
@@ -66,6 +67,7 @@ impl State {
         self.pending.is_some()
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn start(
         &mut self,
         owner: Uuid,
@@ -74,10 +76,22 @@ impl State {
         target: Option<Uuid>,
         cut: Option<CutSource>,
         ctx: &egui::Context,
+        parent: &SharedBudget,
     ) -> Result<bool, String> {
         if self.pending.is_some() {
             return Ok(false);
         }
+        let spatial = target.is_none() && spatial_workspace::needed(&document);
+        let spatial_parent = if spatial {
+            Some(
+                parent
+                    .reserve(spatial_workspace::BYTES)
+                    .map_err(|error| error.to_string())?,
+            )
+        } else {
+            None
+        };
+        let executing_parent = spatial_parent.clone();
         let (send, receive) = mpsc::sync_channel(1);
         let cancelled = Arc::new(AtomicBool::new(false));
         let worker_cancelled = cancelled.clone();
@@ -85,6 +99,7 @@ impl State {
         std::thread::Builder::new()
             .name("paintcraft-copy-capture".into())
             .spawn(move || {
+                let _parent = executing_parent;
                 let check = || {
                     if worker_cancelled.load(Ordering::Relaxed) {
                         Err(paintcraft_core::types::Error::new(
@@ -95,7 +110,7 @@ impl State {
                         Ok(())
                     }
                 };
-                let result = match target {
+                let result = spatial_workspace::with_job(spatial, || match target {
                     Some(target) => capture(&document, selection, target, &budget(), &check),
                     None => paintcraft_render::clipboard::capture_visible(
                         &document,
@@ -110,7 +125,7 @@ impl State {
                             selection,
                         })
                     }),
-                }
+                })
                 .map_err(|e| e.to_string());
                 let _ = send.send(result);
                 wake.request_repaint();
@@ -121,6 +136,7 @@ impl State {
             cancelled,
             cut,
             stage: Stage::Capture(receive),
+            _spatial_parent: spatial_parent,
         });
         Ok(true)
     }
@@ -231,6 +247,7 @@ impl App {
             if visible { None } else { target },
             cut,
             ctx,
+            &self.worker_budget,
         ) {
             Ok(true) => self.editor.set_status(t!(ctx, "Copying to clipboard…")),
             Ok(false) => {}

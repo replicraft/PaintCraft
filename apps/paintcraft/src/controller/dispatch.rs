@@ -12,6 +12,7 @@ pub(super) struct Rejected {
 pub(super) struct Waiting {
     task: Task,
     base: HistoryTicket,
+    spatial: bool,
     done: String,
     empty: &'static str,
     target_alias: Option<&'static str>,
@@ -35,9 +36,19 @@ impl Editor {
         empty: &'static str,
         target_alias: Option<&'static str>,
     ) {
+        let spatial = crate::spatial_workspace::needed(self.document());
+        let task = task.map(|task| {
+            if spatial {
+                Box::new(move |cancel| crate::spatial_workspace::with_job(true, || task(cancel)))
+                    as Task
+            } else {
+                task
+            }
+        });
         match task {
             Ok(task) => self.dispatch_captured(Waiting {
                 task,
+                spatial,
                 base: self.session.history_ticket(),
                 done,
                 empty,
@@ -59,6 +70,7 @@ impl Editor {
         let service = self.editing.as_ref().expect("background editing enabled");
         let Waiting {
             task,
+            spatial,
             base,
             done,
             empty,
@@ -67,7 +79,13 @@ impl Editor {
             text,
             filter,
         } = waiting;
-        match service.submit_retained(task, done.clone(), empty, target_alias) {
+        match service.submit_retained_with_workspace(
+            task,
+            done.clone(),
+            empty,
+            target_alias,
+            spatial,
+        ) {
             Ok(mut pending) => {
                 pending.native_activation = native_activation;
                 pending.text = text;
@@ -75,9 +93,13 @@ impl Editor {
                 self.status = format!("{done}…");
                 self.pending_edit = Some(pending);
             }
-            Err(Rejected { error, task }) if error.code == ErrorCode::ResourceLimit => {
+            Err(Rejected { error, task })
+                if error.code == ErrorCode::ResourceLimit
+                    && service.spatial_request_fits(spatial) =>
+            {
                 self.waiting_dispatch = Some(Waiting {
                     task,
+                    spatial,
                     base,
                     done,
                     empty,

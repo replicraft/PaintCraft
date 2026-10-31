@@ -155,6 +155,7 @@ fn cancelled_capture_does_not_submit_or_publish_and_empty_is_not_written() {
             app.editor.target(),
             None,
             &ctx,
+            &app.worker_budget,
         )
         .unwrap();
     let cancelled = state.pending.as_ref().unwrap().cancelled.clone();
@@ -170,6 +171,7 @@ fn cancelled_capture_does_not_submit_or_publish_and_empty_is_not_written() {
             app.editor.target(),
             None,
             &ctx,
+            &app.worker_budget,
         )
         .unwrap();
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
@@ -421,4 +423,49 @@ mod cut;
 #[test]
 fn cut_controls_work_in_every_native_frontend_and_two_languages() {
     verify_controls("Cut");
+}
+
+#[test]
+fn visible_box_copy_has_real_worker_context_parent_charge_and_exact_pixels() {
+    use paintcraft_core::types::filters::{BoxBlurV1, Descriptor};
+    use paintcraft_document::{FilterInstance, FilterStack};
+    let ctx = egui::Context::default();
+    let mut app = App::new(None);
+    let mut doc = paintcraft_document::import_image(
+        3,
+        1,
+        &[0, 0, 0, 255, 90, 60, 30, 255, 240, 120, 0, 255],
+        "native-box-copy/v1",
+    )
+    .unwrap();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+        FilterStack::new(vec![FilterInstance::new(
+            Uuid::from_u128(303),
+            true,
+            Descriptor::BoxBlurV1(BoxBlurV1::new(1).unwrap()),
+        )])
+        .unwrap();
+    app.editor = Editor::with_document(doc, None);
+    let source = app.editor.document_snapshot();
+    let fake = Fake::default();
+    app.clipboard.writer = Some(Box::new(fake.clone()));
+    app.copy_source_requested(&ctx, true);
+    assert!(app.clipboard.pending.is_some());
+    assert_eq!(app.worker_budget.usage().reserved, spatial_workspace::BYTES);
+    wait_write(&mut app.clipboard, &ctx);
+    assert_eq!(
+        fake.images.lock().unwrap()[0].rgba(),
+        &[30, 20, 10, 255, 110, 60, 10, 255, 190, 100, 10, 255]
+    );
+    assert_eq!(
+        app.worker_budget.usage().reserved,
+        spatial_workspace::BYTES,
+        "Hold declared scratch through acknowledgement/retirement"
+    );
+    *fake.acknowledgement.lock().unwrap() = Some(Ok(()));
+    app.poll_clipboard(&ctx);
+    assert!(app.clipboard.pending.is_none());
+    assert_eq!(app.worker_budget.usage().reserved, 0);
+    assert!(Arc::ptr_eq(&source, &app.editor.document_snapshot()));
+    assert_eq!(app.editor.undo_depth(), 0);
 }

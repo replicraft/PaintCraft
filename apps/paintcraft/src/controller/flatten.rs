@@ -22,10 +22,12 @@ impl Editor {
             return;
         }
         let canvas = self.document().canvas;
-        match self
-            .session
-            .flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))
-        {
+        let spatial = crate::spatial_workspace::needed(self.document());
+        let result = crate::spatial_workspace::with_job(spatial, || {
+            self.session
+                .flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))
+        });
+        match result {
             Ok(receipt) => self.accept_edit(&receipt, "Flatten image", Some("flattened"), canvas),
             Err(error) => self.status = format!("Edit failed: {error}"),
         }

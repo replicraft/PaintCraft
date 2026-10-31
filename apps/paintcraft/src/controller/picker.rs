@@ -41,7 +41,9 @@ impl Editor {
             }) as dispatch::Task;
             self.dispatch_initial(Ok(task), STATUS.into(), "", None);
         } else {
-            match sample(&doc, &pick, || Ok(())) {
+            match crate::spatial_workspace::with_job(crate::spatial_workspace::needed(&doc), || {
+                sample(&doc, &pick, || Ok(()))
+            }) {
                 Ok(color) => {
                     let _ = self.accept_pick(Picked { base, pick, color });
                 }
