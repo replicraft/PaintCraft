@@ -686,3 +686,6 @@ mod point_profiles;
 
 #[path = "gpu/spatial.rs"]
 mod spatial;
+
+#[path = "gpu/levels.rs"]
+mod levels;

@@ -254,22 +254,26 @@ impl GpuRenderer {
         region: Rect,
         caller_check: impl Fn() -> Result<()>,
     ) -> Result<GpuFrame> {
-        let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
-            let mut cache = poisoned.into_inner();
-            cache.clear();
-            self.sources.clear_poison();
-            cache
-        });
-        let check = || {
-            caller_check()?;
-            self.epoch.check()
-        };
-        let result = self.render_inner(doc, region, &check, &mut cache);
-        if result.is_err() {
-            cache.clear();
-            self.clear_output_pool();
-        }
-        result
+        let levels_caller_check = &caller_check;
+        let caller_check = || levels_caller_check();
+        crate::prepared::with_document_levels(doc, &caller_check, || {
+            let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
+                let mut cache = poisoned.into_inner();
+                cache.clear();
+                self.sources.clear_poison();
+                cache
+            });
+            let check = || {
+                caller_check()?;
+                self.epoch.check()
+            };
+            let result = self.render_inner(doc, region, &check, &mut cache);
+            if result.is_err() {
+                cache.clear();
+                self.clear_output_pool();
+            }
+            result
+        })
     }
     pub fn source_cache_usage(&self) -> SourceCacheUsage {
         self.sources

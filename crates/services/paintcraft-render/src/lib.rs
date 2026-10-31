@@ -83,12 +83,16 @@ pub fn render_region_cancellable(
     region: Rect,
     check: impl Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
-    check()?;
-    let bytes = region_bytes(doc, region)?;
-    spatial::preflight(doc, region, &check)?;
-    let mut out = output_buffer(bytes)?;
-    compose_roots_into(doc, region, 0..doc.roots.len(), &mut out, &check)?;
-    Ok(out)
+    let levels_caller_check = &check;
+    let check = || levels_caller_check();
+    crate::prepared::with_document_levels(doc, &check, || {
+        check()?;
+        let bytes = region_bytes(doc, region)?;
+        spatial::preflight(doc, region, &check)?;
+        let mut out = output_buffer(bytes)?;
+        compose_roots_into(doc, region, 0..doc.roots.len(), &mut out, &check)?;
+        Ok(out)
+    })
 }
 
 // Preserve root order and each intermediate RGBA8 rounding boundary when

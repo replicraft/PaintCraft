@@ -127,86 +127,90 @@ impl GpuRenderer {
         region: Rect,
         caller_check: impl Fn() -> Result<()>,
     ) -> Result<GpuTextureFrame> {
-        let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
-            let mut cache = poisoned.into_inner();
-            cache.clear();
-            self.sources.clear_poison();
-            cache
-        });
-        let check = || {
-            caller_check()?;
-            self.epoch.check()
-        };
-        let result = (|| {
-            check()?;
-            let Some(pipeline) = &self.presentation else {
-                return Err(unavailable("GPU display textures unsupported"));
-            };
-            crate::region_bytes(doc, region)?;
-            crate::spatial::preflight(doc, region, &check)?;
-            let (width, height) = (region.width() as u32, region.height() as u32);
-            if width > self.device.limits().max_texture_dimension_2d
-                || height > self.device.limits().max_texture_dimension_2d
-            {
-                return Err(Error::new(
-                    ErrorCode::ResourceLimit,
-                    "canvas exceeds GPU display texture limits",
-                ));
-            }
-            cache.begin_frame();
-            if self.single_layer_display
-                && let Some(layer) = single::eligible(doc, region, &check)?
-            {
-                return self.render_single_layer(doc, layer, region, &check, &mut cache);
-            }
-            let (mut output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
-            check()?;
-            let (texture, view) = self.display_texture(width, height);
-            let bindings = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("PaintCraft native display conversion"),
-                layout: &pipeline.get_bind_group_layout(0),
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: output.as_entire_binding(),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(&view),
-                    },
-                ],
+        let levels_caller_check = &caller_check;
+        let caller_check = || levels_caller_check();
+        crate::prepared::with_document_levels(doc, &caller_check, || {
+            let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
+                let mut cache = poisoned.into_inner();
+                cache.clear();
+                self.sources.clear_poison();
+                cache
             });
-            let mut encoder = self.device.create_command_encoder(&Default::default());
-            {
-                let mut pass = encoder.begin_compute_pass(&Default::default());
-                pass.set_pipeline(pipeline);
-                pass.set_bind_group(0, &bindings, &[]);
-                pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
+            let check = || {
+                caller_check()?;
+                self.epoch.check()
+            };
+            let result = (|| {
+                check()?;
+                let Some(pipeline) = &self.presentation else {
+                    return Err(unavailable("GPU display textures unsupported"));
+                };
+                crate::region_bytes(doc, region)?;
+                crate::spatial::preflight(doc, region, &check)?;
+                let (width, height) = (region.width() as u32, region.height() as u32);
+                if width > self.device.limits().max_texture_dimension_2d
+                    || height > self.device.limits().max_texture_dimension_2d
+                {
+                    return Err(Error::new(
+                        ErrorCode::ResourceLimit,
+                        "canvas exceeds GPU display texture limits",
+                    ));
+                }
+                cache.begin_frame();
+                if self.single_layer_display
+                    && let Some(layer) = single::eligible(doc, region, &check)?
+                {
+                    return self.render_single_layer(doc, layer, region, &check, &mut cache);
+                }
+                let (mut output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
+                check()?;
+                let (texture, view) = self.display_texture(width, height);
+                let bindings = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("PaintCraft native display conversion"),
+                    layout: &pipeline.get_bind_group_layout(0),
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: output.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::TextureView(&view),
+                        },
+                    ],
+                });
+                let mut encoder = self.device.create_command_encoder(&Default::default());
+                {
+                    let mut pass = encoder.begin_compute_pass(&Default::default());
+                    pass.set_pipeline(pipeline);
+                    pass.set_bind_group(0, &bindings, &[]);
+                    pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
+                }
+                check()?;
+                let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
+                submission.wait(&self.device, &self.epoch)?;
+                check()?;
+                output.completed();
+                drop(output);
+                stats.retained_output_bytes = self.output_pool_usage();
+                stats.retained = cache.usage();
+                Ok(GpuTextureFrame {
+                    region,
+                    level: 0,
+                    texture,
+                    view,
+                    device: self.device.clone(),
+                    queue: self.queue.clone(),
+                    submission_identity: self.submission_identity.clone(),
+                    epoch: self.epoch.clone(),
+                    stats,
+                })
+            })();
+            if result.is_err() {
+                cache.clear();
+                self.clear_output_pool();
             }
-            check()?;
-            let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
-            submission.wait(&self.device, &self.epoch)?;
-            check()?;
-            output.completed();
-            drop(output);
-            stats.retained_output_bytes = self.output_pool_usage();
-            stats.retained = cache.usage();
-            Ok(GpuTextureFrame {
-                region,
-                level: 0,
-                texture,
-                view,
-                device: self.device.clone(),
-                queue: self.queue.clone(),
-                submission_identity: self.submission_identity.clone(),
-                epoch: self.epoch.clone(),
-                stats,
-            })
-        })();
-        if result.is_err() {
-            cache.clear();
-            self.clear_output_pool();
-        }
-        result
+            result
+        })
     }
 }

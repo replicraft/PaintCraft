@@ -292,115 +292,120 @@ impl DisplayCache {
         domain: Domain,
         check: impl Fn() -> Result<()>,
     ) -> Result<DisplayFrame> {
-        let request = DisplayRequest::new(doc, request.region, request.level)?;
-        if crate::spatial::relevant(doc, request.region) {
-            crate::spatial::preflight(doc, request.region, &check)?;
+        let levels_caller_check = &check;
+        let check = || levels_caller_check();
+        crate::prepared::with_document_levels(doc, &check, || {
+            let request = DisplayRequest::new(doc, request.region, request.level)?;
+            if crate::spatial::relevant(doc, request.region) {
+                crate::spatial::preflight(doc, request.region, &check)?;
+                let mut stats = DisplayStats {
+                    output_pixels: request.bytes() as u64 / 4,
+                    ..Default::default()
+                };
+                let pixels = reduce(doc, request, &mut stats, &check)?;
+                return Ok(DisplayFrame {
+                    request,
+                    pixels,
+                    stats,
+                });
+            }
+            let mut pixels = output_buffer(request.bytes())?;
             let mut stats = DisplayStats {
                 output_pixels: request.bytes() as u64 / 4,
                 ..Default::default()
             };
-            let pixels = reduce(doc, request, &mut stats, &check)?;
-            return Ok(DisplayFrame {
+            let step = i64::from(request.step());
+            let span = step * i64::from(self.limits.tile_edge);
+            let bounds = request.region;
+            for ty in bounds.y0 / span..=(bounds.y1 - 1) / span {
+                for tx in bounds.x0 / span..=(bounds.x1 - 1) / span {
+                    check()?;
+                    let rect = Rect {
+                        x0: tx * span,
+                        y0: ty * span,
+                        x1: ((tx + 1) * span).min(i64::from(doc.canvas.0)),
+                        y1: ((ty + 1) * span).min(i64::from(doc.canvas.1)),
+                    };
+                    let tile_request = DisplayRequest::new(doc, rect, request.level)?;
+                    let partition = match domain {
+                        Domain::Committed => &self.committed,
+                        Domain::Preview => &self.preview,
+                    };
+                    let key_budget = partition.key_budget(tile_request.bytes());
+                    // Uniform results are already cheap and need no potentially huge
+                    // region-version key. Large unknown keys bypass before enumeration.
+                    let color = uniform(doc, rect, &check)?;
+                    let cells = (rect.width() as u64).div_ceil(u64::from(REGION_EDGE))
+                        * (rect.height() as u64).div_ceil(u64::from(REGION_EDGE));
+                    let key = if color.is_none()
+                        && cells
+                            <= (key_budget / std::mem::size_of::<(RegionCoord, RegionVersion)>())
+                                as u64
+                    {
+                        Key::build(doc, rect, key_budget)?.map(|mut key| {
+                            key.level = request.level;
+                            key
+                        })
+                    } else {
+                        None
+                    };
+                    let hit = key.as_ref().and_then(|key| {
+                        if domain == Domain::Preview
+                            && let Some(index) = self.committed.find(key)
+                        {
+                            return Some((Domain::Committed, index));
+                        }
+                        partition.find(key).map(|i| (domain, i))
+                    });
+                    let mut computed = None;
+                    let tile = if let Some((cached_domain, index)) = hit {
+                        stats.cache_hits += 1;
+                        match cached_domain {
+                            Domain::Committed => self.committed.touch(index),
+                            Domain::Preview => self.preview.touch(index),
+                        }
+                    } else {
+                        stats.recomposed_tiles += 1;
+                        computed = Some(if let Some(color) = color {
+                            stats.uniform_pixels += rect.area() as u64;
+                            let mut out = output_buffer(tile_request.bytes())?;
+                            let color = if color.a() == 0 { [0; 4] } else { color.0 };
+                            for p in out.as_chunks_mut::<4>().0 {
+                                p.copy_from_slice(&color);
+                            }
+                            out
+                        } else {
+                            reduce(doc, tile_request, &mut stats, &check)?
+                        });
+                        computed.as_ref().unwrap()
+                    };
+                    let area = rect.intersect(&bounds).unwrap();
+                    let tile_width = tile_request.size()[0] as usize;
+                    let width = request.size()[0] as usize;
+                    let columns = (area.width() as u64).div_ceil(step as u64) as usize;
+                    for row in 0..(area.height() as u64).div_ceil(step as u64) as usize {
+                        let src = (((area.y0 - rect.y0) / step) as usize + row) * tile_width
+                            + ((area.x0 - rect.x0) / step) as usize;
+                        let dst = (((area.y0 - bounds.y0) / step) as usize + row) * width
+                            + ((area.x0 - bounds.x0) / step) as usize;
+                        pixels[dst * 4..][..columns * 4]
+                            .copy_from_slice(&tile[src * 4..][..columns * 4]);
+                    }
+                    if let (Some(key), Some(computed)) = (key, computed) {
+                        let partition = match domain {
+                            Domain::Committed => &mut self.committed,
+                            Domain::Preview => &mut self.preview,
+                        };
+                        partition.insert(key, computed, false);
+                    }
+                }
+            }
+            check()?;
+            Ok(DisplayFrame {
                 request,
                 pixels,
                 stats,
-            });
-        }
-        let mut pixels = output_buffer(request.bytes())?;
-        let mut stats = DisplayStats {
-            output_pixels: request.bytes() as u64 / 4,
-            ..Default::default()
-        };
-        let step = i64::from(request.step());
-        let span = step * i64::from(self.limits.tile_edge);
-        let bounds = request.region;
-        for ty in bounds.y0 / span..=(bounds.y1 - 1) / span {
-            for tx in bounds.x0 / span..=(bounds.x1 - 1) / span {
-                check()?;
-                let rect = Rect {
-                    x0: tx * span,
-                    y0: ty * span,
-                    x1: ((tx + 1) * span).min(i64::from(doc.canvas.0)),
-                    y1: ((ty + 1) * span).min(i64::from(doc.canvas.1)),
-                };
-                let tile_request = DisplayRequest::new(doc, rect, request.level)?;
-                let partition = match domain {
-                    Domain::Committed => &self.committed,
-                    Domain::Preview => &self.preview,
-                };
-                let key_budget = partition.key_budget(tile_request.bytes());
-                // Uniform results are already cheap and need no potentially huge
-                // region-version key. Large unknown keys bypass before enumeration.
-                let color = uniform(doc, rect, &check)?;
-                let cells = (rect.width() as u64).div_ceil(u64::from(REGION_EDGE))
-                    * (rect.height() as u64).div_ceil(u64::from(REGION_EDGE));
-                let key = if color.is_none()
-                    && cells
-                        <= (key_budget / std::mem::size_of::<(RegionCoord, RegionVersion)>()) as u64
-                {
-                    Key::build(doc, rect, key_budget)?.map(|mut key| {
-                        key.level = request.level;
-                        key
-                    })
-                } else {
-                    None
-                };
-                let hit = key.as_ref().and_then(|key| {
-                    if domain == Domain::Preview
-                        && let Some(index) = self.committed.find(key)
-                    {
-                        return Some((Domain::Committed, index));
-                    }
-                    partition.find(key).map(|i| (domain, i))
-                });
-                let mut computed = None;
-                let tile = if let Some((cached_domain, index)) = hit {
-                    stats.cache_hits += 1;
-                    match cached_domain {
-                        Domain::Committed => self.committed.touch(index),
-                        Domain::Preview => self.preview.touch(index),
-                    }
-                } else {
-                    stats.recomposed_tiles += 1;
-                    computed = Some(if let Some(color) = color {
-                        stats.uniform_pixels += rect.area() as u64;
-                        let mut out = output_buffer(tile_request.bytes())?;
-                        let color = if color.a() == 0 { [0; 4] } else { color.0 };
-                        for p in out.as_chunks_mut::<4>().0 {
-                            p.copy_from_slice(&color);
-                        }
-                        out
-                    } else {
-                        reduce(doc, tile_request, &mut stats, &check)?
-                    });
-                    computed.as_ref().unwrap()
-                };
-                let area = rect.intersect(&bounds).unwrap();
-                let tile_width = tile_request.size()[0] as usize;
-                let width = request.size()[0] as usize;
-                let columns = (area.width() as u64).div_ceil(step as u64) as usize;
-                for row in 0..(area.height() as u64).div_ceil(step as u64) as usize {
-                    let src = (((area.y0 - rect.y0) / step) as usize + row) * tile_width
-                        + ((area.x0 - rect.x0) / step) as usize;
-                    let dst = (((area.y0 - bounds.y0) / step) as usize + row) * width
-                        + ((area.x0 - bounds.x0) / step) as usize;
-                    pixels[dst * 4..][..columns * 4]
-                        .copy_from_slice(&tile[src * 4..][..columns * 4]);
-                }
-                if let (Some(key), Some(computed)) = (key, computed) {
-                    let partition = match domain {
-                        Domain::Committed => &mut self.committed,
-                        Domain::Preview => &mut self.preview,
-                    };
-                    partition.insert(key, computed, false);
-                }
-            }
-        }
-        check()?;
-        Ok(DisplayFrame {
-            request,
-            pixels,
-            stats,
+            })
         })
     }
 }

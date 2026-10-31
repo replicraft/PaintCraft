@@ -25,54 +25,58 @@ pub fn render_in_pool(
     view_bytes: usize,
     check: impl Fn() -> Result<()> + Sync,
 ) -> Result<Vec<u8>> {
-    check()?;
-    let bytes = region_bytes(doc, region)?;
-    crate::spatial::preflight(doc, region, &check)?;
-    let workspace = crate::spatial::current();
-    let edge = match partition {
-        Partition::Bands { rows } => rows,
-        Partition::Tiles { edge } => edge,
-    };
-    if !(1..=1024).contains(&edge) {
-        return Err(Error::new(
-            ErrorCode::InputSchema,
-            "partition size must be 1..=1024",
-        ));
-    }
-    if matches!(partition, Partition::Tiles { .. }) {
-        tiles::admit(region, edge, view_bytes)?;
-    }
-    let mut pixels = output_buffer(bytes)?;
-    pool.install(|| match partition {
-        Partition::Bands { rows } => {
-            let stride = region.width() as usize * 4;
-            let chunk_bytes = stride * (rows as usize).min(region.height() as usize);
-            pixels
-                .par_chunks_mut(chunk_bytes)
-                .enumerate()
-                .try_for_each(|(index, out)| {
-                    check()?;
-                    let y0 = region.y0 + index as i64 * i64::from(rows);
-                    let part = Rect {
-                        y0,
-                        y1: (y0 + i64::from(rows)).min(region.y1),
-                        ..region
-                    };
-                    crate::spatial::captured(&workspace, || {
-                        compose_roots_into(doc, part, 0..doc.roots.len(), out, &check)
-                    })
-                })
+    let levels_caller_check = &check;
+    let check = || levels_caller_check();
+    crate::prepared::with_document_levels(doc, &check, || {
+        check()?;
+        let bytes = region_bytes(doc, region)?;
+        crate::spatial::preflight(doc, region, &check)?;
+        let workspace = crate::spatial::current();
+        let edge = match partition {
+            Partition::Bands { rows } => rows,
+            Partition::Tiles { edge } => edge,
+        };
+        if !(1..=1024).contains(&edge) {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "partition size must be 1..=1024",
+            ));
         }
-        Partition::Tiles { edge } => tiles::compose(
-            doc,
-            region,
-            edge,
-            view_bytes,
-            &mut pixels,
-            &workspace,
-            &check,
-        ),
-    })?;
-    check()?;
-    Ok(pixels)
+        if matches!(partition, Partition::Tiles { .. }) {
+            tiles::admit(region, edge, view_bytes)?;
+        }
+        let mut pixels = output_buffer(bytes)?;
+        pool.install(|| match partition {
+            Partition::Bands { rows } => {
+                let stride = region.width() as usize * 4;
+                let chunk_bytes = stride * (rows as usize).min(region.height() as usize);
+                pixels
+                    .par_chunks_mut(chunk_bytes)
+                    .enumerate()
+                    .try_for_each(|(index, out)| {
+                        check()?;
+                        let y0 = region.y0 + index as i64 * i64::from(rows);
+                        let part = Rect {
+                            y0,
+                            y1: (y0 + i64::from(rows)).min(region.y1),
+                            ..region
+                        };
+                        crate::spatial::captured(&workspace, || {
+                            compose_roots_into(doc, part, 0..doc.roots.len(), out, &check)
+                        })
+                    })
+            }
+            Partition::Tiles { edge } => tiles::compose(
+                doc,
+                region,
+                edge,
+                view_bytes,
+                &mut pixels,
+                &workspace,
+                &check,
+            ),
+        })?;
+        check()?;
+        Ok(pixels)
+    })
 }

@@ -102,125 +102,129 @@ impl CompositeCache {
         domain: Domain,
         check: impl Fn() -> Result<()>,
     ) -> Result<CachedRegion> {
-        check()?;
-        if crate::spatial::relevant(doc, region) {
-            let pixels = render_region_cancellable(doc, region, &check)?;
-            return Ok(CachedRegion {
-                pixels,
-                stats: RenderStats {
-                    output_pixels: region.area() as u64,
-                    recomposed_pixels: region.area() as u64,
-                    recomposed_tiles: 1,
-                    ..Default::default()
-                },
-            });
-        }
-        let mut pixels = output_buffer(region_bytes(doc, region)?)?;
-        let mut stats = RenderStats {
-            output_pixels: region.area() as u64,
-            ..Default::default()
-        };
-        if !doc.layers_in_order().any(|layer| {
-            layer.visible && layer.opacity != 0 && region.intersect(&layer.extent()).is_some()
-        }) {
+        let levels_caller_check = &check;
+        let check = || levels_caller_check();
+        crate::prepared::with_document_levels(doc, &check, || {
             check()?;
-            return Ok(CachedRegion { pixels, stats });
-        }
-        let edge = i64::from(self.limits.tile_edge);
-        for ty in region.y0 / edge..=(region.y1 - 1) / edge {
-            for tx in region.x0 / edge..=(region.x1 - 1) / edge {
-                check()?;
-                let rect = Rect {
-                    x0: tx * edge,
-                    y0: ty * edge,
-                    x1: ((tx + 1) * edge).min(i64::from(doc.canvas.0)),
-                    y1: ((ty + 1) * edge).min(i64::from(doc.canvas.1)),
-                };
-                let tile_bytes = rect.area() as usize * 4;
-                let selected = match domain {
-                    Domain::Committed => &self.committed,
-                    Domain::Preview => &self.preview,
-                };
-                let key_budget =
-                    selected
-                        .key_budget(tile_bytes)
-                        .max(if domain == Domain::Preview {
-                            self.committed.key_budget(tile_bytes)
-                        } else {
-                            0
-                        });
-                let key = Key::build(doc, rect, key_budget)?;
-                let hit = key.as_ref().and_then(|key| {
-                    if domain == Domain::Preview
-                        && let Some(index) = self.committed.find(key)
-                    {
-                        return Some((Domain::Committed, index));
-                    }
-                    selected.find(key).map(|index| (domain, index))
+            if crate::spatial::relevant(doc, region) {
+                let pixels = render_region_cancellable(doc, region, check)?;
+                return Ok(CachedRegion {
+                    pixels,
+                    stats: RenderStats {
+                        output_pixels: region.area() as u64,
+                        recomposed_pixels: region.area() as u64,
+                        recomposed_tiles: 1,
+                        ..Default::default()
+                    },
                 });
-                if let Some((domain, index)) = hit {
-                    let partition = match domain {
-                        Domain::Committed => &mut self.committed,
-                        Domain::Preview => &mut self.preview,
+            }
+            let mut pixels = output_buffer(region_bytes(doc, region)?)?;
+            let mut stats = RenderStats {
+                output_pixels: region.area() as u64,
+                ..Default::default()
+            };
+            if !doc.layers_in_order().any(|layer| {
+                layer.visible && layer.opacity != 0 && region.intersect(&layer.extent()).is_some()
+            }) {
+                check()?;
+                return Ok(CachedRegion { pixels, stats });
+            }
+            let edge = i64::from(self.limits.tile_edge);
+            for ty in region.y0 / edge..=(region.y1 - 1) / edge {
+                for tx in region.x0 / edge..=(region.x1 - 1) / edge {
+                    check()?;
+                    let rect = Rect {
+                        x0: tx * edge,
+                        y0: ty * edge,
+                        x1: ((tx + 1) * edge).min(i64::from(doc.canvas.0)),
+                        y1: ((ty + 1) * edge).min(i64::from(doc.canvas.1)),
                     };
-                    let source = partition.touch(index);
-                    copy_tile(&mut pixels, region, rect, source);
-                    stats.cache_hits += 1;
-                    continue;
-                }
-                let patch = if let Some(key) = key.as_ref() {
-                    let committed = if domain == Domain::Preview {
-                        self.committed.patch_source(key)?
+                    let tile_bytes = rect.area() as usize * 4;
+                    let selected = match domain {
+                        Domain::Committed => &self.committed,
+                        Domain::Preview => &self.preview,
+                    };
+                    let key_budget =
+                        selected
+                            .key_budget(tile_bytes)
+                            .max(if domain == Domain::Preview {
+                                self.committed.key_budget(tile_bytes)
+                            } else {
+                                0
+                            });
+                    let key = Key::build(doc, rect, key_budget)?;
+                    let hit = key.as_ref().and_then(|key| {
+                        if domain == Domain::Preview
+                            && let Some(index) = self.committed.find(key)
+                        {
+                            return Some((Domain::Committed, index));
+                        }
+                        selected.find(key).map(|index| (domain, index))
+                    });
+                    if let Some((domain, index)) = hit {
+                        let partition = match domain {
+                            Domain::Committed => &mut self.committed,
+                            Domain::Preview => &mut self.preview,
+                        };
+                        let source = partition.touch(index);
+                        copy_tile(&mut pixels, region, rect, source);
+                        stats.cache_hits += 1;
+                        continue;
+                    }
+                    let patch = if let Some(key) = key.as_ref() {
+                        let committed = if domain == Domain::Preview {
+                            self.committed.patch_source(key)?
+                        } else {
+                            None
+                        };
+                        if committed.is_some() {
+                            committed
+                        } else {
+                            match domain {
+                                Domain::Committed => self.committed.patch_source(key)?,
+                                Domain::Preview => self.preview.patch_source(key)?,
+                            }
+                        }
                     } else {
                         None
                     };
-                    if committed.is_some() {
-                        committed
-                    } else {
-                        match domain {
-                            Domain::Committed => self.committed.patch_source(key)?,
-                            Domain::Preview => self.preview.patch_source(key)?,
+                    let source = if let Some((regions, mut source)) = patch {
+                        for dirty in regions {
+                            check()?;
+                            let changed = render_region_cancellable(doc, dirty, check)?;
+                            copy_tile(&mut source, rect, dirty, &changed);
+                            stats.recomposed_pixels += dirty.area() as u64;
                         }
-                    }
-                } else {
-                    None
-                };
-                let source = if let Some((regions, mut source)) = patch {
-                    for dirty in regions {
-                        check()?;
-                        let changed = render_region_cancellable(doc, dirty, &check)?;
-                        copy_tile(&mut source, rect, dirty, &changed);
-                        stats.recomposed_pixels += dirty.area() as u64;
-                    }
-                    stats.patched_tiles += 1;
-                    source
-                } else {
-                    let source = self.render_miss(
-                        doc,
-                        rect,
-                        domain,
-                        key_budget,
-                        key.is_some(),
-                        &check,
-                        &mut stats,
-                    )?;
-                    stats.recomposed_pixels += rect.area() as u64;
-                    source
-                };
-                check()?;
-                copy_tile(&mut pixels, region, rect, &source);
-                stats.recomposed_tiles += 1;
-                if let Some(key) = key {
-                    let partition = match domain {
-                        Domain::Committed => &mut self.committed,
-                        Domain::Preview => &mut self.preview,
+                        stats.patched_tiles += 1;
+                        source
+                    } else {
+                        let source = self.render_miss(
+                            doc,
+                            rect,
+                            domain,
+                            key_budget,
+                            key.is_some(),
+                            &check,
+                            &mut stats,
+                        )?;
+                        stats.recomposed_pixels += rect.area() as u64;
+                        source
                     };
-                    partition.insert(key, source, false);
+                    check()?;
+                    copy_tile(&mut pixels, region, rect, &source);
+                    stats.recomposed_tiles += 1;
+                    if let Some(key) = key {
+                        let partition = match domain {
+                            Domain::Committed => &mut self.committed,
+                            Domain::Preview => &mut self.preview,
+                        };
+                        partition.insert(key, source, false);
+                    }
                 }
             }
-        }
-        check()?;
-        Ok(CachedRegion { pixels, stats })
+            check()?;
+            Ok(CachedRegion { pixels, stats })
+        })
     }
 }
 
