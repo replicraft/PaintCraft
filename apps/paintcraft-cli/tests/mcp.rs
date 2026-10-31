@@ -261,3 +261,6 @@ mod curves;
 
 #[path = "mcp/vibrance.rs"]
 mod vibrance;
+
+#[path = "mcp/hsl.rs"]
+mod hsl;

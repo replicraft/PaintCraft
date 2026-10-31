@@ -144,3 +144,6 @@ mod curves;
 
 #[path = "cli/vibrance.rs"]
 mod vibrance;
+
+#[path = "cli/hsl.rs"]
+mod hsl;
