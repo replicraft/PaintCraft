@@ -302,3 +302,6 @@ fn single_native_step_includes_all_point_layers_before_any_frame_allocation() {
     assert!(error.message.contains("single-step"));
     assert!(service.frame.is_none());
 }
+
+#[path = "spatial/version_guards.rs"]
+mod version_guards;

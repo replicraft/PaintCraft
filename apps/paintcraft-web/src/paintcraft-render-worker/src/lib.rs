@@ -53,8 +53,24 @@ impl Service {
         if hex(&Sha256::digest(bytes)) != digest(field(&source.value, "sourceSha256")?)? {
             return Err(stale());
         }
-        if source.spatial.is_none() && bytes.starts_with(b"PCND\x05\r\n\x1a") {
-            return Err(protocol::spatial::refused());
+        // Source authentication above already scanned these bytes. Inspect only
+        // the fixed magic here; probing would add another full-source hash pass.
+        if bytes.len() >= 8 && &bytes[..4] == b"PCND" && &bytes[5..8] == b"\r\n\x1a" {
+            let version = bytes[4];
+            if source.spatial.is_none() && version == 5 {
+                return Err(protocol::spatial::refused());
+            }
+            let maximum = if source.spatial.is_some() { 5 } else { 4 };
+            if !(1..=maximum).contains(&version) {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    if maximum == 4 {
+                        "Preview source2 admits only PCND1 through PCND4"
+                    } else {
+                        "Preview source3 admits only PCND1 through PCND5"
+                    },
+                ));
+            }
         }
         let workspace = source
             .spatial
