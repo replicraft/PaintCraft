@@ -16,3 +16,6 @@ mod tiff;
 mod catalog;
 #[cfg(any(test, target_arch = "wasm32"))]
 mod spatial;
+
+#[cfg(any(test, target_arch = "wasm32"))]
+mod programs;

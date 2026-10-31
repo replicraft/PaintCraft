@@ -21,6 +21,7 @@ uuid = { workspace = true, features = ["js"] }
 
 [dev-dependencies]
 paintcraft-document.workspace = true
+uuid.workspace = true
 
 [lints]
 workspace = true
