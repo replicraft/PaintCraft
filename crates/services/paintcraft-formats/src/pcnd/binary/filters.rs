@@ -38,7 +38,9 @@ pub(super) fn write<W: Write>(
                 output.bytes(&[7, parameters.radius()])?
             }
             Descriptor::BoxBlurV1(_) => return Err(unsupported("Spatial filters require PCND5")),
-            Descriptor::LevelsRgbV1(_) | Descriptor::ExposureSrgbV1(_) => {
+            Descriptor::LevelsRgbV1(_)
+            | Descriptor::ExposureSrgbV1(_)
+            | Descriptor::CurvesRgbV1(_) => {
                 return Err(unsupported("Catalog filters require PCND6"));
             }
         }
@@ -174,6 +176,7 @@ pub(super) fn metadata_bytes(stack: &FilterStack) -> u64 {
                     Descriptor::SolarizeRgbV1 => 0,
                     Descriptor::LevelsRgbV1(_) => 6,
                     Descriptor::ExposureSrgbV1(_) => 2,
+                    Descriptor::CurvesRgbV1(_) => 5,
                 }
             })
             .sum::<u64>()

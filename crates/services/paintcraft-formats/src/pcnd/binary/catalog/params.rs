@@ -1,8 +1,8 @@
 //! Fixed typed parameters; transport names are scoped by numerical profile.
 use super::*;
 use paintcraft_core::types::filters::{
-    BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, ExposureSrgbV1, LevelsRgbV1,
-    PosterizeRgbV1, ThresholdLumaV1,
+    BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor, ExposureSrgbV1,
+    LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1,
 };
 pub(super) fn require(profile: &str, encoding: &str) -> Result<()> {
     if encoding != "params-v1"
@@ -17,6 +17,7 @@ pub(super) fn require(profile: &str, encoding: &str) -> Result<()> {
                 | "box-blur-v1"
                 | "levels-rgb-v1"
                 | "exposure-srgb-v1"
+                | "curves-rgb-v1"
         )
     {
         return Err(unsupported("unknown PCND catalog algorithm/codec"));
@@ -57,6 +58,9 @@ pub(super) fn decode(profile: &str, bytes: &[u8]) -> Result<Descriptor> {
         ("exposure-srgb-v1", [a, b]) => Descriptor::ExposureSrgbV1(
             ExposureSrgbV1::new(i16::from_be_bytes([*a, *b])).map_err(|_| invalid())?,
         ),
+        ("curves-rgb-v1", [a, b, c, d, e]) => {
+            Descriptor::CurvesRgbV1(CurvesRgbV1::new([*a, *b, *c, *d, *e]))
+        }
         _ => return Err(invalid()),
     })
 }
