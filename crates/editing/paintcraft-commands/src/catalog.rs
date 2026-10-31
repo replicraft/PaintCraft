@@ -3,10 +3,11 @@ use super::*;
 
 pub const CATALOG_BATCH_SCHEMA: &str = "paintcraft.batch/catalog-v1";
 
-const PROFILES: [&str; 8] = [
+const PROFILES: [&str; 9] = [
     "black-white-rgb-v1",
     "box-blur-v1",
     "brightness-contrast-v1",
+    "exposure-srgb-v1",
     "invert-rgb-v1",
     "levels-rgb-v1",
     "posterize-rgb-v1",
@@ -96,3 +97,6 @@ pub(super) fn validate(value: &Value) -> Result<()> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod exposure_tests;

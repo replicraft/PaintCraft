@@ -10,7 +10,7 @@ fn levels(gamma: i64) -> Value {
         ("output_white", Value::Int(16)),
     ])
 }
-fn packet(schema: &str, requirements: Option<&[&str]>, descriptor: Value) -> Value {
+pub(super) fn packet(schema: &str, requirements: Option<&[&str]>, descriptor: Value) -> Value {
     let mut fields = vec![
         ("schema", Value::str(schema)),
         ("atomic", Value::Bool(true)),
