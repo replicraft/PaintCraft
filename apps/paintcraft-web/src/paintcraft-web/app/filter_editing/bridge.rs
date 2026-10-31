@@ -167,6 +167,8 @@ impl Drop for Client {
 pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Result<Client> {
     let spatial_count = super::render::stored_spatial(&capture.document);
     capture.spatial |= spatial_count > 0;
+    let catalog_count = super::render::stored_catalog(&capture.document);
+    capture.catalog |= catalog_count > 0;
     let doc = &capture.document;
     let resident = doc
         .layers
@@ -199,15 +201,23 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
         ("maskRuns", (masks.runs as f64).into()),
         ("maskDecodeBytes", (masks.decode_bytes as f64).into()),
     ])?;
-    if capture.spatial {
+    if capture.spatial || capture.catalog {
         for (key, value) in [
-            ("protocol", 3u64),
+            ("protocol", if capture.catalog { 4u64 } else { 3u64 }),
             ("spatialCount", spatial_count),
             ("workspaceBytes", 64 << 20),
             ("workLimit", 268435456),
         ] {
             Reflect::set(&plan, &key.into(), &JsValue::from_f64(value as f64)).map_err(error)?;
         }
+    }
+    if capture.catalog {
+        Reflect::set(
+            &plan,
+            &"catalogCount".into(),
+            &JsValue::from_f64(catalog_count as f64),
+        )
+        .map_err(error)?;
     }
     // Admission precedes serialization, bridge copying and Worker construction.
     let mut admission = Admission {
@@ -254,9 +264,9 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
             return Err(failed("Filter mask source admission changed"));
         }
     }
-    if client.capture.spatial {
+    if client.capture.spatial || client.capture.catalog {
         for (key, expected) in [
-            ("protocol", 3u64),
+            ("protocol", if client.capture.catalog { 4u64 } else { 3u64 }),
             ("spatialCount", spatial_count),
             ("workspaceBytes", 64 << 20),
             ("workLimit", 268435456),
@@ -269,6 +279,11 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
                 return Err(failed("Spatial source workspace binding changed"));
             }
         }
+    }
+    if client.capture.catalog
+        && field(&binding, "catalogCount")?.as_f64() != Some(catalog_count as f64)
+    {
+        return Err(failed("Catalog source binding changed"));
     }
     let size = field(&binding, "size")?
         .dyn_into::<Array>()

@@ -18,6 +18,7 @@ fn source() -> Capture {
         draft: Uuid::from_u128(2),
         document,
         spatial: false,
+        catalog: false,
     }
 }
 fn request(capture: &Capture, descriptor: Descriptor) -> Request {

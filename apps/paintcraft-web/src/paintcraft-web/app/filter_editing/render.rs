@@ -21,6 +21,7 @@ pub(super) struct Capture {
     pub draft: Uuid,
     pub document: Arc<Document>,
     pub spatial: bool,
+    pub catalog: bool,
 }
 impl Capture {
     pub fn same(&self, other: &Self) -> bool {
@@ -29,6 +30,7 @@ impl Capture {
             && self.draft == other.draft
             && Arc::ptr_eq(&self.document, &other.document)
             && self.spatial == other.spatial
+            && self.catalog == other.catalog
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -103,6 +105,7 @@ pub(super) struct Renderer {
 impl Renderer {
     pub fn want(&mut self, mut capture: Capture, request: Request) {
         capture.spatial |= request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor.is_spatial()));
+        capture.catalog |= request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor.is_catalog_only()));
         let work = Work { capture, request };
         if self.wanted.as_ref().is_none_or(|w| !w.same(&work)) {
             self.accepted = None;
@@ -296,6 +299,18 @@ pub(super) fn stored_spatial(doc: &Document) -> u64 {
                 .filters
                 .iter()
                 .filter(|filter| filter.descriptor().is_spatial())
+                .count() as u64
+        })
+        .sum()
+}
+pub(super) fn stored_catalog(doc: &Document) -> u64 {
+    doc.layers
+        .values()
+        .map(|layer| {
+            layer
+                .filters
+                .iter()
+                .filter(|filter| filter.descriptor().is_catalog_only())
                 .count() as u64
         })
         .sum()

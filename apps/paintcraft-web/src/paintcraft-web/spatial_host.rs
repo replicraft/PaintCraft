@@ -13,7 +13,13 @@ pub(crate) const BYTES_MAX: u64 = 64 << 20;
 pub(crate) const WORK_MAX: u64 = 268_435_456;
 
 pub(crate) fn with_document<T>(doc: &Document, work: impl FnOnce() -> Result<T>) -> Result<T> {
-    if !doc.layers.values().any(paintcraft_render::spatial::active) {
+    if !doc.layers.values().any(|layer| {
+        paintcraft_render::spatial::active(layer)
+            || layer
+                .filters
+                .iter()
+                .any(|filter| filter.enabled() && filter.descriptor().is_catalog_only())
+    }) {
         return work();
     }
     static MAIN: OnceLock<SharedBudget> = OnceLock::new();

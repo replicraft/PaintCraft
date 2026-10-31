@@ -87,7 +87,7 @@ impl Editor {
 
     pub fn batch(&self, operations: Vec<Value>) -> Result<Batch> {
         let ticket = self.session.ticket();
-        Batch::from_value(&Value::object([
+        Batch::from_generated_value(Value::object([
             (
                 "schema",
                 Value::str(Batch::schema_for_operations(&operations)),
