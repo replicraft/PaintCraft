@@ -2,6 +2,8 @@
 //! Glam is an implementation detail, never an on-disk, command or GPU representation.
 use glam::{DAffine2, DVec2};
 use std::marker::PhantomData;
+mod source_pixel;
+pub use source_pixel::SourcePixel;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DocumentSpace {}
