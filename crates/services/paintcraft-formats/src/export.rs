@@ -10,6 +10,8 @@ pub mod filter_bake;
 pub mod jxr;
 pub mod metadata_policy;
 mod source_masks_wire;
+pub(crate) mod source_spatial_wire;
+pub use source_spatial_wire::{SPATIAL_CONTEXT_BYTES, SPATIAL_WORK_MAX, SourceSpatialContext};
 mod source_metadata_wire;
 pub use source_masks_wire::SourceMaskContext;
 pub use source_metadata_wire::SourceMetadataContext;
