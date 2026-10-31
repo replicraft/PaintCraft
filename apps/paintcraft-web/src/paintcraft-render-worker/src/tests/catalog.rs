@@ -257,3 +257,111 @@ fn source4_prepares_once_across_native_tiles_and_prices_preview_off_before_compi
     assert!(service.frame.is_none());
     assert_eq!(pcnd::write(&service.base).unwrap(), bytes);
 }
+
+#[test]
+fn source4_refuses_reader_known_exposure_before_adoption_including_disabled_and_zero() {
+    let oracle = paintcraft_core::types::json::parse(include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../../../crates/services/paintcraft-formats/tests/pcnd-exposure-fixtures/oracle.json"
+    )))
+    .unwrap();
+    let mut count = 0;
+    for row in oracle
+        .get("fixtures")
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|row| row.get("accepted").and_then(Value::as_bool) == Some(true))
+    {
+        count += 1;
+        let bytes = unhex(row.get("hex").unwrap().as_str().unwrap());
+        // This is reader-known, authenticated PCND6, not an unknown-parser failure.
+        let budget = SharedBudget::new(4 << 20);
+        let doc = pcnd::read_with_admission_checked(
+            &bytes,
+            2,
+            65_536,
+            1,
+            pcnd::ReadAdmission {
+                metadata: pcnd::MetadataAdmission {
+                    bytes: 1 << 20,
+                    budget: &budget,
+                },
+                coverage: pcnd::CoverageAdmission {
+                    bytes: 1 << 20,
+                    budget: &budget,
+                    limits: Default::default(),
+                },
+            },
+            &|| Ok(()),
+        )
+        .unwrap();
+        assert_eq!(pcnd::write(&doc).unwrap(), bytes);
+        let error = Service::open(&bytes, &text(&control(&doc, &bytes))).unwrap_err();
+        assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+        assert_eq!(
+            error.message,
+            "Preview source4 catalog capability is closed"
+        );
+    }
+    assert_eq!(count, 12);
+}
+
+#[test]
+fn source4_refuses_private_exposure_add_update_before_candidate_even_zero_preview_off() {
+    use paintcraft_core::types::filters::ExposureSrgbV1;
+    for stops in [-800, 0, 800] {
+        for enabled in [false, true] {
+            let mut doc = fixture();
+            let layer = doc.roots[0];
+            let id = Uuid::from_u128(191);
+            doc.layers.get_mut(&layer).unwrap().filters =
+                paintcraft_document::FilterStack::new(vec![
+                    paintcraft_document::FilterInstance::new(id, enabled, Descriptor::InvertRgbV1),
+                ])
+                .unwrap();
+            let bytes = pcnd::write(&doc).unwrap();
+            assert_eq!(bytes[4], 3, "control uses only a legacy point filter");
+            let source = control(&doc, &bytes);
+            let descriptor = Descriptor::ExposureSrgbV1(ExposureSrgbV1::new(stops).unwrap());
+            for operation in [
+                FilterOp::Add {
+                    layer: LayerRef::Id(layer),
+                    alias: "exposure".into(),
+                    descriptor,
+                    enabled,
+                    to_index: None,
+                },
+                FilterOp::Update {
+                    layer: LayerRef::Id(layer),
+                    filter: FilterRef::Id(id),
+                    descriptor,
+                },
+            ] {
+                for render in [false, true] {
+                    let mut service = Service::open(&bytes, &text(&source)).unwrap();
+                    let error = service
+                        .prepare(&text(&request(
+                            &source,
+                            1,
+                            Some(layer),
+                            operation.to_value().unwrap(),
+                            render,
+                            [0, 0, 3, 2],
+                            0,
+                        )))
+                        .unwrap_err();
+                    assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+                    assert_eq!(
+                        error.message,
+                        "Preview source4 catalog capability is closed"
+                    );
+                    assert!(service.candidate.is_none());
+                    assert!(service.frame.is_none());
+                    assert_eq!(pcnd::write(&service.base).unwrap(), bytes);
+                }
+            }
+        }
+    }
+}
