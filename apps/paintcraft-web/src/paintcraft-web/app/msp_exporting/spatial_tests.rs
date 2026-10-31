@@ -38,7 +38,7 @@ fn plan(doc: &Document) -> wire::SourcePlan {
 }
 fn artifact(plan: &wire::SourcePlan, doc: &Document, owner: Owner) -> (Request, Vec<u8>) {
     let source = plan.snapshot(doc).unwrap();
-    if matches!(plan.protocol_version(), 5 | 6) {
+    if matches!(plan.protocol_version(), 5..=7) {
         let exact = plan.spatial_context(source.len()).unwrap();
         let plus_one = plan.spatial_context(source.len() + 1).unwrap();
         assert_eq!(
@@ -58,6 +58,7 @@ fn artifact(plan: &wire::SourcePlan, doc: &Document, owner: Owner) -> (Request, 
         4 => wire::execute(&packet, env!("CARGO_PKG_VERSION"), &|| Ok(())),
         5 => wire::v5::execute(&packet, env!("CARGO_PKG_VERSION"), &|| Ok(())),
         6 => wire::v6::execute(&packet, env!("CARGO_PKG_VERSION"), &|| Ok(())),
+        7 => wire::v7::execute(&packet, env!("CARGO_PKG_VERSION"), &|| Ok(())),
         _ => unreachable!(),
     }
     .unwrap();
@@ -267,3 +268,6 @@ fn actual_box_checkbox_publication_revocation_cancel_and_stale_owner_keep_source
 
 #[path = "spatial_tests/catalog_tests.rs"]
 mod catalog_tests;
+
+#[path = "spatial_tests/prepared_tests.rs"]
+mod prepared_tests;

@@ -7,6 +7,7 @@ pub(super) enum Request {
     V4(wire::Header),
     V5(wire::v5::Header),
     V6(wire::v6::Header),
+    V7(wire::v7::Header),
 }
 impl Request {
     #[cfg(any(target_arch = "wasm32", test))]
@@ -24,6 +25,9 @@ impl Request {
             6 => Ok(Self::V6(wire::v6::Header::capture(
                 plan, source, owner, nonce,
             )?)),
+            7 => Ok(Self::V7(wire::v7::Header::capture(
+                plan, source, owner, nonce,
+            )?)),
             _ => Err(failed("Unsupported captured export protocol")),
         }
     }
@@ -33,6 +37,7 @@ impl Request {
             Self::V4(h) => h.encode().to_vec(),
             Self::V5(h) => h.encode().to_vec(),
             Self::V6(h) => h.encode().to_vec(),
+            Self::V7(h) => h.encode().to_vec(),
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -41,6 +46,7 @@ impl Request {
             Self::V4(h) => wire::Header::decode(bytes)? == *h,
             Self::V5(h) => wire::v5::Header::decode(bytes)? == *h,
             Self::V6(h) => wire::v6::Header::decode(bytes)? == *h,
+            Self::V7(h) => wire::v7::Header::decode(bytes)? == *h,
         };
         if !equal {
             return Err(failed("Request echo differs from captured source/options"));
@@ -52,6 +58,7 @@ impl Request {
             Self::V4(_) => 4,
             Self::V5(_) => 5,
             Self::V6(_) => 6,
+            Self::V7(_) => 7,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -60,6 +67,7 @@ impl Request {
             Self::V4(_) => wire::REQUEST_HEADER,
             Self::V5(_) => wire::v5::REQUEST_HEADER,
             Self::V6(_) => wire::v6::REQUEST_HEADER,
+            Self::V7(_) => wire::v7::REQUEST_HEADER,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -68,6 +76,7 @@ impl Request {
             Self::V4(_) => wire::RESPONSE_HEADER,
             Self::V5(_) => wire::v5::RESPONSE_HEADER,
             Self::V6(_) => wire::v6::RESPONSE_HEADER,
+            Self::V7(_) => wire::v7::RESPONSE_HEADER,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -76,6 +85,7 @@ impl Request {
             Self::V4(_) => wire::RESPONSE_BYTES_MAX,
             Self::V5(_) => wire::v5::RESPONSE_BYTES_MAX,
             Self::V6(_) => wire::v6::RESPONSE_BYTES_MAX,
+            Self::V7(_) => wire::v7::RESPONSE_BYTES_MAX,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -84,6 +94,7 @@ impl Request {
             Self::V4(h) => h.source_sha256,
             Self::V5(h) => h.source_sha256,
             Self::V6(h) => h.source_sha256,
+            Self::V7(h) => h.source_sha256,
         }
     }
     pub(super) fn owner(&self) -> Owner {
@@ -91,6 +102,7 @@ impl Request {
             Self::V4(h) => h.owner,
             Self::V5(h) => h.owner,
             Self::V6(h) => h.owner,
+            Self::V7(h) => h.owner,
         }
     }
     pub(super) fn metadata(&self) -> paintcraft_formats::export::SourceMetadataContext {
@@ -98,6 +110,7 @@ impl Request {
             Self::V4(h) => h.metadata,
             Self::V5(h) => h.metadata,
             Self::V6(h) => h.metadata,
+            Self::V7(h) => h.metadata,
         }
     }
     #[cfg(test)]
@@ -106,6 +119,7 @@ impl Request {
             Self::V4(h) => &mut h.owner,
             Self::V5(h) => &mut h.owner,
             Self::V6(h) => &mut h.owner,
+            Self::V7(h) => &mut h.owner,
         }
     }
 
@@ -140,6 +154,18 @@ impl Request {
                     && plan
                         .catalog_context(h.source_len as usize)
                         .is_ok_and(|actual| actual == h.catalog.encode())
+            }
+            Self::V7(h) => {
+                h.metadata == plan.metadata_context()
+                    && h.masks == plan.mask_context()
+                    && h.filter_digest == plan.filter_digest()
+                    && h.bake_intent == plan.bake_intent()
+                    && plan
+                        .spatial_context(h.source_len as usize)
+                        .is_ok_and(|actual| actual == h.spatial.encode_programs())
+                    && plan
+                        .program_context(h.source_len as usize)
+                        .is_ok_and(|actual| actual == h.programs.encode())
             }
         }
     }

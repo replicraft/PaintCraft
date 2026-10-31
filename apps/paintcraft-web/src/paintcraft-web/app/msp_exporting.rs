@@ -198,6 +198,7 @@ fn admit_version(version: u16) -> Result<()> {
     );
     request.extension = Some("msp");
     request.variant = Some(match version {
+        7 => wire::v7::EXPORT_VARIANT,
         6 => wire::v6::EXPORT_VARIANT,
         4 => wire::EXPORT_VARIANT,
         5 => wire::v5::EXPORT_VARIANT,

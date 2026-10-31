@@ -24,7 +24,9 @@ pub(super) async fn prepare(
     let args = js_sys::Array::new();
     args.push(&owner_value);
     call(&service, "setOwner", &args)?;
-    let getter = if plan.protocol_version() == 6 {
+    let getter = if plan.protocol_version() == 7 {
+        "mspPreparedExportProtocolVersion"
+    } else if plan.protocol_version() == 6 {
         "mspCatalogExportProtocolVersion"
     } else if plan.protocol_version() == 5 {
         "mspSpatialExportProtocolVersion"
@@ -70,7 +72,7 @@ pub(super) async fn prepare(
     let source = plan.snapshot(&doc)?;
     let request = Request::capture(&plan, &source, owner, nonce)?;
     // Same MainWasm ABI as the isolated codec Worker; never infer native sizes.
-    let final_plan = if matches!(plan.protocol_version(), 5 | 6) {
+    let final_plan = if matches!(plan.protocol_version(), 5..=7) {
         js_sys::Reflect::set(
             &metadata,
             &"spatialContext".into(),
@@ -82,6 +84,14 @@ pub(super) async fn prepare(
                 &metadata,
                 &"catalogContext".into(),
                 &Uint8Array::from(plan.catalog_context(source.len())?.as_slice()),
+            )
+            .map_err(error)?;
+        }
+        if plan.protocol_version() == 7 {
+            js_sys::Reflect::set(
+                &metadata,
+                &"programContext".into(),
+                &Uint8Array::from(plan.program_context(source.len())?.as_slice()),
             )
             .map_err(error)?;
         }
