@@ -6,6 +6,7 @@ use paintcraft_document::{FilterInstance, Layer};
 pub(crate) enum PointProgram<'a> {
     Scalar(paintcraft_core::types::filters::Descriptor),
     Vibrance(paintcraft_core::types::filters::VibranceRgbV1),
+    HueSaturation(paintcraft_core::types::filters::HueSaturationRgbV1),
     Levels(&'a crate::prepared::PreparedLevels),
     Exposure(&'a crate::prepared::PreparedExposure),
     Curves(&'a crate::prepared::PreparedCurves),
@@ -16,6 +17,10 @@ impl<'a> PointProgram<'a> {
         admission: Option<&'a crate::spatial::WorkspaceAdmission>,
     ) -> Result<Self> {
         match descriptor {
+            paintcraft_core::types::filters::Descriptor::HueSaturationRgbV1(p) => {
+                admission.ok_or_else(crate::direct::missing)?;
+                Ok(Self::HueSaturation(p))
+            }
             paintcraft_core::types::filters::Descriptor::VibranceRgbV1(p) => {
                 admission.ok_or_else(crate::direct::missing)?;
                 Ok(Self::Vibrance(p))
@@ -55,6 +60,9 @@ impl<'a> PointProgram<'a> {
     }
     pub(crate) fn evaluate(&self, incoming: Rgba) -> Result<Rgba> {
         match self {
+            Self::HueSaturation(policy) => {
+                paintcraft_effects::hue_saturation::evaluate_pixel(*policy, incoming)
+            }
             Self::Vibrance(policy) => {
                 paintcraft_effects::vibrance::evaluate_pixel(*policy, incoming)
             }

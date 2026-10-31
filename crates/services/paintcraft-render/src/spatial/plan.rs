@@ -45,7 +45,8 @@ fn stage(index: usize, descriptor: Descriptor, source: Rect, output: Rect) -> Re
         | Descriptor::LevelsRgbV1(_)
         | Descriptor::ExposureSrgbV1(_)
         | Descriptor::CurvesRgbV1(_)
-        | Descriptor::VibranceRgbV1(_) => None,
+        | Descriptor::VibranceRgbV1(_)
+        | Descriptor::HueSaturationRgbV1(_) => None,
     };
     Ok(Stage {
         index,
@@ -88,9 +89,12 @@ impl<'a> LayerAppearancePlan<'a> {
                 .checked_add(visits)
                 .and_then(|value| value.checked_add(stage.output.area() as u64))
                 .ok_or_else(|| limit("Appearance work overflows"))?;
-            if matches!(filter.descriptor(), Descriptor::VibranceRgbV1(_)) {
+            if crate::direct::priced(filter.descriptor()) {
                 work = work
-                    .checked_add(crate::direct::work(stage.output.area() as u64)?)
+                    .checked_add(crate::direct::work(
+                        filter.descriptor(),
+                        stage.output.area() as u64,
+                    )?)
                     .ok_or_else(|| limit("Direct stage work overflows"))?;
             }
             scratch = scratch.max(stage.blur.map_or(0, BoxBlurPlan::scratch_elements));
@@ -139,9 +143,12 @@ impl<'a> LayerAppearancePlan<'a> {
         {
             check()?;
             let value = stage(index, filter.descriptor(), self.source, output)?;
-            if matches!(filter.descriptor(), Descriptor::VibranceRgbV1(_)) {
+            if crate::direct::priced(filter.descriptor()) {
                 work = work
-                    .checked_add(crate::direct::work(value.output.area() as u64)?)
+                    .checked_add(crate::direct::work(
+                        filter.descriptor(),
+                        value.output.area() as u64,
+                    )?)
                     .ok_or_else(|| limit("Direct stage work overflows"))?;
             }
             output = value.input;
