@@ -2,7 +2,7 @@
 use super::*;
 use paintcraft_core::types::filters::{
     BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor, ExposureSrgbV1,
-    LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1, VibranceRgbV1,
+    HueSaturationRgbV1, LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1, VibranceRgbV1,
 };
 pub(super) fn require(profile: &str, encoding: &str) -> Result<()> {
     if encoding != "params-v1"
@@ -19,6 +19,7 @@ pub(super) fn require(profile: &str, encoding: &str) -> Result<()> {
                 | "exposure-srgb-v1"
                 | "curves-rgb-v1"
                 | "vibrance-rgb-v1"
+                | "hue-saturation-rgb-v1"
         )
     {
         return Err(unsupported("unknown PCND catalog algorithm/codec"));
@@ -62,6 +63,14 @@ pub(super) fn decode(profile: &str, bytes: &[u8]) -> Result<Descriptor> {
         ("curves-rgb-v1", [a, b, c, d, e]) => {
             Descriptor::CurvesRgbV1(CurvesRgbV1::new([*a, *b, *c, *d, *e]))
         }
+        ("hue-saturation-rgb-v1", [a, b, c, d, e, f]) => Descriptor::HueSaturationRgbV1(
+            HueSaturationRgbV1::new(
+                i16::from_be_bytes([*a, *b]),
+                i16::from_be_bytes([*c, *d]),
+                i16::from_be_bytes([*e, *f]),
+            )
+            .map_err(|_| invalid())?,
+        ),
         ("vibrance-rgb-v1", [a, b]) => Descriptor::VibranceRgbV1(
             VibranceRgbV1::new(i16::from_be_bytes([*a, *b])).map_err(|_| invalid())?,
         ),
