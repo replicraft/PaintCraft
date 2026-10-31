@@ -4,7 +4,7 @@ Status: the arithmetic foundation is qualified on native and actual Rust Wasm.
 Editable integration passes native Studio, history, PCND6, CLI/MCP, priced CPU
 rendering and Metal presentation. Fresh browser Source5, Studio and DDS/MSP
 export workflows pass. Hue/Saturation is the twelfth editable Studio profile.
-Full package regression passes; integrated-head CI remains a separate gate.
+Full package regression and all seven integrated-head CI jobs pass.
 
 ## Intent and parameters
 
@@ -249,6 +249,16 @@ match around successful phases and at final recovery closeout. Earlier failed
 post-observations are not fabricated: recovery observations are labeled later.
 Receipt `docs/validation/hsl-integration/full-regression/final-ledger.json`, SHA256
 `00a7dcf48ff4456a0096f7341e4fd5a3abb0d3e07e72601d4a9fa9e732fd2a7c`.
-New integrated-head CI remains a separate pending gate at this checkpoint.
+All seven [integrated-head CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41222726291)
+pass for exact commit `6270c5f6cbe62ca866ba954ae16e93ef5d653931`.
+The original local watch exited one when its output storage filled; that is
+retained as a local monitoring failure, not a remote job result. Subsequent
+read-only API observations establish the completed seven-job success without
+rerunning CI. Final API SHA256
+`51220980d74c9d3467ae82c97c3a6217e170cdb2d3eb281a609e849de4c468e9`;
+push/CI addendum SHA256
+`cfacc01ed57cfa44fb7c594b79253af54e66cd156493d061a20fc5cd9b3abf2a`
+under `docs/validation/hsl-integration/ci-41222726291/`.
+This result excludes later noise work and the remaining Palette inventory.
 
 See [Palette integration](PALETTE_INTEGRATION.md) for the remaining inventory.
