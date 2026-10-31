@@ -10,11 +10,13 @@ use std::{
 };
 #[cfg(target_arch = "wasm32")]
 mod bridge;
+mod request;
 #[cfg(any(target_arch = "wasm32", test))]
 mod response;
 #[cfg(test)]
 mod tests;
 mod view;
+use request::Request;
 #[cfg(any(target_arch = "wasm32", test))]
 fn failed(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
@@ -28,7 +30,7 @@ fn stale() -> Error {
 #[cfg_attr(not(any(target_arch = "wasm32", test)), allow(dead_code))]
 #[derive(Debug)]
 struct Prepared {
-    header: wire::Header,
+    header: Request,
     response: Vec<u8>,
     encoded: Range<usize>,
     preview: Option<egui::ColorImage>,
@@ -103,10 +105,10 @@ impl Review {
         owner
     }
     fn matches_prepared(&self, prepared: &Prepared) -> bool {
-        self.omit_source_metadata == prepared.header.metadata.omit_intent()
-            && prepared.header.owner == self.wire_owner()
+        self.omit_source_metadata == prepared.header.metadata().omit_intent()
+            && prepared.header.owner() == self.wire_owner()
             && self.plan.as_ref().is_some_and(|plan| {
-                plan.metadata_context() == prepared.header.metadata
+                prepared.header.matches_plan(plan)
                     && plan.validate_policies(&self.frozen.document).is_ok()
                     && plan.bake_intent() == u8::from(self.bake_filters)
             })
@@ -214,6 +216,9 @@ fn options(settings: Settings) -> dds::TextureOptions {
 }
 // Admit the exact metadata-bound browser contract before caller-owned preflight.
 pub(super) fn admit() -> Result<()> {
+    admit_version(4)
+}
+fn admit_version(version: u16) -> Result<()> {
     use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform, Request};
     let mut request = Request::new(
         Frontend::Studio,
@@ -222,7 +227,11 @@ pub(super) fn admit() -> Result<()> {
         Platform::Web,
     );
     request.extension = Some("dds");
-    request.variant = Some(wire::EXPORT_VARIANT);
+    request.variant = Some(match version {
+        4 => wire::EXPORT_VARIANT,
+        5 => wire::v5::EXPORT_VARIANT,
+        _ => return Err(stale()),
+    });
     match registry::admission(request) {
         registry::Decision::Allowed
         | registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent) => {
@@ -311,6 +320,7 @@ impl WebApp {
             };
             let plan =
                 wire::SourcePlan::capture_with_policies(&doc, options(review.settings), policies)?;
+            admit_version(plan.protocol_version())?;
             review.plan = Some(plan.clone());
             #[cfg(target_arch = "wasm32")]
             {
@@ -432,3 +442,6 @@ impl WebApp {
         self.dds.review = Some(review);
     }
 }
+
+#[cfg(test)]
+mod spatial_tests;

@@ -125,13 +125,20 @@ impl WebApp {
     }
     fn finish_dds_export(&mut self, ctx: &egui::Context) {
         let result = (|| {
-            admit()?;
             let review = self.dds.review.as_mut().ok_or_else(stale)?;
+            admit_version(
+                review
+                    .prepared
+                    .as_ref()
+                    .ok_or_else(stale)?
+                    .header
+                    .protocol_version(),
+            )?;
             let prepared = review.prepared.take().ok_or_else(stale)?;
-            let expected = wire::encode_settings(options(review.settings), prepared.header.size)?;
+            let expected = wire::encode_settings(options(review.settings), prepared.header.size())?;
             if !review.matches_prepared(&prepared)
                 || (prepared.requires_consent() && !review.approved)
-                || prepared.header.settings != expected
+                || prepared.header.settings() != expected
                 || review.shown.is_none_or(|f| f >= ctx.cumulative_frame_nr())
             {
                 return Err(stale());

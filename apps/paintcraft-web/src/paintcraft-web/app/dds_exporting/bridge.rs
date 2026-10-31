@@ -24,9 +24,20 @@ pub(super) async fn prepare(
     let args = js_sys::Array::new();
     args.push(&owner_value);
     call(&service, "setOwner", &args)?;
+    let getter = if plan.protocol_version() == 5 {
+        "ddsSpatialExportProtocolVersion"
+    } else {
+        "ddsExportProtocolVersion"
+    };
+    if call(&service, getter, &js_sys::Array::new())?.as_f64()
+        != Some(f64::from(plan.protocol_version()))
+    {
+        return Err(failed("Browser export protocol mismatch"));
+    }
     let size = plan.size();
     let metadata = object(&[
         ("width", size.0.into()),
+        ("protocolVersion", u32::from(plan.protocol_version()).into()),
         ("height", size.1.into()),
         ("sourceFlags", u32::from(plan.source_flags()).into()),
         ("bakeIntent", u32::from(plan.bake_intent()).into()),
@@ -58,9 +69,24 @@ pub(super) async fn prepare(
     };
     *cancellation.borrow_mut() = Some(Cancellation(admission.value.clone()));
     let source = plan.snapshot(&doc)?;
-    let request = wire::Header::capture(&plan, &source, owner, nonce)?;
+    let request = Request::capture(&plan, &source, owner, nonce)?;
+    // Same MainWasm ABI as the isolated codec Worker; never infer native sizes.
+    let final_plan = if plan.protocol_version() == 5 {
+        js_sys::Reflect::set(
+            &metadata,
+            &"spatialContext".into(),
+            &Uint8Array::from(plan.spatial_context(source.len())?.as_slice()),
+        )
+        .map_err(error)?;
+        Some(metadata.clone())
+    } else {
+        None
+    };
     let args = js_sys::Array::new();
     args.push(&Uint8Array::from(source.as_slice()));
+    if let Some(value) = final_plan {
+        args.push(&value);
+    }
     let promise = call(&admission.value, "run", &args)?
         .dyn_into::<js_sys::Promise>()
         .map_err(error)?;
@@ -73,13 +99,14 @@ pub(super) async fn prepare(
         value,
         valid: false,
     };
-    let echo = bytes(&lease.value, "requestHeader", wire::REQUEST_HEADER)?;
+    let echo = bytes(&lease.value, "requestHeader", request.header_bytes())?;
     let digest = bytes(&lease.value, "sourceSha256", 32)?;
-    let response = bytes(&lease.value, "responseBytes", wire::RESPONSE_BYTES_MAX)?;
-    if digest != request.source_sha256 {
+    let response = bytes(&lease.value, "responseBytes", request.response_max())?;
+    if digest != request.source_sha256() {
         return Err(failed("DDS source binding changed"));
     }
-    let mut prepared = response::validate(&request, &echo, response, || lease.valid = true)?;
+    let mut prepared =
+        response::validate_request(&request, &echo, response, || lease.valid = true)?;
     prepared.lease = Some(lease);
     Ok(prepared)
 }

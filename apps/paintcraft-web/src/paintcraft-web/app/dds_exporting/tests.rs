@@ -188,7 +188,7 @@ fn default_settings_keep_legacy_capacity_and_stale_settings_cannot_reuse_a_previ
     );
     let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
     assert_ne!(
-        prepared.header.settings,
+        prepared.header.settings(),
         wire::encode_settings(options(Settings::default()), doc.canvas).unwrap()
     );
 }
