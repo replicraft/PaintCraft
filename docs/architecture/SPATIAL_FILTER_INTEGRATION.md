@@ -2,9 +2,10 @@
 
 Box Blur is implemented as the seventh editable filter across the model,
 renderer, automation, PCND persistence and Native/Web host controls. Local tests,
-required offscreen Metal and native/Wasm strict checks pass. **Production browser
-Box runtime and visible UI execution are pending.** Earlier six-point production
-proofs retain their original scope. The broader 132-entry catalog, Gaussian,
+required offscreen Metal and native/Wasm strict checks pass. Actual production
+Chrome qualifies render Worker3, the scoped Box Studio flow and MAIN DDS/MSP export5.
+These are finite appearance, consent and replay proofs; earlier six-point
+production evidence retains its original scope. The broader 132-entry catalog, Gaussian,
 styles and layer masks remain separate work.
 
 ## Exact Box policy
@@ -97,8 +98,9 @@ workspace and work facts before executing a candidate. Source PCND is frozen and
 decoded once per client; sliders reuse it. The MAIN profile still bounds source
 wire, linear memory and output. DDS/MSP protocol 5 carries a separately checked
 spatial context for PCND5; older protocol 4 does not silently gain Box support.
-Current local Worker/codec controls pass; actual built-browser execution remains
-pending. JavaScript cancellation is observed between synchronous Wasm patches,
+Local Worker/codec controls and actual built-browser Worker3, Box Studio and
+MAIN DDS/MSP export5 checks pass for the finite cases recorded below. JavaScript
+cancellation is observed between synchronous Wasm patches,
 not during a running call; no strict maximum latency is claimed.
 
 ## Closed automation profiles
@@ -153,13 +155,51 @@ strict and all seven locales pass. The Native evidence is retained in
 `docs/validation/native-box-ui/final-freeze.json` and
 `single-layer-final-freeze.json` in that directory.
 
-Web passes 387 tests with three existing ignored; Worker passes 17, and native/Wasm
+Web passes 391 tests with three existing ignored; Worker passes 17, and native/Wasm
 strict passes. DDS/MSP protocol 5 passes five Formats groups, two codec-entry
 groups, four older library groups covering 23 tests, four registry controls and
 native/Wasm strict. Node passes 197 tests. Source preimages, the intermediate
 graph-overlap compile failure, test fixture corrections and the sandbox
 no-adapter failure remain retained alongside corrected passes.
 
-Production browser runtime and visible Box UI remain **pending** and must be
-qualified separately before replacing that status. No full 132-catalog, new GPU
-shader, performance, external-application or all-target compatibility claim is made.
+## Production browser qualification
+
+The production build passes all five steps (MAIN, render Worker3, codec Worker5,
+Astro and asset checks), with 3305 input records and 27 frozen assets. The raw
+Worker, Studio and DDS/MSP receipts bind the same 27 asset hashes.
+
+- Raw Chrome Worker3: 17 independent source specimens and 104 finite controls,
+  including source-once reuse, typed refusal and acknowledged retirement. This
+  does not establish a maximum scheduling or cancellation latency.
+- Visible Box Studio: seven checks cover actual Add, default radius 2 and changed
+  radius 1, causal screenshot markers and exact bound Worker planes, byte-identical
+  Cancel, exact stack/raw-source Apply, Undo/Redo and fresh PCND5 reopen/save.
+  Apply legitimately promotes the admitted private texture; fresh reopen verifies
+  strict committed BASE binding. Existing-instance Edit, duplicate and preview-off
+  are not newly qualified by this flow.
+- MAIN DDS export5: actual capture, Bake revocation/recheck and download pass.
+  Nine fresh Worker replays include one positive and eight negative mutations;
+  Pillow 10.3.0 independently decodes the positive file to the exact fixture plane.
+  The source remains unchanged.
+- MAIN MSP export5 also passes real consent/revocation/recheck/download,
+  fresh Worker byte identity and nine replays (one positive, eight negative).
+  Pillow independently decodes its 2×1 opaque-white plane exactly; this uniform
+  fixture does not establish a causal color-change marker. Both MAIN copy flows
+  preserve source/title/dirty state, retire revoked intent without download and
+  use a fresh nonce after recheck. Fresh Worker artifacts match downloaded bytes.
+
+Exact retained receipts are:
+
+- `docs/validation/box-production/attempt-2/final-freeze.json`
+- `docs/validation/box-production/raw-worker/attempt-HcVyrK/final.json`
+- `docs/validation/box-production/ui/attempt-lCvdlH/production.json`
+- `docs/validation/box-production/export5/attempt-TmfN66/final.json`
+- `docs/validation/box-production/export5/attempt-1jHnpq/final.json`
+- `docs/validation/box-production/current-assets-recheck.json`
+
+The current Formats library regression passes 543 tests with 12 existing ignored;
+ten relevant integration targets separately pass 21 tests with one existing
+ignored. These are not a new full all-targets total. Historical six-point counts
+retain their original scope. Calibration and failed attempts remain preserved.
+No full 132-catalog, GPU blur shader, performance, external-application or
+all-target compatibility claim follows from these local and browser controls.

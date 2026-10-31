@@ -374,7 +374,7 @@ Node suite passes 185 tests and independent JS oracle controls pass 63. See the
 Mask painting, layer styles and the rest of the pinned 132-entry source catalog
 remain separate work; seven profiles do not establish catalog parity.
 
-### Box Blur local qualification; browser execution pending
+### Box Blur qualification
 
 Core/Effects/Document, typed Commands, PCND5/recovery, actual CLI/stdio closed
 profiles, regional rendering and required offscreen Metal are qualified locally.
@@ -385,6 +385,14 @@ strict checks and all seven locales pass. The [current spatial qualification
 record](architecture/SPATIAL_FILTER_INTEGRATION.md#current-qualification) gives
 counts and exact boundaries.
 
-**Box production browser runtime and visible UI execution remain pending.**
-Previous six-point browser results above retain their original scope. Higher
-catalog entries, layer masks and styles remain open.
+Actual production Chrome passes Worker3 over 17 sources/104 finite controls and
+seven Box Studio checks: Add, default radius 2/change to 1 with causal screenshots,
+Cancel, exact Apply, Undo/Redo and fresh PCND5 reopen/save. Apply may promote the
+admitted private texture; fresh reopen independently binds committed BASE. This
+does not newly qualify existing Edit, duplicate or preview-off. MAIN DDS export5
+capture/revoke/recheck/download passes, with nine fresh Worker replays (eight
+negative) and independent Pillow pixels. MAIN MSP export5 also passes those finite consent/replay checks, with
+independent exact 2×1 opaque-white pixels. The frozen 27-asset production receipts and current library/integration
+regression counts are recorded in the [spatial qualification](architecture/SPATIAL_FILTER_INTEGRATION.md#production-browser-qualification).
+Previous six-point browser results retain their original scope. Higher catalog
+entries, layer masks and styles remain open.

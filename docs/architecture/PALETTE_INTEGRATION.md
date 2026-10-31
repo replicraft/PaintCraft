@@ -5,8 +5,9 @@ and explicit copy consent support **seven editable profiles**: six point filters
 (Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize) and
 Box Blur. Fixed per-filter masks remain independent of live selection. Native
 and Web Studio share controls. The six-point production proofs below remain
-qualified; Box local host/CLI/PCND/required Metal/Worker checks pass, with actual
-production browser Box runtime and visible UI **pending**. Updated 2026-10-30.
+qualified; Box local host/CLI/PCND/required Metal checks and actual production
+Worker3/scoped Studio/MAIN DDS/MSP export5 pass finite appearance, consent and
+replay checks. MSP has independent exact 2×1 opaque-white pixel evidence. Updated 2026-10-30.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
 seven profiles do not establish parity or a wholesale port.
 
@@ -106,7 +107,7 @@ Extend content cache keys with ordered semantic descriptors, profile version, ma
 
 Placement-only reuse is permitted for these source-local point filters. Position-dependent materials, transformed masks, global statistics, backdrop-dependent styles and resampling require additional keys/bounds. Sharing an appearance does not authorize presenting a stale session/generation/request. Bound caches, queued jobs, scratch and upload copies under caller-owned realms; eviction cannot destroy committed descriptors/source.
 
-PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP protocol v4 preserves its point/mask contract. Protocol 5 adds PCND5 spatial inventory/workspace binding and passes local codec/backend controls; its Box production browser proof remains pending. Historical actual point Worker/UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
+PDN/PAINT/PSD/PSB/ORA preserving writers reject effect-bearing documents before pixel work: a rendered ORA merged preview does not preserve an editable stack in its raw layers. Flat and specialty copies now need a separately captured Bake policy, bound to the frozen document, stack digest and target operation. They return `filters-baked`, including for disabled/hidden intentions, while keeping the original project. Source-metadata Omit never authorizes dropping filters. DDS/MSP protocol v4 preserves its point/mask contract. Protocol 5 adds PCND5 spatial inventory/workspace binding and passes local codec/backend controls; its MAIN DDS export5 actual UI and fresh replay proof pass; MAIN MSP export5 actual UI also passes finite consent/replay checks. Historical actual point Worker/UI flows verify pixels and refusal/revocation. Raw-layer sampling or copy remains an explicitly named source-pixel mode.
 
 GPU presentation may consume CPU-evaluated tiles initially. Never bypass active filters in a GPU fast path, picker, preview or export because the backend has no matching kernel. CPU fallback preserves correctness; unsupported resource sizes yield a typed failure rather than source-only rendering. Do not import Palette's whole-layer clones or fixed LRU limits as PaintCraft's resource policy.
 
@@ -186,8 +187,11 @@ The model, Effects, document/history, PCND5, regional renderer with required
 Metal, typed CLI/stdio profiles and Native/Web/Worker controls are qualified
 locally. Native actual Metal readback, PCND5 Save/reopen and single-layer
 Flatten/Undo pass. [Current counts and scope](SPATIAL_FILTER_INTEGRATION.md#current-qualification)
-record these separately from **pending production browser Box runtime and
-visible UI**. Higher catalog entries, layer masks, styles, Gaussian/global
+record these separately from actual production Worker3 (17 sources/104 finite
+controls), seven scoped Box Studio checks and MAIN DDS export5 UI plus nine
+fresh replays with independent decoded pixels. MAIN MSP export5 actual UI also passes finite consent/replay checks with
+independently decoded exact 2×1 opaque-white pixels. Existing Edit/duplicate/preview-off are not newly qualified by
+the Box Studio run. Higher catalog entries, layer masks, styles, Gaussian/global
 families and broad performance/compatibility remain open.
 
 ## Attribution and copying policy

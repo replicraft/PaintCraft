@@ -285,7 +285,10 @@ under PCND5 and uses inspect/result spatial profiles even if that Box is disable
 or radius 0. Point-only documents keep their minimal older profiles.
 
 Box local Core/Effects/Document, Renderer/required Metal, PCND, CLI/stdio and
-Native/Web host/Worker/strict checks pass. Actual production browser Box runtime
-and UI remain pending; the six-point actual browser evidence above does not
-qualify the new spatial profile. The broader 132-entry catalog/styles/layer-mask
+Native/Web host/Worker/strict checks pass. Separate production Chrome receipts
+now qualify Worker3 (17 sources/104 finite controls), seven scoped Box Studio
+checks and MAIN DDS export5 UI plus nine fresh replays with independent decoded
+pixels. MAIN MSP export5 also passes its finite consent/replay checks and independent
+exact 2×1 opaque-white pixels. These new receipts, not
+the historical six-point browser evidence above, qualify those spatial routes. The broader 132-entry catalog/styles/layer-mask
 milestones remain open.

@@ -84,9 +84,15 @@ closed schemas over genuine outputs, legacy/future-version regressions and
 strict checks. The model, exact Effects kernels, regional renderer with required
 Metal, PCND5, Native/Web host and Worker/codec-entry controls pass locally.
 [Current qualification counts](architecture/SPATIAL_FILTER_INTEGRATION.md#current-qualification)
-keep host, codec and actual browser evidence separate. **Production browser Box
-runtime and visible UI qualification are pending.** Earlier six-point production
-browser evidence remains scoped to those profiles.
+keep host, codec and actual browser evidence separate. Actual Chrome Worker3
+passes 17 sources/104 finite controls; seven Box Studio checks qualify Add/change,
+Cancel/Apply, Undo/Redo and fresh PCND5 reopen. MAIN DDS export5 actual UI and
+nine fresh replays (eight negative), with independent decoded pixels, pass.
+MAIN MSP export5 also passes its finite consent/replay checks and independent
+exact 2×1 opaque-white pixels. These are separate from headless
+MCP execution, and do not newly qualify existing Edit/duplicate/preview-off.
+[Production receipts](architecture/SPATIAL_FILTER_INTEGRATION.md#production-browser-qualification)
+bind 27 assets. Earlier six-point evidence retains its original scope.
 
 ## JPEG background colors
 

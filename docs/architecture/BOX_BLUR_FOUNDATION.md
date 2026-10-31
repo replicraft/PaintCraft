@@ -3,7 +3,8 @@
 This records the qualified scalar foundation now used by the seventh editable
 filter, Box Blur. Persistent descriptors, regional rendering, PCND5, typed
 commands and Native/Web host controls are implemented. Local tests and required
-Metal presentation pass; actual production browser Box runtime/UI are pending.
+Metal presentation pass. Actual production Worker3, scoped Box Studio and MAIN
+DDS/MSP export5 pass their finite appearance, consent and replay checks.
 See [the current integration](SPATIAL_FILTER_INTEGRATION.md). The six
 [point profiles](POINT_FILTER_PROFILES.md) keep their original contracts.
 
@@ -71,7 +72,8 @@ The renderer evaluates ordered prefix regions with cumulative true-source halos,
 admitted buffers and shared per-job work. CPU composition, GPU uploads, display
 reduction and host visual/copy callbacks use the evaluated appearance. Native
 admission is installed on the actual executing thread; a separate codec process
-does not inherit it. Production browser qualification is a separate pending gate.
+does not inherit it. Production Worker3, scoped Box Studio and MAIN DDS/MSP export5 are qualified
+separately with finite appearance, consent and replay controls.
 
 PCND5 is conditional on stored Box, including disabled/radius zero, and adds
 algorithm tag 7 plus one radius byte. Old PCND3/4 still refuse tag 7: their registry
@@ -100,5 +102,6 @@ The retained evidence is `docs/validation/box-blur-foundation/`. Failed test-hel
 coordinate arithmetic, a test iterator lint and an isolated Wasm invocation
 without the web app's UUID randomness feature are retained alongside corrected
 checks. None established a kernel numerical failure. That historical kernel checkpoint alone had no actual blur UI claim. Current
-local host controls add UI-path evidence; production browser Box execution is
-still pending. No GPU blur shader, performance or external-application parity is claimed.
+local host controls and the scoped production Box Studio/Worker3 flow now pass.
+MAIN DDS/MSP export5 also pass actual consent/replay checks. No GPU blur shader,
+performance or external-application parity is claimed.

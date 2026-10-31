@@ -323,8 +323,12 @@ and two recovery controls pass. Model, exact Effects, renderer/required Metal,
 typed CLI/stdio and Native/Web host/save/reopen qualification also pass; DDS/MSP
 protocol 5 workspace/binding and native/Wasm strict controls pass locally.
 [Spatial qualification](architecture/SPATIAL_FILTER_INTEGRATION.md#current-qualification)
-records exact scope. Production browser Box runtime and visible UI execution
-are **pending**. Historical six-point actual-browser evidence remains unchanged;
+records exact scope. Actual production Worker3 passes 17 sources/104 finite
+controls, and seven Box Studio checks include exact stack/source preservation,
+Undo/Redo and fresh PCND5 reopen/save. MAIN DDS export5 actual UI plus nine fresh
+replays (eight negative) and independently decoded pixels pass. MAIN MSP export5 also passes finite consent/replay checks with independently
+decoded exact 2×1 opaque-white pixels. The 27-asset [production receipts](architecture/SPATIAL_FILTER_INTEGRATION.md#production-browser-qualification)
+remain distinct from file-format admission. Historical six-point evidence is unchanged;
 the broader catalog and external-application compatibility are not established
 by these local checks.
 
