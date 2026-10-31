@@ -58,7 +58,8 @@ impl FilterOp {
             Self::Add { descriptor, .. } | Self::Update { descriptor, .. } => match descriptor {
                 Descriptor::LevelsRgbV1(_)
                 | Descriptor::ExposureSrgbV1(_)
-                | Descriptor::CurvesRgbV1(_) => 6,
+                | Descriptor::CurvesRgbV1(_)
+                | Descriptor::VibranceRgbV1(_) => 6,
                 Descriptor::BoxBlurV1(_) => 5,
                 Descriptor::InvertRgbV1 | Descriptor::BrightnessContrastV1(_) => 2,
                 Descriptor::BlackWhiteRgbV1(_)

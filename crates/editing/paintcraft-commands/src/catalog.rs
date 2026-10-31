@@ -3,7 +3,7 @@ use super::*;
 
 pub const CATALOG_BATCH_SCHEMA: &str = "paintcraft.batch/catalog-v1";
 
-const PROFILES: [&str; 10] = [
+const PROFILES: [&str; 11] = [
     "black-white-rgb-v1",
     "box-blur-v1",
     "brightness-contrast-v1",
@@ -14,6 +14,7 @@ const PROFILES: [&str; 10] = [
     "posterize-rgb-v1",
     "solarize-rgb-v1",
     "threshold-luma-v1",
+    "vibrance-rgb-v1",
 ];
 
 impl Batch {
@@ -104,3 +105,6 @@ mod exposure_tests;
 
 #[cfg(test)]
 mod curves_tests;
+
+#[cfg(test)]
+mod vibrance_tests;

@@ -241,7 +241,12 @@ impl Batch {
                 if matches!(name, "filter.add" | "filter.update")
                     && matches!(
                         kind,
-                        Some("levels-rgb-v1" | "exposure-srgb-v1" | "curves-rgb-v1")
+                        Some(
+                            "levels-rgb-v1"
+                                | "exposure-srgb-v1"
+                                | "curves-rgb-v1"
+                                | "vibrance-rgb-v1"
+                        )
                     )
                 {
                     6
