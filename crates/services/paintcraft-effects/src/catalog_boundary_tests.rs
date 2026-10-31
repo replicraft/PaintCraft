@@ -68,3 +68,23 @@ fn legacy_facade_refuses_vibrance_even_default_before_row_callbacks_and_output()
         );
     }
 }
+
+#[test]
+fn legacy_facade_refuses_hsl_default_and_halfturn_before_callbacks_or_writes() {
+    use paintcraft_core::types::filters::HueSaturationRgbV1;
+    for [h, s, l] in [
+        [0, 0, 0],
+        [-180, -100, 100],
+        [180, 100, -100],
+        [137, 73, -19],
+    ] {
+        let descriptor = Descriptor::HueSaturationRgbV1(HueSaturationRgbV1::new(h, s, l).unwrap());
+        assert_prepared_required(descriptor);
+        assert_eq!(
+            evaluate_pixel(&[descriptor], Rgba([64, 16, 128, 0]))
+                .unwrap_err()
+                .message,
+            "Hue/Saturation filter requires its admitted priced direct route"
+        );
+    }
+}

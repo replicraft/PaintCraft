@@ -18,6 +18,9 @@ fn prepared_error(filter: Descriptor) -> Error {
                 "Exposure filter requires its admitted prepared program"
             }
             Descriptor::CurvesRgbV1(_) => "Curves filter requires its admitted prepared program",
+            Descriptor::HueSaturationRgbV1(_) => {
+                "Hue/Saturation filter requires its admitted priced direct route"
+            }
             Descriptor::VibranceRgbV1(_) => {
                 "Vibrance filter requires its admitted priced direct route"
             }
@@ -81,6 +84,7 @@ pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Result<Rgba> {
         Descriptor::BoxBlurV1(_) => return Err(spatial_error()),
         Descriptor::CurvesRgbV1(_) => return Err(prepared_error(filter)),
         Descriptor::VibranceRgbV1(_) => return Err(prepared_error(filter)),
+        Descriptor::HueSaturationRgbV1(_) => return Err(prepared_error(filter)),
         Descriptor::LevelsRgbV1(_) | Descriptor::ExposureSrgbV1(_) => {
             return Err(prepared_error(filter));
         }
