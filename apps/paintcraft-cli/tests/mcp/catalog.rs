@@ -29,7 +29,7 @@ pub(super) fn read_catalog(bytes: &[u8]) -> paintcraft_document::Document {
     .unwrap()
 }
 
-const BUNDLE: &str = "2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5";
+const BUNDLE: &str = "5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b";
 
 #[test]
 fn catalog_stdio_levels_inventory_save_reopen_noop_and_remove_downgrade() {

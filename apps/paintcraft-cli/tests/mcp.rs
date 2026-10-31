@@ -258,3 +258,6 @@ mod exposure;
 
 #[path = "mcp/curves.rs"]
 mod curves;
+
+#[path = "mcp/vibrance.rs"]
+mod vibrance;

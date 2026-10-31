@@ -141,3 +141,6 @@ mod exposure;
 
 #[path = "cli/curves.rs"]
 mod curves;
+
+#[path = "cli/vibrance.rs"]
+mod vibrance;
