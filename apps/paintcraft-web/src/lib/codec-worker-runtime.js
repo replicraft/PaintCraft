@@ -1,3 +1,5 @@
+import * as ddsPrepared from './dds-prepared-worker-protocol.js';
+import * as mspPrepared from './msp-prepared-worker-protocol.js';
 import * as ddsSpatial from './dds-spatial-worker-protocol.js';
 import * as mspSpatial from './msp-spatial-worker-protocol.js';
 import * as ddsCatalog from './dds-catalog-worker-protocol.js';
@@ -11,6 +13,8 @@ import initialize, {
 	dds_spatial_export_request,
 	dds_catalog_export_protocol_version,
 	dds_catalog_export_request,
+	dds_prepared_export_protocol_version,
+	dds_prepared_export_request,
 	decode_request,
 	linear_memory_ceiling,
 	msp_export_protocol_version,
@@ -19,6 +23,8 @@ import initialize, {
 	msp_spatial_export_request,
 	msp_catalog_export_protocol_version,
 	msp_catalog_export_request,
+	msp_prepared_export_protocol_version,
+	msp_prepared_export_request,
 	protocol_version,
 	tiff_page_protocol_version,
 	tiff_page_request,
@@ -57,6 +63,14 @@ const operations = Object.freeze({
 		expectedVersion: ddsCatalog.DDS_PROTOCOL_VERSION,
 		execute: dds_catalog_export_request,
 	}),
+	'dds-prepared-export': Object.freeze({
+		header: ddsPrepared.DDS_REQUEST_HEADER,
+		input: ddsPrepared.DDS_SOURCE_MAX,
+		output: ddsPrepared.DDS_OUTPUT_MAX,
+		version: dds_prepared_export_protocol_version,
+		expectedVersion: ddsPrepared.DDS_PROTOCOL_VERSION,
+		execute: dds_prepared_export_request,
+	}),
 	'msp-catalog-export': Object.freeze({
 		header: mspCatalog.MSP_REQUEST_HEADER,
 		input: mspCatalog.MSP_SOURCE_MAX,
@@ -64,6 +78,14 @@ const operations = Object.freeze({
 		version: msp_catalog_export_protocol_version,
 		expectedVersion: mspCatalog.MSP_PROTOCOL_VERSION,
 		execute: msp_catalog_export_request,
+	}),
+	'msp-prepared-export': Object.freeze({
+		header: mspPrepared.MSP_REQUEST_HEADER,
+		input: mspPrepared.MSP_SOURCE_MAX,
+		output: mspPrepared.MSP_OUTPUT_MAX,
+		version: msp_prepared_export_protocol_version,
+		expectedVersion: mspPrepared.MSP_PROTOCOL_VERSION,
+		execute: msp_prepared_export_request,
 	}),
 	'tiff-pages': Object.freeze({
 		header: TIFF_REQUEST_HEADER,

@@ -1,3 +1,5 @@
+import * as ddsPrepared from '../src/lib/dds-prepared-worker-protocol.js';
+import * as mspPrepared from '../src/lib/msp-prepared-worker-protocol.js';
 import * as ddsSpatial from '../src/lib/dds-spatial-worker-protocol.js';
 import * as mspSpatial from '../src/lib/msp-spatial-worker-protocol.js';
 import * as ddsCatalog from '../src/lib/dds-catalog-worker-protocol.js';
@@ -58,6 +60,8 @@ function runtime(extra = {}) {
 		mspSpatial,
 		ddsCatalog,
 		mspCatalog,
+		ddsPrepared,
+		mspPrepared,
 		Uint8Array,
 		ArrayBuffer,
 		RangeError,
@@ -73,6 +77,10 @@ function runtime(extra = {}) {
 		dds_spatial_export_request: execute('dds-spatial-export'),
 		msp_spatial_export_request: execute('msp-spatial-export'),
 		dds_catalog_export_protocol_version: () => 6,
+		dds_prepared_export_protocol_version: () => 7,
+		msp_prepared_export_protocol_version: () => 7,
+		dds_prepared_export_request: execute('dds-prepared-export'),
+		msp_prepared_export_request: execute('msp-prepared-export'),
 		msp_catalog_export_protocol_version: () => 6,
 		dds_catalog_export_request: execute('dds-catalog-export'),
 		msp_catalog_export_request: execute('msp-catalog-export'),
@@ -242,5 +250,44 @@ test('catalog6 selects only its exact runtime and refuses older worker getters',
 			[`${kind}-catalog-export`],
 		);
 		assert.equal(accepted.messages[0].value.kind, 'result');
+	}
+});
+
+test('prepared7 uses only its named execution entry with exact getter, input and output bounds', async () => {
+	for (const codec of ['dds', 'msp']) {
+		const api = codec === 'dds' ? ddsPrepared : mspPrepared;
+		const upper = codec.toUpperCase(),
+			kind = `${codec}-prepared-export`;
+		const valid = runtime();
+		await valid.self.onmessage({
+			data: { kind, bytes: new ArrayBuffer(449) },
+		});
+		assert.equal(valid.calls.length, 1);
+		assert.equal(valid.calls[0].kind, kind);
+		assert.equal(valid.messages[0].value.kind, 'result');
+		const wrong = runtime({
+			[`${codec}_prepared_export_protocol_version`]: () => 6,
+		});
+		await wrong.self.onmessage({
+			data: { kind, bytes: new ArrayBuffer(449) },
+		});
+		assert.equal(wrong.calls.length, 0);
+		assert.equal(wrong.messages[0].value.kind, 'failure');
+		for (const length of [447, 449 + api[`${upper}_SOURCE_MAX`]]) {
+			const denied = runtime();
+			await denied.self.onmessage({
+				data: { kind, bytes: new ArrayBuffer(length) },
+			});
+			assert.equal(denied.calls.length, 0);
+			assert.equal(denied.messages[0].value.kind, 'failure');
+		}
+		const oversized = runtime({
+			[`${codec}_prepared_export_request`]: () =>
+				new Uint8Array(api[`${upper}_OUTPUT_MAX`] + 1),
+		});
+		await oversized.self.onmessage({
+			data: { kind, bytes: new ArrayBuffer(449) },
+		});
+		assert.equal(oversized.messages[0].value.kind, 'failure');
 	}
 });

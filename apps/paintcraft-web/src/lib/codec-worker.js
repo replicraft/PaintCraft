@@ -1,3 +1,5 @@
+import * as ddsPrepared from './dds-prepared-worker-protocol.js';
+import * as mspPrepared from './msp-prepared-worker-protocol.js';
 import * as ddsSpatial from './dds-spatial-worker-protocol.js';
 import * as mspSpatial from './msp-spatial-worker-protocol.js';
 import * as ddsCatalog from './dds-catalog-worker-protocol.js';
@@ -121,6 +123,16 @@ const DDS_CATALOG = Object.freeze({
 	completed: ddsCatalog.isCompletedDdsRefusal,
 	finalize: ddsCatalog.freezeDdsPlan,
 });
+const DDS_PREPARED = Object.freeze({
+	...DDS,
+	kind: 'dds-prepared-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		ddsPrepared.captureDds(source, owner, plan, nonce),
+	encode: ddsPrepared.encodeDdsRequest,
+	decode: ddsPrepared.decodeDdsResponse,
+	completed: ddsPrepared.isCompletedDdsRefusal,
+	finalize: ddsPrepared.freezeDdsPlan,
+});
 const MSP_CATALOG = Object.freeze({
 	...MSP,
 	kind: 'msp-catalog-export',
@@ -130,6 +142,16 @@ const MSP_CATALOG = Object.freeze({
 	decode: mspCatalog.decodeMspResponse,
 	completed: mspCatalog.isCompletedMspRefusal,
 	finalize: mspCatalog.freezeMspPlan,
+});
+const MSP_PREPARED = Object.freeze({
+	...MSP,
+	kind: 'msp-prepared-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		mspPrepared.captureMsp(source, owner, plan, nonce),
+	encode: mspPrepared.encodeMspRequest,
+	decode: mspPrepared.decodeMspResponse,
+	completed: mspPrepared.isCompletedMspRefusal,
+	finalize: mspPrepared.freezeMspPlan,
 });
 const TIFF = Object.freeze({
 	kind: 'tiff-pages',
@@ -471,28 +493,32 @@ export function tiffFileInWorker({ file, plan, ...options }) {
 export function admitDdsInWorker(options) {
 	return admitExportInWorker(
 		options,
-		options.plan?.protocolVersion === 6
-			? DDS_CATALOG
-			: options.plan?.protocolVersion === 5
-				? DDS_SPATIAL
-				: DDS,
+		options.plan?.protocolVersion === 7
+			? DDS_PREPARED
+			: options.plan?.protocolVersion === 6
+				? DDS_CATALOG
+				: options.plan?.protocolVersion === 5
+					? DDS_SPATIAL
+					: DDS,
 		freezeDdsPlan,
 	);
 }
 export function admitMspInWorker(options) {
 	return admitExportInWorker(
 		options,
-		options.plan?.protocolVersion === 6
-			? MSP_CATALOG
-			: options.plan?.protocolVersion === 5
-				? MSP_SPATIAL
-				: MSP,
+		options.plan?.protocolVersion === 7
+			? MSP_PREPARED
+			: options.plan?.protocolVersion === 6
+				? MSP_CATALOG
+				: options.plan?.protocolVersion === 5
+					? MSP_SPATIAL
+					: MSP,
 		freezeMspPlan,
 	);
 }
 function admitExportInWorker(options, operation, freezePlan) {
 	const protocol = options.plan?.protocolVersion ?? 4;
-	if (![4, 5, 6].includes(protocol))
+	if (![4, 5, 6, 7].includes(protocol))
 		throw refusal('InputSchema', 'Unsupported export protocol version');
 	const plan = freezePlan(options.plan);
 	ownerBytes(options.owner);
@@ -538,6 +564,11 @@ function admitExportInWorker(options, operation, freezePlan) {
 							? captured.finalizePlan(source?.length)
 							: undefined);
 					finalPlan = operation.finalize(exactPlan);
+					if (finalPlan.protocolVersion !== protocol)
+						throw refusal(
+							'ConflictStaleBase',
+							'Export protocol changed during snapshot',
+						);
 					for (const key of [
 						'width',
 						'height',
