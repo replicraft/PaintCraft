@@ -1,8 +1,11 @@
 # Curves numerical foundation
 
-Status: the standalone parameter and exact compiler pass native and actual Wasm
-qualification. Curves is not an editable PaintCraft filter yet. The nine-profile catalog, PCND readers, execution registry
-and Studio controls do not acquire another capability from this document.
+Status: the parameter and exact compiler pass native and actual Wasm qualification.
+Local integration now includes typed catalog intentions, PCND6, caller-owned
+prepared rendering, five Studio controls, native history and CLI/MCP. Actual
+production-browser qualification is pending; the public supported-filter count
+remains nine until that gate passes. The standalone CI result does not qualify
+these later integration changes.
 
 ## Intent and numerical policy
 
@@ -11,10 +14,10 @@ fixed input knots, one shared RGB curve and freely chosen output bytes. Its
 [parameters](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/document.rs#L858)
 and [point evaluator](https://github.com/spiffyfitz/palette/blob/aefc84fe9233e66344147078de866860326d8cfa/crates/palette-core/src/processing/point.rs#L319)
 establish that feature intent. The author inventory calls it five-point Curves.
-PaintCraft will independently implement the exact policy below, rather than
-promise equality with upstream floating-point output or Photoshop.
+PaintCraft independently implements the exact policy below. It does not promise
+equality with upstream floating-point output or Photoshop.
 
-The proposed numerical ID is `curves-rgb-v1`. Five output bytes correspond to
+The numerical ID is `curves-rgb-v1`. Five output bytes correspond to
 fixed inputs `[0,64,128,192,255]`; the identity default has those same outputs.
 Equal, decreasing and nonmonotone outputs and unlocked endpoints are valid.
 Canonical parameters are exactly the five output bytes in input-knot order.
@@ -125,6 +128,55 @@ The actual Wasm receipt is
 `docs/validation/curves-foundation/wasm/final-freeze.json`, SHA256
 `aea8220f6016bf359b67a37b1180400ef7cf0e6d2b421ff352473307d41c6f70`.
 Native logs are under `docs/validation/curves-foundation/compiler/native-first/`.
-All original processes are terminal. Editable descriptors, catalog/PCND registration,
-prepared job ownership, UI and automation are still subsequent work. Exposure's
-pushed CI result is a separate scope and does not qualify this local foundation.
+All original standalone processes are terminal. The seven CI jobs for standalone
+commit `f89243c9` pass in
+[run 41193130351](https://github.com/replicraft/PaintCraft/actions/runs/41193130351).
+That result covers the foundation and earlier Exposure work, not the integration
+checkpoint below.
+
+## Local integration checkpoint
+
+Strict catalog JSON uses `{"kind":"curves-rgb-v1","outputs":[0,64,128,192,255]}`;
+exactly five integer bytes are required. The immutable ten-profile schema bundle
+has contract hash
+`2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5`.
+Older eight/nine-profile files remain byte-identical. All 26 genuine Curves
+CLI/MCP outputs validate against the new bundle and fail both older bundles;
+historical Exposure and Levels outputs still validate against their original and
+new bundles. These are actual process outputs, separate from generator fixtures.
+
+PCND6 stores the five output bytes using the profile-scoped `params-v1` codec.
+Identity and disabled instances retain their full intent. Fourteen independent
+positive/negative format specimens cover strict decoding and preservation.
+No outer PCND or worker protocol version changes. Source2/3/4 and Export4/5/6
+remain closed; Source5/Export7 resolve Curves through an explicit checked decoder,
+prepared execution route and `prepared-curves-rgba8-v1` resource contract.
+
+Prepared Curves tables belong to the admitted caller job and share its cumulative
+work counter. Rendering only looks up already-prepared programs. Missing keys
+refuse before a warm CPU/display/GPU cache can return stale appearance; a frozen
+owner cannot extend itself. The combined Levels/Exposure/Curves limit is 256
+unique programs, compiled in that canonical family order. All enabled stored
+intentions compile, including hidden, opacity-zero and identity cases. Reader
+capability checks still include disabled intentions.
+
+All 46 native prepared-render tests pass. Two required GPU tests pass on
+actual Apple M1 Pro Metal; they qualify CPU-filtered appearance with GPU
+presentation, not a Curves shader. All 19 historical baseline records match
+before/after on their own native and actual Chrome Wasm platforms, including both
+historical export contexts. Only the unpriced native factory bookkeeping size
+changes from 72 to 80 bytes; the Wasm factory stays 48. This is not a latency,
+speedup or process-memory claim.
+
+The native shared-control test covers each of the five sliders, synchronous and
+asynchronous private preview, Cancel, Apply with one undo step, unchanged source
+pixels, fresh native save/open, Undo and Redo. Eight Studio tests and two real CLI
+plus two real stdio MCP tests pass. All five controls are localized in seven
+languages. CLI/MCP image export requires explicit bake consent and leaves the
+editable source unchanged. Main Web's selected filter/DDS/MSP tests pass 51 cases;
+native and actual-target Wasm strict checks pass for Main and both workers.
+
+Receipts remain under `docs/validation/curves-integration/`,
+`curves-planning/owner-source/`, `curves-actual-tests/` and `curves-main/`.
+Fresh production/browser preview, lifecycle and export proof remains a separate
+pending gate; none of the local checks above substitutes for it.
