@@ -3,6 +3,8 @@ use super::*;
 use egui_kittest::{Harness, kittest::Queryable};
 use paintcraft_core::types::filters::BrightnessContrastV1;
 use std::time::Instant;
+#[path = "exposure_tests.rs"]
+mod exposure_tests;
 #[path = "levels_tests.rs"]
 mod levels_tests;
 const RAW: [u8; 8] = [10, 20, 30, 255, 100, 150, 200, 255];
