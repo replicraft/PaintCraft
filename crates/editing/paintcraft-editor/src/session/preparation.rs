@@ -120,6 +120,7 @@ impl Preparation {
             aliases: BTreeMap::new(),
             filter_aliases: BTreeMap::new(),
             document_features: masked_document_features(&self.session.doc),
+            required_filters: catalog_document_requirements(&self.session.doc),
         };
         Ok(PreparedEdit {
             base: self.base,

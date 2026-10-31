@@ -24,6 +24,7 @@ pub use paintcraft_history::{
 };
 use paintcraft_history::{History, Snapshot};
 
+mod catalog;
 mod flatten;
 mod history;
 mod paste;
@@ -32,6 +33,7 @@ mod preparation;
 mod residency;
 mod sampled_brush;
 mod shape_mask;
+pub use catalog::catalog_document_requirements;
 pub use history::{HistoryTicket, HistoryView};
 pub use persistence::PersistentValidator;
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
@@ -41,6 +43,12 @@ pub use residency::PreparedHistoryMaintenance;
 /// preserve the minimal v1/v2 profile.
 /// Extensions disclose inherited point-filter semantics in canonical feature order.
 pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
+    let catalog = doc.layers.values().any(|layer| {
+        layer
+            .filters
+            .iter()
+            .any(|entry| entry.descriptor().is_catalog_only())
+    });
     let masks = doc
         .layers
         .values()
@@ -51,7 +59,7 @@ pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
             .iter()
             .any(|entry| entry.descriptor().is_spatial())
     });
-    if !masks && !spatial {
+    if !masks && !spatial && !catalog {
         return Vec::new();
     }
     let mut features = vec!["layer-point-filters.v1"];
@@ -60,6 +68,9 @@ pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
     }
     if spatial {
         features.push("layer-spatial-filters.v1");
+    }
+    if catalog {
+        features.push("layer-filter-catalog.v1");
     }
     if doc.source_metadata.is_some() {
         features.push("source-metadata.v1");
@@ -76,6 +87,7 @@ pub struct Receipt {
     pub aliases: BTreeMap<String, Uuid>,
     pub filter_aliases: crate::execute::FilterAliases,
     pub document_features: Vec<&'static str>,
+    pub required_filters: Vec<&'static str>,
 }
 
 impl Receipt {
@@ -83,17 +95,17 @@ impl Receipt {
         let Value::Object(mut fields) = Value::object([
             (
                 "schema",
-                Value::str(
-                    if self.document_features.contains(&"layer-spatial-filters.v1") {
-                        "paintcraft.result/v4"
-                    } else if !self.document_features.is_empty() {
-                        "paintcraft.result/v3"
-                    } else if self.filter_aliases.is_empty() {
-                        "paintcraft.result/v1"
-                    } else {
-                        "paintcraft.result/v2"
-                    },
-                ),
+                Value::str(if !self.required_filters.is_empty() {
+                    "paintcraft.result/catalog-v1"
+                } else if self.document_features.contains(&"layer-spatial-filters.v1") {
+                    "paintcraft.result/v4"
+                } else if !self.document_features.is_empty() {
+                    "paintcraft.result/v3"
+                } else if self.filter_aliases.is_empty() {
+                    "paintcraft.result/v1"
+                } else {
+                    "paintcraft.result/v2"
+                }),
             ),
             ("committed", Value::Bool(self.committed)),
             ("state_id", Value::str(self.state_id.to_string())),
@@ -124,6 +136,18 @@ impl Receipt {
                 "document_features".into(),
                 Value::Array(
                     self.document_features
+                        .iter()
+                        .copied()
+                        .map(Value::str)
+                        .collect(),
+                ),
+            );
+        }
+        if !self.required_filters.is_empty() {
+            fields.insert(
+                "required_filters".into(),
+                Value::Array(
+                    self.required_filters
                         .iter()
                         .copied()
                         .map(Value::str)
@@ -403,6 +427,7 @@ impl Session {
                 aliases: BTreeMap::new(),
                 filter_aliases: BTreeMap::new(),
                 document_features: masked_document_features(&self.doc),
+                required_filters: catalog_document_requirements(&self.doc),
             });
         }
         let next_epoch = self.next_epoch()?;
@@ -436,6 +461,7 @@ impl Session {
             aliases: staged.aliases,
             filter_aliases: staged.filter_aliases,
             document_features: masked_document_features(&self.doc),
+            required_filters: catalog_document_requirements(&self.doc),
         })
     }
 
