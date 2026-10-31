@@ -14,6 +14,12 @@ pub struct Header {
 }
 impl Header {
     pub fn capture(plan: &SourcePlan, source: &[u8], owner: Owner, nonce: Uuid) -> Result<Self> {
+        if plan.protocol_version() != 4 {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Export Worker4 does not admit spatial filters",
+            ));
+        }
         if owner.state != plan.source.state() {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
