@@ -1,10 +1,11 @@
 # Levels numerical foundation
 
-Status: validated parameters and the exact scalar lookup-table foundation pass
-native tests and native/Wasm strict compilation. Levels is not an editable
-PaintCraft filter yet. The existing seven descriptors, project profiles and
-automation schemas remain unchanged. This contract prepares the next complete
-filter rather than presenting a linear remap as full Levels.
+Status: the exact scalar lookup-table foundation and local editable integration
+are implemented. Levels has all five parameters, persistent intentions, prepared
+rendering, Studio controls and catalog-aware CLI/MCP operations. Native controls,
+history, save/reopen, active CLI/MCP PNG export and actual Metal checks pass.
+Fresh production-browser qualification is in progress; the seven-filter public
+support claim has not yet been expanded. Existing legacy grammars remain closed.
 
 ## Source intent and parameters
 
@@ -163,8 +164,8 @@ they do not register the editable filter.
 Lookup application is cheap; repeated construction per pixel or per rendered
 tile is not an acceptable integration. The standalone prepared owner and eager
 job construct each unique admitted parameter set once and retain its resource
-charge for its lifetime. Hosts still need to connect that job to their frozen
-render inputs and tile workers. Any cross-job cache
+charge for its lifetime. CPU caches, GPU entry points and frozen document jobs
+now bind that complete inventory before rendering or cache lookup. Any cross-job cache
 needs explicit runtime ownership, eviction, complete parameter/profile keys and
 tests that release charges. A derived table is not authoritative document state.
 
@@ -173,19 +174,24 @@ Integration gates and current status:
 1. Qualified: validated parameters and an independent reproducible integer oracle.
 2. Qualified: bounded exact builders, full-domain boundary controls, cancellation and
    output preservation, native/Wasm checks and quantified construction cost.
-3. Prepared point execution with admitted table lifetime and row application.
-   The [standalone ownership foundation](PREPARED_POINT_PROGRAMS.md) is qualified;
-   eager frozen-job reuse is implemented separately. Existing consumers still
-   need to collect and bind that job's complete parameter inventory.
-4. A catalog-capable persistence and automation boundary. PCND3/4 stay closed to
+3. Qualified locally: prepared point execution, complete-key deduplication,
+   admitted table lifetime, canonical inventory order and frozen-job reuse.
+   The [ownership contract](PREPARED_POINT_PROGRAMS.md) governs retention and
+   lookup-only execution; no global cache or per-pixel compiler is introduced.
+4. Implemented and tested: catalog persistence and automation. PCND3/4 stay closed to
    tags 1 to 6; PCND5 retains its stored-Box invariant. Levels cannot silently
    enter either grammar. Future algorithm IDs, parameter framing and required
-   capabilities follow the [planned catalog contract](PCND_FILTER_CATALOG.md);
-   its reader, writer and automation integration remain unimplemented.
-5. Document/history/commands, all appearance consumers and explicit flat-copy
-   consent, including default/disabled intentions and final-document downgrades.
-6. Real Studio controls, private Apply/Cancel, Undo/Redo, save/reopen, CLI/MCP,
-   CPU/Metal and production-browser qualification.
+   capabilities follow the [catalog contract](PCND_FILTER_CATALOG.md).
+   Actual CLI/MCP receipts validate against the immutable eight-profile bundle
+   and reject the older closed profiles.
+5. Qualified locally: document/history/commands and explicit flat-copy consent,
+   including disabled/default intentions and final-document downgrades. DDS/MSP
+   export6 separately prices compilation and region execution; older Worker4/5
+   and preview source2/3 keep their original capability boundaries.
+6. Native Studio controls, private Apply/Cancel, Undo/Redo, save/reopen and
+   CPU/Metal checks pass. Fresh Main/Source4/codec6 production builds pass, as do
+   all 20 raw browser cases. Visible Studio lifecycle and actual browser export
+   checks remain in progress; compilation and raw packets do not close them.
 
 No catalog layout or future outer version is frozen by this numerical document.
 The wider Palette catalog, layer masks and layer styles remain separate work.

@@ -1,10 +1,12 @@
-# Planned PCND filter catalog
+# PCND filter catalog
 
-Status: **Planned. PCND6 input is not accepted.** This contract defines the first
-finite catalog slice for the existing seven numerical profiles and full Levels.
-It does not register a Descriptor, reader, renderer, automation schema or UI.
-PCND1–5 and their public compatibility claims remain unchanged until the complete
-integration is implemented and qualified.
+Status: **Implemented locally; end-to-end browser qualification is in progress.**
+PCND6 preserves the existing seven numerical profiles and complete five-parameter
+Levels. The reader, writer, typed descriptor, document/history model, prepared
+renderer, catalog automation schemas and Studio controls are implemented. Native
+format tests include independent positive/negative specimens and exact metadata
+boundaries. Existing PCND1–5 layouts and frozen automation schemas remain closed.
+This grammar does not by itself qualify a frontend or release.
 
 The numerical contract is [Levels foundation](LEVELS_FILTER_FOUNDATION.md).
 [Palette integration](PALETTE_INTEGRATION.md) tracks the wider inventory. Its 132

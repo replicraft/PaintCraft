@@ -11,6 +11,15 @@ replay checks. MSP has independent exact 2×1 opaque-white pixel evidence. Updat
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
 seven profiles do not establish parity or a wholesale port.
 
+Complete five-parameter Levels is the next local integration slice. Typed intent,
+hot/cold history, PCND6 catalogs, prepared CPU/Metal rendering, Studio controls and
+catalog CLI/MCP receipts are implemented and locally tested. Fresh web production
+builds and 20 raw Source4 browser cases pass. Visible Studio lifecycle and browser
+export qualification are still in progress, so Levels is not included in the
+seven-profile public support claim above. See the [Levels contract](LEVELS_FILTER_FOUNDATION.md)
+and [catalog framing](PCND_FILTER_CATALOG.md). No layer styles or remaining catalog
+entries are implied by this work.
+
 ## Evidence and upstream identity
 
 The reviewed repository is [spiffyfitz/palette](https://github.com/spiffyfitz/palette), commit [`aefc84fe9233e66344147078de866860326d8cfa`](https://github.com/spiffyfitz/palette/commit/aefc84fe9233e66344147078de866860326d8cfa). GitHub reference verification identified root tree `862c118edfc402f66ae34aea34d940b1a7d119c9`. The read-only source snapshot and individual blob hashes are recorded under `docs/validation/palette-source/`.
