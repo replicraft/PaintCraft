@@ -1,3 +1,5 @@
+import { DDS_PROTOCOL_VERSION as DDS_SPATIAL_PROTOCOL_VERSION } from './dds-spatial-worker-protocol.js';
+import { MSP_PROTOCOL_VERSION as MSP_SPATIAL_PROTOCOL_VERSION } from './msp-spatial-worker-protocol.js';
 // Vite owns the actual modules/Worker/Wasm. wasm-bindgen receives this object,
 // avoiding copied snippets with missing relative module dependencies.
 import {
@@ -43,7 +45,7 @@ export function createCodecService(applicationVersion) {
 		});
 		return job(
 			abort,
-			(source) => ticket.run(source),
+			(source, finalizedPlan) => ticket.run(source, finalizedPlan),
 			() => ticket.release(),
 		);
 	}
@@ -56,7 +58,7 @@ export function createCodecService(applicationVersion) {
 			cancel() {
 				if (active === abort) abort.abort();
 			},
-			async run(source) {
+			async run(source, finalizedPlan) {
 				if (used)
 					throw refusal(
 						'InputSchema',
@@ -64,7 +66,7 @@ export function createCodecService(applicationVersion) {
 					);
 				used = true;
 				try {
-					return await run(source);
+					return await run(source, finalizedPlan);
 				} finally {
 					if (active === abort) active = null;
 				}
@@ -154,10 +156,12 @@ export function createCodecService(applicationVersion) {
 			active?.abort();
 		},
 		ddsExportProtocolVersion: () => DDS_PROTOCOL_VERSION,
+		ddsSpatialExportProtocolVersion: () => DDS_SPATIAL_PROTOCOL_VERSION,
 		beginDdsExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitDdsInWorker);
 		},
 		mspExportProtocolVersion: () => MSP_PROTOCOL_VERSION,
+		mspSpatialExportProtocolVersion: () => MSP_SPATIAL_PROTOCOL_VERSION,
 		beginMspExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitMspInWorker);
 		},

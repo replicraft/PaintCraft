@@ -271,3 +271,52 @@ for (const codec of ['dds', 'msp']) {
 		assert.equal(service.codecWorkerBudget().reservedBytes, 0);
 	});
 }
+
+test('actual installed service forwards exact late Main plan through its run wrapper', async () => {
+	const { createCodecService } = await import('../src/lib/codec-bridge.js');
+	const previous = globalThis.Worker;
+	try {
+		for (const codec of ['dds', 'msp']) {
+			let created = 0;
+			globalThis.Worker = class {
+				constructor() {
+					created++;
+				}
+				terminate() {}
+				postMessage(data) {
+					assert.equal(data.kind, `${codec}-spatial-export`);
+					const request = new Uint8Array(data.bytes);
+					response(codec, request.subarray(0, 320)).then((bytes) =>
+						this.onmessage({
+							data: { kind: 'result', bytes: bytes.buffer },
+						}),
+					);
+				}
+			};
+			const service = createCodecService(version),
+				title = codec === 'dds' ? 'Dds' : 'Msp';
+			service.setOwner(owner);
+			assert.equal(service[`${codec}ExportProtocolVersion`](), 4);
+			assert.equal(service[`${codec}SpatialExportProtocolVersion`](), 5);
+			const initial = plan(codec);
+			delete initial.spatialContext;
+			const ticket = service[`begin${title}Export`](
+				owner,
+				initial,
+				nonce,
+			);
+			assert.equal(created, 0);
+			const raw = await ticket.run(
+				new Uint8Array([5, 1, 2]),
+				plan(codec),
+			);
+			assert.equal(created, 1);
+			assert.equal(raw.requestHeader.length, 320);
+			raw.release();
+			assert.equal(service.budget().reservedBytes, 0);
+		}
+	} finally {
+		if (previous === undefined) delete globalThis.Worker;
+		else globalThis.Worker = previous;
+	}
+});
