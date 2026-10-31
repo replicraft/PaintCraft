@@ -222,7 +222,7 @@ fn curves_controls_keep_fixed_identity_and_all_free_output_vertices() {
         default.descriptor().unwrap(),
         Descriptor::CurvesRgbV1(CurvesRgbV1::default())
     );
-    assert_eq!(Kind::ALL.last(), Some(&Kind::Curves));
+    assert_eq!(Kind::ALL[9], Kind::Curves);
     assert_eq!(
         Kind::ALL
             .iter()
@@ -291,6 +291,43 @@ fn curves_title_and_five_fixed_input_captions_have_seven_real_translations() {
                 translated.insert(label),
                 "distinct controls need distinct captions"
             );
+        }
+    }
+}
+
+#[test]
+fn vibrance_default_signed_amount_roundtrip_and_unclamped_domains() {
+    let default = Parameters::new(Kind::Vibrance);
+    assert!(default.preview);
+    assert_eq!(default.vibrance_amount, 0);
+    assert_eq!(
+        default.descriptor().unwrap(),
+        Descriptor::VibranceRgbV1(VibranceRgbV1::default())
+    );
+    assert_eq!(Kind::ALL.last(), Some(&Kind::Vibrance));
+    for amount in [-100, -99, -1, 0, 1, 99, 100] {
+        let descriptor = Descriptor::VibranceRgbV1(VibranceRgbV1::new(amount).unwrap());
+        let draft = Parameters::from_descriptor(descriptor);
+        assert_eq!(draft.kind, Kind::Vibrance);
+        assert_eq!(draft.vibrance_amount, amount);
+        assert_eq!(draft.descriptor().unwrap(), descriptor);
+        assert!(!descriptor.is_spatial());
+    }
+    for amount in [i16::MIN, -101, 101, i16::MAX] {
+        let mut draft = default;
+        draft.vibrance_amount = amount;
+        assert_eq!(
+            draft.descriptor().unwrap_err().code,
+            paintcraft_core::types::ErrorCode::InputSchema
+        );
+    }
+    for language in Language::ALL {
+        for source in ["Vibrance", "Vibrance amount (%)"] {
+            let translated = translate(language, source);
+            assert!(!translated.trim().is_empty());
+            if language != Language::English {
+                assert_ne!(translated, source, "{language:?}: {source}");
+            }
         }
     }
 }

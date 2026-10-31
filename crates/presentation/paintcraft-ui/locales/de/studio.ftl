@@ -498,3 +498,7 @@ shadows-input-64 = Tiefen (Eingabe 64)
 midtones-input-128 = Mitteltöne (Eingabe 128)
 highlights-input-192 = Lichter (Eingabe 192)
 white-input-255 = Weiß (Eingabe 255)
+
+# Signed whole-RGB Vibrance amount; no per-channel LUT.
+vibrance = Dynamik
+vibrance-amount = Dynamikstärke (%)

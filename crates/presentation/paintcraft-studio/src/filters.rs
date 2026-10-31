@@ -3,7 +3,7 @@ use paintcraft_core::types::{
     Result,
     filters::{
         BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor, ExposureSrgbV1,
-        LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1,
+        LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1, VibranceRgbV1,
     },
 };
 use paintcraft_ui::t;
@@ -21,9 +21,10 @@ pub enum Kind {
     Levels,
     Exposure,
     Curves,
+    Vibrance,
 }
 impl Kind {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 11] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
@@ -34,6 +35,7 @@ impl Kind {
         Self::Levels,
         Self::Exposure,
         Self::Curves,
+        Self::Vibrance,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -47,6 +49,7 @@ impl Kind {
             Self::Levels => "Levels",
             Self::Exposure => "Exposure",
             Self::Curves => "Curves",
+            Self::Vibrance => "Vibrance",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -61,6 +64,7 @@ impl Kind {
             Descriptor::LevelsRgbV1(_) => Self::Levels,
             Descriptor::ExposureSrgbV1(_) => Self::Exposure,
             Descriptor::CurvesRgbV1(_) => Self::Curves,
+            Descriptor::VibranceRgbV1(_) => Self::Vibrance,
         }
     }
     fn title(self, ctx: &egui::Context) -> String {
@@ -240,6 +244,7 @@ pub struct Parameters {
     pub output_white: i16,
     pub stops_hundredths: i16,
     pub curve_outputs: [u8; 5],
+    pub vibrance_amount: i16,
     pub preview: bool,
 }
 impl Parameters {
@@ -259,6 +264,7 @@ impl Parameters {
             output_white: 255,
             stops_hundredths: 0,
             curve_outputs: [0, 64, 128, 192, 255],
+            vibrance_amount: 0,
             preview: true,
         }
     }
@@ -282,6 +288,7 @@ impl Parameters {
             }
             Descriptor::ExposureSrgbV1(p) => draft.stops_hundredths = p.stops_hundredths(),
             Descriptor::CurvesRgbV1(p) => draft.curve_outputs = p.outputs(),
+            Descriptor::VibranceRgbV1(p) => draft.vibrance_amount = p.amount_hundredths(),
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
@@ -306,6 +313,9 @@ impl Parameters {
                 self.output_white,
             )
             .map(Descriptor::LevelsRgbV1),
+            Kind::Vibrance => {
+                VibranceRgbV1::new(self.vibrance_amount).map(Descriptor::VibranceRgbV1)
+            }
             Kind::Exposure => {
                 ExposureSrgbV1::new(self.stops_hundredths).map(Descriptor::ExposureSrgbV1)
             }
@@ -377,6 +387,12 @@ fn draw_parameters(
                 );
             }
             match values.kind {
+                Kind::Vibrance => {
+                    ui.add(
+                        egui::Slider::new(&mut values.vibrance_amount, -100..=100)
+                            .text(t!(ui.ctx(), "Vibrance amount (%)")),
+                    );
+                }
                 Kind::Curves => {
                     // Fixed input positions, freely editable output bytes. The
                     // renderer owns Hermite evaluation; this is no graph/LUT.

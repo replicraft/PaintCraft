@@ -498,3 +498,7 @@ shadows-input-64 = シャドウ（入力 64）
 midtones-input-128 = 中間調（入力 128）
 highlights-input-192 = ハイライト（入力 192）
 white-input-255 = 白（入力 255）
+
+# Signed whole-RGB Vibrance amount; no per-channel LUT.
+vibrance = 自然な彩度
+vibrance-amount = 自然な彩度の量（%）

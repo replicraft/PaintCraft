@@ -498,3 +498,7 @@ shadows-input-64 = Sombras (entrada 64)
 midtones-input-128 = Tons médios (entrada 128)
 highlights-input-192 = Realces (entrada 192)
 white-input-255 = Brancos (entrada 255)
+
+# Signed whole-RGB Vibrance amount; no per-channel LUT.
+vibrance = Vivacidade
+vibrance-amount = Intensidade da vivacidade (%)

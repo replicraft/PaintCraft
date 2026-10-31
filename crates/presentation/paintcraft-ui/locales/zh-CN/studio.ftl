@@ -498,3 +498,7 @@ shadows-input-64 = 阴影（输入 64）
 midtones-input-128 = 中间调（输入 128）
 highlights-input-192 = 高光（输入 192）
 white-input-255 = 白场（输入 255）
+
+# Signed whole-RGB Vibrance amount; no per-channel LUT.
+vibrance = 自然饱和度
+vibrance-amount = 自然饱和度强度（%）

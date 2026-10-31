@@ -498,3 +498,7 @@ shadows-input-64 = छायाएँ (इनपुट 64)
 midtones-input-128 = मध्य टोन (इनपुट 128)
 highlights-input-192 = हाइलाइट (इनपुट 192)
 white-input-255 = सफेद (इनपुट 255)
+
+# Signed whole-RGB Vibrance amount; no per-channel LUT.
+vibrance = वाइब्रेंस
+vibrance-amount = वाइब्रेंस की मात्रा (%)
