@@ -9,19 +9,23 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
     let result = (|| {
         let source = &bytes[REQUEST_HEADER..];
         request.check_source(source)?;
-        let container_version = pcnd::probe(source)?.container_version;
-        if container_version == 5 {
+        // Refuse outside this profile before a newer general reader can parse
+        // or retain its framing. Request bytes have already been authenticated.
+        if source.len() >= 8
+            && &source[..4] == b"PCND"
+            && &source[5..8] == b"\r\n\x1a"
+            && !(1..=4).contains(&source[4])
+        {
             return Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
-                "Export Worker4 does not admit PCND5 spatial source",
+                if source[4] == 5 {
+                    "Export Worker4 does not admit PCND5 spatial source"
+                } else {
+                    "Export Worker4 source profile admits only PCND1 through PCND4"
+                },
             ));
         }
-        if !matches!(container_version, 1..=4) {
-            return Err(Error::new(
-                ErrorCode::CapabilityUnsupported,
-                "Export Worker4 source profile admits only PCND1 through PCND4",
-            ));
-        }
+        pcnd::probe(source)?;
         // Price retained profile/control payload before the reader can allocate.
         request.metadata.check_capture_quote(
             request
