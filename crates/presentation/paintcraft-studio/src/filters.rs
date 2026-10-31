@@ -2,8 +2,8 @@
 use paintcraft_core::types::{
     Result,
     filters::{
-        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, ExposureSrgbV1, LevelsRgbV1,
-        PosterizeRgbV1, ThresholdLumaV1,
+        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor, ExposureSrgbV1,
+        LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1,
     },
 };
 use paintcraft_ui::t;
@@ -20,9 +20,10 @@ pub enum Kind {
     BoxBlur,
     Levels,
     Exposure,
+    Curves,
 }
 impl Kind {
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 10] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
@@ -32,6 +33,7 @@ impl Kind {
         Self::BoxBlur,
         Self::Levels,
         Self::Exposure,
+        Self::Curves,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -44,6 +46,7 @@ impl Kind {
             Self::BoxBlur => "Box Blur",
             Self::Levels => "Levels",
             Self::Exposure => "Exposure",
+            Self::Curves => "Curves",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -57,6 +60,7 @@ impl Kind {
             Descriptor::BoxBlurV1(_) => Self::BoxBlur,
             Descriptor::LevelsRgbV1(_) => Self::Levels,
             Descriptor::ExposureSrgbV1(_) => Self::Exposure,
+            Descriptor::CurvesRgbV1(_) => Self::Curves,
         }
     }
     fn title(self, ctx: &egui::Context) -> String {
@@ -235,6 +239,7 @@ pub struct Parameters {
     pub output_black: i16,
     pub output_white: i16,
     pub stops_hundredths: i16,
+    pub curve_outputs: [u8; 5],
     pub preview: bool,
 }
 impl Parameters {
@@ -253,6 +258,7 @@ impl Parameters {
             output_black: 0,
             output_white: 255,
             stops_hundredths: 0,
+            curve_outputs: [0, 64, 128, 192, 255],
             preview: true,
         }
     }
@@ -275,6 +281,7 @@ impl Parameters {
                 draft.output_white = i16::from(p.output_white());
             }
             Descriptor::ExposureSrgbV1(p) => draft.stops_hundredths = p.stops_hundredths(),
+            Descriptor::CurvesRgbV1(p) => draft.curve_outputs = p.outputs(),
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
@@ -302,6 +309,9 @@ impl Parameters {
             Kind::Exposure => {
                 ExposureSrgbV1::new(self.stops_hundredths).map(Descriptor::ExposureSrgbV1)
             }
+            Kind::Curves => Ok(Descriptor::CurvesRgbV1(CurvesRgbV1::new(
+                self.curve_outputs,
+            ))),
         }
     }
 }
@@ -367,6 +377,20 @@ fn draw_parameters(
                 );
             }
             match values.kind {
+                Kind::Curves => {
+                    // Fixed input positions, freely editable output bytes. The
+                    // renderer owns Hermite evaluation; this is no graph/LUT.
+                    let captions = [
+                        t!(ui.ctx(), "Black (input 0)"),
+                        t!(ui.ctx(), "Shadows (input 64)"),
+                        t!(ui.ctx(), "Midtones (input 128)"),
+                        t!(ui.ctx(), "Highlights (input 192)"),
+                        t!(ui.ctx(), "White (input 255)"),
+                    ];
+                    for (value, caption) in values.curve_outputs.iter_mut().zip(captions) {
+                        ui.add(egui::Slider::new(value, 0..=255).text(caption));
+                    }
+                }
                 Kind::Exposure => {
                     let mut stops = f64::from(values.stops_hundredths) / 100.0;
                     if ui

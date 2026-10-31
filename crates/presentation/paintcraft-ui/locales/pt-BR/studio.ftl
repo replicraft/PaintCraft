@@ -490,3 +490,11 @@ input-white = Branco de entrada
 gamma = Gama
 output-black = Preto de saída
 output-white = Branco de saída
+
+# Five fixed Curves inputs; each control edits its independent output byte.
+curves = Curvas
+black-input-0 = Pretos (entrada 0)
+shadows-input-64 = Sombras (entrada 64)
+midtones-input-128 = Tons médios (entrada 128)
+highlights-input-192 = Realces (entrada 192)
+white-input-255 = Brancos (entrada 255)

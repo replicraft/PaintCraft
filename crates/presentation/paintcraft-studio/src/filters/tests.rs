@@ -212,3 +212,85 @@ fn box_and_radius_controls_have_all_seven_real_translations() {
         }
     }
 }
+
+#[test]
+fn curves_controls_keep_fixed_identity_and_all_free_output_vertices() {
+    let default = Parameters::new(Kind::Curves);
+    assert!(default.preview);
+    assert_eq!(default.curve_outputs, [0, 64, 128, 192, 255]);
+    assert_eq!(
+        default.descriptor().unwrap(),
+        Descriptor::CurvesRgbV1(CurvesRgbV1::default())
+    );
+    assert_eq!(Kind::ALL.last(), Some(&Kind::Curves));
+    assert_eq!(
+        Kind::ALL
+            .iter()
+            .filter(|&&kind| kind == Kind::Curves)
+            .count(),
+        1
+    );
+    for vertex in 0u8..32 {
+        let outputs = std::array::from_fn(|i| if vertex & (1 << i) == 0 { 0 } else { 255 });
+        let descriptor = Descriptor::CurvesRgbV1(CurvesRgbV1::new(outputs));
+        let draft = Parameters::from_descriptor(descriptor);
+        assert_eq!(draft.kind, Kind::Curves);
+        assert_eq!(draft.curve_outputs, outputs);
+        assert_eq!(draft.descriptor().unwrap(), descriptor);
+        assert!(!descriptor.is_spatial());
+    }
+    for outputs in [
+        [255, 191, 127, 63, 0],
+        [23, 9, 240, 73, 201],
+        [37; 5],
+        [0, 128, 128, 128, 255],
+    ] {
+        let mut draft = default;
+        draft.curve_outputs = outputs;
+        let descriptor = draft.descriptor().unwrap();
+        assert_eq!(
+            descriptor,
+            Descriptor::CurvesRgbV1(CurvesRgbV1::new(outputs))
+        );
+        assert_eq!(Parameters::from_descriptor(descriptor), draft);
+    }
+    // Each input position remains independent: changing an output must not
+    // sort neighboring values, lock endpoints or silently constrain the curve.
+    for index in 0..5 {
+        for output in [0, 1, 127, 128, 254, 255] {
+            let mut draft = default;
+            draft.curve_outputs[index] = output;
+            let Descriptor::CurvesRgbV1(actual) = draft.descriptor().unwrap() else {
+                panic!("Curves descriptor");
+            };
+            assert_eq!(actual.outputs(), draft.curve_outputs);
+        }
+    }
+}
+
+#[test]
+fn curves_title_and_five_fixed_input_captions_have_seven_real_translations() {
+    let captions = [
+        "Curves",
+        "Black (input 0)",
+        "Shadows (input 64)",
+        "Midtones (input 128)",
+        "Highlights (input 192)",
+        "White (input 255)",
+    ];
+    assert_eq!(Kind::Curves.label(), captions[0]);
+    for language in Language::ALL {
+        let mut translated = std::collections::BTreeSet::new();
+        for source in captions {
+            let label = translate(language, source);
+            assert!(!label.trim().is_empty(), "{language:?}: {source}");
+            if language != Language::English {
+                assert_ne!(label, source, "{language:?}: {source}");
+            }
+            assert!(
+                translated.insert(label),
+                "distinct controls need distinct captions"
+            );
+        }
+    }
+}

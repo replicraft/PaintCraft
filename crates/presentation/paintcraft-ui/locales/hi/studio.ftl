@@ -490,3 +490,11 @@ input-white = इनपुट सफ़ेद
 gamma = गामा
 output-black = आउटपुट काला
 output-white = आउटपुट सफ़ेद
+
+# Five fixed Curves inputs; each control edits its independent output byte.
+curves = टोन कर्व
+black-input-0 = काला (इनपुट 0)
+shadows-input-64 = छायाएँ (इनपुट 64)
+midtones-input-128 = मध्य टोन (इनपुट 128)
+highlights-input-192 = हाइलाइट (इनपुट 192)
+white-input-255 = सफेद (इनपुट 255)

@@ -490,3 +490,11 @@ input-white = 输入白场
 gamma = 伽马
 output-black = 输出黑场
 output-white = 输出白场
+
+# Five fixed Curves inputs; each control edits its independent output byte.
+curves = 曲线
+black-input-0 = 黑场（输入 0）
+shadows-input-64 = 阴影（输入 64）
+midtones-input-128 = 中间调（输入 128）
+highlights-input-192 = 高光（输入 192）
+white-input-255 = 白场（输入 255）

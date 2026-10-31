@@ -490,3 +490,11 @@ input-white = 入力の白レベル
 gamma = ガンマ
 output-black = 出力の黒レベル
 output-white = 出力の白レベル
+
+# Five fixed Curves inputs; each control edits its independent output byte.
+curves = トーンカーブ
+black-input-0 = 黒（入力 0）
+shadows-input-64 = シャドウ（入力 64）
+midtones-input-128 = 中間調（入力 128）
+highlights-input-192 = ハイライト（入力 192）
+white-input-255 = 白（入力 255）
