@@ -82,3 +82,21 @@ pub fn tiff_page_protocol_version() -> u16 {
 pub fn tiff_page_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
     super::tiff::execute(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
 }
+
+/// Spatial5 is independently negotiated; legacy4 getters/entries remain closed.
+#[wasm_bindgen]
+pub fn dds_spatial_export_protocol_version() -> u16 {
+    paintcraft_formats::dds::web_export::v5::PROTOCOL_VERSION
+}
+#[wasm_bindgen]
+pub fn dds_spatial_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::spatial::dds(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+#[wasm_bindgen]
+pub fn msp_spatial_export_protocol_version() -> u16 {
+    paintcraft_formats::msp::web_export::v5::PROTOCOL_VERSION
+}
+#[wasm_bindgen]
+pub fn msp_spatial_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::spatial::msp(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
+}

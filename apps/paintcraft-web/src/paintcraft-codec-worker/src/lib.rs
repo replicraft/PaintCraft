@@ -11,3 +11,6 @@ mod msp;
 
 #[cfg(any(test, target_arch = "wasm32"))]
 mod tiff;
+
+#[cfg(any(test, target_arch = "wasm32"))]
+mod spatial;
