@@ -342,7 +342,7 @@ fn additional_schema_exports_are_exact_and_legacy_batch_profiles_reject_new_kind
     let mut client = mcp_client::Client::at(Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
     assert_eq!(
         client.ok("get_batch_schema", json!({})),
-        serde_json::from_str::<Value>(include_str!("../schemas/batch-v4.schema.json")).unwrap()
+        serde_json::from_str::<Value>(include_str!("../schemas/batch-v5.schema.json")).unwrap()
     );
     for (name, expected) in [
         ("batch-v4", include_str!("../schemas/batch-v4.schema.json")),
