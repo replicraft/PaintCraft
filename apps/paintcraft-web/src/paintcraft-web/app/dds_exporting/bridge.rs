@@ -76,10 +76,17 @@ pub(super) async fn prepare(
     let request = Request::capture(&plan, &source, owner, nonce)?;
     // Same MainWasm ABI as the isolated codec Worker; never infer native sizes.
     let final_plan = if matches!(plan.protocol_version(), 5..=7) {
+        // Header7 already authenticated and assessed this exact snapshot once.
+        // Reuse its source-aware wire facts rather than rehashing or finalizing
+        // from the live document's allocation history.
+        let final_region = match &request {
+            Request::V7(header) => header.spatial.encode_programs(),
+            _ => plan.spatial_context(source.len())?,
+        };
         js_sys::Reflect::set(
             &metadata,
             &"spatialContext".into(),
-            &Uint8Array::from(plan.spatial_context(source.len())?.as_slice()),
+            &Uint8Array::from(final_region.as_slice()),
         )
         .map_err(error)?;
         if plan.protocol_version() == 6 {
@@ -90,11 +97,11 @@ pub(super) async fn prepare(
             )
             .map_err(error)?;
         }
-        if plan.protocol_version() == 7 {
+        if let Request::V7(header) = &request {
             js_sys::Reflect::set(
                 &metadata,
                 &"programContext".into(),
-                &Uint8Array::from(plan.program_context(source.len())?.as_slice()),
+                &Uint8Array::from(header.programs.encode().as_slice()),
             )
             .map_err(error)?;
         }
