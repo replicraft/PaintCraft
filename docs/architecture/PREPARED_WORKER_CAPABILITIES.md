@@ -1,9 +1,11 @@
 # Prepared worker capabilities
 
-**Status: planned, not implemented.** This is a contract draft for review. It does
-not register preview Source5, export Worker7, or any additional execution support.
-The current Source4 and Export6 capabilities remain closed to their original eight
-numerical profiles. General PCND6 decoding may support Exposure independently.
+**Status: implementation in progress.** The priced registry, verified-container
+requirement probe, program context, DDS/MSP Export7 backends and Main export bindings
+pass local native tests and strict checks. Main and codec-worker Wasm strict checks
+also pass. Source5 worker integration and actual production-browser qualification
+remain open; these are not advertised as complete features. Source4 and Export6
+remain closed to their original eight numerical profiles.
 
 ## Separate decoding from execution
 
@@ -217,3 +219,19 @@ parent quota/cancellation, stale owner/generation, retained frames and explicit-
 consent revocation. Verify final facts with real MainWasm32-generated requests and
 actual WorkerWasm32 evaluation; keep source/history/private intent unchanged on
 refusal and make exact rendered samples independent of the implementation oracle.
+
+## Finite native checkpoint
+
+`docs/validation/prepared-worker7/native-closeout.json` binds the registry's three
+control groups, two context groups, four actual export-worker groups and two web
+codec entry groups. Native all-target strict checks pass. The receipt preserves the
+initial response-offset panic and compile failures; a mistaken native-helper run
+with zero matching tests is explicitly excluded from web-worker evidence.
+
+The Main web host passes 24 filter-editing, 14 DDS and 13 MSP tests, including six
+new prepared-export groups and three new preview binding/selection tests. These
+exercise actual codec responses, literal pixels, exact serialized-source facts,
+context tampering and consent/cancel/stale-owner behavior without launching a UI.
+The native and Wasm strict checks are recorded under
+`docs/validation/exposure-main/`. Neither native invocation nor Wasm compilation
+establishes actual Chrome execution of the new production preview/export paths.

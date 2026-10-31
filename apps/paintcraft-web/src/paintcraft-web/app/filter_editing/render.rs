@@ -320,7 +320,6 @@ pub(super) fn stored_catalog(doc: &Document) -> u64 {
         .sum()
 }
 
-
 pub(super) fn stored_programs(doc: &Document) -> bool {
     paintcraft_formats::export::prepared_capabilities::requires_generic(doc, &|| Ok(()))
         .unwrap_or(true)
