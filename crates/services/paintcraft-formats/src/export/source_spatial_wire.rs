@@ -203,3 +203,5 @@ pub(crate) fn refuse_spatial(doc: &Document) -> Result<()> {
     }
     Ok(())
 }
+
+mod catalog;
