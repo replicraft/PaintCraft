@@ -6,9 +6,11 @@ use crate::{codec_worker::Owner, export, pcnd};
 use paintcraft_document::Document;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
+mod catalog;
 mod request;
 mod response;
 pub mod v5;
+pub mod v6;
 mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
@@ -65,6 +67,7 @@ pub(crate) const SOURCE_LIMITS: Limits = Limits {
 pub struct SourcePlan {
     source: SnapshotPlan,
     spatial: export::SourceSpatialContext,
+    catalog: Option<export::SourceCatalogContext>,
     pub(crate) settings: [u8; 8],
 }
 impl SourcePlan {
@@ -114,7 +117,16 @@ impl SourcePlan {
             source,
             settings,
             spatial: export::SourceSpatialContext::default(),
+            catalog: None,
         };
+        if doc
+            .layers
+            .values()
+            .any(|l| l.filters.iter().any(|f| f.descriptor().is_catalog_only()))
+        {
+            value.capture_catalog(doc, check)?;
+            return Ok(value);
+        }
         value.spatial = export::SourceSpatialContext::capture(doc, 0, check)?;
         if value.spatial.has_spatial() {
             value.spatial = value
@@ -125,10 +137,19 @@ impl SourcePlan {
         Ok(value)
     }
     pub fn protocol_version(&self) -> u16 {
-        if self.spatial.has_spatial() { 5 } else { 4 }
+        if self.catalog.is_some() {
+            6
+        } else if self.spatial.has_spatial() {
+            5
+        } else {
+            4
+        }
     }
     /// Finalize private ABI-local resource facts only after frozen PCND bytes exist.
     pub fn spatial_context(&self, source_len: usize) -> Result<[u8; 64]> {
+        if self.catalog.is_some() {
+            return Ok(self.finalized_catalog_region(source_len)?.encode_catalog());
+        }
         if source_len == 0 || source_len > SOURCE_BYTES_MAX {
             return Err(resource("Spatial source extent"));
         }
