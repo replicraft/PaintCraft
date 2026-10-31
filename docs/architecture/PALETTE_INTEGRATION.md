@@ -9,6 +9,13 @@ Native and Web Studio share controls. Updated 2026-10-31.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
 twelve profiles do not establish parity or a wholesale port.
 
+The [seeded Uniform/Gaussian noise foundation](NOISE_FILTER_FOUNDATION.md) now
+passes native and actual Rust Wasm qualification: 4,380 independent pixel
+expectations, 26,280 mask expectations and exact normalized native/Wasm records.
+Its explicit source-coordinate API still needs catalog admission, persistence,
+rendering and host integration. No thirteenth editable profile, GPU noise kernel
+or upstream floating-point byte parity is claimed.
+
 Whole-RGB [Vibrance](VIBRANCE_FILTER_FOUNDATION.md) is locally qualified through
 native and Web Studio controls, CLI/MCP, PCND6 and direct CPU filtering with Metal
 presentation. It has no LUT or new prepared-program family. The caller's existing
@@ -34,8 +41,9 @@ producer inputs and 27 assets remain exact, with ignored font metadata included
 from the first snapshot. Full regression passes 405 web tests (three ignored)
 and 240 CLI/MCP tests (fifteen ignored), retaining the original disk-full failure
 and later source-identical recovery as separate observations. The
-native/actual-browser twelve-profile slice is qualified; new integrated-head CI
-remains a separate gate.
+native/actual-browser twelve-profile slice is qualified. All seven
+[integrated-head CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41222726291)
+pass for exact commit `6270c5f6`.
 
 Five-point [Curves](CURVES_FILTER_FOUNDATION.md) is locally integrated through
 typed catalog commands, PCND6, prepared CPU filtering, Metal presentation,
