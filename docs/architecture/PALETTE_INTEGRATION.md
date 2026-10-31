@@ -17,7 +17,10 @@ cases/123 checks, 14 Studio lifecycle checks and 16 fresh DDS/MSP Export7 worker
 replays per format, including independently decoded exact pixels. Curves adds a
 priced execution registration within existing Source5/Export7 framing. The old
 closed workers and immutable eight/nine-profile schema bundles remain closed.
-These local results do not inherit a CI result from an earlier commit.
+All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41199286392)
+pass for integrated Curves commit `fbfd4737`. Later standalone
+[Vibrance](VIBRANCE_FILTER_FOUNDATION.md) passes native and actual Wasm numerical
+qualification but is not registered as an editable filter; its CI is separate.
 
 Exposure is locally integrated through native controls, hot/cold history, PCND6,
 prepared CPU filtering, Metal presentation, CLI/MCP and a new immutable nine-profile

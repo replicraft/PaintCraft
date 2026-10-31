@@ -280,3 +280,7 @@ ceiling, inferred execution from decoding or guessed positive context is used.
 The [Curves contract](CURVES_FILTER_FOUNDATION.md) records the finite scope and
 aggregate evidence. Other catalog entries and optional UI routes remain separate
 qualification work.
+
+All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41199286392)
+pass for integrated Curves commit `fbfd4737`. Subsequent standalone Vibrance
+arithmetic does not extend this registry or inherit that head's CI result.

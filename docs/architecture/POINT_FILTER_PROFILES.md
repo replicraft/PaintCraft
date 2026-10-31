@@ -273,10 +273,11 @@ Brightness alone can reuse the existing BC descriptor with contrast zero as an
 explicit preset; it need not duplicate a kernel or inflate the algorithm count.
 [Levels](LEVELS_FILTER_FOUNDATION.md), [Exposure](EXPOSURE_FILTER_FOUNDATION.md)
 and [Curves](CURVES_FILTER_FOUNDATION.md) now have separately qualified exact
-contracts and editable catalog integration. HSL/Vibrance and seeded noise remain
-later proposals requiring explicit deterministic arithmetic or coordinate
-contracts before implementation. HSL/Vibrance couples all three RGB channels;
-independent per-channel lookup tables cannot represent that transform.
+contracts and editable catalog integration. [Vibrance](VIBRANCE_FILTER_FOUNDATION.md)
+now has a separately qualified native/Wasm foundation but remains unregistered
+for editing or persistence. Hue/Saturation and seeded noise still need explicit
+deterministic arithmetic or coordinate contracts. HSL/Vibrance couples all three
+RGB channels; independent per-channel lookup tables cannot represent it.
 
 ## Spatial integration boundary
 

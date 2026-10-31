@@ -219,4 +219,8 @@ preview integration, three existing ignored) and 232 CLI/MCP tests (15 existing
 ignored across 44 groups). Full history passes 26 tests without ignored tests;
 history all-target strict and final workspace formatting checks also pass. The
 serialized original regression process exits successfully without a product fix
-or test rerun. New-head CI remains a separate gate.
+or test rerun. All seven CI jobs pass for integrated Curves commit `fbfd4737` in
+[run 41199286392](https://github.com/replicraft/PaintCraft/actions/runs/41199286392).
+The final CI receipt and separate push addendum are retained under
+`docs/validation/curves-integration/ci-41199286392/`; later standalone Vibrance
+changes have their own qualification and CI scope.
