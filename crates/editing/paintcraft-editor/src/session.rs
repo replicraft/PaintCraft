@@ -37,17 +37,30 @@ pub use persistence::PersistentValidator;
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
 
-/// Stored masks require result/v3; otherwise preserve the minimal v1/v2 profile.
+/// Stored spatial intentions require result/v4, masks require v3; otherwise
+/// preserve the minimal v1/v2 profile.
 /// Extensions disclose inherited point-filter semantics in canonical feature order.
 pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
-    if !doc
+    let masks = doc
         .layers
         .values()
-        .any(|layer| layer.filters.iter().any(|entry| entry.mask().is_some()))
-    {
+        .any(|layer| layer.filters.iter().any(|entry| entry.mask().is_some()));
+    let spatial = doc.layers.values().any(|layer| {
+        layer
+            .filters
+            .iter()
+            .any(|entry| entry.descriptor().is_spatial())
+    });
+    if !masks && !spatial {
         return Vec::new();
     }
-    let mut features = vec!["layer-point-filters.v1", "layer-filter-masks.v1"];
+    let mut features = vec!["layer-point-filters.v1"];
+    if masks {
+        features.push("layer-filter-masks.v1");
+    }
+    if spatial {
+        features.push("layer-spatial-filters.v1");
+    }
     if doc.source_metadata.is_some() {
         features.push("source-metadata.v1");
     }
@@ -70,13 +83,17 @@ impl Receipt {
         let Value::Object(mut fields) = Value::object([
             (
                 "schema",
-                Value::str(if !self.document_features.is_empty() {
-                    "paintcraft.result/v3"
-                } else if self.filter_aliases.is_empty() {
-                    "paintcraft.result/v1"
-                } else {
-                    "paintcraft.result/v2"
-                }),
+                Value::str(
+                    if self.document_features.contains(&"layer-spatial-filters.v1") {
+                        "paintcraft.result/v4"
+                    } else if !self.document_features.is_empty() {
+                        "paintcraft.result/v3"
+                    } else if self.filter_aliases.is_empty() {
+                        "paintcraft.result/v1"
+                    } else {
+                        "paintcraft.result/v2"
+                    },
+                ),
             ),
             ("committed", Value::Bool(self.committed)),
             ("state_id", Value::str(self.state_id.to_string())),
