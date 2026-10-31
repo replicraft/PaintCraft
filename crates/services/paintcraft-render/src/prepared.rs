@@ -4,6 +4,8 @@ use paintcraft_core::types::{
     Error, ErrorCode, Result, Rgba, filters::LevelsRgbV1, resources::BudgetAccount,
 };
 use paintcraft_effects::{levels, mix_point_coverage};
+mod compiler;
+pub use compiler::{CompileWork, LevelsBackend};
 
 pub const LEVELS_TABLE_BYTES: u64 = 256;
 
@@ -11,6 +13,7 @@ pub const LEVELS_TABLE_BYTES: u64 = 256;
 /// Scratch is released after preparation; the table charge follows its owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LevelsQuote {
+    pub backend: LevelsBackend,
     pub peak_bytes: u64,
     pub retained_bytes: u64,
     pub scratch_bytes: u64,
@@ -18,13 +21,7 @@ pub struct LevelsQuote {
 }
 
 pub fn quote_levels(policy: LevelsRgbV1) -> LevelsQuote {
-    let quote = levels::quote(policy);
-    LevelsQuote {
-        peak_bytes: quote.scratch_bytes + LEVELS_TABLE_BYTES,
-        retained_bytes: LEVELS_TABLE_BYTES,
-        scratch_bytes: quote.scratch_bytes,
-        compile_work: quote.work,
-    }
+    compiler::quote(policy)
 }
 
 /// One immutable compiled table with its retained payload account. It is movable
@@ -34,7 +31,7 @@ pub fn quote_levels(policy: LevelsRgbV1) -> LevelsQuote {
 pub struct PreparedLevels {
     policy: LevelsRgbV1,
     table: [u8; 256],
-    actual_compile_work: u64,
+    actual_compile_work: CompileWork,
     // Storage fields precede the account, so their logical lifetime ends first.
     _charge: BudgetAccount,
 }
@@ -68,22 +65,13 @@ impl PreparedLevels {
         table_charge.resize(quote.retained_bytes)?;
         check()?;
         let mut table = [0; 256];
-        let used = {
-            let mut scratch = levels::Scratch::default();
-            levels::build_lut(
-                policy,
-                &mut scratch,
-                &mut table,
-                levels::Limits::from(levels::quote(policy)),
-                check,
-            )?
-        };
+        let used = compiler::build(quote.backend, policy, &mut table, check)?;
         drop(scratch_charge);
         check()?;
         Ok(Self {
             policy,
             table,
-            actual_compile_work: used.units,
+            actual_compile_work: used,
             _charge: table_charge,
         })
     }
@@ -92,9 +80,16 @@ impl PreparedLevels {
         self.policy
     }
 
-    /// Arithmetic units observed at construction, not elapsed time or new quota.
-    pub fn actual_compile_work(&self) -> u64 {
+    /// Tagged raw arithmetic units, not elapsed time or transferable quota.
+    pub fn actual_compile_work(&self) -> CompileWork {
         self.actual_compile_work
+    }
+
+    pub fn backend(&self) -> LevelsBackend {
+        match self.actual_compile_work {
+            CompileWork::U32 { .. } => LevelsBackend::U32,
+            CompileWork::U64 { .. } => LevelsBackend::U64,
+        }
     }
 
     /// Apply the retained table with exactly one point-mask blend per pixel.

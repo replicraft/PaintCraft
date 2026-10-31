@@ -17,7 +17,11 @@ fn retained_program_reuses_exact_hidden_rgb_and_one_mask_blend() {
     let admission = factory(&realm, q.peak_bytes, q.compile_work + 1024);
     let program = Arc::new(PreparedLevels::new(p, &admission, &|| Ok(())).unwrap());
     assert_eq!(program.policy(), p);
-    assert!(program.actual_compile_work() <= q.compile_work);
+    let CompileWork::U32 { units } = program.actual_compile_work() else {
+        panic!("small-power control must retain the u32 backend");
+    };
+    assert!(units <= levels::quote(p).work);
+    assert_eq!(program.backend(), LevelsBackend::U32);
     assert_eq!(realm.usage().reserved, 256);
     assert_eq!(realm.usage().peak, q.peak_bytes);
     let source = [
@@ -276,6 +280,57 @@ fn retained_table_survives_reserved_job_retirement_without_unused_capacity() {
     assert_eq!(next_job.work_used(), 2);
     drop(program);
     assert_eq!(realm.usage().reserved, 0);
+}
+
+#[test]
+fn selected_wide_program_keeps_tagged_limits_pixels_and_cancellation_atomic() {
+    let p = LevelsRgbV1::new(0, 255, 999, 0, 255).unwrap();
+    let q = quote_levels(p);
+    assert_eq!(q.backend, LevelsBackend::U64);
+    assert_eq!(q.scratch_bytes, levels::u64::quote(p).scratch_bytes);
+    assert_eq!(
+        q.compile_work,
+        levels::quote(p).work.max(levels::u64::quote(p).work)
+    );
+    let realm = SharedBudget::new(q.peak_bytes);
+    let admission = factory(&realm, q.peak_bytes, q.compile_work + 16);
+    let program = PreparedLevels::new(p, &admission, &|| Ok(())).unwrap();
+    assert_eq!(program.backend(), LevelsBackend::U64);
+    let CompileWork::U64 { units } = program.actual_compile_work() else {
+        panic!("wide counter must retain its word-width tag");
+    };
+    assert!(units <= levels::u64::quote(p).work);
+    assert_eq!(admission.work_used(), q.compile_work);
+    assert_eq!(realm.usage().reserved, 256);
+    let mut out = [Rgba::TRANSPARENT; 2];
+    program
+        .evaluate_row(
+            &admission,
+            &[Rgba([1, 16, 128, 0]), Rgba([0, 64, 255, 255])],
+            Some(&[128, 255]),
+            &mut out,
+            &|| Ok(()),
+        )
+        .unwrap();
+    assert_eq!(out, [Rgba([74, 105, 183, 0]), Rgba([0, 222, 255, 255])]);
+    assert_eq!(admission.work_used(), q.compile_work + 4);
+    drop(program);
+    assert_eq!(realm.usage().reserved, 0);
+    let realm = SharedBudget::new(q.peak_bytes);
+    let admission = factory(&realm, q.peak_bytes, q.compile_work);
+    let calls = Cell::new(0);
+    let error = PreparedLevels::new(p, &admission, &|| {
+        calls.set(calls.get() + 1);
+        if calls.get() == 20 {
+            Err(cancelled())
+        } else {
+            Ok(())
+        }
+    })
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert_eq!(realm.usage().reserved, 0);
+    assert_eq!(admission.work_used(), q.compile_work);
 }
 
 #[test]
