@@ -138,3 +138,6 @@ mod catalog;
 
 #[path = "cli/exposure.rs"]
 mod exposure;
+
+#[path = "cli/curves.rs"]
+mod curves;

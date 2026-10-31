@@ -255,3 +255,6 @@ mod catalog;
 
 #[path = "mcp/exposure.rs"]
 mod exposure;
+
+#[path = "mcp/curves.rs"]
+mod curves;
