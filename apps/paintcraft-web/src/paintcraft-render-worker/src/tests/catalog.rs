@@ -368,3 +368,9 @@ fn source4_refuses_private_exposure_add_update_before_candidate_even_zero_previe
 
 #[path = "catalog/curves.rs"]
 mod curves;
+
+#[path = "catalog/vibrance.rs"]
+mod vibrance;
+
+#[path = "catalog/legacy_catalog_private.rs"]
+mod legacy_catalog_private;

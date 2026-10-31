@@ -306,6 +306,20 @@ impl Service {
                 ));
             }
             let schema = Batch::schema_for_operation_fields([(name, kind)]);
+            // Closed Source2/3 cannot inherit a catalog execution route through
+            // automatic batch selection, including disabled/identity intents.
+            // Keep Source4's earlier exact list and legacy Levels diagnostic.
+            if schema == paintcraft_commands::CATALOG_BATCH_SCHEMA
+                && self
+                    .source
+                    .spatial
+                    .is_none_or(|p| p.catalog_count.is_none())
+            {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Catalog filter preview requires generic program admission",
+                ));
+            }
             let batch = Batch::from_generated_value(Value::object([
                 ("schema", Value::str(schema)),
                 ("atomic", Value::Bool(true)),
