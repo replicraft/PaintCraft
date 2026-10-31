@@ -188,8 +188,11 @@ impl App {
                     self.pcx_preview
                         .show(ui, (editor.preview_stamp(), draft.pcx_encoding), || {
                             let doc = snapshot;
-                            let rgba = paintcraft_render::render_flat(&doc)
-                                .map_err(|error| error.to_string())?;
+                            let rgba = spatial_workspace::with_job(
+                                spatial_workspace::needed(&doc),
+                                || paintcraft_render::render_flat(&doc),
+                            )
+                            .map_err(|error| error.to_string())?;
                             let prepared = paintcraft_formats::pcx::prepare_rgba(
                                 doc.canvas.0,
                                 doc.canvas.1,

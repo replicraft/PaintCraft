@@ -47,16 +47,21 @@ impl State {
                     .copy
                     .prepare(config.clone(), target)
                     .map_err(|e| e.to_string())?;
-                icns::prepare_document_with_policies(
-                    &self.copy.frozen.document,
-                    &specs(&config),
-                    if config.filter == preview::Filter::Nearest {
-                        icons::Filter::Nearest
-                    } else {
-                        icons::Filter::Lanczos3
+                spatial_workspace::with_job(
+                    spatial_workspace::needed(&self.copy.frozen.document),
+                    || {
+                        icns::prepare_document_with_policies(
+                            &self.copy.frozen.document,
+                            &specs(&config),
+                            if config.filter == preview::Filter::Nearest {
+                                icons::Filter::Nearest
+                            } else {
+                                icons::Filter::Lanczos3
+                            },
+                            &|| Ok(()),
+                            policy,
+                        )
                     },
-                    &|| Ok(()),
-                    policy,
                 )
                 .map_err(|e| e.to_string())
             },

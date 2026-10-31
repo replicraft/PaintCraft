@@ -290,3 +290,62 @@ fn advanced_dds_msp_require_their_own_bake_choice_and_revocation_retires_preview
         assert_eq!(history, h.state().editor.history_view().ticket);
     }
 }
+
+#[test]
+fn real_box_bake_checkbox_exports_exact_png_and_keeps_project_appearance_editable() {
+    use paintcraft_core::types::filters::BoxBlurV1;
+    let path = std::env::temp_dir().join(format!("paintcraft-box-copy-{}.png", Uuid::new_v4()));
+    let mut app = App::new(None);
+    app.settings.experience = Experience::Studio;
+    let mut doc = paintcraft_document::import_image(
+        3,
+        1,
+        &[0, 0, 0, 255, 90, 60, 30, 255, 240, 120, 0, 255],
+        "native-box-export/v1",
+    )
+    .unwrap();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+        FilterStack::new(vec![FilterInstance::new(
+            Uuid::from_u128(404),
+            true,
+            Descriptor::BoxBlurV1(BoxBlurV1::new(1).unwrap()),
+        )])
+        .unwrap();
+    app.editor = Editor::with_document(doc, None);
+    app.path_text = path.to_string_lossy().into_owned();
+    let source = app.editor.document_snapshot();
+    let history = app.editor.history_view().ticket;
+    app.begin_export_options(ImageExport::Png);
+    let mut h = harness(app);
+    h.run();
+    assert!(
+        h.get_by_label("Choose destination…")
+            .accesskit_node()
+            .is_disabled()
+    );
+    h.get_by_label(CHECK).click();
+    h.run();
+    h.get_by_label("Choose destination…").click();
+    h.run();
+    let Some(Confirm::Export { losses, .. }) = &h.state().confirm else {
+        panic!("real loss review");
+    };
+    assert!(losses.iter().any(|loss| loss == "filters-baked"));
+    h.get_by_label("Export now").click();
+    h.run();
+    assert_eq!(
+        paintcraft_formats::image::decode(&std::fs::read(&path).unwrap())
+            .unwrap()
+            .rgba,
+        [30, 20, 10, 255, 110, 60, 10, 255, 190, 100, 10, 255]
+    );
+    assert!(Arc::ptr_eq(&source, &h.state().editor.document_snapshot()));
+    assert_eq!(history, h.state().editor.history_view().ticket);
+    assert!(h.state().editor.document().layers.values().any(|layer| {
+        layer
+            .filters
+            .iter()
+            .any(|filter| filter.descriptor().is_spatial())
+    }));
+    std::fs::remove_file(path).unwrap();
+}

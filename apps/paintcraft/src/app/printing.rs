@@ -32,7 +32,10 @@ impl App {
             ));
             return;
         }
-        let png = paintcraft_render::render_flat(document).and_then(|rgba| {
+        let png = spatial_workspace::with_job(spatial_workspace::needed(document), || {
+            paintcraft_render::render_flat(document)
+        })
+        .and_then(|rgba| {
             paintcraft_formats::image::encode(ImageFormat::Png, width, height, &rgba, 90)
         });
         match png {

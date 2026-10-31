@@ -94,7 +94,9 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
-        match export::export_flat_options(&frozen.document, options, &all) {
+        match spatial_workspace::with_job(spatial_workspace::needed(&frozen.document), || {
+            export::export_flat_options(&frozen.document, options, &all)
+        }) {
             Ok(plan) => {
                 self.confirm = Some(Confirm::Export {
                     exists: path.exists(),
@@ -188,7 +190,10 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
-        let result = export::export_flat_options(&frozen.document, options, losses)
+        let result =
+            spatial_workspace::with_job(spatial_workspace::needed(&frozen.document), || {
+                export::export_flat_options(&frozen.document, options, losses)
+            })
             .map_err(|e| e.to_string());
         let status = match result {
             Ok(flat) => {
