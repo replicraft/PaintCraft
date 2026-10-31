@@ -27,7 +27,7 @@ pub fn render_in_pool(
 ) -> Result<Vec<u8>> {
     let levels_caller_check = &check;
     let check = || levels_caller_check();
-    crate::prepared::with_document_levels(doc, &check, || {
+    crate::prepared::with_document_programs(doc, &check, || {
         check()?;
         let bytes = region_bytes(doc, region)?;
         crate::spatial::preflight(doc, region, &check)?;

@@ -294,7 +294,7 @@ impl DisplayCache {
     ) -> Result<DisplayFrame> {
         let levels_caller_check = &check;
         let check = || levels_caller_check();
-        crate::prepared::with_document_levels(doc, &check, || {
+        crate::prepared::with_document_programs(doc, &check, || {
             let request = DisplayRequest::new(doc, request.region, request.level)?;
             if crate::spatial::relevant(doc, request.region) {
                 crate::spatial::preflight(doc, request.region, &check)?;

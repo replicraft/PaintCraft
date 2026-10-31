@@ -6,20 +6,32 @@ use paintcraft_document::{FilterInstance, Layer};
 pub(crate) enum PointProgram<'a> {
     Scalar(paintcraft_core::types::filters::Descriptor),
     Levels(&'a crate::prepared::PreparedLevels),
+    Exposure(&'a crate::prepared::PreparedExposure),
 }
 impl<'a> PointProgram<'a> {
     pub(crate) fn new(
         descriptor: paintcraft_core::types::filters::Descriptor,
-        job: Option<&'a crate::prepared::PreparedLevelsJob>,
+        admission: Option<&'a crate::spatial::WorkspaceAdmission>,
     ) -> Result<Self> {
         match descriptor {
-            paintcraft_core::types::filters::Descriptor::LevelsRgbV1(policy) => job
+            paintcraft_core::types::filters::Descriptor::LevelsRgbV1(policy) => admission
+                .and_then(|admission| admission.prepared_levels())
                 .and_then(|job| job.get(policy))
                 .map(Self::Levels)
                 .ok_or_else(|| {
                     Error::new(
                         ErrorCode::CapabilityUnsupported,
                         "Levels appearance lacks its frozen prepared policy",
+                    )
+                }),
+            paintcraft_core::types::filters::Descriptor::ExposureSrgbV1(policy) => admission
+                .and_then(|admission| admission.prepared_programs())
+                .and_then(|job| job.exposure(policy))
+                .map(Self::Exposure)
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "Exposure appearance lacks its frozen prepared policy",
                     )
                 }),
             other => Ok(Self::Scalar(other)),
@@ -31,6 +43,7 @@ impl<'a> PointProgram<'a> {
                 paintcraft_effects::evaluate_pixel(&[*descriptor], incoming)
             }
             Self::Levels(program) => Ok(program.evaluate_pixel(incoming)),
+            Self::Exposure(program) => Ok(program.evaluate_pixel(incoming)),
         }
     }
 }
@@ -72,10 +85,7 @@ pub(crate) fn uniform(
     let admission = crate::spatial::current();
     for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
         check()?;
-        let program = PointProgram::new(
-            filter.descriptor(),
-            admission.as_ref().and_then(|a| a.prepared_levels()),
-        )?;
+        let program = PointProgram::new(filter.descriptor(), admission.as_ref())?;
         let candidate = program.evaluate(pixel)?;
         if candidate == pixel {
             continue;
@@ -147,10 +157,7 @@ pub(crate) fn pixels(
         let x0 = local.0 + (index * 64) as i64;
         for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
             check()?;
-            let program = PointProgram::new(
-                filter.descriptor(),
-                admission.as_ref().and_then(|a| a.prepared_levels()),
-            )?;
+            let program = PointProgram::new(filter.descriptor(), admission.as_ref())?;
             for (x, pixel) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
                 *pixel = mix(filter, &program, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
             }

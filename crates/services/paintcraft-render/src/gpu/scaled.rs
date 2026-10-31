@@ -91,7 +91,7 @@ impl GpuRenderer {
     ) -> Result<GpuTextureFrame> {
         let levels_caller_check = &caller_check;
         let caller_check = || levels_caller_check();
-        crate::prepared::with_document_levels(doc, &caller_check, || {
+        crate::prepared::with_document_programs(doc, &caller_check, || {
             if doc.canvas.0 > paintcraft_core::types::policy::CANVAS_SIDE_MAX
                 || doc.canvas.1 > paintcraft_core::types::policy::CANVAS_SIDE_MAX
             {

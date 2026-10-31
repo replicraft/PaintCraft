@@ -689,3 +689,6 @@ mod spatial;
 
 #[path = "gpu/levels.rs"]
 mod levels;
+
+#[path = "gpu/exposure.rs"]
+mod exposure;

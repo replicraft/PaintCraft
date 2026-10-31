@@ -104,7 +104,7 @@ impl CompositeCache {
     ) -> Result<CachedRegion> {
         let levels_caller_check = &check;
         let check = || levels_caller_check();
-        crate::prepared::with_document_levels(doc, &check, || {
+        crate::prepared::with_document_programs(doc, &check, || {
             check()?;
             if crate::spatial::relevant(doc, region) {
                 let pixels = render_region_cancellable(doc, region, check)?;
