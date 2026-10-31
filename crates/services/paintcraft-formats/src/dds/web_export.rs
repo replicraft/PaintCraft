@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 mod request;
 mod response;
+pub mod v5;
 mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
@@ -63,6 +64,7 @@ pub(crate) const SOURCE_LIMITS: Limits = Limits {
 #[derive(Clone, Debug)]
 pub struct SourcePlan {
     source: SnapshotPlan,
+    spatial: export::SourceSpatialContext,
     pub(crate) settings: [u8; 8],
 }
 impl SourcePlan {
@@ -89,6 +91,14 @@ impl SourcePlan {
         options: TextureOptions,
         policies: export::CopyPolicies,
     ) -> Result<Self> {
+        Self::capture_with_policies_checked(doc, options, policies, &|| Ok(()))
+    }
+    pub fn capture_with_policies_checked(
+        doc: &Document,
+        options: TextureOptions,
+        policies: export::CopyPolicies,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         let source = SnapshotPlan::capture_with_policies(
             doc,
             SOURCE_LIMITS,
@@ -100,7 +110,60 @@ impl SourcePlan {
             ),
         )?;
         let settings = encode_settings(options, doc.canvas)?;
-        Ok(Self { source, settings })
+        let mut value = Self {
+            source,
+            settings,
+            spatial: export::SourceSpatialContext::default(),
+        };
+        value.spatial = export::SourceSpatialContext::capture(doc, 0, check)?;
+        if value.spatial.has_spatial() {
+            value.spatial = value
+                .spatial
+                .with_base_payload(value.payload_base(doc, 0)?)?;
+            value.spatial.validate(WORKER_PAYLOAD_BYTES_MAX)?;
+        }
+        Ok(value)
+    }
+    pub fn protocol_version(&self) -> u16 {
+        if self.spatial.has_spatial() { 5 } else { 4 }
+    }
+    /// Finalize private ABI-local resource facts only after frozen PCND bytes exist.
+    pub fn spatial_context(&self, source_len: usize) -> Result<[u8; 64]> {
+        if source_len == 0 || source_len > SOURCE_BYTES_MAX {
+            return Err(resource("Spatial source extent"));
+        }
+        if !self.spatial.has_spatial() {
+            return Ok([0; 64]);
+        }
+        Ok(self
+            .spatial
+            .finalize_source(source_len, WORKER_PAYLOAD_BYTES_MAX)?
+            .encode())
+    }
+    pub(crate) fn payload_base(&self, doc: &Document, source_bytes: usize) -> Result<u64> {
+        let resident = doc.layers.values().try_fold(0u64, |n, l| {
+            n.checked_add(
+                l.raster.resident_tiles() as u64
+                    * paintcraft_raster::RasterLayer::TILE_BYTES as u64,
+            )
+            .ok_or_else(|| resource("Spatial resident extent overflow"))
+        })?;
+        export::dds::preparation_reservation_bytes(&TexturePlan::new(
+            doc.canvas.0,
+            doc.canvas.1,
+            decode_settings(self.settings, doc.canvas)?,
+        )?)?
+        .checked_add(resident)
+        .and_then(|n| n.checked_add(source_bytes as u64))
+        .and_then(|n| n.checked_add(self.metadata_context().retained_charge()))
+        .and_then(|n| n.checked_add(self.mask_context().decode_bytes()))
+        .and_then(|n| n.checked_add(self.source.filter_inventory().filter_storage_bytes()))
+        .and_then(|n| {
+            n.checked_add(
+                (8 << 20) + (1 << 20) + ENCODED_BYTES_MAX as u64 + 2 * PREVIEW_BYTES_MAX as u64,
+            )
+        })
+        .ok_or_else(|| resource("Spatial export payload overflow"))
     }
     pub fn mask_context(&self) -> export::SourceMaskContext {
         self.source.mask_context()
