@@ -47,7 +47,11 @@ pub(super) fn op(
                 unreachable!("filter parser")
             };
             if filter.required_batch_version() > version {
-                return Err(bad("new point descriptors require paintcraft.batch/v4"));
+                return Err(bad(if filter.required_batch_version() == 5 {
+                    "spatial descriptors require paintcraft.batch/v5"
+                } else {
+                    "new point descriptors require paintcraft.batch/v4"
+                }));
             }
             parsed
         }

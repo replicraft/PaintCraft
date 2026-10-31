@@ -236,7 +236,9 @@ impl Batch {
         let version = operations
             .into_iter()
             .map(|(name, kind)| {
-                if matches!(name, "filter.add" | "filter.update")
+                if matches!(name, "filter.add" | "filter.update") && kind == Some("box-blur-v1") {
+                    5
+                } else if matches!(name, "filter.add" | "filter.update")
                     && matches!(
                         kind,
                         Some(
@@ -257,6 +259,7 @@ impl Batch {
             .max()
             .unwrap_or(2);
         match version {
+            5 => "paintcraft.batch/v5",
             4 => "paintcraft.batch/v4",
             3 => "paintcraft.batch/v3",
             _ => "paintcraft.batch/v2",
@@ -293,9 +296,10 @@ impl Batch {
             Some("paintcraft.batch/v2") => 2,
             Some("paintcraft.batch/v3") => 3,
             Some("paintcraft.batch/v4") => 4,
+            Some("paintcraft.batch/v5") => 5,
             _ => {
                 return Err(bad(
-                    "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3 or paintcraft.batch/v4",
+                    "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3, paintcraft.batch/v4 or paintcraft.batch/v5",
                 ));
             }
         };

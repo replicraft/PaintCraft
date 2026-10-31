@@ -56,6 +56,7 @@ impl FilterOp {
         match self {
             Self::Mask { .. } => 3,
             Self::Add { descriptor, .. } | Self::Update { descriptor, .. } => match descriptor {
+                Descriptor::BoxBlurV1(_) => 5,
                 Descriptor::InvertRgbV1 | Descriptor::BrightnessContrastV1(_) => 2,
                 Descriptor::BlackWhiteRgbV1(_)
                 | Descriptor::ThresholdLumaV1(_)
@@ -184,3 +185,7 @@ pub(super) fn parse_with_coverage(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "filters/box_tests.rs"]
+mod box_tests;
