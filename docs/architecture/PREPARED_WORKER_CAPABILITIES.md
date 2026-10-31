@@ -321,3 +321,32 @@ exact. See the [Vibrance contract](VIBRANCE_FILTER_FOUNDATION.md) for receipts,
 preserved failures, passing package regressions and the seven passing CI jobs for
 integrated Vibrance commit `b00bcce2`. This does not
 qualify other catalog entries, future direct transforms or all upstream effects.
+
+
+## Direct Hue/Saturation
+
+The twelfth entry is `hue-saturation-rgb-v1`/`params-v1`, execution
+`DirectHueSaturation`, resource `direct-hue-saturation-rgba8-work128-v1`, revision 1.
+Its strict decoder requires six signed big-endian parameter bytes in H/S/L order.
+The whole-RGB evaluator retains policy only: no LUT, preparation table or extra
+prepared family. Per-descriptor pricing preserves Vibrance's 64 while HSL adds
+128 modeled units per candidate slot, including fast paths. Caller-parent and
+reverse-halo accounting follow the direct path above; existing Source5/Export7
+outer contracts and ceilings remain unchanged.
+
+Native Worker tests admit the exact Source5 job bound 530 and refuse 529 before
+execution, including quote-only. Spatial plans bulk-spend once; nonspatial paths
+separate the direct portion from Source5's initial `other` charge and debit the
+captured parent during evaluation. Export7 has no matching subtraction. The same
+shared predicates preserve optional-proof avoidance, exact cold ROI and admission
+before public CPU/GPU cache hits. Actual Metal covers general/single-layer upload,
+Curves with HSL under one parent, and fractional-mask LOD at bound 512/511.
+
+Every field of all 43 old-eleven records matches before/after separately on
+native and actual Wasm; all six historical Main contexts match in Wasm. Reader
+support does not widen old Source2/3/4 or Export4/5/6 registries. Actual fresh
+browser Source5 passes 24 cases/229 checks, Studio ten lifecycle records, and
+DDS/MSP7 sixteen fresh replays each with real Main consent and independent exact
+pixels. No browser RPC exposes native TLS counters; same-parent execution proof
+is scoped to native tests. See the [HSL contract](HUE_SATURATION_FILTER_FOUNDATION.md)
+for numerical policy, receipts, preserved failures and remaining package/CI scope.

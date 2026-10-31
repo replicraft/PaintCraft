@@ -1,8 +1,10 @@
 # PCND filter catalog
 
-Status: **Implemented and locally qualified for eleven profiles.** PCND6 preserves
+Status: **Implemented and locally qualified for twelve profiles.** PCND6 preserves
 the existing seven numerical profiles, complete five-parameter Levels, Exposure
-and five-point Curves, plus whole-RGB Vibrance.
+and five-point Curves, plus whole-RGB Vibrance and Hue/Saturation.
+Hue/Saturation native and actual-browser delivery is qualified separately from
+this transport grammar.
 Typed descriptors, document/history, prepared rendering, catalog automation and
 Studio controls are implemented. Independent positive/negative format specimens
 and exact metadata boundaries are tested. Existing PCND1–5 layouts and historical
@@ -11,8 +13,9 @@ previews, Studio lifecycle and DDS/MSP7 browser exports have separate finite
 execution evidence. This grammar alone does not qualify a frontend or release.
 
 Numerical contracts: [Levels](LEVELS_FILTER_FOUNDATION.md),
-[Exposure](EXPOSURE_FILTER_FOUNDATION.md), [Curves](CURVES_FILTER_FOUNDATION.md)
-and [Vibrance](VIBRANCE_FILTER_FOUNDATION.md).
+[Exposure](EXPOSURE_FILTER_FOUNDATION.md), [Curves](CURVES_FILTER_FOUNDATION.md),
+[Vibrance](VIBRANCE_FILTER_FOUNDATION.md) and
+[Hue/Saturation](HUE_SATURATION_FILTER_FOUNDATION.md).
 
 [Palette integration](PALETTE_INTEGRATION.md) tracks the wider inventory. Its 132
 conventional filters include embedded LUTs, displacement rasters, geometry and
@@ -91,6 +94,7 @@ wire defaults, extra bytes, missing fields and float coercion are forbidden.
 | `exposure-srgb-v1` | Stops hundredths i16BE | 2 |
 | `curves-rgb-v1` | Five output u8 values for fixed inputs 0, 64, 128, 192, 255 | 5 |
 | `vibrance-rgb-v1` | Amount hundredths i16BE | 2 |
+| `hue-saturation-rgb-v1` | Hue degrees, saturation hundredths and lightness hundredths, each i16BE in that order | 6 |
 
 Existing parameter ranges and arithmetic versions do not change. Levels requires
 input black 0–254, input white 1–255 strictly above black, gamma 10–999, and byte
@@ -102,6 +106,9 @@ profile; LUT bytes are never serialized in place of those five parameters.
 Vibrance requires amount hundredths -100 through 100, default zero. It transforms
 the whole RGB tuple directly; no LUT or prepared table is serialized. Disabled
 and zero-amount intentions remain stored and require the declared capability.
+Hue/Saturation requires hue -180 through 180 and saturation/lightness -100 through
+100, all default zero. All three signed intentions remain explicit, including
+distinct -180/+180 hue endpoints; no LUT is serialized.
 Prepared LUT bytes are
 not parameters, persistent intent or authority. Old PCND numeric tags are not
 reinterpreted as catalog indexes.
@@ -120,7 +127,7 @@ actual 132-entry inventory without reserving an unnecessary 1024-entry table;
 it does not promise unlimited simultaneous algorithm versions.
 
 The generic parameter ceiling is 65,536 bytes per instance. A known codec's exact
-bound is stricter: the current eleven never allocate that generic maximum.
+bound is stricter: the current twelve never allocate that generic maximum.
 Prelude framing, identifier bytes, parameter lengths/bytes and mask metadata all
 count toward the **existing aggregate 8,388,608-byte PCND metadata ceiling**.
 There is no additional allowance. Existing per-layer 256-filter, canvas, layer,
@@ -196,7 +203,8 @@ Any future owned parameter payload needs explicit admission and unique hot/cold
 storage accounting rather than being hidden behind inline instance size.
 
 Writers select PCND6 only when at least one stored catalog-only profile requires
-it, including disabled or identity Levels, Exposure, Curves and Vibrance. Old-only documents retain their exact
+it, including disabled or identity Levels, Exposure, Curves, Vibrance and
+Hue/Saturation. Old-only documents retain their exact
 minimal PCND1–5 output, even if they arrived in a catalog request. Reject PCND6
 with only legacy-expressible intentions after metadata inventory and before tile
 inflation. Removing the last catalog-only profile restores the applicable legacy
