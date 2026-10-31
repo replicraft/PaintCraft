@@ -1,12 +1,23 @@
 # Palette integration: persistent nondestructive filters
 
 Status: ordered history, PCND persistence, regional rendering, typed automation
-and explicit copy consent support **nine editable profiles**: Invert,
+and explicit copy consent support **ten editable profiles**: Invert,
 Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
-Levels and Exposure. Fixed per-filter masks remain independent of live selection.
+Levels, Exposure and Curves. Fixed per-filter masks remain independent of live selection.
 Native and Web Studio share controls. Updated 2026-10-31.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
-nine profiles do not establish parity or a wholesale port.
+ten profiles do not establish parity or a wholesale port.
+
+Five-point [Curves](CURVES_FILTER_FOUNDATION.md) is locally integrated through
+typed catalog commands, PCND6, prepared CPU filtering, Metal presentation,
+native/browser Studio controls and CLI/MCP. Five independently editable output
+bytes retain the fixed input knots; identity, constants and nonmonotone curves
+remain editable intentions. Fresh actual Chrome qualification passes 17 Source5
+cases/123 checks, 14 Studio lifecycle checks and 16 fresh DDS/MSP Export7 worker
+replays per format, including independently decoded exact pixels. Curves adds a
+priced execution registration within existing Source5/Export7 framing. The old
+closed workers and immutable eight/nine-profile schema bundles remain closed.
+These local results do not inherit a CI result from an earlier commit.
 
 Exposure is locally integrated through native controls, hot/cold history, PCND6,
 prepared CPU filtering, Metal presentation, CLI/MCP and a new immutable nine-profile

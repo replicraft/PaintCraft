@@ -271,9 +271,12 @@ inventory are separate milestones.
 
 Brightness alone can reuse the existing BC descriptor with contrast zero as an
 explicit preset; it need not duplicate a kernel or inflate the algorithm count.
-Exposure, Levels gamma, HSL/Vibrance and seeded noise remain later proposals:
-they need explicit deterministic transcendental or coordinate contracts before
-implementation.
+[Levels](LEVELS_FILTER_FOUNDATION.md), [Exposure](EXPOSURE_FILTER_FOUNDATION.md)
+and [Curves](CURVES_FILTER_FOUNDATION.md) now have separately qualified exact
+contracts and editable catalog integration. HSL/Vibrance and seeded noise remain
+later proposals requiring explicit deterministic arithmetic or coordinate
+contracts before implementation. HSL/Vibrance couples all three RGB channels;
+independent per-channel lookup tables cannot represent that transform.
 
 ## Spatial integration boundary
 
