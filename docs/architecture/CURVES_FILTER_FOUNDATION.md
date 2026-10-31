@@ -1,7 +1,7 @@
 # Curves numerical foundation
 
-Status: standalone parameter/compiler work is beginning. Curves is not an editable
-PaintCraft filter yet. The nine-profile catalog, PCND readers, execution registry
+Status: the standalone parameter and exact compiler pass native and actual Wasm
+qualification. Curves is not an editable PaintCraft filter yet. The nine-profile catalog, PCND readers, execution registry
 and Studio controls do not acquire another capability from this document.
 
 ## Intent and numerical policy
@@ -68,27 +68,63 @@ compiler's work, scratch or cancellation contract.
 
 ## Independent oracle and adoption gates
 
-The frozen planning oracle solves each segment's four endpoint/derivative
+The frozen independent test oracle solves each segment's four endpoint/derivative
 constraints by stdlib Fraction Gaussian elimination and evaluates by Horner.
-It does not call the prospective product basis implementation. Its finite corpus
+It does not call the product basis implementation. Its finite corpus
 contains 64 full LUTs, 12 exact half ties, 432 RGBA/mask literals and 36,864
 all-alpha records. It includes all 32 output vertices, eight structural profiles
 and 24 seeded profiles. This is not exhaustive over `2^40` parameter tuples.
 
-Planning evidence lives under `docs/validation/curves-planning/`. The independent
+The reviewed test fixtures live under
+`crates/services/paintcraft-effects/tests/curves-fixtures/`; planning provenance
+remains under `docs/validation/curves-planning/`. The independent
 oracle SHA256 is `a4641d09a7e5e037ef496cde6f54db82c99b13e2247fa79bffc2e2d8c5f45e40`.
-It needs promotion to reviewed test fixtures before any product-result claim.
+Its numeric corpus and arithmetic-bound experiment remain separate proofs.
 
-Next gates are a caller-owned private LUT compiler, explicit scratch/work quotes,
-geometry and quota preflight before callbacks, bounded cancellation and final-only
-publication. Source/output preservation and scratch reuse must be tested, followed
-by actual native and Wasm equality with the independent oracle. Standalone types
-or compiler tests do not establish editable support.
+The compiler contract requires caller-owned private LUT storage, explicit
+scratch/work quotes, geometry and quota preflight before callbacks, bounded
+cancellation and final-only
+publication. Source/output preservation, scratch reuse and actual native/Wasm equality
+are tested at the finite checkpoint below. Standalone types or compiler tests do not establish editable support.
 
 Only after those prerequisites should typed descriptors, history, an immutable
 catalog bundle, PCND6 parameters, prepared rendering, controls and automation be
 connected. Source5 and Export7 may resolve a new explicitly priced registration
 without an outer protocol bump; general reader recognition alone grants no
-execution capability. Existing closed profiles and old saved bytes remain closed
-and unchanged. Actual native/browser lifecycle and export qualification remain
+execution capability. Existing closed profiles remain closed; old saved bytes
+remain unchanged. Actual native/browser lifecycle and export qualification remain
 required before increasing the public supported-filter count.
+
+## Standalone qualification checkpoint
+
+The Core suite passes 78 tests, including the three Curves parameter-identity
+controls. The compiler passes seven focused debug groups and the full Effects
+release suite passes 59 tests, retaining Levels/Exposure and spatial/point controls.
+Native all-target strict checks pass. No source or arithmetic fix was required.
+
+`paintcraft_effects::curves` exposes `Scratch`, `Limits`, `Quote`, `WorkUsed`,
+`quote`, `build_lut` and lookup-only `evaluate_pixel`. Scratch is a private
+256-byte candidate table. Its quoted storage excludes caller output and small
+fixed scalar stack/control values; it is not a process-memory bound. Compilation
+charges a fixed conservative model of 128 source-step units per entry, 32,768 per
+table, before each entry's formula. These are modeled bounds, not measured cycles,
+CPU instructions or actual primitive counts. Geometry and scratch/work refusal
+precede callbacks. Initial, per-input and final checks total 258 on success;
+only the final successful check permits the complete output copy. Failure leaves
+caller output unchanged and scratch reusable.
+
+Actual Chrome execution of the real Rust Wasm plus generated wasm-bindgen
+0.2.129 glue passes all 64 complete LUT hashes, 12 half ties, 432 Rust RGBA/mask
+controls and 36,864 all-alpha records. It includes 90 causal hidden-RGB controls,
+geometry/quota refusal before callbacks, invalid raw inputs, cancellation,
+readiness, guards and reuse. Memory remains two MiB during this finite run under
+a nonshared 16-MiB maximum. Neither value is a process RSS or performance result.
+No fake imports or host implementations replace the Rust compiler or mask mix.
+
+The actual Wasm receipt is
+`docs/validation/curves-foundation/wasm/final-freeze.json`, SHA256
+`aea8220f6016bf359b67a37b1180400ef7cf0e6d2b421ff352473307d41c6f70`.
+Native logs are under `docs/validation/curves-foundation/compiler/native-first/`.
+All original processes are terminal. Editable descriptors, catalog/PCND registration,
+prepared job ownership, UI and automation are still subsequent work. Exposure's
+pushed CI result is a separate scope and does not qualify this local foundation.
