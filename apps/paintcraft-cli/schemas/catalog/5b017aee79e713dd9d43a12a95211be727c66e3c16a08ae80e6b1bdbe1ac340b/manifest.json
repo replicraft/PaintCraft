@@ -1,0 +1,323 @@
+{
+  "schema": "paintcraft.schema-catalog-manifest/v1",
+  "profile_contract_sha256": "5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b",
+  "contract_hash_encoding": "SHA256 of UTF8 compact JSON, sorted object keys, ensure_ascii=true, no final newline",
+  "profile_contract": {
+    "schema": "paintcraft.filter-profile-contract/v1",
+    "codec_id": "params-v1",
+    "profiles": [
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "black-white-rgb-v1"
+          },
+          "strength": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "kind",
+          "strength"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "box-blur-v1"
+          },
+          "radius": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 32
+          }
+        },
+        "required": [
+          "kind",
+          "radius"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "brightness-contrast-v1"
+          },
+          "brightness": {
+            "type": "integer",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "contrast": {
+            "type": "integer",
+            "minimum": -99,
+            "maximum": 99
+          }
+        },
+        "required": [
+          "kind",
+          "brightness",
+          "contrast"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "curves-rgb-v1"
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "minItems": 5,
+            "maxItems": 5
+          }
+        },
+        "required": [
+          "kind",
+          "outputs"
+        ],
+        "additionalProperties": false,
+        "$comment": "Five fixed input knots 0,64,128,192,255; free output ordering and endpoints. Runtime requires canonical integer tokens."
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "exposure-srgb-v1"
+          },
+          "stops_hundredths": {
+            "type": "integer",
+            "minimum": -800,
+            "maximum": 800
+          }
+        },
+        "required": [
+          "kind",
+          "stops_hundredths"
+        ],
+        "additionalProperties": false,
+        "$comment": "Runtime requires canonical integer tokens; zero EV is retained catalog intent."
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "invert-rgb-v1"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "levels-rgb-v1"
+          },
+          "input_black": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 254
+          },
+          "input_white": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255
+          },
+          "gamma_hundredths": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 999
+          },
+          "output_black": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "output_white": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "required": [
+          "kind",
+          "input_black",
+          "input_white",
+          "gamma_hundredths",
+          "output_black",
+          "output_white"
+        ],
+        "additionalProperties": false,
+        "$comment": "Runtime additionally requires input_black < input_white and canonical integer tokens."
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "posterize-rgb-v1"
+          },
+          "levels": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 32
+          }
+        },
+        "required": [
+          "kind",
+          "levels"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "solarize-rgb-v1"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "threshold-luma-v1"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "required": [
+          "kind",
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "vibrance-rgb-v1"
+          },
+          "amount_hundredths": {
+            "type": "integer",
+            "minimum": -100,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "kind",
+          "amount_hundredths"
+        ],
+        "additionalProperties": false,
+        "$comment": "Whole incoming RGB, exact rational adaptive saturation; runtime canonical integer tokens. Default and disabled remain stored intent."
+      }
+    ],
+    "numerical_identity": "Versioned numerical IDs retain their independently specified arithmetic; no LUT or transport identity substitution.",
+    "envelope_names": {
+      "batch": "paintcraft.batch/catalog-v1",
+      "result": "paintcraft.result/catalog-v1",
+      "file-command": "paintcraft.file-command/catalog-v1",
+      "inspect": "paintcraft.inspect/catalog-v1",
+      "mcp-inspect": "paintcraft.mcp-inspect/catalog-v1"
+    },
+    "assessment_schema": "paintcraft.open-assessment/catalog-v1",
+    "header6_features": [
+      "raster.rgba8",
+      "canvas.finite",
+      "layers.flat",
+      "layer-point-filters.v1",
+      "layer-filter-masks.v1",
+      "layer-filter-catalog.v1"
+    ],
+    "runtime_constraints": [
+      "ordered input endpoints",
+      "canonical integer tokens",
+      "sorted unique inventories",
+      "exact Add/Update union",
+      "exact final stored inventory",
+      "actual source/mask/spatial features"
+    ],
+    "resolved_template_sha256": {
+      "batch": "dac012635ac1a82f5591bc9de92f6d8db10fc00209059203d1fbba897b3b8ab5",
+      "result": "22d4091cf1d6055af90c8c49a1934de91163a20c1a34c635c711cd108a428897",
+      "file-command": "8c26f740498f4aaf2b42816a18faa4eefe8682010351bbb4a0785398106f708e",
+      "inspect": "52a663c304df01da450b233c443663c2295d591593c55df4e17a32b9fed942bf",
+      "mcp-inspect": "0505616e7f4fd36edbb1e135b0f36a3221aefa947af49dd9c7a07a500d680a2c"
+    }
+  },
+  "schemas": [
+    {
+      "kind": "batch",
+      "id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:batch",
+      "file": "batch.schema.json",
+      "sha256": "cd7b19a6e901b086a655a89b444bb91e73384d9e67b7539d7b97e131defc3da7"
+    },
+    {
+      "kind": "result",
+      "id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:result",
+      "file": "result.schema.json",
+      "sha256": "ca90948c12166488769d1c6923355e3069986296630397b04773c531d549d51c"
+    },
+    {
+      "kind": "file-command",
+      "id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:file-command",
+      "file": "file-command.schema.json",
+      "sha256": "0661f6057c8b5c2726462f03886cca9571e48a2d3350150a4e9d6ccde9e40c55"
+    },
+    {
+      "kind": "inspect",
+      "id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:inspect",
+      "file": "inspect.schema.json",
+      "sha256": "41d8f2c9ec59d995081dc130f406b76f9a993c4ed6c33a40fd783f3a3ded7928"
+    },
+    {
+      "kind": "mcp-inspect",
+      "id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:mcp-inspect",
+      "file": "mcp-inspect.schema.json",
+      "sha256": "26b1722b3c00ee8f0fec97a2056f3dd184f13a967524375a8fcbb4f023d6540b"
+    }
+  ],
+  "frozen_legacy_inputs": [
+    {
+      "file": "batch-v5.schema.json",
+      "sha256": "6a049a3b05d2a0db7d611f5bcc88fd3543ed71f7a1b1e2a0ef9c5fbd19cb34b0"
+    },
+    {
+      "file": "result-v4.schema.json",
+      "sha256": "b0c412a2fab1135812ded70023618a2812d5baa45bb44de4048e465045bee154"
+    },
+    {
+      "file": "file-command-v4.schema.json",
+      "sha256": "78ab9a1ac3bec9e3274cc480d4ad8b4ad516b6f10c8d5fdbd3b1265237cc8b8a"
+    },
+    {
+      "file": "inspect-v4.schema.json",
+      "sha256": "b5197142216edea86d388536961ea65a6c6c5e59f4c4dedff98ec57ca2949bc0"
+    },
+    {
+      "file": "mcp-inspect-v4.schema.json",
+      "sha256": "d8efe86d229d278c2f87868f89daef7c1397217a5fc06ef18a79e1c8f85e0fe8"
+    }
+  ],
+  "availability": "Schema definitions only; runtime integration and actual consumer validation require separate qualification."
+}

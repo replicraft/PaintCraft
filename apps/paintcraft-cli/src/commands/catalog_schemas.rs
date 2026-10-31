@@ -1,23 +1,23 @@
-//! Immutable resolved schemas for the current ten-profile catalog.
+//! Immutable resolved schemas for the current eleven-profile catalog.
 pub(super) fn schema(kind: &str) -> Option<&'static str> {
     Some(match kind {
         "catalog" => include_str!(
-            "../../schemas/catalog/2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5/manifest.json"
+            "../../schemas/catalog/5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b/manifest.json"
         ),
         "batch-catalog" => include_str!(
-            "../../schemas/catalog/2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5/batch.schema.json"
+            "../../schemas/catalog/5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b/batch.schema.json"
         ),
         "result-catalog" => include_str!(
-            "../../schemas/catalog/2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5/result.schema.json"
+            "../../schemas/catalog/5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b/result.schema.json"
         ),
         "file-command-catalog" => include_str!(
-            "../../schemas/catalog/2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5/file-command.schema.json"
+            "../../schemas/catalog/5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b/file-command.schema.json"
         ),
         "inspect-catalog" => include_str!(
-            "../../schemas/catalog/2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5/inspect.schema.json"
+            "../../schemas/catalog/5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b/inspect.schema.json"
         ),
         "mcp-inspect-catalog" => include_str!(
-            "../../schemas/catalog/2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5/mcp-inspect.schema.json"
+            "../../schemas/catalog/5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b/mcp-inspect.schema.json"
         ),
         _ => return None,
     })

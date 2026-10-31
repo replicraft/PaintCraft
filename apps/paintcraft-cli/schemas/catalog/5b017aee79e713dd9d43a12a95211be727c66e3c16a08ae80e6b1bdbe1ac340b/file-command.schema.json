@@ -1,0 +1,435 @@
+{
+  "$comment": "Immutable resolved catalog bundle; legacy profiles unchanged. Runtime verifies inventories and relational constraints.",
+  "$defs": {
+    "engine_result": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "paintcraft.result/catalog-v1"
+        },
+        "committed": {
+          "type": "boolean"
+        },
+        "state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publication_epoch": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        },
+        "history_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "aliases": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "filter_aliases": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "layer_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "filter_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "layer_id",
+              "filter_id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "document_features": {
+          "oneOf": [
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-filter-catalog.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-filter-catalog.v1",
+                "source-metadata.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-spatial-filters.v1",
+                "layer-filter-catalog.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-spatial-filters.v1",
+                "layer-filter-catalog.v1",
+                "source-metadata.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-filter-masks.v1",
+                "layer-filter-catalog.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-filter-masks.v1",
+                "layer-filter-catalog.v1",
+                "source-metadata.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-filter-masks.v1",
+                "layer-spatial-filters.v1",
+                "layer-filter-catalog.v1"
+              ]
+            },
+            {
+              "const": [
+                "layer-point-filters.v1",
+                "layer-filter-masks.v1",
+                "layer-spatial-filters.v1",
+                "layer-filter-catalog.v1",
+                "source-metadata.v1"
+              ]
+            }
+          ]
+        },
+        "required_filters": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "black-white-rgb-v1",
+              "box-blur-v1",
+              "brightness-contrast-v1",
+              "curves-rgb-v1",
+              "exposure-srgb-v1",
+              "invert-rgb-v1",
+              "levels-rgb-v1",
+              "posterize-rgb-v1",
+              "solarize-rgb-v1",
+              "threshold-luma-v1",
+              "vibrance-rgb-v1"
+            ]
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 11,
+          "$comment": "Runtime enforces ASCII sorting and exact Add/Update union (batch) or stored inventory (output).",
+          "contains": {
+            "enum": [
+              "curves-rgb-v1",
+              "exposure-srgb-v1",
+              "levels-rgb-v1",
+              "vibrance-rgb-v1"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "committed",
+        "state_id",
+        "publication_epoch",
+        "history_id",
+        "aliases",
+        "warnings",
+        "document_features",
+        "required_filters"
+      ],
+      "additionalProperties": false,
+      "title": "PaintCraft finite eleven-profile catalog result",
+      "$comment": "Immutable resolved catalog bundle; legacy profiles unchanged. Runtime verifies inventories and relational constraints."
+    },
+    "engine_error": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "paintcraft.error/v1"
+        },
+        "committed": {
+          "const": false
+        },
+        "code": {
+          "enum": [
+            "input.schema",
+            "policy.unknown",
+            "reference.unknown_alias",
+            "reference.unknown_id",
+            "target.invalid",
+            "capability.unsupported",
+            "conflict.stale_base",
+            "resource.limit",
+            "operation.cancelled",
+            "codec.failed",
+            "storage.failed",
+            "invariant.violation"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "operation_index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "schema",
+        "committed",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "file_receipt": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "paintcraft.file-operation/v1"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "operation": {
+          "enum": [
+            "save",
+            "save-as",
+            "save-copy",
+            "export",
+            "migrate-copy"
+          ]
+        },
+        "source_state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "source_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "destination_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "save_sequence": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        },
+        "binding_generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        },
+        "replacement": {
+          "enum": [
+            "not-attempted",
+            "not-replaced",
+            "replaced",
+            "unknown"
+          ]
+        },
+        "requested_durability": {
+          "enum": [
+            "best-effort",
+            "durable"
+          ]
+        },
+        "durability": {
+          "enum": [
+            "not-requested",
+            "not-confirmed",
+            "confirmed"
+          ]
+        },
+        "staged_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_destination_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acknowledged_state_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_lineage_adopted": {
+          "const": false
+        },
+        "retry": {
+          "enum": [
+            "allowed-new-request",
+            "inspect",
+            "no-automatic-retry"
+          ]
+        },
+        "losses_acknowledged": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "minItems": 0,
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "minItems": 0,
+          "maxItems": 64,
+          "uniqueItems": true
+        },
+        "synthetic": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema",
+        "operation_id",
+        "operation",
+        "source_state_id",
+        "source_sha256",
+        "destination_id",
+        "save_sequence",
+        "binding_generation",
+        "replacement",
+        "requested_durability",
+        "durability",
+        "staged_sha256",
+        "observed_destination_sha256",
+        "acknowledged_state_id",
+        "source_lineage_adopted",
+        "retry",
+        "losses_acknowledged",
+        "reasons",
+        "synthetic"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.file-command/catalog-v1"
+    },
+    "engine": {
+      "$ref": "#/$defs/engine_result"
+    },
+    "file": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/file_receipt"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "success",
+        "engine-rejected",
+        "file-incomplete"
+      ]
+    },
+    "exit_code": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 6
+    },
+    "synthetic": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "engine",
+    "file",
+    "outcome",
+    "exit_code",
+    "synthetic"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:file-command",
+  "title": "PaintCraft finite eleven-profile catalog file-command"
+}

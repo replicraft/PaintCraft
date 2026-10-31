@@ -1,0 +1,669 @@
+{
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.mcp-inspect/catalog-v1"
+    },
+    "document_features": {
+      "oneOf": [
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        }
+      ]
+    },
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "state_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1048576
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1048576
+    },
+    "dirty": {
+      "type": "boolean"
+    },
+    "undo_depth": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "redo_depth": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "opacity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "filters": {
+            "type": "array",
+            "maxItems": 256,
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "descriptor": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "black-white-rgb-v1"
+                        },
+                        "strength": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "strength"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "box-blur-v1"
+                        },
+                        "radius": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 32
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "radius"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "brightness-contrast-v1"
+                        },
+                        "brightness": {
+                          "type": "integer",
+                          "minimum": -100,
+                          "maximum": 100
+                        },
+                        "contrast": {
+                          "type": "integer",
+                          "minimum": -99,
+                          "maximum": 99
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "brightness",
+                        "contrast"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "curves-rgb-v1"
+                        },
+                        "outputs": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255
+                          },
+                          "minItems": 5,
+                          "maxItems": 5
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "outputs"
+                      ],
+                      "additionalProperties": false,
+                      "$comment": "Five fixed input knots 0,64,128,192,255; free output ordering and endpoints. Runtime requires canonical integer tokens."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "exposure-srgb-v1"
+                        },
+                        "stops_hundredths": {
+                          "type": "integer",
+                          "minimum": -800,
+                          "maximum": 800
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "stops_hundredths"
+                      ],
+                      "additionalProperties": false,
+                      "$comment": "Runtime requires canonical integer tokens; zero EV is retained catalog intent."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "invert-rgb-v1"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "levels-rgb-v1"
+                        },
+                        "input_black": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 254
+                        },
+                        "input_white": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 255
+                        },
+                        "gamma_hundredths": {
+                          "type": "integer",
+                          "minimum": 10,
+                          "maximum": 999
+                        },
+                        "output_black": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "output_white": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "input_black",
+                        "input_white",
+                        "gamma_hundredths",
+                        "output_black",
+                        "output_white"
+                      ],
+                      "additionalProperties": false,
+                      "$comment": "Runtime additionally requires input_black < input_white and canonical integer tokens."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "posterize-rgb-v1"
+                        },
+                        "levels": {
+                          "type": "integer",
+                          "minimum": 2,
+                          "maximum": 32
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "levels"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "solarize-rgb-v1"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "threshold-luma-v1"
+                        },
+                        "level": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "level"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "vibrance-rgb-v1"
+                        },
+                        "amount_hundredths": {
+                          "type": "integer",
+                          "minimum": -100,
+                          "maximum": 100
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "amount_hundredths"
+                      ],
+                      "additionalProperties": false,
+                      "$comment": "Whole incoming RGB, exact rational adaptive saturation; runtime canonical integer tokens. Default and disabled remain stored intent."
+                    }
+                  ]
+                },
+                "mask": {
+                  "type": "object",
+                  "properties": {
+                    "schema": {
+                      "const": "a8-bands/v1"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "domain": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "type": "integer",
+                        "minimum": -140737488355327,
+                        "maximum": 140737488355327
+                      }
+                    },
+                    "bands": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 262144
+                    },
+                    "runs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 262144
+                    },
+                    "digest": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "schema",
+                    "enabled",
+                    "domain",
+                    "bands",
+                    "runs",
+                    "digest"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "enabled",
+                "descriptor"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "visible",
+          "opacity"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required_filters": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "black-white-rgb-v1",
+          "box-blur-v1",
+          "brightness-contrast-v1",
+          "curves-rgb-v1",
+          "exposure-srgb-v1",
+          "invert-rgb-v1",
+          "levels-rgb-v1",
+          "posterize-rgb-v1",
+          "solarize-rgb-v1",
+          "threshold-luma-v1",
+          "vibrance-rgb-v1"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 11,
+      "$comment": "Runtime enforces ASCII sorting and exact Add/Update union (batch) or stored inventory (output).",
+      "contains": {
+        "enum": [
+          "curves-rgb-v1",
+          "exposure-srgb-v1",
+          "levels-rgb-v1",
+          "vibrance-rgb-v1"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "document_id",
+    "state_id",
+    "width",
+    "height",
+    "dirty",
+    "undo_depth",
+    "redo_depth",
+    "layers",
+    "document_features",
+    "required_filters"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "required": [
+        "layers"
+      ],
+      "properties": {
+        "layers": {
+          "contains": {
+            "required": [
+              "filters"
+            ],
+            "properties": {
+              "filters": {
+                "contains": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "descriptor"
+                      ],
+                      "properties": {
+                        "descriptor": {
+                          "required": [
+                            "kind"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "const": "curves-rgb-v1"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "descriptor"
+                      ],
+                      "properties": {
+                        "descriptor": {
+                          "required": [
+                            "kind"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "const": "exposure-srgb-v1"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "descriptor"
+                      ],
+                      "properties": {
+                        "descriptor": {
+                          "required": [
+                            "kind"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "const": "levels-rgb-v1"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "descriptor"
+                      ],
+                      "properties": {
+                        "descriptor": {
+                          "required": [
+                            "kind"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "const": "vibrance-rgb-v1"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "layers"
+        ],
+        "properties": {
+          "layers": {
+            "contains": {
+              "required": [
+                "filters"
+              ],
+              "properties": {
+                "filters": {
+                  "contains": {
+                    "required": [
+                      "mask"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "document_features": {
+            "contains": {
+              "const": "layer-filter-masks.v1"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "document_features": {
+            "not": {
+              "contains": {
+                "const": "layer-filter-masks.v1"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "layers"
+        ],
+        "properties": {
+          "layers": {
+            "contains": {
+              "required": [
+                "filters"
+              ],
+              "properties": {
+                "filters": {
+                  "contains": {
+                    "required": [
+                      "descriptor"
+                    ],
+                    "properties": {
+                      "descriptor": {
+                        "required": [
+                          "kind"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "const": "box-blur-v1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "document_features": {
+            "contains": {
+              "const": "layer-spatial-filters.v1"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "document_features": {
+            "not": {
+              "contains": {
+                "const": "layer-spatial-filters.v1"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "title": "PaintCraft finite eleven-profile catalog mcp-inspect",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paintcraft:schema:catalog-v1:5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b:mcp-inspect",
+  "$comment": "Immutable resolved catalog bundle; legacy profiles unchanged. Runtime verifies inventories and relational constraints."
+}

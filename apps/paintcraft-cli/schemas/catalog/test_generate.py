@@ -89,12 +89,13 @@ class CatalogSchemas(unittest.TestCase):
         for name, expected in ENCODED.items():
             self.assertEqual((HERE / SHA / name).read_bytes(), expected)
 
-    def test_all_ten_complete_descriptors_and_closed_legacy_input(self):
+    def test_all_eleven_complete_descriptors_and_closed_legacy_input(self):
         values = [{"kind": "invert-rgb-v1"}, {"kind": "brightness-contrast-v1", "brightness": -100, "contrast": 99},
                   {"kind": "black-white-rgb-v1", "strength": 100}, {"kind": "threshold-luma-v1", "level": 0},
                   {"kind": "posterize-rgb-v1", "levels": 32}, {"kind": "solarize-rgb-v1"},
                   {"kind": "box-blur-v1", "radius": 32}, LEVELS, {"kind":"exposure-srgb-v1","stops_hundredths":-800},
-                  {"kind":"curves-rgb-v1","outputs":[0,64,128,192,255]}]
+                  {"kind":"curves-rgb-v1","outputs":[0,64,128,192,255]},
+                  {"kind":"vibrance-rgb-v1","amount_hundredths":100}]
         for descriptor in values:
             self.valid("batch", batch(descriptor))
         old = GEN["legacy"]("batch")
@@ -267,6 +268,37 @@ class CatalogSchemas(unittest.TestCase):
         value = batch({"kind":"exposure-srgb-v1","stops_hundredths":-800})
         self.valid("batch",value)
         Draft202012Validator(json.loads((old_bundles[1] / "batch.schema.json").read_bytes())).validate(value)
+
+    def test_vibrance_strict_complete_signed_policy_and_all_older_bundles_closed(self):
+        old=[HERE/digest for digest in [
+            "d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6",
+            "cac612d12ffbfd5bd8826fb6fd9e78d727e94f5186626867a58305ac56f20453",
+            "2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5"]]
+        for amount in [-100,-99,-1,0,1,99,100]:
+            value=batch({"kind":"vibrance-rgb-v1","amount_hundredths":amount})
+            self.valid("batch",value)
+            for folder in old:
+                self.assertFalse(Draft202012Validator(json.loads((folder/"batch.schema.json").read_bytes())).is_valid(value))
+        for amount in [-101,101,None,True,"0",0.5]:
+            self.invalid("batch",batch({"kind":"vibrance-rgb-v1","amount_hundredths":amount}))
+        for desc in [{"kind":"vibrance-rgb-v1"},{"kind":"vibrance-rgb-v1","amount_hundredths":0,"extra":0}]:
+            self.invalid("batch",batch(desc))
+        def converted(value):
+            if isinstance(value,dict):
+                if value.get("kind")=="levels-rgb-v1":return {"kind":"vibrance-rgb-v1","amount_hundredths":0}
+                return {k:converted(v)for k,v in value.items()}
+            if isinstance(value,list):return [converted(v)for v in value]
+            return "vibrance-rgb-v1" if value=="levels-rgb-v1" else value
+        for flags in itertools.product([False,True],repeat=3):
+            engine=converted(result(*flags))
+            values={"result":engine,"file-command":{"schema":"paintcraft.file-command/catalog-v1","engine":engine,"file":None,"outcome":"success","exit_code":0,"synthetic":True},"inspect":converted(inspection(False,*flags)),"mcp-inspect":converted(inspection(True,*flags))}
+            for kind,value in values.items():
+                self.valid(kind,value)
+                for folder in old:
+                    self.assertFalse(Draft202012Validator(json.loads((folder/(kind+".schema.json")).read_bytes())).is_valid(value))
+        for descriptor,folder in [(LEVELS,old[0]),({"kind":"exposure-srgb-v1","stops_hundredths":100},old[1]),({"kind":"curves-rgb-v1","outputs":[23,9,240,73,201]},old[2])]:
+            value=batch(descriptor);self.valid("batch",value)
+            Draft202012Validator(json.loads((folder/"batch.schema.json").read_bytes())).validate(value)
 
     def test_runtime_checks_are_not_falsely_claimed_as_static_schema_guarantees(self):
         # JSON Schema cannot compare two parameter fields or payload inventories.

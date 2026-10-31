@@ -25,7 +25,8 @@ pub(super) fn expanded(doc: &Document) -> bool {
                 | Descriptor::SolarizeRgbV1
                 | Descriptor::LevelsRgbV1(_)
                 | Descriptor::ExposureSrgbV1(_)
-                | Descriptor::CurvesRgbV1(_) => true,
+                | Descriptor::CurvesRgbV1(_)
+                | Descriptor::VibranceRgbV1(_) => true,
             })
     })
 }
