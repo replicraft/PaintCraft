@@ -163,13 +163,15 @@ impl FilterStack {
     }
 }
 fn hash(instances: &[FilterInstance]) -> [u8; 32] {
-    // Canonical v1: domain, u16BE count; ordered UUID bytes, enabled u8,
-    // u16BE descriptor-ID length + UTF8 ID, then BC i16BE brightness/contrast.
-    // IDs carry arithmetic versions. Unmasked stacks retain exact v1 bytes;
-    // only stored mask intent opts into v2 presence/enablement/field hashing.
+    // Old-only stacks preserve their exact v1/v2 bytes. A catalog-only
+    // intention chooses v3: semantic parameter lengths and mask presence are
+    // explicit for every record, independent of archive/JSON transport.
     let mut digest = Sha256::new();
-    let masked = instances.iter().any(|f| f.mask().is_some());
-    digest.update(if masked {
+    let catalog = instances.iter().any(|f| f.descriptor.is_catalog_only());
+    let masked = instances.iter().any(|f| f.mask.is_some());
+    digest.update(if catalog {
+        b"paintcraft.filter-stack/v3\0"
+    } else if masked {
         b"paintcraft.filter-stack/v2\0"
     } else {
         b"paintcraft.filter-stack/v1\0"
@@ -181,20 +183,14 @@ fn hash(instances: &[FilterInstance]) -> [u8; 32] {
         let id = instance.descriptor.id();
         digest.update((id.len() as u16).to_be_bytes());
         digest.update(id.as_bytes());
-        match instance.descriptor {
-            Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
-            Descriptor::BrightnessContrastV1(parameters) => {
-                digest.update(parameters.brightness().to_be_bytes());
-                digest.update(parameters.contrast().to_be_bytes());
-            }
-            Descriptor::BlackWhiteRgbV1(p) => digest.update([p.strength()]),
-            Descriptor::ThresholdLumaV1(p) => digest.update([p.level()]),
-            Descriptor::PosterizeRgbV1(p) => digest.update([p.levels()]),
-            Descriptor::BoxBlurV1(p) => digest.update([p.radius()]),
+        let (parameters, length) = instance.descriptor.semantic_parameter_bytes();
+        if catalog {
+            digest.update((length as u32).to_be_bytes());
         }
-        if masked {
-            digest.update([u8::from(instance.mask().is_some())]);
-            if let Some(mask) = instance.mask() {
+        digest.update(&parameters[..length]);
+        if catalog || masked {
+            digest.update([u8::from(instance.mask.is_some())]);
+            if let Some(mask) = &instance.mask {
                 digest.update([u8::from(mask.enabled())]);
                 digest.update(mask.coverage().digest());
             }
@@ -260,3 +256,7 @@ pub fn inspection(stack: &FilterStack) -> paintcraft_core::types::json::Value {
 
 #[cfg(test)]
 mod point_tests;
+
+#[cfg(test)]
+#[path = "filters/catalog_tests.rs"]
+mod catalog_tests;
