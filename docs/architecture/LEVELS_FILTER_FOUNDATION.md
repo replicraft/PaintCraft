@@ -4,8 +4,9 @@ Status: the exact scalar lookup-table foundation and local editable integration
 are implemented. Levels has all five parameters, persistent intentions, prepared
 rendering, Studio controls and catalog-aware CLI/MCP operations. Native controls,
 history, save/reopen, active CLI/MCP PNG export and actual Metal checks pass.
-Fresh production-browser qualification is in progress; the seven-filter public
-support claim has not yet been expanded. Existing legacy grammars remain closed.
+Fresh production-browser preview, Studio lifecycle and DDS/MSP6 export checks
+also pass. Existing legacy grammars remain closed. This is one additional filter,
+not qualification of the wider Palette catalog or a new packaged release.
 
 ## Source intent and parameters
 
@@ -190,11 +191,28 @@ Integration gates and current status:
    and preview source2/3 keep their original capability boundaries.
 6. Native Studio controls, private Apply/Cancel, Undo/Redo, save/reopen and
    CPU/Metal checks pass. Fresh Main/Source4/codec6 production builds pass, as do
-   all 20 raw browser cases. Visible Studio lifecycle and actual browser export
-   checks remain in progress; compilation and raw packets do not close them.
+   all 20 raw browser cases and 22 visible Studio lifecycle checks. Actual Main
+   DDS/MSP6 exports pass consent/revocation/download and independent literal
+   2×1 pixel checks, with 12 fresh Worker replays per format (11 negative).
+   The full CLI package passes 224 tests with 15 ignored; workspace all-target
+   and main/render/codec Wasm strict checks pass. These local results do not
+   establish original-application parity, physical-tablet or release qualification.
 
 No catalog layout or future outer version is frozen by this numerical document.
 The wider Palette catalog, layer masks and layer styles remain separate work.
+
+The local integration receipt is
+`docs/validation/levels-catalog-model/final-integration/final-ledger.json`,
+SHA-256 `6dfbcb26722ce87188e858d48549e4881f5ffeae3066608f8e20300df30f9e1d`.
+The separate production-browser receipt is
+`docs/validation/levels-catalog-browser/browser-final-freeze.json`,
+SHA-256 `f3b6dc7880cf97d1c87ecc3b33a77771d7c25280aa6f5e80caf622dd1dced221`.
+Both preserve source/artifact identities and failed or calibration attempts.
+Browser export pixel checks cover the decoded top-level 2×1 image, not every mip
+chain or original-application compatibility. Prepared Levels evaluates CPU lookup
+tables; required Metal checks qualify composition/display entry points, not a
+GPU Levels kernel. No new latency or throughput claim is inferred from these
+functional checks.
 
 [CI run 41157624974](https://github.com/replicraft/PaintCraft/actions/runs/41157624974)
 passes all seven jobs for numerical-foundation commit

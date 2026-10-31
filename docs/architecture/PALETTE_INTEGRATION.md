@@ -1,22 +1,24 @@
 # Palette integration: persistent nondestructive filters
 
 Status: ordered history, PCND persistence, regional rendering, typed automation
-and explicit copy consent support **seven editable profiles**: six point filters
+and explicit copy consent support **eight editable profiles**: six original point filters
 (Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize) and
-Box Blur. Fixed per-filter masks remain independent of live selection. Native
+Box Blur and complete Levels. Fixed per-filter masks remain independent of live selection. Native
 and Web Studio share controls. The six-point production proofs below remain
 qualified; Box local host/CLI/PCND/required Metal checks and actual production
 Worker3/scoped Studio/MAIN DDS/MSP export5 pass finite appearance, consent and
 replay checks. MSP has independent exact 2×1 opaque-white pixel evidence. Updated 2026-10-30.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
-seven profiles do not establish parity or a wholesale port.
+eight profiles do not establish parity or a wholesale port.
 
-Complete five-parameter Levels is the next local integration slice. Typed intent,
+Complete five-parameter Levels is locally integrated and qualified. Typed intent,
 hot/cold history, PCND6 catalogs, prepared CPU/Metal rendering, Studio controls and
 catalog CLI/MCP receipts are implemented and locally tested. Fresh web production
-builds and 20 raw Source4 browser cases pass. Visible Studio lifecycle and browser
-export qualification are still in progress, so Levels is not included in the
-seven-profile public support claim above. See the [Levels contract](LEVELS_FILTER_FOUNDATION.md)
+builds, 20 raw Source4 browser cases and 22 visible Studio lifecycle checks pass.
+Actual Main DDS/MSP6 browser exports pass consent/revocation/download checks,
+independent 2×1 literal pixels and 12 fresh Worker replays per format (11 negative).
+Native workspace/Wasm strict checks and all 224 CLI tests pass, with 15 ignored.
+See the [Levels contract](LEVELS_FILTER_FOUNDATION.md)
 and [catalog framing](PCND_FILTER_CATALOG.md). No layer styles or remaining catalog
 entries are implied by this work.
 

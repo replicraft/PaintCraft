@@ -16,8 +16,16 @@ seven editable profiles: Invert, Brightness/Contrast, Black & White, Threshold,
 Posterize, Solarize and Box Blur, with fixed per-filter coverage masks. The
 [spatial integration record](architecture/SPATIAL_FILTER_INTEGRATION.md) covers
 the later native and production-browser checks. Complete Levels arithmetic and
-[prepared backend selection](architecture/LEVELS_BACKEND_SELECTION.md) are
-qualified components; Levels is not yet registered in documents, PCND or UI.
+[prepared backend selection](architecture/LEVELS_BACKEND_SELECTION.md) now feed
+the local eighth-profile integration: typed document/history intentions, PCND6,
+catalog automation and five-field Studio controls. Native controls, active
+CLI/MCP exports, required Metal checks, fresh production builds, 20 raw browser
+cases and 22 actual Studio lifecycle checks pass. DDS/MSP6 production-browser
+exports also pass actual consent/revocation/download, independently decoded
+2×1 pixels and 12 fresh Worker replays per format (11 negative). Workspace and
+Wasm strict checks pass, as do 224 CLI package tests with 15 ignored. The existing
+seven-profile export evidence below remains historical; see the
+[current Levels scope](architecture/LEVELS_FILTER_FOUNDATION.md).
 The initial 95 renderer tests passed on
 required offscreen Metal, including 32 GPU controls. [Typed editing and CLI/MCP inspection](FILTER_COMMANDS.md) are also implemented,
 with strict versioned result profiles and real metadata-limit refusal controls.

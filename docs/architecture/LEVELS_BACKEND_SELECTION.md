@@ -1,8 +1,8 @@
 # Prepared Levels backend selection
 
 Status: qualified preparation implementation, now connected to the local Levels
-descriptor, PCND6, catalog automation and Studio controls. Final browser export
-and integration qualification is tracked in the [Levels contract](LEVELS_FILTER_FOUNDATION.md).
+descriptor, PCND6, catalog automation and Studio controls. Browser exports and
+integration qualification are tracked in the [Levels contract](LEVELS_FILTER_FOUNDATION.md).
 The numerical policy remains `levels-rgb-v1`; this is an execution choice.
 
 ## APIs, storage and accounting

@@ -355,8 +355,9 @@ catalog coverage. Existing older byte-profile evidence retains its original scop
 
 The finite catalog layout and initial eight numerical profile/codec pairs are
 specified in [the catalog contract](architecture/PCND_FILTER_CATALOG.md).
-The PCND6 reader/writer integration is under qualification; this section does not
-advertise released Levels or browser catalog support. Existing PCND1–5 layout,
+The PCND6 reader/writer has local format, host, CLI/MCP and production-browser
+qualification for the initial eight profiles; this is not a new packaged release.
+Existing PCND1–5 layout,
 minimal output selection and historical fixture bytes remain unchanged.
 
 PCND6 adds a bounded required-algorithm prelude immediately after the magic,

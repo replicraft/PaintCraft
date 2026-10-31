@@ -24,8 +24,9 @@ Configure your MCP client with the absolute path to that binary:
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
 [Editable filters and persistent masks](FILTER_COMMANDS.md) are available through
-`apply_operations` and `get_batch_schema`. The seven profiles are Invert,
-Brightness/Contrast, Black & White, Threshold, Posterize, Solarize and Box Blur.
+`apply_operations`, `get_batch_schema` and `get_catalog_schema`. The eight profiles
+are Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize,
+Box Blur and complete five-parameter Levels.
 They retain parameters, instance identity, source pixels and saved coverage
 through Undo/Redo and PCND save/reopen. MCP owns its headless document; it does
 not control an open Desktop or browser Studio. Layer masks, styles and the rest
@@ -42,7 +43,7 @@ lowest grammar required by the actual operation list:
 | `filter.mask.set`, `.from_selection`, `.set_enabled`, `.remove` | v3 |
 | Original two-kind Add/Update; scalar enable/reorder/remove/duplicate | v2 |
 
-The local Levels extension has separate discovery: call `get_catalog_schema`
+The Levels extension has separate discovery: call `get_catalog_schema`
 with `{}` for the immutable bundle manifest, or `{"kind":"batch"}` for its
 resolved command schema. Other kinds are `result`, `file-command`, `inspect`
 and `mcp-inspect`. `get_batch_schema` stays exactly v5. MCP supplies the current

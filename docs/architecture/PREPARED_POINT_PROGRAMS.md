@@ -3,7 +3,7 @@
 Status: admitted Levels ownership and row evaluation are connected to frozen
 document jobs, CPU cache and GPU entry points, catalog persistence/automation,
 and Studio previews. The [complete Levels integration](LEVELS_FILTER_FOUNDATION.md)
-tracks current qualification; browser export checks remain open. No global cache
+tracks the finite native and browser qualification. No global cache
 is introduced, and the existing seven filters retain their numerical policies.
 
 ## Admission and lifetime

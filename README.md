@@ -4,7 +4,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 
 - Windows 7, 10 and 11 Classic skins.
 - Studio with document tabs, Save All and floating panels.
-- Seven editable filters in Studio: Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize and [Box Blur](docs/architecture/SPATIAL_FILTER_INTEGRATION.md), with saved selection masks and live previews.
+- Eight editable Studio filters, including Levels and Box Blur, with live previews and saved selection masks.
 - Desktop, browser and command-line apps.
 - **MCP support:** let AI assistants paint, edit layers, preview images and save projects.
 - Nine brushes, pencil, eraser, fill and color picker.
