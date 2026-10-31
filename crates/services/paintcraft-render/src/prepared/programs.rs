@@ -16,6 +16,29 @@ fn active_exposure(doc: &Document) -> bool {
             .any(|f| f.enabled() && matches!(f.descriptor(), Descriptor::ExposureSrgbV1(_)))
     })
 }
+// Forward guard only: registration alone never enables an unprepared family.
+pub(super) fn unprepared_curves() -> Error {
+    Error::new(
+        ErrorCode::CapabilityUnsupported,
+        "Curves appearance requires its frozen prepared policy",
+    )
+}
+pub(super) fn refuse_layer_curves(layer: &Layer) -> Result<()> {
+    if layer
+        .filters
+        .iter()
+        .any(|f| f.enabled() && matches!(f.descriptor(), Descriptor::CurvesRgbV1(_)))
+    {
+        return Err(unprepared_curves());
+    }
+    Ok(())
+}
+pub(super) fn refuse_document_curves(doc: &Document) -> Result<()> {
+    for layer in doc.layers.values() {
+        refuse_layer_curves(layer)?;
+    }
+    Ok(())
+}
 fn missing() -> Error {
     Error::new(
         ErrorCode::CapabilityUnsupported,
@@ -32,6 +55,13 @@ pub struct DocumentProgramsQuote {
     pub compile_work: u64,
     pub preparation_peak_bytes: u64,
     pub retained_bytes: u64,
+}
+impl DocumentProgramsQuote {
+    /// Derived count; the old quote layout/fields and legacy values stay exact.
+    pub fn curves_programs(self) -> usize {
+        self.unique_programs
+            .saturating_sub(self.levels_programs.saturating_add(self.exposure_programs))
+    }
 }
 fn capture(
     doc: &Document,
@@ -97,10 +127,11 @@ fn document_quote(l: &[LevelsRgbV1], e: &[ExposureSrgbV1]) -> Result<DocumentPro
 /// charges and retains both throughout all compilation. Bound-job retention is
 /// available separately through WorkspaceAdmission::prepared_retained_bytes.
 /// With no active Exposure, values/callbacks are exactly the old Levels quote.
-pub fn quote_document_programs(
+pub(super) fn quote_legacy_programs(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<DocumentProgramsQuote> {
+    refuse_document_curves(doc)?;
     if !active_exposure(doc) {
         let q = super::quote_document_levels(doc, check)?;
         return Ok(DocumentProgramsQuote {
@@ -131,11 +162,12 @@ fn validate_doc(
 /// Freeze all active unique complete keys in one caller-owned scope/counter.
 /// Existing frozen jobs never extend. Missing Exposure under a legacy-only
 /// Levels owner refuses; callers must begin a fresh final-document invocation.
-pub fn prepare_document_programs(
+pub(super) fn prepare_legacy_programs(
     doc: &Document,
     admission: WorkspaceAdmission,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<WorkspaceAdmission> {
+    refuse_document_curves(doc)?;
     if admission.prepared_programs().is_some() {
         validate_doc(doc, &admission, check)?;
         return Ok(admission);
@@ -184,15 +216,17 @@ pub(crate) fn validate_layer_programs(
             }
         }
     }
+    super::curves_document::validate_layer_curves(layer, admission, check)?;
     Ok(())
 }
 /// Bind before all cache hits, parallel capture and GPU appearance preparation.
 /// No TLS fallback realm exists. No active Exposure delegates the old path.
-pub fn with_document_programs<T>(
+pub(super) fn with_legacy_programs<T>(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
+    refuse_document_curves(doc)?;
     if !active_exposure(doc) {
         if let Some(admission) = crate::spatial::current()
             && admission.prepared_programs().is_some()
@@ -202,9 +236,11 @@ pub fn with_document_programs<T>(
         return super::with_document_levels(doc, check, work);
     }
     let admission = crate::spatial::current().ok_or_else(missing)?;
-    let admission = prepare_document_programs(doc, admission, check)?;
+    let admission = prepare_legacy_programs(doc, admission, check)?;
     crate::spatial::with_workspace(admission, work)
 }
+#[cfg(test)]
+use super::{prepare_document_programs, quote_document_programs, with_document_programs};
 #[cfg(test)]
 #[path = "program_tests.rs"]
 mod tests;

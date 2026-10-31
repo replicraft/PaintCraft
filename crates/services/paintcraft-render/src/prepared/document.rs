@@ -69,6 +69,7 @@ pub fn quote_document_levels(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<DocumentLevelsQuote> {
+    super::programs::refuse_document_curves(doc)?;
     let mut policies = [LevelsRgbV1::default(); PreparedLevelsJob::MAX_PROGRAMS];
     let len = capture(doc, &mut policies, check)?;
     if len == 0 {
@@ -98,6 +99,11 @@ pub fn prepare_document_levels(
     admission: WorkspaceAdmission,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<WorkspaceAdmission> {
+    if admission.prepared_curves().is_some() {
+        super::curves_document::validate_doc(doc, &admission, check)?;
+        return Ok(admission);
+    }
+    super::programs::refuse_document_curves(doc)?;
     if !active(doc) {
         return Ok(admission);
     }
@@ -169,6 +175,13 @@ pub fn with_document_levels<T>(
     check: &dyn Fn() -> Result<()>,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
+    if let Some(a) = crate::spatial::current()
+        && a.prepared_curves().is_some()
+    {
+        super::curves_document::validate_doc(doc, &a, check)?;
+        return work();
+    }
+    super::programs::refuse_document_curves(doc)?;
     if !active(doc) {
         return work();
     }

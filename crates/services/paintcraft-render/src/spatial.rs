@@ -14,6 +14,12 @@ pub use plan::{LayerAppearancePlan, WorkspaceQuote};
 pub use tiles::{TiledQuote, quote_layer};
 pub(crate) use tiles::{preflight, visit};
 
+// Attachment tagging is excluded Rust factory bookkeeping, not payload.
+#[derive(Clone, Debug)]
+enum ProgramBinding {
+    Legacy(std::sync::Arc<crate::prepared::PreparedPointJob>),
+    Curves(std::sync::Arc<crate::prepared::PreparedCurvesJob>),
+}
 /// Shared intermediate-storage admission, independent of final output/cache
 /// admission. A reserved job scope can back this factory without double-charging.
 #[derive(Clone, Debug)]
@@ -23,7 +29,7 @@ pub struct WorkspaceAdmission {
     work_limit: u64,
     work_used: std::sync::Arc<std::sync::Mutex<u64>>,
     levels: Option<std::sync::Arc<crate::prepared::PreparedLevelsJob>>,
-    programs: Option<std::sync::Arc<crate::prepared::PreparedPointJob>>,
+    programs: Option<ProgramBinding>,
 }
 impl WorkspaceAdmission {
     pub fn new(scope: BudgetScope, bytes_limit: u64, work_limit: u64) -> Self {
@@ -39,15 +45,33 @@ impl WorkspaceAdmission {
     /// Immutable programs captured for this frozen rendering invocation.
     pub fn prepared_levels(&self) -> Option<&crate::prepared::PreparedLevelsJob> {
         match &self.programs {
-            Some(job) => job.levels(),
+            Some(ProgramBinding::Legacy(job)) => job.levels(),
+            Some(ProgramBinding::Curves(job)) => job.legacy().and_then(|old| old.levels()),
             None => self.levels.as_deref(),
         }
     }
     pub fn prepared_programs(&self) -> Option<&crate::prepared::PreparedPointJob> {
-        self.programs.as_deref()
+        match &self.programs {
+            Some(ProgramBinding::Legacy(job)) => Some(job),
+            Some(ProgramBinding::Curves(job)) => job.legacy(),
+            None => None,
+        }
+    }
+    pub fn prepared_curves(&self) -> Option<&crate::prepared::PreparedCurvesJob> {
+        match &self.programs {
+            Some(ProgramBinding::Curves(job)) => Some(job),
+            _ => None,
+        }
+    }
+    /// Includes legacy Levels-only and Curves-only frozen complete owners.
+    pub fn has_prepared_programs(&self) -> bool {
+        self.programs.is_some() || self.levels.is_some()
     }
     /// Actual retained logical program payload, not allocator/Arc bookkeeping.
     pub fn prepared_retained_bytes(&self) -> u64 {
+        if let Some(job) = self.prepared_curves() {
+            return job.retained_bytes();
+        }
         self.prepared_programs().map_or_else(
             || {
                 self.prepared_levels()
@@ -61,7 +85,15 @@ impl WorkspaceAdmission {
         job: std::sync::Arc<crate::prepared::PreparedPointJob>,
     ) -> Self {
         self.levels = None;
-        self.programs = Some(job);
+        self.programs = Some(ProgramBinding::Legacy(job));
+        self
+    }
+    pub(crate) fn with_curves(
+        mut self,
+        job: std::sync::Arc<crate::prepared::PreparedCurvesJob>,
+    ) -> Self {
+        self.levels = None;
+        self.programs = Some(ProgramBinding::Curves(job));
         self
     }
     pub(crate) fn with_levels(

@@ -7,6 +7,7 @@ pub(crate) enum PointProgram<'a> {
     Scalar(paintcraft_core::types::filters::Descriptor),
     Levels(&'a crate::prepared::PreparedLevels),
     Exposure(&'a crate::prepared::PreparedExposure),
+    Curves(&'a crate::prepared::PreparedCurves),
 }
 impl<'a> PointProgram<'a> {
     pub(crate) fn new(
@@ -14,6 +15,16 @@ impl<'a> PointProgram<'a> {
         admission: Option<&'a crate::spatial::WorkspaceAdmission>,
     ) -> Result<Self> {
         match descriptor {
+            paintcraft_core::types::filters::Descriptor::CurvesRgbV1(p) => admission
+                .and_then(|a| a.prepared_curves())
+                .and_then(|j| j.get(p))
+                .map(Self::Curves)
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "Curves appearance lacks its frozen prepared policy",
+                    )
+                }),
             paintcraft_core::types::filters::Descriptor::LevelsRgbV1(policy) => admission
                 .and_then(|admission| admission.prepared_levels())
                 .and_then(|job| job.get(policy))
@@ -44,6 +55,7 @@ impl<'a> PointProgram<'a> {
             }
             Self::Levels(program) => Ok(program.evaluate_pixel(incoming)),
             Self::Exposure(program) => Ok(program.evaluate_pixel(incoming)),
+            Self::Curves(program) => Ok(program.evaluate_pixel(incoming)),
         }
     }
 }

@@ -692,3 +692,6 @@ mod levels;
 
 #[path = "gpu/exposure.rs"]
 mod exposure;
+
+#[path = "gpu/curves.rs"]
+mod curves;

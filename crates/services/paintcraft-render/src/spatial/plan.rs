@@ -43,7 +43,8 @@ fn stage(index: usize, descriptor: Descriptor, source: Rect, output: Rect) -> Re
         | Descriptor::PosterizeRgbV1(_)
         | Descriptor::SolarizeRgbV1
         | Descriptor::LevelsRgbV1(_)
-        | Descriptor::ExposureSrgbV1(_) => None,
+        | Descriptor::ExposureSrgbV1(_)
+        | Descriptor::CurvesRgbV1(_) => None,
     };
     Ok(Stage {
         index,
