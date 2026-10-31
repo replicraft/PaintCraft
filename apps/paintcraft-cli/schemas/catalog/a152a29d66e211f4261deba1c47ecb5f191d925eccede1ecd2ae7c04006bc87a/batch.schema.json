@@ -1,0 +1,3076 @@
+{
+  "title": "PaintCraft finite twelve-profile catalog batch",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.batch/catalog-v1"
+    },
+    "atomic": {
+      "const": true
+    },
+    "policy": {
+      "type": "string",
+      "pattern": "^paintcraft\\.[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)*/[a-z0-9][a-z0-9._-]{0,95}$"
+    },
+    "base": {
+      "type": "object",
+      "properties": {
+        "state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publication_epoch": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        }
+      },
+      "required": [
+        "state_id",
+        "publication_epoch"
+      ],
+      "additionalProperties": false
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.add"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+              },
+              "descriptor": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "black-white-rgb-v1"
+                      },
+                      "strength": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "strength"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "box-blur-v1"
+                      },
+                      "radius": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 32
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "radius"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "brightness-contrast-v1"
+                      },
+                      "brightness": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "contrast": {
+                        "type": "integer",
+                        "minimum": -99,
+                        "maximum": 99
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "brightness",
+                      "contrast"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "curves-rgb-v1"
+                      },
+                      "outputs": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "minItems": 5,
+                        "maxItems": 5
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "outputs"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Five fixed input knots 0,64,128,192,255; free output ordering and endpoints. Runtime requires canonical integer tokens."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "exposure-srgb-v1"
+                      },
+                      "stops_hundredths": {
+                        "type": "integer",
+                        "minimum": -800,
+                        "maximum": 800
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "stops_hundredths"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Runtime requires canonical integer tokens; zero EV is retained catalog intent."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "hue-saturation-rgb-v1"
+                      },
+                      "hue_degrees": {
+                        "type": "integer",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "saturation_hundredths": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "lightness_hundredths": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "hue_degrees",
+                      "saturation_hundredths",
+                      "lightness_hundredths"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Whole incoming encoded RGB, exact HSL adjustment; all three signed integer fields required. Default and disabled remain stored intent; opposite half-turn intents remain distinct."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "invert-rgb-v1"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "levels-rgb-v1"
+                      },
+                      "input_black": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 254
+                      },
+                      "input_white": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 255
+                      },
+                      "gamma_hundredths": {
+                        "type": "integer",
+                        "minimum": 10,
+                        "maximum": 999
+                      },
+                      "output_black": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "output_white": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "input_black",
+                      "input_white",
+                      "gamma_hundredths",
+                      "output_black",
+                      "output_white"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Runtime additionally requires input_black < input_white and canonical integer tokens."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "posterize-rgb-v1"
+                      },
+                      "levels": {
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 32
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "levels"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "solarize-rgb-v1"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "threshold-luma-v1"
+                      },
+                      "level": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "level"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "vibrance-rgb-v1"
+                      },
+                      "amount_hundredths": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "amount_hundredths"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Whole incoming RGB, exact rational adaptive saturation; runtime canonical integer tokens. Default and disabled remain stored intent."
+                  }
+                ]
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "to_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 256
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "ref",
+              "descriptor"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.update"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "descriptor": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "black-white-rgb-v1"
+                      },
+                      "strength": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "strength"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "box-blur-v1"
+                      },
+                      "radius": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 32
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "radius"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "brightness-contrast-v1"
+                      },
+                      "brightness": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "contrast": {
+                        "type": "integer",
+                        "minimum": -99,
+                        "maximum": 99
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "brightness",
+                      "contrast"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "curves-rgb-v1"
+                      },
+                      "outputs": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "minItems": 5,
+                        "maxItems": 5
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "outputs"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Five fixed input knots 0,64,128,192,255; free output ordering and endpoints. Runtime requires canonical integer tokens."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "exposure-srgb-v1"
+                      },
+                      "stops_hundredths": {
+                        "type": "integer",
+                        "minimum": -800,
+                        "maximum": 800
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "stops_hundredths"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Runtime requires canonical integer tokens; zero EV is retained catalog intent."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "hue-saturation-rgb-v1"
+                      },
+                      "hue_degrees": {
+                        "type": "integer",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "saturation_hundredths": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "lightness_hundredths": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "hue_degrees",
+                      "saturation_hundredths",
+                      "lightness_hundredths"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Whole incoming encoded RGB, exact HSL adjustment; all three signed integer fields required. Default and disabled remain stored intent; opposite half-turn intents remain distinct."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "invert-rgb-v1"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "levels-rgb-v1"
+                      },
+                      "input_black": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 254
+                      },
+                      "input_white": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 255
+                      },
+                      "gamma_hundredths": {
+                        "type": "integer",
+                        "minimum": 10,
+                        "maximum": 999
+                      },
+                      "output_black": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "output_white": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "input_black",
+                      "input_white",
+                      "gamma_hundredths",
+                      "output_black",
+                      "output_white"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Runtime additionally requires input_black < input_white and canonical integer tokens."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "posterize-rgb-v1"
+                      },
+                      "levels": {
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 32
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "levels"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "solarize-rgb-v1"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "threshold-luma-v1"
+                      },
+                      "level": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "level"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "vibrance-rgb-v1"
+                      },
+                      "amount_hundredths": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "amount_hundredths"
+                    ],
+                    "additionalProperties": false,
+                    "$comment": "Whole incoming RGB, exact rational adaptive saturation; runtime canonical integer tokens. Default and disabled remain stored intent."
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref",
+              "descriptor"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.set_enabled"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref",
+              "enabled"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.reorder"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "to_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 256
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref",
+              "to_index"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.remove"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.duplicate"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+              },
+              "to_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 256
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref",
+              "ref"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.mask_spans"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over",
+                  "destination-out"
+                ],
+                "default": "source-over"
+              },
+              "spans": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 262144,
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 255
+                    }
+                  ],
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "color",
+              "spans"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.move_selection"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "offset": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "clear": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "transparent_key": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "offset",
+              "clear"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.cut_selection"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "clear": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "clear"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.transform_selection"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "transform": {
+                "enum": [
+                  "rotate-right",
+                  "rotate-left",
+                  "rotate-180",
+                  "flip-horizontal",
+                  "flip-vertical"
+                ]
+              },
+              "clear": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "transform",
+              "clear"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "canvas.transform"
+              },
+              "transform": {
+                "enum": [
+                  "rotate-right",
+                  "rotate-left",
+                  "rotate-180",
+                  "flip-horizontal",
+                  "flip-vertical"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "transform"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "canvas.crop"
+              },
+              "rect": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "op",
+              "rect"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "canvas.clear"
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              }
+            },
+            "required": [
+              "op",
+              "ref",
+              "color"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "layer.add"
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 1024
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "origin": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "default_pixel": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              }
+            },
+            "required": [
+              "op",
+              "ref",
+              "name",
+              "width",
+              "height",
+              "origin",
+              "default_pixel"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "layer.duplicate"
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 1024
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "ref",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "layer.delete"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "layer.set_properties"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 1024
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "opacity_u8": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.fill_rect"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "rect": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "rect",
+              "color",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.pencil_path"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    "y": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 65536
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "points",
+              "color",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "selection.set_rect"
+              },
+              "rect": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "op",
+              "rect"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "selection.set_polygon"
+              },
+              "points": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 65536,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    "y": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "op",
+              "points"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "selection.invert"
+              }
+            },
+            "required": [
+              "op"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "selection.clear"
+              }
+            },
+            "required": [
+              "op"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "canvas.resize"
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "anchor": {
+                "enum": [
+                  "top-left",
+                  "top",
+                  "top-right",
+                  "left",
+                  "center",
+                  "right",
+                  "bottom-left",
+                  "bottom",
+                  "bottom-right"
+                ]
+              },
+              "outside_content": {
+                "const": "preserve"
+              }
+            },
+            "required": [
+              "op",
+              "width",
+              "height",
+              "anchor",
+              "outside_content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.stroke_path"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "integer",
+                      "minimum": -36028797018963712,
+                      "maximum": 36028797018963712
+                    },
+                    "y": {
+                      "type": "integer",
+                      "minimum": -36028797018963712,
+                      "maximum": 36028797018963712
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 65536
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1024
+              },
+              "point_scale": {
+                "enum": [
+                  1,
+                  256
+                ]
+              },
+              "brush": {
+                "enum": [
+                  "round",
+                  "square",
+                  "smooth-round",
+                  "calligraphy-brush",
+                  "calligraphy-pen",
+                  "airbrush",
+                  "oil",
+                  "crayon",
+                  "marker",
+                  "natural-pencil",
+                  "watercolor"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "points",
+              "color",
+              "mode",
+              "size",
+              "brush"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "point_scale": {
+                      "const": 256
+                    }
+                  },
+                  "required": [
+                    "point_scale"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "brush": {
+                      "not": {
+                        "enum": [
+                          "round",
+                          "square"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "points": {
+                      "items": {
+                        "properties": {
+                          "x": {
+                            "minimum": -140737488355327,
+                            "maximum": 140737488355327
+                          },
+                          "y": {
+                            "minimum": -140737488355327,
+                            "maximum": 140737488355327
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "brush": {
+                      "enum": [
+                        "calligraphy-brush",
+                        "calligraphy-pen",
+                        "airbrush",
+                        "oil",
+                        "crayon",
+                        "marker",
+                        "natural-pencil",
+                        "watercolor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "brush"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "mode": {
+                      "const": "source-over"
+                    }
+                  }
+                }
+              }
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.flood_fill"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "at": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              },
+              "tolerance": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "at",
+              "color",
+              "mode",
+              "tolerance"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.contour"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "stroke": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{8}$"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1024
+                  }
+                },
+                "required": [
+                  "color",
+                  "size"
+                ],
+                "additionalProperties": false
+              },
+              "fill": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    "y": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 2,
+                "maxItems": 1024
+              },
+              "closed": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "points",
+              "closed",
+              "mode"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "stroke"
+                ]
+              },
+              {
+                "required": [
+                  "fill"
+                ]
+              }
+            ],
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "line"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "stroke"
+              ]
+            },
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "stroke"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "fill"
+                    ]
+                  }
+                ]
+              },
+              {
+                "if": {
+                  "properties": {
+                    "closed": {
+                      "const": true
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "points": {
+                      "minItems": 3
+                    }
+                  }
+                },
+                "else": {
+                  "required": [
+                    "stroke"
+                  ],
+                  "not": {
+                    "required": [
+                      "fill"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.shape"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "kind": {
+                "enum": [
+                  "line",
+                  "rect",
+                  "ellipse",
+                  "rounded-rect",
+                  "triangle",
+                  "right-triangle",
+                  "diamond",
+                  "pentagon",
+                  "hexagon",
+                  "right-arrow",
+                  "left-arrow",
+                  "up-arrow",
+                  "down-arrow",
+                  "four-point-star",
+                  "five-point-star",
+                  "six-point-star",
+                  "rectangular-callout",
+                  "oval-callout",
+                  "cloud-callout",
+                  "heart",
+                  "lightning"
+                ]
+              },
+              "from": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "to": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "stroke": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{8}$"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1024
+                  }
+                },
+                "required": [
+                  "color",
+                  "size"
+                ],
+                "additionalProperties": false
+              },
+              "fill": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "kind",
+              "from",
+              "to",
+              "mode"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "stroke"
+                ]
+              },
+              {
+                "required": [
+                  "fill"
+                ]
+              }
+            ],
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "line"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "stroke"
+              ]
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.text"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "at": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "scale": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "at",
+              "text",
+              "scale",
+              "color",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "layer.reorder"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "to_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99999
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "to_index"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.mask.set"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "mask": {
+                "type": "object",
+                "properties": {
+                  "domain": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "integer",
+                        "minimum": -140737488355327,
+                        "maximum": 140737488355327
+                      },
+                      "y": {
+                        "type": "integer",
+                        "minimum": -140737488355327,
+                        "maximum": 140737488355327
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 281474976710654
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 281474976710654
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "bands": {
+                    "type": "array",
+                    "maxItems": 262144,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "y0": {
+                          "type": "integer",
+                          "minimum": -140737488355327,
+                          "maximum": 140737488355327
+                        },
+                        "y1": {
+                          "type": "integer",
+                          "minimum": -140737488355327,
+                          "maximum": 140737488355327
+                        },
+                        "runs": {
+                          "type": "array",
+                          "maxItems": 262144,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "x0": {
+                                "type": "integer",
+                                "minimum": -140737488355327,
+                                "maximum": 140737488355327
+                              },
+                              "x1": {
+                                "type": "integer",
+                                "minimum": -140737488355327,
+                                "maximum": 140737488355327
+                              },
+                              "coverage": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                              }
+                            },
+                            "required": [
+                              "x0",
+                              "x1",
+                              "coverage"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "y0",
+                        "y1",
+                        "runs"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "domain",
+                  "bands"
+                ],
+                "additionalProperties": false
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref",
+              "mask"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.mask.from_selection"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.mask.set_enabled"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref",
+              "enabled"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter.mask.remove"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "filter_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "filter_ref"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 1024
+    },
+    "required_filters": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "black-white-rgb-v1",
+          "box-blur-v1",
+          "brightness-contrast-v1",
+          "curves-rgb-v1",
+          "exposure-srgb-v1",
+          "hue-saturation-rgb-v1",
+          "invert-rgb-v1",
+          "levels-rgb-v1",
+          "posterize-rgb-v1",
+          "solarize-rgb-v1",
+          "threshold-luma-v1",
+          "vibrance-rgb-v1"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 0,
+      "maxItems": 12,
+      "$comment": "Runtime enforces ASCII sorting and exact Add/Update union (batch) or stored inventory (output)."
+    }
+  },
+  "required": [
+    "schema",
+    "atomic",
+    "policy",
+    "base",
+    "operations",
+    "required_filters"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paintcraft:schema:catalog-v1:a152a29d66e211f4261deba1c47ecb5f191d925eccede1ecd2ae7c04006bc87a:batch",
+  "$comment": "Immutable resolved catalog bundle; legacy profiles unchanged. Runtime verifies inventories and relational constraints."
+}
