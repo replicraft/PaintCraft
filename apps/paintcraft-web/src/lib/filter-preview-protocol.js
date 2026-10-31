@@ -1,6 +1,9 @@
 export const SOURCE_BYTES_MAX = 64 * 1024 * 1024;
 export const OUTPUT_PIXELS_MAX = 4_194_304;
 export const LINEAR_MEMORY_BYTES = 256 * 1024 * 1024;
+export const SPATIAL_WORKSPACE_BYTES_MAX = 64 * 1024 * 1024;
+export const SPATIAL_JOB_WORK_MAX = 268435456;
+export const SPATIAL_STEP_WORK_MAX = 8388608;
 // One persistent instance plus serialization/bridge and bounded upload slots.
 // A logical declaration; neither allocator interception nor GPU/RSS accounting.
 export const RESERVATION_BYTES =
@@ -127,6 +130,9 @@ export function validatePlan(plan) {
 	shape(
 		plan,
 		[
+			...(Object.hasOwn(plan ?? {}, 'protocol')
+				? ['protocol', 'spatialCount', 'workspaceBytes', 'workLimit']
+				: []),
 			'owner',
 			'draft',
 			'document',
@@ -145,6 +151,28 @@ export function validatePlan(plan) {
 	);
 	owner(plan.owner);
 	const integer = (x) => Number.isSafeInteger(x) && x >= 0;
+	if (Object.hasOwn(plan, 'protocol')) {
+		if (
+			plan.protocol !== 3 ||
+			!integer(plan.spatialCount) ||
+			!integer(plan.workspaceBytes) ||
+			!integer(plan.workLimit)
+		)
+			throw fail(
+				'InputSchema',
+				'Invalid spatial source protocol/workspace',
+			);
+		if (
+			plan.spatialCount > plan.layers * 256 ||
+			plan.workspaceBytes > SPATIAL_WORKSPACE_BYTES_MAX ||
+			plan.workLimit > SPATIAL_JOB_WORK_MAX
+		)
+			throw fail(
+				'ResourceLimit',
+				'Spatial source workspace declaration exceeds profile',
+			);
+	}
+
 	if (
 		!isUuid(plan.draft) ||
 		!isUuid(plan.document) ||
@@ -183,7 +211,21 @@ export function validatePlan(plan) {
 }
 export function validateBinding(binding, plan) {
 	validatePlan(binding);
+	if ((binding.protocol ?? 2) !== (plan.protocol ?? 2))
+		throw fail('CodecFailed', 'Render Worker source profile mismatch');
 	for (const key of [
+		...(plan.protocol === 3
+			? [
+					'protocol',
+					'spatialCount',
+					'workspaceBytes',
+					'workLimit',
+					'layers',
+					'residentBytes',
+					'metadataBytes',
+					'metadataCharge',
+				]
+			: []),
 		'owner',
 		'draft',
 		'document',
@@ -200,6 +242,14 @@ export function validateBinding(binding, plan) {
 }
 export function validateRequest(options, plan) {
 	shape(options, ['generation', 'operation', 'target', 'view', 'render']);
+	if (
+		plan.protocol !== 3 &&
+		options.operation?.descriptor?.kind === 'box-blur-v1'
+	)
+		throw fail(
+			'CapabilityUnsupported',
+			'Box preview requires source protocol3',
+		);
 	view(options.view, plan);
 	if (
 		typeof options.generation !== 'string' ||
