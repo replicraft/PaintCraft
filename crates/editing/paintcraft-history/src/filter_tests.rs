@@ -209,3 +209,6 @@ fn failed_cold_capture_keeps_stack_and_timeline_unchanged() {
 
 #[path = "filter_tests/catalog_tests.rs"]
 mod catalog_tests;
+
+#[path = "filter_tests/exposure_tests.rs"]
+mod exposure_tests;
