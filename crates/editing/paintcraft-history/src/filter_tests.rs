@@ -206,3 +206,6 @@ fn failed_cold_capture_keeps_stack_and_timeline_unchanged() {
     let original = history.undo().unwrap().unwrap();
     assert_eq!(original.document.layers[&id].filters, stack(false));
 }
+
+#[path = "filter_tests/catalog_tests.rs"]
+mod catalog_tests;
