@@ -260,3 +260,7 @@ mod point_tests;
 #[cfg(test)]
 #[path = "filters/catalog_tests.rs"]
 mod catalog_tests;
+
+#[cfg(test)]
+#[path = "filters/exposure_tests.rs"]
+mod exposure_tests;
