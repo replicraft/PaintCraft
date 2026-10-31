@@ -100,3 +100,21 @@ pub fn msp_spatial_export_protocol_version() -> u16 {
 pub fn msp_spatial_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
     super::spatial::msp(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
 }
+
+/// Catalog6 is independently negotiated; old4/5 remain closed.
+#[wasm_bindgen]
+pub fn dds_catalog_export_protocol_version() -> u16 {
+    paintcraft_formats::dds::web_export::v6::PROTOCOL_VERSION
+}
+#[wasm_bindgen]
+pub fn dds_catalog_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::catalog::dds(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+#[wasm_bindgen]
+pub fn msp_catalog_export_protocol_version() -> u16 {
+    paintcraft_formats::msp::web_export::v6::PROTOCOL_VERSION
+}
+#[wasm_bindgen]
+pub fn msp_catalog_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::catalog::msp(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
+}
