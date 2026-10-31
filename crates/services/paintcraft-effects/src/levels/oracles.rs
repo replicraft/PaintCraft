@@ -1,4 +1,5 @@
 //! Product LUTs against independent Python binary half-threshold classification.
+use super::test_api::{Backend, Reference, Wide};
 use super::*;
 use paintcraft_core::types::policy::hex;
 use serde_json::Value;
@@ -48,11 +49,11 @@ struct Counts {
     max_work: u64,
     max_quote: u64,
 }
-fn table(p: [i16; 5], scratch: &mut Scratch, counts: &mut Counts) -> [u8; 256] {
+fn table<B: Backend>(p: [i16; 5], scratch: &mut B::Scratch, counts: &mut Counts) -> [u8; 256] {
     let p = policy(p);
-    let q = quote(p);
+    let q = B::quote(p);
     let mut output = [199; 256];
-    let used = build_lut(p, scratch, &mut output, q.into(), &|| Ok(())).unwrap();
+    let used = B::build(p, scratch, &mut output, q.into(), &|| Ok(())).unwrap();
     assert!(used.units <= q.work);
     counts.builds += 1;
     counts.work += used.units;
@@ -84,27 +85,27 @@ impl Stream {
         );
     }
 }
-fn report(name: &str, counts: &Counts, start: std::time::Instant) {
+fn report<B: Backend>(name: &str, counts: &Counts, start: std::time::Instant) {
     eprintln!(
-        "{name}: builds={} actual_work={} max_build_work={} max_quote={} scratch={} elapsed_ms={} (serial test time, not UI/performance qualification)",
+        "{name} ({}): builds={} actual_work={} max_build_work={} max_quote={} scratch={} elapsed_ms={} (serial test time, not UI/performance qualification)",
+        B::NAME,
         counts.builds,
         counts.work,
         counts.max_work,
         counts.max_quote,
-        std::mem::size_of::<Scratch>(),
+        std::mem::size_of::<B::Scratch>(),
         start.elapsed().as_millis()
     );
 }
-#[test]
-fn ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation() {
+fn ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation<B: Backend>() {
     let o = oracle();
-    let mut scratch = Scratch::default();
+    let mut scratch = B::Scratch::default();
     let mut counts = Counts::default();
     let mut tables = std::collections::HashMap::new();
     assert_eq!(array(field(&o, "luts")).len(), 10);
     for row in array(field(&o, "luts")) {
         let p = params(field(row, "parameters"));
-        let lut = table(p, &mut scratch, &mut counts);
+        let lut = table::<B>(p, &mut scratch, &mut counts);
         assert_eq!(
             lut,
             std::array::from_fn(|i| number(&array(field(row, "expected"))[i]) as u8)
@@ -114,7 +115,7 @@ fn ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation() {
     assert_eq!(array(field(&o, "half_ties")).len(), 6);
     for row in array(field(&o, "half_ties")) {
         let p = params(field(row, "parameters"));
-        let lut = table(p, &mut scratch, &mut counts);
+        let lut = table::<B>(p, &mut scratch, &mut counts);
         assert_eq!(
             lut[number(field(row, "input")) as usize],
             number(field(row, "expected")) as u8
@@ -136,8 +137,8 @@ fn ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation() {
     let all_alpha = field(&o, "all_alpha_mask_stream");
     let mut hash = Sha256::new();
     let mut records = 0;
-    let rows =
-        [[16, 240, 200, 255, 0], [0, 255, 50, 0, 255]].map(|p| table(p, &mut scratch, &mut counts));
+    let rows = [[16, 240, 200, 255, 0], [0, 255, 50, 0, 255]]
+        .map(|p| table::<B>(p, &mut scratch, &mut counts));
     for alpha in 0..=255 {
         for coverage in [0, 128, 255] {
             for lut in &rows {
@@ -155,17 +156,16 @@ fn ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation() {
         field(all_alpha, "sha256").as_str().unwrap()
     );
 }
-#[test]
-fn every_gamma_35640_records_match_independent_stream() {
+fn every_gamma_35640_records_match_independent_stream<B: Backend>() {
     let o = oracle();
-    let mut scratch = Scratch::default();
+    let mut scratch = B::Scratch::default();
     let mut counts = Counts::default();
     let mut stream = Stream::default();
     let start = std::time::Instant::now();
     for gamma in 10..=999 {
         for [ib, iw, ob, ow] in [[0, 255, 0, 255], [0, 255, 255, 0], [64, 192, 16, 240]] {
             let p = [ib, iw, gamma, ob, ow];
-            let lut = table(p, &mut scratch, &mut counts);
+            let lut = table::<B>(p, &mut scratch, &mut counts);
             for v in [0, 1, 2, 63, 64, 127, 128, 191, 192, 253, 254, 255] {
                 stream.add(p, v, lut[usize::from(v)]);
             }
@@ -173,12 +173,11 @@ fn every_gamma_35640_records_match_independent_stream() {
     }
     stream.finish(&o, "every-gamma");
     assert_eq!(counts.builds, 2970);
-    report("every-gamma", &counts, start);
+    report::<B>("every-gamma", &counts, start);
 }
-#[test]
-fn all_67584_channel_bytes_match_independent_stream() {
+fn all_67584_channel_bytes_match_independent_stream<B: Backend>() {
     let o = oracle();
-    let mut scratch = Scratch::default();
+    let mut scratch = B::Scratch::default();
     let mut counts = Counts::default();
     let mut stream = Stream::default();
     let start = std::time::Instant::now();
@@ -186,7 +185,7 @@ fn all_67584_channel_bytes_match_independent_stream() {
         for gamma in [10, 11, 25, 50, 99, 100, 101, 125, 200, 333, 999] {
             for [ob, ow] in [[0, 255], [255, 0], [16, 240], [73, 73]] {
                 let p = [ib, iw, gamma, ob, ow];
-                let lut = table(p, &mut scratch, &mut counts);
+                let lut = table::<B>(p, &mut scratch, &mut counts);
                 for v in 0..=255u8 {
                     stream.add(p, v, lut[usize::from(v)]);
                 }
@@ -195,19 +194,18 @@ fn all_67584_channel_bytes_match_independent_stream() {
     }
     stream.finish(&o, "all-byte-cases");
     assert_eq!(counts.builds, 264);
-    report("all-byte-cases", &counts, start);
+    report::<B>("all-byte-cases", &counts, start);
 }
-#[test]
-fn all_32640_input_intervals_226444_edges_match_independent_stream() {
+fn all_32640_input_intervals_226444_edges_match_independent_stream<B: Backend>() {
     let o = oracle();
-    let mut scratch = Scratch::default();
+    let mut scratch = B::Scratch::default();
     let mut counts = Counts::default();
     let mut stream = Stream::default();
     let start = std::time::Instant::now();
     for ib in 0..=254u8 {
         for iw in ib + 1..=255u8 {
             let p = [i16::from(ib), i16::from(iw), 100, 19, 237];
-            let lut = table(p, &mut scratch, &mut counts);
+            let lut = table::<B>(p, &mut scratch, &mut counts);
             let mut values = [
                 ib.saturating_sub(1),
                 ib,
@@ -227,5 +225,32 @@ fn all_32640_input_intervals_226444_edges_match_independent_stream() {
     }
     stream.finish(&o, "all-input-interval-edges");
     assert_eq!(counts.builds, 32640);
-    report("all-input-interval-edges", &counts, start);
+    report::<B>("all-input-interval-edges", &counts, start);
 }
+
+macro_rules! backend_tests {
+    ($module:ident,$backend:ty) => {
+        mod $module {
+            use super::*;
+            #[test]
+            fn ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation() {
+                super::ten_full_luts_six_ties_and_rgba_mask_alpha_source_preservation::<$backend>();
+            }
+            #[test]
+            fn every_gamma_35640_records_match_independent_stream() {
+                super::every_gamma_35640_records_match_independent_stream::<$backend>();
+            }
+            #[test]
+            fn all_67584_channel_bytes_match_independent_stream() {
+                super::all_67584_channel_bytes_match_independent_stream::<$backend>();
+            }
+            #[test]
+            fn all_32640_input_intervals_226444_edges_match_independent_stream() {
+                super::all_32640_input_intervals_226444_edges_match_independent_stream::<$backend>(
+                );
+            }
+        }
+    };
+}
+backend_tests!(reference, Reference);
+backend_tests!(wide, Wide);

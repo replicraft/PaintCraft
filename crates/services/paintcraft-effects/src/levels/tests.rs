@@ -1,22 +1,22 @@
+use super::test_api::{Backend, Reference, Wide};
 use super::*;
 use std::cell::Cell;
 fn policy(v: [i16; 5]) -> LevelsRgbV1 {
     LevelsRgbV1::new(v[0], v[1], v[2], v[3], v[4]).unwrap()
 }
-fn build(p: LevelsRgbV1) -> ([u8; 256], WorkUsed) {
+fn build<B: Backend>(p: LevelsRgbV1) -> ([u8; 256], WorkUsed) {
     let mut output = [199; 256];
-    let mut scratch = Scratch::default();
-    let used = build_lut(p, &mut scratch, &mut output, quote(p).into(), &|| Ok(())).unwrap();
-    assert!(used.units <= quote(p).work);
+    let mut scratch = B::Scratch::default();
+    let used = B::build(p, &mut scratch, &mut output, B::quote(p).into(), &|| Ok(())).unwrap();
+    assert!(used.units <= B::quote(p).work);
     (output, used)
 }
-#[test]
-fn identity_inversion_constant_and_nonneutral_exact_halves() {
-    let (identity, _) = build(LevelsRgbV1::default());
+fn identity_inversion_constant_and_nonneutral_exact_halves<B: Backend>() {
+    let (identity, _) = build::<B>(LevelsRgbV1::default());
     assert_eq!(identity, std::array::from_fn(|v| v as u8));
-    let (inverted, _) = build(policy([0, 255, 100, 255, 0]));
+    let (inverted, _) = build::<B>(policy([0, 255, 100, 255, 0]));
     assert_eq!(inverted, std::array::from_fn(|v| 255 - v as u8));
-    let (constant, _) = build(policy([127, 128, 999, 73, 73]));
+    let (constant, _) = build::<B>(policy([127, 128, 999, 73, 73]));
     assert_eq!(constant, [73; 256]);
     for (p, want) in [
         ([0, 4, 200, 0, 255], 128),
@@ -24,14 +24,13 @@ fn identity_inversion_constant_and_nonneutral_exact_halves() {
         ([0, 2, 50, 0, 2], 1),
         ([0, 2, 50, 2, 0], 2),
     ] {
-        assert_eq!(build(policy(p)).0[1], want, "{p:?}");
+        assert_eq!(build::<B>(policy(p)).0[1], want, "{p:?}");
     }
 }
-#[test]
-fn geometry_and_preflight_refuse_before_callbacks_or_publication() {
+fn geometry_and_preflight_refuse_before_callbacks_or_publication<B: Backend>() {
     let p = policy([0, 255, 999, 255, 0]);
-    let q = quote(p);
-    let mut scratch = Scratch::default();
+    let q = B::quote(p);
+    let mut scratch = B::Scratch::default();
     let calls = Cell::new(0);
     let check = || {
         calls.set(calls.get() + 1);
@@ -40,7 +39,7 @@ fn geometry_and_preflight_refuse_before_callbacks_or_publication() {
     for length in [0, 1, 255, 257] {
         let mut output = vec![199; length];
         assert_eq!(
-            build_lut(p, &mut scratch, &mut output, q.into(), &check)
+            B::build(p, &mut scratch, &mut output, q.into(), &check)
                 .unwrap_err()
                 .code,
             ErrorCode::InputSchema
@@ -59,7 +58,7 @@ fn geometry_and_preflight_refuse_before_callbacks_or_publication() {
     ] {
         let mut output = [199; 256];
         assert_eq!(
-            build_lut(p, &mut scratch, &mut output, limits, &check)
+            B::build(p, &mut scratch, &mut output, limits, &check)
                 .unwrap_err()
                 .code,
             ErrorCode::ResourceLimit
@@ -68,15 +67,14 @@ fn geometry_and_preflight_refuse_before_callbacks_or_publication() {
     }
     assert_eq!(calls.get(), 0);
     assert!(q.work < 80_000_000);
-    assert_eq!(q.scratch_bytes, std::mem::size_of::<Scratch>() as u64);
+    assert_eq!(q.scratch_bytes, std::mem::size_of::<B::Scratch>() as u64);
 }
-#[test]
-fn early_mid_and_final_check_cancellation_never_publish_and_scratch_can_be_reused() {
+fn early_mid_and_final_check_cancellation_never_publish_and_scratch_can_be_reused<B: Backend>() {
     let p = policy([0, 4, 200, 255, 0]);
-    let mut scratch = Scratch::default();
+    let mut scratch = B::Scratch::default();
     let mut output = [199; 256];
     let count = Cell::new(0usize);
-    build_lut(p, &mut scratch, &mut output, quote(p).into(), &|| {
+    B::build(p, &mut scratch, &mut output, B::quote(p).into(), &|| {
         count.set(count.get() + 1);
         Ok(())
     })
@@ -97,50 +95,34 @@ fn early_mid_and_final_check_cancellation_never_publish_and_scratch_can_be_reuse
             }
         };
         assert_eq!(
-            build_lut(p, &mut scratch, &mut output, quote(p).into(), &check)
+            B::build(p, &mut scratch, &mut output, B::quote(p).into(), &check)
                 .unwrap_err()
                 .code,
             ErrorCode::OperationCancelled
         );
         assert_eq!(output, [199; 256]);
-        build_lut(p, &mut scratch, &mut output, quote(p).into(), &|| Ok(())).unwrap();
+        B::build(p, &mut scratch, &mut output, B::quote(p).into(), &|| Ok(())).unwrap();
         assert_eq!(output, expected);
     }
 }
-#[test]
-fn fixed_capacity_grouping_terminates_for_zero_one_and_reports_checked_overflow() {
-    let mut scratch = Scratch::default();
-    let mut budget = Budget {
-        used: 0,
-        limit: u64::MAX,
-        check: &|| Ok(()),
-    };
-    scratch.left.pow(0, 999, &mut budget).unwrap();
-    assert_eq!(
-        scratch.left.compare(&Integer::zero(), &mut budget).unwrap(),
-        std::cmp::Ordering::Equal
-    );
-    scratch.left.pow(1, 999, &mut budget).unwrap();
-    scratch.right.pow(2, 0, &mut budget).unwrap();
-    assert_eq!(
-        scratch.left.compare(&scratch.right, &mut budget).unwrap(),
-        std::cmp::Ordering::Equal
-    );
-    scratch.left.pow(2, 10239, &mut budget).unwrap();
-    scratch.right.pow(2, 1, &mut budget).unwrap();
-    assert_eq!(
-        scratch
-            .temporary
-            .product(&scratch.left, &scratch.right, &mut budget)
-            .unwrap_err()
-            .code,
-        ErrorCode::ResourceLimit
-    );
-    assert_eq!(
-        scratch.left.pow(2, 10240, &mut budget).unwrap_err().code,
-        ErrorCode::ResourceLimit
-    );
-    let output = build(policy([0, 255, 999, 0, 255])).0;
+fn fixed_capacity_grouping_terminates_for_zero_one_and_reports_checked_overflow<B: Backend>() {
+    B::capacity_controls();
+    let output = build::<B>(policy([0, 255, 999, 0, 255])).0;
     assert_eq!((output[0], output[255]), (0, 255));
     assert!(output.windows(2).all(|v| v[0] <= v[1]));
 }
+
+macro_rules! backend_tests {
+ ($module:ident,$backend:ty)=>{mod $module {use super::*;
+#[test]
+fn identity_inversion_constant_and_nonneutral_exact_halves() {super::identity_inversion_constant_and_nonneutral_exact_halves::<$backend>();}
+#[test]
+fn geometry_and_preflight_refuse_before_callbacks_or_publication() {super::geometry_and_preflight_refuse_before_callbacks_or_publication::<$backend>();}
+#[test]
+fn early_mid_and_final_check_cancellation_never_publish_and_scratch_can_be_reused() {super::early_mid_and_final_check_cancellation_never_publish_and_scratch_can_be_reused::<$backend>();}
+#[test]
+fn fixed_capacity_grouping_terminates_for_zero_one_and_reports_checked_overflow() {super::fixed_capacity_grouping_terminates_for_zero_one_and_reports_checked_overflow::<$backend>();}
+}};
+}
+backend_tests!(reference, Reference);
+backend_tests!(wide, Wide);
