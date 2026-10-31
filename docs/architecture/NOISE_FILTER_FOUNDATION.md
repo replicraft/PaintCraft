@@ -178,3 +178,6 @@ Source5/Export7, Studio, CLI/MCP and editable document support remain future gat
 
 Later catalog integration must prevent coordinate-dependent noise from using a
 uniform-source collapse proof and must charge the captured caller before work.
+Normal canvas sizes additionally require the separately versioned
+[scoped workload contract](NOISE_WORKLOAD_CONTRACT.md); old Source5/Export7 limits
+are not silently enlarged by registering the new numerical policy.
