@@ -8,6 +8,7 @@ mod coverage;
 pub mod curves;
 mod exact;
 pub mod exposure;
+pub mod hue_saturation;
 pub mod levels;
 mod point;
 pub mod spatial;
