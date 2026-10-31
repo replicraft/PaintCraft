@@ -477,3 +477,7 @@ posterize = Tontrennung
 solarize = Solarisation
 strength = Stärke (%)
 levels = Stufen
+
+# Finite spatial filter controls.
+box-blur = Box-Weichzeichnung
+radius-px = Radius (Pixel)

@@ -477,3 +477,7 @@ posterize = 色调分离
 solarize = 曝光反转
 strength = 强度（%）
 levels = 色阶数
+
+# Finite spatial filter controls.
+box-blur = 方框模糊
+radius-px = 半径（像素）

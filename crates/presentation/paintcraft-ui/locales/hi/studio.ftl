@@ -477,3 +477,7 @@ posterize = पोस्टराइज़
 solarize = सोलराइज़
 strength = तीव्रता (%)
 levels = स्तरों की संख्या
+
+# Finite spatial filter controls.
+box-blur = बॉक्स धुंधलापन
+radius-px = त्रिज्या (पिक्सेल)

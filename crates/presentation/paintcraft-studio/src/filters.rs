@@ -1,7 +1,9 @@
 //! Filter presentation only. Hosts own snapshots, preview admission and publication.
 use paintcraft_core::types::{
     Result,
-    filters::{BlackWhiteV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1},
+    filters::{
+        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, PosterizeRgbV1, ThresholdLumaV1,
+    },
 };
 use paintcraft_ui::t;
 use std::hash::Hash;
@@ -14,15 +16,17 @@ pub enum Kind {
     Threshold,
     Posterize,
     Solarize,
+    BoxBlur,
 }
 impl Kind {
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 7] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
         Self::Threshold,
         Self::Posterize,
         Self::Solarize,
+        Self::BoxBlur,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -32,6 +36,7 @@ impl Kind {
             Self::Threshold => "Threshold",
             Self::Posterize => "Posterize",
             Self::Solarize => "Solarize",
+            Self::BoxBlur => "Box Blur",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -42,6 +47,7 @@ impl Kind {
             Descriptor::ThresholdLumaV1(_) => Self::Threshold,
             Descriptor::PosterizeRgbV1(_) => Self::Posterize,
             Descriptor::SolarizeRgbV1 => Self::Solarize,
+            Descriptor::BoxBlurV1(_) => Self::BoxBlur,
         }
     }
 }
@@ -205,6 +211,7 @@ pub struct Parameters {
     pub strength: i16,
     pub threshold: i16,
     pub levels: i16,
+    pub radius: i16,
     pub preview: bool,
 }
 impl Parameters {
@@ -216,6 +223,7 @@ impl Parameters {
             strength: 100,
             threshold: 128,
             levels: 6,
+            radius: 2,
             preview: true,
         }
     }
@@ -229,6 +237,7 @@ impl Parameters {
             Descriptor::BlackWhiteRgbV1(p) => draft.strength = i16::from(p.strength()),
             Descriptor::ThresholdLumaV1(p) => draft.threshold = i16::from(p.level()),
             Descriptor::PosterizeRgbV1(p) => draft.levels = i16::from(p.levels()),
+            Descriptor::BoxBlurV1(p) => draft.radius = i16::from(p.radius()),
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
@@ -244,6 +253,7 @@ impl Parameters {
             }
             Kind::Posterize => PosterizeRgbV1::new(self.levels).map(Descriptor::PosterizeRgbV1),
             Kind::Solarize => Ok(Descriptor::SolarizeRgbV1),
+            Kind::BoxBlur => BoxBlurV1::new(self.radius).map(Descriptor::BoxBlurV1),
         }
     }
 }
@@ -324,6 +334,12 @@ fn draw_parameters(
                 Kind::Posterize => {
                     ui.add(
                         egui::Slider::new(&mut values.levels, 2..=32).text(t!(ui.ctx(), "Levels")),
+                    );
+                }
+                Kind::BoxBlur => {
+                    ui.add(
+                        egui::Slider::new(&mut values.radius, 0..=32)
+                            .text(t!(ui.ctx(), "Radius (px)")),
                     );
                 }
                 Kind::Invert | Kind::BrightnessContrast | Kind::Solarize => {}

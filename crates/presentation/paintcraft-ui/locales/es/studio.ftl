@@ -477,3 +477,7 @@ posterize = Posterizar
 solarize = Solarizar
 strength = Intensidad (%)
 levels = Niveles
+
+# Finite spatial filter controls.
+box-blur = Desenfoque de caja
+radius-px = Radio (px)

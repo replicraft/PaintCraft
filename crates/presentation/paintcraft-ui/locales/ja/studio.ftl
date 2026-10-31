@@ -477,3 +477,7 @@ posterize = ポスタリゼーション
 solarize = ソラリゼーション
 strength = 強さ（%）
 levels = 階調数
+
+# Finite spatial filter controls.
+box-blur = ボックスぼかし
+radius-px = 半径（px）

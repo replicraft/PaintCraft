@@ -87,3 +87,50 @@ fn new_filter_labels_are_present_in_all_seven_locales() {
         }
     }
 }
+
+#[test]
+fn box_parameters_are_real_typed_spatial_values_with_closed_radius_bounds() {
+    let default = Parameters::new(Kind::BoxBlur);
+    assert_eq!(default.radius, 2);
+    assert!(default.preview);
+    assert_eq!(
+        default.descriptor().unwrap(),
+        Descriptor::BoxBlurV1(BoxBlurV1::default())
+    );
+    assert_eq!(
+        Kind::ALL
+            .iter()
+            .filter(|&&kind| kind == Kind::BoxBlur)
+            .count(),
+        1
+    );
+    for radius in 0..=32 {
+        let descriptor = Descriptor::BoxBlurV1(BoxBlurV1::new(radius).unwrap());
+        let draft = Parameters::from_descriptor(descriptor);
+        assert_eq!(draft.kind, Kind::BoxBlur);
+        assert_eq!(draft.radius, radius);
+        assert_eq!(draft.descriptor().unwrap(), descriptor);
+        assert!(descriptor.is_spatial());
+    }
+    for radius in [i16::MIN, -1, 33, i16::MAX] {
+        let mut invalid = default;
+        invalid.radius = radius;
+        assert_eq!(
+            invalid.descriptor().unwrap_err().code,
+            paintcraft_core::types::ErrorCode::InputSchema
+        );
+    }
+}
+
+#[test]
+fn box_and_radius_controls_have_all_seven_real_translations() {
+    for language in Language::ALL {
+        for source in ["Box Blur", "Radius (px)"] {
+            let translated = translate(language, source);
+            assert!(!translated.trim().is_empty());
+            if language != Language::English {
+                assert_ne!(translated, source, "{language:?}: {source}");
+            }
+        }
+    }
+}
