@@ -1,5 +1,6 @@
 //! Versioned encoded-RGB filter descriptors. These do not change composition policy.
 use super::{Error, ErrorCode, Result};
+mod catalog_value;
 mod coverage;
 mod levels_params;
 mod point_params;
@@ -47,6 +48,7 @@ pub enum Descriptor {
     PosterizeRgbV1(PosterizeRgbV1),
     SolarizeRgbV1,
     BoxBlurV1(BoxBlurV1),
+    LevelsRgbV1(LevelsRgbV1),
 }
 impl Descriptor {
     /// Spatial intentions require a finite source and neighborhood admission.
@@ -59,7 +61,22 @@ impl Descriptor {
             | Self::BlackWhiteRgbV1(_)
             | Self::ThresholdLumaV1(_)
             | Self::PosterizeRgbV1(_)
-            | Self::SolarizeRgbV1 => false,
+            | Self::SolarizeRgbV1
+            | Self::LevelsRgbV1(_) => false,
+        }
+    }
+    /// Requires the explicit catalog constructor/persistence boundary. The old
+    /// seven-profile parser and container registries do not gain this capability.
+    pub const fn is_catalog_only(self) -> bool {
+        match self {
+            Self::LevelsRgbV1(_) => true,
+            Self::InvertRgbV1
+            | Self::BrightnessContrastV1(_)
+            | Self::BlackWhiteRgbV1(_)
+            | Self::ThresholdLumaV1(_)
+            | Self::PosterizeRgbV1(_)
+            | Self::SolarizeRgbV1
+            | Self::BoxBlurV1(_) => false,
         }
     }
     pub const fn id(self) -> &'static str {
@@ -71,7 +88,47 @@ impl Descriptor {
             Self::PosterizeRgbV1(_) => "posterize-rgb-v1",
             Self::SolarizeRgbV1 => "solarize-rgb-v1",
             Self::BoxBlurV1(_) => "box-blur-v1",
+            Self::LevelsRgbV1(_) => "levels-rgb-v1",
         }
+    }
+    /// Canonical semantic bytes for the finite initial eight numerical profiles.
+    /// Only the returned used prefix is semantic; zero padding is excluded.
+    /// This is independent of any transport codec, JSON or derived lookup table.
+    pub fn semantic_parameter_bytes(self) -> ([u8; 6], usize) {
+        let mut bytes = [0; 6];
+        let length = match self {
+            Self::InvertRgbV1 | Self::SolarizeRgbV1 => 0,
+            Self::BrightnessContrastV1(p) => {
+                bytes[..2].copy_from_slice(&p.brightness().to_be_bytes());
+                bytes[2..4].copy_from_slice(&p.contrast().to_be_bytes());
+                4
+            }
+            Self::BlackWhiteRgbV1(p) => {
+                bytes[0] = p.strength();
+                1
+            }
+            Self::ThresholdLumaV1(p) => {
+                bytes[0] = p.level();
+                1
+            }
+            Self::PosterizeRgbV1(p) => {
+                bytes[0] = p.levels();
+                1
+            }
+            Self::BoxBlurV1(p) => {
+                bytes[0] = p.radius();
+                1
+            }
+            Self::LevelsRgbV1(p) => {
+                bytes[0] = p.input_black();
+                bytes[1] = p.input_white();
+                bytes[2..4].copy_from_slice(&p.gamma_hundredths().to_be_bytes());
+                bytes[4] = p.output_black();
+                bytes[5] = p.output_white();
+                6
+            }
+        };
+        (bytes, length)
     }
     /// Stable inspection/command representation; versions are part of kind.
     pub fn to_value(self) -> super::json::Value {
@@ -100,6 +157,17 @@ impl Descriptor {
             Self::BoxBlurV1(p) => Value::object([
                 ("kind", Value::str(self.id())),
                 ("radius", Value::Int(i64::from(p.radius()))),
+            ]),
+            Self::LevelsRgbV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                ("input_black", Value::Int(i64::from(p.input_black()))),
+                ("input_white", Value::Int(i64::from(p.input_white()))),
+                (
+                    "gamma_hundredths",
+                    Value::Int(i64::from(p.gamma_hundredths())),
+                ),
+                ("output_black", Value::Int(i64::from(p.output_black()))),
+                ("output_white", Value::Int(i64::from(p.output_white()))),
             ]),
         }
     }

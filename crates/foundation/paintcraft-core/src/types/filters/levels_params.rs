@@ -1,4 +1,4 @@
-//! Complete numerical Levels policy; not registered as a persistent descriptor.
+//! Complete numerical Levels policy, constructed through the explicit catalog boundary.
 use super::{Error, ErrorCode, Result};
 
 /// Encoded RGB channel-independent Levels, preserving alpha and transforming
@@ -178,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    fn parameter_foundation_does_not_admit_a_document_descriptor() {
+    fn legacy_descriptor_grammars_remain_closed() {
         use crate::types::{filters::Descriptor, json::Value};
         assert_eq!(
             Descriptor::checked("levels-rgb-v1", None, None)
