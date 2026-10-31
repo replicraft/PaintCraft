@@ -15,6 +15,7 @@ mod kernels;
 pub mod spatial;
 
 pub mod parallel;
+pub mod prepared;
 
 pub mod cache;
 pub mod clipboard;

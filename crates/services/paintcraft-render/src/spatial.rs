@@ -49,7 +49,7 @@ impl WorkspaceAdmission {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
     }
-    fn reserve_work(&self, work: u64) -> Result<()> {
+    pub(crate) fn reserve_work(&self, work: u64) -> Result<()> {
         let mut used = self
             .work_used
             .lock()
