@@ -181,3 +181,25 @@ uniform-source collapse proof and must charge the captured caller before work.
 Normal canvas sizes additionally require the separately versioned
 [scoped workload contract](NOISE_WORKLOAD_CONTRACT.md); old Source5/Export7 limits
 are not silently enlarged by registering the new numerical policy.
+
+## CI and isolated parser linkage
+
+The [standalone integration CI run](https://github.com/replicraft/PaintCraft/actions/runs/41227109331)
+for exact commit `8b8cf23b963c7a672447aa96c2330bdbe9f21a37` finishes with six
+successful jobs and one failed Ubuntu job. Ubuntu's workspace tests pass; its
+subsequent isolated stable-parser check stops immediately because `fuzz/Cargo.lock`
+lacks the new Effects-to-libm edge. Later parser commands are not treated as
+executed. The original watch, failed-step log and final API remain preserved in
+`docs/validation/noise-foundation/ci-41227109331/final-freeze.json`, SHA256
+`d9e31168724da21b0eec92eec91527dc59721c98aad508f66e1a037cd75d6428`.
+
+The corrective isolated lock adds only libm 0.2.16 with the product lock's exact
+source/checksum and the Effects dependency edge. Local macOS qualification passes
+20 Python tests, all-target strict Clippy, 25 Rust parser tests, formatting, replay
+build, both historical/stock/PCND replay suites and final lock validation. All
+2,684 captured inputs match before/after every phase. Receipt:
+`docs/validation/noise-foundation/parser-lock-fix/attempt-20261031T184248Z-6cf084dd/final-freeze.json`,
+SHA256 `cf18b5993d7468add1d393117abcee497440b7abbba23bc8e60ca8cff9d663c7`.
+This verifies the isolated parser linkage and existing parser cases; it does not
+claim persistent Noise codec fuzzing or a successful Linux CI retry. The corrected
+head requires its own CI result.
