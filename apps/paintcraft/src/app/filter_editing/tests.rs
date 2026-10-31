@@ -607,3 +607,6 @@ mod point_filter_tests;
 
 #[path = "box_tests.rs"]
 mod box_tests;
+
+#[path = "hsl_tests.rs"]
+mod hsl_tests;
