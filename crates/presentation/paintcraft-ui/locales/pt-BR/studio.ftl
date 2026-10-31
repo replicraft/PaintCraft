@@ -312,6 +312,7 @@ clip-to-display-range = Limitar à faixa de exibição
 reinhard-per-channel = Reinhard por canal
 
 exposure-ev = Exposição (EV)
+exposure = Exposição
 
 negative-samples = Valores negativos
 

@@ -312,6 +312,7 @@ clip-to-display-range = 裁剪到显示范围
 reinhard-per-channel = 逐通道Reinhard
 
 exposure-ev = 曝光（EV）
+exposure = 曝光
 
 negative-samples = 负样本值
 

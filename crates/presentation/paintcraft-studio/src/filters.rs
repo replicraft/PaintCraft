@@ -2,8 +2,8 @@
 use paintcraft_core::types::{
     Result,
     filters::{
-        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, LevelsRgbV1, PosterizeRgbV1,
-        ThresholdLumaV1,
+        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, Descriptor, ExposureSrgbV1, LevelsRgbV1,
+        PosterizeRgbV1, ThresholdLumaV1,
     },
 };
 use paintcraft_ui::t;
@@ -19,9 +19,10 @@ pub enum Kind {
     Solarize,
     BoxBlur,
     Levels,
+    Exposure,
 }
 impl Kind {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
@@ -30,6 +31,7 @@ impl Kind {
         Self::Solarize,
         Self::BoxBlur,
         Self::Levels,
+        Self::Exposure,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -41,6 +43,7 @@ impl Kind {
             Self::Solarize => "Solarize",
             Self::BoxBlur => "Box Blur",
             Self::Levels => "Levels",
+            Self::Exposure => "Exposure",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -53,6 +56,7 @@ impl Kind {
             Descriptor::SolarizeRgbV1 => Self::Solarize,
             Descriptor::BoxBlurV1(_) => Self::BoxBlur,
             Descriptor::LevelsRgbV1(_) => Self::Levels,
+            Descriptor::ExposureSrgbV1(_) => Self::Exposure,
         }
     }
     fn title(self, ctx: &egui::Context) -> String {
@@ -230,6 +234,7 @@ pub struct Parameters {
     pub gamma_hundredths: i16,
     pub output_black: i16,
     pub output_white: i16,
+    pub stops_hundredths: i16,
     pub preview: bool,
 }
 impl Parameters {
@@ -247,6 +252,7 @@ impl Parameters {
             gamma_hundredths: 100,
             output_black: 0,
             output_white: 255,
+            stops_hundredths: 0,
             preview: true,
         }
     }
@@ -268,6 +274,7 @@ impl Parameters {
                 draft.output_black = i16::from(p.output_black());
                 draft.output_white = i16::from(p.output_white());
             }
+            Descriptor::ExposureSrgbV1(p) => draft.stops_hundredths = p.stops_hundredths(),
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
@@ -292,6 +299,9 @@ impl Parameters {
                 self.output_white,
             )
             .map(Descriptor::LevelsRgbV1),
+            Kind::Exposure => {
+                ExposureSrgbV1::new(self.stops_hundredths).map(Descriptor::ExposureSrgbV1)
+            }
         }
     }
 }
@@ -357,6 +367,20 @@ fn draw_parameters(
                 );
             }
             match values.kind {
+                Kind::Exposure => {
+                    let mut stops = f64::from(values.stops_hundredths) / 100.0;
+                    if ui
+                        .add(
+                            egui::Slider::new(&mut stops, -8.0..=8.0)
+                                .step_by(0.01)
+                                .fixed_decimals(2)
+                                .text(t!(ui.ctx(), "Exposure (EV)")),
+                        )
+                        .changed()
+                    {
+                        values.stops_hundredths = (stops * 100.0).round() as i16;
+                    }
+                }
                 Kind::Levels => {
                     let white_limit = values.input_white.saturating_sub(1).clamp(0, 254);
                     ui.add(

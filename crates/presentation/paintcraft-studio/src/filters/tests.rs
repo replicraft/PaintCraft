@@ -2,6 +2,38 @@ use super::*;
 use paintcraft_ui::i18n::{Language, translate};
 
 #[test]
+fn exposure_controls_retain_signed_hundredths_and_have_seven_translations() {
+    assert_eq!(
+        Parameters::new(Kind::Exposure).descriptor().unwrap(),
+        Descriptor::ExposureSrgbV1(ExposureSrgbV1::default())
+    );
+    for stops in [-800, -799, -1, 0, 1, 799, 800] {
+        let descriptor = Descriptor::ExposureSrgbV1(ExposureSrgbV1::new(stops).unwrap());
+        let draft = Parameters::from_descriptor(descriptor);
+        assert_eq!(draft.kind, Kind::Exposure);
+        assert_eq!(draft.stops_hundredths, stops);
+        assert_eq!(draft.descriptor().unwrap(), descriptor);
+    }
+    for invalid in [-801, 801] {
+        let mut draft = Parameters::new(Kind::Exposure);
+        draft.stops_hundredths = invalid;
+        assert_eq!(
+            draft.descriptor().unwrap_err().code,
+            paintcraft_core::types::ErrorCode::InputSchema
+        );
+    }
+    for language in Language::ALL {
+        for source in ["Exposure", "Exposure (EV)"] {
+            let translated = translate(language, source);
+            assert!(!translated.trim().is_empty());
+            if language != Language::English {
+                assert_ne!(translated, source, "{language:?}: {source}");
+            }
+        }
+    }
+}
+
+#[test]
 fn complete_levels_controls_roundtrip_gamma_and_equal_or_inverted_outputs() {
     assert_eq!(translate(Language::English, Kind::Levels.label()), "Levels");
     assert_eq!(

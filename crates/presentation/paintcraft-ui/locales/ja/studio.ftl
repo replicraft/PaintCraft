@@ -312,6 +312,7 @@ clip-to-display-range = 表示範囲にクリップ
 reinhard-per-channel = チャンネルごとのReinhard
 
 exposure-ev = 露出（EV）
+exposure = 露出
 
 negative-samples = 負のサンプル値
 

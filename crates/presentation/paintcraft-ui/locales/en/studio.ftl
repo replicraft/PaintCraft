@@ -312,6 +312,7 @@ clip-to-display-range = Clip to display range
 reinhard-per-channel = Reinhard per channel
 
 exposure-ev = Exposure (EV)
+exposure = Exposure
 
 negative-samples = Negative samples
 

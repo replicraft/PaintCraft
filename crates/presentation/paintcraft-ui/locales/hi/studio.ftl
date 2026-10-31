@@ -312,6 +312,7 @@ clip-to-display-range = प्रदर्शन सीमा तक काट�
 reinhard-per-channel = प्रति चैनल Reinhard
 
 exposure-ev = एक्सपोज़र (EV)
+exposure = एक्सपोज़र
 
 negative-samples = ऋणात्मक नमूने
 
