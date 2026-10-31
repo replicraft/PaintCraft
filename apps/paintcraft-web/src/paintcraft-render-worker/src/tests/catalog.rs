@@ -365,3 +365,6 @@ fn source4_refuses_private_exposure_add_update_before_candidate_even_zero_previe
         }
     }
 }
+
+#[path = "catalog/curves.rs"]
+mod curves;

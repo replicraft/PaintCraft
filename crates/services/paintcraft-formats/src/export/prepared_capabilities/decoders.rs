@@ -1,8 +1,8 @@
 //! Strict finite transport decoders belonging to the priced execution registry.
 use super::*;
 use paintcraft_core::types::filters::{
-    BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, ExposureSrgbV1, LevelsRgbV1, PosterizeRgbV1,
-    ThresholdLumaV1,
+    BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, ExposureSrgbV1, LevelsRgbV1,
+    PosterizeRgbV1, ThresholdLumaV1,
 };
 fn bad() -> Error {
     Error::new(
@@ -75,4 +75,13 @@ pub(super) fn exposure(bytes: &[u8]) -> Result<Descriptor> {
     Ok(Descriptor::ExposureSrgbV1(
         ExposureSrgbV1::new(i16::from_be_bytes([*a, *b])).map_err(|_| bad())?,
     ))
+}
+
+pub(super) fn curves(bytes: &[u8]) -> Result<Descriptor> {
+    let [a, b, c, d, e] = bytes else {
+        return Err(bad());
+    };
+    Ok(Descriptor::CurvesRgbV1(CurvesRgbV1::new([
+        *a, *b, *c, *d, *e,
+    ])))
 }

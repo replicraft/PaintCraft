@@ -39,7 +39,7 @@ fn independent_required_subset_hashes_and_canonical_order_match_contract() {
 }
 #[test]
 fn every_registration_has_typed_decoder_execution_and_pricing_and_unknowns_refuse() {
-    assert_eq!(registrations().len(), 9);
+    assert_eq!(registrations().len(), 10);
     assert!(
         descriptor_requires_generic(Descriptor::ExposureSrgbV1(ExposureSrgbV1::new(0).unwrap()))
             .unwrap()
@@ -111,4 +111,25 @@ fn hashes_depend_on_required_resolution_only_and_union_retains_source_intent() {
             .unwrap(),
         before
     );
+}
+
+#[test]
+fn curves_registration_is_explicit_priced_and_exact_five_bytes() {
+    use paintcraft_core::types::filters::CurvesRgbV1;
+    let entry = resolve("curves-rgb-v1", "params-v1").unwrap();
+    assert_eq!(entry.execution(), Execution::PreparedCurves);
+    assert_eq!(entry.resource_contract(), ("prepared-curves-rgba8-v1", 1));
+    for outputs in [[0, 64, 128, 192, 255], [255, 0, 255, 0, 255], [0; 5]] {
+        let descriptor = Descriptor::CurvesRgbV1(CurvesRgbV1::new(outputs));
+        assert_eq!(entry.decode(&outputs).unwrap(), descriptor);
+        assert!(descriptor_requires_generic(descriptor).unwrap());
+    }
+    for bad in [&[][..], &[0; 4][..], &[0; 6][..]] {
+        assert_eq!(entry.decode(bad).unwrap_err().code, ErrorCode::CodecFailed);
+    }
+    assert_eq!(
+        resolve("curves-rgb-v1", "params-v2").unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert_eq!(registrations()[9].profile(), "curves-rgb-v1");
 }

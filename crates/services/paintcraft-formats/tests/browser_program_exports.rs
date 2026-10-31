@@ -341,3 +341,6 @@ fn registry_and_inner_integrity_refuse_before_generic_adoption_on_authenticated_
         assert_eq!(failure.message, "compact PCND SHA-256 mismatch");
     }
 }
+
+#[path = "browser_program_exports/curves.rs"]
+mod curves;
