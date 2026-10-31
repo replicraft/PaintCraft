@@ -212,3 +212,6 @@ mod catalog_tests;
 
 #[path = "filter_tests/exposure_tests.rs"]
 mod exposure_tests;
+
+#[path = "filter_tests/curves_tests.rs"]
+mod curves_tests;
