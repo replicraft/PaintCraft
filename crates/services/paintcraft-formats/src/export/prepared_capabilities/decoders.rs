@@ -85,3 +85,11 @@ pub(super) fn curves(bytes: &[u8]) -> Result<Descriptor> {
         *a, *b, *c, *d, *e,
     ])))
 }
+
+pub(super) fn vibrance(bytes: &[u8]) -> Result<Descriptor> {
+    let [a, b] = bytes else { return Err(bad()) };
+    Ok(Descriptor::VibranceRgbV1(
+        paintcraft_core::types::filters::VibranceRgbV1::new(i16::from_be_bytes([*a, *b]))
+            .map_err(|_| bad())?,
+    ))
+}

@@ -39,7 +39,7 @@ fn independent_required_subset_hashes_and_canonical_order_match_contract() {
 }
 #[test]
 fn every_registration_has_typed_decoder_execution_and_pricing_and_unknowns_refuse() {
-    assert_eq!(registrations().len(), 10);
+    assert_eq!(registrations().len(), 11);
     assert!(
         descriptor_requires_generic(Descriptor::ExposureSrgbV1(ExposureSrgbV1::new(0).unwrap()))
             .unwrap()
@@ -133,3 +133,6 @@ fn curves_registration_is_explicit_priced_and_exact_five_bytes() {
     );
     assert_eq!(registrations()[9].profile(), "curves-rgb-v1");
 }
+
+#[path = "vibrance_tests.rs"]
+mod vibrance_tests;
