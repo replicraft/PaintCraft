@@ -1,9 +1,10 @@
 # Levels numerical foundation
 
-Status: implementation in progress. Levels is not an editable PaintCraft filter
-yet. The existing seven descriptors, project profiles and automation schemas
-remain unchanged. This contract prepares the next complete filter rather than
-presenting a linear remap as full Levels.
+Status: validated parameters and the exact scalar lookup-table foundation pass
+native tests and native/Wasm strict compilation. Levels is not an editable
+PaintCraft filter yet. The existing seven descriptors, project profiles and
+automation schemas remain unchanged. This contract prepares the next complete
+filter rather than presenting a linear remap as full Levels.
 
 ## Source intent and parameters
 
@@ -84,12 +85,67 @@ operation accounting and construction limits must be checked with the actual
 implementation. Scratch byte quotes are local ABI facts, not a project format.
 
 The kernel builds a 256-byte RGB lookup table into caller-owned private storage.
-It must have no heap allocation, per-pixel transcendental calculation or global
-cache. Validate limits before work; check cancellation throughout construction
+Successful arithmetic and table storage must use no heap allocation, per-pixel
+transcendental calculation or global cache. Caller callbacks and the shared
+error type's diagnostic strings have separate allocation behavior. Validate
+limits before work; check cancellation throughout construction
 and immediately before publishing the completed table. Failure must leave the
 caller's published output table unchanged. Scratch may contain discarded work.
 Measure construction cost over the parameter domain before choosing runtime
 limits or claiming that the implementation is fast.
+
+## Foundation qualification and measured construction cost
+
+Core passes 67 tests, including all 32,640 valid input intervals, all 990 gamma
+values, invalid boundaries and retained refusal by the old descriptor APIs.
+The independent stdlib Python [fixture generator](../../crates/services/paintcraft-effects/tests/levels-fixtures/generate.py)
+defines 329,668 framed channel records, ten full LUT literals, six explicit
+half ties, 200 RGBA/mask cases and a separate all-alpha stream. The fixed-integer
+kernel matches those numerical specimens. The oracle uses binary half-threshold
+classification, independently of the kernel's monotone sweep.
+
+The Effects suite passes 33 tests at the arithmetic checkpoint. The four oracle
+groups then pass again with the intact heterogeneous fixture read by a
+`serde_json` test-only dependency; the strict integer-only product parser stays
+unchanged. Native all-target Clippy covers the benchmark example. Wasm strict
+compilation uses the existing Core UUID browser feature context. This is not
+Wasm runtime or editable-filter qualification. Retained logs, source hashes and
+the first fixture-loader failure are bound in
+`docs/validation/levels-foundation/final-freeze.json`.
+
+The native release example is reproducible with:
+
+```sh
+CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=2 \
+    cargo run --locked --offline --release -p paintcraft-effects --example levels_bench
+```
+
+On Apple M1 Pro, arm64, Rust 1.99.0, 15 timed samples per case after one warm-up,
+using reused caller scratch and a no-op cancellation callback:
+
+| Case | Median ms | p95 ms | Actual work units | Conservative quote |
+| --- | ---: | ---: | ---: | ---: |
+| Identity / gamma 1.00 linear remap | 0.000375 | 0.000417 | 512 | 512 |
+| Gamma 0.50, full endpoints | 0.013459 | 0.014458 | 37,726 | 40,862 |
+| Gamma 2.00, full endpoints | 0.014083 | 0.014583 | 37,799 | 40,864 |
+| Gamma 0.11, full endpoints | 0.179459 | 0.182500 | 177,585 | 820,246 |
+| Gamma 9.97, full endpoints | 15.053125 | 16.489375 | 12,086,959 | 76,729,394 |
+| Gamma 9.99, full endpoints | 15.180917 | 17.107708 | 12,090,642 | 76,873,778 |
+| Inverted output 240 to 16, input 17 to 201, gamma 3.33 | 1.924042 | 2.261459 | 1,723,684 | 8,736,521 |
+
+Caller scratch is exactly 6,696 bytes on this native target, including the private
+256-byte staging table and five fixed integers. The published 256-byte table has
+its own caller storage. Work units describe bounded arithmetic, not milliseconds.
+Every complete benchmark LUT was independently rechecked against the Python
+oracle. The source manifest and all eleven case results are retained under the
+ignored `benchmarks/results/levels-lut/2026-10-30/` directory.
+
+These are isolated kernel observations on a machine that may run other projects,
+not controlled whole-machine, physical-RSS, UI or Wasm timing qualification.
+Hashing, printing and compilation are outside the reported per-table timings.
+High-gamma construction must be prepared once and reused; it cannot run per
+pixel or per rendered tile. Further implementation comparisons may reduce this
+cost, but no speedup over another implementation is established here.
 
 ## Prepared execution and remaining integration
 
