@@ -89,11 +89,11 @@ class CatalogSchemas(unittest.TestCase):
         for name, expected in ENCODED.items():
             self.assertEqual((HERE / SHA / name).read_bytes(), expected)
 
-    def test_all_eight_complete_descriptors_and_closed_legacy_input(self):
+    def test_all_nine_complete_descriptors_and_closed_legacy_input(self):
         values = [{"kind": "invert-rgb-v1"}, {"kind": "brightness-contrast-v1", "brightness": -100, "contrast": 99},
                   {"kind": "black-white-rgb-v1", "strength": 100}, {"kind": "threshold-luma-v1", "level": 0},
                   {"kind": "posterize-rgb-v1", "levels": 32}, {"kind": "solarize-rgb-v1"},
-                  {"kind": "box-blur-v1", "radius": 32}, LEVELS]
+                  {"kind": "box-blur-v1", "radius": 32}, LEVELS, {"kind":"exposure-srgb-v1","stops_hundredths":-800}]
         for descriptor in values:
             self.valid("batch", batch(descriptor))
         old = GEN["legacy"]("batch")
@@ -176,6 +176,45 @@ class CatalogSchemas(unittest.TestCase):
         self.invalid("inspect", value)
         self.invalid("mcp-inspect", inspection())
         self.invalid("inspect", inspection(True))
+
+
+    def test_exposure_strict_schema_and_old_eight_profile_bundle_remains_closed(self):
+        old_root = HERE / "d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6"
+        old_manifest = json.loads((old_root / "manifest.json").read_bytes())
+        self.assertEqual(hashlib.sha256((old_root / "manifest.json").read_bytes()).hexdigest(), "bb74bbb65debed2610854d4f4d21574f69e313b56a2aa2d76cd51c89bb623873")
+        for row in old_manifest["schemas"]:
+            self.assertEqual(hashlib.sha256((old_root / row["file"]).read_bytes()).hexdigest(), row["sha256"])
+        self.assertNotEqual(SHA, old_root.name)
+        for stops in [-800, -1, 0, 1, 800]:
+            value = batch({"kind":"exposure-srgb-v1","stops_hundredths":stops})
+            self.valid("batch", value)
+            self.assertFalse(Draft202012Validator(json.loads((old_root / "batch.schema.json").read_bytes())).is_valid(value))
+        for invalid in [None, True, "100", 0.5, -801, 801]:
+            self.invalid("batch", batch({"kind":"exposure-srgb-v1","stops_hundredths":invalid}))
+        for desc in [{"kind":"exposure-srgb-v1"}, {"kind":"exposure-srgb-v1","stops_hundredths":0,"stops":0}]:
+            self.invalid("batch", batch(desc))
+        def exposure_only(value):
+            if isinstance(value, dict):
+                if value.get("kind") == "levels-rgb-v1":
+                    return {"kind":"exposure-srgb-v1","stops_hundredths":0}
+                return {k:exposure_only(v) for k,v in value.items()}
+            if isinstance(value, list):
+                return [exposure_only(v) for v in value]
+            return "exposure-srgb-v1" if value == "levels-rgb-v1" else value
+        for flags in itertools.product([False, True], repeat=3):
+            engine = exposure_only(result(*flags))
+            wrapper = {"schema":"paintcraft.file-command/catalog-v1","engine":engine,
+                       "file":None,"outcome":"success","exit_code":0,"synthetic":True}
+            values = {"result":engine,"file-command":wrapper,
+                      "inspect":exposure_only(inspection(False,*flags)),
+                      "mcp-inspect":exposure_only(inspection(True,*flags))}
+            for kind,value in values.items():
+                self.valid(kind,value)
+                self.assertFalse(Draft202012Validator(json.loads((old_root / (kind+".schema.json")).read_bytes())).is_valid(value))
+        # Older eight-profile examples continue to validate in the new bundle.
+        for kind,value in [("batch",batch()),("result",result()),("inspect",inspection()),("mcp-inspect",inspection(True))]:
+            self.valid(kind,value)
+            Draft202012Validator(json.loads((old_root / (kind+".schema.json")).read_bytes())).validate(value)
 
     def test_runtime_checks_are_not_falsely_claimed_as_static_schema_guarantees(self):
         # JSON Schema cannot compare two parameter fields or payload inventories.

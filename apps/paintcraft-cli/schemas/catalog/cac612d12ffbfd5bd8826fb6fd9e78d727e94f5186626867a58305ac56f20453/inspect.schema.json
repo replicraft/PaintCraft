@@ -1,0 +1,840 @@
+{
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.inspect/catalog-v1"
+    },
+    "document_features": {
+      "oneOf": [
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1"
+          ]
+        },
+        {
+          "const": [
+            "layer-point-filters.v1",
+            "layer-filter-masks.v1",
+            "layer-spatial-filters.v1",
+            "layer-filter-catalog.v1",
+            "source-metadata.v1"
+          ]
+        }
+      ]
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "paintcraft.open-assessment/catalog-v1"
+        },
+        "assessment_only": {
+          "const": true
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profile": {
+          "const": "paintcraft.native/binary6-document6-filter-catalog1"
+        },
+        "container_version": {
+          "const": 6
+        },
+        "document_schema": {
+          "const": "paintcraft.document/v6"
+        },
+        "required_features": {
+          "oneOf": [
+            {
+              "const": [
+                "raster.rgba8",
+                "canvas.finite",
+                "layers.flat",
+                "layer-point-filters.v1",
+                "layer-filter-masks.v1",
+                "layer-filter-catalog.v1"
+              ]
+            },
+            {
+              "const": [
+                "raster.rgba8",
+                "canvas.finite",
+                "layers.flat",
+                "layer-point-filters.v1",
+                "layer-filter-masks.v1",
+                "layer-filter-catalog.v1",
+                "source-metadata.v1"
+              ]
+            }
+          ]
+        },
+        "capability_generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        },
+        "mode": {
+          "const": "editable"
+        },
+        "migration_id": {
+          "type": "null"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "profile_id": {
+                "enum": [
+                  "black-white-rgb-v1",
+                  "box-blur-v1",
+                  "brightness-contrast-v1",
+                  "exposure-srgb-v1",
+                  "invert-rgb-v1",
+                  "levels-rgb-v1",
+                  "posterize-rgb-v1",
+                  "solarize-rgb-v1",
+                  "threshold-luma-v1"
+                ]
+              },
+              "codec_id": {
+                "const": "params-v1"
+              }
+            },
+            "required": [
+              "profile_id",
+              "codec_id"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "contains": {
+            "required": [
+              "profile_id"
+            ],
+            "properties": {
+              "profile_id": {
+                "enum": [
+                  "exposure-srgb-v1",
+                  "levels-rgb-v1"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "assessment_only",
+        "source_sha256",
+        "profile",
+        "container_version",
+        "document_schema",
+        "required_features",
+        "capability_generation",
+        "mode",
+        "migration_id",
+        "reasons",
+        "required_filters"
+      ],
+      "additionalProperties": false
+    },
+    "document": {
+      "type": "object",
+      "properties": {
+        "document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "canvas": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "policy": {
+          "const": "paintcraft.core/default-v1"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "opacity_u8": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "origin": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1048576
+              },
+              "default_pixel": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "filters": {
+                "type": "array",
+                "maxItems": 256,
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "descriptor": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "black-white-rgb-v1"
+                            },
+                            "strength": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 100
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "strength"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "box-blur-v1"
+                            },
+                            "radius": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 32
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "radius"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "brightness-contrast-v1"
+                            },
+                            "brightness": {
+                              "type": "integer",
+                              "minimum": -100,
+                              "maximum": 100
+                            },
+                            "contrast": {
+                              "type": "integer",
+                              "minimum": -99,
+                              "maximum": 99
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "brightness",
+                            "contrast"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "exposure-srgb-v1"
+                            },
+                            "stops_hundredths": {
+                              "type": "integer",
+                              "minimum": -800,
+                              "maximum": 800
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "stops_hundredths"
+                          ],
+                          "additionalProperties": false,
+                          "$comment": "Runtime requires canonical integer tokens; zero EV is retained catalog intent."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "invert-rgb-v1"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "levels-rgb-v1"
+                            },
+                            "input_black": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 254
+                            },
+                            "input_white": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 255
+                            },
+                            "gamma_hundredths": {
+                              "type": "integer",
+                              "minimum": 10,
+                              "maximum": 999
+                            },
+                            "output_black": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 255
+                            },
+                            "output_white": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 255
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "input_black",
+                            "input_white",
+                            "gamma_hundredths",
+                            "output_black",
+                            "output_white"
+                          ],
+                          "additionalProperties": false,
+                          "$comment": "Runtime additionally requires input_black < input_white and canonical integer tokens."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "posterize-rgb-v1"
+                            },
+                            "levels": {
+                              "type": "integer",
+                              "minimum": 2,
+                              "maximum": 32
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "levels"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "solarize-rgb-v1"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "threshold-luma-v1"
+                            },
+                            "level": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 255
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "level"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "mask": {
+                      "type": "object",
+                      "properties": {
+                        "schema": {
+                          "const": "a8-bands/v1"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "domain": {
+                          "type": "array",
+                          "minItems": 4,
+                          "maxItems": 4,
+                          "items": {
+                            "type": "integer",
+                            "minimum": -140737488355327,
+                            "maximum": 140737488355327
+                          }
+                        },
+                        "bands": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 262144
+                        },
+                        "runs": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 262144
+                        },
+                        "digest": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "schema",
+                        "enabled",
+                        "domain",
+                        "bands",
+                        "runs",
+                        "digest"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "enabled",
+                    "descriptor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "visible",
+              "opacity_u8",
+              "origin",
+              "width",
+              "height",
+              "default_pixel"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "document_id",
+        "state_id",
+        "canvas",
+        "policy",
+        "layers"
+      ],
+      "additionalProperties": false
+    },
+    "ticket": {
+      "type": "object",
+      "properties": {
+        "state_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publication_epoch": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$"
+        }
+      },
+      "required": [
+        "state_id",
+        "publication_epoch"
+      ],
+      "additionalProperties": false
+    },
+    "input_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "required_filters": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "black-white-rgb-v1",
+          "box-blur-v1",
+          "brightness-contrast-v1",
+          "exposure-srgb-v1",
+          "invert-rgb-v1",
+          "levels-rgb-v1",
+          "posterize-rgb-v1",
+          "solarize-rgb-v1",
+          "threshold-luma-v1"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 9,
+      "$comment": "Runtime enforces ASCII sorting and exact Add/Update union (batch) or stored inventory (output).",
+      "contains": {
+        "enum": [
+          "exposure-srgb-v1",
+          "levels-rgb-v1"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "assessment",
+    "document",
+    "ticket",
+    "input_sha256",
+    "document_features",
+    "required_filters"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "required": [
+        "document"
+      ],
+      "properties": {
+        "document": {
+          "required": [
+            "layers"
+          ],
+          "properties": {
+            "layers": {
+              "contains": {
+                "required": [
+                  "filters"
+                ],
+                "properties": {
+                  "filters": {
+                    "contains": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "descriptor"
+                          ],
+                          "properties": {
+                            "descriptor": {
+                              "required": [
+                                "kind"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "exposure-srgb-v1"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "required": [
+                            "descriptor"
+                          ],
+                          "properties": {
+                            "descriptor": {
+                              "required": [
+                                "kind"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "levels-rgb-v1"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "document"
+        ],
+        "properties": {
+          "document": {
+            "required": [
+              "layers"
+            ],
+            "properties": {
+              "layers": {
+                "contains": {
+                  "required": [
+                    "filters"
+                  ],
+                  "properties": {
+                    "filters": {
+                      "contains": {
+                        "required": [
+                          "mask"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "document_features": {
+            "contains": {
+              "const": "layer-filter-masks.v1"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "document_features": {
+            "not": {
+              "contains": {
+                "const": "layer-filter-masks.v1"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "document"
+        ],
+        "properties": {
+          "document": {
+            "required": [
+              "layers"
+            ],
+            "properties": {
+              "layers": {
+                "contains": {
+                  "required": [
+                    "filters"
+                  ],
+                  "properties": {
+                    "filters": {
+                      "contains": {
+                        "required": [
+                          "descriptor"
+                        ],
+                        "properties": {
+                          "descriptor": {
+                            "required": [
+                              "kind"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "box-blur-v1"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "document_features": {
+            "contains": {
+              "const": "layer-spatial-filters.v1"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "document_features": {
+            "not": {
+              "contains": {
+                "const": "layer-spatial-filters.v1"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "assessment": {
+            "properties": {
+              "required_features": {
+                "contains": {
+                  "const": "source-metadata.v1"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "document_features": {
+            "contains": {
+              "const": "source-metadata.v1"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "document_features": {
+            "not": {
+              "contains": {
+                "const": "source-metadata.v1"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "title": "PaintCraft finite nine-profile catalog inspect",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paintcraft:schema:catalog-v1:cac612d12ffbfd5bd8826fb6fd9e78d727e94f5186626867a58305ac56f20453:inspect",
+  "$comment": "Immutable resolved catalog bundle; legacy profiles unchanged. Runtime verifies inventories and relational constraints."
+}
