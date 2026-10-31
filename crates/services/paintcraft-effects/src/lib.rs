@@ -11,6 +11,7 @@ pub mod exposure;
 pub mod levels;
 mod point;
 pub mod spatial;
+pub mod vibrance;
 pub use coverage::mix_point_coverage;
 
 /// Apply ordered point descriptors. Every stage rounds independently and preserves
