@@ -215,3 +215,6 @@ mod exposure_tests;
 
 #[path = "filter_tests/curves_tests.rs"]
 mod curves_tests;
+
+#[path = "filter_tests/vibrance_tests.rs"]
+mod vibrance_tests;
