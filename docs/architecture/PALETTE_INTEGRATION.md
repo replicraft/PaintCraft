@@ -1,17 +1,28 @@
 # Palette integration: persistent nondestructive filters
 
 Status: ordered history, PCND persistence, regional rendering, typed automation
-and explicit copy consent support **eight editable profiles**: six original point filters
-(Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize) and
-Box Blur and complete Levels. Fixed per-filter masks remain independent of live selection. Native
-and Web Studio share controls. The six-point production proofs below remain
-qualified; Box local host/CLI/PCND/required Metal checks and actual production
-Worker3/scoped Studio/MAIN DDS/MSP export5 pass finite appearance, consent and
-replay checks. MSP has independent exact 2×1 opaque-white pixel evidence. Updated 2026-10-30.
+and explicit copy consent support **nine editable profiles**: Invert,
+Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
+Levels and Exposure. Fixed per-filter masks remain independent of live selection.
+Native and Web Studio share controls. Updated 2026-10-31.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
-eight profiles do not establish parity or a wholesale port.
+nine profiles do not establish parity or a wholesale port.
 
-Complete five-parameter Levels is locally integrated and qualified. Typed intent,
+Exposure is locally integrated through native controls, hot/cold history, PCND6,
+prepared CPU filtering, Metal presentation, CLI/MCP and a new immutable nine-profile
+schema bundle.
+Fresh actual Chrome Source5 passes 15 cases/97 checks and six Studio lifecycle
+evidence groups. Actual Main-produced DDS/MSP Export7 routes each pass 16 fresh
+Worker replays, real consent/revocation/download flows and exact independent 2×1
+pixels. All 3,435 producer inputs and 27 assets remain unchanged during proof.
+The [Exposure contract](EXPOSURE_FILTER_FOUNDATION.md) and
+[prepared-worker contract](PREPARED_WORKER_CAPABILITIES.md) record finite scopes,
+preserved failures and open qualification. Older eight-profile schemas, Source4
+and Export6 remain closed. Full web tests pass 404 with three existing ignored;
+full CLI/MCP tests pass 228 with 15 existing ignored, and all 267 Node tests pass.
+Native/Wasm strict checks pass. No new-head remote CI result is implied.
+
+The earlier complete five-parameter Levels checkpoint is locally qualified. Typed intent,
 hot/cold history, PCND6 catalogs, prepared CPU/Metal rendering, Studio controls and
 catalog CLI/MCP receipts are implemented and locally tested. Fresh web production
 builds, 20 raw Source4 browser cases and 22 visible Studio lifecycle checks pass.
@@ -151,7 +162,7 @@ Gate: real native and production-browser add/edit/reorder/Cancel/Apply/Undo/save
 
 Add neighborhood filters only with halo/border/scratch/dirty-region proofs; global-analysis filters need immutable full-dependency analysis objects; geometric filters need mapped footprints and interpolation support. Masks, effect styles/shared lighting, generators, imported LUTs/patterns and plugins each require bounded payloads and distinct semantics. Continue from the author's [15-category inventory](../temp/IMPLEMENTED_FUNCTIONS.md#12-complete-implemented-filter-catalog), qualifying each family rather than claiming 132 integrations at once.
 
-The ordered stack now has six implemented point profiles, fixed per-filter
+The earlier six-point checkpoint has six implemented point profiles, fixed per-filter
 masks, editable history/persistence and consistent native/web/CLI appearance.
 The [mask qualification](FILTER_MASKS.md) retains its historical two-kind scope.
 For the four additions, Commands has 21 passing tests; actual CLI/stdio-MCP has

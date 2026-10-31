@@ -1,16 +1,17 @@
 # PCND filter catalog
 
-Status: **Implemented and locally qualified for the initial eight profiles.**
-PCND6 preserves the existing seven numerical profiles and complete five-parameter
-Levels. The reader, writer, typed descriptor, document/history model, prepared
-renderer, catalog automation schemas and Studio controls are implemented. Native
-format tests include independent positive/negative specimens and exact metadata
-boundaries. Existing PCND1–5 layouts and frozen automation schemas remain closed.
-Actual native controls, CLI/MCP, production Source4 previews, Studio lifecycle
-and DDS/MSP6 browser exports have separate finite execution evidence. This
-grammar does not by itself qualify a frontend or release.
+Status: **Implemented and locally qualified for nine profiles.** PCND6 preserves
+the existing seven numerical profiles, complete five-parameter Levels and Exposure.
+Typed descriptors, document/history, prepared rendering, catalog automation and
+Studio controls are implemented. Independent positive/negative format specimens
+and exact metadata boundaries are tested. Existing PCND1–5 layouts and historical
+automation schemas remain closed. Native controls, CLI/MCP, production Source5
+previews, Studio lifecycle and DDS/MSP7 browser exports have separate finite
+execution evidence. This grammar alone does not qualify a frontend or release.
 
-The numerical contract is [Levels foundation](LEVELS_FILTER_FOUNDATION.md).
+Numerical contracts: [Levels](LEVELS_FILTER_FOUNDATION.md) and
+[Exposure](EXPOSURE_FILTER_FOUNDATION.md).
+
 [Palette integration](PALETTE_INTEGRATION.md) tracks the wider inventory. Its 132
 conventional filters include embedded LUTs, displacement rasters, geometry and
 other ownership requirements. This grammar does not promise all 132 algorithms,
@@ -68,9 +69,9 @@ letters, digits or hyphens, ending in a positive `-vN` suffix without a leading
 zero in N. There is no case folding, Unicode normalization, executable payload,
 URL lookup, generic extension table or unknown-profile passthrough.
 
-## Initial profile and parameter codecs
+## Registered profiles and parameter codecs
 
-Every initial transport codec is named `params-v1`, **scoped by its numerical
+Every current transport codec is named `params-v1`, **scoped by its numerical
 profile ID**. A codec name alone does not identify its semantics. Parameter bytes
 must have the exact indicated length and pass the profile's checked constructor;
 wire defaults, extra bytes, missing fields and float coercion are forbidden.
@@ -85,10 +86,13 @@ wire defaults, extra bytes, missing fields and float coercion are forbidden.
 | `solarize-rgb-v1` | Empty | 0 |
 | `box-blur-v1` | Radius u8 | 1 |
 | `levels-rgb-v1` | Input black u8, input white u8, gamma hundredths u16BE, output black u8, output white u8 | 6 |
+| `exposure-srgb-v1` | Stops hundredths i16BE | 2 |
 
 Existing parameter ranges and arithmetic versions do not change. Levels requires
 input black 0–254, input white 1–255 strictly above black, gamma 10–999, and byte
-output endpoints, including equal and inverted outputs. Prepared LUT bytes are
+output endpoints, including equal and inverted outputs. Exposure requires signed
+stops hundredths -800 through 800, including disabled/default zero intentions.
+Prepared LUT bytes are
 not parameters, persistent intent or authority. Old PCND numeric tags are not
 reinterpreted as catalog indexes.
 
@@ -106,7 +110,7 @@ actual 132-entry inventory without reserving an unnecessary 1024-entry table;
 it does not promise unlimited simultaneous algorithm versions.
 
 The generic parameter ceiling is 65,536 bytes per instance. A known codec's exact
-bound is stricter: the initial eight never allocate that generic maximum.
+bound is stricter: the current nine never allocate that generic maximum.
 Prelude framing, identifier bytes, parameter lengths/bytes and mask metadata all
 count toward the **existing aggregate 8,388,608-byte PCND metadata ceiling**.
 There is no additional allowance. Existing per-layer 256-filter, canvas, layer,
@@ -153,7 +157,7 @@ A caller-created Header can never authorize unvalidated source bytes.
 ## Semantic identity and minimal legacy output
 
 Canonical semantic parameter bytes are defined **independently of transport**.
-For the initial eight profiles they equal the bytes in the table. Accepting a
+For the current nine profiles they equal the bytes in the table. Accepting a
 future alternative lossless codec must not change the semantic hash when it
 constructs identical typed parameters. Transport codec IDs, file compression,
 JSON formatting, allocation identities and derived LUTs are excluded.
@@ -182,7 +186,7 @@ Any future owned parameter payload needs explicit admission and unique hot/cold
 storage accounting rather than being hidden behind inline instance size.
 
 Writers select PCND6 only when at least one stored catalog-only profile requires
-it, including disabled or identity Levels. Old-only documents retain their exact
+it, including disabled or identity Levels and Exposure. Old-only documents retain their exact
 minimal PCND1–5 output, even if they arrived in a catalog request. Reject PCND6
 with only legacy-expressible intentions after metadata inventory and before tile
 inflation. Removing the last catalog-only profile restores the applicable legacy

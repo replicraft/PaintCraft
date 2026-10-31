@@ -1,12 +1,14 @@
 # Exposure numerical foundation
 
 Status: native and actual Wasm execution qualify the exact compiler. Typed
-catalog commands, PCND6 persistence, hot/cold history, prepared CPU/Metal rendering,
+catalog commands, PCND6 persistence, hot/cold history, prepared CPU filtering and
+Metal presentation,
 Studio controls, native edit controls, CLI and stdio MCP are locally qualified.
 The new nine-profile schema bundle is additive; the prior eight-profile bundle and
-old browser preview/export capabilities remain closed. Source5 and Export7 browser
-integration is in progress. Public feature counts remain eight until that delivery
-is qualified. These checks do not establish Palette byte parity or full catalog support.
+old browser preview/export capabilities remain closed. Fresh Source5 and Export7
+production-browser qualification passes the finite workflows below. Exposure is
+the ninth editable Studio profile. These checks do not establish Palette byte
+parity or full catalog support.
 
 ## Intent and sources
 
@@ -18,7 +20,7 @@ The transfer constants are documented in [W3C CSS Color 4](https://www.w3.org/TR
 PaintCraft independently implements the exact mathematical policy below; it
 does not promise equality with Palette's floating-point results or Photoshop.
 
-The proposed numerical profile is `exposure-srgb-v1`, with one required integer
+The numerical profile is `exposure-srgb-v1`, with one required integer
 `stops_hundredths` in -800 through 800, default zero. One stop doubles linear
 light. Floats, missing fields, unknown keys, clamping and inferred defaults are
 not future wire conveniences. Canonical semantic parameters are the signed
@@ -122,9 +124,35 @@ bundle and are rejected by the frozen eight-profile bundle. Six separately retai
 genuine Levels outputs validate against both bundles. See the finite closeout in
 `docs/validation/exposure-catalog-cli/finite-closeout/final-ledger.json`.
 
-These are separate compiler, native-control and automation scopes. They do not
-qualify Source5 browser UI, Export7 production downloads, physical tablet behavior,
-repeatable performance gains or the unimplemented Palette catalog.
+These compiler, native-control and automation scopes are separate from the fresh
+production-browser evidence below. Physical tablet behavior, repeated performance
+measurements and the unimplemented Palette catalog remain outside this checkpoint.
+
+## Production-browser checkpoint
+
+A fresh main/Source5/Export7 production build passes all five build/asset checks.
+All 3,435 producer inputs and 27 assets remain byte-identical throughout the proof.
+Actual Chrome Source5 passes 15 cases and 97 checks. The visible Studio workflow
+passes six lifecycle evidence groups: identity and causal Exposure previews,
+Cancel with byte-identical source, Apply, exact Undo/Redo and fresh PCND6 reopen.
+This does not newly qualify every existing-instance, duplicate or preview-off UI path.
+
+Actual Main-produced DDS and MSP Export7 routes each pass 16 fresh Worker replays
+(one positive and 15 negative). Real dialogs exercise consent, revocation without
+download, recheck with a fresh nonce and the authorized download. Independent
+Pillow decoding verifies the exact 2×1 planes: DDS `[90,26,176,255]` and MSP
+`[0,0,0,255]`. PCND source bytes, title and dirty state remain unchanged.
+
+The aggregate receipt is
+`docs/validation/exposure-catalog-browser/browser-final-freeze.json`, SHA256
+`55360d27089fdf6c03e629bcb32a5f20c137d4091c8750b0e903c49a39dda4d8`.
+The initial loopback permission failure and all calibration attempts are preserved.
+All original processes are terminal and browser/server resources are closed.
+The full web package passes 404 tests with three existing ignored tests. The full
+CLI/MCP package passes 228 tests with 15 existing ignored tests across 44 groups.
+Native all-target and Wasm strict checks and all 267 Node tests pass.
+New-head remote CI is a separate gate; the earlier green CI applies to pre-Exposure
+commit `c94be65c`.
 
 ## Admission and acceptance
 
@@ -141,9 +169,9 @@ clipping, exact half ties, all alpha values and mask coverage controls. Compiler
 preflight, cancellation, final-check failure, reuse and source/output preservation
 are separate gates. Native and Wasm execution must both match the oracle.
 
-Later integration must connect typed descriptor construction, semantic identity,
+Implemented integration connects typed descriptor construction, semantic identity,
 history, a new immutable resolved schema bundle, PCND6 profile/codec resolution,
 prepared CPU/GPU entry points, native/Web controls, explicit copy consent and
 CLI/MCP inspection/export. Older eight-profile schemas and Worker capabilities
-must remain closed until explicitly revised and qualified. This document grants
-none of those capabilities.
+remain closed; Source5 and Export7 resolve explicit priced implementations. New
+registrations require their own numerical, resource and consumer qualification.

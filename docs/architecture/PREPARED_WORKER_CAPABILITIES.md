@@ -1,11 +1,11 @@
 # Prepared worker capabilities
 
-**Status: implementation in progress.** The priced registry, verified-container
-requirement probe, program context, DDS/MSP Export7 backends and Main export bindings
-pass local native tests and strict checks. Main and codec-worker Wasm strict checks
-also pass. Source5 worker integration and actual production-browser qualification
-remain open; these are not advertised as complete features. Source4 and Export6
-remain closed to their original eight numerical profiles.
+**Status: implemented and locally qualified.** The priced registry,
+verified-container requirement probe, program context, Source5 preview and DDS/MSP
+Export7 backends pass native, Wasm and actual production-browser checks described
+below. Source4 and Export6 remain closed to their original eight numerical profiles.
+Registry growth still requires a real decoder, execution route, pricing and
+consumer qualification; reader support alone grants no execution capability.
 
 ## Separate decoding from execution
 
@@ -235,3 +235,19 @@ context tampering and consent/cancel/stale-owner behavior without launching a UI
 The native and Wasm strict checks are recorded under
 `docs/validation/exposure-main/`. Neither native invocation nor Wasm compilation
 establishes actual Chrome execution of the new production preview/export paths.
+
+## Actual production-browser checkpoint
+
+The fresh build and all actual runs retain identical 3,435 producer inputs and
+27 assets. Source5 passes 15 cases/97 checks; the Studio Exposure workflow passes
+six lifecycle evidence groups. Actual Main-produced DDS/MSP Export7 routes each
+pass 16 fresh Worker replays, explicit consent/revocation/download checks and
+independently decoded exact 2×1 pixels. Source PCND bytes, title and dirty state
+remain unchanged. The aggregate source/harness/asset receipt is
+`docs/validation/exposure-catalog-browser/browser-final-freeze.json`, SHA256
+`55360d27089fdf6c03e629bcb32a5f20c137d4091c8750b0e903c49a39dda4d8`.
+
+These finite checks qualify Exposure delivery. They do not establish all optional
+UI workflows, physical tablets, other applications, repeated performance results
+or future registry entries. Native/Wasm compilation and earlier CI remain separate
+records; no pre-Exposure CI result is promoted to the current head.
