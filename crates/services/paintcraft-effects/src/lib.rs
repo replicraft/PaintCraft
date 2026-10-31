@@ -6,6 +6,7 @@ use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, filters::Descriptor
 
 mod coverage;
 mod exact;
+pub mod exposure;
 pub mod levels;
 mod point;
 pub mod spatial;
