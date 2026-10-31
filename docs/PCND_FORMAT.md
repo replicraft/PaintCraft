@@ -5,7 +5,7 @@ compositing policy. Documents without retained source metadata use the initial
 version 1 layout when all layer filter stacks are empty. Version 2 adds one
 immutable original-source attachment. Version 3 preserves ordered point-filter
 intentions without modifying source raster samples. Version 4 adds persistent
-per-filter A8 masks. Tile encodings remain the same. The unreleased ZIP prototype
+per-filter A8 masks. Version 5 adds persistent spatial Box Blur intentions. Tile encodings remain the same. The unreleased ZIP prototype
 is not a supported format.
 
 This adopted contract supersedes the ZIP proposal in the original implementation
@@ -14,7 +14,7 @@ bytes; they do not define a current compatibility target.
 
 All integers below are canonical unsigned LEB128 unless specified otherwise.
 Redundant leading zero groups, overflow and truncated integers are invalid.
-Signed origins and v4 mask endpoints use ZigZag: `(value << 1) ^ (value >> 63)`. UUID bytes use UUID
+Signed origins and v4/v5 mask endpoints use ZigZag: `(value << 1) ^ (value >> 63)`. UUID bytes use UUID
 network order, exactly as `Uuid::as_bytes()`. Strings are a byte length followed by
 that many UTF-8 bytes; no terminator or normalization is applied.
 
@@ -22,13 +22,13 @@ The stream consists of:
 
 | Field | Representation |
 |---|---|
-| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01, 02, 03 or 04 |
+| Magic and version | Eight bytes: `50 43 4e 44 VV 0d 0a 1a`, where VV is 01, 02, 03, 04 or 05 |
 | Document ID | 16 bytes |
 | State ID | 16 bytes |
 | Canvas width, height | Two positive integers, each at most 1,048,576 |
 | Title presence | One byte, exactly 0 or 1 |
 | Title, if present | UTF-8 string, at most 4,096 characters and 16,384 bytes |
-| Source attachment | v1 absent; v2 required; versions 3/4 use a strict 0/1 presence byte before the optional attachment |
+| Source attachment | v1 absent; v2 required; versions 3/4/5 use a strict 0/1 presence byte before the optional attachment |
 | Root layer count | Integer bounded by the editor's layer-count policy |
 | Layers | The following layer records, in root order |
 | Integrity digest | 32 bytes of SHA-256 over every preceding byte |
@@ -44,7 +44,7 @@ A layer record consists of:
 | Origin X, Y | Two ZigZag integers bounded by the coordinate policy |
 | Width, height | Two positive integers, each at most 1,048,576 |
 | Default pixel | Four straight RGBA8 bytes, including hidden RGB |
-| Filter stack | Versions 3/4: bounded ordered intentions; v4 adds per-instance masks as specified below |
+| Filter stack | Versions 3/4/5: bounded ordered intentions; v4/5 add per-instance masks; only v5 admits spatial tag 7 |
 | Tile records | Repeated records, terminated by one zero byte |
 
 A tile starts with a nonzero one-byte encoding tag, followed by tile X, tile Y,
@@ -146,8 +146,7 @@ file. The digest supplies corruption detection, not proof of origin or authentic
 ## Version 3 live point filters
 
 Version 3 has schema `paintcraft.document/v3` and requires
-`layer-point-filters.v1`. When its optional source attachment is present, header
-assessment also reports `source-metadata.v1`. The source-presence byte immediately
+`layer-point-filters.v1`. The header reports grammar capabilities, not actual optional source inventory. The source-presence byte immediately
 after the title is exactly 0 or 1; an attachment, if present, uses the unchanged
 version-two framing. It remains original-source information, not an applied
 working profile.
@@ -192,7 +191,7 @@ same aggregate 8 MiB metadata limit; existing decoded tile and caller-owned sour
 metadata admission still apply before pixel inflation. The raw and selected
 compact preflights count the same stack encoding.
 
-Version 3 is emitted only when at least one layer stack is nonempty and no
+Version 3 is emitted only when a point-only layer stack is nonempty and no
 instance stores a mask, including a stack containing only disabled instances. An all-empty version-three stream is
 noncanonical and refused. Version-one/two readers initialize empty stacks. When
 all stacks are empty, writers retain the exact original version-one/two byte
@@ -212,13 +211,13 @@ qualification.
 
 Version 4 has schema `paintcraft.document/v4`. Its header feature order is
 `raster.rgba8`, `canvas.finite`, `layers.flat`, `layer-point-filters.v1`,
-`layer-filter-masks.v1`, then `source-metadata.v1` only when the attachment is
-present. The title/source-presence/attachment and layer framing remain as in
+`layer-filter-masks.v1`. Optional source presence is validated by the full reader,
+not added to this version-derived header capability list. The title/source-presence/attachment and layer framing remain as in
 version 3. The shared additive algorithm registry above applies before each
 mask field. Original tags 1/2 retain their exact parameter bytes; tags 3–6 do not
 require a new mask framing or container version.
 
-The writer selects v4 whenever any filter instance stores a mask, including a
+The writer selects v4 when no spatial intention is stored and any filter instance stores a mask, including a
 mask on a disabled filter, a disabled mask, or a field with zero coverage.
 A v4 stream with no stored mask is noncanonical. Once no masks remain, the
 writer returns to the unchanged v3 profile for nonempty stacks, or v1/v2 for
@@ -291,13 +290,51 @@ selection capture, source transformations, identity, history, renderer and
 frontend qualification. CLI/MCP summary and conditional result profiles are
 specified in [editable filter commands](FILTER_COMMANDS.md).
 
+## Version 5 persistent spatial intentions
+
+Version 5 has schema `paintcraft.document/v5`. The header requires these grammar
+capabilities in exact order: `raster.rgba8`, `canvas.finite`, `layers.flat`,
+`layer-point-filters.v1`, `layer-filter-masks.v1`, `layer-spatial-filters.v1`.
+Point and mask support are mandatory grammar capabilities even in an all-Box,
+maskless file. The bounded probe derives this list from the version, without
+scanning stacks or allocating masks. This is distinct from result/inspection
+`document_features`, whose mask feature occurs only when a mask is actually stored.
+
+The writer selects v5 iff any stored instance is `box-blur-v1`, including disabled
+or radius-zero instances. Title, optional source attachment, layer, point-stack,
+per-instance optional mask and tile framing reuse the existing layouts. Every
+instance has the strict mask-presence byte used in v4, even when all are absent.
+The algorithm registry adds **tag 7 followed by one radius byte 0–32 only in v5**.
+Tags 1–6 retain exact encodings. PCND3/4 tag 7 remains unsupported, even disabled;
+there is no silent registry widening in those versions. Unknown algorithms and
+invalid radius bytes are refused before pixel inflation.
+
+A v5 stream without a stored spatial intention is noncanonical. Removing the
+last Box returns to v4 when masks remain, v3 for point-only nonempty stacks, or
+exact v1/v2 for empty stacks. Old v1–4 specimen bytes remain unchanged. The fixed
+8 MiB metadata ceiling, aggregate mask counts/work, explicit `ReadAdmission`,
+shared 256 MiB coverage realm and resident history-mask ownership continue to
+apply. Spatial rendering additionally requires a caller-owned workspace; file
+readability is not permission for an unquoted render.
+
+Independent Python fixtures pin v5 raw/compact bytes, Box parameters, masks,
+source attachments, canonical downgrades and refusal cases. The 58 PCND controls
+and two recovery controls pass. Model, exact Effects, renderer/required Metal,
+typed CLI/stdio and Native/Web host/save/reopen qualification also pass; DDS/MSP
+protocol 5 workspace/binding and native/Wasm strict controls pass locally.
+[Spatial qualification](architecture/SPATIAL_FILTER_INTEGRATION.md#current-qualification)
+records exact scope. Production browser Box runtime and visible UI execution
+are **pending**. Historical six-point actual-browser evidence remains unchanged;
+the broader catalog and external-application compatibility are not established
+by these local checks.
+
 ## Six-profile extension qualification
 
 Core/Effects/Document, Commands, actual CLI/stdio-MCP consumers, independent
 closed-schema controls and Native/Web host UI checks are qualified for the four
 additional profiles. The full Formats suite passes 769 tests, and all 108
 renderer tests pass, including 36 required offscreen Metal controls. The actual
-production Chrome probe passes 305 render Worker and 32 DDS/MSP protocol4 export
+production Chrome probe passes 305 render Worker and 32 DDS/MSP protocol 4 export
 cases against independent sources and planes; nine positive artifacts independently
 decode to the expected pixels. Four actual Chrome Studio flows also pass Add,
 parameter changes for the three numeric kinds, Cancel, Apply, exact Undo/Redo and

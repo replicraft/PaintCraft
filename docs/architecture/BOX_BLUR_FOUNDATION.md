@@ -1,9 +1,11 @@
 # Box blur kernel and integration boundary
 
-This is the numerical and allocation-free kernel foundation for a future
-editable spatial filter. It does **not** add a seventh Studio filter, a PCND
-algorithm tag, a command descriptor or a browser preview mode. The shipped
-catalog remains the [six point profiles](POINT_FILTER_PROFILES.md).
+This records the qualified scalar foundation now used by the seventh editable
+filter, Box Blur. Persistent descriptors, regional rendering, PCND5, typed
+commands and Native/Web host controls are implemented. Local tests and required
+Metal presentation pass; actual production browser Box runtime/UI are pending.
+See [the current integration](SPATIAL_FILTER_INTEGRATION.md). The six
+[point profiles](POINT_FILTER_PROFILES.md) keep their original contracts.
 
 ## Numerical policy
 
@@ -63,30 +65,26 @@ the finite source for this symmetric kernel. Cancellation checks occur during
 both passes; failed private output and scratch must be discarded. There is no
 millisecond cancellation guarantee.
 
-## Remaining integration gates
+## Integrated regional boundary
 
-Before exposing an editable spatial descriptor, evaluate ordered prefix regions
-with cumulative halos, bounded ping-pong buffers and admitted per-worker peak
-storage. Route CPU composition, GPU uploads, display reduction, thumbnails,
-sampling and export through that evaluator. Local transparent/uniform shortcuts
-and cache invalidation must account for upstream halo pixels and masks.
+The renderer evaluates ordered prefix regions with cumulative true-source halos,
+admitted buffers and shared per-job work. CPU composition, GPU uploads, display
+reduction and host visual/copy callbacks use the evaluated appearance. Native
+admission is installed on the actual executing thread; a separate codec process
+does not inherit it. Production browser qualification is a separate pending gate.
 
-Extend document identities, history, persistence, typed automation, private
-previews and actual UI workflows together. Current PCND3/4 unknown-algorithm
-fixtures use tag 7. Move those active controls to a reserved sentinel only if
-that same container/profile registry later accepts tag 7, retaining historical
-evidence. The preferred [spatial integration plan](SPATIAL_FILTER_INTEGRATION.md)
-uses conditional PCND5 with distinct spatial grammar support. A PCND5-scoped
-tag 7 would not invalidate unknown-tag-7 refusals in unchanged PCND3/4: gate
-algorithms by their container/profile. No numeric Box tag or PCND5 wire layout
-is frozen by this foundation. Do not reinterpret a legacy negative as supported
-solely because a different container version knows that numeric value.
+PCND5 is conditional on stored Box, including disabled/radius zero, and adds
+algorithm tag 7 plus one radius byte. Old PCND3/4 still refuse tag 7: their registry
+and byte profiles are unchanged. PCND5 header grammar requires point/mask/spatial
+capabilities, while actual result features include masks only when stored.
+The [format contract](../PCND_FORMAT.md#version5-persistent-spatial-intentions)
+and [automation contract](../FILTER_COMMANDS.md) define the closed profiles.
 
 The independent Python/Fraction oracle under
-`crates/services/paintcraft-effects/tests/box-fixtures` specifies numerical
-expectations. Product comparisons, resource/cancellation tests and eventual
-renderer/host checks are distinct qualification gates. Neither a generated
-oracle nor a standalone kernel establishes an editable filter implementation.
+`crates/services/paintcraft-effects/tests/box-fixtures` remains separate from
+product output and host tests. The historical kernel checkpoint below is not an
+actual browser or whole-catalog proof. Current integration qualification is
+summarized in [SPATIAL_FILTER_INTEGRATION](SPATIAL_FILTER_INTEGRATION.md#current-qualification).
 
 ## Local foundation qualification
 
@@ -101,5 +99,6 @@ source files remain below 800 lines; no new dependency is required.
 The retained evidence is `docs/validation/box-blur-foundation/`. Failed test-helper
 coordinate arithmetic, a test iterator lint and an isolated Wasm invocation
 without the web app's UUID randomness feature are retained alongside corrected
-checks. None established a kernel numerical failure. This checkpoint has no
-actual blur UI, GPU blur, performance or external-application parity claim.
+checks. None established a kernel numerical failure. That historical kernel checkpoint alone had no actual blur UI claim. Current
+local host controls add UI-path evidence; production browser Box execution is
+still pending. No GPU blur shader, performance or external-application parity is claimed.
