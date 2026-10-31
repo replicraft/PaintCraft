@@ -246,6 +246,7 @@ impl Batch {
                                 | "exposure-srgb-v1"
                                 | "curves-rgb-v1"
                                 | "vibrance-rgb-v1"
+                                | "hue-saturation-rgb-v1"
                         )
                     )
                 {
