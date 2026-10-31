@@ -63,12 +63,14 @@ fn each_tile(
 struct Quote {
     spatial: u64,
     other: u64,
+    direct: u64,
     peak: u64,
     tiles: u64,
 }
 fn quote_tile(doc: &Document, tile: Rect, resolve: u64, catalog: bool) -> Result<Quote> {
     let mut result = Quote {
         spatial: 0,
+        direct: 0,
         other: (tile.area() as u64)
             .checked_add(resolve)
             .ok_or_else(|| resource("Native tile work overflows"))?,
@@ -101,6 +103,20 @@ fn quote_tile(doc: &Document, tile: Rect, resolve: u64, catalog: bool) -> Result
         } else {
             plan.work
         };
+        let layer_work = if spatial {
+            layer_work
+        } else {
+            let direct = paintcraft_render::spatial::quote_direct_work(layer, local, &|| Ok(()))?
+                .checked_mul(2)
+                .ok_or_else(|| resource("Direct proof work overflows"))?;
+            result.direct = result
+                .direct
+                .checked_add(direct)
+                .ok_or_else(|| resource("Direct tile work overflows"))?;
+            layer_work
+                .checked_sub(direct)
+                .ok_or_else(|| resource("Direct tile quote disagrees"))?
+        };
         let target = if spatial {
             &mut result.spatial
         } else {
@@ -113,6 +129,7 @@ fn quote_tile(doc: &Document, tile: Rect, resolve: u64, catalog: bool) -> Result
     if result
         .other
         .checked_add(result.spatial)
+        .and_then(|n| n.checked_add(result.direct))
         .is_none_or(|n| n > NATIVE_STEP_WORK_MAX)
     {
         return Err(resource("Native tile exceeds single-step work profile"));
@@ -133,6 +150,7 @@ fn quote(doc: &Document, request: DisplayRequest, profile: Profile) -> Result<Qu
     }
     let mut total = Quote {
         spatial: 0,
+        direct: 0,
         other: 0,
         peak: 0,
         tiles: 0,
@@ -144,6 +162,10 @@ fn quote(doc: &Document, request: DisplayRequest, profile: Profile) -> Result<Qu
             .spatial
             .checked_add(next.spatial)
             .ok_or_else(|| resource("Spatial job work overflow"))?;
+        total.direct = total
+            .direct
+            .checked_add(next.direct)
+            .ok_or_else(|| resource("Direct job work overflow"))?;
         total.other = total
             .other
             .checked_add(next.other)
@@ -156,6 +178,7 @@ fn quote(doc: &Document, request: DisplayRequest, profile: Profile) -> Result<Qu
             || total
                 .other
                 .checked_add(total.spatial)
+                .and_then(|n| n.checked_add(total.direct))
                 .is_none_or(|n| n > profile.work)
         {
             return Err(resource("Spatial frame exceeds declared workspace/work"));
@@ -220,6 +243,7 @@ impl GenericFrame {
         let work = quote
             .other
             .checked_add(quote.spatial)
+            .and_then(|n| n.checked_add(quote.direct))
             .and_then(|n| n.checked_add(compile))
             .and_then(|n| n.checked_add(admission.work_used()))
             .ok_or_else(|| resource("Prepared frame work overflow"))?;

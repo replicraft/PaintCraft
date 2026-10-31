@@ -362,3 +362,6 @@ fn malformed_mask_operation_is_unsupported_then_higher_generation_can_retry() {
         .unwrap();
     finish(&mut s);
 }
+
+#[path = "programs/generic_vibrance.rs"]
+mod generic_vibrance;
