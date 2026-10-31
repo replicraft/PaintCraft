@@ -365,3 +365,6 @@ fn malformed_mask_operation_is_unsupported_then_higher_generation_can_retry() {
 
 #[path = "programs/generic_vibrance.rs"]
 mod generic_vibrance;
+
+#[path = "programs/generic_hue_saturation.rs"]
+mod generic_hue_saturation;

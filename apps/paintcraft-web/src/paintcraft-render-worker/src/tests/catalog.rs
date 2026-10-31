@@ -374,3 +374,6 @@ mod vibrance;
 
 #[path = "catalog/legacy_catalog_private.rs"]
 mod legacy_catalog_private;
+
+#[path = "catalog/hue_saturation.rs"]
+mod hue_saturation;
