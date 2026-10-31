@@ -151,8 +151,10 @@ All original processes are terminal and browser/server resources are closed.
 The full web package passes 404 tests with three existing ignored tests. The full
 CLI/MCP package passes 228 tests with 15 existing ignored tests across 44 groups.
 Native all-target and Wasm strict checks and all 267 Node tests pass.
-New-head remote CI is a separate gate; the earlier green CI applies to pre-Exposure
-commit `c94be65c`.
+All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41188695399)
+passed for pushed Exposure commit `d7d412bb`. The original watch terminated with
+exit zero. This result does not qualify later local Curves foundation/integration
+work; pre-Exposure receipts at `c94be65c` remain separate historical evidence.
 
 ## Admission and acceptance
 

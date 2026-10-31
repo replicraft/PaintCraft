@@ -250,4 +250,6 @@ remain unchanged. The aggregate source/harness/asset receipt is
 These finite checks qualify Exposure delivery. They do not establish all optional
 UI workflows, physical tablets, other applications, repeated performance results
 or future registry entries. Native/Wasm compilation and earlier CI remain separate
-records; no pre-Exposure CI result is promoted to the current head.
+records. All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41188695399)
+pass for pushed Exposure commit `d7d412bb`. No pre-Exposure result is promoted to
+that head, and later local Curves work is not qualified by its CI.

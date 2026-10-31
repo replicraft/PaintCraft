@@ -20,7 +20,9 @@ The [Exposure contract](EXPOSURE_FILTER_FOUNDATION.md) and
 preserved failures and open qualification. Older eight-profile schemas, Source4
 and Export6 remain closed. Full web tests pass 404 with three existing ignored;
 full CLI/MCP tests pass 228 with 15 existing ignored, and all 267 Node tests pass.
-Native/Wasm strict checks pass. No new-head remote CI result is implied.
+Native/Wasm strict checks pass. All seven
+[CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41188695399) pass
+for pushed Exposure commit `d7d412bb`; later local Curves work is outside that result.
 
 The earlier complete five-parameter Levels checkpoint is locally qualified. Typed intent,
 hot/cold history, PCND6 catalogs, prepared CPU/Metal rendering, Studio controls and
