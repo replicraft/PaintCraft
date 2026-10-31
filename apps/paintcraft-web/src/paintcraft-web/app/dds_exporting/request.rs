@@ -6,6 +6,7 @@ use paintcraft_formats::codec_worker::Owner;
 pub(super) enum Request {
     V4(wire::Header),
     V5(wire::v5::Header),
+    V6(wire::v6::Header),
 }
 impl Request {
     #[cfg(any(target_arch = "wasm32", test))]
@@ -20,6 +21,9 @@ impl Request {
             5 => Ok(Self::V5(wire::v5::Header::capture(
                 plan, source, owner, nonce,
             )?)),
+            6 => Ok(Self::V6(wire::v6::Header::capture(
+                plan, source, owner, nonce,
+            )?)),
             _ => Err(failed("Unsupported captured export protocol")),
         }
     }
@@ -28,6 +32,7 @@ impl Request {
         match self {
             Self::V4(h) => h.encode().to_vec(),
             Self::V5(h) => h.encode().to_vec(),
+            Self::V6(h) => h.encode().to_vec(),
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -35,6 +40,7 @@ impl Request {
         let equal = match self {
             Self::V4(h) => wire::Header::decode(bytes)? == *h,
             Self::V5(h) => wire::v5::Header::decode(bytes)? == *h,
+            Self::V6(h) => wire::v6::Header::decode(bytes)? == *h,
         };
         if !equal {
             return Err(failed("Request echo differs from captured source/options"));
@@ -45,6 +51,7 @@ impl Request {
         match self {
             Self::V4(_) => 4,
             Self::V5(_) => 5,
+            Self::V6(_) => 6,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -52,6 +59,7 @@ impl Request {
         match self {
             Self::V4(_) => wire::REQUEST_HEADER,
             Self::V5(_) => wire::v5::REQUEST_HEADER,
+            Self::V6(_) => wire::v6::REQUEST_HEADER,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -59,6 +67,7 @@ impl Request {
         match self {
             Self::V4(_) => wire::RESPONSE_HEADER,
             Self::V5(_) => wire::v5::RESPONSE_HEADER,
+            Self::V6(_) => wire::v6::RESPONSE_HEADER,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -66,6 +75,7 @@ impl Request {
         match self {
             Self::V4(_) => wire::RESPONSE_BYTES_MAX,
             Self::V5(_) => wire::v5::RESPONSE_BYTES_MAX,
+            Self::V6(_) => wire::v6::RESPONSE_BYTES_MAX,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -73,30 +83,35 @@ impl Request {
         match self {
             Self::V4(h) => h.source_sha256,
             Self::V5(h) => h.source_sha256,
+            Self::V6(h) => h.source_sha256,
         }
     }
     pub(super) fn owner(&self) -> Owner {
         match self {
             Self::V4(h) => h.owner,
             Self::V5(h) => h.owner,
+            Self::V6(h) => h.owner,
         }
     }
     pub(super) fn metadata(&self) -> paintcraft_formats::export::SourceMetadataContext {
         match self {
             Self::V4(h) => h.metadata,
             Self::V5(h) => h.metadata,
+            Self::V6(h) => h.metadata,
         }
     }
     pub(super) fn settings(&self) -> [u8; 8] {
         match self {
             Self::V4(h) => h.settings,
             Self::V5(h) => h.settings,
+            Self::V6(h) => h.settings,
         }
     }
     pub(super) fn size(&self) -> (u32, u32) {
         match self {
             Self::V4(h) => h.size,
             Self::V5(h) => h.size,
+            Self::V6(h) => h.size,
         }
     }
     pub(super) fn matches_plan(&self, plan: &wire::SourcePlan) -> bool {
@@ -118,6 +133,18 @@ impl Request {
                     && plan
                         .spatial_context(h.source_len as usize)
                         .is_ok_and(|actual| actual == h.spatial.encode())
+            }
+            Self::V6(h) => {
+                h.metadata == plan.metadata_context()
+                    && h.masks == plan.mask_context()
+                    && h.filter_digest == plan.filter_digest()
+                    && h.bake_intent == plan.bake_intent()
+                    && plan
+                        .spatial_context(h.source_len as usize)
+                        .is_ok_and(|actual| actual == h.spatial.encode_catalog())
+                    && plan
+                        .catalog_context(h.source_len as usize)
+                        .is_ok_and(|actual| actual == h.catalog.encode())
             }
         }
     }

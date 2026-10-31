@@ -24,7 +24,9 @@ pub(super) async fn prepare(
     let args = js_sys::Array::new();
     args.push(&owner_value);
     call(&service, "setOwner", &args)?;
-    let getter = if plan.protocol_version() == 5 {
+    let getter = if plan.protocol_version() == 6 {
+        "ddsCatalogExportProtocolVersion"
+    } else if plan.protocol_version() == 5 {
         "ddsSpatialExportProtocolVersion"
     } else {
         "ddsExportProtocolVersion"
@@ -71,13 +73,21 @@ pub(super) async fn prepare(
     let source = plan.snapshot(&doc)?;
     let request = Request::capture(&plan, &source, owner, nonce)?;
     // Same MainWasm ABI as the isolated codec Worker; never infer native sizes.
-    let final_plan = if plan.protocol_version() == 5 {
+    let final_plan = if matches!(plan.protocol_version(), 5 | 6) {
         js_sys::Reflect::set(
             &metadata,
             &"spatialContext".into(),
             &Uint8Array::from(plan.spatial_context(source.len())?.as_slice()),
         )
         .map_err(error)?;
+        if plan.protocol_version() == 6 {
+            js_sys::Reflect::set(
+                &metadata,
+                &"catalogContext".into(),
+                &Uint8Array::from(plan.catalog_context(source.len())?.as_slice()),
+            )
+            .map_err(error)?;
+        }
         Some(metadata.clone())
     } else {
         None
