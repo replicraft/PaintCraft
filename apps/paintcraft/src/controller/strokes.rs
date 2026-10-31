@@ -122,7 +122,7 @@ impl PreviewPreparation {
             Some(Preview::Filter(edit)) => match &edit.operation {
                 paintcraft_commands::FilterOp::Add { descriptor, .. }
                 | paintcraft_commands::FilterOp::Update { descriptor, .. } => {
-                    descriptor.is_spatial()
+                    descriptor.is_spatial() || descriptor.is_catalog_only()
                 }
                 paintcraft_commands::FilterOp::SetEnabled { .. }
                 | paintcraft_commands::FilterOp::Reorder { .. }
@@ -318,7 +318,7 @@ pub(super) fn captured_batch(
     ticket: paintcraft_editor::session::Ticket,
     operations: Vec<Value>,
 ) -> Result<Batch> {
-    Batch::from_value(&Value::object([
+    Batch::from_generated_value(Value::object([
         (
             "schema",
             Value::str(Batch::schema_for_operations(&operations)),

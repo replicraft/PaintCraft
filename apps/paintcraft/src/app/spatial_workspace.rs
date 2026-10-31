@@ -20,7 +20,7 @@ pub(crate) fn needed(doc: &Document) -> bool {
         layer
             .filters
             .iter()
-            .any(|filter| filter.descriptor().is_spatial())
+            .any(|filter| filter.descriptor().is_spatial() || filter.descriptor().is_catalog_only())
     })
 }
 /// The executing thread installs the context; submitting a closure on the UI

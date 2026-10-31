@@ -3,6 +3,8 @@ use super::*;
 use egui_kittest::{Harness, kittest::Queryable};
 use paintcraft_core::types::filters::BrightnessContrastV1;
 use std::time::Instant;
+#[path = "levels_tests.rs"]
+mod levels_tests;
 const RAW: [u8; 8] = [10, 20, 30, 255, 100, 150, 200, 255];
 const INVERTED: [u8; 8] = [245, 235, 225, 255, 155, 105, 55, 255];
 fn app(asynchronous: bool) -> App {

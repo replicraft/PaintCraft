@@ -156,10 +156,9 @@ impl LayerThumbnails {
         let Some(source_layer) = doc.layers.get(&layer) else {
             return;
         };
-        let spatial = source_layer
-            .filters
-            .iter()
-            .any(|filter| filter.descriptor().is_spatial());
+        let spatial = source_layer.filters.iter().any(|filter| {
+            filter.descriptor().is_spatial() || filter.descriptor().is_catalog_only()
+        });
         let reservation = (WORK_BYTES + if spatial { spatial_workspace::BYTES } else { 0 })
             .saturating_add(
                 source_layer.raster.resident_tiles() as u64
