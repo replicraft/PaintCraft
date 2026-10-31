@@ -143,6 +143,7 @@ impl GpuRenderer {
                 return Err(unavailable("GPU display textures unsupported"));
             };
             crate::region_bytes(doc, region)?;
+            crate::spatial::preflight(doc, region, &check)?;
             let (width, height) = (region.width() as u32, region.height() as u32);
             if width > self.device.limits().max_texture_dimension_2d
                 || height > self.device.limits().max_texture_dimension_2d

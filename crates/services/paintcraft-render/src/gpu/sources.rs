@@ -81,6 +81,9 @@ impl Key {
         self.versions.capacity() * size_of::<(RegionCoord, RegionVersion)>()
     }
     fn build(doc: &Document, layer: &Layer, area: Rect, budget: usize) -> Result<Option<Self>> {
+        if crate::spatial::active(layer) {
+            return Ok(None);
+        }
         let local = area
             .translated(-layer.origin.0, -layer.origin.1)
             .expect("clipped layer view");
@@ -349,6 +352,23 @@ impl SourceCache {
 }
 fn gather(layer: &Layer, local: Rect, check: &impl Fn() -> Result<()>) -> Result<Vec<u8>> {
     let mut bytes = crate::output_buffer(local.area() as usize * 4)?;
+    if crate::spatial::active(layer) {
+        crate::spatial::visit(layer, local, check, |tile, pixels| {
+            for (i, pixel) in pixels.iter().enumerate() {
+                if i.is_multiple_of(64) {
+                    check()?;
+                }
+                let x = tile.x0 + (i % tile.width() as usize) as i64;
+                let y = tile.y0 + (i / tile.width() as usize) as i64;
+                let offset = ((y - local.y0) as usize * local.width() as usize
+                    + (x - local.x0) as usize)
+                    * 4;
+                bytes[offset..offset + 4].copy_from_slice(&pixel.0);
+            }
+            Ok(())
+        })?;
+        return Ok(bytes);
+    }
     for (row, y) in bytes
         .chunks_exact_mut(local.width() as usize * 4)
         .zip(local.y0..local.y1)

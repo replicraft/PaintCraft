@@ -341,6 +341,7 @@ impl GpuRenderer {
     ) -> Result<(output::Output<'_>, GpuRenderStats)> {
         let mut stats = GpuRenderStats::default();
         check()?;
+        crate::spatial::preflight(doc, region, check)?;
         let size = self.checked_region_size(doc, region)?;
         let w = region.width() as u32;
         // Fresh buffers are zero-initialized by wgpu. Reused buffers are cleared

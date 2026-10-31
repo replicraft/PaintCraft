@@ -683,3 +683,6 @@ mod masks;
 
 #[path = "gpu/point_profiles.rs"]
 mod point_profiles;
+
+#[path = "gpu/spatial.rs"]
+mod spatial;
