@@ -320,5 +320,40 @@
       "palette throughput as interactive brush latency",
       "single-backend baseline as a codec optimization winner"
     ]
+  },
+  {
+    "id": "PALETTE-NOISE-KERNEL",
+    "title": "Standalone coordinate Noise kernel latency",
+    "choice": "observe-kernel-cost-not-algorithm-selection",
+    "activation_tasks": [
+      "PALETTE-NOISE"
+    ],
+    "status": "locally-measured-native-kernel",
+    "tier": "both",
+    "hyperfine_required": true,
+    "hyperfine_role": "process-confirmation",
+    "owner": "docs/architecture/NOISE_FILTER_FOUNDATION.md",
+    "adapter_path": "crates/services/paintcraft-effects/examples/noise_bench.rs",
+    "workloads": [
+      "1000x486 default",
+      "1920x1080 actual1080p",
+      "optional2000x1000 exact2MP",
+      "Uniform/Gaussian xmono/color defaultamount10/seed1",
+      "separateamount0 calibration"
+    ],
+    "correctness_gates": [
+      "independent4380foundation/26280masks",
+      "frozenproceduralprobes and sourcecoordinates",
+      "actualquotes+alpha/sourcepreservation",
+      "sameactualnative/Wasmfulloutputdigest beforecross-platformtiming claims"
+    ],
+    "limitations": [
+      "Different semantics are workload conditions, not algorithm contenders",
+      "NoUI delivery/cancel/slice targetclaim",
+      "No globalRSS/performance/Paletteparityclaim"
+    ],
+    "result_artifacts": [
+      "docs/benchmarks/noise-kernel-2026-10-31/DECISION.md"
+    ]
   }
 ]

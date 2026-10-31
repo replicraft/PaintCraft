@@ -12,8 +12,13 @@ paintcraft-core.workspace = true
 libm.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
 sha2.workspace = true
 serde_json.workspace = true
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "noise"
+harness = false

@@ -3551,6 +3551,7 @@ dependencies = [
 name = "paintcraft-effects"
 version = "0.1.1"
 dependencies = [
+ "criterion",
  "libm",
  "paintcraft-core",
  "serde_json",
