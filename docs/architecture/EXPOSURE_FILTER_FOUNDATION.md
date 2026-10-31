@@ -1,9 +1,12 @@
 # Exposure numerical foundation
 
-Status: standalone parameter and compiler work is in progress. Exposure is not
-an editable PaintCraft filter yet. Existing eight-profile catalog schemas,
-PCND6 capabilities and Worker profiles remain closed. A parameter type or oracle
-alone does not establish feature support.
+Status: native and actual Wasm execution qualify the exact compiler. Typed
+catalog commands, PCND6 persistence, hot/cold history, prepared CPU/Metal rendering,
+Studio controls, native edit controls, CLI and stdio MCP are locally qualified.
+The new nine-profile schema bundle is additive; the prior eight-profile bundle and
+old browser preview/export capabilities remain closed. Source5 and Export7 browser
+integration is in progress. Public feature counts remain eight until that delivery
+is qualified. These checks do not establish Palette byte parity or full catalog support.
 
 ## Intent and sources
 
@@ -64,6 +67,64 @@ their greatest common divisor where valid. Mixed branches retain crossed
 denominator powers. Fixed-limb capacity and operation quotes must be proved
 against the actual chosen implementation, including every temporary. No
 floating-point approximation decides an exact half threshold.
+
+## Standalone APIs and native checkpoint
+
+`paintcraft_effects::exposure` supplies the explicit u32 reference backend;
+`exposure::u64` supplies a separate u64 backend. Each has its own `Scratch`,
+`Limits`, `Quote` and `WorkUsed`, with `quote` and `build_lut`. Neither selects a
+backend automatically. `evaluate_pixel` performs lookup only and preserves alpha.
+
+The shared private integer engine retains Levels' public APIs, quote arithmetic,
+callback order and capacity diagnostics. Exposure owns its own budget and error
+context. Storage is five fixed 10,240-bit integers plus the private LUT; there
+are no heap arithmetic buffers, implicit caches, unsafe casts or dynamic backend
+dispatch. The conservative mixed-branch bound is 5,760 bits. The quote permits
+180 u32 or 91 u64 limbs, including rounded operands and signed exposure scaling.
+The denominator 32,946 requires 16 bits, not 15.
+
+There are at most three monotone branch regimes. Conservative counting permits
+516 powers and 514 products/shifts/comparisons, including transition reloads.
+The exact maximum quoted work is 25,259,104 u32 units or 10,299,760 u64 units,
+both attained at EV +/-7.99. These are distinct abstract accounting units, not
+CPU instruction counts, timing, RSS or a conversion between backend costs.
+
+Both native backends match all 1,601 independent LUT hashes and the complete
+409,856-byte aggregate, ten literal half ties, 420 literal RGBA/mask controls and
+26,880 all-alpha cases. The full Effects release suite passes 51 tests, including
+existing Levels and spatial/point regressions. Four debug boundary tests cover
+geometry, preflight, early/mid/final cancellation, reuse, small private capacity,
+independently recorded primitive charges and output preservation. All-target
+Effects strict lint checks pass. Native scratch size is 6,696 bytes per backend;
+this is caller-owned compiler storage, not a process memory bound.
+
+The independent review and native logs live under
+`docs/validation/exposure-foundation/compiler/`. Native test elapsed times are
+diagnostic observations, not repeated benchmark or frontend performance evidence.
+Backend measurements and actual frontend delivery remain separate gates.
+
+## Actual Wasm and integration checkpoint
+
+Actual Chrome execution of the real Rust Wasm modules covers both explicit
+backends over all 1,601 LUTs, ten exact half ties, 420 literal RGBA/mask controls
+and 26,880 all-alpha cases. Existing Levels controls pass in the same harness.
+Cancellation, zero-callback preflight and invalid/readiness/batch checks also pass.
+Each module retains its two-MiB nonshared memory during this finite run. Native
+scratch size is not a Wasm size assertion. The immutable compiler evidence is in
+`docs/validation/exposure-foundation/wasm/final-freeze.json`.
+
+Native integration passes independent document identities, cold-history restoration,
+PCND positive/negative fixtures and exact CPU plus actual Metal presentation checks.
+The native editor control test exercises private preview, Cancel, Apply, Undo/Redo
+and save/reopen in both synchronous and worker modes. Actual CLI and stdio MCP each
+pass two groups; all 26 captured catalog outputs validate against the new nine-profile
+bundle and are rejected by the frozen eight-profile bundle. Six separately retained
+genuine Levels outputs validate against both bundles. See the finite closeout in
+`docs/validation/exposure-catalog-cli/finite-closeout/final-ledger.json`.
+
+These are separate compiler, native-control and automation scopes. They do not
+qualify Source5 browser UI, Export7 production downloads, physical tablet behavior,
+repeatable performance gains or the unimplemented Palette catalog.
 
 ## Admission and acceptance
 
