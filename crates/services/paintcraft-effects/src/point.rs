@@ -5,14 +5,20 @@ pub(super) fn require_point(filter: Descriptor) -> Result<()> {
         return Err(spatial_error());
     }
     if filter.is_catalog_only() {
-        return Err(prepared_error());
+        return Err(prepared_error(filter));
     }
     Ok(())
 }
-fn prepared_error() -> Error {
+fn prepared_error(filter: Descriptor) -> Error {
     Error::new(
         ErrorCode::CapabilityUnsupported,
-        "Levels filter requires its admitted prepared program",
+        match filter {
+            Descriptor::LevelsRgbV1(_) => "Levels filter requires its admitted prepared program",
+            Descriptor::ExposureSrgbV1(_) => {
+                "Exposure filter requires its admitted prepared program"
+            }
+            _ => "Catalog filter requires an admitted prepared program",
+        },
     )
 }
 fn spatial_error() -> Error {
@@ -69,7 +75,9 @@ pub(super) fn evaluate(filter: Descriptor, pixel: Rgba) -> Result<Rgba> {
         }
         Descriptor::SolarizeRgbV1 => rgb.map(|v| if v >= 128 { 255 - v } else { v }),
         Descriptor::BoxBlurV1(_) => return Err(spatial_error()),
-        Descriptor::LevelsRgbV1(_) => return Err(prepared_error()),
+        Descriptor::LevelsRgbV1(_) | Descriptor::ExposureSrgbV1(_) => {
+            return Err(prepared_error(filter));
+        }
     };
     Ok(Rgba([candidate[0], candidate[1], candidate[2], alpha]))
 }
