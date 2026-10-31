@@ -20,6 +20,7 @@ pub(super) struct Capture {
     pub ticket: Ticket,
     pub draft: Uuid,
     pub document: Arc<Document>,
+    pub spatial: bool,
 }
 impl Capture {
     pub fn same(&self, other: &Self) -> bool {
@@ -27,6 +28,7 @@ impl Capture {
             && self.ticket == other.ticket
             && self.draft == other.draft
             && Arc::ptr_eq(&self.document, &other.document)
+            && self.spatial == other.spatial
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -99,7 +101,8 @@ pub(super) struct Renderer {
     closing: Option<Outcome<()>>,
 }
 impl Renderer {
-    pub fn want(&mut self, capture: Capture, request: Request) {
+    pub fn want(&mut self, mut capture: Capture, request: Request) {
+        capture.spatial |= request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor.is_spatial()));
         let work = Work { capture, request };
         if self.wanted.as_ref().is_none_or(|w| !w.same(&work)) {
             self.accepted = None;
@@ -283,3 +286,21 @@ impl Renderer {
         self.error = None;
     }
 }
+
+/// Stored descriptors select the source capability even disabled or radius-zero.
+pub(super) fn stored_spatial(doc: &Document) -> u64 {
+    doc.layers
+        .values()
+        .map(|layer| {
+            layer
+                .filters
+                .iter()
+                .filter(|filter| filter.descriptor().is_spatial())
+                .count() as u64
+        })
+        .sum()
+}
+
+#[cfg(test)]
+#[path = "render/spatial_tests.rs"]
+mod spatial_tests;

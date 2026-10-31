@@ -139,6 +139,8 @@ impl WebApp {
                         owner: draft.base.owner,
                         ticket: draft.ticket(),
                         draft: draft.revision.draft,
+                        spatial: draft.source_spatial
+                            || draft.parameters.descriptor().is_ok_and(|d| d.is_spatial()),
                         document: draft.source.clone(),
                     },
                     Request {
@@ -157,6 +159,8 @@ impl WebApp {
                     owner: draft.base.owner,
                     ticket: draft.ticket(),
                     draft: draft.revision.draft,
+                    spatial: draft.source_spatial
+                        || draft.parameters.descriptor().is_ok_and(|d| d.is_spatial()),
                     document: draft.source.clone(),
                 },
                 Request {
@@ -186,6 +190,7 @@ impl WebApp {
                     owner: state.draft.base.owner,
                     ticket: state.draft.ticket(),
                     draft: state.draft.revision.draft,
+                    spatial: state.draft.source_spatial,
                     document: state.draft.source,
                 });
             } else {
@@ -332,6 +337,7 @@ impl WebApp {
             owner: self.editor.session.owner_id(),
             ticket: self.editor.session.ticket(),
             draft: Uuid::new_v4(),
+            spatial: render::stored_spatial(self.editor.session.document()) > 0,
             document: self.editor.session.snapshot(),
         }
     }

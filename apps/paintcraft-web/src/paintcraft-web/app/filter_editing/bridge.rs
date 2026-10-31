@@ -164,7 +164,9 @@ impl Drop for Client {
         }
     }
 }
-pub(super) async fn open(capture: Capture, cancellation: CancelSlot) -> Result<Client> {
+pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Result<Client> {
+    let spatial_count = super::render::stored_spatial(&capture.document);
+    capture.spatial |= spatial_count > 0;
     let doc = &capture.document;
     let resident = doc
         .layers
@@ -197,6 +199,16 @@ pub(super) async fn open(capture: Capture, cancellation: CancelSlot) -> Result<C
         ("maskRuns", (masks.runs as f64).into()),
         ("maskDecodeBytes", (masks.decode_bytes as f64).into()),
     ])?;
+    if capture.spatial {
+        for (key, value) in [
+            ("protocol", 3u64),
+            ("spatialCount", spatial_count),
+            ("workspaceBytes", 64 << 20),
+            ("workLimit", 268435456),
+        ] {
+            Reflect::set(&plan, &key.into(), &JsValue::from_f64(value as f64)).map_err(error)?;
+        }
+    }
     // Admission precedes serialization, bridge copying and Worker construction.
     let mut admission = Admission {
         value: begin(&plan).map_err(error)?,
@@ -240,6 +252,22 @@ pub(super) async fn open(capture: Capture, cancellation: CancelSlot) -> Result<C
     ] {
         if field(&binding, name)?.as_f64() != Some(expected as f64) {
             return Err(failed("Filter mask source admission changed"));
+        }
+    }
+    if client.capture.spatial {
+        for (key, expected) in [
+            ("protocol", 3u64),
+            ("spatialCount", spatial_count),
+            ("workspaceBytes", 64 << 20),
+            ("workLimit", 268435456),
+            ("layers", client.capture.document.layers.len() as u64),
+            ("residentBytes", resident),
+            ("metadataBytes", metadata_bytes as u64),
+            ("metadataCharge", metadata_charge),
+        ] {
+            if field(&binding, key)?.as_f64() != Some(expected as f64) {
+                return Err(failed("Spatial source workspace binding changed"));
+            }
         }
     }
     let size = field(&binding, "size")?
