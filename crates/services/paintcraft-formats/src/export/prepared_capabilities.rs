@@ -15,6 +15,7 @@ pub enum Execution {
     PreparedExposure,
     PreparedCurves,
     DirectVibrance,
+    DirectHueSaturation,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct Registration {
@@ -44,7 +45,7 @@ impl Registration {
 }
 // Every entry names an actual strict decoder, execution route and priced model.
 // A new general reader arm cannot extend this table implicitly.
-static REGISTRY: [Registration; 11] = [
+static REGISTRY: [Registration; 12] = [
     entry(
         "invert-rgb-v1",
         decoders::invert,
@@ -110,6 +111,12 @@ static REGISTRY: [Registration; 11] = [
         decoders::vibrance,
         Execution::DirectVibrance,
         "direct-vibrance-rgba8-work64-v1",
+    ),
+    entry(
+        "hue-saturation-rgb-v1",
+        decoders::hue_saturation,
+        Execution::DirectHueSaturation,
+        "direct-hue-saturation-rgba8-work128-v1",
     ),
 ];
 const fn entry(

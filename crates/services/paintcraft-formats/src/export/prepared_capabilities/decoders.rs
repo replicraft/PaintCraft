@@ -93,3 +93,17 @@ pub(super) fn vibrance(bytes: &[u8]) -> Result<Descriptor> {
             .map_err(|_| bad())?,
     ))
 }
+
+pub(super) fn hue_saturation(bytes: &[u8]) -> Result<Descriptor> {
+    let [a, b, c, d, e, f] = bytes else {
+        return Err(bad());
+    };
+    Ok(Descriptor::HueSaturationRgbV1(
+        paintcraft_core::types::filters::HueSaturationRgbV1::new(
+            i16::from_be_bytes([*a, *b]),
+            i16::from_be_bytes([*c, *d]),
+            i16::from_be_bytes([*e, *f]),
+        )
+        .map_err(|_| bad())?,
+    ))
+}
