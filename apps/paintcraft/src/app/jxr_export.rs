@@ -282,9 +282,13 @@ impl App {
         state.metadata_policy = policy;
         let service = self.editing.as_ref().ok_or_else(stale)?;
         service.reap_abandoned();
-        state.pending = service.try_submit_jxr_export(quote, move |cancel| {
-            worker::prepare_with_policies(source, owner, cancel, policies)
-        })?;
+        let spatial = spatial_workspace::needed(&source);
+        let task = move |cancel| worker::prepare_with_policies(source, owner, cancel, policies);
+        state.pending = if spatial {
+            service.try_submit_jxr_export_with_workspace(quote, task, true)
+        } else {
+            service.try_submit_jxr_export(quote, task)
+        }?;
         Ok(())
     }
     pub(super) fn poll_jxr_export(&mut self, ctx: &egui::Context) {

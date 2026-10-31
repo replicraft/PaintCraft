@@ -31,18 +31,39 @@ impl Service {
         quote: u64,
         task: impl FnOnce(Cancellation) -> Result<PreparedJxrExport> + Send + 'static,
     ) -> Result<Option<JxrExportPending>> {
+        self.try_submit_jxr_export_with_workspace(quote, task, false)
+    }
+    pub(crate) fn try_submit_jxr_export_with_workspace(
+        &self,
+        quote: u64,
+        task: impl FnOnce(Cancellation) -> Result<PreparedJxrExport> + Send + 'static,
+        spatial: bool,
+    ) -> Result<Option<JxrExportPending>> {
         if quote > PREPARATION_CHARGE {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
                 "JPEG XR export exceeds editing admission",
             ));
         }
-        match self.submit_jxr_export(quote, task) {
+        let submitted = if spatial {
+            self.submit_jxr_export_with_workspace(quote, task, true)
+        } else {
+            self.submit_jxr_export(quote, task)
+        };
+        match submitted {
             Ok(pending) => Ok(Some(pending)),
             Err(error) if error.code == ErrorCode::ResourceLimit => {
                 let mut executor = self.lock()?;
                 executor.reap_abandoned();
-                if executor.request_fits(PREPARATION_CHARGE) && executor.pending() > 0 {
+                if executor.request_fits(
+                    PREPARATION_CHARGE
+                        + if spatial {
+                            crate::spatial_workspace::BYTES
+                        } else {
+                            0
+                        },
+                ) && executor.pending() > 0
+                {
                     Ok(None)
                 } else {
                     Err(error)
@@ -56,17 +77,26 @@ impl Service {
         quote: u64,
         task: impl FnOnce(Cancellation) -> Result<PreparedJxrExport> + Send + 'static,
     ) -> Result<JxrExportPending> {
+        self.submit_jxr_export_with_workspace(quote, task, false)
+    }
+    pub(crate) fn submit_jxr_export_with_workspace(
+        &self,
+        quote: u64,
+        task: impl FnOnce(Cancellation) -> Result<PreparedJxrExport> + Send + 'static,
+        spatial: bool,
+    ) -> Result<JxrExportPending> {
         if quote > PREPARATION_CHARGE {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
                 "JPEG XR export exceeds editing admission",
             ));
         }
-        self.submit(
+        self.submit_with_workspace(
             move |cancel| task(cancel).map(|value| Completion::JxrExport(Box::new(value))),
             "Export JPEG XR".into(),
             "",
             None,
+            spatial,
         )
         .map(JxrExportPending)
     }

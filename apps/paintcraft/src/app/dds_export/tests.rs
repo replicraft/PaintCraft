@@ -648,3 +648,90 @@ fn only_a_live_executor_job_retries_and_an_oversized_quote_never_does() {
     service.reap_abandoned();
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn box_dds_host_worker_has_workspace_and_retains_the_extra_parent_charge() {
+    use paintcraft_core::types::filters::BoxBlurV1;
+    let budget = paintcraft_runtime::SharedBudget::new(3 << 30);
+    let service =
+        controller::background::Service::with_budget(egui::Context::default(), budget.clone())
+            .unwrap();
+    let mut source = paintcraft_document::import_image(
+        3,
+        1,
+        &[0, 0, 0, 255, 90, 60, 30, 255, 240, 120, 0, 255],
+        "native-box-dds/v1",
+    )
+    .unwrap();
+    source.layers.get_mut(&source.roots[0]).unwrap().filters =
+        paintcraft_document::FilterStack::new(vec![paintcraft_document::FilterInstance::new(
+            Uuid::from_u128(505),
+            true,
+            paintcraft_core::types::filters::Descriptor::BoxBlurV1(BoxBlurV1::new(1).unwrap()),
+        )])
+        .unwrap();
+    let source = Arc::new(source);
+    let original = source.clone();
+    let settings = Settings::default();
+    let target = export::metadata_policy::Target::new(Family::Dds, Operation::ExportFlat);
+    let policies = export::CopyPolicies {
+        source_metadata: Default::default(),
+        filter_bake: export::filter_bake::Policy::capture(
+            &source,
+            target,
+            export::filter_bake::Intent::Bake,
+            &|| Ok(()),
+        )
+        .unwrap(),
+    };
+    let quote = worker::quote(&source, settings).unwrap();
+    let pending = service
+        .try_submit_dds_export_with_workspace(
+            quote,
+            move |cancel| worker::prepare_with_policies(source, settings, quote, cancel, policies),
+            true,
+        )
+        .unwrap()
+        .unwrap();
+    let until = Instant::now() + Duration::from_secs(10);
+    let prepared = loop {
+        if let Some(result) = pending.poll() {
+            break result.unwrap();
+        }
+        assert!(Instant::now() < until);
+        std::thread::yield_now();
+    };
+    assert_eq!(
+        budget.usage().reserved,
+        (2 << 30) + spatial_workspace::BYTES
+    );
+    assert_eq!(
+        prepared
+            .preview
+            .as_ref()
+            .unwrap()
+            .pixels
+            .iter()
+            .map(|p| p.to_array())
+            .collect::<Vec<_>>(),
+        vec![[30, 20, 10, 255], [110, 60, 10, 255], [190, 100, 10, 255]]
+    );
+    assert!(
+        prepared
+            .artifact
+            .losses()
+            .iter()
+            .any(|loss| *loss == "filters-baked")
+    );
+    assert_eq!(
+        original.layers[&original.roots[0]].raster.get(1, 0),
+        Rgba([90, 60, 30, 255])
+    );
+    drop(pending);
+    assert_eq!(
+        budget.usage().reserved,
+        (2 << 30) + spatial_workspace::BYTES
+    );
+    drop(prepared);
+    assert_eq!(budget.usage().reserved, 0);
+}

@@ -24,6 +24,14 @@ impl Service {
         quote: u64,
         task: impl FnOnce(Cancellation) -> Result<Prepared> + Send + 'static,
     ) -> Result<Option<DdsExportPending>> {
+        self.try_submit_dds_export_with_workspace(quote, task, false)
+    }
+    pub(crate) fn try_submit_dds_export_with_workspace(
+        &self,
+        quote: u64,
+        task: impl FnOnce(Cancellation) -> Result<Prepared> + Send + 'static,
+        spatial: bool,
+    ) -> Result<Option<DdsExportPending>> {
         // A request which can never fit must not masquerade as contention.
         if quote > PREPARATION_CHARGE {
             return Err(Error::new(
@@ -31,12 +39,25 @@ impl Service {
                 "DDS export exceeds editing admission",
             ));
         }
-        match self.submit_dds_export(quote, task) {
+        let submitted = if spatial {
+            self.submit_dds_export_with_workspace(quote, task, true)
+        } else {
+            self.submit_dds_export(quote, task)
+        };
+        match submitted {
             Ok(pending) => Ok(Some(pending)),
             Err(error) if error.code == ErrorCode::ResourceLimit => {
                 let mut executor = self.lock()?;
                 executor.reap_abandoned();
-                if executor.request_fits(PREPARATION_CHARGE) && executor.pending() > 0 {
+                if executor.request_fits(
+                    PREPARATION_CHARGE
+                        + if spatial {
+                            crate::spatial_workspace::BYTES
+                        } else {
+                            0
+                        },
+                ) && executor.pending() > 0
+                {
                     Ok(None)
                 } else {
                     Err(error)
@@ -50,17 +71,26 @@ impl Service {
         quote: u64,
         task: impl FnOnce(Cancellation) -> Result<Prepared> + Send + 'static,
     ) -> Result<DdsExportPending> {
+        self.submit_dds_export_with_workspace(quote, task, false)
+    }
+    pub(crate) fn submit_dds_export_with_workspace(
+        &self,
+        quote: u64,
+        task: impl FnOnce(Cancellation) -> Result<Prepared> + Send + 'static,
+        spatial: bool,
+    ) -> Result<DdsExportPending> {
         if quote > PREPARATION_CHARGE {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
                 "DDS export exceeds editing admission",
             ));
         }
-        self.submit(
+        self.submit_with_workspace(
             move |cancel| task(cancel).map(|value| Completion::DdsExport(Box::new(value))),
             "Export DDS".into(),
             "",
             None,
+            spatial,
         )
         .map(DdsExportPending)
     }

@@ -324,9 +324,15 @@ impl App {
                 };
                 state.metadata_policy = policy;
                 let settings = state.settings;
-                service.try_submit_dds_export(quote, move |cancel| {
+                let spatial = spatial_workspace::needed(&doc);
+                let task = move |cancel| {
                     worker::prepare_with_policies(doc, settings, quote, cancel, policies)
-                })
+                };
+                if spatial {
+                    service.try_submit_dds_export_with_workspace(quote, task, true)
+                } else {
+                    service.try_submit_dds_export(quote, task)
+                }
             })();
             match result {
                 Ok(Some(pending)) => state.pending = Some(pending),

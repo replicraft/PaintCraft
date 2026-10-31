@@ -185,3 +185,71 @@ fn cancel_during_render_retires_without_an_artifact_and_releases_admission() {
         std::thread::sleep(Duration::from_millis(1));
     }
 }
+
+#[test]
+fn box_msp_host_worker_uses_the_same_explicit_workspace_and_parent_charge() {
+    use paintcraft_core::types::filters::{BoxBlurV1, Descriptor};
+    let budget = paintcraft_runtime::SharedBudget::new(3 << 30);
+    let service =
+        controller::background::Service::with_budget(egui::Context::default(), budget.clone())
+            .unwrap();
+    let mut source = document([255; 4]);
+    let id = source.roots[0];
+    source.layers.get_mut(&id).unwrap().filters =
+        paintcraft_document::FilterStack::new(vec![paintcraft_document::FilterInstance::new(
+            Uuid::from_u128(606),
+            true,
+            Descriptor::BoxBlurV1(BoxBlurV1::new(1).unwrap()),
+        )])
+        .unwrap();
+    let source = Arc::new(source);
+    let original = source.clone();
+    let version = Version::RowRleV2;
+    let target = export::metadata_policy::Target::new(Family::Msp, Operation::ExportFlat);
+    let policies = export::CopyPolicies {
+        source_metadata: Default::default(),
+        filter_bake: export::filter_bake::Policy::capture(
+            &source,
+            target,
+            export::filter_bake::Intent::Bake,
+            &|| Ok(()),
+        )
+        .unwrap(),
+    };
+    let quote = worker::quote(&source, version).unwrap();
+    let pending = service
+        .try_submit_msp_export_with_workspace(
+            quote,
+            move |cancel, capacity| {
+                worker::prepare_with_policies(source, version, quote, capacity, cancel, policies)
+            },
+            true,
+        )
+        .unwrap()
+        .unwrap();
+    let prepared = poll(&pending).unwrap();
+    assert_eq!(
+        budget.usage().reserved,
+        (2 << 30) + spatial_workspace::BYTES
+    );
+    assert!(
+        prepared
+            .preview
+            .as_ref()
+            .unwrap()
+            .pixels
+            .iter()
+            .all(|p| *p == egui::Color32::WHITE)
+    );
+    assert!(
+        prepared
+            .artifact
+            .losses()
+            .iter()
+            .any(|loss| *loss == "filters-baked")
+    );
+    assert_eq!(original.layers[&id].raster.get(0, 0), Rgba([255; 4]));
+    drop(pending);
+    drop(prepared);
+    assert_eq!(budget.usage().reserved, 0);
+}

@@ -320,9 +320,15 @@ impl App {
                 };
                 state.metadata_policy = policy;
                 let version = state.version;
-                service.try_submit_msp_export(quote, move |cancel, capacity| {
+                let spatial = spatial_workspace::needed(&doc);
+                let task = move |cancel, capacity| {
                     worker::prepare_with_policies(doc, version, quote, capacity, cancel, policies)
-                })
+                };
+                if spatial {
+                    service.try_submit_msp_export_with_workspace(quote, task, true)
+                } else {
+                    service.try_submit_msp_export(quote, task)
+                }
             })();
             match result {
                 Ok(Some(pending)) => state.pending = Some(pending),
