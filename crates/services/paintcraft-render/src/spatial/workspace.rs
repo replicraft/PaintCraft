@@ -108,6 +108,7 @@ impl Workspace {
     pub fn evaluate(
         &mut self,
         plan: &LayerAppearancePlan<'_>,
+        admission: &WorkspaceAdmission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<()> {
         for stage in &self.stages {
@@ -138,6 +139,10 @@ impl Workspace {
                 }
                 std::mem::swap(&mut self.front, &mut self.back);
             } else {
+                let program = crate::appearance::PointProgram::new(
+                    filter.descriptor(),
+                    admission.prepared_levels(),
+                )?;
                 let width = stage.output.width() as usize;
                 for (i, pixel) in self.front[..output_count].iter_mut().enumerate() {
                     if i.is_multiple_of(64) {
@@ -147,8 +152,7 @@ impl Workspace {
                     let y = stage.output.y0 + (i / width) as i64;
                     let m = coverage(x, y);
                     if m != 0 {
-                        let candidate =
-                            paintcraft_effects::evaluate_pixel(&[filter.descriptor()], *pixel)?;
+                        let candidate = program.evaluate(*pixel)?;
                         *pixel = paintcraft_effects::mix_point_coverage(*pixel, candidate, m);
                     }
                 }

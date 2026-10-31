@@ -146,6 +146,11 @@ impl PreparedLevelsJob {
             .find(|program| program.policy() == policy)
             .map(Arc::as_ref)
     }
+    /// Actual retained logical index/table payload; allocator/Arc bookkeeping is
+    /// excluded as in the quote. Construction proved this sum fits admission.
+    pub fn retained_bytes(&self) -> u64 {
+        self._index_charge.bytes() + self.programs.len() as u64 * super::LEVELS_TABLE_BYTES
+    }
     pub fn len(&self) -> usize {
         self.programs.len()
     }

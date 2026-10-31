@@ -2,7 +2,45 @@
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use paintcraft_document::{FilterInstance, Layer};
 
-fn mix(filter: &FilterInstance, local: (i64, i64), incoming: Rgba) -> Result<Rgba> {
+/// A candidate binding is resolved once per stage/chunk, never per pixel.
+pub(crate) enum PointProgram<'a> {
+    Scalar(paintcraft_core::types::filters::Descriptor),
+    Levels(&'a crate::prepared::PreparedLevels),
+}
+impl<'a> PointProgram<'a> {
+    pub(crate) fn new(
+        descriptor: paintcraft_core::types::filters::Descriptor,
+        job: Option<&'a crate::prepared::PreparedLevelsJob>,
+    ) -> Result<Self> {
+        match descriptor {
+            paintcraft_core::types::filters::Descriptor::LevelsRgbV1(policy) => job
+                .and_then(|job| job.get(policy))
+                .map(Self::Levels)
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "Levels appearance lacks its frozen prepared policy",
+                    )
+                }),
+            other => Ok(Self::Scalar(other)),
+        }
+    }
+    pub(crate) fn evaluate(&self, incoming: Rgba) -> Result<Rgba> {
+        match self {
+            Self::Scalar(descriptor) => {
+                paintcraft_effects::evaluate_pixel(&[*descriptor], incoming)
+            }
+            Self::Levels(program) => Ok(program.evaluate_pixel(incoming)),
+        }
+    }
+}
+
+fn mix(
+    filter: &FilterInstance,
+    program: &PointProgram<'_>,
+    local: (i64, i64),
+    incoming: Rgba,
+) -> Result<Rgba> {
     let coverage = filter
         .mask()
         .filter(|mask| mask.enabled())
@@ -10,7 +48,7 @@ fn mix(filter: &FilterInstance, local: (i64, i64), incoming: Rgba) -> Result<Rgb
     if coverage == 0 {
         return Ok(incoming);
     }
-    let candidate = paintcraft_effects::evaluate_pixel(&[filter.descriptor()], incoming)?;
+    let candidate = program.evaluate(incoming)?;
     if coverage == 255 {
         Ok(candidate)
     } else {
@@ -31,9 +69,14 @@ pub(crate) fn uniform(
     if crate::spatial::active(layer) {
         return Ok(None);
     }
+    let admission = crate::spatial::current();
     for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
         check()?;
-        let candidate = paintcraft_effects::evaluate_pixel(&[filter.descriptor()], pixel)?;
+        let program = PointProgram::new(
+            filter.descriptor(),
+            admission.as_ref().and_then(|a| a.prepared_levels()),
+        )?;
+        let candidate = program.evaluate(pixel)?;
         if candidate == pixel {
             continue;
         }
@@ -98,13 +141,18 @@ pub(crate) fn pixels(
     if !layer.filters.iter().any(|filter| filter.enabled()) {
         return Ok(());
     }
+    let admission = crate::spatial::current();
     for (index, chunk) in bytes.chunks_mut(64 * 4).enumerate() {
         check()?;
         let x0 = local.0 + (index * 64) as i64;
         for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
             check()?;
+            let program = PointProgram::new(
+                filter.descriptor(),
+                admission.as_ref().and_then(|a| a.prepared_levels()),
+            )?;
             for (x, pixel) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
-                *pixel = mix(filter, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
+                *pixel = mix(filter, &program, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
             }
         }
     }

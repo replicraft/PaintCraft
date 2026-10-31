@@ -5,6 +5,11 @@ use paintcraft_core::types::{
 };
 use paintcraft_effects::{levels, mix_point_coverage};
 mod compiler;
+mod document;
+pub(crate) use document::validate_layer_levels;
+pub use document::{
+    DocumentLevelsQuote, prepare_document_levels, quote_document_levels, with_document_levels,
+};
 mod job;
 pub use compiler::{CompileWork, LevelsBackend};
 pub use job::{LevelsJobQuote, PreparedLevelsJob, quote_levels_job};
@@ -76,6 +81,11 @@ impl PreparedLevels {
             actual_compile_work: used,
             _charge: table_charge,
         })
+    }
+
+    /// Lookup only: regional/stage callers already charge their point visits.
+    pub(crate) fn evaluate_pixel(&self, incoming: Rgba) -> Rgba {
+        levels::evaluate_pixel(&self.table, incoming)
     }
 
     pub fn policy(&self) -> LevelsRgbV1 {

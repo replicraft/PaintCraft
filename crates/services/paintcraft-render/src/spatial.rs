@@ -22,6 +22,7 @@ pub struct WorkspaceAdmission {
     bytes_limit: u64,
     work_limit: u64,
     work_used: std::sync::Arc<std::sync::Mutex<u64>>,
+    levels: Option<std::sync::Arc<crate::prepared::PreparedLevelsJob>>,
 }
 impl WorkspaceAdmission {
     pub fn new(scope: BudgetScope, bytes_limit: u64, work_limit: u64) -> Self {
@@ -30,7 +31,23 @@ impl WorkspaceAdmission {
             bytes_limit,
             work_limit,
             work_used: std::sync::Arc::new(std::sync::Mutex::new(0)),
+            levels: None,
         }
+    }
+    /// Immutable programs captured for this frozen rendering invocation.
+    pub fn prepared_levels(&self) -> Option<&crate::prepared::PreparedLevelsJob> {
+        self.levels.as_deref()
+    }
+    pub(crate) fn with_levels(
+        mut self,
+        job: std::sync::Arc<crate::prepared::PreparedLevelsJob>,
+    ) -> Self {
+        self.levels = Some(job);
+        self
+    }
+    pub(crate) fn with_byte_limit(mut self, bytes: u64) -> Self {
+        self.bytes_limit = self.bytes_limit.min(bytes);
+        self
     }
     pub fn scope(&self) -> &BudgetScope {
         &self.scope
@@ -145,11 +162,12 @@ impl LayerAppearancePlan<'_> {
                 "Spatial appearance exceeds its workspace or work limit",
             ));
         }
+        crate::prepared::validate_layer_levels(self.layer, admission, check)?;
         check()?;
         admission.reserve_work(self.quote.work)?;
         let mut workspace = workspace::Workspace::new(self, admission, check)?;
         workspace.extract(self, check)?;
-        workspace.evaluate(self, check)?;
+        workspace.evaluate(self, admission, check)?;
         check()?;
         let result = consume(workspace.result(pixels(self.output)?))?;
         check()?;
