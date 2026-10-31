@@ -1,0 +1,261 @@
+{
+  "schema": "paintcraft.schema-catalog-manifest/v1",
+  "profile_contract_sha256": "d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6",
+  "contract_hash_encoding": "SHA256 of UTF8 compact JSON, sorted object keys, ensure_ascii=true, no final newline",
+  "profile_contract": {
+    "schema": "paintcraft.filter-profile-contract/v1",
+    "codec_id": "params-v1",
+    "profiles": [
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "black-white-rgb-v1"
+          },
+          "strength": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "kind",
+          "strength"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "box-blur-v1"
+          },
+          "radius": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 32
+          }
+        },
+        "required": [
+          "kind",
+          "radius"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "brightness-contrast-v1"
+          },
+          "brightness": {
+            "type": "integer",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "contrast": {
+            "type": "integer",
+            "minimum": -99,
+            "maximum": 99
+          }
+        },
+        "required": [
+          "kind",
+          "brightness",
+          "contrast"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "invert-rgb-v1"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "levels-rgb-v1"
+          },
+          "input_black": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 254
+          },
+          "input_white": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255
+          },
+          "gamma_hundredths": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 999
+          },
+          "output_black": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "output_white": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "required": [
+          "kind",
+          "input_black",
+          "input_white",
+          "gamma_hundredths",
+          "output_black",
+          "output_white"
+        ],
+        "additionalProperties": false,
+        "$comment": "Runtime additionally requires input_black < input_white and canonical integer tokens."
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "posterize-rgb-v1"
+          },
+          "levels": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 32
+          }
+        },
+        "required": [
+          "kind",
+          "levels"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "solarize-rgb-v1"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "threshold-luma-v1"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "required": [
+          "kind",
+          "level"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "numerical_identity": "Versioned numerical IDs retain their independently specified arithmetic; no LUT or transport identity substitution.",
+    "envelope_names": {
+      "batch": "paintcraft.batch/catalog-v1",
+      "result": "paintcraft.result/catalog-v1",
+      "file-command": "paintcraft.file-command/catalog-v1",
+      "inspect": "paintcraft.inspect/catalog-v1",
+      "mcp-inspect": "paintcraft.mcp-inspect/catalog-v1"
+    },
+    "assessment_schema": "paintcraft.open-assessment/catalog-v1",
+    "header6_features": [
+      "raster.rgba8",
+      "canvas.finite",
+      "layers.flat",
+      "layer-point-filters.v1",
+      "layer-filter-masks.v1",
+      "layer-filter-catalog.v1"
+    ],
+    "runtime_constraints": [
+      "ordered input endpoints",
+      "canonical integer tokens",
+      "sorted unique inventories",
+      "exact Add/Update union",
+      "exact final stored inventory",
+      "actual source/mask/spatial features"
+    ],
+    "resolved_template_sha256": {
+      "batch": "c67e5f58e6bc181cc437854f776e277f96ae25def96fcebb21bfdd9230771083",
+      "result": "dc8821e45f21e45d530fe988b6438c0ace4eddf5abf7524480aa486988ae5a7f",
+      "file-command": "97fa417f31c25b346100a5661af7fca1e16ad32bd8f308ab6d628810bf1343ba",
+      "inspect": "be989d4272b86c08634dac729caa24ab41f2d296dd65d17863dcda3971f3a508",
+      "mcp-inspect": "a09f5242f80d9ea0893404db595872aa47af213ece35343b7e257c7eba088705"
+    }
+  },
+  "schemas": [
+    {
+      "kind": "batch",
+      "id": "urn:paintcraft:schema:catalog-v1:d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6:batch",
+      "file": "batch.schema.json",
+      "sha256": "8b0f0854d395affa9eefacd5cd9d07edc5c0ef2991a21dfe1f6783802c958a03"
+    },
+    {
+      "kind": "result",
+      "id": "urn:paintcraft:schema:catalog-v1:d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6:result",
+      "file": "result.schema.json",
+      "sha256": "1dbff9680fcc85c2f8aa4328e448d106644d15bcd4c771e7a9853bb1ebde42c7"
+    },
+    {
+      "kind": "file-command",
+      "id": "urn:paintcraft:schema:catalog-v1:d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6:file-command",
+      "file": "file-command.schema.json",
+      "sha256": "db9267ab584e0aa4bbf86341ac1510e1bc50b5522d7475dc21de502ecac6d3b6"
+    },
+    {
+      "kind": "inspect",
+      "id": "urn:paintcraft:schema:catalog-v1:d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6:inspect",
+      "file": "inspect.schema.json",
+      "sha256": "89c829b91a4b2aa53849df1c692aa61486e516e671ee9d011e3b49a07b3281bb"
+    },
+    {
+      "kind": "mcp-inspect",
+      "id": "urn:paintcraft:schema:catalog-v1:d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6:mcp-inspect",
+      "file": "mcp-inspect.schema.json",
+      "sha256": "ff0955a3ead191fbc5a24d9f392f5127683852690ca1ac1f6e97e7d1e345a0d4"
+    }
+  ],
+  "frozen_legacy_inputs": [
+    {
+      "file": "batch-v5.schema.json",
+      "sha256": "6a049a3b05d2a0db7d611f5bcc88fd3543ed71f7a1b1e2a0ef9c5fbd19cb34b0"
+    },
+    {
+      "file": "result-v4.schema.json",
+      "sha256": "b0c412a2fab1135812ded70023618a2812d5baa45bb44de4048e465045bee154"
+    },
+    {
+      "file": "file-command-v4.schema.json",
+      "sha256": "78ab9a1ac3bec9e3274cc480d4ad8b4ad516b6f10c8d5fdbd3b1265237cc8b8a"
+    },
+    {
+      "file": "inspect-v4.schema.json",
+      "sha256": "b5197142216edea86d388536961ea65a6c6c5e59f4c4dedff98ec57ca2949bc0"
+    },
+    {
+      "file": "mcp-inspect-v4.schema.json",
+      "sha256": "d8efe86d229d278c2f87868f89daef7c1397217a5fc06ef18a79e1c8f85e0fe8"
+    }
+  ],
+  "availability": "Schema definitions only; runtime integration and actual consumer validation require separate qualification."
+}
