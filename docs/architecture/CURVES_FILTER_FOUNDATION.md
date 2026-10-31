@@ -2,9 +2,9 @@
 
 Status: the parameter and exact compiler pass native and actual Wasm qualification.
 Local integration now includes typed catalog intentions, PCND6, caller-owned
-prepared rendering, five Studio controls, native history and CLI/MCP. Actual
-production-browser qualification is pending; the public supported-filter count
-remains nine until that gate passes. The standalone CI result does not qualify
+prepared rendering, five Studio controls, native history and CLI/MCP. Fresh
+production-browser qualification passes the finite workflows below. Curves is
+the tenth editable Studio profile. The standalone CI result does not qualify
 these later integration changes.
 
 ## Intent and numerical policy
@@ -178,5 +178,45 @@ native and actual-target Wasm strict checks pass for Main and both workers.
 
 Receipts remain under `docs/validation/curves-integration/`,
 `curves-planning/owner-source/`, `curves-actual-tests/` and `curves-main/`.
-Fresh production/browser preview, lifecycle and export proof remains a separate
-pending gate; none of the local checks above substitutes for it.
+
+## Actual production-browser checkpoint
+
+The fresh Main, Source5 render worker, Export7 codec worker, Astro build and asset
+checks all pass. All 3,458 captured producer inputs and 27 production assets remain
+identical through the final browser closeout. Raw Source5 passes 17 cases and 123
+checks, including identity, inverse, constants, free outputs, disabled intent,
+legacy and Exposure compatibility, requirement unions, quota/tamper/stale refusal
+and old closed profiles.
+
+The actual Studio flow passes 14 checks using all five real controls. Each private
+prefix frame matches the independent reference; the final constant-37 preview
+also matches every screenshot pixel in the source-established canvas region.
+Cancel preserves exact saved bytes/state/title/clean status. Apply preserves the
+complete stack, manifest and raw source; Undo returns the original PCND3, Redo
+restores PCND6, and a fresh page opens the saved PCND6 with a bound committed BASE.
+
+Actual Main DDS and MSP Export7 routes each pass explicit consent, revocation,
+fresh recheck nonce, download and 16 fresh worker replays. Independent Pillow
+decodes the complete two-pixel planes to inverse RGB `[191,239,127]` for DDS and
+opaque black for MSP. Original PCND bytes, title and dirty state stay unchanged.
+No guessed positive packet, fake import or host replacement stands in for Rust
+Wasm execution. One Studio parameter-layout calibration is retained separately; the first
+semantic run of each of the four gates passes.
+
+The aggregate receipt is
+`docs/validation/curves-catalog-browser/browser-final-freeze.json`, SHA256
+`1d7a068dfa58441345e508dbb0c174484e21de68696f84eee648f39514f182ee`.
+All original jobs are terminal and owned browsers/servers are closed. These are
+finite local results, not new-head CI, physical-device, performance, original-app
+or all-132-filter qualification. A subsequent Curves-specific test passes real
+cold-history compaction, spill, restoration and Undo/Redo, preserving all five
+parameter bytes, mixed filter intent, raw pixels and unique mask/metadata payload
+accounting. All 26 history tests and strict checks pass. The two test-only source
+additions after the browser freeze are recorded separately in
+`docs/validation/curves-main/full-regression/promotion.json`; no runtime code
+changes. Full package regression then passes 405 Web tests (404 unit plus one
+preview integration, three existing ignored) and 232 CLI/MCP tests (15 existing
+ignored across 44 groups). Full history passes 26 tests without ignored tests;
+history all-target strict and final workspace formatting checks also pass. The
+serialized original regression process exits successfully without a product fix
+or test rerun. New-head CI remains a separate gate.

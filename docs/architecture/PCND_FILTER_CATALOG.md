@@ -1,7 +1,8 @@
 # PCND filter catalog
 
-Status: **Implemented and locally qualified for nine profiles.** PCND6 preserves
-the existing seven numerical profiles, complete five-parameter Levels and Exposure.
+Status: **Implemented and locally qualified for ten profiles.** PCND6 preserves
+the existing seven numerical profiles, complete five-parameter Levels, Exposure
+and five-point Curves.
 Typed descriptors, document/history, prepared rendering, catalog automation and
 Studio controls are implemented. Independent positive/negative format specimens
 and exact metadata boundaries are tested. Existing PCND1–5 layouts and historical
@@ -9,8 +10,8 @@ automation schemas remain closed. Native controls, CLI/MCP, production Source5
 previews, Studio lifecycle and DDS/MSP7 browser exports have separate finite
 execution evidence. This grammar alone does not qualify a frontend or release.
 
-Numerical contracts: [Levels](LEVELS_FILTER_FOUNDATION.md) and
-[Exposure](EXPOSURE_FILTER_FOUNDATION.md).
+Numerical contracts: [Levels](LEVELS_FILTER_FOUNDATION.md),
+[Exposure](EXPOSURE_FILTER_FOUNDATION.md) and [Curves](CURVES_FILTER_FOUNDATION.md).
 
 [Palette integration](PALETTE_INTEGRATION.md) tracks the wider inventory. Its 132
 conventional filters include embedded LUTs, displacement rasters, geometry and
@@ -87,11 +88,15 @@ wire defaults, extra bytes, missing fields and float coercion are forbidden.
 | `box-blur-v1` | Radius u8 | 1 |
 | `levels-rgb-v1` | Input black u8, input white u8, gamma hundredths u16BE, output black u8, output white u8 | 6 |
 | `exposure-srgb-v1` | Stops hundredths i16BE | 2 |
+| `curves-rgb-v1` | Five output u8 values for fixed inputs 0, 64, 128, 192, 255 | 5 |
 
 Existing parameter ranges and arithmetic versions do not change. Levels requires
 input black 0–254, input white 1–255 strictly above black, gamma 10–999, and byte
 output endpoints, including equal and inverted outputs. Exposure requires signed
 stops hundredths -800 through 800, including disabled/default zero intentions.
+Curves permits every five-byte tuple, including identity, constants, decreasing
+and nonmonotone outputs. Its exact Hermite arithmetic is fixed by the numerical
+profile; LUT bytes are never serialized in place of those five parameters.
 Prepared LUT bytes are
 not parameters, persistent intent or authority. Old PCND numeric tags are not
 reinterpreted as catalog indexes.
@@ -110,7 +115,7 @@ actual 132-entry inventory without reserving an unnecessary 1024-entry table;
 it does not promise unlimited simultaneous algorithm versions.
 
 The generic parameter ceiling is 65,536 bytes per instance. A known codec's exact
-bound is stricter: the current nine never allocate that generic maximum.
+bound is stricter: the current ten never allocate that generic maximum.
 Prelude framing, identifier bytes, parameter lengths/bytes and mask metadata all
 count toward the **existing aggregate 8,388,608-byte PCND metadata ceiling**.
 There is no additional allowance. Existing per-layer 256-filter, canvas, layer,
@@ -186,7 +191,7 @@ Any future owned parameter payload needs explicit admission and unique hot/cold
 storage accounting rather than being hidden behind inline instance size.
 
 Writers select PCND6 only when at least one stored catalog-only profile requires
-it, including disabled or identity Levels and Exposure. Old-only documents retain their exact
+it, including disabled or identity Levels, Exposure and Curves. Old-only documents retain their exact
 minimal PCND1–5 output, even if they arrived in a catalog request. Reject PCND6
 with only legacy-expressible intentions after metadata inventory and before tile
 inflation. Removing the last catalog-only profile restores the applicable legacy

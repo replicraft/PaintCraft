@@ -253,3 +253,30 @@ or future registry entries. Native/Wasm compilation and earlier CI remain separa
 records. All seven [CI jobs](https://github.com/replicraft/PaintCraft/actions/runs/41188695399)
 pass for pushed Exposure commit `d7d412bb`. No pre-Exposure result is promoted to
 that head, and later local Curves work is not qualified by its CI.
+
+## Curves registry extension
+
+The tenth entry resolves `curves-rgb-v1`/`params-v1` to the checked five-output
+decoder, caller-owned prepared execution and resource contract
+`prepared-curves-rgba8-v1`, revision 1. Source5/Export7 framing, ceilings and
+registry contract 1 remain unchanged. The first nine entries and old subset
+hashes are unchanged. Source2/3/4 and Export4/5/6 still refuse reader-known Curves,
+including disabled and identity intentions.
+
+Curves preparation shares the parent admission and cumulative work counter.
+Enabled stored Levels/Exposure/Curves keys have a combined 256-program ceiling
+and compile in that canonical family order; a complete frozen owner never
+extends itself. A missing family or key refuses before warm-cache use. When no
+enabled Curves exists, the historical preparation path retains its original
+quotes, callbacks, account traces and context bytes.
+
+All 19 historical baseline cases match before/after on native and actual Chrome
+Wasm separately. Both historical full 128-byte Wasm export contexts and subset
+digests match. Fresh production Curves tests pass 17 raw Source5 cases/123 checks,
+14 Studio lifecycle checks and 16 fresh Export7 replays for each DDS/MSP route.
+Main produces the accepted packets and numerical contexts; independently decoded
+downloads match literal inverse/constant results. No outer-version bump, raised
+ceiling, inferred execution from decoding or guessed positive context is used.
+The [Curves contract](CURVES_FILTER_FOUNDATION.md) records the finite scope and
+aggregate evidence. Other catalog entries and optional UI routes remain separate
+qualification work.
