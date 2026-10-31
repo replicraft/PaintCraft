@@ -53,3 +53,18 @@ fn standalone_point_facade_refuses_curves_even_identity_before_row_callbacks_or_
         );
     }
 }
+
+#[test]
+fn legacy_facade_refuses_vibrance_even_default_before_row_callbacks_and_output() {
+    use paintcraft_core::types::filters::VibranceRgbV1;
+    for amount in [-100, 0, 100] {
+        let descriptor = Descriptor::VibranceRgbV1(VibranceRgbV1::new(amount).unwrap());
+        assert_prepared_required(descriptor);
+        assert_eq!(
+            evaluate_pixel(&[descriptor], Rgba([64, 16, 128, 0]))
+                .unwrap_err()
+                .message,
+            "Vibrance filter requires its admitted priced direct route"
+        );
+    }
+}
