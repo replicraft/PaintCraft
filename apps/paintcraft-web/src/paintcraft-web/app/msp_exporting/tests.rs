@@ -222,7 +222,7 @@ fn preview_cannot_cross_a_prepared_owner_or_current_frame_and_cancel_keeps_sourc
     let mut r = review(h.state_mut());
     r.shown = Some(2);
     assert!(r.take_ready(2).is_err());
-    r.prepared.as_mut().unwrap().header.owner.epoch += 1;
+    r.prepared.as_mut().unwrap().header.owner_mut().epoch += 1;
     assert!(r.take_ready(3).is_err());
     assert!(r.prepared.is_some());
     r.retire_preview();

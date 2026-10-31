@@ -1,33 +1,50 @@
 //! Full Rust validation precedes display/download; JS slices alone are not proof.
 use super::*;
+#[cfg(test)]
 pub(super) fn validate(
     request: &wire::Header,
     echo: &[u8],
     response: Vec<u8>,
     on_validated: impl FnOnce(),
 ) -> Result<Prepared> {
-    if wire::Header::decode(echo)? != *request {
-        return Err(failed(
-            "MSP2 request echo differs from captured source/options",
-        ));
-    }
-    let frame =
-        wire::decode_response(&response, request, request.owner, env!("CARGO_PKG_VERSION"))?;
-    on_validated();
-    let wire::Frame::Success {
-        encoded,
-        preview,
-        preview_size,
-        losses,
-        ..
-    } = frame
-    else {
-        let wire::Frame::Refused(error) = frame else {
-            unreachable!()
-        };
-        return Err(error);
+    validate_request(&Request::V4(request.clone()), echo, response, on_validated)
+}
+pub(super) fn validate_request(
+    request: &Request,
+    echo: &[u8],
+    response: Vec<u8>,
+    on_validated: impl FnOnce(),
+) -> Result<Prepared> {
+    request.validate_echo(echo)?;
+    let parts = match request {
+        Request::V4(h) => {
+            match wire::decode_response(&response, h, h.owner, env!("CARGO_PKG_VERSION"))? {
+                wire::Frame::Success {
+                    encoded,
+                    preview,
+                    preview_size,
+                    losses,
+                    ..
+                } => Ok((encoded, preview, preview_size, losses)),
+                wire::Frame::Refused(error) => Err(error),
+            }
+        }
+        Request::V5(h) => {
+            match wire::v5::decode_response(&response, h, h.owner, env!("CARGO_PKG_VERSION"))? {
+                wire::v5::Frame::Success {
+                    encoded,
+                    preview,
+                    preview_size,
+                    losses,
+                    ..
+                } => Ok((encoded, preview, preview_size, losses)),
+                wire::v5::Frame::Refused(error) => Err(error),
+            }
+        }
     };
-    let start = wire::RESPONSE_HEADER;
+    on_validated();
+    let (encoded, preview, preview_size, losses) = parts?;
+    let start = request.response_header();
     let end = start + encoded.len();
     let mut pixels = Vec::new();
     pixels

@@ -127,8 +127,15 @@ impl WebApp {
             return;
         }
         let result = (|| {
-            admit()?;
             let review = self.msp.review.as_mut().ok_or_else(stale)?;
+            admit_version(
+                review
+                    .prepared
+                    .as_ref()
+                    .ok_or_else(stale)?
+                    .header
+                    .protocol_version(),
+            )?;
             if self.msp_version != Version::RowRleV2 {
                 return Err(stale());
             }
