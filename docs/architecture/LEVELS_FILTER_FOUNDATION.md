@@ -162,6 +162,8 @@ The remaining gates are:
 2. A bounded exact builder, full-domain boundary controls, cancellation and
    output preservation, native/Wasm checks and quantified construction cost.
 3. Prepared point execution with admitted table lifetime and row application.
+   The [standalone ownership foundation](PREPARED_POINT_PROGRAMS.md) is qualified;
+   frozen-job program construction and integration into existing consumers remain.
 4. A catalog-capable persistence and automation boundary. PCND3/4 stay closed to
    tags 1 to 6; PCND5 retains its stored-Box invariant. Levels cannot silently
    enter either grammar. Future algorithm IDs, parameter framing and required
@@ -173,3 +175,8 @@ The remaining gates are:
 
 No catalog layout or future outer version is frozen by this numerical document.
 The wider Palette catalog, layer masks and layer styles remain separate work.
+
+[CI run 41157624974](https://github.com/replicraft/PaintCraft/actions/runs/41157624974)
+passes all seven jobs for numerical-foundation commit
+`7656928508dd6060eb17d1816e5268c143545783`. This does not promote the numerical
+foundation to an eighth editable filter or qualify subsequent integration changes.
