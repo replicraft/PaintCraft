@@ -8,6 +8,7 @@ fn worker_msp_variant_is_exact_web_studio_flat_copy_with_preflight() {
         paintcraft_formats::msp::web_export::EXPORT_VARIANT,
         paintcraft_formats::msp::web_export::v5::EXPORT_VARIANT,
         paintcraft_formats::msp::web_export::v6::EXPORT_VARIANT,
+        paintcraft_formats::msp::web_export::v7::EXPORT_VARIANT,
     ] {
         for frontend in [
             Frontend::Studio,
@@ -73,7 +74,7 @@ fn generic_msp1_keeps_its_old_route_and_misspelled_worker_variants_are_denied() 
         "web-msp2-row-rle-worker-v0",
         "web-msp2-row-rle-worker-v1",
         "web-msp2-row-rle-worker-v2",
-        "web-msp2-row-rle-worker-v7",
+        "web-msp2-row-rle-worker-v8",
         "web-dds-texture-worker-v5",
         "native-msp2-row-rle-v1",
         "web-dds-texture-worker-v1",

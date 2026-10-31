@@ -371,6 +371,7 @@ pub fn admission(request: Request<'_>) -> Decision {
                 crate::dds::web_export::EXPORT_VARIANT
                     | crate::dds::web_export::v5::EXPORT_VARIANT
                     | crate::dds::web_export::v6::EXPORT_VARIANT
+                    | crate::dds::web_export::v7::EXPORT_VARIANT
             )
         )
         && request.extension.is_some_and(|extension| {
@@ -388,6 +389,7 @@ pub fn admission(request: Request<'_>) -> Decision {
                 crate::msp::web_export::EXPORT_VARIANT
                     | crate::msp::web_export::v5::EXPORT_VARIANT
                     | crate::msp::web_export::v6::EXPORT_VARIANT
+                    | crate::msp::web_export::v7::EXPORT_VARIANT
             )
         )
         && request

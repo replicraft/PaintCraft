@@ -8,6 +8,7 @@ fn web_texture_gate_is_exact_and_requires_preflight() {
         paintcraft_formats::dds::web_export::EXPORT_VARIANT,
         paintcraft_formats::dds::web_export::v5::EXPORT_VARIANT,
         paintcraft_formats::dds::web_export::v6::EXPORT_VARIANT,
+        paintcraft_formats::dds::web_export::v7::EXPORT_VARIANT,
     ] {
         for family in Family::ALL {
             for frontend in [
@@ -75,7 +76,7 @@ fn unrelated_variants_refuse_while_absent_options_keep_the_legacy_route() {
         "native-dds-texture-v1",
         "web-dds-texture-worker-v1",
         "web-dds-texture-worker-v2",
-        "web-dds-texture-worker-v7",
+        "web-dds-texture-worker-v8",
         "web-msp2-row-rle-worker-v5",
         "dds-guessed",
     ] {
