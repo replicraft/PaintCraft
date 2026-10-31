@@ -1,3 +1,5 @@
+import * as ddsSpatial from '../src/lib/dds-spatial-worker-protocol.js';
+import * as mspSpatial from '../src/lib/msp-spatial-worker-protocol.js';
 // Execute the actual runtime source with only its Wasm imports substituted.
 // This exercises dispatch/copy caps, not real Wasm or browser qualification.
 
@@ -50,6 +52,8 @@ function runtime(extra = {}) {
 	};
 	vm.runInNewContext(source, {
 		self,
+		ddsSpatial,
+		mspSpatial,
 		Uint8Array,
 		ArrayBuffer,
 		RangeError,
@@ -60,6 +64,10 @@ function runtime(extra = {}) {
 		linear_memory_ceiling: () => LINEAR_MEMORY_BYTES,
 		application_version: () => '0.1.0',
 		dds_export_protocol_version: () => DDS_PROTOCOL_VERSION,
+		dds_spatial_export_protocol_version: () => 5,
+		msp_spatial_export_protocol_version: () => 5,
+		dds_spatial_export_request: execute('dds-spatial-export'),
+		msp_spatial_export_request: execute('msp-spatial-export'),
 		msp_export_protocol_version: () => MSP_PROTOCOL_VERSION,
 		tiff_page_protocol_version: () => 2,
 		decode_request: execute('decode'),
@@ -90,6 +98,8 @@ test('one shared runtime selects only the exact operation and transfers one resu
 	for (const [kind, header] of [
 		['decode', REQUEST_HEADER],
 		['dds-export', DDS_REQUEST_HEADER],
+		['dds-spatial-export', ddsSpatial.DDS_REQUEST_HEADER],
+		['msp-spatial-export', mspSpatial.MSP_REQUEST_HEADER],
 		['msp-export', MSP_REQUEST_HEADER],
 		['tiff-pages', TIFF_REQUEST_HEADER],
 	]) {
@@ -127,6 +137,16 @@ test('invalid operation, profile version, input and output caps cannot call anot
 	for (const [kind, header, max] of [
 		['decode', REQUEST_HEADER, INPUT_BYTES_MAX],
 		['dds-export', DDS_REQUEST_HEADER, DDS_SOURCE_MAX],
+		[
+			'dds-spatial-export',
+			ddsSpatial.DDS_REQUEST_HEADER,
+			ddsSpatial.DDS_SOURCE_MAX,
+		],
+		[
+			'msp-spatial-export',
+			mspSpatial.MSP_REQUEST_HEADER,
+			mspSpatial.MSP_SOURCE_MAX,
+		],
 		['msp-export', MSP_REQUEST_HEADER, MSP_SOURCE_MAX],
 		['tiff-pages', TIFF_REQUEST_HEADER, TIFF_SOURCE_MAX],
 	]) {
@@ -171,4 +191,20 @@ test('invalid operation, profile version, input and output caps cannot call anot
 		},
 	});
 	assert.equal(tiffOutput.messages[0].value.kind, 'failure');
+});
+
+test('spatial5 has independent exact version getters and never falls back to4', async () => {
+	for (const kind of ['dds', 'msp']) {
+		const r = runtime({
+			[`${kind}_spatial_export_protocol_version`]: () => 4,
+		});
+		await r.self.onmessage({
+			data: {
+				kind: `${kind}-spatial-export`,
+				bytes: new ArrayBuffer(321),
+			},
+		});
+		assert.equal(r.calls.length, 0);
+		assert.equal(r.messages[0].value.kind, 'failure');
+	}
 });

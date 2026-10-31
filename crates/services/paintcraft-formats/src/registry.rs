@@ -201,7 +201,7 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
             Some("ag-psd-csh-exact-i32")
         }
         Family::Tiff if raster_operation && operation.is_write() => Some("tiff-rgba8"),
-        Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1-v2-v3-v4"),
+        Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1-v2-v3-v4-v5"),
         Family::Png
         | Family::Jpeg
         | Family::Bmp
@@ -365,7 +365,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
-        && request.variant == Some(crate::dds::web_export::EXPORT_VARIANT)
+        && matches!(request.variant, Some(crate::dds::web_export::EXPORT_VARIANT | crate::dds::web_export::v5::EXPORT_VARIANT))
         && request.extension.is_some_and(|extension| {
             extension
                 .trim_start_matches('.')
@@ -375,7 +375,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
-        && request.variant == Some(crate::msp::web_export::EXPORT_VARIANT)
+        && matches!(request.variant, Some(crate::msp::web_export::EXPORT_VARIANT | crate::msp::web_export::v5::EXPORT_VARIANT))
         && request
             .extension
             .is_some_and(|value| value.trim_start_matches('.').eq_ignore_ascii_case("msp"));
