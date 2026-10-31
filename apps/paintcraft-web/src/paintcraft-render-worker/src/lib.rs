@@ -2,6 +2,7 @@
 //! Staging and each output patch are synchronous; cancellation is acknowledged
 //! between patches. Large sparse reduction may delay one patch (not a time cap).
 pub mod protocol;
+mod spatial;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 use paintcraft_commands::{Batch, FilterOp, FilterRef, LayerRef, Op};
@@ -9,7 +10,7 @@ use paintcraft_core::types::{
     Error, ErrorCode, Result,
     json::Value,
     policy::hex,
-    resources::{BudgetLease, SharedBudget},
+    resources::{AllocationClass, BudgetLease, BudgetScope, SharedBudget},
 };
 use paintcraft_document::Document;
 use paintcraft_formats::{export::filter_bake, pcnd};
@@ -28,6 +29,7 @@ struct Frame {
     pixels: Vec<u8>,
     column: u32,
     row: u32,
+    spatial: Option<spatial::NativeFrame>,
 }
 #[derive(Debug)]
 pub struct Service {
@@ -38,6 +40,7 @@ pub struct Service {
     frame: Option<Frame>,
     generation: Option<u64>,
     _lease: BudgetLease,
+    workspace: Option<BudgetScope>,
 }
 impl Service {
     pub fn open(bytes: &[u8], control: &str) -> Result<Self> {
@@ -50,6 +53,17 @@ impl Service {
         if hex(&Sha256::digest(bytes)) != digest(field(&source.value, "sourceSha256")?)? {
             return Err(stale());
         }
+        if source.spatial.is_none() && bytes.starts_with(b"PCND\x05\r\n\x1a") {
+            return Err(protocol::spatial::refused());
+        }
+        let workspace = source
+            .spatial
+            .map(|profile| {
+                SharedBudget::new(profile.bytes)
+                    .reserve_capacity(profile.bytes)
+                    .map(|reservation| reservation.scope(AllocationClass::SharedBudget))
+            })
+            .transpose()?;
         let metadata = SharedBudget::new(source.metadata_charge);
         // The protocol echoes profile payload length. PCND's reader allowance
         // includes the fixed source descriptor even for resolution-only sources.
@@ -85,6 +99,13 @@ impl Service {
             },
             &|| Ok(()),
         )?;
+        let count = protocol::spatial::stored(&base);
+        if source.spatial.is_some_and(|profile| profile.count != count) {
+            return Err(stale());
+        }
+        if source.spatial.is_none() && count != 0 {
+            return Err(protocol::spatial::refused());
+        }
         let resident = base.layers.values().try_fold(0u64, |n, l| {
             n.checked_add(
                 l.raster.resident_tiles() as u64
@@ -137,6 +158,7 @@ impl Service {
             frame: None,
             generation: None,
             _lease: lease,
+            workspace,
         })
     }
     pub fn context(&self) -> Value {
@@ -188,6 +210,9 @@ impl Service {
                 .get("descriptor")
                 .and_then(|descriptor| descriptor.get("kind"))
                 .and_then(Value::as_str);
+            if self.source.spatial.is_none() && kind == Some("box-blur-v1") {
+                return Err(protocol::spatial::refused());
+            }
             let schema = Batch::schema_for_operation_fields([(name, kind)]);
             let batch = Batch::from_value(&Value::object([
                 ("schema", Value::str(schema)),
@@ -232,6 +257,12 @@ impl Service {
             return Err(resource("Filter preview output exceeds4MP"));
         }
         let rect = request.region();
+        let native =
+            if let (Some(profile), Some(scope)) = (self.source.spatial, self.workspace.clone()) {
+                spatial::NativeFrame::prepare(doc, request, profile, scope, render)?
+            } else {
+                None
+            };
         let binding = Value::object([
             (
                 "kind",
@@ -276,6 +307,7 @@ impl Service {
                 pixels,
                 column: 0,
                 row: 0,
+                spatial: native,
             });
         }
         Ok(binding)
@@ -286,6 +318,12 @@ impl Service {
             .frame
             .as_mut()
             .ok_or_else(|| bad("No filter frame active"))?;
+        if let Some(mut native) = f.spatial.take() {
+            let doc = self.candidate.as_ref().unwrap_or(&self.base);
+            let result = native.step(doc, f);
+            f.spatial = Some(native);
+            return result;
+        }
         let [width, height] = f.request.size();
         if f.row >= height {
             return Ok(true);

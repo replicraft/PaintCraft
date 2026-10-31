@@ -4,6 +4,7 @@ use paintcraft_core::types::{
     json::{self, Value},
 };
 use uuid::Uuid;
+pub mod spatial;
 pub const SOURCE_BYTES_MAX: u64 = 64 << 20;
 pub const LINEAR_MEMORY_BYTES: u64 = 256 << 20;
 pub const OUTPUT_PIXELS_MAX: u64 = 4_194_304;
@@ -87,28 +88,30 @@ pub struct Source {
     pub metadata_charge: u64,
     pub masks: paintcraft_formats::pcnd::CoverageFacts,
     pub quote: u64,
+    pub spatial: Option<spatial::SpatialProfile>,
 }
 impl Source {
     pub fn parse(value: Value) -> Result<Self> {
-        object(
-            &value,
-            &[
-                "owner",
-                "draft",
-                "document",
-                "sourceSha256",
-                "size",
-                "layers",
-                "residentBytes",
-                "metadataBytes",
-                "metadataCharge",
-                "filterDigest",
-                "maskCount",
-                "maskBands",
-                "maskRuns",
-                "maskDecodeBytes",
-            ],
-        )?;
+        let mut names = vec![
+            "owner",
+            "draft",
+            "document",
+            "sourceSha256",
+            "size",
+            "layers",
+            "residentBytes",
+            "metadataBytes",
+            "metadataCharge",
+            "filterDigest",
+            "maskCount",
+            "maskBands",
+            "maskRuns",
+            "maskDecodeBytes",
+        ];
+        if value.get("protocol").is_some() {
+            names.extend(["protocol", "spatialCount", "workspaceBytes", "workLimit"]);
+        }
+        object(&value, &names)?;
         let owner = field(&value, "owner")?;
         object(owner, &["session", "state", "epoch", "frontend"])?;
         uuid(field(owner, "session")?)?;
@@ -138,6 +141,7 @@ impl Source {
         if layers > paintcraft_document::LAYER_COUNT_MAX {
             return Err(resource("Layer count"));
         }
+        let spatial = spatial::SpatialProfile::parse(&value, layers)?;
         let resident = integer(field(&value, "residentBytes")?)?;
         if !resident.is_multiple_of(paintcraft_raster::RasterLayer::TILE_BYTES as u64) {
             return Err(bad("Resident allowance must price full padded tiles"));
@@ -171,7 +175,7 @@ impl Source {
         // output/transfer, and existing aggregate metadata/parser allowance.
         let per_layer = std::mem::size_of::<paintcraft_document::Layer>()
             + 256 * std::mem::size_of::<paintcraft_document::FilterInstance>();
-        let quote = (layers as u64)
+        let mut quote = (layers as u64)
             .checked_mul(per_layer as u64)
             .and_then(|n| n.checked_mul(3))
             .and_then(|n| n.checked_add(resident))
@@ -186,6 +190,11 @@ impl Source {
                 )
             })
             .ok_or_else(|| resource("Filter preview workspace overflow"))?;
+        if let Some(profile) = spatial {
+            quote = quote
+                .checked_add(profile.extra_quote()?)
+                .ok_or_else(|| resource("Spatial workspace quote overflow"))?;
+        }
         // Leave a declared 32MiB for Wasm runtime/stack/allocator behavior.
         // Logical payload admission is not interception of allocator or RSS.
         if quote > LINEAR_MEMORY_BYTES - (32 << 20) {
@@ -204,6 +213,7 @@ impl Source {
             metadata_charge,
             masks,
             quote,
+            spatial,
         })
     }
 }
