@@ -21,6 +21,7 @@ impl Descriptor {
             ],
             Some("exposure-srgb-v1") => &["kind", "stops_hundredths"],
             Some("curves-rgb-v1") => &["kind", "outputs"],
+            Some("vibrance-rgb-v1") => &["kind", "amount_hundredths"],
             _ => return Self::from_value(value),
         };
         let bad = || {
@@ -41,6 +42,9 @@ impl Descriptor {
                 .ok_or_else(bad)
         };
         Ok(match kind {
+            Some("vibrance-rgb-v1") => {
+                Self::VibranceRgbV1(VibranceRgbV1::new(parameter("amount_hundredths")?)?)
+            }
             Some("curves-rgb-v1") => {
                 let values = object
                     .get("outputs")
@@ -81,3 +85,7 @@ mod exposure_tests;
 #[cfg(test)]
 #[path = "catalog_value/curves_tests.rs"]
 mod curves_tests;
+
+#[cfg(test)]
+#[path = "catalog_value/vibrance_tests.rs"]
+mod vibrance_tests;

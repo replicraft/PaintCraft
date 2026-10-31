@@ -57,6 +57,7 @@ pub enum Descriptor {
     LevelsRgbV1(LevelsRgbV1),
     ExposureSrgbV1(ExposureSrgbV1),
     CurvesRgbV1(CurvesRgbV1),
+    VibranceRgbV1(VibranceRgbV1),
 }
 impl Descriptor {
     /// Spatial intentions require a finite source and neighborhood admission.
@@ -72,14 +73,18 @@ impl Descriptor {
             | Self::SolarizeRgbV1
             | Self::LevelsRgbV1(_)
             | Self::ExposureSrgbV1(_)
-            | Self::CurvesRgbV1(_) => false,
+            | Self::CurvesRgbV1(_)
+            | Self::VibranceRgbV1(_) => false,
         }
     }
     /// Requires the explicit catalog constructor/persistence boundary. The old
     /// seven-profile parser and container registries do not gain this capability.
     pub const fn is_catalog_only(self) -> bool {
         match self {
-            Self::LevelsRgbV1(_) | Self::ExposureSrgbV1(_) | Self::CurvesRgbV1(_) => true,
+            Self::LevelsRgbV1(_)
+            | Self::ExposureSrgbV1(_)
+            | Self::CurvesRgbV1(_)
+            | Self::VibranceRgbV1(_) => true,
             Self::InvertRgbV1
             | Self::BrightnessContrastV1(_)
             | Self::BlackWhiteRgbV1(_)
@@ -101,6 +106,7 @@ impl Descriptor {
             Self::LevelsRgbV1(_) => "levels-rgb-v1",
             Self::ExposureSrgbV1(_) => "exposure-srgb-v1",
             Self::CurvesRgbV1(_) => "curves-rgb-v1",
+            Self::VibranceRgbV1(_) => "vibrance-rgb-v1",
         }
     }
     /// Canonical semantic bytes for the finite registered numerical profiles.
@@ -140,6 +146,10 @@ impl Descriptor {
                 6
             }
             Self::ExposureSrgbV1(p) => {
+                bytes[..2].copy_from_slice(&p.semantic_bytes());
+                2
+            }
+            Self::VibranceRgbV1(p) => {
                 bytes[..2].copy_from_slice(&p.semantic_bytes());
                 2
             }
@@ -194,6 +204,13 @@ impl Descriptor {
                 (
                     "stops_hundredths",
                     Value::Int(i64::from(p.stops_hundredths())),
+                ),
+            ]),
+            Self::VibranceRgbV1(p) => Value::object([
+                ("kind", Value::str(self.id())),
+                (
+                    "amount_hundredths",
+                    Value::Int(i64::from(p.amount_hundredths())),
                 ),
             ]),
             Self::CurvesRgbV1(p) => Value::object([
