@@ -218,3 +218,6 @@ mod curves_tests;
 
 #[path = "filter_tests/vibrance_tests.rs"]
 mod vibrance_tests;
+
+#[path = "filter_tests/hue_saturation_tests.rs"]
+mod hue_saturation_tests;
