@@ -239,7 +239,10 @@ impl Batch {
             .into_iter()
             .map(|(name, kind)| {
                 if matches!(name, "filter.add" | "filter.update")
-                    && matches!(kind, Some("levels-rgb-v1" | "exposure-srgb-v1"))
+                    && matches!(
+                        kind,
+                        Some("levels-rgb-v1" | "exposure-srgb-v1" | "curves-rgb-v1")
+                    )
                 {
                     6
                 } else if matches!(name, "filter.add" | "filter.update")
