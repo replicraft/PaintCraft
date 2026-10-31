@@ -1,0 +1,20 @@
+{
+  "schema": "paintcraft.independent-ordered-vibrance-portable/v1",
+  "case_count": 12,
+  "oracle_sha256": "011b9548440ebc5ceddf1403438ba0f50d5b94fb888864671a16f2dabaf8ea2b",
+  "reference_sources": [
+    {
+      "path": "crates/services/paintcraft-effects/tests/vibrance-fixtures/generate.py",
+      "sha256": "c77dd70bbea25ea7eacad1db4bceaedb07478ac9272af0993c29c6046c09f30d"
+    },
+    {
+      "path": "crates/services/paintcraft-effects/tests/curves-fixtures/generate.py",
+      "sha256": "9f5f3c383af6257fc5099062f30154556b6614e5e7649dd1aeb660cd2727160e"
+    },
+    {
+      "path": "crates/services/paintcraft-effects/tests/box-fixtures/generate.py",
+      "sha256": "bc5055214ef481059285939c2f6c5286e1b9dc664811b5940f7370ab9be33e35"
+    }
+  ],
+  "note": "Original oracle historical provenance labels retained; no ignored source dependency"
+}
