@@ -52,6 +52,9 @@ fn assessment(sha: &str, m: &pcnd::Header, mode: &str, reasons: &[String]) -> Va
         (true, 2) => "paintcraft.native/binary2-document2-source-metadata1",
         (true, 3) => "paintcraft.native/binary3-document3-point-filters1",
         (true, 4) => "paintcraft.native/binary4-document4-filter-masks1",
+        (true, 5) => {
+            "paintcraft.native/binary5-document5-point-filters1-filter-masks1-spatial-filters1"
+        }
         _ => "paintcraft.native/unrecognized",
     };
     Value::object([

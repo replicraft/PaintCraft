@@ -1,6 +1,6 @@
 use super::super::format_profile;
 use super::super::{
-    BATCH_V4_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, export, image,
+    BATCH_V5_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, export, image,
     new_document, read_captured, read_conversion_source, save,
 };
 use super::{
@@ -326,7 +326,7 @@ impl PaintingServer {
         description = "Get the engine batch schema, including all brushes, shapes, layer operations, editable filters and persistent coverage masks, flood fill, text, selections and transforms."
     )]
     async fn get_batch_schema(&self) -> CallToolResult {
-        CallToolResult::success(vec![ContentBlock::text(BATCH_V4_SCHEMA)])
+        CallToolResult::success(vec![ContentBlock::text(BATCH_V5_SCHEMA)])
     }
     #[tool(
         description = "Apply engine operations as one atomic, undoable batch. Use get_batch_schema for operation definitions. The server captures the current base ticket; failures publish no edits."

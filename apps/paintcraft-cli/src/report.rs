@@ -19,7 +19,7 @@ pub fn error_value(e: &Error) -> Value {
     Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect())
 }
 
-/// File-command/v3 carries masked result/v3; other engine profiles retain v1/v2.
+/// File-command/v4 carries spatial result/v4; older results retain their exact profile.
 /// The engine result and external file receipt are
 /// reported independently.
 pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_code: u8) -> Value {
@@ -30,7 +30,9 @@ pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_
     Value::object([
         (
             "schema",
-            Value::str(if engine_schema == Some("paintcraft.result/v3") {
+            Value::str(if engine_schema == Some("paintcraft.result/v4") {
+                "paintcraft.file-command/v4"
+            } else if engine_schema == Some("paintcraft.result/v3") {
                 "paintcraft.file-command/v3"
             } else if engine_schema == Some("paintcraft.result/v2") {
                 "paintcraft.file-command/v2"

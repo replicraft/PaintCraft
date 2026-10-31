@@ -439,7 +439,20 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "fresh-write",
                     "paintcraft-formats",
                 ),
+                row(
+                    "pcnd.spatial-filters.read",
+                    "paintcraft.native/binary5-document5-point-filters1-filter-masks1-spatial-filters1",
+                    "read",
+                    "paintcraft-formats",
+                ),
+                row(
+                    "pcnd.spatial-filters.write",
+                    "paintcraft.native/binary5-document5-point-filters1-filter-masks1-spatial-filters1",
+                    "fresh-write",
+                    "paintcraft-formats",
+                ),
                 row("batch.v1.edit", POLICY, "edit", "paintcraft-editor"),
+                row("batch.v5.edit", POLICY, "edit", "paintcraft-editor"),
                 row("flat.render", POLICY, "render", "paintcraft-render"),
                 row(
                     "image.rgba8.paste-layer",
