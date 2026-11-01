@@ -6,6 +6,7 @@ use super::*;
 pub enum RegistryContract {
     Legacy1 = 1,
     ScopedNoise2 = 2,
+    LayerAppearance3 = 3,
 }
 impl RegistryContract {
     pub const fn revision(self) -> u16 {
@@ -18,6 +19,7 @@ impl TryFrom<u16> for RegistryContract {
         match value {
             1 => Ok(Self::Legacy1),
             2 => Ok(Self::ScopedNoise2),
+            3 => Ok(Self::LayerAppearance3),
             _ => Err(unsupported(
                 "Prepared worker registry contract is unavailable",
             )),
@@ -44,9 +46,14 @@ impl Registration {
             (RegistryContract::Legacy1, Execution::DirectNoise) => Err(unsupported(
                 "Noise requires scoped worker registry contract 2",
             )),
-            (RegistryContract::ScopedNoise2, Execution::DirectNoise)
+            (
+                RegistryContract::ScopedNoise2 | RegistryContract::LayerAppearance3,
+                Execution::DirectNoise,
+            )
             | (
-                RegistryContract::Legacy1 | RegistryContract::ScopedNoise2,
+                RegistryContract::Legacy1
+                | RegistryContract::ScopedNoise2
+                | RegistryContract::LayerAppearance3,
                 Execution::DirectPoint
                 | Execution::RegionBox
                 | Execution::PreparedLevels

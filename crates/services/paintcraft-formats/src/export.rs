@@ -8,6 +8,7 @@ use crate::image::{self, ImageFormat};
 pub mod dds;
 pub mod filter_bake;
 pub mod jxr;
+pub mod layer_appearance;
 pub mod metadata_policy;
 pub mod noise_workload;
 pub mod prepared_capabilities;

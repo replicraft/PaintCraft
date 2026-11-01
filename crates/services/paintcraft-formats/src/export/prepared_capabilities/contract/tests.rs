@@ -30,7 +30,7 @@ fn every_known_pair_has_explicit_class_and_contract_resolution() {
             entry
         ));
     }
-    for revision in [0, 3, u16::MAX] {
+    for revision in [0, 4, u16::MAX] {
         assert_eq!(
             RegistryContract::try_from(revision).unwrap_err().code,
             ErrorCode::CapabilityUnsupported

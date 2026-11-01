@@ -1,0 +1,62 @@
+{
+  "status": "SOURCE_ONLY_POLICY_AND_FRAMING_NOT_RUNTIME_TESTS",
+  "abi": [
+    {
+      "compiled": "wasm32-v1",
+      "requested": "wasm32-v1",
+      "accepted": true,
+      "frameHex": "7061696e7463726166742e776f726b65722d636f7665726167652d626f756e64732f76310000097761736d33322d7631000100000000",
+      "sha256": "872a7d0421ef9d76ab2d9c3f5248faa88a4058e08ddc72a65221cc74cb383b86"
+    },
+    {
+      "compiled": "wasm32-v1",
+      "requested": "native64-v1",
+      "accepted": false,
+      "frameHex": "7061696e7463726166742e776f726b65722d636f7665726167652d626f756e64732f76310000097761736d33322d7631000100000000",
+      "sha256": "872a7d0421ef9d76ab2d9c3f5248faa88a4058e08ddc72a65221cc74cb383b86"
+    },
+    {
+      "compiled": "native64-v1",
+      "requested": "wasm32-v1",
+      "accepted": false,
+      "frameHex": "7061696e7463726166742e776f726b65722d636f7665726167652d626f756e64732f763100000b6e617469766536342d7631000100000000",
+      "sha256": "e0086bfc89d748908612984db3b0328ffa5817a70efa4ad38439405e57e11feb"
+    },
+    {
+      "compiled": "native64-v1",
+      "requested": "native64-v1",
+      "accepted": true,
+      "frameHex": "7061696e7463726166742e776f726b65722d636f7665726167652d626f756e64732f763100000b6e617469766536342d7631000100000000",
+      "sha256": "e0086bfc89d748908612984db3b0328ffa5817a70efa4ad38439405e57e11feb"
+    }
+  ],
+  "prefix": [
+    {
+      "originalBaseMax": 100,
+      "sealedMainSpent": 30,
+      "openBaseWorkLimit": 70,
+      "workerCharge": 20,
+      "admitted": true,
+      "cumulativeWorkerUsed": 20,
+      "combinedUsed": 50
+    },
+    {
+      "originalBaseMax": 100,
+      "sealedMainSpent": 30,
+      "openBaseWorkLimit": 70,
+      "workerCharge": 40,
+      "admitted": true,
+      "cumulativeWorkerUsed": 60,
+      "combinedUsed": 90
+    },
+    {
+      "originalBaseMax": 100,
+      "sealedMainSpent": 30,
+      "openBaseWorkLimit": 70,
+      "workerCharge": 11,
+      "admitted": false,
+      "cumulativeWorkerUsed": 60,
+      "combinedUsed": 90
+    }
+  ]
+}
