@@ -184,7 +184,10 @@ export function createLayerAppearanceRuntime({
 						.completed
 				)
 					poisoned = true;
-				ffi(() => service.retire());
+				// A bad frame/digest/post must revoke a provisional Rust success.
+				if (rustGeneration === ticket.generation)
+					cancelRust(ticket.generation);
+				else ffi(() => service.retire());
 				rustGeneration = null;
 				if (current === ticket) current = null;
 				if (copyPending === ticket) copyPending = null;
@@ -316,6 +319,9 @@ export function createLayerAppearanceRuntime({
 							},
 							[bytes.buffer],
 						);
+						// Successful transfer owns the escaped bytes; release private codec/frame storage.
+						ffi(() => service.retire());
+						rustGeneration = null;
 						ticket.responded = true;
 					} catch (error) {
 						cleanupTicket(ticket, error);
@@ -335,6 +341,9 @@ export function createLayerAppearanceRuntime({
 				post({ ...ticket.binding, id: ticket.id, pixels }, [
 					pixels.buffer,
 				]);
+				// Retire private storage only after genuine successful transfer.
+				ffi(() => service.retire());
+				rustGeneration = null;
 				ticket.responded = true;
 				current = null;
 			}

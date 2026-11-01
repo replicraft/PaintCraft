@@ -24,6 +24,7 @@ export function deferred() {
 export async function fixture() {
 	const admission = {
 		mode: 'base',
+		workAuthority: 'standalone-view-jobs',
 		workspaceBytes: '67108864',
 		baseWorkLimit: '268435456',
 		noiseWorkLimit: '0',

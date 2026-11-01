@@ -330,7 +330,12 @@ test('malformed actual frame extent fails privately rather than posting pixels',
 		false,
 	);
 	assert.equal(h.events.find((e) => e.kind === 'error').completed, false);
-	assert.equal(h.calls.includes('retire'), true);
+	assert.equal(
+		h.calls.some(
+			(c) => Array.isArray(c) && c[0] === 'cancel' && c[1] === '1',
+		),
+		true,
+	);
 });
 
 test('bad async union hash cannot retire prior accepted Rust work', async (t) => {
@@ -352,5 +357,80 @@ test('bad async union hash cannot retire prior accepted Rust work', async (t) =>
 	assert.equal(h.calls.includes('retire'), false);
 	await h.until(() =>
 		h.events.some((e) => e.kind === 'frame' && e.generation === '1'),
+	);
+});
+
+// Metadata/FFI mocks only: proves dispatcher does not cancel genuine delivered success.
+test('same-view next generation preserves completed frame and encoded-copy success', async (t) => {
+	for (const copy of [false, true]) {
+		const options = {},
+			h = await harness(options);
+		t.after(() => close(h));
+		await h.start();
+		if (copy) {
+			const output = await visualOutput();
+			options.copySha = await sha(
+				new TextEncoder().encode(encodeProgram(output, 4096)),
+			);
+			await h.send('copy-prepare', {
+				request: await h.register(1),
+				output,
+			});
+			const admitted = h.events.find((e) => e.kind === 'copy-admitted');
+			await h.send('copy-input', {
+				outputSha256: admitted.outputSha256,
+				mask: new ArrayBuffer(0),
+			});
+			await h.until(() =>
+				h.events.some((e) => e.kind === 'encoded-copy'),
+			);
+		} else {
+			await h.send('update', { request: await h.register(1) });
+			await h.until(() =>
+				h.events.some(
+					(e) => e.kind === 'frame' && e.generation === '1',
+				),
+			);
+		}
+		await h.send('update', { request: await h.register(2) });
+		await h.until(() =>
+			h.events.some((e) => e.kind === 'frame' && e.generation === '2'),
+		);
+		assert.equal(
+			h.calls.some((c) => Array.isArray(c) && c[0] === 'cancel'),
+			false,
+		);
+	}
+});
+
+test('failed encoded digest cancels accepted Rust generation before error instead of preserving success', async (t) => {
+	const options = {
+		digestEncoded: async () => {
+			throw new Error('mock digest failure');
+		},
+	};
+	const h = await harness(options);
+	t.after(() => close(h));
+	await h.start();
+	const output = await visualOutput();
+	options.copySha = await sha(
+		new TextEncoder().encode(encodeProgram(output, 4096)),
+	);
+	await h.send('copy-prepare', { request: await h.register(1), output });
+	const admitted = h.events.find((e) => e.kind === 'copy-admitted');
+	await h.send('copy-input', {
+		outputSha256: admitted.outputSha256,
+		mask: new ArrayBuffer(0),
+	});
+	await h.until(() => h.events.some((e) => e.kind === 'error'));
+	assert.equal(
+		h.events.some((e) => e.kind === 'encoded-copy'),
+		false,
+	);
+	assert.equal(
+		h.calls.some(
+			(c) => Array.isArray(c) && c[0] === 'cancel' && c[1] === '1',
+		),
+		true,
 	);
 });
