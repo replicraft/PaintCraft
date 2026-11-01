@@ -39,6 +39,11 @@ pub(crate) fn current() -> Option<WorkspaceAdmission> {
             .map(|(admission, _)| admission.clone())
     })
 }
+/// Retain the actual caller before asynchronous submission. Absence returns
+/// None without constructing a fallback counter, realm or execution grant.
+pub fn capture_current_workspace() -> Option<WorkspaceAdmission> {
+    current()
+}
 /// Capture an installed caller for work that must survive synchronous scope
 /// exit. The fallback is constructed only when no caller exists. This retains
 /// the selected realm, cumulative counter and frozen program owner, tightens
@@ -271,5 +276,28 @@ mod tests {
         assert!(spare_budget.usage().peak > 0);
         assert_eq!(spare_budget.usage().reserved, 0);
         assert!(current().is_none());
+    }
+}
+
+#[cfg(test)]
+mod source7_capture_tests {
+    use super::*;
+    use paintcraft_core::types::resources::{AllocationClass, SharedBudget};
+    #[test]
+    fn optional_capture_retains_actual_owner_without_fallback_or_counter_reset() {
+        assert!(capture_current_workspace().is_none());
+        let budget = SharedBudget::new(4096);
+        let parent = WorkspaceAdmission::new(budget.scope(AllocationClass::SharedBudget), 128, 11);
+        parent.reserve_work(3).unwrap();
+        let captured =
+            with_workspace(parent.clone(), || Ok(capture_current_workspace().unwrap())).unwrap();
+        assert!(capture_current_workspace().is_none());
+        assert!(captured.same_job(&parent));
+        captured.reserve_work(8).unwrap();
+        assert_eq!(parent.work_used(), 11);
+        assert!(captured.reserve_work(1).is_err());
+        let foreign = WorkspaceAdmission::new(parent.scope().clone(), 128, 11);
+        assert!(!captured.same_job(&foreign));
+        assert_eq!(budget.usage().reserved, 0);
     }
 }

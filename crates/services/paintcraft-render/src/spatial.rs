@@ -8,7 +8,10 @@ mod context;
 mod plan;
 mod tiles;
 mod workspace;
-pub use context::{capture_workspace_or_current, with_workspace, with_workspace_or_current};
+pub use context::{
+    capture_current_workspace, capture_workspace_or_current, with_workspace,
+    with_workspace_or_current,
+};
 pub(crate) use context::{captured, current};
 pub use plan::{LayerAppearancePlan, WorkspaceQuote};
 pub use tiles::{TiledQuote, quote_direct_work, quote_layer};
@@ -106,6 +109,10 @@ impl WorkspaceAdmission {
     pub(crate) fn with_byte_limit(mut self, bytes: u64) -> Self {
         self.bytes_limit = self.bytes_limit.min(bytes);
         self
+    }
+    /// Same cumulative work owner, independent of tightened child ceilings.
+    pub fn same_job(&self, other: &Self) -> bool {
+        self.same_work_owner(other)
     }
     pub(crate) fn same_work_owner(&self, other: &Self) -> bool {
         std::sync::Arc::ptr_eq(&self.work_used, &other.work_used)

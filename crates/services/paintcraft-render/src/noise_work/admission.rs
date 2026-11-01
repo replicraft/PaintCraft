@@ -196,6 +196,11 @@ impl NoiseAdmission {
             noise: 0,
         })
     }
+    /// Consume a bounded remote child grant on this SAME paired counter once.
+    /// This only debits; it does not construct, refund or reset an authority.
+    pub fn reserve_transferred_work(&self, work: WorkComponents) -> Result<()> {
+        self.reserve_components(work)
+    }
     pub(crate) fn reserve_components(&self, delta: WorkComponents) -> Result<()> {
         // All combined operations lock Noise BEFORE base; never reverse that order.
         let mut noise = self.counter.used.lock().unwrap_or_else(|e| e.into_inner());
@@ -210,4 +215,51 @@ impl NoiseAdmission {
 #[cfg(test)]
 pub(super) fn counter_payload_bytes() -> u64 {
     std::mem::size_of::<Counter>() as u64
+}
+
+#[cfg(test)]
+mod source7_transfer_tests {
+    use super::*;
+    use paintcraft_core::types::resources::{AllocationClass, SharedBudget};
+    #[test]
+    fn transferred_pair_is_atomic_and_cannot_be_copied_from_remaining_limits() {
+        let budget = SharedBudget::new(4096);
+        let parent = NoiseAdmission::new_root(
+            budget.scope(AllocationClass::SharedBudget),
+            NoiseJobPolicy::BrowserV1,
+            NoiseLimits {
+                bytes: 4096,
+                base_work: 11,
+                noise_work: 17,
+            },
+        )
+        .unwrap();
+        parent.reserve_base_work(3).unwrap();
+        let copy = parent.clone();
+        parent
+            .reserve_transferred_work(WorkComponents { base: 8, noise: 17 })
+            .unwrap();
+        assert_eq!(
+            parent.used().unwrap(),
+            WorkComponents {
+                base: 11,
+                noise: 17
+            }
+        );
+        assert!(
+            copy.reserve_transferred_work(WorkComponents { base: 1, noise: 0 })
+                .is_err()
+        );
+        assert!(
+            copy.reserve_transferred_work(WorkComponents { base: 0, noise: 1 })
+                .is_err()
+        );
+        assert_eq!(
+            parent.used().unwrap(),
+            WorkComponents {
+                base: 11,
+                noise: 17
+            }
+        );
+    }
 }
