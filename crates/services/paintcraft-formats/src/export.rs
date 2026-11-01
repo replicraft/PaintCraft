@@ -430,3 +430,8 @@ mod tests {
         );
     }
 }
+
+mod noise_contexts;
+pub use noise_contexts::{
+    NoiseContextControlQuote, SourceNoiseProgramContext, SourceNoiseRegionContext,
+};
