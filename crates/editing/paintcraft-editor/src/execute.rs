@@ -12,6 +12,7 @@ mod staged;
 pub use filters::PublishedAliases as FilterAliases;
 mod layers;
 mod mask;
+pub mod metadata_clone;
 mod paint;
 mod path;
 mod planning;
