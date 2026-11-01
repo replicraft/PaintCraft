@@ -197,7 +197,9 @@ pub(super) fn prepare_legacy_programs(
     check()?;
     Ok(admission.with_programs(Arc::new(job)))
 }
-pub(crate) fn validate_layer_programs(
+/// Validate existing caller-bound programs without compiling or allocating.
+/// This preserves the existing validation callbacks and grants no workspace.
+pub fn validate_layer_programs(
     layer: &Layer,
     admission: &WorkspaceAdmission,
     check: &dyn Fn() -> Result<()>,

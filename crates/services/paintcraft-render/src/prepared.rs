@@ -18,7 +18,7 @@ pub use curves_job::PreparedCurvesJob;
 pub use exposure::{ExposureQuote, PreparedExposure, quote_exposure};
 pub use point_job::PreparedPointJob;
 pub use programs::DocumentProgramsQuote;
-pub(crate) use programs::validate_layer_programs;
+pub use programs::validate_layer_programs;
 mod compiler;
 mod document;
 pub(crate) use document::validate_layer_levels;
