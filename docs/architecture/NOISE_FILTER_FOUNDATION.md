@@ -295,6 +295,37 @@ document-navigation and flat-output changes, which need fresh browser regression
 Ordinary browser copy routes and Export8 remain open. No GPU Noise kernel or
 upstream floating-point byte parity is claimed.
 
+The bounded PNG/JPEG/BMP adapter subsequently passes eleven actual production
+Wasm FFI cases, including independent decoding, malformed selection retirement,
+one-shot delivery, cancellation/reuse and paired-budget refusal. Its receipt is
+`docs/validation/noise-flat-output-browser/final-freeze.json`, SHA256
+`441504e7ed1a0a2abf6406d992ea6a2793d7ba1fba5c9b55f5181723d9f6b870`.
+Actual Main attempt 95102 additionally passes all six positive delivery paths:
+three downloads, the decoded print image, and whole/selected visible clipboard
+copies with real OS clipboard readback. Only the OS printer invocation is mocked.
+That attempt then fails a delayed-publication check and is retained as partial
+evidence, not a passing suite: an obsolete job forwards cancellation on every
+repaint, while the observer also incorrectly requires the latest cancel ACK.
+
+Main cancellation now shares a once-only guard across cloned handles. Image
+color picking with stored Noise also uses the existing single admitted worker,
+requesting a level-zero raw ROI from the complete source document. It preserves
+source coordinates and spatial-filter halos, averages straight RGBA with the
+existing half-up rule, and checks current UI colors/options as well as tool and
+document ownership before publication. Layer/raw and older-profile sampling keep
+their existing paths. Superseded samples wait for acknowledged close; they do not
+publish into the display cache or document history.
+
+The combined changes pass all 431 web Rust tests (three existing ignores), strict
+native all-target and Wasm checks, with all 3,297 inputs unchanged:
+`docs/validation/noise-picker-native/attempt-1/final.json`. The fresh production
+build also passes, retaining 53 artifacts:
+`docs/validation/noise-picker-production/attempt-1/final.json`, SHA256
+`1e0386de358994953813d99797ef095c5d26d7dea1e32a4248a20f60ee552c3c`.
+Its Main Wasm is new; codec and render Worker bytes match the preceding build.
+Actual browser replay of the fix and the new picker remains pending. These checks
+do not establish Export8, browser flattening or other specialty-copy support.
+
 Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
 background job; retained preview handles keep their source reservation after
 cancellation or source replacement. The full App suite passes 772 tests with 29

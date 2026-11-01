@@ -21,7 +21,11 @@ asset preparation/encoding also pass headless checks. The production web build
 passes. Its frozen Studio browser checkpoint passes 35 semantic checks, including
 real brush/text previews, stack changes, persistence and delayed-response fences;
 subsequent navigation/output changes need fresh regression. Remaining browser
-copy routes and Export8 are still under qualification. The fully qualified cross-frontend
+copy routes and Export8 are still under qualification. Six positive Main output
+paths now pass on a frozen browser checkpoint, but its cancellation tests exposed
+repeated cancel forwarding. A once-only fix and worker-backed Image color picker
+pass 431 web Rust tests and native/Wasm strict checks; the rebuilt production app
+still needs actual browser replay. The fully qualified cross-frontend
 baseline above remains twelve. No GPU Noise kernel or upstream floating-point
 byte parity is claimed. The foundation document records exact local receipts,
 finite measured latency and remaining boundaries.
