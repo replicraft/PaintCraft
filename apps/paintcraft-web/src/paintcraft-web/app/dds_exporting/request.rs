@@ -8,8 +8,39 @@ pub(super) enum Request {
     V5(wire::v5::Header),
     V6(wire::v6::Header),
     V7(wire::v7::Header),
+    V8(wire::v8::Header),
 }
 impl Request {
+    #[cfg(any(target_arch = "wasm32", test))]
+    pub(super) fn capture_plan(
+        plan: &Plan,
+        source: &[u8],
+        owner: Owner,
+        nonce: uuid::Uuid,
+    ) -> Result<Self> {
+        match plan {
+            Plan::Legacy(p) => Self::capture(p, source, owner, nonce),
+            Plan::Noise(p) => Ok(Self::V8(wire::v8::Header::capture(
+                p, source, owner, nonce,
+            )?)),
+        }
+    }
+    pub(super) fn matches_captured(&self, plan: &Plan) -> bool {
+        match (self, plan) {
+            (Self::V8(h), Plan::Noise(p)) => {
+                h.workload == p.workload()
+                    && h.metadata == p.metadata_context()
+                    && h.masks == p.mask_context()
+                    && h.filter_digest == p.filter_digest()
+                    && h.bake_intent == p.bake_intent()
+                    && h.settings == p.settings()
+                    && h.size == p.size()
+                    && p.matches_context(h)
+            }
+            (_, Plan::Legacy(p)) => self.matches_plan(p),
+            _ => false,
+        }
+    }
     #[cfg(any(target_arch = "wasm32", test))]
     pub(super) fn capture(
         plan: &wire::SourcePlan,
@@ -38,6 +69,7 @@ impl Request {
             Self::V5(h) => h.encode().to_vec(),
             Self::V6(h) => h.encode().to_vec(),
             Self::V7(h) => h.encode().to_vec(),
+            Self::V8(h) => h.encode().expect("validated DDS8 test header").to_vec(),
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -47,6 +79,7 @@ impl Request {
             Self::V5(h) => wire::v5::Header::decode(bytes)? == *h,
             Self::V6(h) => wire::v6::Header::decode(bytes)? == *h,
             Self::V7(h) => wire::v7::Header::decode(bytes)? == *h,
+            Self::V8(h) => wire::v8::Header::decode(bytes)? == *h,
         };
         if !equal {
             return Err(failed("Request echo differs from captured source/options"));
@@ -59,6 +92,7 @@ impl Request {
             Self::V5(_) => 5,
             Self::V6(_) => 6,
             Self::V7(_) => 7,
+            Self::V8(_) => 8,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -68,6 +102,7 @@ impl Request {
             Self::V5(_) => wire::v5::REQUEST_HEADER,
             Self::V6(_) => wire::v6::REQUEST_HEADER,
             Self::V7(_) => wire::v7::REQUEST_HEADER,
+            Self::V8(_) => wire::v8::REQUEST_HEADER,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -77,6 +112,7 @@ impl Request {
             Self::V5(_) => wire::v5::RESPONSE_HEADER,
             Self::V6(_) => wire::v6::RESPONSE_HEADER,
             Self::V7(_) => wire::v7::RESPONSE_HEADER,
+            Self::V8(_) => wire::v8::RESPONSE_HEADER,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -86,6 +122,7 @@ impl Request {
             Self::V5(_) => wire::v5::RESPONSE_BYTES_MAX,
             Self::V6(_) => wire::v6::RESPONSE_BYTES_MAX,
             Self::V7(_) => wire::v7::RESPONSE_BYTES_MAX,
+            Self::V8(_) => wire::v8::RESPONSE_BYTES_MAX,
         }
     }
     #[cfg(any(target_arch = "wasm32", test))]
@@ -95,6 +132,7 @@ impl Request {
             Self::V5(h) => h.source_sha256,
             Self::V6(h) => h.source_sha256,
             Self::V7(h) => h.source_sha256,
+            Self::V8(h) => h.source_sha256,
         }
     }
     pub(super) fn owner(&self) -> Owner {
@@ -103,6 +141,7 @@ impl Request {
             Self::V5(h) => h.owner,
             Self::V6(h) => h.owner,
             Self::V7(h) => h.owner,
+            Self::V8(h) => h.owner,
         }
     }
     pub(super) fn metadata(&self) -> paintcraft_formats::export::SourceMetadataContext {
@@ -111,6 +150,7 @@ impl Request {
             Self::V5(h) => h.metadata,
             Self::V6(h) => h.metadata,
             Self::V7(h) => h.metadata,
+            Self::V8(h) => h.metadata,
         }
     }
     pub(super) fn settings(&self) -> [u8; 8] {
@@ -119,6 +159,7 @@ impl Request {
             Self::V5(h) => h.settings,
             Self::V6(h) => h.settings,
             Self::V7(h) => h.settings,
+            Self::V8(h) => h.settings,
         }
     }
     pub(super) fn size(&self) -> (u32, u32) {
@@ -127,6 +168,7 @@ impl Request {
             Self::V5(h) => h.size,
             Self::V6(h) => h.size,
             Self::V7(h) => h.size,
+            Self::V8(h) => h.size,
         }
     }
     pub(super) fn matches_plan(&self, plan: &wire::SourcePlan) -> bool {
@@ -134,6 +176,7 @@ impl Request {
             return false;
         }
         match self {
+            Self::V8(_) => false,
             Self::V4(h) => {
                 h.metadata == plan.metadata_context()
                     && h.masks == plan.mask_context()

@@ -65,6 +65,18 @@ pub(super) fn validate_request(
                 wire::v7::Frame::Refused(error) => Err(error),
             }
         }
+        Request::V8(h) => {
+            match wire::v8::decode_response(&response, h, h.owner, env!("CARGO_PKG_VERSION"))? {
+                wire::v8::Frame::Success {
+                    encoded,
+                    preview,
+                    preview_size,
+                    losses,
+                    ..
+                } => Ok((encoded, preview, preview_size, losses)),
+                wire::v8::Frame::Refused(error) => Err(error),
+            }
+        }
     };
     on_validated();
     let (encoded, preview, preview_size, losses) = parts?;

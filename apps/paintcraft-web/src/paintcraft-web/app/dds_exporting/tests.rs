@@ -109,7 +109,7 @@ fn post_admission_ui_displays_preview_and_losses_without_touching_source_in_en_a
         let plan = wire::SourcePlan::capture(&frozen.document, options(settings)).unwrap();
         h.state_mut().dds.review = Some(Review {
             frozen,
-            plan: Some(plan),
+            plan: Some(plan.into()),
             omit_source_metadata: false,
             bake_filters: false,
             owner,
@@ -234,7 +234,7 @@ fn pending_review(
     (
         Review {
             frozen,
-            plan: Some(plan),
+            plan: Some(plan.into()),
             omit_source_metadata: false,
             bake_filters: false,
             owner: crate::importing::Owner::capture(app),

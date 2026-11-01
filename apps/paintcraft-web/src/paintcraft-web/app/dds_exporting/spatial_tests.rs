@@ -42,6 +42,12 @@ fn plan(doc: &Document) -> wire::SourcePlan {
     };
     wire::SourcePlan::capture_with_policies(doc, options(Settings::default()), policies).unwrap()
 }
+fn legacy(plan: &Plan) -> &wire::SourcePlan {
+    let Plan::Legacy(plan) = plan else {
+        panic!("Historical DDS fixtures must retain their legacy protocol");
+    };
+    plan
+}
 fn artifact(plan: &wire::SourcePlan, doc: &Document, owner: Owner) -> (Request, Vec<u8>) {
     let source = plan.snapshot(doc).unwrap();
     if matches!(plan.protocol_version(), 5..=7) {
@@ -210,7 +216,8 @@ fn actual_box_checkbox_publication_revocation_cancel_and_stale_owner_keep_source
             assert!(review.bake_filters);
             let plan = review.plan.as_ref().unwrap();
             assert_eq!(plan.protocol_version(), 5);
-            let (header, bytes) = artifact(plan, &review.frozen.document, review.wire_owner());
+            let (header, bytes) =
+                artifact(legacy(plan), &review.frozen.document, review.wire_owner());
             response::validate_request(&header, &header.encode(), bytes, || {}).unwrap()
         };
         let (target, _) = pending(h.state_mut().dds.review.as_mut().unwrap());
@@ -243,7 +250,7 @@ fn actual_box_checkbox_publication_revocation_cancel_and_stale_owner_keep_source
         let late = {
             let review = h.state().dds.review.as_ref().unwrap();
             let (header, bytes) = artifact(
-                review.plan.as_ref().unwrap(),
+                legacy(review.plan.as_ref().unwrap()),
                 &review.frozen.document,
                 review.wire_owner(),
             );

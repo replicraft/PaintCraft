@@ -10,7 +10,9 @@ use std::{
 };
 #[cfg(target_arch = "wasm32")]
 mod bridge;
+mod plan;
 mod request;
+use plan::Plan;
 #[cfg(any(target_arch = "wasm32", test))]
 mod response;
 #[cfg(test)]
@@ -65,7 +67,7 @@ struct Review {
     frozen: super::exporting::Frozen,
     omit_source_metadata: bool,
     bake_filters: bool,
-    plan: Option<wire::SourcePlan>,
+    plan: Option<Plan>,
     owner: crate::importing::Owner,
     name: String,
     filename: String,
@@ -108,7 +110,7 @@ impl Review {
         self.omit_source_metadata == prepared.header.metadata().omit_intent()
             && prepared.header.owner() == self.wire_owner()
             && self.plan.as_ref().is_some_and(|plan| {
-                prepared.header.matches_plan(plan)
+                prepared.header.matches_captured(plan)
                     && plan.validate_policies(&self.frozen.document).is_ok()
                     && plan.bake_intent() == u8::from(self.bake_filters)
             })
@@ -228,6 +230,7 @@ fn admit_version(version: u16) -> Result<()> {
     );
     request.extension = Some("dds");
     request.variant = Some(match version {
+        8 => wire::v8::EXPORT_VARIANT,
         7 => wire::v7::EXPORT_VARIANT,
         6 => wire::v6::EXPORT_VARIANT,
         4 => wire::EXPORT_VARIANT,
@@ -320,8 +323,7 @@ impl WebApp {
                 source_metadata: policy,
                 filter_bake,
             };
-            let plan =
-                wire::SourcePlan::capture_with_policies(&doc, options(review.settings), policies)?;
+            let plan = Plan::capture(&doc, options(review.settings), policies)?;
             admit_version(plan.protocol_version())?;
             review.plan = Some(plan.clone());
             #[cfg(target_arch = "wasm32")]
@@ -447,3 +449,18 @@ impl WebApp {
 
 #[cfg(test)]
 mod spatial_tests;
+
+#[cfg(test)]
+mod noise_tests;
+
+/// Stored intent selects8 even for default DDS settings or disabled/zero Noise.
+pub(super) fn needs_noise_worker(doc: &paintcraft_document::Document) -> bool {
+    doc.layers.values().any(|l| {
+        l.filters.iter().any(|f| {
+            matches!(
+                f.descriptor(),
+                paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(_)
+            )
+        })
+    })
+}

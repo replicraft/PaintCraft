@@ -184,7 +184,8 @@ fn actual_prepared_checkbox_publication_revocation_cancel_and_stale_owner_keep_s
             assert!(review.bake_filters);
             let plan = review.plan.as_ref().unwrap();
             assert_eq!(plan.protocol_version(), 7);
-            let (header, bytes) = artifact(plan, &review.frozen.document, review.wire_owner());
+            let (header, bytes) =
+                artifact(legacy(plan), &review.frozen.document, review.wire_owner());
             let prepared =
                 response::validate_request(&header, &header.encode(), bytes, || {}).unwrap();
             assert_eq!(pixels(&prepared), [90, 26, 176, 255, 90, 26, 176, 255]);
@@ -220,7 +221,7 @@ fn actual_prepared_checkbox_publication_revocation_cancel_and_stale_owner_keep_s
         let late = {
             let review = h.state().dds.review.as_ref().unwrap();
             let (header, bytes) = artifact(
-                review.plan.as_ref().unwrap(),
+                legacy(review.plan.as_ref().unwrap()),
                 &review.frozen.document,
                 review.wire_owner(),
             );

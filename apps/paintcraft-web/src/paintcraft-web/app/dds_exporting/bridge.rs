@@ -10,7 +10,7 @@ use wasm_bindgen_futures::JsFuture;
 pub(super) async fn prepare(
     service: JsValue,
     doc: Arc<paintcraft_document::Document>,
-    plan: wire::SourcePlan,
+    plan: Plan,
     owner: Owner,
     nonce: uuid::Uuid,
     cancellation: Rc<RefCell<Option<Cancellation>>>,
@@ -24,7 +24,9 @@ pub(super) async fn prepare(
     let args = js_sys::Array::new();
     args.push(&owner_value);
     call(&service, "setOwner", &args)?;
-    let getter = if plan.protocol_version() == 7 {
+    let getter = if plan.protocol_version() == 8 {
+        "ddsNoiseExportProtocolVersion"
+    } else if plan.protocol_version() == 7 {
         "ddsPreparedExportProtocolVersion"
     } else if plan.protocol_version() == 6 {
         "ddsCatalogExportProtocolVersion"
@@ -62,6 +64,14 @@ pub(super) async fn prepare(
             Uint8Array::from(plan.settings().as_slice()).into(),
         ),
     ])?;
+    if let Plan::Noise(noise) = &plan {
+        js_sys::Reflect::set(
+            &metadata,
+            &"noiseWorkload".into(),
+            &Uint8Array::from(wire::v8::workload_bytes(noise.workload())?.as_slice()),
+        )
+        .map_err(error)?;
+    }
     let args = js_sys::Array::new();
     args.push(&owner_value);
     args.push(&metadata);
@@ -73,9 +83,24 @@ pub(super) async fn prepare(
     };
     *cancellation.borrow_mut() = Some(Cancellation(admission.value.clone()));
     let source = plan.snapshot(&doc)?;
-    let request = Request::capture(&plan, &source, owner, nonce)?;
+    let request = Request::capture_plan(&plan, &source, owner, nonce)?;
     // Same MainWasm ABI as the isolated codec Worker; never infer native sizes.
-    let final_plan = if matches!(plan.protocol_version(), 5..=7) {
+    let final_plan = if let Request::V8(header) = &request {
+        for (key, bytes) in [
+            ("noiseRegionContext", header.spatial.encode()?.to_vec()),
+            (
+                "noiseProgramContext",
+                header
+                    .programs
+                    .encode(header.spatial, header.workload)?
+                    .to_vec(),
+            ),
+        ] {
+            js_sys::Reflect::set(&metadata, &key.into(), &Uint8Array::from(bytes.as_slice()))
+                .map_err(error)?;
+        }
+        Some(metadata.clone())
+    } else if matches!(plan.protocol_version(), 5..=7) {
         // Header7 already authenticated and assessed this exact snapshot once.
         // Reuse its source-aware wire facts rather than rehashing or finalizing
         // from the live document's allocation history.
