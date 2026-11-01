@@ -1,3 +1,4 @@
+import { createRenderAdmission } from '../src/lib/render-admission.js';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import test from 'node:test';
@@ -313,9 +314,11 @@ test('Source6 admitted client checks getters before transfer and releases only a
 				}
 			}
 			globalThis.Worker = StubWorker;
-			const service = await import(
-				`../src/lib/filter-preview-worker.js?noise-client=${invalid}`
-			);
+			const service = (
+				await import(
+					`../src/lib/filter-preview-worker.js?noise-client=${invalid}`
+				)
+			).createFilterPreviewController(createRenderAdmission());
 			const source = new Uint8Array([1, 2, 3]);
 			const p = plan();
 			delete p.sourceSha256;

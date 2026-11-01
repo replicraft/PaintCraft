@@ -1,3 +1,4 @@
+import { createRenderAdmission } from '../src/lib/render-admission.js';
 import assert from 'node:assert/strict';
 import { createHash, webcrypto } from 'node:crypto';
 import test from 'node:test';
@@ -271,9 +272,11 @@ async function mockClient({ refusal = false, tamper = false } = {}) {
 		}
 	}
 	globalThis.Worker = Worker;
-	const service = await import(
-		`../src/lib/filter-preview-worker.js?program=${Date.now()}-${Math.random()}`
-	);
+	const service = (
+		await import(
+			`../src/lib/filter-preview-worker.js?program=${Date.now()}-${Math.random()}`
+		)
+	).createFilterPreviewController(createRenderAdmission());
 	return {
 		messages,
 		empty,

@@ -1,3 +1,4 @@
+import { createRenderAdmission } from '../src/lib/render-admission.js';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import test from 'node:test';
@@ -117,9 +118,11 @@ async function errorClient(
 		terminate() {}
 	}
 	globalThis.Worker = ErrorWorker;
-	const service = await import(
-		`../src/lib/filter-preview-worker.js?error=${failingKind}-${completed}-${Date.now()}`
-	);
+	const service = (
+		await import(
+			`../src/lib/filter-preview-worker.js?error=${failingKind}-${completed}-${Date.now()}`
+		)
+	).createFilterPreviewController(createRenderAdmission());
 	const source = new Uint8Array([10, 11, 12]);
 	return {
 		service,
@@ -194,9 +197,11 @@ test('completed typed OPEN refusal releases its exact lease while unknown failur
 			terminate() {}
 		}
 		globalThis.Worker = RefusalWorker;
-		const service = await import(
-			`../src/lib/filter-preview-worker.js?refusal=${completed}-${Date.now()}`
-		);
+		const service = (
+			await import(
+				`../src/lib/filter-preview-worker.js?refusal=${completed}-${Date.now()}`
+			)
+		).createFilterPreviewController(createRenderAdmission());
 		await assert.rejects(
 			service.beginFilterPreview(plan).open(source, sourceSha),
 		);
@@ -234,9 +239,11 @@ const request = {
 	render: true,
 };
 test('pre-Worker normalization failure cannot retain the admission lease', async () => {
-	const service = await import(
-		`../src/lib/filter-preview-worker.js?normalization=${Date.now()}`
-	);
+	const service = (
+		await import(
+			`../src/lib/filter-preview-worker.js?normalization=${Date.now()}`
+		)
+	).createFilterPreviewController(createRenderAdmission());
 	assert.throws(
 		() => service.beginFilterPreview({ ...plan, sourceSha256: undefined }),
 		(e) => e.code === 'InputSchema',
@@ -381,9 +388,11 @@ test('persistent client keeps one source across ordinary retirement and requires
 		terminate() {}
 	}
 	globalThis.Worker = FakeWorker;
-	const service = await import(
-		`../src/lib/filter-preview-worker.js?client-test=${Date.now()}`
-	);
+	const service = (
+		await import(
+			`../src/lib/filter-preview-worker.js?client-test=${Date.now()}`
+		)
+	).createFilterPreviewController(createRenderAdmission());
 	const admission = service.beginFilterPreview(plan);
 	assert.throws(
 		() => service.beginFilterPreview(plan),
@@ -472,9 +481,9 @@ test('slider burst retains only active plus latest and acknowledges retirement w
 		terminate() {}
 	}
 	globalThis.Worker = SlowWorker;
-	const service = await import(
-		`../src/lib/filter-preview-worker.js?burst=${Date.now()}`
-	);
+	const service = (
+		await import(`../src/lib/filter-preview-worker.js?burst=${Date.now()}`)
+	).createFilterPreviewController(createRenderAdmission());
 	const source = new Uint8Array([4, 5, 6]);
 	const admission = service.beginFilterPreview(plan);
 	const client = await admission.open(source, await sha(source));

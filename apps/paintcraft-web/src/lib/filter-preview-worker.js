@@ -1,3 +1,4 @@
+import { renderAdmission } from './render-admission.js';
 import { joinableCopy, makeEncodedCopy } from './filter-preview-copy.js';
 import {
 	capabilityFacts6,
@@ -50,38 +51,47 @@ const typedRustErrors = new Set([
 	'storage.failed',
 	'invariant.violation',
 ]);
-let reservationBytes = RESERVATION_BYTES;
-let reserved = false,
-	quarantined = false;
 export function filterPreviewUsage() {
-	return { reserved: reserved ? reservationBytes : 0, quarantined };
+	return renderAdmission.usage();
 }
 export function beginFilterPreview(input) {
+	return beginWithAdmission(input, renderAdmission);
+}
+// Embedding hosts and isolated mock realms must supply their logical owner.
+// Normal application exports always share the single production broker.
+export function createFilterPreviewController(broker) {
+	if (
+		!broker ||
+		typeof broker.acquire !== 'function' ||
+		typeof broker.usage !== 'function'
+	)
+		throw fail('InputSchema', 'Render admission owner required');
+	return Object.freeze({
+		beginFilterPreview: (input) => beginWithAdmission(input, broker),
+		filterPreviewUsage: () => broker.usage(),
+	});
+}
+function beginWithAdmission(input, broker) {
 	validatePlan(input);
 	const frozen = JSON.parse(
 		[5, 6].includes(input?.protocol)
 			? encodeProgram(input, OPEN_BYTES_MAX)
 			: canonical(input),
 	);
-	if (reserved || quarantined)
-		throw fail(
-			'ResourceLimit',
-			'Filter render service is busy or quarantined',
-		);
-	reserved = true;
-	reservationBytes =
+	const lease = broker.acquire(
 		RESERVATION_BYTES +
-		(input?.protocol === 6
-			? NOISE_CONTROL_BYTES
-			: input?.protocol === 5
-				? PROGRAM_CONTROL_BYTES
-				: 0);
+			(input?.protocol === 6
+				? NOISE_CONTROL_BYTES
+				: input?.protocol === 5
+					? PROGRAM_CONTROL_BYTES
+					: 0),
+	);
 	let used = false;
 	return {
 		cancel() {
 			if (!used) {
 				used = true;
-				reserved = false;
+				lease.release();
 			}
 		},
 		async open(source, sourceSha256) {
@@ -93,7 +103,7 @@ export function beginFilterPreview(input) {
 				source.length < 1 ||
 				source.length > SOURCE_BYTES_MAX
 			) {
-				reserved = false;
+				lease.release();
 				throw fail('ResourceLimit', 'Filter source allowance');
 			}
 			let worker;
@@ -127,7 +137,7 @@ export function beginFilterPreview(input) {
 				function hardFail(error) {
 					if (closed) return;
 					closed = true;
-					quarantined = true;
+					lease.quarantine();
 					// terminate is not an acknowledged join; keep this one lease.
 					worker.terminate();
 					if (desired) {
@@ -662,7 +672,7 @@ export function beginFilterPreview(input) {
 							});
 							closed = true;
 							worker.terminate();
-							reserved = false;
+							lease.release();
 							return closedAck;
 						})().catch((error) => {
 							hardFail(error);
@@ -674,10 +684,10 @@ export function beginFilterPreview(input) {
 				return client;
 			} catch (error) {
 				if (worker) {
-					if (completedOpenRefusals.has(error)) reserved = false;
-					else quarantined = true;
+					if (completedOpenRefusals.has(error)) lease.release();
+					else lease.quarantine();
 					worker.terminate();
-				} else reserved = false;
+				} else lease.release();
 				throw error;
 			}
 		},

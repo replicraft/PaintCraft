@@ -1,3 +1,4 @@
+import { createRenderAdmission } from '../src/lib/render-admission.js';
 // Transport/control unit tests. Stub bytes are not an actual codec/browser proof.
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
@@ -446,9 +447,11 @@ test('public client cancel/close joins pending byteSHA before slot release', asy
 				},
 			},
 		});
-		const service = await import(
-			'../src/lib/filter-preview-worker.js?copy-hash-barrier'
-		);
+		const service = (
+			await import(
+				'../src/lib/filter-preview-worker.js?copy-hash-barrier'
+			)
+		).createFilterPreviewController(createRenderAdmission());
 		const client = await service
 			.beginFilterPreview(p)
 			.open(source, p.sourceSha256);
