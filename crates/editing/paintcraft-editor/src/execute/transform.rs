@@ -75,12 +75,14 @@ impl Stage<'_> {
         for id in &self.doc.roots {
             self.refuse_noise_geometry(*id)?;
         }
+        let mut mask_counts = self.mask_mapping_counts(|_| true)?;
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let source = &self.doc.layers[&id].raster;
             self.map_filter_masks(
                 id,
                 filter_masks::Mapping::Orthogonal((source.width(), source.height()), t),
+                &mut mask_counts,
             )?;
             let layer = self.doc.layers.get_mut(&id).unwrap();
             layer.origin = origin(t, self.doc.canvas, layer.extent())?;
@@ -92,12 +94,14 @@ impl Stage<'_> {
         for id in &self.doc.roots {
             self.refuse_noise_geometry(*id)?;
         }
+        let mut mask_counts = self.mask_mapping_counts(|_| true)?;
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let source = &self.doc.layers[&id].raster;
             self.map_filter_masks(
                 id,
                 filter_masks::Mapping::Orthogonal((source.width(), source.height()), t),
+                &mut mask_counts,
             )?;
             let layer = &self.doc.layers[&id];
             let p = origin(t, self.doc.canvas, layer.extent())?;

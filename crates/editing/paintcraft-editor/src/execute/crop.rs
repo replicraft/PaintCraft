@@ -61,14 +61,18 @@ impl Stage<'_> {
                 self.refuse_noise_geometry(*id)?;
             }
         }
+        let mut mask_counts =
+            self.mask_mapping_counts(|layer| !matches!(mapping(layer, rect).0, LayerCrop::Keep))?;
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let (action, origin) = mapping(&self.doc.layers[&id], rect);
             match action {
                 LayerCrop::Keep => {}
-                LayerCrop::Empty => self.map_filter_masks(id, filter_masks::Mapping::Empty)?,
+                LayerCrop::Empty => {
+                    self.map_filter_masks(id, filter_masks::Mapping::Empty, &mut mask_counts)?
+                }
                 LayerCrop::Clip(area) => {
-                    self.map_filter_masks(id, filter_masks::Mapping::Crop(area))?
+                    self.map_filter_masks(id, filter_masks::Mapping::Crop(area), &mut mask_counts)?
                 }
             }
             let layer = self.doc.layers.get_mut(&id).unwrap();
@@ -91,14 +95,18 @@ impl Stage<'_> {
                 self.refuse_noise_geometry(*id)?;
             }
         }
+        let mut mask_counts =
+            self.mask_mapping_counts(|layer| !matches!(mapping(layer, rect).0, LayerCrop::Keep))?;
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let (action, origin) = mapping(&self.doc.layers[&id], rect);
             match action {
                 LayerCrop::Keep => {}
-                LayerCrop::Empty => self.map_filter_masks(id, filter_masks::Mapping::Empty)?,
+                LayerCrop::Empty => {
+                    self.map_filter_masks(id, filter_masks::Mapping::Empty, &mut mask_counts)?
+                }
                 LayerCrop::Clip(area) => {
-                    self.map_filter_masks(id, filter_masks::Mapping::Crop(area))?
+                    self.map_filter_masks(id, filter_masks::Mapping::Crop(area), &mut mask_counts)?
                 }
             }
             let layer = &self.doc.layers[&id];

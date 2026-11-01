@@ -6,7 +6,9 @@ use paintcraft_core::types::{
     orthogonal::OrthogonalTransform,
     resources::{AllocationClass, BudgetAccount},
 };
-use paintcraft_document::{FilterMask, FilterStack};
+use paintcraft_document::{FilterMask, FilterStack, LayerMask};
+mod mapping;
+pub(super) use mapping::Counts;
 use paintcraft_raster::coverage_mask::{A8Mask, Band, Limits};
 use std::{cell::Cell, mem::size_of, sync::Arc};
 
@@ -15,7 +17,12 @@ pub(super) struct Captured {
     layer: Uuid,
     fields: Arc<Fields>,
 }
+enum LayerSlot {
+    Keep,
+    Replace(Option<LayerMask>),
+}
 struct Fields {
+    layer: LayerSlot,
     entries: Vec<(Uuid, Option<FilterMask>)>,
     _charge: BudgetAccount,
 }
@@ -49,6 +56,7 @@ fn fields(stage: &Stage<'_>, count: usize) -> Result<Fields> {
         return Err(error);
     }
     Ok(Fields {
+        layer: LayerSlot::Keep,
         entries,
         _charge: charge,
     })
@@ -98,25 +106,32 @@ impl Stage<'_> {
         Ok(captured.fields.clone())
     }
     fn install_masks(&mut self, layer: Uuid, fields: &Fields) -> Result<()> {
-        if fields.entries.is_empty() {
-            return Ok(());
+        if !fields.entries.is_empty() {
+            let mut instances = self.filter_instances(layer, false)?;
+            for (id, mask) in &fields.entries {
+                (self.check)()?;
+                let entry = instances
+                    .iter_mut()
+                    .find(|entry| entry.id() == *id)
+                    .ok_or_else(|| {
+                        Error::new(ErrorCode::InvariantViolation, "Captured filter missing")
+                    })?;
+                *entry = entry.with_mask(mask.clone());
+            }
+            self.doc
+                .layers
+                .get_mut(&layer)
+                .expect("resolved layer")
+                .filters = FilterStack::new(instances)?;
         }
-        let mut instances = self.filter_instances(layer, false)?;
-        for (id, mask) in &fields.entries {
+        if let LayerSlot::Replace(mask) = &fields.layer {
             (self.check)()?;
-            let entry = instances
-                .iter_mut()
-                .find(|entry| entry.id() == *id)
-                .ok_or_else(|| {
-                    Error::new(ErrorCode::InvariantViolation, "Captured filter missing")
-                })?;
-            *entry = entry.with_mask(mask.clone());
+            self.doc
+                .layers
+                .get_mut(&layer)
+                .expect("resolved layer")
+                .mask = mask.clone();
         }
-        self.doc
-            .layers
-            .get_mut(&layer)
-            .expect("resolved layer")
-            .filters = FilterStack::new(instances)?;
         Ok(())
     }
     fn remember_masks(&mut self, layer: Uuid, fields: Fields) -> Result<()> {
@@ -146,6 +161,7 @@ impl Stage<'_> {
             return self.install_masks(layer, &fields);
         }
         let entry = self.doc.layers[&layer].filters.as_slice()[position].clone();
+        let mut counts = self.filter_mask_counts(layer, entry.id())?;
         let mut fields = fields(self, 1)?;
         let remaining = Cell::new(self.coverage_work);
         let check = || {
@@ -153,10 +169,7 @@ impl Stage<'_> {
             remaining.set(remaining.get().checked_sub(1).ok_or_else(limit)?);
             Ok(())
         };
-        let limits = Limits {
-            work: self.coverage_work,
-            ..Limits::default()
-        };
+        let limits = counts.limits(self.coverage_work);
         let mask = match operation {
             MaskOp::Set { coverage, enabled } => Some(FilterMask::new(
                 *enabled,
@@ -196,31 +209,31 @@ impl Stage<'_> {
             }
             (_, new) => new,
         };
+        if let Some(mask) = &mask {
+            counts.include(mask.coverage())?;
+        }
         self.coverage_work = remaining.get();
         fields.entries.push((entry.id(), mask));
         self.remember_masks(layer, fields)
     }
-    /// Freeze transformed fields before any layer geometry is overwritten.
-    pub(super) fn map_filter_masks(&mut self, layer: Uuid, mapping: Mapping) -> Result<()> {
-        // Filter-free documents retain the legacy transform admission path.
-        if !self.doc.layers[&layer]
-            .filters
-            .iter()
-            .any(|entry| entry.mask().is_some())
-        {
+    /// Freeze BOTH mask families before geometry changes; replay only installs.
+    pub(super) fn map_filter_masks(
+        &mut self,
+        layer: Uuid,
+        mapping: Mapping,
+        counts: &mut Counts,
+    ) -> Result<()> {
+        let source = &self.doc.layers[&layer];
+        if source.mask.is_none() && !source.filters.iter().any(|e| e.mask().is_some()) {
             return Ok(());
         }
         if self.planning.is_none() {
             let fields = self.captured_masks(layer)?;
             return self.install_masks(layer, &fields);
         }
-        let entries = &self.doc.layers[&layer].filters;
         let mut fields = fields(
             self,
-            entries
-                .iter()
-                .filter(|entry| entry.mask().is_some())
-                .count(),
+            source.filters.iter().filter(|e| e.mask().is_some()).count(),
         )?;
         let remaining = Cell::new(self.coverage_work);
         let check = || {
@@ -228,44 +241,32 @@ impl Stage<'_> {
             remaining.set(remaining.get().checked_sub(1).ok_or_else(limit)?);
             Ok(())
         };
-        for entry in entries.iter() {
-            let Some(mask) = entry.mask() else {
-                continue;
-            };
+        for entry in source.filters.iter() {
+            let Some(mask) = entry.mask() else { continue };
             check()?;
-            let limits = Limits {
-                work: remaining.get(),
-                ..Limits::default()
-            };
-            let coverage = match mapping {
-                Mapping::Empty => A8Mask::from_bands(
-                    Rect::from_origin_size(0, 0, 1, 1).unwrap(),
-                    &[],
-                    &self.adm.coverage_budget(),
-                    limits,
-                    &check,
-                )?,
-                Mapping::Crop(area) => {
-                    mask.coverage()
-                        .cropped_checked(area, remaining.get(), &check)?
-                }
-                Mapping::Orthogonal(size, transform) => mask.coverage().orthogonal_checked(
-                    size,
-                    transform,
-                    &self.adm.coverage_budget(),
-                    limits,
-                    &check,
-                )?,
-                Mapping::Rebase { offset } => mask.coverage().translated_checked(
-                    offset.0,
-                    offset.1,
-                    remaining.get(),
-                    &check,
-                )?,
-            };
+            let coverage = mapping::coverage(
+                mask.coverage(),
+                self,
+                mapping,
+                counts.limits(remaining.get()),
+                &check,
+            )?;
+            counts.include(&coverage)?;
             fields
                 .entries
                 .push((entry.id(), Some(mask.with_coverage(coverage))));
+        }
+        if let Some(mask) = &source.mask {
+            check()?;
+            let coverage = mapping::coverage(
+                mask.coverage(),
+                self,
+                mapping,
+                counts.limits(remaining.get()),
+                &check,
+            )?;
+            counts.include(&coverage)?;
+            fields.layer = LayerSlot::Replace(Some(mask.with_coverage(coverage)));
         }
         self.coverage_work = remaining.get();
         self.remember_masks(layer, fields)

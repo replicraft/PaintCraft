@@ -78,11 +78,13 @@ impl Stage<'_> {
     pub(super) fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) -> Result<()> {
         self.refuse_noise_geometry(id)?;
         let origin = self.doc.layers[&id].origin;
+        let mut mask_counts = self.mask_mapping_counts(|layer| layer.id == id)?;
         self.map_filter_masks(
             id,
             filter_masks::Mapping::Rebase {
                 offset: (origin.0 - g.origin.0, origin.1 - g.origin.1),
             },
+            &mut mask_counts,
         )?;
         let l = self.doc.layers.get_mut(&id).unwrap();
         l.raster = RasterLayer::new(g.size.0, g.size.1, l.raster.default_pixel());
