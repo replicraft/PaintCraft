@@ -517,3 +517,10 @@ fn stable_target(op: &FilterOp, target: Uuid) -> Result<()> {
 
 #[cfg(test)]
 mod tests;
+
+// Separate Source6 types; old Service/Frame/GenericFrame are unchanged.
+pub mod noise_service;
+#[cfg(target_arch = "wasm32")]
+mod noise_wasm;
+#[cfg(target_arch = "wasm32")]
+pub use noise_wasm::NoiseRenderWorker;
