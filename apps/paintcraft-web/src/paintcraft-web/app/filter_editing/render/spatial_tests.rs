@@ -10,6 +10,7 @@ fn source() -> Capture {
         paintcraft_document::import_image(1, 1, &[10, 20, 30, 255], "profile-upgrade").unwrap(),
     );
     Capture {
+        scoped: false,
         owner: Uuid::from_u128(1),
         ticket: Ticket {
             state_id: document.state_id,
@@ -96,4 +97,28 @@ fn exposure_requires_generic_source_but_levels_retains_closed_source4() {
     base.edit = None;
     renderer.want(generic, base);
     assert!(renderer.wanted.as_ref().unwrap().capture.programs);
+}
+
+#[test]
+fn neutral_or_disabled_noise_selects_source_six_and_replaces_old_capture_class() {
+    use paintcraft_core::types::filters::{AddNoiseRgbV1, NoiseDistribution};
+    use paintcraft_document::{FilterInstance, FilterStack};
+    let c = source();
+    let mut renderer = Renderer::default();
+    let d = Descriptor::AddNoiseRgbV1(
+        AddNoiseRgbV1::new(0, 65535, false, NoiseDistribution::Gaussian).unwrap(),
+    );
+    renderer.want(c.clone(), request(&c, d));
+    assert!(renderer.wanted.as_ref().unwrap().capture.scoped);
+    assert!(renderer.wanted.as_ref().unwrap().capture.programs);
+    let mut stored = c.clone();
+    let mut doc = (*stored.document).clone();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+        FilterStack::new(vec![FilterInstance::new(Uuid::from_u128(99), false, d)]).unwrap();
+    stored.document = Arc::new(doc);
+    assert!(stored_scoped(&stored.document));
+    renderer.want(stored.clone(), request(&stored, Descriptor::InvertRgbV1));
+    assert!(renderer.wanted.as_ref().unwrap().capture.scoped);
+    renderer.want(c.clone(), request(&c, Descriptor::InvertRgbV1));
+    assert!(!renderer.wanted.as_ref().unwrap().capture.scoped);
 }

@@ -23,6 +23,7 @@ pub(super) struct Capture {
     pub spatial: bool,
     pub catalog: bool,
     pub programs: bool,
+    pub scoped: bool,
 }
 impl Capture {
     pub fn same(&self, other: &Self) -> bool {
@@ -33,6 +34,7 @@ impl Capture {
             && self.spatial == other.spatial
             && self.catalog == other.catalog
             && self.programs == other.programs
+            && self.scoped == other.scoped
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -110,6 +112,9 @@ impl Renderer {
         capture.catalog |= request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor.is_catalog_only()));
         capture.programs |= stored_programs(&capture.document)
             || request.edit.as_ref().is_some_and(|edit| matches!(&edit.operation, paintcraft_commands::FilterOp::Add { descriptor, .. } | paintcraft_commands::FilterOp::Update { descriptor, .. } if descriptor_programs(*descriptor)));
+        capture.scoped |= stored_scoped(&capture.document) || request.edit.as_ref().is_some_and(|edit| {
+            matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor_scoped(*descriptor))
+        });
         let work = Work { capture, request };
         if self.wanted.as_ref().is_none_or(|w| !w.same(&work)) {
             self.accepted = None;
@@ -332,3 +337,14 @@ pub(super) fn descriptor_programs(descriptor: paintcraft_core::types::filters::D
 #[cfg(test)]
 #[path = "render/spatial_tests.rs"]
 mod spatial_tests;
+
+pub(super) fn descriptor_scoped(d: paintcraft_core::types::filters::Descriptor) -> bool {
+    matches!(
+        d,
+        paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(_)
+    )
+}
+pub(super) fn stored_scoped(doc: &Document) -> bool {
+    paintcraft_formats::export::prepared_capabilities::requires_scoped_noise(doc, &|| Ok(()))
+        .unwrap_or(true)
+}

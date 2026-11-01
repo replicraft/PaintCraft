@@ -7,6 +7,9 @@ use paintcraft_tools::FilterEdit;
 use uuid::Uuid;
 #[cfg(target_arch = "wasm32")]
 mod bridge;
+mod ordinary;
+#[cfg(test)]
+mod ordinary_tests;
 pub(crate) mod render;
 #[cfg(any(target_arch = "wasm32", test))]
 mod requirements;
@@ -28,6 +31,7 @@ mod tests;
 #[derive(Default)]
 pub(super) struct Display {
     renderer: Renderer,
+    transient: Option<ordinary::Transient>,
     source: Option<Capture>,
     committed: Option<Capture>,
     texture: Option<egui::TextureHandle>,
@@ -77,6 +81,7 @@ impl WebApp {
         if self.frontend != Frontend::Studio || self.blocked() || self.filter_private_input() {
             return;
         }
+        self.forget_noise_preview();
         let Some(operation) = state::operation(self, intent) else {
             return;
         };
@@ -138,6 +143,11 @@ impl WebApp {
             if state.base_view != Some(view) {
                 self.filter_display.renderer.want(
                     Capture {
+                        scoped: render::stored_scoped(&draft.source)
+                            || draft
+                                .parameters
+                                .descriptor()
+                                .is_ok_and(render::descriptor_scoped),
                         owner: draft.base.owner,
                         ticket: draft.ticket(),
                         draft: draft.revision.draft,
@@ -168,6 +178,11 @@ impl WebApp {
         match draft.operation() {
             Ok(edit) => self.filter_display.renderer.want(
                 Capture {
+                    scoped: render::stored_scoped(&draft.source)
+                        || draft
+                            .parameters
+                            .descriptor()
+                            .is_ok_and(render::descriptor_scoped),
                     owner: draft.base.owner,
                     ticket: draft.ticket(),
                     draft: draft.revision.draft,
@@ -209,6 +224,7 @@ impl WebApp {
                 self.filter_display.footprint = self.canvas.filter_footprint;
                 self.filter_display.view = state.base_view;
                 self.filter_display.committed = Some(Capture {
+                    scoped: render::stored_scoped(&state.draft.source),
                     owner: state.draft.base.owner,
                     ticket: state.draft.ticket(),
                     draft: state.draft.revision.draft,
@@ -254,6 +270,9 @@ impl WebApp {
                 && !self.editor.tools.gesture_is_selection())
     }
     fn accept_filter_reply(&mut self, ctx: &egui::Context, reply: render::Reply) {
+        if self.accept_noise_preview_reply(ctx, &reply) {
+            return;
+        }
         let private = self.filter_editing.as_ref().is_some_and(|state| {
             state.draft.current(self) && state.draft.revision == reply.request.revision
         });
@@ -358,6 +377,7 @@ impl WebApp {
     }
     fn filter_capture(&self) -> Capture {
         Capture {
+            scoped: render::stored_scoped(self.editor.session.document()),
             owner: self.editor.session.owner_id(),
             ticket: self.editor.session.ticket(),
             draft: Uuid::new_v4(),
@@ -373,7 +393,10 @@ impl WebApp {
             && std::sync::Arc::ptr_eq(&source.document, &self.editor.session.snapshot())
     }
     pub(crate) fn worker_filter_canvas(&mut self, ctx: &egui::Context) -> bool {
-        // Existing ordinary tool previews remain a separate synchronous boundary.
+        if self.worker_noise_preview(ctx) {
+            return true;
+        }
+        // Old profiles retain their existing synchronous ordinary-preview path.
         if self.filter_editing.is_none() && self.ordinary_filter_preview() {
             return false;
         }

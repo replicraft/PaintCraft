@@ -1,6 +1,7 @@
 //! Calls an admitted, real dedicated Worker; no rendering runs in spawn_local.
 use super::render::{Capture, Reply, Request, View};
 mod programs;
+mod scoped;
 use js_sys::{Array, Function, Reflect, Uint8Array};
 use paintcraft_core::types::{Error, ErrorCode, Result, json};
 use sha2::{Digest, Sha256};
@@ -171,6 +172,8 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
     let catalog_count = super::render::stored_catalog(&capture.document);
     capture.catalog |= catalog_count > 0;
     capture.programs |= super::render::stored_programs(&capture.document);
+    capture.scoped |= super::render::stored_scoped(&capture.document);
+    capture.programs |= capture.scoped;
     let doc = &capture.document;
     let resident = doc
         .layers
@@ -203,7 +206,10 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
         ("maskRuns", (masks.runs as f64).into()),
         ("maskDecodeBytes", (masks.decode_bytes as f64).into()),
     ])?;
-    if capture.programs {
+    if capture.scoped {
+        let source = super::requirements::capture(doc, None)?;
+        scoped::open(&plan, &source.source)?;
+    } else if capture.programs {
         let source = super::requirements::capture(doc, None)?;
         programs::open(&plan, &source.source)?;
     } else if capture.spatial || capture.catalog {
@@ -269,13 +275,19 @@ pub(super) async fn open(mut capture: Capture, cancellation: CancelSlot) -> Resu
             return Err(failed("Filter mask source admission changed"));
         }
     }
-    if client.capture.programs {
+    if client.capture.scoped {
+        scoped::validate_runtime(&client.value)?;
+        let requirements = super::requirements::capture(&client.capture.document, None)?;
+        scoped::validate(&binding, &requirements)?;
+    } else if client.capture.programs {
         number(&binding, "protocol", 5)?;
         number(&binding, "registryContract", 1)?;
         let requirements = super::requirements::capture(&client.capture.document, None)?;
         programs::validate(&binding, &requirements)?;
     }
-    if client.capture.spatial || client.capture.catalog || client.capture.programs {
+    if !client.capture.scoped
+        && (client.capture.spatial || client.capture.catalog || client.capture.programs)
+    {
         for (key, expected) in [
             (
                 "protocol",
@@ -399,7 +411,11 @@ impl Client {
                     ("render", request.render.into()),
                 ])?;
                 if let Some(requirements) = &requirements {
-                    programs::attach(&plan, requirements)?;
+                    if capture.scoped {
+                        scoped::attach(&plan, requirements)?;
+                    } else {
+                        programs::attach(&plan, requirements)?;
+                    }
                 }
                 call(&value, "update", &[plan])?
             } else {
@@ -408,7 +424,11 @@ impl Client {
                     ("view", view(request.view)?),
                 ])?;
                 if let Some(requirements) = &requirements {
-                    programs::attach(&plan, requirements)?;
+                    if capture.scoped {
+                        scoped::attach(&plan, requirements)?;
+                    } else {
+                        programs::attach(&plan, requirements)?;
+                    }
                 }
                 call(&value, "base", &[plan])?
             };
@@ -420,7 +440,11 @@ impl Client {
                 string(&result, "draft", &capture.draft.to_string())?;
                 string(&result, "sourceSha256", &sha)?;
                 if let Some(requirements) = &requirements {
-                    programs::validate(&result, requirements)?;
+                    if capture.scoped {
+                        scoped::validate(&result, requirements)?;
+                    } else {
+                        programs::validate(&result, requirements)?;
+                    }
                 }
                 match target {
                     Some(id) => string(&result, "target", &id.to_string())?,

@@ -262,3 +262,51 @@ fn selection_only_epoch_stales_mask_capture_before_private_text_can_publish() {
         assert_eq!(app.editor.tools.is_editing_text(), private_text);
     }
 }
+
+#[test]
+fn noise_mask_changes_publish_editor_intent_and_reopened_source_selects_six() {
+    use paintcraft_core::types::filters::AddNoiseRgbV1;
+    let (ctx, mut app, id) = setup_filter();
+    let mut doc = (*app.editor.session.snapshot()).clone();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
+        FilterStack::new(vec![FilterInstance::new(
+            id,
+            false,
+            Descriptor::AddNoiseRgbV1(AddNoiseRgbV1::default()),
+        )])
+        .unwrap();
+    app.editor = Editor::from_document(doc).unwrap();
+    let source = app.editor.session.snapshot();
+    selection(&mut app, Rect::new(1, 0, 2, 1).unwrap());
+    app.begin_studio_filter(&ctx, Intent::UseSelection(id));
+    assert!(app.filter_editing.is_none());
+    assert_eq!(mask(&app).coverage().coverage(1, 0), 255);
+    assert!(app.filter_capture().scoped);
+    let ticket = app.editor.session.ticket();
+    app.begin_studio_filter(&ctx, Intent::SetMaskEnabled { id, enabled: false });
+    assert!(!mask(&app).enabled());
+    assert_ne!(app.editor.session.ticket(), ticket);
+    app.begin_studio_filter(&ctx, Intent::RemoveMask(id));
+    assert!(
+        app.editor.session.document().layers[&app.editor.target.unwrap()]
+            .filters
+            .as_slice()[0]
+            .mask()
+            .is_none()
+    );
+    app.editor.apply(Edit::Undo).unwrap();
+    assert!(!mask(&app).enabled());
+    assert!(app.filter_capture().scoped);
+    assert_eq!(
+        app.editor.session.document().layers[&app.editor.target.unwrap()].raster,
+        source.layers[&source.roots[0]].raster
+    );
+    let bytes = paintcraft_formats::pcnd::write_compact(app.editor.session.document()).unwrap();
+    assert_eq!(bytes[4], 6);
+    assert!(
+        app.editor
+            .session
+            .document()
+            .same_semantics(&read_project(&bytes))
+    );
+}
