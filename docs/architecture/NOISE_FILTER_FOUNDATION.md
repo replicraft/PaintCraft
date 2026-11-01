@@ -276,5 +276,23 @@ and the last good display. Both failed attempts remain recorded in
 `docs/validation/noise-main-native/final-freeze.json`, SHA256
 `f0948564d11effdaa20995a5c49e84c95d9f4675034fd313a46ab4515ee5f66c`.
 Strict Main Wasm checks also pass with unchanged source inputs
-(`docs/validation/noise-main-wasm/attempt-1/final.json`). Production UI, ordinary
-browser copy routes and Export8 remain separate open gates. No GPU Noise kernel or upstream floating-point byte parity is claimed.
+(`docs/validation/noise-main-wasm/attempt-1/final.json`). The fresh production Main,
+codec Worker, render Worker and Astro bundle pass with all inputs unchanged and
+27 checked assets (`docs/validation/noise-web-production/attempt-1/final.json`,
+SHA256 `124a5fce2056caecf9064e0ae5a6f5d6245148bf2333baa0c9fcdd8cc80cdbb0`).
+Production UI, ordinary browser copy routes and Export8 remain separate open
+gates. No GPU Noise kernel or upstream floating-point byte parity is claimed.
+
+Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
+background job; retained preview handles keep their source reservation after
+cancellation or source replacement. The full App suite passes 772 tests with 29
+existing ignores, and strict checks pass. The first compile failure and its two
+integration corrections are retained in
+`docs/validation/noise-native-assets/final-freeze.json`, SHA256
+`cc11a9fd5c6ef5f2327fad091554689bf4fcf7466f2d2ad0e4d14d7664ae3149`.
+A subsequent test-only addition passes an actual staged-file test covering revoked
+bake consent, cancellation cleanup and validated publication, with unchanged
+source/history and final reservation release; strict checks pass again:
+`docs/validation/noise-native-asset-write/attempt-1/final.json`.
+These headless tests do not claim OS picker interaction or opaque encoder
+allocator/RSS accounting.
