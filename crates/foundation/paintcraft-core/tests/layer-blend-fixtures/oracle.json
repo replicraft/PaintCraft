@@ -1,0 +1,1878 @@
+{
+  "exact_half_ties": [
+    {
+      "back": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "exact": [
+        253,
+        2
+      ],
+      "front": [
+        254,
+        254,
+        254,
+        2
+      ],
+      "mode": "multiply",
+      "rgba": [
+        127,
+        127,
+        127,
+        4
+      ]
+    },
+    {
+      "back": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "exact": [
+        255,
+        2
+      ],
+      "front": [
+        254,
+        254,
+        254,
+        2
+      ],
+      "mode": "screen",
+      "rgba": [
+        128,
+        128,
+        128,
+        4
+      ]
+    }
+  ],
+  "order": {
+    "backdrop": [
+      30,
+      80,
+      140,
+      255
+    ],
+    "layers": [
+      {
+        "mode": "multiply",
+        "opacity": 129,
+        "rgba": [
+          210,
+          40,
+          80,
+          128
+        ]
+      },
+      {
+        "mode": "screen",
+        "opacity": 173,
+        "rgba": [
+          40,
+          190,
+          230,
+          192
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "display_premultiplied": [
+          47,
+          136,
+          180,
+          255
+        ],
+        "order": [
+          0,
+          1
+        ],
+        "rgba": [
+          47,
+          136,
+          180,
+          255
+        ]
+      },
+      {
+        "display_premultiplied": [
+          46,
+          115,
+          159,
+          255
+        ],
+        "order": [
+          1,
+          0
+        ],
+        "rgba": [
+          46,
+          115,
+          159,
+          255
+        ]
+      }
+    ]
+  },
+  "policy": "encoded-sRGB byte inputs; existing separate own-mask and opacity alpha rounding; W3C Fraction blend then one channel rounding per layer",
+  "status": "PROPOSED_REFERENCE_NOT_PRODUCT_QUALIFICATION",
+  "vectors": [
+    {
+      "back": [
+        31,
+        127,
+        241,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            204,
+            77,
+            13,
+            255
+          ],
+          "exact_rgb": [
+            [
+              204,
+              1
+            ],
+            [
+              77,
+              1
+            ],
+            [
+              13,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            204,
+            77,
+            13,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            25,
+            38,
+            12,
+            255
+          ],
+          "exact_rgb": [
+            [
+              124,
+              5
+            ],
+            [
+              9779,
+              255
+            ],
+            [
+              3133,
+              255
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            25,
+            38,
+            12,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            210,
+            166,
+            242,
+            255
+          ],
+          "exact_rgb": [
+            [
+              1051,
+              5
+            ],
+            [
+              42241,
+              255
+            ],
+            [
+              61637,
+              255
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            210,
+            166,
+            242,
+            255
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "name": "opaque-distinct",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            255
+          ],
+          "exact_rgb": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            0,
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            255
+          ],
+          "exact_rgb": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            0,
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            23,
+            99,
+            201,
+            255
+          ],
+          "exact_rgb": [
+            [
+              23,
+              1
+            ],
+            [
+              99,
+              1
+            ],
+            [
+              201,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            23,
+            99,
+            201,
+            255
+          ]
+        }
+      ],
+      "front": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "name": "black-source",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            23,
+            99,
+            201,
+            255
+          ],
+          "exact_rgb": [
+            [
+              23,
+              1
+            ],
+            [
+              99,
+              1
+            ],
+            [
+              201,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            23,
+            99,
+            201,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "name": "white-source",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            23,
+            99,
+            201,
+            255
+          ],
+          "exact_rgb": [
+            [
+              23,
+              1
+            ],
+            [
+              99,
+              1
+            ],
+            [
+              201,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            23,
+            99,
+            201,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            255
+          ],
+          "exact_rgb": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            0,
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            23,
+            99,
+            201,
+            255
+          ],
+          "exact_rgb": [
+            [
+              23,
+              1
+            ],
+            [
+              99,
+              1
+            ],
+            [
+              201,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            23,
+            99,
+            201,
+            255
+          ]
+        }
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "name": "black-backdrop",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            23,
+            99,
+            201,
+            255
+          ],
+          "exact_rgb": [
+            [
+              23,
+              1
+            ],
+            [
+              99,
+              1
+            ],
+            [
+              201,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            23,
+            99,
+            201,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            23,
+            99,
+            201,
+            255
+          ],
+          "exact_rgb": [
+            [
+              23,
+              1
+            ],
+            [
+              99,
+              1
+            ],
+            [
+              201,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            23,
+            99,
+            201,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "name": "white-backdrop",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            103,
+            75,
+            111,
+            192
+          ],
+          "exact_rgb": [
+            [
+              26135,
+              191
+            ],
+            [
+              19065,
+              191
+            ],
+            [
+              28030,
+              191
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            137,
+            100,
+            147,
+            192
+          ]
+        },
+        {
+          "display_premultiplied": [
+            54,
+            75,
+            79,
+            192
+          ],
+          "exact_rgb": [
+            [
+              705685,
+              9741
+            ],
+            [
+              322185,
+              3247
+            ],
+            [
+              342110,
+              3247
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            72,
+            99,
+            105,
+            192
+          ]
+        },
+        {
+          "display_premultiplied": [
+            104,
+            129,
+            117,
+            192
+          ],
+          "exact_rgb": [
+            [
+              1339925,
+              9741
+            ],
+            [
+              554505,
+              3247
+            ],
+            [
+              502110,
+              3247
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            138,
+            171,
+            155,
+            192
+          ]
+        }
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        128
+      ],
+      "name": "both-partial",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            200,
+            30,
+            180,
+            255
+          ],
+          "exact_rgb": [
+            [
+              200,
+              1
+            ],
+            [
+              30,
+              1
+            ],
+            [
+              180,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            200,
+            30,
+            180,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            104,
+            29,
+            118,
+            255
+          ],
+          "exact_rgb": [
+            [
+              269320,
+              2601
+            ],
+            [
+              8414,
+              289
+            ],
+            [
+              34100,
+              289
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            104,
+            29,
+            118,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            201,
+            136,
+            192,
+            255
+          ],
+          "exact_rgb": [
+            [
+              523016,
+              2601
+            ],
+            [
+              39390,
+              289
+            ],
+            [
+              166300,
+              867
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            201,
+            136,
+            192,
+            255
+          ]
+        }
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        255
+      ],
+      "name": "source-opaque-backdrop-partial",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            102,
+            39,
+            7,
+            128
+          ],
+          "exact_rgb": [
+            [
+              204,
+              1
+            ],
+            [
+              77,
+              1
+            ],
+            [
+              13,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            204,
+            77,
+            13,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            102,
+            39,
+            7,
+            128
+          ],
+          "exact_rgb": [
+            [
+              204,
+              1
+            ],
+            [
+              77,
+              1
+            ],
+            [
+              13,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            204,
+            77,
+            13,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            102,
+            39,
+            7,
+            128
+          ],
+          "exact_rgb": [
+            [
+              204,
+              1
+            ],
+            [
+              77,
+              1
+            ],
+            [
+              13,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            204,
+            77,
+            13,
+            128
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "name": "transparent-backdrop-hidden",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "normal",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "multiply",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "screen",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "name": "transparent-source-hidden",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "exact_rgb": [],
+          "mode": "normal",
+          "rgba": [
+            91,
+            7,
+            241,
+            0
+          ]
+        },
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "exact_rgb": [],
+          "mode": "multiply",
+          "rgba": [
+            91,
+            7,
+            241,
+            0
+          ]
+        },
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "exact_rgb": [],
+          "mode": "screen",
+          "rgba": [
+            91,
+            7,
+            241,
+            0
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "name": "both-transparent-hidden",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "normal",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "multiply",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "screen",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "name": "opacity-zero",
+      "opacity": 0,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "normal",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "multiply",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        },
+        {
+          "display_premultiplied": [
+            46,
+            4,
+            121,
+            128
+          ],
+          "exact_rgb": [],
+          "mode": "screen",
+          "rgba": [
+            91,
+            7,
+            241,
+            128
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "name": "mask-zero",
+      "opacity": 255,
+      "own_mask": 0
+    },
+    {
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            66,
+            13,
+            107,
+            144
+          ],
+          "exact_rgb": [
+            [
+              133192,
+              1147
+            ],
+            [
+              25879,
+              1147
+            ],
+            [
+              218287,
+              1147
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            116,
+            23,
+            190,
+            144
+          ]
+        },
+        {
+          "display_premultiplied": [
+            57,
+            8,
+            107,
+            144
+          ],
+          "exact_rgb": [
+            [
+              581992,
+              5735
+            ],
+            [
+              4154857,
+              292485
+            ],
+            [
+              55639889,
+              292485
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            101,
+            14,
+            190,
+            144
+          ]
+        },
+        {
+          "display_premultiplied": [
+            67,
+            13,
+            122,
+            144
+          ],
+          "exact_rgb": [
+            [
+              677608,
+              5735
+            ],
+            [
+              6758633,
+              292485
+            ],
+            [
+              1706173,
+              7905
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            118,
+            23,
+            216,
+            144
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "name": "alpha128-mask128-opacity128",
+      "opacity": 128,
+      "own_mask": 128
+    },
+    {
+      "back": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "exact_rgb": [
+            [
+              200,
+              1
+            ],
+            [
+              60,
+              1
+            ],
+            [
+              10,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            200,
+            60,
+            10,
+            1
+          ]
+        },
+        {
+          "display_premultiplied": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "exact_rgb": [
+            [
+              200,
+              1
+            ],
+            [
+              60,
+              1
+            ],
+            [
+              10,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            200,
+            60,
+            10,
+            1
+          ]
+        },
+        {
+          "display_premultiplied": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "exact_rgb": [
+            [
+              200,
+              1
+            ],
+            [
+              60,
+              1
+            ],
+            [
+              10,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            200,
+            60,
+            10,
+            1
+          ]
+        }
+      ],
+      "front": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "name": "two-stage-alpha-counterexample",
+      "opacity": 128,
+      "own_mask": 128
+    },
+    {
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "name": "u32-maximum",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        254,
+        1,
+        128,
+        1
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            1,
+            2,
+            1,
+            3
+          ],
+          "exact_rgb": [
+            [
+              64772,
+              763
+            ],
+            [
+              129793,
+              763
+            ],
+            [
+              97154,
+              763
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            85,
+            170,
+            127,
+            3
+          ]
+        },
+        {
+          "display_premultiplied": [
+            1,
+            2,
+            1,
+            3
+          ],
+          "exact_rgb": [
+            [
+              16516858,
+              194565
+            ],
+            [
+              32968183,
+              194565
+            ],
+            [
+              24742012,
+              194565
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            85,
+            169,
+            127,
+            3
+          ]
+        },
+        {
+          "display_premultiplied": [
+            1,
+            2,
+            2,
+            3
+          ],
+          "exact_rgb": [
+            [
+              16645892,
+              194565
+            ],
+            [
+              33097217,
+              194565
+            ],
+            [
+              24807038,
+              194565
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            86,
+            170,
+            128,
+            3
+          ]
+        }
+      ],
+      "front": [
+        1,
+        254,
+        127,
+        2
+      ],
+      "name": "small-alpha",
+      "opacity": 255,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        31,
+        127,
+        241,
+        254
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            75,
+            114,
+            183,
+            254
+          ],
+          "exact_rgb": [
+            [
+              2416607,
+              32417
+            ],
+            [
+              3708959,
+              32417
+            ],
+            [
+              5952017,
+              32417
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            75,
+            114,
+            184,
+            254
+          ]
+        },
+        {
+          "display_premultiplied": [
+            30,
+            105,
+            182,
+            254
+          ],
+          "exact_rgb": [
+            [
+              4800347,
+              162085
+            ],
+            [
+              865674977,
+              8266335
+            ],
+            [
+              1516285039,
+              8266335
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            30,
+            105,
+            183,
+            254
+          ]
+        },
+        {
+          "display_premultiplied": [
+            76,
+            136,
+            240,
+            254
+          ],
+          "exact_rgb": [
+            [
+              12335003,
+              162085
+            ],
+            [
+              1129526113,
+              8266335
+            ],
+            [
+              1991805551,
+              8266335
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            76,
+            137,
+            241,
+            254
+          ]
+        }
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        129
+      ],
+      "name": "opacity127",
+      "opacity": 127,
+      "own_mask": 255
+    },
+    {
+      "back": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "cases": [
+        {
+          "display_premultiplied": [
+            0,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              0,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "normal",
+          "rgba": [
+            0,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            0,
+            0,
+            0,
+            255
+          ],
+          "exact_rgb": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "mode": "multiply",
+          "rgba": [
+            0,
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "display_premultiplied": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "exact_rgb": [
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ],
+            [
+              255,
+              1
+            ]
+          ],
+          "mode": "screen",
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "front": [
+        0,
+        255,
+        255,
+        255
+      ],
+      "name": "primaries",
+      "opacity": 255,
+      "own_mask": 255
+    }
+  ]
+}
