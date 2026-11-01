@@ -23,12 +23,15 @@ GPU integration tests on Apple M1 Pro Metal; the earlier default-feature GPU tar
 ran zero tests and supplies no hardware evidence. This is CPU filtering with GPU
 presentation, not a Noise GPU kernel. Actual DDS8 browser export remains pending.
 
-Actual Noise flattening passes the single-layer Image-menu route, including exact
-pixels, metadata, Undo/Redo and fresh reopen. The following multilayer shortcut
-case exposed Classic-only shortcut dispatch and is retained as a partial failure.
-The narrow shortcut correction has two passing tests and a fresh production build.
-Browser replay, remaining stale-result cases and the separate 4MP ingestion phase
-remain pending.
+Actual Noise flattening now passes six small browser cases: single-layer Image
+menu, multilayer shortcut, three delayed-result fences and a 128×64 diagnostic.
+A separate 2048×2048 boundary passes the full 16 MiB Worker and saved Main raster
+hashes against two independent references, with source metadata preserved.
+The observed Main publication window includes a 91.4 ms close-ACK-to-rAF-dirty
+interval and an 84 ms long task; saving is separately observed at 633 ms.
+These are single-run diagnostics, not isolated ingestion CPU time or a 50 ms
+promise. The original shortcut failure and fit-view observer error remain
+preserved in the [Noise record](NOISE_FILTER_FOUNDATION.md).
 
 The next structural slices are selection-derived **layer masks**, then
 **Multiply/Screen layer blending**, then **Color Overlay** as the first live layer

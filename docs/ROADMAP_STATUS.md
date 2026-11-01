@@ -21,9 +21,11 @@ Noise adds a thirteenth stored descriptor with qualified numerical/native/CLI/MC
 and Source6 execution. Its bounded flat-copy routes and Image picker have finite
 actual browser proof. DDS8 has passed local native/Wasm/Node and explicit Metal
 presentation checks; actual DDS8 browser export is pending. Actual Noise Flatten
-has one passing single-layer menu case and a retained multilayer shortcut failure;
-the narrow shortcut fix and fresh production build pass. Actual browser replay
-and 4MP qualification remain pending. The [current integration map](architecture/PALETTE_INTEGRATION.md)
+passes six small browser cases and a separate 4MP/16 MiB boundary, with exact
+independent pixels and retained metadata. The boundary observes a 91.4 ms
+close-ACK-to-rAF-publication interval, an 84 ms Main long task and a separate
+633 ms save interval; these are diagnostics, not a 50 ms or isolated-CPU promise.
+The initial shortcut and observer failures remain preserved. The [current integration map](architecture/PALETTE_INTEGRATION.md)
 and [Noise checkpoint](architecture/NOISE_FILTER_FOUNDATION.md) distinguish each
 route, failure and pinned source. All seven CI jobs for exact `6641216f` pass;
 later local changes are separate evidence.
@@ -161,10 +163,13 @@ the format or performance roadmap.
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well
 as the layer stack. Native preparation uses the ordered worker and guarded
-publication. The stored-Noise browser extension has only its single-layer menu
-case qualified so far; multilayer shortcut/fence replay and 4MP ingestion remain
-pending after a retained first-attempt failure. Full T19/M3 and cross-application
-qualification remain unfinished.
+publication. The stored-Noise browser extension passes six small cases covering
+menu/shortcut, stale/cancel fences and a bounded diagnostic, plus a separate
+2048² full 16 MiB ingestion boundary with exact Worker/saved-raster hashes.
+Source metadata and Undo/Redo remain intact; initial failures are retained.
+Its observed 84 ms Main long task and 91.4 ms publication observation do not
+establish a 50 ms latency guarantee; save is separately observed at 633 ms.
+Full T19/M3 and cross-application qualification remain unfinished.
 
 The user-requested [MCP painting server](MCP.md) now provides headless stdio tools
 through the CLI, using the existing atomic editor, history, format admission and

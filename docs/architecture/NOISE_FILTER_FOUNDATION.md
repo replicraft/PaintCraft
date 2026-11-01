@@ -351,8 +351,8 @@ Atomic publication retains selection and source metadata; one Undo restores the
 complete original layers, raw pixels and filter intentions. Packed Main bytes
 have their own reservation in the existing clipboard realm, retained through
 ingestion, hashing and history preparation. There is no Main Noise-render fallback
-or new worker grant. Ingestion remains synchronous and its browser latency has
-not yet been qualified.
+or new worker grant. Ingestion remains synchronous; later finite browser
+observations and their limits are recorded below.
 
 These two changes pass all 442 web Rust tests (three existing ignores), strict
 native all-target and Wasm checks, with all 3,300 inputs unchanged:
@@ -434,15 +434,43 @@ The first actual Flatten attempt passes the single filtered-layer Image-menu
 case: independent source/pixels, whole-canvas Source6 binding and close ordering,
 metadata-preserving minimal PCND2, Undo/Redo and fresh reopen. It then fails the
 multilayer Command+Shift+F case because Web shortcut dispatch used the Classic
-frontend. This is a **partial result**, not a passing Flatten suite: receipt
+frontend. This first attempt is a **partial result**, not a passing suite: receipt
 `docs/validation/noise-flatten-browser/first-attempt-closeout.json`, SHA256
 `3fc19deb195c960605f2526e0ba2838f5f0e9d07c6a7800882831543e73ffcf3`.
 A narrow two-path shortcut fix has two passing tests. The fresh production build
 passes with all 3,326 inputs unchanged and 53 artifacts, including 27 dist assets:
 `docs/validation/noise-shortcut-production/attempt-1/final.json`, SHA256
 `a9af8616306d35d985fb9414bc6ce4fca6b696d763b561e533c464ae21ccb7fd`.
-Actual browser replay, held-result fences, the bounded ingestion diagnostic and
-separate 4MP boundary remain pending. Main ingestion/hash/history are synchronous; neither
-this partial result nor native tests establish a 50 ms or cancellation-latency
-promise. The broad cross-frontend baseline remains twelve while Noise's specific
-routes retain their separately recorded qualification.
+The corrected producer subsequently passes six small actual Chrome cases:
+single-filtered-layer Image-menu flattening, multilayer Command+Shift+F, genuine
+held-result Escape/source-owner/private-draft fences and a 128×64 diagnostic.
+Each source is compared in full against its independently parsed fixture before
+Main authority is accepted, including hidden pixels, filter IDs and source
+metadata. Positives check exact whole-canvas RGBA, metadata-preserving minimal
+PCND2, single Undo/Redo and fresh reopen. Cancelled/stale replies require real
+retirement and source-close ACKs and cannot publish a flatten history entry.
+
+A separately authorized 2048×2048/MAX_PIXELS run passes the complete 16 MiB raw
+Worker reply and saved Main raster SHA against two streaming independent
+references, plus five literal probes. It uses active Uniform Noise10/color with
+seed65535 and no Box, a 3,408-byte implicit-default source and a nonuniform output
+that requires real raster tiles. Canvas and limits are unchanged. The first
+boundary attempt's observer incorrectly rejected a legitimate 1024²/level1 fit
+BASE; that error is preserved separately from product refusal. The corrected
+observer admits only that exact fit shape and the exact native 2048²/level0 action.
+
+This instrumented run observes 136.6 ms OPEN-to-raw, 7.7 ms raw-to-close-ACK and
+91.4 ms close-ACK-to-first-rAF-observed-dirty. An actual Main long task lasts
+84 ms within the publication window. Save is measured separately at 633 ms.
+These are service and observation intervals, not isolated kernel or exact
+synchronous-ingest CPU durations; observer hash snapshots can affect timing.
+Main ingestion/hash/history remain synchronous. No 50 ms, cancellation-latency,
+RSS or general performance guarantee follows, nor a Gaussian or arbitrary-stack
+4MP result.
+
+Aggregate `docs/validation/noise-flatten-browser/browser-final-freeze.json`, SHA256
+`396a03282245f02640b09cf83a84760890aef3314f88a7ad27a81f9a97da0d94`,
+binds both successful original sessions, both retained first failures and the
+current 3,326 producer inputs, 53 artifacts and 27 dist assets without byte drift.
+Browser/server cleanup passes. The broad cross-frontend baseline remains twelve
+while Noise's specific routes retain their separately recorded qualification.
