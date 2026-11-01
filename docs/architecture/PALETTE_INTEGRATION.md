@@ -58,10 +58,16 @@ These are single-run diagnostics, not isolated ingestion CPU time or a 50 ms
 promise. The original shortcut failure and fit-view observer error remain
 preserved in the [Noise record](NOISE_FILTER_FOUNDATION.md).
 
-The next structural slices are selection-derived **layer masks**, then
+Selection-derived **layer masks** now have locally qualified persistence,
+history, geometry, CPU rendering with GPU presentation, CLI/MCP automation and
+desktop Studio controls. They are distinct from per-filter masks and leave source
+pixels intact. Browser rendering and editing integration remains in progress;
+unsupported browser mask actions refuse before changing the document or gesture.
+See [the layer-mask record](LAYER_MASK_FOUNDATION.md) for the tested scope.
+
+The next slices are completing browser layer-mask integration, then
 **Multiply/Screen layer blending**, then **Color Overlay** as the first live layer
-style. Layer masks are distinct from implemented filter masks. Each slice needs
-its own persistence, history, automation and all-consumer rendering contract.
+style. Each slice needs its own persistence, history, automation and rendering contract.
 Other filters can follow through individually specified numerical/spatial
 contracts. The author's pinned 132 filters, ten style families and nineteen blend
 modes are an inventory, not completed PaintCraft parity or a wholesale port.
