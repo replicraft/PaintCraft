@@ -28,7 +28,25 @@ one-level settings. Real consent/revocation, fresh recheck, decoded downloads,
 late-cancel fencing and unchanged source/history pass. The final in-flight Worker
 abort retains a declared 640 MiB quarantine until page close; this is not immediate
 zero-byte release or RSS evidence. These finite DDS8 results do not establish
-MSP/JXR support or an all-consumer thirteen-profile baseline.
+JXR support or an all-consumer thirteen-profile baseline.
+
+MSP8 has a separate local and actual-browser checkpoint for both encodings.
+Local gates pass 1,544 tests with 32 ignored across 94 target groups, native/Wasm
+strict checks, 296 Node tests and 113 Biome files. Actual Worker qualification
+covers 48 positive combinations across eight sources, both encodings and direct
+FFI/runtime/service, within 93 total observations including headers and refusals.
+Three Main cases pass 18 checkpoints: untouched default MSP1 encoding and explicit
+MSP2 with Uniform/Gaussian Noise followed by explicit Threshold128. Genuine
+consent/revocation, fresh nonce, independent DanM/LinS download decoding, late
+termination fences and exact source/title/dirty/after-Undo preservation pass.
+The final Worker abort retains a declared 512 MiB quarantine until page close;
+no immediate zero-byte release, RSS or latency claim follows. The aggregate
+`docs/validation/noise-msp8-integration/complete-consumer-final-freeze.json`
+binds production6f02eeeb's 3,343 inputs, 53 artifacts and 27 dist assets to these
+finite results. Earlier failure/projection scopes remain preserved; successful
+pushed9171 CI is distinct evidence. A fresh DDS shared-runtime Worker regression
+also passes all 43 cases on this current production; it does not replay or relabel
+the historical three-case Main DDS proof.
 
 Actual Noise flattening now passes six small browser cases: single-layer Image
 menu, multilayer shortcut, three delayed-result fences and a 128×64 diagnostic.

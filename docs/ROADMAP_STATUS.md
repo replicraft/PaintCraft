@@ -24,8 +24,19 @@ presentation checks, 43 actual Worker checks and three Main browser cases with
 18 checkpoints (Uniform/two mips, Gaussian/two mips, default/one level). Consent,
 fresh recheck/download, late cancellation and unchanged source/history pass.
 The final in-flight Worker abort quarantines the declared 640 MiB until page
-close; this is not immediate zero-byte release or RSS evidence. MSP/JXR and a
-blanket thirteen-profile all-consumer baseline are not established. Actual Noise Flatten
+close; this is not immediate zero-byte release or RSS evidence. MSP8 separately
+passes 48 actual Worker combinations within 93 total observations and three Main
+cases/18 checkpoints: untouched default MSP1 encoding and explicit MSP2 with
+Uniform/Gaussian Noise followed by explicit Threshold128. Real consent/recheck,
+independent exact DanM/LinS downloads, late-termination fences and unchanged
+source/title/dirty/after-Undo semantics pass on production6f02eeeb's 3,343 inputs,
+53 artifacts and 27 assets. Its separate local gates pass 1,544 tests/32 ignored,
+296 Node tests, Biome and native/Wasm strict checks, preserving earlier failures
+and projections. Final in-flight MSP cancellation retains the declared 512 MiB
+quarantine until page close; no zero-charge/RSS/latency claim follows. A fresh
+DDS shared-runtime Worker regression passes all 43 cases on this same production;
+it does not replay the historical Main DDS cases. JXR and a blanket thirteen-profile
+all-consumer baseline remain unestablished. Actual Noise Flatten
 passes six small browser cases and a separate 4MP/16 MiB boundary, with exact
 independent pixels and retained metadata. The boundary observes a 91.4 ms
 close-ACK-to-rAF-publication interval, an 84 ms Main long task and a separate

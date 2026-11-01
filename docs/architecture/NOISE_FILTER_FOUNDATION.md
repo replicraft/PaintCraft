@@ -456,8 +456,53 @@ attempts are retained separately from these final passing cases.
 `d9a4ce1a87d7750cddadde0789f8e296a3c5464cf48e3efbb3861c21145e6083`,
 binds the immutable Worker aggregate to Main session7799's passing receipt, the
 same a9af producer, 3,326 current inputs, 53 artifacts and 27 dist assets, and
-successful browser/server cleanup. This is finite DDS8 evidence, not MSP/JXR,
-a broader thirteen-profile all-consumer baseline or a performance guarantee.
+successful browser/server cleanup. This is finite DDS8 evidence, not a broader
+thirteen-profile all-consumer baseline or a performance guarantee.
+
+### MSP8: both encodings, finite actual consumers
+
+The separate version-aware MSP8 checkpoint retains the old MSP4–7 profiles and
+exact opaque black/white requirement; no implicit threshold or alpha matte is
+introduced. Local native runtime qualification passes 1,544 tests with 32 ignored
+across 94 target groups; native/Wasm strict checks, 296 Node tests and 113 Biome
+files pass through explicit source projections. The original test-signature and
+unfulfilled Clippy expectation failures remain preserved, with test/attribute-only
+corrections distinguished from production behavior.
+
+Actual Worker session10615 passes 48 positive combinations: eight independent
+sources × two encodings × direct FFI, maintained runtime and admitted service.
+Its 93 observations also include producer headers and expected refusal/resource/
+lifecycle controls; these are not 93 additional semantic positives. The helper's
+nonshared 64 MiB maximum is distinct from the actual codec's 256 MiB maximum.
+Final in-flight cancellation retains the declared 512 MiB and one pending
+quarantined job until isolated page close; termination is not immediate zero-byte
+release or an RSS observation.
+
+Actual Main session12745 passes all three cases on its first attempt, with 18
+checkpoints: untouched default MSP1 encoding, explicitly selected MSP2 with
+Uniform, and explicitly selected MSP2 with Gaussian. Frozen independent opaque
+color fixtures followed by explicit Threshold128 produce white then black; real
+DanM/LinS downloads match both exact independent binary framing and independent
+stdlib decoding. Genuine 704-byte requests and 864-byte responses bind selected
+version, owner, source, nonce and all context echoes. Bake refusal/revocation,
+fresh recheck, a fully checked genuine third result held until actual Worker
+termination, and no late download pass. Exact saved project bytes, title, public
+dirty state and source semantics after Undo remain unchanged; this does not
+measure a direct Undo-depth API or browser ready-version cross-switch.
+
+`docs/validation/noise-msp8-integration/complete-consumer-final-freeze.json`, SHA256
+`2922a99f5e5603956255107177ef63cd91ff5bea14df15703719010b0bf41f7a`,
+binds the preserved local/Worker receipt to Main's final receipt, actual fresh
+production6f02eeeb, all 3,343 producer inputs, 53 artifacts and 27 dist outputs,
+executed harness hashes and successful browser/server finally cleanup. Earlier
+source-only packs and first failures remain immutable. Pushed9171 CI is separate
+from these later local MSP8 commits. Fresh DDS Worker session97341 subsequently
+passes all 43 shared-runtime cases on the same current production, with 2,677
+helper inputs and all 3,343 producer inputs/53 artifacts exact. Addendum
+`docs/validation/noise-msp8-integration/current-dds-regression-addendum.json`
+binds this result; no new Main DDS replay is claimed. No JXR, other Noise web
+output, layer-mask activation, all-consumer
+thirteen-profile baseline, Noise GPU kernel, RSS or latency claim follows.
 
 The first actual Flatten attempt passes the single filtered-layer Image-menu
 case: independent source/pixels, whole-canvas Source6 binding and close ordering,
