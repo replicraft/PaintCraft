@@ -1,0 +1,29 @@
+{
+	"scope": "independent exact framing, not a new Noise numerical oracle",
+	"size": [
+		2,
+		1
+	],
+	"rgba": [
+		255,
+		255,
+		255,
+		255,
+		0,
+		0,
+		0,
+		255
+	],
+	"files": {
+		"white-black-v1.msp": {
+			"length": 33,
+			"sha256": "27b9962e1738429fc36cf0a81abde187f9b96c8ad9a37984a75d9ea0f640b0e8",
+			"hex": "44616e4d02000100010001000100010002000100000000002a2c00000000000080"
+		},
+		"white-black-v2.msp": {
+			"length": 36,
+			"sha256": "1cead0b62dd6ce7902352290f6b15207ed42272a9277aea37462663364e308df",
+			"hex": "4c696e530200010001000100010001000200010000000000223a00000000000002000180"
+		}
+	}
+}
