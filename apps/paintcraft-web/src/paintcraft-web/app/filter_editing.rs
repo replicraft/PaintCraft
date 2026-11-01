@@ -7,6 +7,8 @@ use paintcraft_tools::FilterEdit;
 use uuid::Uuid;
 #[cfg(target_arch = "wasm32")]
 mod bridge;
+#[cfg(any(target_arch = "wasm32", test))]
+mod cancel_once;
 mod flat_action;
 #[cfg(test)]
 mod flat_action_tests;

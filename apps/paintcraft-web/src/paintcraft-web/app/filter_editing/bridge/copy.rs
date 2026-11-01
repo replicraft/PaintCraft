@@ -3,14 +3,17 @@ use super::*;
 #[derive(Clone, Debug)]
 pub(in super::super) struct CopyControl {
     value: JsValue,
+    cancellation: super::super::cancel_once::CancelOnce,
 }
 impl CopyControl {
     pub(in super::super) fn cancel(&self) {
-        if let Ok(pending) = call(&self.value, "cancel", &["1".into()]) {
-            wasm_bindgen_futures::spawn_local(async move {
-                let _ = promise(pending).await;
-            });
-        }
+        self.cancellation.run_once(|| {
+            if let Ok(pending) = call(&self.value, "cancel", &["1".into()]) {
+                wasm_bindgen_futures::spawn_local(async move {
+                    let _ = promise(pending).await;
+                });
+            }
+        });
     }
 }
 pub(in super::super) struct EncodedCopy {
@@ -21,6 +24,7 @@ impl Client {
     pub(in super::super) fn copy_control(&self) -> CopyControl {
         CopyControl {
             value: self.value.clone(),
+            cancellation: Default::default(),
         }
     }
     pub(in super::super) async fn encode_copy(
