@@ -1,3 +1,4 @@
+import * as mspNoise from './msp-noise-worker-protocol.js';
 import * as ddsNoise from './dds-noise-worker-protocol.js';
 import { freezeNoiseWorkload } from './source-noise-export-context.js';
 import * as ddsPrepared from './dds-prepared-worker-protocol.js';
@@ -134,6 +135,16 @@ const DDS_NOISE = Object.freeze({
 	decode: ddsNoise.decodeDdsResponse,
 	completed: ddsNoise.isCompletedDdsRefusal,
 	finalize: ddsNoise.freezeDdsPlan,
+});
+const MSP_NOISE = Object.freeze({
+	...MSP,
+	kind: 'msp-noise-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		mspNoise.captureMsp(source, owner, plan, nonce),
+	encode: mspNoise.encodeMspRequest,
+	decode: mspNoise.decodeMspResponse,
+	completed: mspNoise.isCompletedMspRefusal,
+	finalize: mspNoise.freezeMspPlan,
 });
 function freezeInitialNoise(plan) {
 	return Object.freeze({
@@ -529,21 +540,28 @@ export function admitDdsInWorker(options) {
 export function admitMspInWorker(options) {
 	return admitExportInWorker(
 		options,
-		options.plan?.protocolVersion === 7
-			? MSP_PREPARED
-			: options.plan?.protocolVersion === 6
-				? MSP_CATALOG
-				: options.plan?.protocolVersion === 5
-					? MSP_SPATIAL
-					: MSP,
-		freezeMspPlan,
+		options.plan?.protocolVersion === 8
+			? MSP_NOISE
+			: options.plan?.protocolVersion === 7
+				? MSP_PREPARED
+				: options.plan?.protocolVersion === 6
+					? MSP_CATALOG
+					: options.plan?.protocolVersion === 5
+						? MSP_SPATIAL
+						: MSP,
+		options.plan?.protocolVersion === 8
+			? mspNoise.freezeInitialMspPlan
+			: freezeMspPlan,
 	);
 }
 function admitExportInWorker(options, operation, freezePlan) {
 	const protocol = options.plan?.protocolVersion ?? 4;
 	if (
 		![4, 5, 6, 7].includes(protocol) &&
-		!(protocol === 8 && operation === DDS_NOISE)
+		!(
+			protocol === 8 &&
+			(operation === DDS_NOISE || operation === MSP_NOISE)
+		)
 	)
 		throw refusal('InputSchema', 'Unsupported export protocol version');
 	const plan = freezePlan(options.plan);

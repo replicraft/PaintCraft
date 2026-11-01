@@ -1,3 +1,4 @@
+import { MSP_PROTOCOL_VERSION as MSP_NOISE_PROTOCOL_VERSION } from './msp-noise-worker-protocol.js';
 import { DDS_PROTOCOL_VERSION as DDS_NOISE_PROTOCOL_VERSION } from './dds-noise-worker-protocol.js';
 import { DDS_PROTOCOL_VERSION as DDS_PREPARED_PROTOCOL_VERSION } from './dds-prepared-worker-protocol.js';
 import { MSP_PROTOCOL_VERSION as MSP_PREPARED_PROTOCOL_VERSION } from './msp-prepared-worker-protocol.js';
@@ -172,6 +173,7 @@ export function createCodecService(applicationVersion) {
 		mspSpatialExportProtocolVersion: () => MSP_SPATIAL_PROTOCOL_VERSION,
 		mspCatalogExportProtocolVersion: () => MSP_CATALOG_PROTOCOL_VERSION,
 		mspPreparedExportProtocolVersion: () => MSP_PREPARED_PROTOCOL_VERSION,
+		mspNoiseExportProtocolVersion: () => MSP_NOISE_PROTOCOL_VERSION,
 		beginMspExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitMspInWorker);
 		},

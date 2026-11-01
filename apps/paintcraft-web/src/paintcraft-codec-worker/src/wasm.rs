@@ -127,3 +127,13 @@ pub fn dds_noise_export_protocol_version() -> u16 {
 pub fn dds_noise_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
     super::noise::dds(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
 }
+
+/// Version-aware scoped MSP8 is independent of oldMSP4..7 and DDS8.
+#[wasm_bindgen]
+pub fn msp_noise_export_protocol_version() -> u16 {
+    8
+}
+#[wasm_bindgen]
+pub fn msp_noise_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::noise::msp(bytes).map_err(|e| JsValue::from_str(&e.to_string()))
+}

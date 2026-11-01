@@ -128,7 +128,7 @@ test('DDS8 literal header offsets detach all inputs before asynchronous hash', a
 		/DDS8 actual source length/,
 	);
 });
-test('MSP8 stays unsupported and changed immutable workload refuses before Worker creation', async () => {
+test('futureMSP9 and malformedDDS8-as-MSP8 refuse before Worker; immutableDDSworkload staysbound', async () => {
 	const p = validPlan();
 	const options = {
 		plan: p,
@@ -137,10 +137,28 @@ test('MSP8 stays unsupported and changed immutable workload refuses before Worke
 		applicationVersion: '0.1.0',
 		currentOwner: () => owner,
 	};
+	let mspWorkers = 0;
+	const mspOptions = {
+		...options,
+		createWorker: () => {
+			mspWorkers++;
+			throw Error('must not construct');
+		},
+	};
 	assert.throws(
-		() => admitMspInWorker(options),
+		() =>
+			admitMspInWorker({
+				...mspOptions,
+				plan: { ...p, protocolVersion: 9 },
+			}),
 		/Unsupported export protocol/,
 	);
+	assert.throws(
+		() => admitMspInWorker(mspOptions),
+		(e) => e.code === 'InputSchema',
+	);
+	assert.equal(mspWorkers, 0);
+	assert.equal(codecWorkerBudget().reservedBytes, 0);
 	const admission = admitDdsInWorker(options);
 	const changed = validPlan();
 	changed.noiseWorkload = changed.noiseWorkload.slice();

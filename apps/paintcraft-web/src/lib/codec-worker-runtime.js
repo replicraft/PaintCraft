@@ -1,3 +1,4 @@
+import * as mspNoise from './msp-noise-worker-protocol.js';
 import * as ddsNoise from './dds-noise-worker-protocol.js';
 import * as ddsPrepared from './dds-prepared-worker-protocol.js';
 import * as mspPrepared from './msp-prepared-worker-protocol.js';
@@ -9,6 +10,8 @@ import * as mspCatalog from './msp-catalog-worker-protocol.js';
 import initialize, {
 	application_version,
 	dds_noise_export_protocol_version,
+	msp_noise_export_protocol_version,
+	msp_noise_export_request,
 	dds_noise_export_request,
 	dds_export_protocol_version,
 	dds_export_request,
@@ -58,6 +61,14 @@ import {
 } from './tiff-page-worker-protocol.js';
 
 const operations = Object.freeze({
+	'msp-noise-export': Object.freeze({
+		header: mspNoise.MSP_REQUEST_HEADER,
+		input: mspNoise.MSP_SOURCE_MAX,
+		output: mspNoise.MSP_OUTPUT_MAX,
+		version: msp_noise_export_protocol_version,
+		expectedVersion: mspNoise.MSP_PROTOCOL_VERSION,
+		execute: msp_noise_export_request,
+	}),
 	'dds-noise-export': Object.freeze({
 		header: ddsNoise.DDS_REQUEST_HEADER,
 		input: ddsNoise.DDS_SOURCE_MAX,

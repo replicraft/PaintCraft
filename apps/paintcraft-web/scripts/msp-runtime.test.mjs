@@ -1,3 +1,4 @@
+import * as mspNoise from '../src/lib/msp-noise-worker-protocol.js';
 import * as ddsNoise from '../src/lib/dds-noise-worker-protocol.js';
 import * as ddsPrepared from '../src/lib/dds-prepared-worker-protocol.js';
 import * as mspPrepared from '../src/lib/msp-prepared-worker-protocol.js';
@@ -58,6 +59,7 @@ function runtime(extra = {}) {
 	vm.runInNewContext(source, {
 		self,
 		ddsNoise,
+		mspNoise,
 		ddsSpatial,
 		mspSpatial,
 		ddsCatalog,
@@ -75,6 +77,8 @@ function runtime(extra = {}) {
 		application_version: () => '0.1.0',
 		dds_noise_export_protocol_version: () => 8,
 		dds_noise_export_request: execute('dds-noise-export'),
+		msp_noise_export_protocol_version: () => 8,
+		msp_noise_export_request: execute('msp-noise-export'),
 		dds_export_protocol_version: () => DDS_PROTOCOL_VERSION,
 		dds_spatial_export_protocol_version: () => 5,
 		msp_spatial_export_protocol_version: () => 5,
@@ -360,6 +364,76 @@ test('DDS8 selects its exact executor/getter and enforces both input and output 
 			assert.equal(
 				r.messages[0].value.bytes.byteLength,
 				ddsNoise.DDS_OUTPUT_MAX,
+			);
+			assert.equal(r.messages[0].transfer[0], r.messages[0].value.bytes);
+		}
+	}
+});
+
+// VM dispatch/boundary coverage only: Wasm executors are substituted above.
+test('MSP8 selects its exact executor/getter and enforces both input and output boundaries', async () => {
+	const kind = 'msp-noise-export',
+		header = mspNoise.MSP_REQUEST_HEADER;
+	for (const length of [header, header + mspNoise.MSP_SOURCE_MAX]) {
+		const r = runtime(),
+			input = new ArrayBuffer(length);
+		new Uint8Array(input)[length - 1] = 71;
+		await r.self.onmessage({ data: { kind, bytes: input } });
+		assert.equal(r.calls.length, 1);
+		assert.equal(r.calls[0].kind, kind);
+		assert.equal(r.calls[0].bytes.buffer, input);
+		assert.equal(r.calls[0].bytes[length - 1], 71);
+		assert.equal(r.messages.length, 1);
+		assert.equal(r.messages[0].value.kind, 'result');
+		assert.deepEqual(
+			[...new Uint8Array(r.messages[0].value.bytes)],
+			[1, 2, 3],
+		);
+		assert.equal(r.messages[0].transfer[0], r.messages[0].value.bytes);
+		await r.self.onmessage({
+			get data() {
+				throw Error('second MSP8 request accessed');
+			},
+		});
+		assert.equal(r.calls.length, 1);
+		assert.equal(r.messages.length, 1);
+	}
+	for (const version of [7, 9]) {
+		const r = runtime({ msp_noise_export_protocol_version: () => version });
+		await r.self.onmessage({
+			data: { kind, bytes: new ArrayBuffer(header + 1) },
+		});
+		assert.equal(r.calls.length, 0);
+		assert.equal(r.messages.length, 1);
+		assert.equal(r.messages[0].value.kind, 'failure');
+	}
+	for (const length of [header - 1, header + mspNoise.MSP_SOURCE_MAX + 1]) {
+		const r = runtime();
+		await r.self.onmessage({
+			data: { kind, bytes: new ArrayBuffer(length) },
+		});
+		assert.equal(r.calls.length, 0);
+		assert.equal(r.messages[0].value.kind, 'failure');
+	}
+	for (const excess of [0, 1]) {
+		let executions = 0;
+		const r = runtime({
+			msp_noise_export_request: () => {
+				executions++;
+				return new Uint8Array(mspNoise.MSP_OUTPUT_MAX + excess);
+			},
+		});
+		await r.self.onmessage({
+			data: { kind, bytes: new ArrayBuffer(header + 1) },
+		});
+		assert.equal(executions, 1);
+		assert.equal(r.calls.length, 0, 'no other codec executor used');
+		assert.equal(r.messages.length, 1);
+		assert.equal(r.messages[0].value.kind, excess ? 'failure' : 'result');
+		if (!excess) {
+			assert.equal(
+				r.messages[0].value.bytes.byteLength,
+				mspNoise.MSP_OUTPUT_MAX,
 			);
 			assert.equal(r.messages[0].transfer[0], r.messages[0].value.bytes);
 		}
