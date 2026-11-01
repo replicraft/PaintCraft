@@ -159,6 +159,12 @@ impl Admission {
         self.paint_metadata_scope = reservation.scope(AllocationClass::PaintMetadata);
         self
     }
+    /// Reuse an admitted caller scope, including its reservation and footprint.
+    /// This leaves the independent per-plan metadata limit unchanged.
+    pub fn with_paint_metadata_scope(mut self, scope: BudgetScope) -> Self {
+        self.paint_metadata_scope = scope;
+        self
+    }
     pub fn paint_metadata_budget(&self) -> SharedBudget {
         self.paint_metadata_scope.budget()
     }
@@ -655,3 +661,7 @@ impl Eq for RasterLayer {}
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "raster/metadata_scope_tests.rs"]
+mod metadata_scope_tests;
