@@ -5,7 +5,11 @@ use paintcraft_ui::t;
 
 impl App {
     pub(super) fn print_requested(&mut self, ctx: &egui::Context) {
-        if self.document_count() == 0 || self.printer.pending() || !self.editor.shape_file_ready() {
+        if self.document_count() == 0
+            || self.printer.pending()
+            || self.ordinary_output.busy()
+            || !self.editor.shape_file_ready()
+        {
             return;
         }
         self.editor.cancel_gesture();
@@ -19,7 +23,8 @@ impl App {
     }
 
     pub(super) fn capture_print(&mut self, ctx: &egui::Context) {
-        if self.printer.pending() || !self.editor.can_capture_file() {
+        if self.printer.pending() || self.ordinary_output.busy() || !self.editor.can_capture_file()
+        {
             return;
         }
         let document = self.editor.document();
@@ -30,6 +35,18 @@ impl App {
                 ctx,
                 "Printing is limited to 16 megapixels per document."
             ));
+            return;
+        }
+        if spatial_workspace::JobPolicy::capture(document, None, false)
+            == spatial_workspace::JobPolicy::Noise
+        {
+            match export_options::Frozen::capture(self) {
+                Ok(frozen) => self.start_ordinary_output(
+                    frozen,
+                    ordinary_output::Intent::Print(self.document_window_title()),
+                ),
+                Err(error) => self.editor.set_status(error.to_string()),
+            }
             return;
         }
         let png = spatial_workspace::legacy_document(document, || {
@@ -55,6 +72,7 @@ impl App {
     }
 
     pub(super) fn poll_print(&mut self, ctx: &egui::Context) {
+        self.poll_ordinary_output(ctx);
         if let Some(result) = self.printer.poll() {
             match result {
                 Ok(PrintOutcome::Printed) => {

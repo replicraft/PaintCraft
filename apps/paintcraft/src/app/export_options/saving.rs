@@ -94,6 +94,21 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
+        if spatial_workspace::JobPolicy::capture(&frozen.document, None, false)
+            == spatial_workspace::JobPolicy::Noise
+            && !matches!(format, ImageFormat::Dds | ImageFormat::Msp)
+        {
+            self.start_ordinary_output(
+                frozen,
+                ordinary_output::Intent::Plan {
+                    path,
+                    format,
+                    settings,
+                    policy,
+                },
+            );
+            return;
+        }
         match spatial_workspace::legacy_document(&frozen.document, || {
             export::export_flat_options(&frozen.document, options, &all)
         }) {
@@ -190,6 +205,22 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
+        if spatial_workspace::JobPolicy::capture(&frozen.document, None, false)
+            == spatial_workspace::JobPolicy::Noise
+            && !matches!(format, ImageFormat::Dds | ImageFormat::Msp)
+        {
+            self.start_ordinary_output(
+                frozen,
+                ordinary_output::Intent::Save {
+                    path: path.to_path_buf(),
+                    format,
+                    settings,
+                    policy,
+                    losses: losses.to_vec(),
+                },
+            );
+            return;
+        }
         let result = spatial_workspace::legacy_document(&frozen.document, || {
             export::export_flat_options(&frozen.document, options, losses)
         })

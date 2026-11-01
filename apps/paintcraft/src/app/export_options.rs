@@ -52,7 +52,7 @@ impl Settings {
         options
     }
 }
-fn mode(encoding: Encoding) -> paintcraft_formats::pcx::Mode {
+pub(super) fn mode(encoding: Encoding) -> paintcraft_formats::pcx::Mode {
     match encoding {
         Encoding::Rgb24 => paintcraft_formats::pcx::Mode::Rgb24,
         Encoding::IndexedExact => paintcraft_formats::pcx::Mode::IndexedExact,
@@ -72,6 +72,14 @@ pub(crate) struct Draft {
     pcx_encoding: Encoding,
     dds: paintcraft_ui::dds_export::Settings,
     msp_version: paintcraft_ui::msp_export::Version,
+}
+
+impl Draft {
+    pub(super) fn pcx_matches(&self, frozen: &Frozen, encoding: Encoding) -> bool {
+        self.format == Choice::Flat(ImageExport::Pcx)
+            && self.frozen == *frozen
+            && self.pcx_encoding == encoding
+    }
 }
 
 impl App {
@@ -182,11 +190,17 @@ impl App {
             }
             if draft.format == Choice::Flat(ImageExport::Pcx) {
                 pcx_export::controls(ui, &mut draft.pcx_encoding);
-                let editor = &self.editor;
-                let snapshot = draft.frozen.document.clone();
-                preview_ready =
-                    self.pcx_preview
-                        .show(ui, (editor.preview_stamp(), draft.pcx_encoding), || {
+                if spatial_workspace::JobPolicy::capture(&draft.frozen.document, None, false)
+                    == spatial_workspace::JobPolicy::Noise
+                {
+                    preview_ready = self.noise_pcx_preview(ui, &draft.frozen, draft.pcx_encoding);
+                } else {
+                    let editor = &self.editor;
+                    let snapshot = draft.frozen.document.clone();
+                    preview_ready = self.pcx_preview.show(
+                        ui,
+                        (editor.preview_stamp(), draft.pcx_encoding),
+                        || {
                             let doc = snapshot;
                             let rgba = spatial_workspace::legacy_document(&doc, || {
                                 paintcraft_render::render_flat(&doc)
@@ -209,7 +223,9 @@ impl App {
                                 rgba: preview.rgba,
                                 quantized: prepared.is_quantized(),
                             })
-                        });
+                        },
+                    );
+                }
             } else {
                 self.pcx_preview.clear();
             }

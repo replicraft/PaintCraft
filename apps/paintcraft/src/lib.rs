@@ -68,6 +68,8 @@ mod msp_export;
 #[cfg(target_os = "macos")]
 #[path = "app/native_menu.rs"]
 mod native_menu;
+#[path = "app/ordinary_output.rs"]
+mod ordinary_output;
 #[cfg(target_os = "macos")]
 #[path = "app/owned_tablet.rs"]
 pub mod owned_tablet;
@@ -284,6 +286,7 @@ pub struct App {
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
     printer: paintcraft_platform::printing::PrintService,
+    ordinary_output: ordinary_output::State,
     clipboard: clipboard::State,
     paste: paste::State,
     pending_import: Option<importing::Pending>,
@@ -438,6 +441,7 @@ impl App {
             pending_frame: None,
             dialogs: None,
             printer: Default::default(),
+            ordinary_output: Default::default(),
             clipboard: Default::default(),
             paste: Default::default(),
             pending_import: None,
