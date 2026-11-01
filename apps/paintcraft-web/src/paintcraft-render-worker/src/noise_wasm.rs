@@ -40,6 +40,24 @@ impl NoiseRenderWorker {
     pub fn binding(&self) -> String {
         text(&self.service.context())
     }
+    /// New explicit flat-output protocol1, not a widened Source6 BEGIN.
+    #[wasm_bindgen(js_name = prepareCopy)]
+    pub fn prepare_copy(
+        &mut self,
+        begin: &str,
+        output: &str,
+    ) -> std::result::Result<String, JsValue> {
+        self.service
+            .prepare_copy(begin, output, &|| Ok(()))
+            .map(|v| text(&v))
+            .map_err(error)
+    }
+    #[wasm_bindgen(js_name = encodedFrame)]
+    pub fn encoded_frame(&mut self, mask: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+        self.service
+            .encode_copy_for_wasm(mask, &|| Ok(()))
+            .map_err(error)
+    }
     pub fn retire(&mut self) {
         self.service.retire();
     }
@@ -78,5 +96,22 @@ pub fn scoped_qualification_policy() -> String {
         ("nativeEdge", Value::Int(p.native_edge())),
         ("baseSliceLimit", Value::Int(p.base_limit() as i64)),
         ("noiseSliceLimit", Value::Int(p.noise_limit() as i64)),
+    ]))
+}
+
+#[wasm_bindgen]
+pub fn flat_copy_protocol_version() -> u32 {
+    1
+}
+#[wasm_bindgen]
+pub fn flat_copy_limits() -> String {
+    text(&Value::object([
+        ("version", Value::Int(1)),
+        ("outputBytes", Value::Int(16 << 20)),
+        ("scratchBytes", Value::Int(32 << 20)),
+        ("selectionBytes", Value::Int(4_194_304)),
+        ("workPerPixel", Value::Int(64)),
+        ("selectionWorkPerByte", Value::Int(2)),
+        ("maxSide", Value::Int(8192)),
     ]))
 }

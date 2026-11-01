@@ -7,6 +7,7 @@ use paintcraft_formats::export::prepared_capabilities::{
 use paintcraft_render::noise_work::WorkComponents;
 use protocol::scoped_programs as wire;
 mod begin;
+mod copy;
 mod frame;
 mod open;
 mod owner;

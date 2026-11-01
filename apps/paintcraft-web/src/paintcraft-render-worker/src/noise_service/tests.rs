@@ -436,3 +436,6 @@ fn full_1080p_noise_before_box32_quotes_exact_64_patch_halos_within_both_job_com
     assert!(s.state.frame.is_none());
     assert_eq!(s.state.workspace.footprint().live, 0);
 }
+
+#[path = "tests/copy.rs"]
+mod copy;

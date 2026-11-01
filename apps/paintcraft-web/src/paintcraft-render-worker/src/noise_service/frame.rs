@@ -22,6 +22,9 @@ pub(super) struct NoiseFrame {
     _scratch: BudgetAccount,
     pub output: BudgetAccount,
     pub delivered: bool,
+    pub(super) copy: Option<super::copy::Reservation>,
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+    pub(super) encoded_account: Option<BudgetAccount>,
 }
 #[derive(Clone, Copy, Debug)]
 pub(super) struct PreparedQuote {
@@ -187,6 +190,8 @@ impl NoiseFrame {
             _scratch: fixed,
             output,
             delivered: false,
+            copy: None,
+            encoded_account: None,
         })
     }
     pub fn complete(&self) -> bool {

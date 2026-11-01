@@ -125,7 +125,7 @@ fn header(value: &Value) -> Result<()> {
     RegistryContract::try_from(revision as u16)?;
     Ok(())
 }
-fn hash(value: &Value) -> Result<[u8; 32]> {
+pub(crate) fn hash(value: &Value) -> Result<[u8; 32]> {
     let text = digest(value)?;
     let mut result = [0; 32];
     for (byte, chunk) in result.iter_mut().zip(text.as_bytes().as_chunks::<2>().0) {
