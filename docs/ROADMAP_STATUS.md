@@ -10,22 +10,28 @@ replace the canonical 37-task roadmap or transplant new contracts wholesale.
 [Palette integration](architecture/PALETTE_INTEGRATION.md) is now a requested
 extension of the engine roadmap: editable ordered filters over retained source
 pixels, followed by masks and layer styles. The source review maps the author's
-catalog to document/history/PCND, rendering and Studio acceptance gates. Ordered
-filter storage, cold history, PCND3/4/5 and CPU/GPU-prepared appearances now cover
-seven editable profiles: Invert, Brightness/Contrast, Black & White, Threshold,
-Posterize, Solarize and Box Blur, with fixed per-filter coverage masks. The
-[spatial integration record](architecture/SPATIAL_FILTER_INTEGRATION.md) covers
-the later native and production-browser checks. Complete Levels arithmetic and
-[prepared backend selection](architecture/LEVELS_BACKEND_SELECTION.md) now feed
-the local eighth-profile integration: typed document/history intentions, PCND6,
-catalog automation and five-field Studio controls. Native controls, active
-CLI/MCP exports, required Metal checks, fresh production builds, 20 raw browser
-cases and 22 actual Studio lifecycle checks pass. DDS/MSP6 production-browser
-exports also pass actual consent/revocation/download, independently decoded
-2×1 pixels and 12 fresh Worker replays per format (11 negative). Workspace and
-Wasm strict checks pass, as do 224 CLI package tests with 15 ignored. The existing
-seven-profile export evidence below remains historical; see the
-[current Levels scope](architecture/LEVELS_FILTER_FOUNDATION.md).
+catalog to document/history/PCND, rendering and Studio acceptance gates. The
+current established baseline is twelve editable profiles: Invert,
+Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
+Levels, Exposure, Curves, Vibrance and Hue/Saturation, with persistent per-filter
+masks. PCND6 catalogs, cold history, typed automation, private Studio drafts and
+CPU-evaluated GPU presentation preserve their source intentions.
+
+Noise adds a thirteenth stored descriptor with qualified numerical/native/CLI/MCP
+and Source6 execution. Its bounded flat-copy routes and Image picker have finite
+actual browser proof. DDS8 has passed local native/Wasm/Node and explicit Metal
+presentation checks; actual DDS8 browser export is pending. Actual Noise Flatten
+has one passing single-layer menu case and a retained multilayer shortcut failure;
+the narrow shortcut fix and fresh production build pass. Actual browser replay
+and 4MP qualification remain pending. The [current integration map](architecture/PALETTE_INTEGRATION.md)
+and [Noise checkpoint](architecture/NOISE_FILTER_FOUNDATION.md) distinguish each
+route, failure and pinned source. All seven CI jobs for exact `6641216f` pass;
+later local changes are separate evidence.
+
+Next structural work is selection-derived layer masks, Multiply/Screen layer
+blending, then Color Overlay as the first live style. The remaining author's
+132-entry inventory and broader styles are open, not implied by these profiles.
+The following counts describe historical initial checkpoints.
 The initial 95 renderer tests passed on
 required offscreen Metal, including 32 GPU controls. [Typed editing and CLI/MCP inspection](FILTER_COMMANDS.md) are also implemented,
 with strict versioned result profiles and real metadata-limit refusal controls.
@@ -42,9 +48,10 @@ retained ICC and resolution-only projects; private
 parameter previews, Cancel, canvas navigation, preview-off Apply, Undo/Redo,
 editing existing parameters, direct enable/reorder and fresh reopen/save also
 have actual browser UI coverage,
-with independent descriptor order and raw-pixel checks. Initial browser source
-capture and ordinary drawing previews remain
-synchronous; per-patch cancellation has no strict latency guarantee. Persistent
+with independent descriptor order and raw-pixel checks. Initial source
+capture/hash stages remain synchronous. Stored-Noise ordinary
+previews now use Source6; this does not establish a strict latency bound for
+all Main capture, publication or other profile paths. Persistent
 whole-layer masks, layer styles and the remaining catalog are still work.
 
 Actual browser metadata-limit refusal retains parameters for retry and preserves
@@ -154,7 +161,10 @@ the format or performance roadmap.
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well
 as the layer stack. Native preparation uses the ordered worker and guarded
-publication. Full T19/M3 and cross-application qualification remain unfinished.
+publication. The stored-Noise browser extension has only its single-layer menu
+case qualified so far; multilayer shortcut/fence replay and 4MP ingestion remain
+pending after a retained first-attempt failure. Full T19/M3 and cross-application
+qualification remain unfinished.
 
 The user-requested [MCP painting server](MCP.md) now provides headless stdio tools
 through the CLI, using the existing atomic editor, history, format admission and

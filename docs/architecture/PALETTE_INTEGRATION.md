@@ -1,39 +1,42 @@
 # Palette integration: persistent nondestructive filters
 
-Status: ordered history, PCND persistence, regional rendering, typed automation
-and explicit copy consent support **twelve editable profiles**: Invert,
-Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
-Levels, Exposure, Curves, Vibrance and Hue/Saturation. Fixed per-filter masks
-remain independent of live selection.
-Native and Web Studio share controls. Updated 2026-11-01.
-Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
-twelve profiles do not establish parity or a wholesale port.
+Status: the established cross-frontend baseline covers **twelve editable profiles**:
+Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
+Levels, Exposure, Curves, Vibrance and Hue/Saturation. Ordered history, PCND6 catalog
+persistence, typed automation and private Studio drafts retain original source
+pixels. Persistent per-filter masks remain independent of live selection.
+Updated 2026-11-01.
 
-The [seeded Uniform/Gaussian noise foundation](NOISE_FILTER_FOUNDATION.md) now
-passes native and actual Rust Wasm qualification: 4,380 independent pixel
-expectations, 26,280 mask expectations and exact normalized native/Wasm records.
-Its typed thirteenth descriptor now preserves intent through PCND6/history and
-renders through explicit paired admission. Real CLI/MCP default/1080p copies and
-headless Native Studio controls pass. The dedicated Source6 Worker passes native
-tests and its qualification constructor passes 26 complete Chrome Worker frames
-plus 26 cancellation cases. Native printing, flat-image copies and ICO/CUR/ICNS
-asset preparation/encoding also pass headless checks. The production web build
-passes. Its frozen Studio browser checkpoint passes 35 semantic checks, including
-real brush/text previews, stack changes, persistence and delayed-response fences;
-subsequent navigation/output changes need fresh regression. Remaining browser
-copy routes and Export8 are still under qualification. Six positive Main output
-paths now pass on a frozen browser checkpoint, but its cancellation tests exposed
-repeated cancel forwarding. A once-only fix and worker-backed Image color picker
-pass 431 web Rust tests and native/Wasm strict checks. Fresh production browser
-replay now passes all eighteen output cases, including twelve delayed-result
-fences with exactly one cancellation each. The picker still needs actual UI
-qualification. The next local slice restores Studio sampling preferences and adds
-captured background flattening with complete Undo; 442 web Rust tests, native/Wasm
-strict checks and its production build pass. Actual UI/latency checks and specialty
-adapters remain open. The fully qualified cross-frontend
-baseline above remains twelve. No GPU Noise kernel or upstream floating-point
-byte parity is claimed. The foundation document records exact local receipts,
-finite measured latency and remaining boundaries.
+Noise is the **thirteenth stored descriptor**, with separately qualified numerical,
+native, CLI/MCP and Source6 execution. Actual browser PNG/JPEG/BMP downloads,
+print-image preparation and visible clipboard routes pass eighteen finite cases.
+The Image picker subsequently passes four positive and three stale-result cases,
+plus eight accepted-pixel Undo/Redo controls, on its pinned production build.
+These route-specific results do not promote every consumer to a thirteen-profile
+baseline. The [Noise record](NOISE_FILTER_FOUNDATION.md) retains exact sources,
+artifacts, failures, measured boundaries and exclusions.
+
+All seven [CI jobs for `6641216f`](https://github.com/replicraft/PaintCraft/actions/runs/41309633465)
+pass. Later local DDS8/flatten-eligibility checks pass selected packages, Native App,
+287 Node tests and native/Wasm strict checks. An explicit GPU-feature run passes fifty
+GPU integration tests on Apple M1 Pro Metal; the earlier default-feature GPU target
+ran zero tests and supplies no hardware evidence. This is CPU filtering with GPU
+presentation, not a Noise GPU kernel. Actual DDS8 browser export remains pending.
+
+Actual Noise flattening passes the single-layer Image-menu route, including exact
+pixels, metadata, Undo/Redo and fresh reopen. The following multilayer shortcut
+case exposed Classic-only shortcut dispatch and is retained as a partial failure.
+The narrow shortcut correction has two passing tests and a fresh production build.
+Browser replay, remaining stale-result cases and the separate 4MP ingestion phase
+remain pending.
+
+The next structural slices are selection-derived **layer masks**, then
+**Multiply/Screen layer blending**, then **Color Overlay** as the first live layer
+style. Layer masks are distinct from implemented filter masks. Each slice needs
+its own persistence, history, automation and all-consumer rendering contract.
+Other filters can follow through individually specified numerical/spatial
+contracts. The author's pinned 132 filters, ten style families and nineteen blend
+modes are an inventory, not completed PaintCraft parity or a wholesale port.
 
 Whole-RGB [Vibrance](VIBRANCE_FILTER_FOUNDATION.md) is locally qualified through
 native and Web Studio controls, CLI/MCP, PCND6 and direct CPU filtering with Metal

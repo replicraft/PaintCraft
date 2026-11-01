@@ -334,7 +334,8 @@ SHA256 `e73aae35e92290347ee82e20b1992bbe824ab13dcb38098e3d073a14ee3d5704`.
 It retains five preceding failed attempts and their distinct harness/product
 causes. The print image is genuinely decoded, but OS printer invocation is mocked;
 clipboard success includes real browser write/read and independently decoded bytes.
-Actual UI qualification of the new picker remains pending. These checks do not
+At this output checkpoint, actual picker UI qualification remained pending;
+the later finite picker result is recorded below. These output checks do not
 establish Export8, browser flattening or other specialty-copy support.
 
 The next local slice corrects a pre-existing web Studio bug: canvas input was
@@ -361,9 +362,9 @@ behavior. The fresh production build passes with 53 artifacts and 27 checked
 assets: `docs/validation/noise-flatten-production/attempt-1/final.json`, SHA256
 `7533e3cac44706ea0a65c47094c4d5875e6427b75ce07b18c0921c3438c95604`.
 All preceding production artifact bytes are preserved before rebuilding.
-Actual UI qualification of Studio sampling and flattening remains pending on
-this new build; the eighteen-case output receipt above belongs to its earlier
-explicitly pinned build.
+At this build checkpoint, actual Studio sampling and flattening qualification
+remained pending; later results are recorded below. The eighteen-case output
+receipt above belongs to its earlier explicitly pinned build.
 
 CI for checkpoint `c378f626` subsequently exposes a debug-only fixture problem:
 fourteen headless tests drop unapplied font texture deltas. The macOS job fails;
@@ -380,9 +381,12 @@ A fresh production build keeps all 53 artifacts byte-identical to the preceding
 build while pinning the corrected 3,300 source inputs:
 `docs/validation/noise-debug-production/attempt-1/final.json`, SHA256
 `bc548f349fdf8434133b8f5b2375f644fd5b7584d47e15acb3787c16e2e800c4`.
-The new CI run for `6641216f` is separate from the failed checkpoint; its overall
-result remains pending. Local release-profile results alone did not establish
-debug-profile or integrated CI success.
+All seven [CI jobs for exact `6641216f`](https://github.com/replicraft/PaintCraft/actions/runs/41309633465)
+subsequently pass. Original watch54419 exits0 and the final API confirms seven
+successes; the failed checkpoint remains separately preserved. Receipt
+`docs/validation/noise-ci-41309633465/final-freeze.json`, SHA256
+`b306d3e6edc80460af730c521c1e7b6914492b98c666240bde0cbe8b3873360e`,
+pins this result. Local and CI evidence retain their own exact source scopes.
 
 Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
 background job; retained preview handles keep their source reservation after
@@ -397,3 +401,48 @@ source/history and final reservation release; strict checks pass again:
 `docs/validation/noise-native-asset-write/attempt-1/final.json`.
 These headless tests do not claim OS picker interaction or opaque encoder
 allocator/RSS accounting.
+
+## Latest finite consumer checkpoint
+
+The actual Image picker subsequently passes four positive and three stale-result
+cases, plus eight accepted-pixel Undo/Redo controls: fifteen semantic records;
+twenty coordinate calibrations are separate. It verifies source-local Noise and
+Box-halo sampling, raw-layer behavior, after-tool choices and changed owner/tool/
+Controls-color rejection after real cancellation and source-close acknowledgments.
+Sampling preserves the project; real follow-up pixel edits make the chosen color
+observable. Receipt `docs/validation/noise-picker-browser/browser-final-freeze.json`,
+SHA256 `4af45c8c5da044d6c8816e03232970d1aedf0721beac5582fdbcf1bbbe8ad17e`,
+pins its 3,300 producer inputs, 53 artifacts and 27 assets. It does not establish
+all picker sizes, geometry, physical pen behavior or later-build equivalence.
+
+DDS8 and the shared document-derived Flatten eligibility rule now pass a separate
+local checkpoint. Seven selected packages and integrations pass 1,942 tests with
+32 ignored; Native App passes 774 with 29 ignored. Node passes 287 and Biome checks
+110 files. Native workspace strict, Main/both-Worker Wasm strict and formatting
+pass. Those runtime stages are bound through explicit later source projections,
+retaining all seven native attempts and the initial nine Node fixture failures.
+The default-feature Render GPU target executed **zero tests**. A separate explicit
+`--features gpu` run passes 126 library and 50 GPU integration tests on actual
+Apple M1 Pro Metal, with no ignores. Repeated Renderer groups are not additive
+unique coverage. Receipt
+`docs/validation/noise-dds-eligibility-native/final-freeze.json`, SHA256
+`8e047e46027cbe85bc650c2c2e1c8b567a21e1a8ca34990e8125a938aaa528ec`,
+records these scopes. Actual DDS8 browser consent/download/replay remains pending;
+older Export4–7 profiles remain closed to Noise. No GPU Noise kernel is claimed.
+
+The first actual Flatten attempt passes the single filtered-layer Image-menu
+case: independent source/pixels, whole-canvas Source6 binding and close ordering,
+metadata-preserving minimal PCND2, Undo/Redo and fresh reopen. It then fails the
+multilayer Command+Shift+F case because Web shortcut dispatch used the Classic
+frontend. This is a **partial result**, not a passing Flatten suite: receipt
+`docs/validation/noise-flatten-browser/first-attempt-closeout.json`, SHA256
+`3fc19deb195c960605f2526e0ba2838f5f0e9d07c6a7800882831543e73ffcf3`.
+A narrow two-path shortcut fix has two passing tests. The fresh production build
+passes with all 3,326 inputs unchanged and 53 artifacts, including 27 dist assets:
+`docs/validation/noise-shortcut-production/attempt-1/final.json`, SHA256
+`a9af8616306d35d985fb9414bc6ce4fca6b696d763b561e533c464ae21ccb7fd`.
+Actual browser replay, held-result fences, the bounded ingestion diagnostic and
+separate 4MP boundary remain pending. Main ingestion/hash/history are synchronous; neither
+this partial result nor native tests establish a 50 ms or cancellation-latency
+promise. The broad cross-frontend baseline remains twelve while Noise's specific
+routes retain their separately recorded qualification.
