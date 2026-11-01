@@ -507,3 +507,12 @@ hue-saturation = Hue / Saturation
 hue-degrees = Hue (degrees)
 saturation-adjustment = Saturation adjustment (%)
 lightness-adjustment = Lightness adjustment (%)
+
+# Seeded noise; source-local fields remain editable.
+add-noise = Add Noise
+noise-amount = Noise amount (%)
+noise-seed = Noise seed
+monochrome-noise = Monochrome noise
+noise-distribution = Noise distribution
+uniform-noise = Uniform noise
+gaussian-noise = Gaussian noise

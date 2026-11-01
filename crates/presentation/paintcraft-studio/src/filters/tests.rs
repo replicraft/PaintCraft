@@ -340,7 +340,7 @@ fn hue_saturation_controls_preserve_three_signed_units_and_equal_effect_intents(
         default.descriptor().unwrap(),
         Descriptor::HueSaturationRgbV1(HueSaturationRgbV1::default())
     );
-    assert_eq!(Kind::ALL.last(), Some(&Kind::HueSaturation));
+    assert_eq!(Kind::ALL[11], Kind::HueSaturation);
     assert_eq!(
         Kind::ALL
             .iter()
@@ -409,6 +409,72 @@ fn hue_saturation_captions_are_distinct_and_translated_in_all_seven_locales() {
             "Hue (degrees)",
             "Saturation adjustment (%)",
             "Lightness adjustment (%)",
+        ] {
+            let label = translate(language, source);
+            assert!(!label.trim().is_empty());
+            assert!(labels.insert(label.clone()), "{language:?}: {source}");
+            if language != Language::English {
+                assert_ne!(label, source, "{language:?}: {source}");
+            }
+        }
+    }
+}
+
+#[test]
+fn noise_draft_preserves_both_distributions_seed_domain_and_all_controls() {
+    assert_eq!(Kind::ALL.len(), 13);
+    assert_eq!(Kind::ALL.last(), Some(&Kind::AddNoise));
+    let default = Parameters::new(Kind::AddNoise);
+    assert!(default.preview);
+    assert_eq!(
+        default.descriptor().unwrap(),
+        Descriptor::AddNoiseRgbV1(AddNoiseRgbV1::default())
+    );
+    for amount in [0, 1, 10, 100] {
+        for seed in [0, 1, 32768, u16::MAX] {
+            for monochrome in [false, true] {
+                for distribution in [NoiseDistribution::Uniform, NoiseDistribution::Gaussian] {
+                    let descriptor = Descriptor::AddNoiseRgbV1(
+                        AddNoiseRgbV1::new(amount, seed, monochrome, distribution).unwrap(),
+                    );
+                    let draft = Parameters::from_descriptor(descriptor);
+                    assert_eq!(draft.kind, Kind::AddNoise);
+                    assert_eq!(
+                        (
+                            draft.noise_amount,
+                            draft.noise_seed,
+                            draft.noise_monochrome,
+                            draft.noise_distribution
+                        ),
+                        (amount, seed, monochrome, distribution)
+                    );
+                    assert_eq!(draft.descriptor().unwrap(), descriptor);
+                }
+            }
+        }
+    }
+    for invalid in [i16::MIN, -1, 101, i16::MAX] {
+        let mut draft = default;
+        draft.noise_amount = invalid;
+        assert_eq!(
+            draft.descriptor().unwrap_err().code,
+            paintcraft_core::types::ErrorCode::InputSchema
+        );
+    }
+}
+
+#[test]
+fn noise_controls_have_distinct_translations_in_all_seven_locales() {
+    for language in Language::ALL {
+        let mut labels = std::collections::BTreeSet::new();
+        for source in [
+            "Add Noise",
+            "Noise amount (%)",
+            "Noise seed",
+            "Monochrome noise",
+            "Noise distribution",
+            "Uniform noise",
+            "Gaussian noise",
         ] {
             let label = translate(language, source);
             assert!(!label.trim().is_empty());

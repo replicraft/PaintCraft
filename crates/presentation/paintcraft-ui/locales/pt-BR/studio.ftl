@@ -507,3 +507,12 @@ hue-saturation = Matiz / Saturação
 hue-degrees = Matiz (graus)
 saturation-adjustment = Ajuste de saturação (%)
 lightness-adjustment = Ajuste de luminosidade (%)
+
+# Seeded noise; source-local fields remain editable.
+add-noise = Adicionar ruído
+noise-amount = Quantidade de ruído (%)
+noise-seed = Semente do ruído
+monochrome-noise = Ruído monocromático
+noise-distribution = Distribuição do ruído
+uniform-noise = Ruído uniforme
+gaussian-noise = Ruído gaussiano

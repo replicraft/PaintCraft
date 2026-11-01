@@ -507,3 +507,12 @@ hue-saturation = Farbton / Sättigung
 hue-degrees = Farbton (Grad)
 saturation-adjustment = Sättigungsanpassung (%)
 lightness-adjustment = Helligkeitsanpassung (%)
+
+# Seeded noise; source-local fields remain editable.
+add-noise = Rauschen hinzufügen
+noise-amount = Rauschstärke (%)
+noise-seed = Rausch-Startwert
+monochrome-noise = Monochromes Rauschen
+noise-distribution = Rauschverteilung
+uniform-noise = Gleichverteiltes Rauschen
+gaussian-noise = Gaußsches Rauschen

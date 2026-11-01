@@ -507,3 +507,12 @@ hue-saturation = 色相 / 彩度
 hue-degrees = 色相（度）
 saturation-adjustment = 彩度の調整（%）
 lightness-adjustment = 明度の調整（%）
+
+# Seeded noise; source-local fields remain editable.
+add-noise = ノイズを追加
+noise-amount = ノイズ量 (%)
+noise-seed = ノイズのシード
+monochrome-noise = 単色ノイズ
+noise-distribution = ノイズ分布
+uniform-noise = 一様ノイズ
+gaussian-noise = ガウスノイズ

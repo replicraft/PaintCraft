@@ -2,8 +2,9 @@
 use paintcraft_core::types::{
     Result,
     filters::{
-        BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor, ExposureSrgbV1,
-        HueSaturationRgbV1, LevelsRgbV1, PosterizeRgbV1, ThresholdLumaV1, VibranceRgbV1,
+        AddNoiseRgbV1, BlackWhiteV1, BoxBlurV1, BrightnessContrastV1, CurvesRgbV1, Descriptor,
+        ExposureSrgbV1, HueSaturationRgbV1, LevelsRgbV1, NoiseDistribution, PosterizeRgbV1,
+        ThresholdLumaV1, VibranceRgbV1,
     },
 };
 use paintcraft_ui::t;
@@ -23,9 +24,10 @@ pub enum Kind {
     Curves,
     Vibrance,
     HueSaturation,
+    AddNoise,
 }
 impl Kind {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 13] = [
         Self::Invert,
         Self::BrightnessContrast,
         Self::BlackWhite,
@@ -38,6 +40,7 @@ impl Kind {
         Self::Curves,
         Self::Vibrance,
         Self::HueSaturation,
+        Self::AddNoise,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -53,6 +56,7 @@ impl Kind {
             Self::Curves => "Curves",
             Self::Vibrance => "Vibrance",
             Self::HueSaturation => "Hue / Saturation",
+            Self::AddNoise => "Add Noise",
         }
     }
     pub fn of(descriptor: Descriptor) -> Self {
@@ -69,6 +73,7 @@ impl Kind {
             Descriptor::CurvesRgbV1(_) => Self::Curves,
             Descriptor::VibranceRgbV1(_) => Self::Vibrance,
             Descriptor::HueSaturationRgbV1(_) => Self::HueSaturation,
+            Descriptor::AddNoiseRgbV1(_) => Self::AddNoise,
         }
     }
     fn title(self, ctx: &egui::Context) -> String {
@@ -252,6 +257,10 @@ pub struct Parameters {
     pub hue_degrees: i16,
     pub saturation_hundredths: i16,
     pub lightness_hundredths: i16,
+    pub noise_amount: i16,
+    pub noise_seed: u16,
+    pub noise_monochrome: bool,
+    pub noise_distribution: NoiseDistribution,
     pub preview: bool,
 }
 impl Parameters {
@@ -275,6 +284,10 @@ impl Parameters {
             hue_degrees: 0,
             saturation_hundredths: 0,
             lightness_hundredths: 0,
+            noise_amount: 10,
+            noise_seed: 1,
+            noise_monochrome: true,
+            noise_distribution: NoiseDistribution::Uniform,
             preview: true,
         }
     }
@@ -304,12 +317,25 @@ impl Parameters {
                 draft.saturation_hundredths = p.saturation_hundredths();
                 draft.lightness_hundredths = p.lightness_hundredths();
             }
+            Descriptor::AddNoiseRgbV1(p) => {
+                draft.noise_amount = p.amount_hundredths() as i16;
+                draft.noise_seed = p.seed();
+                draft.noise_monochrome = p.monochrome();
+                draft.noise_distribution = p.distribution();
+            }
             Descriptor::InvertRgbV1 | Descriptor::SolarizeRgbV1 => {}
         }
         draft
     }
     pub fn descriptor(self) -> Result<Descriptor> {
         match self.kind {
+            Kind::AddNoise => AddNoiseRgbV1::new(
+                self.noise_amount,
+                self.noise_seed,
+                self.noise_monochrome,
+                self.noise_distribution,
+            )
+            .map(Descriptor::AddNoiseRgbV1),
             Kind::Invert => Ok(Descriptor::InvertRgbV1),
             Kind::BrightnessContrast => BrightnessContrastV1::new(self.brightness, self.contrast)
                 .map(Descriptor::BrightnessContrastV1),
@@ -409,6 +435,41 @@ fn draw_parameters(
                 );
             }
             match values.kind {
+                Kind::AddNoise => {
+                    ui.add(
+                        egui::Slider::new(&mut values.noise_amount, 0..=100)
+                            .text(t!(ui.ctx(), "Noise amount (%)")),
+                    );
+                    ui.add(
+                        egui::Slider::new(&mut values.noise_seed, 0..=u16::MAX)
+                            .text(t!(ui.ctx(), "Noise seed")),
+                    );
+                    ui.checkbox(
+                        &mut values.noise_monochrome,
+                        t!(ui.ctx(), "Monochrome noise"),
+                    );
+                    let distribution_label = ui.label(t!(ui.ctx(), "Noise distribution"));
+                    let caption = match values.noise_distribution {
+                        NoiseDistribution::Uniform => "Uniform noise",
+                        NoiseDistribution::Gaussian => "Gaussian noise",
+                    };
+                    egui::ComboBox::from_id_salt("studio-noise-distribution")
+                        .selected_text(t!(ui.ctx(), caption))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(
+                                &mut values.noise_distribution,
+                                NoiseDistribution::Uniform,
+                                t!(ui.ctx(), "Uniform noise"),
+                            );
+                            ui.selectable_value(
+                                &mut values.noise_distribution,
+                                NoiseDistribution::Gaussian,
+                                t!(ui.ctx(), "Gaussian noise"),
+                            );
+                        })
+                        .response
+                        .labelled_by(distribution_label.id);
+                }
                 Kind::HueSaturation => {
                     ui.add(
                         egui::Slider::new(&mut values.hue_degrees, -180..=180)

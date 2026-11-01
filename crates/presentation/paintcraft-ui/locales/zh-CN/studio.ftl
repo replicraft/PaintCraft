@@ -507,3 +507,12 @@ hue-saturation = 色相 / 饱和度
 hue-degrees = 色相（度）
 saturation-adjustment = 饱和度调整（%）
 lightness-adjustment = 明度调整（%）
+
+# Seeded noise; source-local fields remain editable.
+add-noise = 添加杂色
+noise-amount = 杂色数量 (%)
+noise-seed = 杂色种子
+monochrome-noise = 单色杂色
+noise-distribution = 杂色分布
+uniform-noise = 均匀杂色
+gaussian-noise = 高斯杂色

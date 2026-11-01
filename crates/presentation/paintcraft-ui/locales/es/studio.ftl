@@ -507,3 +507,12 @@ hue-saturation = Tono / Saturación
 hue-degrees = Tono (grados)
 saturation-adjustment = Ajuste de saturación (%)
 lightness-adjustment = Ajuste de luminosidad (%)
+
+# Seeded noise; source-local fields remain editable.
+add-noise = Añadir ruido
+noise-amount = Cantidad de ruido (%)
+noise-seed = Semilla del ruido
+monochrome-noise = Ruido monocromático
+noise-distribution = Distribución del ruido
+uniform-noise = Ruido uniforme
+gaussian-noise = Ruido gaussiano

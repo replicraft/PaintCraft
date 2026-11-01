@@ -507,3 +507,12 @@ hue-saturation = रंगत / संतृप्ति
 hue-degrees = रंगत (डिग्री)
 saturation-adjustment = संतृप्ति समायोजन (%)
 lightness-adjustment = प्रकाशमानता समायोजन (%)
+
+# Seeded noise; source-local fields remain editable.
+add-noise = नॉइज़ जोड़ें
+noise-amount = नॉइज़ की मात्रा (%)
+noise-seed = नॉइज़ सीड
+monochrome-noise = एकवर्णी नॉइज़
+noise-distribution = नॉइज़ वितरण
+uniform-noise = समान नॉइज़
+gaussian-noise = गॉसियन नॉइज़
