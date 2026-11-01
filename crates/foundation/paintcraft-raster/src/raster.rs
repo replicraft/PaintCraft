@@ -166,6 +166,10 @@ impl Admission {
         self.paint_metadata_scope = scope;
         self
     }
+    /// Retain the exact caller scope, including reservation and shared footprint.
+    pub fn paint_metadata_scope(&self) -> BudgetScope {
+        self.paint_metadata_scope.clone()
+    }
     pub fn paint_metadata_budget(&self) -> SharedBudget {
         self.paint_metadata_scope.budget()
     }
