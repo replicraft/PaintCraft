@@ -101,6 +101,28 @@ impl A8Mask {
         limits: Limits,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        self.inverted_with_account(
+            || budget.account(AllocationClass::CoverageMasks),
+            limits,
+            check,
+        )
+    }
+    /// Preserve the exact supplied scope/reservation for the final canonical
+    /// payload. The unchanged sparse algorithm allocates no dense field.
+    pub fn inverted_in_scope_checked(
+        &self,
+        scope: &BudgetScope,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        self.inverted_with_account(|| scope.account(), limits, check)
+    }
+    fn inverted_with_account(
+        &self,
+        account: impl FnOnce() -> BudgetAccount,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         let mut probe = Probe {
             remaining: Cell::new(limits.work),
             check,
@@ -123,7 +145,7 @@ impl A8Mask {
         } else {
             // Admission precedes allocation; retain actual capacities and the
             // existing Storage/Arc allowance. No uncharged staging Vec or pool.
-            let mut charge = budget.account(AllocationClass::CoverageMasks);
+            let mut charge = account();
             charge.resize(builder::quote(bands, runs)?)?;
             let mut output = Vec::<Rows>::new();
             let mut values = Vec::<Run>::new();

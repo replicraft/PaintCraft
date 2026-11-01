@@ -25,6 +25,44 @@ impl A8Mask {
         limits: Limits,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<(Self, u64)> {
+        Self::capture_selection_measured(
+            selection,
+            source_extent,
+            || budget.scope(AllocationClass::CoverageMasks),
+            limits,
+            check,
+        )
+    }
+    /// Capture into the exact supplied scope, retaining its reservation and
+    /// shared footprint for scratch, canonical construction and final storage.
+    pub fn from_selection_in_scope(
+        selection: &Selection,
+        source_extent: Rect,
+        scope: &BudgetScope,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        Self::from_selection_measured_in_scope(selection, source_extent, scope, limits, check)
+            .map(|(mask, _)| mask)
+    }
+    /// Same canonical bytes, callbacks and complete weighted work as the budget
+    /// API. No underlying-budget escape or fresh capacity reservation occurs.
+    pub fn from_selection_measured_in_scope(
+        selection: &Selection,
+        source_extent: Rect,
+        scope: &BudgetScope,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, u64)> {
+        Self::capture_selection_measured(selection, source_extent, || scope.clone(), limits, check)
+    }
+    fn capture_selection_measured(
+        selection: &Selection,
+        source_extent: Rect,
+        scope: impl FnOnce() -> BudgetScope,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, u64)> {
         let callbacks = Cell::new(0u64);
         let weighted = Cell::new(0u64);
         let checked = || {
@@ -45,7 +83,7 @@ impl A8Mask {
             y1: source_extent.height(),
         };
         valid(domain)?;
-        let scope = budget.scope(AllocationClass::CoverageMasks);
+        let scope = scope();
         let mut samples = Buffer::new(&scope, usize::try_from(limits.work).unwrap_or(usize::MAX));
         let mut emit = |rect: Rect, value: u8| -> Result<()> {
             if value == 0 {
