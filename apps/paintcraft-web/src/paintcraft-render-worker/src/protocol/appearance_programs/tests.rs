@@ -176,6 +176,38 @@ fn source_fact_hash_and_immutable_anchor_mismatch_refuse_without_counter_or_adop
 #[test]
 fn begin_quote_only_keeps_source_anchor_and_refuses_changed_admission_or_actual_abi() {
     let (source, profile) = open(&text(&control(false)), &|| Ok(())).unwrap();
+    let value = begin_value(&source, &profile);
+    let parsed = begin(&text(&value), &|| Ok(())).unwrap();
+    assert!(!parsed.render);
+    parsed.matches_source(&source, &profile).unwrap();
+    let wrong = replace(value, "admissionSha256", Value::str("00".repeat(32)));
+    assert!(
+        begin(&text(&wrong), &|| Ok(()))
+            .unwrap()
+            .matches_source(&source, &profile)
+            .is_err()
+    );
+    let value = control(false);
+    let fact = field(&value, "sourceRequirements").unwrap().clone();
+    let own = field(&fact, "layerMasks").unwrap().clone();
+    let other = if CoverageAbi::current().unwrap() == CoverageAbi::Wasm32V1 {
+        "native64-v1"
+    } else {
+        "wasm32-v1"
+    };
+    let fact = replace(
+        fact,
+        "layerMasks",
+        replace(own, "coverageAbi", Value::str(other)),
+    );
+    let error = open(&text(&replace(value, "sourceRequirements", fact)), &|| {
+        Ok(())
+    })
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+}
+
+fn begin_value(source: &Source, profile: &Profile) -> Value {
     let union = Union7::capture(
         &profile.requirements,
         profile.admission,
@@ -183,7 +215,7 @@ fn begin_quote_only_keeps_source_anchor_and_refuses_changed_admission_or_actual_
         &|| Ok(()),
     )
     .unwrap();
-    let value = Value::object([
+    Value::object([
         ("protocol", Value::Int(7)),
         ("registryContract", Value::Int(3)),
         ("owner", owner()),
@@ -217,33 +249,56 @@ fn begin_quote_only_keeps_source_anchor_and_refuses_changed_admission_or_actual_
             "admissionSha256",
             Value::str(hex(&profile.admission.digest().unwrap())),
         ),
-    ]);
-    let parsed = begin(&text(&value), &|| Ok(())).unwrap();
-    assert!(!parsed.render);
-    parsed.matches_source(&source, &profile).unwrap();
-    let wrong = replace(value, "admissionSha256", Value::str("00".repeat(32)));
-    assert!(
-        begin(&text(&wrong), &|| Ok(()))
-            .unwrap()
-            .matches_source(&source, &profile)
-            .is_err()
-    );
-    let value = control(false);
-    let fact = field(&value, "sourceRequirements").unwrap().clone();
-    let own = field(&fact, "layerMasks").unwrap().clone();
-    let other = if CoverageAbi::current().unwrap() == CoverageAbi::Wasm32V1 {
-        "native64-v1"
-    } else {
-        "wasm32-v1"
-    };
-    let fact = replace(
-        fact,
-        "layerMasks",
-        replace(own, "coverageAbi", Value::str(other)),
-    );
-    let error = open(&text(&replace(value, "sourceRequirements", fact)), &|| {
-        Ok(())
-    })
-    .unwrap_err();
-    assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+    ])
+}
+
+#[test]
+fn source7_envelope_uuid_spellings_are_canonical_without_changing_legacy_parser() {
+    const CANONICAL: &str = "abcdef01-2345-6789-abcd-ef0123456789";
+    fn with_id(value: Value, name: &str, spelling: &str) -> Value {
+        if matches!(name, "session" | "state") {
+            let owner = field(&value, "owner").unwrap().clone();
+            replace(value, "owner", replace(owner, name, Value::str(spelling)))
+        } else {
+            replace(value, name, Value::str(spelling))
+        }
+    }
+    let (source, profile) = open(&text(&control(false)), &|| Ok(())).unwrap();
+    let begin_control = begin_value(&source, &profile);
+    let alternatives = [
+        CANONICAL.replace('-', ""),
+        CANONICAL.to_ascii_uppercase(),
+        format!("urn:uuid:{CANONICAL}"),
+        format!("{{{CANONICAL}}}"),
+    ];
+    for name in ["session", "state", "draft", "document"] {
+        let valid = with_id(control(false), name, CANONICAL);
+        open(&text(&valid), &|| Ok(())).unwrap();
+        for spelling in &alternatives {
+            // Each alternate is a valid UUID to the old shared parser. This
+            // new envelope guard must refuse it before adoption or execution.
+            crate::protocol::uuid(&Value::str(spelling)).unwrap();
+            assert_eq!(
+                open(&text(&with_id(valid.clone(), name, spelling)), &|| Ok(()))
+                    .unwrap_err()
+                    .code,
+                ErrorCode::InputSchema,
+                "OPEN {name}: {spelling}"
+            );
+        }
+        if name == "document" {
+            continue;
+        }
+        let valid = with_id(begin_control.clone(), name, CANONICAL);
+        begin(&text(&valid), &|| Ok(())).unwrap();
+        for spelling in &alternatives {
+            assert_eq!(
+                begin(&text(&with_id(valid.clone(), name, spelling)), &|| Ok(()))
+                    .unwrap_err()
+                    .code,
+                ErrorCode::InputSchema,
+                "BEGIN {name}: {spelling}"
+            );
+        }
+    }
 }

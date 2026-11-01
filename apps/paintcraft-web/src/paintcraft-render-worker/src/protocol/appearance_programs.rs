@@ -126,6 +126,12 @@ pub fn open(control: &str, check: &dyn Fn() -> Result<()>) -> Result<(Source, Pr
     )?;
     header(&value)?;
     check()?;
+    let owner = field(&value, "owner")?;
+    for name in ["session", "state"] {
+        uuid(field(owner, name)?)?;
+    }
+    uuid(field(&value, "draft")?)?;
+    uuid(field(&value, "document")?)?;
     appearance(field(&value, "appearance")?)?;
     let admission = admission(&value)?;
     let source = facts::fact(field(&value, "sourceRequirements")?, true)?;
@@ -252,3 +258,18 @@ fn bound() -> Error {
 }
 #[cfg(test)]
 mod tests;
+
+// Source7 envelope IDs use the same canonical spelling as its JS transport.
+// Legacy protocols retain their existing shared UUID parser unchanged.
+fn uuid(value: &Value) -> Result<Uuid> {
+    let spelling = string(value)?;
+    let id = Uuid::parse_str(spelling).map_err(|_| bad("Source7 UUID"))?;
+    let mut buffer = [0; 36];
+    let canonical: &str = id.hyphenated().encode_lower(&mut buffer);
+    if canonical != spelling {
+        return Err(bad(
+            "Source7 UUID must be canonical lowercase hyphenated text",
+        ));
+    }
+    Ok(id)
+}
