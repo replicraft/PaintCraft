@@ -20,6 +20,14 @@ impl WebApp {
             paintcraft_tools::commands::canvas_color(self.editor.session.document())
         }
     }
+    /// Retained navigation geometry belongs to one document session. Zoom is
+    /// only part of the request scope, so anchors survive within this identity.
+    pub(crate) fn studio_canvas_id(&self) -> egui::Id {
+        egui::Id::unique((
+            "web-studio-canvas",
+            self.editor.session.history_ticket().owner,
+        ))
+    }
     pub(crate) fn studio_canvas_scope(&self) -> egui::Id {
         egui::Id::unique((
             self.editor.session.history_ticket().owner,

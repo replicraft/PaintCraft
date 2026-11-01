@@ -245,7 +245,7 @@ impl WebApp {
                     if self.frontend == paintcraft_ui::actions::Frontend::Studio {
                         paintcraft_studio::canvas::anchor_at(
                             ctx,
-                            egui::Id::unique("web-studio-canvas"),
+                            self.studio_canvas_id(),
                             self.studio_canvas_scope(),
                             anchor,
                             center,

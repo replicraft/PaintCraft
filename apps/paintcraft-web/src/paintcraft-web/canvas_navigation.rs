@@ -31,7 +31,7 @@ impl WebApp {
         if self.frontend == Frontend::Studio {
             paintcraft_studio::canvas::pan_by(
                 ui.ctx(),
-                egui::Id::unique("web-studio-canvas"),
+                self.studio_canvas_id(),
                 self.studio_canvas_scope(),
                 delta,
             );

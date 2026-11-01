@@ -306,3 +306,6 @@ mod responsive_tests;
 
 #[cfg(test)]
 mod touch_navigation_tests;
+
+#[cfg(test)]
+mod studio_document_navigation_tests;

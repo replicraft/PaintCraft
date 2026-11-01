@@ -160,6 +160,7 @@ impl WebApp {
         }
         let extent = self.editor.session.document().canvas;
         let scope = self.studio_canvas_scope();
+        let studio_id = self.studio_canvas_id();
         let studio = self.frontend == paintcraft_ui::actions::Frontend::Studio;
         let size = Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom;
         let paint = |ui: &mut egui::Ui, response: egui::Response, painter: egui::Painter| {
@@ -311,13 +312,7 @@ impl WebApp {
             }
         };
         if studio {
-            paintcraft_studio::canvas::canvas_for_scope(
-                ui,
-                egui::Id::unique("web-studio-canvas"),
-                scope,
-                size,
-                paint,
-            );
+            paintcraft_studio::canvas::canvas_for_scope(ui, studio_id, scope, size, paint);
         } else if rulers {
             paintcraft_classic::canvas::ruled_canvas_for_scope(
                 ui,
@@ -501,7 +496,7 @@ impl WebApp {
                 let delta = ui.input(|input| input.pointer.delta());
                 paintcraft_studio::canvas::pan_by(
                     ui.ctx(),
-                    egui::Id::unique("web-studio-canvas"),
+                    self.studio_canvas_id(),
                     self.studio_canvas_scope(),
                     delta,
                 );
