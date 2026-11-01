@@ -419,7 +419,11 @@ test('persistent client keeps one source across ordinary retirement and requires
 test('slider burst retains only active plus latest and acknowledges retirement without source reload', async () => {
 	let opens = 0,
 		updates = 0,
-		cancels = 0;
+		cancels = 0,
+		acknowledgeActive;
+	const active = new Promise((resolve) => {
+		acknowledgeActive = resolve;
+	});
 	class SlowWorker {
 		postMessage(message) {
 			const emit = (data) =>
@@ -448,6 +452,7 @@ test('slider burst retains only active plus latest and acknowledges retirement w
 			} else {
 				updates++;
 				this.active = message;
+				if (updates === 1) acknowledgeActive();
 				setTimeout(async () => {
 					if (this.active !== message) return;
 					this.active = null;
@@ -476,7 +481,9 @@ test('slider burst retains only active plus latest and acknowledges retirement w
 	const initial = client
 		.base({ generation: '1', view: request.view })
 		.catch((e) => e);
-	await new Promise((resolve) => setTimeout(resolve, 8));
+	// Start the burst only after the first request actually reaches the Worker.
+	// An elapsed timer does not establish that async request hashing has finished.
+	await active;
 	const burst = [];
 	for (let n = 2; n <= 1001; n++)
 		burst.push(
