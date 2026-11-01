@@ -748,3 +748,6 @@ fn admit_bmp(bytes: &[u8], pixels: u64) -> Result<()> {
 
 #[cfg(test)]
 mod tests;
+
+/// Explicit bounded foreign-copy encoding; legacy facades remain unchanged.
+pub mod bounded_copy;

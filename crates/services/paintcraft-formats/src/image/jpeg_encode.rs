@@ -36,7 +36,7 @@ impl std::str::FromStr for JpegMatte {
     }
 }
 
-fn prepare(
+pub(super) fn prepare(
     width: u32,
     height: u32,
     rgba: &[u8],
