@@ -13,6 +13,7 @@ mod response;
 pub mod v5;
 pub mod v6;
 pub mod v7;
+pub mod v8;
 mod worker;
 pub use request::Header;
 pub use response::{Frame, decode_response};
