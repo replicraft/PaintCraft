@@ -15,6 +15,7 @@ mod dispatch;
 mod files;
 mod filter_editing;
 mod filter_submission;
+mod layer_masks;
 pub(crate) use filter_submission::Feedback as FilterFeedback;
 mod flatten;
 mod floating;
@@ -541,6 +542,7 @@ impl Editor {
     fn execute(&mut self, action: Action) {
         match action {
             Action::Filter(edit) => self.execute_filter(edit),
+            Action::LayerMask(edit) => self.execute_layer_mask(edit),
             Action::MoveSelection {
                 layer,
                 offset,

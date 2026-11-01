@@ -372,6 +372,10 @@ impl App {
     }
 
     pub(super) fn confirm_dialog(&mut self, ui: &mut egui::Ui) {
+        if self.confirm == Some(Confirm::LayerMask) {
+            self.layer_mask_wait_dialog(ui.ctx());
+            return;
+        }
         if self.confirm == Some(Confirm::FilterParameters) {
             self.studio_filter_dialog(ui.ctx());
             return;
@@ -453,7 +457,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::FilterParameters | Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::MspExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::LayerMask | Confirm::FilterParameters | Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::MspExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -541,7 +545,8 @@ impl App {
             Some(Choice::Accept) => {
                 self.confirm = None;
                 match confirm {
-                    Confirm::FilterParameters
+                    Confirm::LayerMask
+                    | Confirm::FilterParameters
                     | Confirm::PasteLayer
                     | Confirm::ImportLosses
                     | Confirm::RecentFiles

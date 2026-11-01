@@ -59,6 +59,8 @@ mod importing;
 mod input;
 #[path = "app/jxr_export.rs"]
 mod jxr_export;
+#[path = "app/layer_mask_editing.rs"]
+mod layer_mask_editing;
 #[path = "app/layer_panel.rs"]
 mod layer_panel;
 #[path = "app/layer_thumbnails.rs"]
@@ -205,6 +207,7 @@ enum Confirm {
     Brushes,
     LayerProperties(layers::PropertiesDraft),
     FilterParameters,
+    LayerMask,
     DiscardForNew,
     DiscardForOpen(PathBuf),
     DiscardForRecovery(Found),
@@ -271,6 +274,7 @@ pub struct App {
     classic: paintcraft_classic::Workspace,
     studio: paintcraft_studio::Workspace,
     filter_editing: Option<filter_editing::State>,
+    layer_mask_editing: Option<layer_mask_editing::State>,
     other_workspace: Option<Box<tabs::WorkspaceDocuments>>,
     switching: Option<switching::Switch>,
     gpu: Option<Arc<GpuRenderer>>,
@@ -426,6 +430,7 @@ impl App {
             classic: Default::default(),
             studio: Default::default(),
             filter_editing: None,
+            layer_mask_editing: None,
             other_workspace: None,
             switching: None,
             gpu: None,

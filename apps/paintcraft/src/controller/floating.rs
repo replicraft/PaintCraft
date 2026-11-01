@@ -17,6 +17,12 @@ impl Editor {
         if self.outbox.has_seen(token) {
             return false;
         }
+        if let Action::LayerMask(edit) = &action
+            && let Err(error) = self.validate_layer_mask_edit(edit)
+        {
+            self.status = format!("Edit failed: {error}");
+            return false;
+        }
         if let Action::Filter(edit) = &action
             && let Err(error) = self.validate_filter_edit(edit)
         {
