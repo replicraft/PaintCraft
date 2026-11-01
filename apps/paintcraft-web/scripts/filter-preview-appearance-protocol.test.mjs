@@ -39,6 +39,7 @@ globalThis.crypto ??= webcrypto;
 // Synthetic metadata/work extents exercise grammar, not actual Rust ABI admission.
 const grant = (noise = false) => ({
 	mode: noise ? 'noise' : 'base',
+	workAuthority: 'captured-job',
 	workspaceBytes: '67108864',
 	baseWorkLimit: '268435456',
 	noiseWorkLimit: noise ? '34359738368' : '0',
@@ -596,5 +597,43 @@ test('Source7 current13 descriptor shapes resolve with old12 numerical digests b
 				codec_id: 'params-v2',
 			}),
 		{ code: 'CapabilityUnsupported' },
+	);
+});
+
+test('Source7 workAuthority is explicit and immutable through admitted SHA, not inferred from an empty Worker realm', async () => {
+	const p = await plan(),
+		b = await begin(p);
+	for (const invalid of [
+		undefined,
+		null,
+		true,
+		0,
+		'',
+		'unknown',
+		'StandaloneViewJobs',
+	]) {
+		const a = { ...p.admission, workAuthority: invalid };
+		if (invalid === undefined) delete a.workAuthority;
+		assert.throws(() => validateAdmission7(a), { code: 'InputSchema' });
+	}
+	assert.throws(
+		() =>
+			validateBegin7({ ...b, workAuthority: 'standalone-view-jobs' }, p),
+		{ code: 'InputSchema' },
+	);
+	const changed = structuredClone(p);
+	changed.admission.workAuthority = 'standalone-view-jobs';
+	await assert.rejects(
+		verifyPlan7(changed, p.sourceRequirements.pairs.map(numericalEntry7)),
+		{ code: 'CodecFailed' },
+	);
+	const standalone = {
+		...p.admission,
+		workAuthority: 'standalone-view-jobs',
+	};
+	validateAdmission7(standalone);
+	assert.notEqual(
+		await admissionDigest7(standalone),
+		await admissionDigest7(p.admission),
 	);
 });

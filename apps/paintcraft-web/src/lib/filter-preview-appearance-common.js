@@ -107,12 +107,15 @@ export function slice7(mode) {
 export function validateAdmission7(value, slice = slice7(value?.mode)) {
 	shape7(value, [
 		'mode',
+		'workAuthority',
 		'workspaceBytes',
 		'baseWorkLimit',
 		'noiseWorkLimit',
 		'totalWorkLimit',
 	]);
 	mode7(value.mode);
+	if (!['captured-job', 'standalone-view-jobs'].includes(value.workAuthority))
+		throw fail7('InputSchema', 'Source7 explicit work authority');
 	const bytes = decimal7(value.workspaceBytes),
 		base = decimal7(value.baseWorkLimit),
 		noise = decimal7(value.noiseWorkLimit),

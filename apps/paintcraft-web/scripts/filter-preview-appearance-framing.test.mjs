@@ -20,6 +20,7 @@ const oracle = JSON.parse(
 );
 const admission = (noise = false) => ({
 	mode: noise ? 'noise' : 'base',
+	workAuthority: 'captured-job',
 	workspaceBytes: '67108864',
 	baseWorkLimit: '268435456',
 	noiseWorkLimit: noise ? '34359738368' : '0',
@@ -176,4 +177,31 @@ test('Source7 u32 own counts have no artificial u16 acceptance ceiling and brows
 	assert.throws(() => validateLayerMasks7({ ...own, stored: 100001 }), {
 		code: 'InputSchema',
 	});
+});
+
+test('Source7 admission v2 origin changes admission, source capability and union while old numeric inputs stay fixed', async () => {
+	const admissionHashes = new Set(),
+		capabilities = new Set(),
+		unions = new Set();
+	for (const row of oracle.originVectors) {
+		const a = { ...admission(row.noise), workAuthority: row.workAuthority };
+		assert.equal(await admissionDigest7(a), row.frames.admission.sha256);
+		const c = new Reader(row.frames.capability.hex).fact(
+			row.frames.capability.sha256,
+		);
+		assert.equal(
+			await capabilityDigest7(c.fact, a),
+			row.frames.capability.sha256,
+		);
+		const u = new Reader(row.frames.union.hex).union(
+			row.frames.union.sha256,
+		);
+		assert.equal(await unionDigest7(u.fact, a), row.frames.union.sha256);
+		admissionHashes.add(row.frames.admission.sha256);
+		capabilities.add(row.frames.capability.sha256);
+		unions.add(row.frames.union.sha256);
+	}
+	assert.equal(admissionHashes.size, 4);
+	assert.equal(capabilities.size, 4);
+	assert.equal(unions.size, 4);
 });

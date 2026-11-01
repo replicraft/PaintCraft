@@ -562,3 +562,23 @@ test('Source7 preparation wrapper rejects accessors before ownership or Worker a
 		});
 	}
 });
+
+test('Source7 transport refuses OPEN and sealed UNION HELLO with different work origins before transfer', async () => {
+	const env = setup(),
+		ctx = await prepared(env),
+		source = new Uint8Array([1, 2, 3]);
+	const hello = structuredClone(ctx.hello);
+	hello.admission.workAuthority = 'standalone-view-jobs';
+	await assert.rejects(
+		ctx.admission.open(source, ctx.p.sourceSha256, { plan: ctx.p, hello }),
+		{ code: 'ConflictStaleBase' },
+	);
+	assert.equal(source.byteLength, 3);
+	await ctx.admission.close();
+	ctx.guard.release();
+	assert.equal(
+		env.worker.messages.some((m) => m.kind === 'open'),
+		false,
+	);
+	assert.equal(env.broker.usage().reserved, 0);
+});

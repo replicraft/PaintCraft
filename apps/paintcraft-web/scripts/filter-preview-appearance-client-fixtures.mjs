@@ -14,6 +14,7 @@ import {
 } from '../src/lib/filter-preview-appearance-protocol.js';
 const grant = (noise = false) => ({
 	mode: noise ? 'noise' : 'base',
+	workAuthority: 'captured-job',
 	workspaceBytes: '67108864',
 	baseWorkLimit: '268435456',
 	noiseWorkLimit: noise ? '34359738368' : '0',

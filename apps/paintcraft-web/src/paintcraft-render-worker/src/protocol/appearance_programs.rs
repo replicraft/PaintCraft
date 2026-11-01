@@ -6,7 +6,7 @@ pub use metadata::{Fact7, Union7};
 use paintcraft_core::types::policy::hex;
 use paintcraft_formats::export::{
     layer_appearance::{
-        self as metadata, Admission7, CoverageAbi, LayerMasks7, Mode7, Requirements7,
+        self as metadata, Admission7, CoverageAbi, LayerMasks7, Mode7, Origin7, Requirements7,
         appearance_registration,
     },
     prepared_capabilities::{self as capabilities, RegistryContract, Requirements},
@@ -219,6 +219,7 @@ fn admission(value: &Value) -> Result<Admission7> {
         a,
         &[
             "mode",
+            "workAuthority",
             "workspaceBytes",
             "baseWorkLimit",
             "noiseWorkLimit",
@@ -230,8 +231,14 @@ fn admission(value: &Value) -> Result<Admission7> {
         Some("noise") => Mode7::Noise,
         _ => return Err(bad("Source7 mode")),
     };
+    let work_authority = match field(a, "workAuthority")?.as_str() {
+        Some("captured-job") => Origin7::CapturedJob,
+        Some("standalone-view-jobs") => Origin7::StandaloneViewJobs,
+        _ => return Err(bad("Source7 work authority")),
+    };
     let result = Admission7 {
         mode,
+        work_authority,
         workspace_bytes: decimal(field(a, "workspaceBytes")?)?,
         base_work: decimal(field(a, "baseWorkLimit")?)?,
         noise_work: decimal(field(a, "noiseWorkLimit")?)?,

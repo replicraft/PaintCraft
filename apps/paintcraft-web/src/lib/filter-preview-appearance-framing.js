@@ -58,8 +58,9 @@ class Frame {
 export async function admissionDigest7(value) {
 	const a = snapshot7(value);
 	validateAdmission7(a);
-	const b = new Frame('paintcraft.source7-admission/v1\0');
+	const b = new Frame('paintcraft.source7-admission/v2\0');
 	b.number(a.mode === 'base' ? 0 : 1, 1);
+	b.number(a.workAuthority === 'captured-job' ? 0 : 1, 1);
 	for (const key of [
 		'workspaceBytes',
 		'baseWorkLimit',

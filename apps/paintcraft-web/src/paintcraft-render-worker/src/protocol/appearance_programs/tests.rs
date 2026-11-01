@@ -2,6 +2,7 @@ use super::*;
 fn grant(noise: bool) -> Admission7 {
     Admission7 {
         mode: if noise { Mode7::Noise } else { Mode7::Base },
+        work_authority: Origin7::CapturedJob,
         workspace_bytes: 64 << 20,
         base_work: 268_435_456,
         noise_work: if noise { 1 << 35 } else { 0 },
@@ -301,4 +302,61 @@ fn source7_envelope_uuid_spellings_are_canonical_without_changing_legacy_parser(
             );
         }
     }
+}
+
+#[test]
+fn admission_work_authority_is_required_closed_and_digest_bound() {
+    for noise in [false, true] {
+        for origin in [Origin7::CapturedJob, Origin7::StandaloneViewJobs] {
+            let a = Admission7 {
+                work_authority: origin,
+                ..grant(noise)
+            };
+            let positive = replace(
+                replace(control(noise), "admission", a.value().unwrap()),
+                "sourceRequirements",
+                full_fact(&required(noise), a),
+            );
+            let (_, profile) = open(&text(&positive), &|| Ok(())).unwrap();
+            assert_eq!(profile.admission.work_authority, origin);
+        }
+    }
+    let value = control(false);
+    let grant = field(&value, "admission").unwrap().clone();
+    for invalid in [
+        Value::Null,
+        Value::Bool(true),
+        Value::str(""),
+        Value::str("unknown"),
+        Value::str("CapturedJob"),
+    ] {
+        let changed = replace(
+            value.clone(),
+            "admission",
+            replace(grant.clone(), "workAuthority", invalid),
+        );
+        assert_eq!(
+            open(&text(&changed), &|| Ok(())).unwrap_err().code,
+            ErrorCode::InputSchema
+        );
+    }
+    let Value::Object(mut fields) = grant.clone() else {
+        panic!("object")
+    };
+    fields.remove("workAuthority");
+    let missing = replace(value.clone(), "admission", Value::Object(fields));
+    assert_eq!(
+        open(&text(&missing), &|| Ok(())).unwrap_err().code,
+        ErrorCode::InputSchema
+    );
+    let changed = replace(
+        value,
+        "admission",
+        replace(grant, "workAuthority", Value::str("standalone-view-jobs")),
+    );
+    // Structurally valid origin change cannot reuse a captured-origin Fact SHA.
+    assert_eq!(
+        open(&text(&changed), &|| Ok(())).unwrap_err().code,
+        ErrorCode::InputSchema
+    );
 }
