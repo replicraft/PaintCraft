@@ -30,11 +30,21 @@ base work. Each total is a checked sum, not an independently spendable allowance
 Policy selection is trusted endpoint behavior; a browser request cannot select
 native limits. Child limits are componentwise minima and retain prior usage.
 
-The 64 MiB appearance byte realm, existing output/source/metadata limits and
-8,388,608-unit per-step limit remain unchanged. For example, Gaussian before a
-radius-32 Box can require a 65×65 input prefix for one output pixel; that exceeds
-the step bound and must refuse until a separately qualified incremental algorithm
-exists. Multiple stages and repeated halos sum normally.
+The 64 MiB appearance byte realm and existing output/source/metadata limits
+remain unchanged. Old protocols retain their 8,388,608-unit per-step limit.
+Source6 is qualifying a separate fixed policy: 64×64 native/display patches,
+8,388,608 base units and 134,217,728 Noise units per synchronous slice. The public
+qualification constructor cannot exceed that Noise slice ceiling; no wire field
+selects a larger policy. Actual browser timing/cancellation gates must pass before
+ordinary delivery is claimed.
+
+Gaussian before radius-32 Box needs a 65×65 source prefix even for one interior
+output pixel, exceeding the old aggregate slice limit. The new policy admits that
+prefix without reducing its price. At full 1920×1080, the canvas-aligned64 patch
+quote has 510 patches and 32,541,507,584 Noise units for this compound case, below
+2^35. This is an independently checked geometry quote, not an observed complete
+frame or universal stack allowance. Multiple stages and repeated halos sum
+normally; final execution and actual slice cost require their own evidence.
 
 ## One owned job and explicit lifetime
 

@@ -5,16 +5,20 @@ and explicit copy consent support **twelve editable profiles**: Invert,
 Brightness/Contrast, Black & White, Threshold, Posterize, Solarize, Box Blur,
 Levels, Exposure, Curves, Vibrance and Hue/Saturation. Fixed per-filter masks
 remain independent of live selection.
-Native and Web Studio share controls. Updated 2026-10-31.
+Native and Web Studio share controls. Updated 2026-11-01.
 Layer masks, styles and the rest of the pinned 132-entry inventory remain open;
 twelve profiles do not establish parity or a wholesale port.
 
 The [seeded Uniform/Gaussian noise foundation](NOISE_FILTER_FOUNDATION.md) now
 passes native and actual Rust Wasm qualification: 4,380 independent pixel
 expectations, 26,280 mask expectations and exact normalized native/Wasm records.
-Its explicit source-coordinate API still needs catalog admission, persistence,
-rendering and host integration. No thirteenth editable profile, GPU noise kernel
-or upstream floating-point byte parity is claimed.
+Its typed thirteenth descriptor now preserves intent through PCND6/history and
+renders through explicit paired admission. Real CLI/MCP default/1080p copies and
+headless Native Studio controls pass; the dedicated Source6 Worker passes native
+tests. Actual Source6 browser delivery, remaining copy routes and Export8 are
+still under qualification. The fully qualified cross-frontend baseline above
+remains twelve. No GPU Noise kernel or upstream floating-point byte parity is
+claimed. The foundation document records exact local receipts and boundaries.
 
 Whole-RGB [Vibrance](VIBRANCE_FILTER_FOUNDATION.md) is locally qualified through
 native and Web Studio controls, CLI/MCP, PCND6 and direct CPU filtering with Metal

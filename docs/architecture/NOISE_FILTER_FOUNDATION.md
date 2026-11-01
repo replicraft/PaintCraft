@@ -1,9 +1,10 @@
 # Seeded noise numerical foundation
 
-Status: the standalone numerical foundation passes native and actual Rust Wasm
-qualification. This does not add an editable catalog profile. Studio currently
-exposes twelve qualified profiles; noise still needs persistence, history,
-rendering, host controls and automation integration.
+Status: the numerical foundation passes native and actual Rust Wasm qualification.
+Noise now has typed catalog intent, PCND6 persistence, recorded history, scoped
+CPU appearance evaluation and qualified CLI/MCP rendering. Native Studio controls
+pass headless tests. The established cross-frontend baseline remains twelve
+profiles while Source6 browser delivery and remaining copy routes are qualified.
 
 ## Intent and source coordinates
 
@@ -16,8 +17,9 @@ the intended controls and pattern anchoring, not floating-point byte parity.
 seed, monochrome mode and `NoiseDistribution`. Defaults are amount 10, seed 1,
 monochrome true and Uniform. Invalid amount fails rather than clamps. Its six
 semantic bytes are unsigned amount u16 big-endian, seed u16 big-endian,
-monochrome 0/1 and distribution 0/1 for Uniform/Gaussian. This is not yet a PCND
-codec or permission to admit a new catalog descriptor.
+monochrome 0/1 and distribution 0/1 for Uniform/Gaussian. The strict PCND6
+`params-v1` codec now preserves this intent, including disabled and zero-amount
+instances. Decoding intent does not grant renderer execution work.
 
 `SourcePixel` is a distinct pair of unsigned integer source coordinates. Signed
 conversion is checked. The caller separately validates the layer extent and
@@ -212,3 +214,38 @@ The [native kernel baseline](../benchmarks/noise-kernel-2026-10-31/DECISION.md)
 now records three statistical/process sessions for the default canvas and actual
 1080p. These timings qualify the measured scalar workloads only; they do not
 replace Wasm or real host responsiveness gates.
+
+
+## Integration checkpoint, 2026-11-01
+
+The typed descriptor, command schema, history reconstruction and PCND raw/compact
+round trips are implemented. The paired renderer admission preserves separate
+base/Noise limits and cumulative ownership; a disabled or neutral Noise intent
+cannot increase the base allowance. Coordinate-changing raster operations refuse
+stored Noise before mutation until source-coordinate remapping is supported.
+
+The frozen old-twelve comparison is byte-exact for all 59 native and 59 actual
+Wasm records, with all eight authentic Main contexts unchanged and no excluded
+layout, callback or accounting fields. Local receipt
+`docs/validation/noise-planning/baseline/post-final-freeze.json`, SHA256
+`3f5482cf41aba79fefefa9fe7d1b8d6acbf2ae8b8c28e7dacc5e67d47af7d3c2`,
+pins that completed source boundary.
+
+Actual CLI/MCP tests pass ten default/1080p complete-frame hashes previously
+observed from the qualified numerical kernel, plus independent tiny Uniform and
+Gaussian literals. Persistence, preview/export, bake refusal, no-op updates,
+undo/redo, source preservation and reopen are exercised. The full CLI suite passes
+249 tests, with 15 existing ignores; strict checks and eleven schema tests pass.
+These results are in `docs/validation/noise-cli-runtime/final-freeze.json`, SHA256
+`e5c7279822b6bded581df60746eb1995f702bad86282f4f28907d28eb12da736`.
+Full-frame hash observations are host-integration references, not a second
+independent mathematical oracle or benchmark.
+
+The dedicated Source6 Worker passes 57 native tests and strict checks. Headless
+Native App/Studio passes 764/27 tests with 29 existing App ignores and required
+Metal access. That proof precedes subsequent print/export preparation changes:
+`docs/validation/noise-worker-native/final-freeze.json`, SHA256
+`219423e0aad851430f631ec6a08c76a534f5acda3c21aed859b008571e22cccb`.
+Actual Source6 Wasm/browser frames, slice latency, cancellation acknowledgement,
+Main tool-preview lifecycle and Export8 remain separate open gates. No GPU Noise
+kernel or upstream floating-point byte parity is claimed.
