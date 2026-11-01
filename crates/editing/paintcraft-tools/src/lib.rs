@@ -20,6 +20,8 @@ pub mod pen_stroke;
 mod picker;
 mod preview_revision;
 pub use filter_edit::FilterEdit;
+mod layer_mask_edit;
+pub use layer_mask_edit::LayerMaskEdit;
 mod selection;
 #[cfg(feature = "text")]
 pub mod text;

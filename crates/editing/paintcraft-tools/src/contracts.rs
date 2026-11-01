@@ -212,6 +212,7 @@ pub struct ColorPick {
 pub enum Action {
     /// Captured Studio revision; receiving hosts revalidate at execution.
     Filter(crate::FilterEdit),
+    LayerMask(crate::LayerMaskEdit),
     ToolFailure(&'static str),
     SampledStroke(crate::sampled_brush::SampledStroke),
     PenStroke(crate::pen_stroke::PenStroke),

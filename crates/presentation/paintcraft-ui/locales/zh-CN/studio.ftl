@@ -516,3 +516,15 @@ monochrome-noise = 单色杂色
 noise-distribution = 杂色分布
 uniform-noise = 均匀杂色
 gaussian-noise = 高斯杂色
+
+# Saved source-local layer mask actions.
+layer-mask = 图层蒙版
+use-selection-as-layer-mask = 将选区用作图层蒙版
+enable-layer-mask = 启用图层蒙版
+invert-layer-mask = 反相图层蒙版
+remove-layer-mask = 移除图层蒙版
+no-saved-layer-mask = 没有已保存的图层蒙版
+saved-layer-mask-domain = 已保存图层蒙版的范围
+saved-layer-mask-bands = 已保存图层蒙版的条带数
+saved-layer-mask-runs = 已保存图层蒙版的区段数
+pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = 已保存蒙版外的像素会保持隐藏。更改选区不会更改此蒙版。

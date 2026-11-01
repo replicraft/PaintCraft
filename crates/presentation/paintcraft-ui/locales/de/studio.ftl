@@ -516,3 +516,15 @@ monochrome-noise = Monochromes Rauschen
 noise-distribution = Rauschverteilung
 uniform-noise = Gleichverteiltes Rauschen
 gaussian-noise = Gaußsches Rauschen
+
+# Saved source-local layer mask actions.
+layer-mask = Ebenenmaske
+use-selection-as-layer-mask = Auswahl als Ebenenmaske verwenden
+enable-layer-mask = Ebenenmaske aktivieren
+invert-layer-mask = Ebenenmaske umkehren
+remove-layer-mask = Ebenenmaske entfernen
+no-saved-layer-mask = Keine gespeicherte Ebenenmaske
+saved-layer-mask-domain = Bereich der gespeicherten Ebenenmaske
+saved-layer-mask-bands = Bänder der gespeicherten Ebenenmaske
+saved-layer-mask-runs = Läufe der gespeicherten Ebenenmaske
+pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Pixel außerhalb der gespeicherten Maske bleiben verborgen. Eine Änderung der Auswahl ändert diese Maske nicht.

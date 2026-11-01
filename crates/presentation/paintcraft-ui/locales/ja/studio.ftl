@@ -516,3 +516,15 @@ monochrome-noise = 単色ノイズ
 noise-distribution = ノイズ分布
 uniform-noise = 一様ノイズ
 gaussian-noise = ガウスノイズ
+
+# Saved source-local layer mask actions.
+layer-mask = レイヤーマスク
+use-selection-as-layer-mask = 選択範囲をレイヤーマスクにする
+enable-layer-mask = レイヤーマスクを有効にする
+invert-layer-mask = レイヤーマスクを反転
+remove-layer-mask = レイヤーマスクを削除
+no-saved-layer-mask = 保存済みレイヤーマスクなし
+saved-layer-mask-domain = 保存済みレイヤーマスクの領域
+saved-layer-mask-bands = 保存済みレイヤーマスクのバンド数
+saved-layer-mask-runs = 保存済みレイヤーマスクの区間数
+pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = 保存したマスクの外側のピクセルは非表示のままです。選択範囲を変更しても、このマスクは変わりません。

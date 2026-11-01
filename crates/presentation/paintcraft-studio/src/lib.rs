@@ -2,6 +2,7 @@
 pub mod canvas;
 mod canvas_size;
 pub mod filters;
+pub mod layer_masks;
 pub use canvas_size::{CanvasResponse, CanvasSize, canvas_size_dialog};
 mod colors;
 mod history;

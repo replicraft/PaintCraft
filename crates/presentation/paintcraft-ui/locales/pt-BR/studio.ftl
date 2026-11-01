@@ -516,3 +516,15 @@ monochrome-noise = Ruído monocromático
 noise-distribution = Distribuição do ruído
 uniform-noise = Ruído uniforme
 gaussian-noise = Ruído gaussiano
+
+# Saved source-local layer mask actions.
+layer-mask = Máscara de camada
+use-selection-as-layer-mask = Usar seleção como máscara de camada
+enable-layer-mask = Ativar máscara de camada
+invert-layer-mask = Inverter máscara de camada
+remove-layer-mask = Remover máscara de camada
+no-saved-layer-mask = Nenhuma máscara de camada salva
+saved-layer-mask-domain = Domínio da máscara de camada salva
+saved-layer-mask-bands = Faixas da máscara de camada salva
+saved-layer-mask-runs = Trechos da máscara de camada salva
+pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Os pixels fora da máscara salva permanecem ocultos. Alterar a seleção não altera esta máscara.

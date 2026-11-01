@@ -516,3 +516,15 @@ monochrome-noise = Monochrome noise
 noise-distribution = Noise distribution
 uniform-noise = Uniform noise
 gaussian-noise = Gaussian noise
+
+# Saved source-local layer mask actions.
+layer-mask = Layer mask
+use-selection-as-layer-mask = Use selection as layer mask
+enable-layer-mask = Enable layer mask
+invert-layer-mask = Invert layer mask
+remove-layer-mask = Remove layer mask
+no-saved-layer-mask = No saved layer mask
+saved-layer-mask-domain = Saved layer mask domain
+saved-layer-mask-bands = Saved layer mask bands
+saved-layer-mask-runs = Saved layer mask runs
+pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Pixels outside the saved mask stay hidden. Changing the selection does not change this mask.

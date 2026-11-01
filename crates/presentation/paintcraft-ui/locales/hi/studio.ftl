@@ -516,3 +516,15 @@ monochrome-noise = एकवर्णी नॉइज़
 noise-distribution = नॉइज़ वितरण
 uniform-noise = समान नॉइज़
 gaussian-noise = गॉसियन नॉइज़
+
+# Saved source-local layer mask actions.
+layer-mask = परत मास्क
+use-selection-as-layer-mask = चयन को परत मास्क के रूप में उपयोग करें
+enable-layer-mask = परत मास्क सक्षम करें
+invert-layer-mask = परत मास्क उलटें
+remove-layer-mask = परत मास्क हटाएँ
+no-saved-layer-mask = कोई सहेजा गया परत मास्क नहीं
+saved-layer-mask-domain = सहेजे गए परत मास्क का क्षेत्र
+saved-layer-mask-bands = सहेजे गए परत मास्क के बैंड
+saved-layer-mask-runs = सहेजे गए परत मास्क के खंड
+pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = सहेजे गए मास्क के बाहर के पिक्सेल छिपे रहते हैं। चयन बदलने से यह मास्क नहीं बदलता।
