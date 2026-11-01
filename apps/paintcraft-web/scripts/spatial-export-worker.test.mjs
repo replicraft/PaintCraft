@@ -225,7 +225,7 @@ for (const codec of ['dds', 'msp']) {
 			() =>
 				service[`admit${title}InWorker`]({
 					...options,
-					plan: { ...plan(codec), protocolVersion: 8 },
+					plan: { ...plan(codec), protocolVersion: 9 },
 				}),
 			/Unsupported export protocol/,
 		);

@@ -19,3 +19,6 @@ mod spatial;
 
 #[cfg(any(test, target_arch = "wasm32"))]
 mod programs;
+
+#[cfg(any(test, target_arch = "wasm32"))]
+mod noise;

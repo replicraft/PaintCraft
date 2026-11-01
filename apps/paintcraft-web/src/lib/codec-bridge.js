@@ -1,3 +1,4 @@
+import { DDS_PROTOCOL_VERSION as DDS_NOISE_PROTOCOL_VERSION } from './dds-noise-worker-protocol.js';
 import { DDS_PROTOCOL_VERSION as DDS_PREPARED_PROTOCOL_VERSION } from './dds-prepared-worker-protocol.js';
 import { MSP_PROTOCOL_VERSION as MSP_PREPARED_PROTOCOL_VERSION } from './msp-prepared-worker-protocol.js';
 import { DDS_PROTOCOL_VERSION as DDS_SPATIAL_PROTOCOL_VERSION } from './dds-spatial-worker-protocol.js';
@@ -163,6 +164,7 @@ export function createCodecService(applicationVersion) {
 		ddsSpatialExportProtocolVersion: () => DDS_SPATIAL_PROTOCOL_VERSION,
 		ddsCatalogExportProtocolVersion: () => DDS_CATALOG_PROTOCOL_VERSION,
 		ddsPreparedExportProtocolVersion: () => DDS_PREPARED_PROTOCOL_VERSION,
+		ddsNoiseExportProtocolVersion: () => DDS_NOISE_PROTOCOL_VERSION,
 		beginDdsExport(capturedOwner, plan, nonce) {
 			return beginExport(capturedOwner, plan, nonce, admitDdsInWorker);
 		},

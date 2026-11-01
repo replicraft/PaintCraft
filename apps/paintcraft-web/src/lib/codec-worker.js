@@ -1,3 +1,5 @@
+import * as ddsNoise from './dds-noise-worker-protocol.js';
+import { freezeNoiseWorkload } from './source-noise-export-context.js';
 import * as ddsPrepared from './dds-prepared-worker-protocol.js';
 import * as mspPrepared from './msp-prepared-worker-protocol.js';
 import * as ddsSpatial from './dds-spatial-worker-protocol.js';
@@ -123,6 +125,23 @@ const DDS_CATALOG = Object.freeze({
 	completed: ddsCatalog.isCompletedDdsRefusal,
 	finalize: ddsCatalog.freezeDdsPlan,
 });
+const DDS_NOISE = Object.freeze({
+	...DDS,
+	kind: 'dds-noise-export',
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		ddsNoise.captureDds(source, owner, plan, nonce),
+	encode: ddsNoise.encodeDdsRequest,
+	decode: ddsNoise.decodeDdsResponse,
+	completed: ddsNoise.isCompletedDdsRefusal,
+	finalize: ddsNoise.freezeDdsPlan,
+});
+function freezeInitialNoise(plan) {
+	return Object.freeze({
+		...freezeDdsPlan(plan),
+		protocolVersion: 8,
+		noiseWorkload: freezeNoiseWorkload(plan.noiseWorkload),
+	});
+}
 const DDS_PREPARED = Object.freeze({
 	...DDS,
 	kind: 'dds-prepared-export',
@@ -493,14 +512,18 @@ export function tiffFileInWorker({ file, plan, ...options }) {
 export function admitDdsInWorker(options) {
 	return admitExportInWorker(
 		options,
-		options.plan?.protocolVersion === 7
-			? DDS_PREPARED
-			: options.plan?.protocolVersion === 6
-				? DDS_CATALOG
-				: options.plan?.protocolVersion === 5
-					? DDS_SPATIAL
-					: DDS,
-		freezeDdsPlan,
+		options.plan?.protocolVersion === 8
+			? DDS_NOISE
+			: options.plan?.protocolVersion === 7
+				? DDS_PREPARED
+				: options.plan?.protocolVersion === 6
+					? DDS_CATALOG
+					: options.plan?.protocolVersion === 5
+						? DDS_SPATIAL
+						: DDS,
+		options.plan?.protocolVersion === 8
+			? freezeInitialNoise
+			: freezeDdsPlan,
 	);
 }
 export function admitMspInWorker(options) {
@@ -518,7 +541,10 @@ export function admitMspInWorker(options) {
 }
 function admitExportInWorker(options, operation, freezePlan) {
 	const protocol = options.plan?.protocolVersion ?? 4;
-	if (![4, 5, 6, 7].includes(protocol))
+	if (
+		![4, 5, 6, 7].includes(protocol) &&
+		!(protocol === 8 && operation === DDS_NOISE)
+	)
 		throw refusal('InputSchema', 'Unsupported export protocol version');
 	const plan = freezePlan(options.plan);
 	ownerBytes(options.owner);
@@ -582,6 +608,7 @@ function admitExportInWorker(options, operation, freezePlan) {
 								'Spatial export plan changed during snapshot',
 							);
 					for (const key of [
+						...(protocol === 8 ? ['noiseWorkload'] : []),
 						'filterDigest',
 						'metadataContext',
 						'maskContext',

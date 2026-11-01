@@ -1,3 +1,4 @@
+import * as ddsNoise from './dds-noise-worker-protocol.js';
 import * as ddsPrepared from './dds-prepared-worker-protocol.js';
 import * as mspPrepared from './msp-prepared-worker-protocol.js';
 import * as ddsSpatial from './dds-spatial-worker-protocol.js';
@@ -7,6 +8,8 @@ import * as mspCatalog from './msp-catalog-worker-protocol.js';
 // One isolated job per Worker. Never imported by the editor's main Wasm module.
 import initialize, {
 	application_version,
+	dds_noise_export_protocol_version,
+	dds_noise_export_request,
 	dds_export_protocol_version,
 	dds_export_request,
 	dds_spatial_export_protocol_version,
@@ -55,6 +58,14 @@ import {
 } from './tiff-page-worker-protocol.js';
 
 const operations = Object.freeze({
+	'dds-noise-export': Object.freeze({
+		header: ddsNoise.DDS_REQUEST_HEADER,
+		input: ddsNoise.DDS_SOURCE_MAX,
+		output: ddsNoise.DDS_OUTPUT_MAX,
+		version: dds_noise_export_protocol_version,
+		expectedVersion: ddsNoise.DDS_PROTOCOL_VERSION,
+		execute: dds_noise_export_request,
+	}),
 	'dds-catalog-export': Object.freeze({
 		header: ddsCatalog.DDS_REQUEST_HEADER,
 		input: ddsCatalog.DDS_SOURCE_MAX,
