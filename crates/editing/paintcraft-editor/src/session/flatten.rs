@@ -28,21 +28,7 @@ impl Session {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Receipt> {
         check()?;
-        let already_flat = match self.doc.roots.as_slice() {
-            [] => true,
-            [id] => {
-                self.doc.layers.len() == 1
-                    && self.doc.layers.get(id).is_some_and(|layer| {
-                        layer.visible
-                            && layer.opacity == 255
-                            && layer.origin == (0, 0)
-                            && (layer.raster.width(), layer.raster.height()) == self.doc.canvas
-                            && layer.filters.is_empty()
-                    })
-            }
-            _ => false,
-        };
-        if already_flat {
+        if !self.doc.requires_flatten() {
             return Ok(Receipt {
                 committed: false,
                 state_id: self.doc.state_id,

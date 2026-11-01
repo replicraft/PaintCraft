@@ -62,6 +62,25 @@ pub struct Document {
 }
 
 impl Document {
+    /// Whether the admitted document needs visible projection into one plain
+    /// canvas-sized layer. Stored intent counts even when disabled or neutral.
+    /// This is the editor's flatten/no-op rule, not a pixel-equivalence proof.
+    pub fn requires_flatten(&self) -> bool {
+        match self.roots.as_slice() {
+            [] => false,
+            [id] => {
+                !(self.layers.len() == 1
+                    && self.layers.get(id).is_some_and(|layer| {
+                        layer.visible
+                            && layer.opacity == 255
+                            && layer.origin == (0, 0)
+                            && (layer.raster.width(), layer.raster.height()) == self.canvas
+                            && layer.filters.is_empty()
+                    }))
+            }
+            _ => true,
+        }
+    }
     pub fn canvas_rect(&self) -> Rect {
         Rect::from_origin_size(0, 0, self.canvas.0, self.canvas.1).expect("canvas is non-empty")
     }
@@ -377,3 +396,6 @@ mod tests {
 
 #[cfg(test)]
 mod import_tests;
+
+#[cfg(test)]
+mod flatten_tests;
