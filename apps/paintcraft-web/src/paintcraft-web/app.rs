@@ -711,7 +711,7 @@ impl WebApp {
             {
                 return false;
             }
-            if let Some(action) = Action::from_shortcut_for(Frontend::Classic, *key, *modifiers)
+            if let Some(action) = Action::from_shortcut_for(self.frontend, *key, *modifiers)
                 && action.enabled(self.context())
             {
                 self.action(ctx, action);
