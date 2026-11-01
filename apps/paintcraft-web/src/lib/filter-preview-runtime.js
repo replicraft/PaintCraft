@@ -1,11 +1,20 @@
 // Persistent visual Worker; separate from the one-shot format codec instance.
 import initialize, {
 	linear_memory_ceiling,
+	NoiseRenderWorker,
 	prepared_capabilities,
 	prepared_protocol_version,
 	protocol_version,
 	RenderWorker,
+	scoped_capabilities,
+	scoped_control_quote,
+	scoped_protocol_version,
+	scoped_qualification_policy,
 } from '../../render-worker-pkg/paintcraft_web_render_worker.js';
+import {
+	cancelGeneration6,
+	validateRuntimeRequest6,
+} from './filter-preview-noise-protocol.js';
 import {
 	BEGIN_BYTES_MAX,
 	CAPABILITY_BYTES_MAX,
@@ -19,9 +28,13 @@ import {
 	LINEAR_MEMORY_BYTES,
 	SOURCE_BYTES_MAX,
 	validatePlan,
+	validateRequest,
 } from './filter-preview-protocol.js';
 
 let sourceProtocol = 2;
+let sourcePlan = null,
+	lastQueued = -1n,
+	acceptedGeneration = -1n;
 let service = null,
 	current = null,
 	desired = null,
@@ -103,9 +116,11 @@ function pump() {
 			}
 			current = desired;
 			desired = null;
+			if (sourceProtocol === 6)
+				acceptedGeneration = BigInt(current.request.generation);
 			current.binding = JSON.parse(
 				service.prepare(
-					sourceProtocol === 5
+					[5, 6].includes(sourceProtocol)
 						? encodeProgram(current.request, BEGIN_BYTES_MAX)
 						: canonical(current.request),
 				),
@@ -134,6 +149,35 @@ function pump() {
 self.onmessage = async ({ data }) => {
 	let ownsOpening = false;
 	try {
+		if (data.kind === 'hello' && data.registryContract === 2) {
+			if (data.protocol !== 6)
+				throw fail('CapabilityUnsupported', 'Source6 HELLO protocol');
+			const control = encodeProgram(
+				{
+					protocol: 6,
+					registryContract: 2,
+					pairs: data.pairs,
+					workload: data.workload,
+				},
+				CAPABILITY_BYTES_MAX,
+			);
+			const wasm = await initialize();
+			if (
+				scoped_protocol_version() !== 6 ||
+				linear_memory_ceiling() !== LINEAR_MEMORY_BYTES ||
+				wasm.memory.buffer.byteLength > LINEAR_MEMORY_BYTES
+			)
+				throw fail('CodecFailed', 'Source6 artifact contract');
+			post({
+				...JSON.parse(scoped_capabilities(control)),
+				id: data.id,
+				runtimeFacts: {
+					controlQuote: JSON.parse(scoped_control_quote()),
+					slicePolicy: JSON.parse(scoped_qualification_policy()),
+				},
+			});
+			return;
+		}
 		if (data.kind === 'hello') {
 			if (data.registryContract !== 1)
 				throw fail('InputSchema', 'Prepared registry contract');
@@ -167,15 +211,19 @@ self.onmessage = async ({ data }) => {
 			)
 				throw fail('ResourceLimit', 'Filter source extent');
 			validatePlan(data.plan);
+			const scoped = data.plan.protocol === 6;
 			const generic = data.plan.protocol === 5;
-			const encoded = generic
-				? encodeProgram(data.plan, OPEN_BYTES_MAX)
-				: canonical(data.plan);
+			const encoded =
+				generic || scoped
+					? encodeProgram(data.plan, OPEN_BYTES_MAX)
+					: canonical(data.plan);
 			const wasm = await initialize();
 			if (
-				(generic
-					? prepared_protocol_version() !== 5
-					: ![2, 3, 4].includes(protocol_version())) ||
+				(scoped
+					? scoped_protocol_version() !== 6
+					: generic
+						? prepared_protocol_version() !== 5
+						: ![2, 3, 4].includes(protocol_version())) ||
 				(data.plan.protocol === 3 &&
 					![3, 4].includes(protocol_version())) ||
 				(data.plan.protocol === 4 && protocol_version() !== 4) ||
@@ -183,13 +231,21 @@ self.onmessage = async ({ data }) => {
 				wasm.memory.buffer.byteLength > LINEAR_MEMORY_BYTES
 			)
 				throw fail('CodecFailed', 'Render Worker contract mismatch');
-			service = generic
-				? RenderWorker.openPrograms(
+			service = scoped
+				? NoiseRenderWorker.openQualified(
 						new Uint8Array(data.source),
 						encoded,
 					)
-				: new RenderWorker(new Uint8Array(data.source), encoded);
+				: generic
+					? RenderWorker.openPrograms(
+							new Uint8Array(data.source),
+							encoded,
+						)
+					: new RenderWorker(new Uint8Array(data.source), encoded);
 			sourceProtocol = data.plan.protocol ?? 2;
+			sourcePlan = data.plan;
+			lastQueued = -1n;
+			acceptedGeneration = -1n;
 			opening = false;
 			post({
 				kind: 'ready',
@@ -200,11 +256,31 @@ self.onmessage = async ({ data }) => {
 		}
 		if (!service) throw fail('InputSchema', 'Source not open');
 		if (data.kind === 'update') {
+			if (sourceProtocol === 6) {
+				validateRuntimeRequest6(
+					data.request,
+					sourcePlan,
+					validateRequest,
+					canonical,
+				);
+				const generation = BigInt(data.request.generation);
+				if (generation <= lastQueued)
+					throw fail(
+						'ConflictStaleBase',
+						'Source6 generation did not advance',
+					);
+				lastQueued = generation;
+			}
 			retired(desired);
 			desired = data;
 			schedule();
 		} else if (data.kind === 'cancel') {
-			const through = BigInt(data.generation);
+			const through =
+				sourceProtocol === 6
+					? cancelGeneration6(data.generation)
+					: BigInt(data.generation);
+			if (sourceProtocol === 6 && through > lastQueued)
+				lastQueued = through;
 			if (current && BigInt(current.request.generation) <= through) {
 				service.retire();
 				retired(current);
@@ -214,7 +290,13 @@ self.onmessage = async ({ data }) => {
 				retired(desired);
 				desired = null;
 			}
-			if (!current && !desired) service.retire();
+			if (
+				!current &&
+				!desired &&
+				(sourceProtocol !== 6 ||
+					(acceptedGeneration >= 0n && acceptedGeneration <= through))
+			)
+				service.retire();
 			post({ kind: 'retired', id: data.id, generation: data.generation });
 		} else if (data.kind === 'close') {
 			retire();

@@ -1,4 +1,10 @@
 import {
+	validateBinding6,
+	validatePlan6,
+	validateRequest6,
+	validateResult6,
+} from './filter-preview-noise-protocol.js';
+import {
 	validateBinding5,
 	validatePlan5,
 	validateRequest5,
@@ -133,6 +139,7 @@ export function same(a, b) {
 	return canonical(a) === canonical(b);
 }
 export function validatePlan(plan) {
+	if (plan?.protocol === 6) return validatePlan6(plan, validatePlan);
 	if (plan?.protocol === 5) return validatePlan5(plan, validatePlan);
 	shape(
 		plan,
@@ -220,6 +227,8 @@ export function validatePlan(plan) {
 		throw fail('InputSchema', 'Invalid filter preview source facts');
 }
 export function validateBinding(binding, plan) {
+	if (plan?.protocol === 6)
+		return validateBinding6(binding, plan, validatePlan);
 	if (plan?.protocol === 5)
 		return validateBinding5(binding, plan, validatePlan);
 	validatePlan(binding);
@@ -254,6 +263,8 @@ export function validateBinding(binding, plan) {
 			throw fail('CodecFailed', 'Render Worker source binding mismatch');
 }
 export function validateRequest(options, plan) {
+	if (plan?.protocol === 6)
+		return validateRequest6(options, plan, validateRequest, canonical);
 	if (plan?.protocol === 5)
 		return validateRequest5(options, plan, validateRequest, canonical);
 	shape(options, ['generation', 'operation', 'target', 'view', 'render']);
@@ -285,6 +296,8 @@ export function validateRequest(options, plan) {
 	canonical(options.operation);
 }
 export function validateResult(result, request, plan) {
+	if (plan?.protocol === 6)
+		return validateResult6(result, request, plan, validateResult);
 	if (plan?.protocol === 5)
 		return validateResult5(result, request, plan, validateResult);
 	shape(

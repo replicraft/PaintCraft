@@ -1,4 +1,12 @@
 import {
+	capabilityFacts6,
+	facts6,
+	freezeSource6,
+	NOISE_CONTROL_BYTES,
+	validateCapabilities6,
+	validateRuntimeFacts6,
+} from './filter-preview-noise-protocol.js';
+import {
 	BEGIN_BYTES_MAX,
 	encodeProgram,
 	freezeSource5,
@@ -12,7 +20,6 @@ import {
 import {
 	canonical,
 	fail,
-	OUTPUT_PIXELS_MAX,
 	RESERVATION_BYTES,
 	SOURCE_BYTES_MAX,
 	sha,
@@ -51,7 +58,7 @@ export function filterPreviewUsage() {
 export function beginFilterPreview(input) {
 	validatePlan(input);
 	const frozen = JSON.parse(
-		input?.protocol === 5
+		[5, 6].includes(input?.protocol)
 			? encodeProgram(input, OPEN_BYTES_MAX)
 			: canonical(input),
 	);
@@ -62,7 +69,12 @@ export function beginFilterPreview(input) {
 		);
 	reserved = true;
 	reservationBytes =
-		RESERVATION_BYTES + (input?.protocol === 5 ? PROGRAM_CONTROL_BYTES : 0);
+		RESERVATION_BYTES +
+		(input?.protocol === 6
+			? NOISE_CONTROL_BYTES
+			: input?.protocol === 5
+				? PROGRAM_CONTROL_BYTES
+				: 0);
 	let used = false;
 	return {
 		cancel() {
@@ -196,7 +208,8 @@ export function beginFilterPreview(input) {
 							data.message.length <= 4096;
 						if (
 							(p.kind === 'open' ||
-								(plan.protocol === 5 && p.kind === 'hello')) &&
+								([5, 6].includes(plan.protocol) &&
+									p.kind === 'hello')) &&
 							completed
 						)
 							completedOpenRefusals.add(error);
@@ -216,7 +229,8 @@ export function beginFilterPreview(input) {
 						);
 					else p.resolve(data);
 				};
-				let capabilities = null;
+				let capabilities = null,
+					runtimeFacts = null;
 				async function resolveSubset(pairs, expected) {
 					let entries = pairs.map((p) =>
 						(capabilities ?? []).find(
@@ -227,15 +241,50 @@ export function beginFilterPreview(input) {
 					);
 					if (capabilities === null || entries.some((e) => !e)) {
 						const reply = await send('hello', {
-							registryContract: 1,
+							registryContract: plan.protocol === 6 ? 2 : 1,
+							...(plan.protocol === 6
+								? { protocol: 6, workload: plan.workload }
+								: {}),
 							pairs,
 						});
 						try {
-							entries = await validateCapabilities(
-								reply,
-								pairs,
-								expected,
-							);
+							if (plan.protocol === 6) {
+								entries = await validateCapabilities6(
+									reply,
+									pairs,
+									expected,
+									plan.workload,
+								);
+								validateRuntimeFacts6(reply.runtimeFacts);
+								if (
+									runtimeFacts &&
+									encodeProgram(
+										runtimeFacts,
+										OPEN_BYTES_MAX,
+									) !==
+										encodeProgram(
+											reply.runtimeFacts,
+											OPEN_BYTES_MAX,
+										)
+								)
+									throw fail(
+										'CodecFailed',
+										'Source6 runtime facts changed',
+									);
+								runtimeFacts = Object.freeze({
+									controlQuote: Object.freeze({
+										...reply.runtimeFacts.controlQuote,
+									}),
+									slicePolicy: Object.freeze({
+										...reply.runtimeFacts.slicePolicy,
+									}),
+								});
+							} else
+								entries = await validateCapabilities(
+									reply,
+									pairs,
+									expected,
+								);
 						} catch (error) {
 							hardFail(error);
 							throw error;
@@ -244,14 +293,27 @@ export function beginFilterPreview(input) {
 						// history of all algorithms requested during this owner.
 						capabilities = entries;
 					} else {
-						const actual = await requirementDigests(pairs, entries);
+						const actual =
+							plan.protocol === 6
+								? await capabilityFacts6(
+										pairs,
+										entries,
+										plan.workload,
+									)
+								: await requirementDigests(pairs, entries);
 						if (
 							JSON.stringify(actual) !==
-							JSON.stringify({
-								count: expected.count,
-								requiredSha256: expected.requiredSha256,
-								resolutionSha256: expected.resolutionSha256,
-							})
+							JSON.stringify(
+								plan.protocol === 6
+									? facts6(expected)
+									: {
+											count: expected.count,
+											requiredSha256:
+												expected.requiredSha256,
+											resolutionSha256:
+												expected.resolutionSha256,
+										},
+							)
 						)
 							throw fail(
 								'CodecFailed',
@@ -259,7 +321,7 @@ export function beginFilterPreview(input) {
 							);
 					}
 				}
-				if (plan.protocol === 5)
+				if ([5, 6].includes(plan.protocol))
 					await resolveSubset(
 						plan.sourceRequirements.pairs,
 						plan.sourceRequirements,
@@ -277,6 +339,8 @@ export function beginFilterPreview(input) {
 					);
 				validateBinding(ready.binding, plan);
 				if (plan.protocol === 5) validateReady5(ready, plan);
+				if (plan.protocol === 6 && !runtimeFacts)
+					throw fail('CodecFailed', 'Source6 ABI handshake missing');
 				function cancelled() {
 					return fail(
 						'OperationCancelled',
@@ -339,7 +403,7 @@ export function beginFilterPreview(input) {
 								canonical(job.request.operation),
 							),
 						);
-						if (plan.protocol === 5)
+						if ([5, 6].includes(plan.protocol))
 							await resolveSubset(
 								unionPairs(
 									plan.sourceRequirements.pairs,
@@ -400,10 +464,12 @@ export function beginFilterPreview(input) {
 					}
 				}
 				if (plan.protocol === 5) freezeSource5(ready.binding);
+				if (plan.protocol === 6) freezeSource6(ready.binding);
 				Object.freeze(ready.binding.owner);
 				Object.freeze(ready.binding.size);
 				const client = {
 					binding: Object.freeze(ready.binding),
+					...(plan.protocol === 6 ? { runtimeFacts } : {}),
 					update(options) {
 						try {
 							if (closing || closed)
@@ -424,7 +490,7 @@ export function beginFilterPreview(input) {
 									'Filter generation did not advance',
 								);
 							const request = JSON.parse(
-								(plan.protocol === 5
+								([5, 6].includes(plan.protocol)
 									? (value) =>
 											encodeProgram(
 												value,
@@ -432,6 +498,14 @@ export function beginFilterPreview(input) {
 											)
 									: canonical)({
 									...options,
+									...(plan.protocol === 6
+										? {
+												protocol: 6,
+												registryContract: 2,
+												workloadSha256:
+													plan.workload.sha256,
+											}
+										: {}),
 									owner: plan.owner,
 									draft: plan.draft,
 									sourceSha256,
