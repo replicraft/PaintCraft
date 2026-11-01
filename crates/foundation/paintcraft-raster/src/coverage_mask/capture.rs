@@ -10,9 +10,31 @@ impl A8Mask {
         limits: Limits,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        Self::from_selection_measured(selection, source_extent, budget, limits, check)
+            .map(|(mask, _)| mask)
+    }
+    /// Same field, per-call limits and callback cadence as from_selection.
+    /// Successful work includes all callback steps (also terminal canonicalizing
+    /// builder/hash callbacks) plus weighted BinaryMask row traversal units.
+    /// Callers carrying one transaction allowance debit this total ONCE. Pass a
+    /// cancellation-only callback, not another callback-count work debit.
+    pub fn from_selection_measured(
+        selection: &Selection,
+        source_extent: Rect,
+        budget: &SharedBudget,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, u64)> {
+        let callbacks = Cell::new(0u64);
+        let weighted = Cell::new(0u64);
+        let checked = || {
+            check()?;
+            callbacks.set(callbacks.get().checked_add(1).ok_or_else(limit)?);
+            Ok(())
+        };
         let probe = Probe {
             remaining: Cell::new(limits.work),
-            check,
+            check: &checked,
         };
         probe.step()?;
         valid(source_extent)?;
@@ -121,6 +143,8 @@ impl A8Mask {
                                         },
                                     )?;
                                     probe.spend(spent)?;
+                                    weighted
+                                        .set(weighted.get().checked_add(spent).ok_or_else(limit)?);
                                     x = right;
                                 }
                                 if x < area.x1 {
@@ -153,6 +177,14 @@ impl A8Mask {
             }
         }
         drop(emit);
-        assemble(domain, &samples.values, &scope, limits, &probe)
+        let mask = assemble(domain, &samples.values, &scope, limits, &probe)?;
+        let work = callbacks
+            .get()
+            .checked_add(weighted.get())
+            .ok_or_else(limit)?;
+        Ok((mask, work))
     }
 }
+
+#[cfg(test)]
+mod tests;
