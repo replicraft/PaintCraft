@@ -84,6 +84,7 @@ mod tests {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "x".into(),
                 origin: (0, 0),

@@ -18,8 +18,10 @@ pub use paintcraft_core::types::policy::POLICY;
 mod conversion_identity;
 pub mod filters;
 pub use filters::{FilterInstance, FilterMask, FilterStack};
+mod layer_mask;
 pub mod source_metadata;
 pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
+pub use layer_mask::LayerMask;
 pub use source_metadata::SourceMetadata;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -33,9 +35,19 @@ pub struct Layer {
     pub raster: RasterLayer,
     /// Ordered non-destructive intentions, independent of the raw source.
     pub filters: FilterStack,
+    /// Immutable source-local coverage, applied after filters and before opacity.
+    pub mask: Option<LayerMask>,
 }
 
 impl Layer {
+    /// Shared backing identities; callers deduplicate Layer and filter uses together.
+    pub fn mask_storage_usage(&self) -> impl Iterator<Item = (usize, u64)> + '_ {
+        self.filters.mask_storage_usage().chain(
+            self.mask
+                .as_ref()
+                .and_then(|m| m.coverage().storage_usage()),
+        )
+    }
     /// Document-space rectangle covered by the layer.
     pub fn extent(&self) -> Rect {
         Rect::from_origin_size(
@@ -62,6 +74,21 @@ pub struct Document {
 }
 
 impl Document {
+    /// Stored disabled/zero/full masks remain capabilities and persistent intent.
+    pub fn has_layer_masks(&self) -> bool {
+        self.layers.values().any(|l| l.mask.is_some())
+    }
+    /// Legacy routes must opt in explicitly rather than silently drop this field.
+    pub fn require_no_layer_masks(&self) -> Result<()> {
+        if self.has_layer_masks() {
+            Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Layer masks require a qualified appearance or persistence route",
+            ))
+        } else {
+            Ok(())
+        }
+    }
     /// Whether the admitted document needs visible projection into one plain
     /// canvas-sized layer. Stored intent counts even when disabled or neutral.
     /// This is the editor's flatten/no-op rule, not a pixel-equivalence proof.
@@ -76,6 +103,7 @@ impl Document {
                             && layer.origin == (0, 0)
                             && (layer.raster.width(), layer.raster.height()) == self.canvas
                             && layer.filters.is_empty()
+                            && layer.mask.is_none()
                     }))
             }
             _ => true,
@@ -183,6 +211,7 @@ pub fn new_document(
                 visible: true,
                 opacity: 255,
                 filters: Default::default(),
+                mask: None,
                 raster: RasterLayer::new(width, height, color),
             },
         );
@@ -265,6 +294,7 @@ fn imported_document(
         visible: true,
         opacity: 255,
         filters: Default::default(),
+        mask: None,
         raster,
     };
     Document {

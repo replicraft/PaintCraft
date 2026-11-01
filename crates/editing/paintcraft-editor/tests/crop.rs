@@ -257,6 +257,7 @@ fn crop_matches_independent_world_space_samples_for_kept_partial_hidden_and_offc
         doc.layers.insert(
             id,
             paintcraft_document::Layer {
+                mask: None,
                 id,
                 name: format!("Layer {index}"),
                 origin,

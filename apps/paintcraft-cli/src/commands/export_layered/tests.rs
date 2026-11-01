@@ -338,6 +338,7 @@ fn paint_staged_copy_retains_individual_geometry_and_source_identity_with_explic
     original.layers.insert(
         id,
         paintcraft_document::Layer {
+            mask: None,
             id,
             name: "second UI".into(),
             origin: (-3, 4),

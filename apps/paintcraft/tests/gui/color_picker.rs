@@ -89,6 +89,7 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
     doc.layers.insert(
         red,
         Layer {
+            mask: None,
             id: red,
             name: "Red overlay".into(),
             origin: (100, 100),
@@ -103,6 +104,7 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
     doc.layers.insert(
         hidden,
         Layer {
+            mask: None,
             id: hidden,
             name: "Hidden raw".into(),
             origin: (100, 100),

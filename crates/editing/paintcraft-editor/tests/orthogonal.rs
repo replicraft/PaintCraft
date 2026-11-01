@@ -54,6 +54,7 @@ fn all_orientations_keep_full_layer_extents_metadata_hidden_rgb_and_recorded_his
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "Hidden off-canvas".into(),
                 origin: (-2, 3),

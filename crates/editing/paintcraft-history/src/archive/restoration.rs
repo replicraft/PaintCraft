@@ -112,6 +112,7 @@ mod tests {
                 visible: true,
                 opacity: 255,
                 filters: Default::default(),
+                mask: None,
                 width: 512,
                 height: 256,
                 default: Rgba::TRANSPARENT,

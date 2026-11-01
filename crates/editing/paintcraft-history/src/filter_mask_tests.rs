@@ -241,3 +241,6 @@ fn cancellation_of_cold_capture_keeps_mask_timeline_and_owned_bytes() {
     drop(history);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[path = "filter_mask_tests/layer_tests.rs"]
+mod layer_tests;

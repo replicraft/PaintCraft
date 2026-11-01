@@ -35,6 +35,7 @@ fn fixture() -> Session {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: format!("Layer {index}"),
                 origin,

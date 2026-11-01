@@ -94,6 +94,7 @@ impl Session {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: name.into(),
                 origin: draft.origin,

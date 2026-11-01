@@ -65,6 +65,7 @@ fn setup(origin: (i64, i64)) -> (Session, Uuid) {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "Hidden target 日本語".into(),
             origin,

@@ -98,3 +98,47 @@ fn clear_matching_pristine_source_without_stored_filters_remains_an_exact_noop()
     assert_eq!(s.ticket().publication_epoch, ticket.publication_epoch);
     assert_eq!(s.history_view().entries.len(), entries);
 }
+
+#[test]
+fn clear_matching_pristine_source_discards_stored_layer_mask_and_undo_restores_it() {
+    use paintcraft_core::types::{Rect, resources::SharedBudget};
+    use paintcraft_document::LayerMask;
+    use paintcraft_raster::coverage_mask::A8Mask;
+    for enabled in [false, true] {
+        for coverage in [0, 127, 255] {
+            let budget = SharedBudget::new(8192);
+            let field = A8Mask::uniform(
+                Rect::new(0, 0, 2, 1).unwrap(),
+                coverage,
+                &budget,
+                Default::default(),
+                &|| Ok(()),
+            )
+            .unwrap();
+            let mut document =
+                paintcraft_document::new_document(2, 1, Some(COLOR), 0, POLICY).unwrap();
+            let id = document.roots[0];
+            document.layers.get_mut(&id).unwrap().mask = Some(LayerMask::new(enabled, field));
+            let mut session = Session::new(document);
+            let before = session.snapshot();
+            let epoch = session.ticket().publication_epoch;
+            let entries = session.history_view().entries.len();
+            let receipt = session.apply(&clear(&session)).unwrap();
+            assert!(receipt.committed);
+            assert_eq!(session.ticket().publication_epoch, epoch + 1);
+            assert_eq!(session.history_view().entries.len(), entries + 1);
+            let after = session.snapshot();
+            let layer = &after.layers[&after.roots[0]];
+            assert!(layer.mask.is_none());
+            assert!(layer.filters.is_empty());
+            assert_eq!(layer.raster.get(0, 0), COLOR);
+            assert!(session.undo().unwrap().is_some());
+            assert!(session.document().same_semantics(&before));
+            let restored = session.document().layers[&id].mask.as_ref().unwrap();
+            assert_eq!(restored.enabled(), enabled);
+            assert_eq!(restored.coverage().coverage(0, 0), coverage);
+            assert!(session.redo().unwrap().is_some());
+            assert!(session.document().same_semantics(&after));
+        }
+    }
+}

@@ -75,6 +75,7 @@ impl Session {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "Background".into(),
                 origin: (0, 0),

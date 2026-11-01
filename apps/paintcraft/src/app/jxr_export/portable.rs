@@ -90,6 +90,7 @@ pub(super) fn guard_document() -> paintcraft_document::Document {
     document.layers.insert(
         id,
         paintcraft_document::Layer {
+            mask: None,
             id,
             name: "Invisible source colors".into(),
             origin: (0, 0),

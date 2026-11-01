@@ -60,6 +60,7 @@ fn selected_target_only_clears_and_overwrites_once_with_exact_history_and_off_ca
             doc.layers.insert(
                 id,
                 Layer {
+                    mask: None,
                     id,
                     name: "Selected hidden layer".into(),
                     origin: (3, 1),
@@ -257,6 +258,7 @@ fn selected_region_outside_offset_layer_rebases_without_turning_new_padding_into
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "Offset".into(),
             origin: (3, 1),

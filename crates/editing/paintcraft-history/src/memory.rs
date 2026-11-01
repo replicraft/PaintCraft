@@ -7,7 +7,7 @@ pub struct MemoryUsage {
     /// Unique declared mask storage retained by hot or cold selection snapshots.
     /// Masks currently stay resident when raster history is packed or spilled.
     pub selection_bytes: u64,
-    /// Unique persistent A8 mask allocations retained by hot/cold snapshots.
+    /// Unique persistent Layer and filter A8 allocations retained by hot/cold snapshots.
     /// Coverage stays resident when RGBA history is compressed or spilled.
     pub filter_mask_bytes: u64,
     /// Unique conservative source attachment storage retained by hot/cold
@@ -69,13 +69,13 @@ impl History {
             match &entry.storage {
                 Storage::Hot(snapshot) => {
                     for layer in snapshot.document.layers.values() {
-                        for (identity, bytes) in layer.filters.mask_storage_usage() {
+                        for (identity, bytes) in layer.mask_storage_usage() {
                             count_mask(identity, bytes);
                         }
                     }
                 }
                 Storage::Cold(packed) => {
-                    for (identity, bytes) in packed.filter_mask_storage_usage() {
+                    for (identity, bytes) in packed.mask_storage_usage() {
                         count_mask(identity, bytes);
                     }
                 }

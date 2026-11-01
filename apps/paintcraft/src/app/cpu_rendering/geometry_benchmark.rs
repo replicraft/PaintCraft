@@ -198,6 +198,7 @@ pub(crate) fn fixture_for_base(base: &str) -> Editor {
         doc.layers.insert(
             id,
             paintcraft_document::Layer {
+                mask: None,
                 id,
                 name: format!("Layer {n}"),
                 origin: (0, 0),

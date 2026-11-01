@@ -297,6 +297,7 @@ impl Stage<'_> {
                     ));
                 }
                 let layer = Layer {
+                    mask: None,
                     id,
                     name: name.clone(),
                     origin: *origin,

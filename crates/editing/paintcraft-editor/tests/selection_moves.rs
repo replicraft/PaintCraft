@@ -53,6 +53,7 @@ fn setup() -> (Session, Uuid) {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "Hidden target".into(),
             visible: false,

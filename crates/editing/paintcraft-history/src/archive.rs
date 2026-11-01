@@ -38,6 +38,7 @@ struct SavedLayer {
     visible: bool,
     opacity: u8,
     filters: paintcraft_document::FilterStack,
+    mask: Option<paintcraft_document::LayerMask>,
     width: u32,
     height: u32,
     default: Rgba,
@@ -61,10 +62,12 @@ impl Transfer<'_> {
     }
 }
 impl Packed {
-    pub(crate) fn filter_mask_storage_usage(&self) -> impl Iterator<Item = (usize, u64)> + '_ {
-        self.layers
-            .iter()
-            .flat_map(|l| l.filters.mask_storage_usage())
+    pub(crate) fn mask_storage_usage(&self) -> impl Iterator<Item = (usize, u64)> + '_ {
+        self.layers.iter().flat_map(|l| {
+            l.filters
+                .mask_storage_usage()
+                .chain(l.mask.as_ref().and_then(|m| m.coverage().storage_usage()))
+        })
     }
     pub(crate) fn source_metadata(&self) -> Option<&paintcraft_document::SourceMetadata> {
         self.source_metadata.as_ref()
@@ -204,6 +207,7 @@ impl Packed {
                 visible: layer.visible,
                 opacity: layer.opacity,
                 filters: layer.filters.clone(),
+                mask: layer.mask.clone(),
                 width: layer.raster.width(),
                 height: layer.raster.height(),
                 default: layer.raster.default_pixel(),
@@ -261,6 +265,7 @@ impl Packed {
                     visible: layer.visible,
                     opacity: layer.opacity,
                     filters: layer.filters.clone(),
+                    mask: layer.mask.clone(),
                     raster,
                 },
             );

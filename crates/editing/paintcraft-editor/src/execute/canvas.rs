@@ -14,6 +14,7 @@ impl Stage<'_> {
                     && layer.visible
                     && layer.opacity == 255
                     && layer.filters.is_empty()
+                    && layer.mask.is_none()
                     && layer.raster.width() == width
                     && layer.raster.height() == height
                     && layer.raster.default_pixel() == color
@@ -47,6 +48,7 @@ impl Stage<'_> {
             self.doc.layers.insert(
                 id,
                 Layer {
+                    mask: None,
                     id,
                     name: "Background".to_owned(),
                     origin: (0, 0),
