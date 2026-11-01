@@ -89,13 +89,15 @@ class CatalogSchemas(unittest.TestCase):
         for name, expected in ENCODED.items():
             self.assertEqual((HERE / SHA / name).read_bytes(), expected)
 
-    def test_all_twelve_complete_descriptors_and_closed_legacy_input(self):
+    def test_all_thirteen_complete_descriptors_and_closed_legacy_input(self):
         values = [{"kind": "invert-rgb-v1"}, {"kind": "brightness-contrast-v1", "brightness": -100, "contrast": 99},
                   {"kind": "black-white-rgb-v1", "strength": 100}, {"kind": "threshold-luma-v1", "level": 0},
                   {"kind": "posterize-rgb-v1", "levels": 32}, {"kind": "solarize-rgb-v1"},
                   {"kind": "box-blur-v1", "radius": 32}, LEVELS, {"kind":"exposure-srgb-v1","stops_hundredths":-800},
                   {"kind":"curves-rgb-v1","outputs":[0,64,128,192,255]},
                   {"kind":"vibrance-rgb-v1","amount_hundredths":100},{"kind":"hue-saturation-rgb-v1","hue_degrees":180,"saturation_hundredths":-100,"lightness_hundredths":100}]
+        values.append({"kind": "add-noise-rgb-v1", "amount_hundredths": 100,
+                       "seed": 65535, "monochrome": False, "distribution": "gaussian"})
         for descriptor in values:
             self.valid("batch", batch(descriptor))
         old = GEN["legacy"]("batch")
@@ -324,6 +326,61 @@ class CatalogSchemas(unittest.TestCase):
         # New bundle accepts compatible old11 inputs without changing those old bytes.
         value=batch({"kind":"vibrance-rgb-v1","amount_hundredths":100});self.valid("batch",value)
         Draft202012Validator(json.loads((HERE/old_digests[-1]/"batch.schema.json").read_bytes())).validate(value)
+
+    def test_noise_complete_controls_and_all_older_bundles_closed(self):
+        valid = {"kind": "add-noise-rgb-v1", "amount_hundredths": 10,
+                 "seed": 1, "monochrome": True, "distribution": "uniform"}
+        old = [HERE / digest for digest in [
+            "d842bed34f9b27250082dffc95656eecb28c266cedadbfe745cf1d07ae3148f6",
+            "cac612d12ffbfd5bd8826fb6fd9e78d727e94f5186626867a58305ac56f20453",
+            "2729c23e843ca43c502a01e8f1e41d5d2ad9c0bfba610bb9b2659274d8e780e5",
+            "5b017aee79e713dd9d43a12a95211be727c66e3c16a08ae80e6b1bdbe1ac340b",
+            "a152a29d66e211f4261deba1c47ecb5f191d925eccede1ecd2ae7c04006bc87a"]]
+        for amount, seed, mono, dist in itertools.product(
+                [0, 100], [0, 32768, 65535], [False, True], ["uniform", "gaussian"]):
+            value = batch(dict(valid, amount_hundredths=amount, seed=seed,
+                               monochrome=mono, distribution=dist))
+            self.valid("batch", value)
+            for folder in old:
+                self.assertFalse(Draft202012Validator(json.loads(
+                    (folder / "batch.schema.json").read_bytes())).is_valid(value))
+        for key, bad_values in {
+            "amount_hundredths": [-1, 101, True, None, "10", 0.5],
+            "seed": [-1, 65536, True, None, "1", 0.5],
+            "monochrome": [0, 1, None, "true"],
+            "distribution": [0, 1, None, "Gaussian", "other"],
+        }.items():
+            for bad in bad_values:
+                self.invalid("batch", batch(dict(valid, **{key: bad})))
+            missing = valid.copy()
+            del missing[key]
+            self.invalid("batch", batch(missing))
+        self.invalid("batch", batch(dict(valid, extra=0)))
+
+        def converted(value):
+            if isinstance(value, dict):
+                if value.get("kind") == "levels-rgb-v1":
+                    return valid.copy()
+                return {k: converted(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [converted(v) for v in value]
+            return "add-noise-rgb-v1" if value == "levels-rgb-v1" else value
+
+        for flags in itertools.product([False, True], repeat=3):
+            engine = converted(result(*flags))
+            values = {
+                "result": engine,
+                "file-command": {"schema": "paintcraft.file-command/catalog-v1",
+                    "engine": engine, "file": None, "outcome": "success",
+                    "exit_code": 0, "synthetic": True},
+                "inspect": converted(inspection(False, *flags)),
+                "mcp-inspect": converted(inspection(True, *flags)),
+            }
+            for kind, value in values.items():
+                self.valid(kind, value)
+                for folder in old:
+                    self.assertFalse(Draft202012Validator(json.loads(
+                        (folder / (kind + ".schema.json")).read_bytes())).is_valid(value))
 
     def test_runtime_checks_are_not_falsely_claimed_as_static_schema_guarantees(self):
         # JSON Schema cannot compare two parameter fields or payload inventories.
