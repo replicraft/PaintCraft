@@ -1,7 +1,9 @@
 //! Source5: separate bounded controls and priced registry requirements.
 use super::*;
 use paintcraft_core::types::policy::hex;
-use paintcraft_formats::export::prepared_capabilities::{self as capabilities, Requirements};
+use paintcraft_formats::export::prepared_capabilities::{
+    self as capabilities, RegistryContract, Requirements,
+};
 pub const OPEN_BYTES_MAX: usize = 64 << 10;
 pub const CAPABILITY_BYTES_MAX: usize = 128 << 10;
 pub const BEGIN_BYTES_MAX: usize = 8 << 10;
@@ -126,7 +128,10 @@ pub fn pairs(
 }
 pub fn requirements(value: &Value, max: usize) -> Result<Requirements> {
     let mut result = Requirements::default();
-    pairs(value, max, |p, c| result.insert(p, c))?;
+    pairs(value, max, |p, c| {
+        capabilities::resolve_for(RegistryContract::Legacy1, p, c)?;
+        result.insert(p, c)
+    })?;
     Ok(result)
 }
 #[derive(Clone, Copy, Debug)]
@@ -215,7 +220,7 @@ pub fn hello(control: &str) -> Result<Value> {
         .try_reserve_exact(requirements.len())
         .map_err(|_| resource("Prepared capability reply"))?;
     for (profile, codec) in requirements.pairs() {
-        let entry = capabilities::resolve(profile, codec)?;
+        let entry = capabilities::resolve_for(RegistryContract::Legacy1, profile, codec)?;
         let (resource, revision) = entry.resource_contract();
         entries.push(Value::object([
             ("profile_id", Value::str(profile)),

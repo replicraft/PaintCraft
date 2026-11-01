@@ -62,6 +62,9 @@ pub(super) fn open(bytes: &[u8], control: &str, check: &dyn Fn() -> Result<()>) 
         &scope,
         check,
     )?;
+    required
+        .requirements()
+        .validate_contract(capabilities::RegistryContract::Legacy1, &|| Ok(()))?;
     profile.source.matches(required.requirements(), check)?;
     let declared = wire::requirements(
         field(field(&source.value, "sourceRequirements")?, "pairs")?,

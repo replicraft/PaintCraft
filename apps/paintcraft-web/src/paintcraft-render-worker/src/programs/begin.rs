@@ -9,6 +9,7 @@ fn batch(service: &Service, operation: &Value, target: Uuid) -> Result<(Batch, R
         let kind = string(field(field(operation, "descriptor")?, "kind")?)?;
         // Implementation/pricing, including unknown/default/disabled, is checked
         // before a typed batch or private candidate can allocate metadata.
+        capabilities::resolve_for(capabilities::RegistryContract::Legacy1, kind, "params-v1")?;
         added.insert(kind, "params-v1")?;
     }
     let kind = operation
@@ -37,7 +38,11 @@ fn batch(service: &Service, operation: &Value, target: Uuid) -> Result<(Batch, R
     };
     stable_target(op, target)?;
     if let FilterOp::Add { descriptor, .. } | FilterOp::Update { descriptor, .. } = op {
-        let registration = capabilities::resolve(descriptor.id(), "params-v1")?;
+        let registration = capabilities::resolve_for(
+            capabilities::RegistryContract::Legacy1,
+            descriptor.id(),
+            "params-v1",
+        )?;
         let (params, len) = descriptor.semantic_parameter_bytes();
         if registration.decode(&params[..len])? != *descriptor {
             return Err(Error::new(
