@@ -110,6 +110,7 @@ impl WebApp {
         let area = region(&capture.document, &pick)?;
         let job = Job {
             frozen: Frozen::capture(self),
+            flatten: None,
             capture,
             region: area,
             spec: Value::Null,

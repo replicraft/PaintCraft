@@ -1,5 +1,6 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
 mod filters;
+mod flatten;
 mod floating;
 mod pen;
 mod resource_shape;

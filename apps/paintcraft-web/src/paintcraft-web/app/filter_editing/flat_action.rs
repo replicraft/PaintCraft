@@ -1,5 +1,8 @@
 //! One frozen background action borrows the display's SINGLE admitted slot.
 use super::*;
+mod flatten;
+#[cfg(test)]
+mod flatten_tests;
 mod picker;
 #[cfg(test)]
 mod picker_tests;
@@ -63,6 +66,7 @@ enum Purpose {
     Print { title: String },
     Clipboard(crate::clipboard::background::Deferred),
     Picker(picker::Intent),
+    Flatten,
 }
 struct Encoded {
     bytes: Vec<u8>,
@@ -72,11 +76,13 @@ struct Encoded {
 enum Output {
     Encoded(Encoded),
     Picked(paintcraft_core::types::Rgba),
+    Flattened(flatten::Pixels),
 }
 type Outcome = Rc<RefCell<Option<Result<Output>>>>;
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(super) struct Job {
     frozen: Frozen,
+    flatten: Option<flatten::Transaction>,
     capture: Capture,
     region: Rect,
     spec: Value,
@@ -132,6 +138,7 @@ impl WebApp {
         capture.programs = true;
         self.filter_display.copy_action = Some(Job {
             frozen,
+            flatten: None,
             capture,
             region,
             spec,
@@ -340,6 +347,7 @@ impl WebApp {
                 let cancelled = job.cancelled.clone();
                 let control = job.control.clone();
                 let is_picker = matches!(job.purpose, Some(Purpose::Picker(_)));
+                let raw_account = job.flatten.as_mut().and_then(|t| t.account.take());
                 let ctx = ctx.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let slot = Rc::default();
@@ -348,6 +356,10 @@ impl WebApp {
                             *control.borrow_mut() = Some(client.copy_control());
                             let encoded = if cancelled.get() {
                                 Err(rejected("Background action cancelled"))
+                            } else if let Some(account) = raw_account {
+                                flatten::render(&client, &capture, region, account)
+                                    .await
+                                    .map(Output::Flattened)
                             } else if is_picker {
                                 picker::sample(&client, &capture, region)
                                     .await
@@ -423,6 +435,23 @@ impl WebApp {
                                 self.controls.tool = self.editor.tools.tool;
                             }
                             Err(error) => self.message = error.to_string(),
+                        }
+                    }
+                    (Purpose::Flatten, Output::Flattened(pixels)) => {
+                        match flatten::publish(
+                            self,
+                            job.flatten.take().expect("flatten transaction"),
+                            pixels,
+                        ) {
+                            Ok(()) => {
+                                self.message = if self.unsaved() {
+                                    "Unsaved changes - kept only in this tab".into()
+                                } else {
+                                    "Ready".into()
+                                };
+                                self.update_title();
+                            }
+                            Err(error) => self.message = format!("Edit failed: {error}"),
                         }
                     }
                     _ => self.message = "Background result kind changed".into(),
