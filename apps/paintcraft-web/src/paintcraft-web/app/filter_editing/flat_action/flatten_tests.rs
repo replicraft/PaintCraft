@@ -11,7 +11,8 @@ use paintcraft_tools::Action;
 fn setup() -> (egui::Context, WebApp) {
     let ctx = egui::Context::default();
     let mut app = WebApp::new(&ctx);
-    let _ = ctx.run_ui(egui::RawInput::default(), |_| {});
+    let mut output = ctx.run_ui(egui::RawInput::default(), |_| {});
+    output.textures_delta.clear();
     let mut doc = Editor::new(2, 1).unwrap().session.document().clone();
     let layer = doc.layers.get_mut(&doc.roots[0]).unwrap();
     layer.filters = FilterStack::new(vec![FilterInstance::new(
