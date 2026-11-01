@@ -32,7 +32,7 @@ fn app(path: &Path) -> App {
 fn stage_bytes(app: &mut App, ctx: &egui::Context) {
     let mut state = app.icon_export.take().unwrap();
     state.draft.config.filter = widget::Filter::Nearest;
-    state.prepare(ctx);
+    state.prepare(ctx, &app.worker_budget);
     let prepared = state.cache.value().unwrap();
     state.bytes = Some(
         prepared

@@ -14,9 +14,12 @@ pub(super) struct State {
     stamp: controller::PreviewStamp,
     copy: AssetCopy<widget::Config>,
     draft: widget::Draft,
-    cache: widget::Cache<(widget::Config, bool, bool), icons::Prepared>,
+    cache: widget::Cache<(widget::Config, bool, bool), asset_output::Prepared<icons::Prepared>>,
     bytes: Option<Vec<u8>>,
     destination: Option<(PathBuf, Option<save::Expectation>)>,
+    background: asset_output::Async<widget::Config, icons::Prepared>,
+    writing: Option<asset_output::WriteJob>,
+    choose_when_ready: bool,
 }
 impl State {
     fn current(&self, app: &App) -> bool {
@@ -36,7 +39,13 @@ impl State {
             Operation::ExportAsset,
         )
     }
-    fn prepare(&mut self, ctx: &egui::Context) {
+    fn prepare(&mut self, ctx: &egui::Context, budget: &paintcraft_runtime::SharedBudget) {
+        if spatial_workspace::JobPolicy::capture(&self.copy.frozen.document, None, false)
+            == spatial_workspace::JobPolicy::Noise
+        {
+            self.prepare_noise(ctx, budget);
+            return;
+        }
         if !self.copy.ready() {
             self.copy.retire();
             self.cache = Default::default();
@@ -69,6 +78,7 @@ impl State {
                         policy,
                     )
                 })
+                .map(asset_output::Prepared::legacy)
                 .map_err(|e| e.to_string())
             },
         ) {
@@ -100,7 +110,10 @@ fn specs(config: &widget::Config) -> Vec<icons::EntrySpec> {
         })
         .collect()
 }
-fn frame(prepared: &icons::Prepared, index: usize) -> Option<widget::Frame<'_>> {
+fn frame(
+    prepared: &asset_output::Prepared<icons::Prepared>,
+    index: usize,
+) -> Option<widget::Frame<'_>> {
     let entry = prepared.entries().get(index)?;
     Some(widget::Frame {
         width: entry.spec.width,
@@ -153,6 +166,9 @@ impl App {
             cache: Default::default(),
             bytes: None,
             destination: None,
+            background: Default::default(),
+            writing: None,
+            choose_when_ready: false,
         });
         self.confirm = Some(Confirm::IconExport);
     }
@@ -165,6 +181,25 @@ impl App {
             self.confirm = None;
             self.editor
                 .set_status(t!(ctx, "The document changed; choose the image again."));
+            return;
+        }
+        if state.writing.is_some() {
+            if let Some(result) = self.poll_icon_export_write(&mut state) {
+                self.confirm = None;
+                self.editor.set_status(result);
+                return;
+            }
+            let closed =
+                egui::Modal::new(egui::Id::unique("icon_export-writing")).show(ctx, |ui| {
+                    ui.spinner();
+                    ui.button(t!(ctx, "Cancel")).clicked()
+                });
+            if closed.inner || closed.should_close() {
+                self.confirm = None;
+                return;
+            }
+            self.icon_export = Some(state);
+            ctx.request_repaint_after(Duration::from_millis(25));
             return;
         }
         let response = egui::Modal::new(egui::Id::unique((
@@ -201,7 +236,7 @@ impl App {
                 .show(ui, |ui| {
                     widget::controls(ui, &mut state.draft);
                     state.copy.controls(ui);
-                    state.prepare(ctx);
+                    state.prepare(ctx, &self.worker_budget);
                     let ready = state.cache.show(ui, state.draft.selected, frame);
                     let consent = state.cache.value().is_some_and(|prepared| {
                         widget::consent(
@@ -231,9 +266,10 @@ impl App {
             self.confirm = None;
             return;
         }
+        let choose_ready = state.choose_when_ready && state.bytes.is_some();
         let review = state.destination.is_some();
         self.icon_export = Some(state);
-        if response.inner.1 {
+        if response.inner.1 || choose_ready {
             if review {
                 self.finish_icon_export(ctx);
             } else {
@@ -263,12 +299,27 @@ impl App {
             self.icon_export = Some(state);
             return;
         }
-        match prepared.encode(&losses, &|| Ok(())) {
-            Ok(bytes) => state.bytes = Some(bytes),
-            Err(error) => {
-                self.editor.set_status(format!("Cannot export: {error}"));
+        if spatial_workspace::JobPolicy::capture(&state.copy.frozen.document, None, false)
+            == spatial_workspace::JobPolicy::Noise
+        {
+            if state.bytes.is_none() {
+                match state.background.request_encode(&losses) {
+                    Ok(()) => state.choose_when_ready = true,
+                    Err(error) => self.editor.set_status(format!("Cannot export: {error}")),
+                }
                 self.icon_export = Some(state);
+                self.confirm = Some(Confirm::IconExport);
                 return;
+            }
+            state.choose_when_ready = false;
+        } else {
+            match prepared.encode(&losses, &|| Ok(())) {
+                Ok(bytes) => state.bytes = Some(bytes),
+                Err(error) => {
+                    self.editor.set_status(format!("Cannot export: {error}"));
+                    self.icon_export = Some(state);
+                    return;
+                }
             }
         }
         let extension = state.draft.config.kind.extension();
@@ -373,6 +424,12 @@ impl App {
             self.editor.set_status(format!("Cannot export: {error}"));
             return;
         }
+        if spatial_workspace::JobPolicy::capture(&state.copy.frozen.document, None, false)
+            == spatial_workspace::JobPolicy::Noise
+        {
+            self.start_icon_export_write(ctx, state);
+            return;
+        }
         let Some((path, expected)) = state.destination else {
             return;
         };
@@ -416,3 +473,9 @@ mod tests;
 #[cfg(test)]
 #[path = "icon_export/metadata_tests.rs"]
 mod metadata_tests;
+
+#[path = "icon_export/noise.rs"]
+mod noise;
+#[cfg(test)]
+#[path = "icon_export/noise_tests.rs"]
+mod noise_tests;

@@ -110,7 +110,7 @@ fn revoke_and_changed_configuration_cannot_reuse_an_old_picker_policy() {
     let mut app = app(&path);
     let state = app.icon_export.as_mut().unwrap();
     state.copy.omit = true;
-    state.prepare(&ctx);
+    state.prepare(&ctx, &app.worker_budget);
     let prepared = state.cache.value().unwrap();
     state.bytes = Some(
         prepared
@@ -130,7 +130,7 @@ fn revoke_and_changed_configuration_cannot_reuse_an_old_picker_policy() {
         hotspot: (3, 4),
     }];
     state.copy.omit = true;
-    state.prepare(&ctx);
+    state.prepare(&ctx, &app.worker_budget);
     let prepared = state.cache.value().unwrap();
     state.bytes = Some(
         prepared

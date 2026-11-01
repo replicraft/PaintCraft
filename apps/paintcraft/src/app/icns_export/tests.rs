@@ -32,7 +32,7 @@ fn stage(app: &mut App, ctx: &egui::Context) {
     let mut state = app.icns_export.take().unwrap();
     state.draft.config.kinds = vec![widget::Kind::Retina16];
     state.draft.config.filter = preview::Filter::Nearest;
-    state.prepare(ctx);
+    state.prepare(ctx, &app.worker_budget);
     let prepared = state.cache.value().unwrap();
     state.bytes = Some(
         prepared
