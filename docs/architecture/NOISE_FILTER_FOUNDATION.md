@@ -337,6 +337,34 @@ clipboard success includes real browser write/read and independently decoded byt
 Actual UI qualification of the new picker remains pending. These checks do not
 establish Export8, browser flattening or other specialty-copy support.
 
+The next local slice corrects a pre-existing web Studio bug: canvas input was
+overriding its sampling controls with Classic's Image/One/Previous policy.
+Classic retains that policy; Studio now uses its saved source, size and after-tool
+choices. Ctrl captures an Image override in the gesture and immediately restores
+the persistent preference, so releasing Ctrl cannot invalidate an asynchronous
+sample. Headless canvas and normalized pen-fallback tests check causal pixels.
+
+Browser flattening now requests whole-canvas Source6 BASE pixels, waits for source
+close ACK, and supplies them to the captured editor `Preparation::flatten`.
+Atomic publication retains selection and source metadata; one Undo restores the
+complete original layers, raw pixels and filter intentions. Packed Main bytes
+have their own reservation in the existing clipboard realm, retained through
+ingestion, hashing and history preparation. There is no Main Noise-render fallback
+or new worker grant. Ingestion remains synchronous and its browser latency has
+not yet been qualified.
+
+These two changes pass all 442 web Rust tests (three existing ignores), strict
+native all-target and Wasm checks, with all 3,300 inputs unchanged:
+`docs/validation/noise-flatten-native/attempt-2/final.json`. The preceding attempt
+retains two test-helper compile errors, corrected without changing production
+behavior. The fresh production build passes with 53 artifacts and 27 checked
+assets: `docs/validation/noise-flatten-production/attempt-1/final.json`, SHA256
+`7533e3cac44706ea0a65c47094c4d5875e6427b75ce07b18c0921c3438c95604`.
+All preceding production artifact bytes are preserved before rebuilding.
+Actual UI qualification of Studio sampling and flattening remains pending on
+this new build; the eighteen-case output receipt above belongs to its earlier
+explicitly pinned build.
+
 Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
 background job; retained preview handles keep their source reservation after
 cancellation or source replacement. The full App suite passes 772 tests with 29

@@ -27,7 +27,10 @@ repeated cancel forwarding. A once-only fix and worker-backed Image color picker
 pass 431 web Rust tests and native/Wasm strict checks. Fresh production browser
 replay now passes all eighteen output cases, including twelve delayed-result
 fences with exactly one cancellation each. The picker still needs actual UI
-qualification; browser flattening and specialty adapters remain open. The fully qualified cross-frontend
+qualification. The next local slice restores Studio sampling preferences and adds
+captured background flattening with complete Undo; 442 web Rust tests, native/Wasm
+strict checks and its production build pass. Actual UI/latency checks and specialty
+adapters remain open. The fully qualified cross-frontend
 baseline above remains twelve. No GPU Noise kernel or upstream floating-point
 byte parity is claimed. The foundation document records exact local receipts,
 finite measured latency and remaining boundaries.
