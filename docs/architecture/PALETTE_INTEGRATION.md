@@ -14,11 +14,15 @@ passes native and actual Rust Wasm qualification: 4,380 independent pixel
 expectations, 26,280 mask expectations and exact normalized native/Wasm records.
 Its typed thirteenth descriptor now preserves intent through PCND6/history and
 renders through explicit paired admission. Real CLI/MCP default/1080p copies and
-headless Native Studio controls pass; the dedicated Source6 Worker passes native
-tests. Actual Source6 browser delivery, remaining copy routes and Export8 are
-still under qualification. The fully qualified cross-frontend baseline above
-remains twelve. No GPU Noise kernel or upstream floating-point byte parity is
-claimed. The foundation document records exact local receipts and boundaries.
+headless Native Studio controls pass. The dedicated Source6 Worker passes native
+tests and its qualification constructor passes 26 complete Chrome Worker frames
+plus 26 cancellation cases. Native printing, flat-image copies and ICO/CUR/ICNS
+asset preparation/encoding also pass headless checks. The production web build
+passes, while the actual Studio browser workflow, remaining browser copy routes
+and Export8 are still under qualification. The fully qualified cross-frontend
+baseline above remains twelve. No GPU Noise kernel or upstream floating-point
+byte parity is claimed. The foundation document records exact local receipts,
+finite measured latency and remaining boundaries.
 
 Whole-RGB [Vibrance](VIBRANCE_FILTER_FOUNDATION.md) is locally qualified through
 native and Web Studio controls, CLI/MCP, PCND6 and direct CPU filtering with Metal
