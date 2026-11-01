@@ -325,3 +325,6 @@ mod tests {
         assert!(decode(&raw_frame(&[]), BLOCK_BYTES_MAX as usize + 1, &|| Ok(())).is_err());
     }
 }
+
+// Separate admitted portable snapshot path; existing Encoder is unchanged.
+pub(super) mod admitted;
