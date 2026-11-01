@@ -44,7 +44,24 @@ Evidence lives in `docs/validation/layer-mask-integration/final-freeze.json`,
 `docs/validation/layer-mask-actions-integration/final-freeze.json` and
 `docs/validation/layer-mask-native-ui-integration/final-freeze.json`.
 
-Browser Source7 rendering, its lifecycle/resource accounting, appearance-aware
-foreign export consent and asynchronous browser mask editing remain unfinished.
-No browser mask controls are activated by this milestone. This does not establish
-Palette's full 132-filter catalog, blend-mode or layer-style parity.
+Browser Source7 has a locally qualified rendering and visual-consumer checkpoint.
+The fresh production build binds 4,579 source inputs, 55 artifacts and 28 assets.
+Actual Chrome passes 26 independent straight-RGBA comparisons, two independently
+decoded PNG outputs and 23 refusal/lifecycle controls. Two 1000 by 486 sessions
+each complete and release 20 views on one OPEN, including real panning. Earlier
+view-8/view-11 exhaustion failures are retained with their original evidence.
+
+Three actual application cases pass stored-mask display/save, private Invert
+Cancel/Apply/Undo/Redo, Image sampling proved through a Pencil edit, and Flatten
+with Undo/Redo. Independent project decoding checks source pixels, masks and
+metadata. Captured caller work stays cumulative, transferred quotas are consumed
+once, and retained memory survives uncertain Worker retirement. The native and
+mock transport checks cover additional ownership boundaries; these browser cases
+are finite correctness checks, not latency, RSS or physical-GPU measurements.
+The aggregate receipt is
+`docs/validation/source7-complete-consumer-final-freeze.json`.
+
+Appearance-aware foreign export consent, actual OS print/Clipboard publication
+and asynchronous browser mask editing remain open. Browser mask mutation controls
+remain closed. Palette's full 132-filter catalog, blend modes and layer styles
+remain separate roadmap work.

@@ -49,9 +49,11 @@ later local changes are separate evidence.
 Saved layer masks now have locally qualified persistence, history, geometry,
 CPU rendering with GPU presentation, CLI/MCP and desktop Studio controls.
 The [layer-mask checkpoint](architecture/LAYER_MASK_FOUNDATION.md) records the
-scope and test results. Browser rendering and asynchronous mask editing remain
-in progress. Unsupported browser mask actions refuse before session mutation.
-Next is completing that browser integration, then Multiply/Screen layer blending
+scope and test results. Actual browser rendering, private numeric filters, Image
+sampling and Flatten now pass finite source/history and pixel checks. Asynchronous
+browser mask editing and appearance-aware foreign export consent remain open.
+Unsupported browser mask actions refuse before session mutation.
+Next is completing those browser actions, then Multiply/Screen layer blending
 and Color Overlay as the first live style. The remaining author's 132-entry
 inventory and broader styles are open, not implied by these profiles.
 The following counts describe historical initial checkpoints.

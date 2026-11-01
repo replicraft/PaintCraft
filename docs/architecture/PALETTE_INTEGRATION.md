@@ -61,8 +61,10 @@ preserved in the [Noise record](NOISE_FILTER_FOUNDATION.md).
 Selection-derived **layer masks** now have locally qualified persistence,
 history, geometry, CPU rendering with GPU presentation, CLI/MCP automation and
 desktop Studio controls. They are distinct from per-filter masks and leave source
-pixels intact. Browser rendering and editing integration remains in progress;
-unsupported browser mask actions refuse before changing the document or gesture.
+pixels intact. Actual browser display/save, numeric private-filter history, Image
+sampling and Flatten now pass finite independent pixel and project checks.
+Asynchronous browser mask mutation and appearance-aware foreign export consent
+remain open; unsupported mask actions refuse before changing the document or gesture.
 See [the layer-mask record](LAYER_MASK_FOUNDATION.md) for the tested scope.
 
 The next slices are completing browser layer-mask integration, then
