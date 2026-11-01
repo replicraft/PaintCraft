@@ -3,6 +3,7 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 
 pub(crate) fn require_unfiltered_layers(document: &Document) -> Result<()> {
+    document.require_no_layer_masks()?;
     if document
         .layers
         .values()

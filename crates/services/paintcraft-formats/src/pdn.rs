@@ -189,6 +189,7 @@ pub fn preflight(
             visible: _,
             opacity: _,
             filters: _,
+            mask: _,
             raster: _,
         } = layer;
         let pixels = u64::from(layer.raster.width()) * u64::from(layer.raster.height());

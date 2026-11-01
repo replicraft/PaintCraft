@@ -30,6 +30,7 @@ fn source() -> Document {
                 visible: true,
                 opacity: 255,
                 filters: Default::default(),
+                mask: None,
                 raster: RasterLayer::from_rgba(size.0, size.1, Rgba([0; 4]), rgba, &mut admission)
                     .unwrap(),
             },

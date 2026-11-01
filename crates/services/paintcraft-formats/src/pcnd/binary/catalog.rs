@@ -59,11 +59,26 @@ impl<'a> Manifest<'a> {
         supported: bool,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        Self::read_impl(input, supported, false, check)
+    }
+    pub(super) fn read_v7(
+        input: &mut Input<'a>,
+        supported: bool,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        Self::read_impl(input, supported, true, check)
+    }
+    fn read_impl(
+        input: &mut Input<'a>,
+        supported: bool,
+        allow_empty: bool,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         check()?;
         let length = input.number(PRELUDE_MAX)? as usize;
         let mut prelude = Input::new(input.take(length)?);
         let count = prelude.number(ENTRIES_MAX as u64)? as usize;
-        if count == 0 {
+        if count == 0 && !allow_empty {
             return Err(invalid());
         }
         let mut manifest = Self::empty();
@@ -94,6 +109,19 @@ impl<'a> Manifest<'a> {
         doc: &Document,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Manifest<'static>> {
+        Self::capture_impl(doc, false, check)
+    }
+    pub(super) fn capture_v7(
+        doc: &Document,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Manifest<'static>> {
+        Self::capture_impl(doc, true, check)
+    }
+    fn capture_impl(
+        doc: &Document,
+        allow_empty: bool,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Manifest<'static>> {
         let mut manifest = Manifest::empty();
         for layer in doc.layers.values() {
             check()?;
@@ -116,7 +144,7 @@ impl<'a> Manifest<'a> {
                 }
             }
         }
-        if manifest.len == 0 {
+        if manifest.len == 0 && !allow_empty {
             return Err(invalid());
         }
         manifest.entries[..manifest.len].sort_unstable_by_key(|e| e.unwrap().profile);

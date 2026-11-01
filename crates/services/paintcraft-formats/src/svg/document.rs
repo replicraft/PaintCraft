@@ -48,6 +48,7 @@ impl Raster {
             visible: true,
             opacity: 255,
             filters: Default::default(),
+            mask: None,
             raster,
         };
         check()?;

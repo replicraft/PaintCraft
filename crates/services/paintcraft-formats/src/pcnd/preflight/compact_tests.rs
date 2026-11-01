@@ -41,6 +41,7 @@ fn specimen(profile_bytes: usize, color: Option<Rgba>) -> (Document, SharedBudge
             visible: true,
             opacity: 255,
             filters: Default::default(),
+            mask: None,
             raster,
         },
     );

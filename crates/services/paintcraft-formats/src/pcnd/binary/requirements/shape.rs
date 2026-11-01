@@ -6,7 +6,7 @@ pub(super) fn tile_records(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<u64> {
     let version = verified.version;
-    if !matches!(version, 1..=6) {
+    if !matches!(version, 1..=7) {
         return Err(unsupported("unknown native document version"));
     }
     // Work is finite independently of caller cancellation. Controls are scalar
@@ -23,14 +23,18 @@ pub(super) fn tile_records(
         .remaining()
         .checked_add(MAGIC.len())
         .ok_or_else(resource)?;
-    let catalog_count = if version == 6 {
+    let catalog_count = if version >= 6 {
         // Reuse canonical borrowed manifest validation; the second tiny prefix
         // read extracts only its count, with no second source authentication.
         let mut prefix = input;
         let length = prefix.number(65_536)? as usize;
         let mut prelude = Input::new(prefix.take(length)?);
         let count = prelude.number(256)?;
-        catalog::Manifest::read(&mut input, false, &step)?;
+        if version == 7 {
+            catalog::Manifest::read_v7(&mut input, false, &step)?;
+        } else {
+            catalog::Manifest::read(&mut input, false, &step)?;
+        }
         Some(count)
     } else {
         None
@@ -86,6 +90,10 @@ pub(super) fn tile_records(
                 }
                 metadata(initial, input.remaining(), payload, DOCUMENT_MAX as usize)?;
             }
+        }
+        if version == 7 {
+            masks.skip(&mut input, &step)?;
+            metadata(initial, input.remaining(), payload, DOCUMENT_MAX as usize)?;
         }
         loop {
             step()?;

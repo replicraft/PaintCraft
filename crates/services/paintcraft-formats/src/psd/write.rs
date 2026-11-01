@@ -128,6 +128,7 @@ pub fn preflight(
             visible: _,
             opacity: _,
             filters: _,
+            mask: _,
             raster: _,
         } = layer;
         let width = layer.raster.width();

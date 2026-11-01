@@ -86,6 +86,7 @@ fn convert(
                 visible: layer.visible,
                 opacity: layer.opacity,
                 filters: Default::default(),
+                mask: None,
                 raster,
             },
         );

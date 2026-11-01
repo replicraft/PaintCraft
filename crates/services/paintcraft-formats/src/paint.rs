@@ -170,6 +170,7 @@ pub fn preflight(
             visible: _,
             opacity: _,
             filters: _,
+            mask: _,
             raster: _,
         } = layer;
         if !layer.visible || layer.opacity != 255 {

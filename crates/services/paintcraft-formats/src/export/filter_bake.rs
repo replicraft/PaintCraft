@@ -88,6 +88,7 @@ fn invalid(message: &str) -> Error {
 /// layer cap. This bounded scratch is not a total process-memory/RSS guarantee.
 pub fn inspect(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory> {
     check()?;
+    doc.require_no_layer_masks()?;
     if doc.roots.len() > LAYER_COUNT_MAX || doc.layers.len() > LAYER_COUNT_MAX {
         return Err(Error::new(
             ErrorCode::ResourceLimit,

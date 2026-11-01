@@ -57,6 +57,7 @@ pub fn decode_psd(
                 visible: info.visible,
                 opacity: info.opacity,
                 filters: Default::default(),
+                mask: None,
                 raster,
             },
         );

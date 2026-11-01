@@ -116,6 +116,26 @@ pub fn coverage_facts(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<
                 )?)
                 .ok_or_else(limit)?;
         }
+        if let Some(mask) = &layer.mask {
+            check()?;
+            let stats = mask.coverage().stats();
+            facts.masks = facts.masks.checked_add(1).ok_or_else(limit)?;
+            facts.bands = facts
+                .bands
+                .checked_add(stats.bands as u64)
+                .ok_or_else(limit)?;
+            facts.runs = facts
+                .runs
+                .checked_add(stats.runs as u64)
+                .ok_or_else(limit)?;
+            facts.decode_bytes = facts
+                .decode_bytes
+                .checked_add(super::binary::coverage_decode_quote(
+                    stats.bands,
+                    stats.runs,
+                )?)
+                .ok_or_else(limit)?;
+        }
     }
     Ok(facts)
 }
@@ -128,6 +148,18 @@ pub(super) fn validate_counts(doc: &Document, check: &dyn Fn() -> Result<()>) ->
     for layer in doc.layers.values() {
         for filter in layer.filters.iter() {
             let Some(mask) = filter.mask() else { continue };
+            check()?;
+            let stats = mask.coverage().stats();
+            bands = bands
+                .checked_add(stats.bands)
+                .filter(|n| *n <= limits.bands)
+                .ok_or_else(limit)?;
+            runs = runs
+                .checked_add(stats.runs)
+                .filter(|n| *n <= limits.runs)
+                .ok_or_else(limit)?;
+        }
+        if let Some(mask) = &layer.mask {
             check()?;
             let stats = mask.coverage().stats();
             bands = bands

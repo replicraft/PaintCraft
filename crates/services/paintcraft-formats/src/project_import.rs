@@ -83,6 +83,7 @@ pub fn decode_paint(
             visible: true,
             opacity: 255,
             filters: Default::default(),
+            mask: None,
             raster: RasterLayer::new(decoded.width, decoded.height, fill),
         },
     );
@@ -117,6 +118,7 @@ pub fn decode_paint(
                 visible: true,
                 opacity: 255,
                 filters: Default::default(),
+                mask: None,
                 raster,
             },
         );
@@ -226,6 +228,7 @@ pub fn decode_pdn(
                 visible: layer.visible,
                 opacity: layer.opacity,
                 filters: Default::default(),
+                mask: None,
                 raster,
             },
         );

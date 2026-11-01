@@ -2,7 +2,8 @@
 use super::*;
 use crate::pcnd::coverage::CoverageReader;
 use paintcraft_core::types::Rect;
-use paintcraft_document::FilterMask;
+use paintcraft_document::{FilterMask, LayerMask};
+use paintcraft_raster::coverage_mask::A8Mask;
 use paintcraft_raster::coverage_mask::{Run, Visit};
 mod assessment;
 mod decode;
@@ -14,10 +15,25 @@ pub(super) fn write<W: Write>(
     output: &mut Output<W>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
+    write_coverage(mask.map(|m| (m.enabled(), m.coverage())), output, check)
+}
+pub(super) fn write_layer<W: Write>(
+    mask: Option<&LayerMask>,
+    output: &mut Output<W>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    write_coverage(mask.map(|m| (m.enabled(), m.coverage())), output, check)
+}
+fn write_coverage<W: Write>(
+    mask: Option<(bool, &A8Mask)>,
+    output: &mut Output<W>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
     output.bytes(&[u8::from(mask.is_some())])?;
-    let Some(mask) = mask else { return Ok(()) };
-    output.bytes(&[u8::from(mask.enabled()), CODEC])?;
-    let coverage = mask.coverage();
+    let Some((enabled, coverage)) = mask else {
+        return Ok(());
+    };
+    output.bytes(&[u8::from(enabled), CODEC])?;
     let domain = coverage.domain();
     for value in [domain.x0, domain.y0, domain.x1, domain.y1] {
         output.signed(value)?;
@@ -161,6 +177,24 @@ pub(super) fn read(
     reader: &mut CoverageReader<'_>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<FilterMask>> {
+    Ok(read_coverage(input, allowance, reader, check)?
+        .map(|(enabled, mask)| FilterMask::new(enabled, mask)))
+}
+pub(super) fn read_layer(
+    input: &mut Input<'_>,
+    allowance: usize,
+    reader: &mut CoverageReader<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Option<LayerMask>> {
+    Ok(read_coverage(input, allowance, reader, check)?
+        .map(|(enabled, mask)| LayerMask::new(enabled, mask)))
+}
+fn read_coverage(
+    input: &mut Input<'_>,
+    allowance: usize,
+    reader: &mut CoverageReader<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Option<(bool, A8Mask)>> {
     let mut probe = *input;
     let Some(header) = inspect(&mut probe, allowance, reader, check)? else {
         *input = probe;
@@ -168,11 +202,17 @@ pub(super) fn read(
     };
     reader.counts(header.bands, header.runs)?;
     let mask = decode::materialize(input, header, reader, check)?;
-    Ok(Some(FilterMask::new(header.enabled, mask)))
+    Ok(Some((header.enabled, mask)))
 }
 pub(super) fn coarse_bytes(mask: Option<&FilterMask>) -> Option<u64> {
+    coarse_coverage(mask.map(FilterMask::coverage))
+}
+pub(super) fn layer_coarse_bytes(mask: Option<&LayerMask>) -> Option<u64> {
+    coarse_coverage(mask.map(LayerMask::coverage))
+}
+fn coarse_coverage(mask: Option<&A8Mask>) -> Option<u64> {
     let Some(mask) = mask else { return Some(1) };
-    let stats = mask.coverage().stats();
+    let stats = mask.stats();
     // Exact near-cap paths use the real selected writer, not this overestimate.
     3u64.checked_add(40)?
         .checked_add(10)?

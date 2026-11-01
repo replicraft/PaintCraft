@@ -46,8 +46,9 @@ fn metadata_bound(
         return Ok(None);
     }
     super::coverage::validate_counts(doc, check)?;
-    let live_filters = doc.layers.values().any(|layer| !layer.filters.is_empty());
-    let catalog_only = binary::has_catalog(doc);
+    let layer_masks = doc.has_layer_masks();
+    let live_filters = layer_masks || doc.layers.values().any(|layer| !layer.filters.is_empty());
+    let catalog_only = layer_masks || binary::has_catalog(doc);
     let masked = catalog_only
         || binary::has_spatial(doc)
         || doc
@@ -60,7 +61,11 @@ fn metadata_bound(
         + integer_bytes(u64::from(doc.canvas.1))
         + 1;
     if catalog_only {
-        bytes += binary::catalog_metadata_bytes(doc, check)?;
+        bytes += if layer_masks {
+            binary::catalog_metadata_bytes_v7(doc, check)?
+        } else {
+            binary::catalog_metadata_bytes(doc, check)?
+        };
     }
     if live_filters {
         bytes += 1; // PCND3 original-source presence flag.
@@ -119,6 +124,15 @@ fn metadata_bound(
                     bytes = total;
                 }
             }
+        }
+        if layer_masks {
+            let Some(bound) = binary::layer_mask_metadata_bound(layer.mask.as_ref()) else {
+                return Ok(None);
+            };
+            let Some(total) = bytes.checked_add(bound) else {
+                return Ok(None);
+            };
+            bytes = total;
         }
         if !inspect_coordinates {
             let record = 1

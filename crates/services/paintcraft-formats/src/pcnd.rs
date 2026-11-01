@@ -11,6 +11,7 @@ use uuid::Uuid;
 pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
+pub const LAYER_RASTER_MASKS_FEATURE: &str = "layer-masks.v1";
 pub const LAYER_MASKS_FEATURE: &str = "layer-filter-masks.v1";
 pub const LAYER_SPATIAL_FILTERS_FEATURE: &str = "layer-spatial-filters.v1";
 pub const LAYER_CATALOG_FEATURE: &str = "layer-filter-catalog.v1";
@@ -95,17 +96,19 @@ impl Header {
                 | (4, "paintcraft.document/v4")
                 | (5, "paintcraft.document/v5")
                 | (6, "paintcraft.document/v6")
+                | (7, "paintcraft.document/v7")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(matches!(self.container_version, 2..=6) && feature == SOURCE_METADATA_FEATURE)
-                && !(matches!(self.container_version, 3..=6) && feature == LAYER_FILTERS_FEATURE)
-                && !(matches!(self.container_version, 4..=6) && feature == LAYER_MASKS_FEATURE)
-                && !(matches!(self.container_version, 5 | 6)
+                && !(matches!(self.container_version, 2..=7) && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 3..=7) && feature == LAYER_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 4..=7) && feature == LAYER_MASKS_FEATURE)
+                && !(matches!(self.container_version, 5..=7)
                     && feature == LAYER_SPATIAL_FILTERS_FEATURE)
-                && !(self.container_version == 6 && feature == LAYER_CATALOG_FEATURE)
+                && !(matches!(self.container_version, 6 | 7) && feature == LAYER_CATALOG_FEATURE)
+                && !(self.container_version == 7 && feature == LAYER_RASTER_MASKS_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
         }
@@ -135,6 +138,27 @@ impl Header {
         {
             return Err(unsupported(
                 "PCND5 header omits required grammar capability",
+            ));
+        }
+        if self.container_version == 7
+            && SUPPORTED_FEATURES
+                .iter()
+                .copied()
+                .chain([
+                    LAYER_FILTERS_FEATURE,
+                    LAYER_MASKS_FEATURE,
+                    LAYER_CATALOG_FEATURE,
+                    LAYER_RASTER_MASKS_FEATURE,
+                ])
+                .any(|required| {
+                    !self
+                        .required_features
+                        .iter()
+                        .any(|feature| feature == required)
+                })
+        {
+            return Err(unsupported(
+                "PCND7 header omits required grammar capability",
             ));
         }
         Ok(())
@@ -258,7 +282,10 @@ mod spatial_tests;
 
 /// One bounded, authenticated requirement; assessment does not grant adoption.
 pub use binary::catalog::Requirement;
-/// Report PCND6's actual manifest without decoding document payloads.
+#[cfg(test)]
+mod layer_mask_tests;
+
+/// Report PCND6/7's actual manifest without decoding document payloads.
 pub fn catalog_manifest(bytes: &[u8]) -> Result<Vec<Requirement>> {
     catalog_manifest_checked(bytes, &|| Ok(()))
 }
