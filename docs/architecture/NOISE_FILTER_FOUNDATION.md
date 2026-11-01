@@ -260,8 +260,10 @@ owner, generation, reuse and cleanup checks pass. On the tested M1 Pro with
 Chrome 156, the longest synchronous service call is 12.2 ms and the longest
 cancellation acknowledgement is 6.5 ms. Default-size service jobs take
 609.9–1051.7 ms and 1080p jobs 2545.7–4284.2 ms. These finite observations include
-Worker yielding and output verification, exclude Main serialization/UI transport,
-and do not establish statistical or global bounds. All proposed service targets
+the qualification harness's per-step timer yields and output verification,
+exclude Main serialization/UI transport, and do not establish statistical or
+global bounds. The production pump instead uses MessageChannel; these completion
+totals do not measure its scheduling or app-render latency. All proposed service targets
 pass separately from functional checks. Receipt
 `docs/validation/noise-source6-qualification/final-freeze.json`, SHA256
 `cb8cfc2ab3ca93efcd21f6852ffe9b2be57a0712d7fdea834f7825b597c5e8a8`,
