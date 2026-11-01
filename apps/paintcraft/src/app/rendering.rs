@@ -244,6 +244,11 @@ impl App {
             let selection = self.editor.selection();
             let spatial =
                 spatial_workspace::needed(&doc) || preparation.requires_spatial_workspace();
+            let job_policy = spatial_workspace::JobPolicy::capture(
+                &doc,
+                preparation.prospective_filter_descriptor(),
+                spatial,
+            );
             let tiles = doc
                 .layers
                 .values()
@@ -278,7 +283,7 @@ impl App {
             match renderer.submit(
                 reservation,
                 move |cancel| {
-                    spatial_workspace::with_job(spatial, || {
+                    job_policy.run(|| {
                         cancel.check()?;
                         let image = preparation.build_paste(&|| cancel.check())?;
                         let batch = preparation.build(|| cancel.check())?;
@@ -389,6 +394,21 @@ impl App {
         let spatial = spatial_workspace::needed(self.editor.document())
             || preparation.requires_spatial_workspace();
         let pixels = spatial_workspace::with_job(spatial, || {
+            spatial_workspace::refuse_noise(self.editor.document())?;
+            if preparation
+                .prospective_filter_descriptor()
+                .is_some_and(|descriptor| {
+                    matches!(
+                        descriptor,
+                        paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(_)
+                    )
+                })
+            {
+                return Err(paintcraft_core::types::Error::new(
+                    paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                    "Noise preview requires the admitted native rendering worker",
+                ));
+            }
             if let Some(image) = preparation.build_paste(&|| Ok(()))? {
                 self.cpu_renderer.clear_geometry();
                 return self

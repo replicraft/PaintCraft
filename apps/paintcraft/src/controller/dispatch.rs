@@ -37,12 +37,12 @@ impl Editor {
         target_alias: Option<&'static str>,
     ) {
         let spatial = crate::spatial_workspace::needed(self.document());
+        let policy = crate::spatial_workspace::JobPolicy::capture(self.document(), None, spatial);
         let task = task.map(|task| {
-            if spatial {
-                Box::new(move |cancel| crate::spatial_workspace::with_job(true, || task(cancel)))
-                    as Task
-            } else {
+            if policy == crate::spatial_workspace::JobPolicy::None {
                 task
+            } else {
+                Box::new(move |cancel| policy.run(|| task(cancel))) as Task
             }
         });
         match task {
@@ -150,3 +150,7 @@ impl Editor {
 #[cfg(test)]
 #[path = "dispatch/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "dispatch/noise_tests.rs"]
+mod noise_tests;

@@ -117,6 +117,18 @@ pub(crate) struct PreviewPreparation {
 impl PreviewPreparation {
     /// Quote before command parsing/staging. Stored spatial intentions are
     /// checked separately by the host, including disabled/radius-zero entries.
+    pub(crate) fn prospective_filter_descriptor(
+        &self,
+    ) -> Option<&paintcraft_core::types::filters::Descriptor> {
+        match self.preview.as_deref() {
+            Some(Preview::Filter(edit)) => match &edit.operation {
+                paintcraft_commands::FilterOp::Add { descriptor, .. }
+                | paintcraft_commands::FilterOp::Update { descriptor, .. } => Some(descriptor),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
     pub(crate) fn requires_spatial_workspace(&self) -> bool {
         match self.preview.as_deref() {
             Some(Preview::Filter(edit)) => match &edit.operation {

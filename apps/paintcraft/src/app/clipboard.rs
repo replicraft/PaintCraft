@@ -82,6 +82,12 @@ impl State {
             return Ok(false);
         }
         let spatial = target.is_none() && spatial_workspace::needed(&document);
+        let policy = if target.is_none() {
+            spatial_workspace::JobPolicy::capture(&document, None, spatial)
+        } else {
+            // Raw target capture does not evaluate any editable filter.
+            spatial_workspace::JobPolicy::None
+        };
         let spatial_parent = if spatial {
             Some(
                 parent
@@ -110,23 +116,24 @@ impl State {
                         Ok(())
                     }
                 };
-                let result = spatial_workspace::with_job(spatial, || match target {
-                    Some(target) => capture(&document, selection, target, &budget(), &check),
-                    None => paintcraft_render::clipboard::capture_visible(
-                        &document,
-                        &selection,
-                        &budget(),
-                        &check,
-                    )
-                    .map(|image| {
-                        image.map(|(image, origin)| Capture {
-                            image,
-                            origin,
-                            selection,
-                        })
-                    }),
-                })
-                .map_err(|e| e.to_string());
+                let result = policy
+                    .run(|| match target {
+                        Some(target) => capture(&document, selection, target, &budget(), &check),
+                        None => paintcraft_render::clipboard::capture_visible(
+                            &document,
+                            &selection,
+                            &budget(),
+                            &check,
+                        )
+                        .map(|image| {
+                            image.map(|(image, origin)| Capture {
+                                image,
+                                origin,
+                                selection,
+                            })
+                        }),
+                    })
+                    .map_err(|e| e.to_string());
                 let _ = send.send(result);
                 wake.request_repaint();
             })
@@ -324,3 +331,7 @@ impl App {
 #[cfg(test)]
 #[path = "clipboard/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "clipboard/noise_tests.rs"]
+mod noise_tests;

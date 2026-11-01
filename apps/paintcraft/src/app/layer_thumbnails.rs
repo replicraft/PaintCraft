@@ -178,13 +178,14 @@ impl LayerThumbnails {
             layers: [(layer, source_layer.clone())].into(),
             title: None,
         };
+        let policy = spatial_workspace::JobPolicy::capture(&source, None, spatial);
         let executor = self.executor.as_mut().unwrap();
         let scope = (doc.document_id, doc.state_id);
         let wake = ctx.clone();
         match executor.submit(
             reservation,
             move |cancel| {
-                spatial_workspace::with_job(spatial, || {
+                policy.run(|| {
                     let layer = source.layers.get(&layer).ok_or_else(|| {
                         paintcraft_core::types::Error::new(
                             paintcraft_core::types::ErrorCode::TargetInvalid,
@@ -322,3 +323,7 @@ mod tests {
         assert!(matches!(service.preview(id), Preview::Ready { .. }));
     }
 }
+
+#[cfg(test)]
+#[path = "layer_thumbnails/noise_tests.rs"]
+mod noise_tests;

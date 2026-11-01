@@ -95,7 +95,14 @@ impl Source {
         check: impl Fn() -> paintcraft_core::types::Result<()>,
     ) -> paintcraft_core::types::Result<DisplayFrame> {
         let spatial = self.requires_spatial_workspace();
-        spatial_workspace::with_job(spatial, || {
+        let policy = spatial_workspace::JobPolicy::capture(
+            &self.doc,
+            self.preparation
+                .as_ref()
+                .and_then(|p| p.prospective_filter_descriptor()),
+            spatial,
+        );
+        policy.run(|| {
             check()?;
             let staged;
             let doc = match self

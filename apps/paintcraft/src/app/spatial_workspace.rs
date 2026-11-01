@@ -8,6 +8,9 @@ use paintcraft_document::Document;
 use paintcraft_render::spatial::{WorkspaceAdmission, with_workspace};
 use std::sync::OnceLock;
 
+#[path = "spatial_workspace/noise.rs"]
+mod noise;
+pub(crate) use noise::{JobPolicy, legacy_document, refuse_noise};
 pub(crate) const BYTES: u64 = 64 << 20;
 pub(crate) const WORK: u64 = 1_000_000_000;
 

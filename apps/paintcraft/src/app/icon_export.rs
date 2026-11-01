@@ -54,24 +54,21 @@ impl State {
                     .copy
                     .prepare(config.clone(), target)
                     .map_err(|e| e.to_string())?;
-                spatial_workspace::with_job(
-                    spatial_workspace::needed(&self.copy.frozen.document),
-                    || {
-                        icons::prepare_document_with_policies(
-                            &self.copy.frozen.document,
-                            kind(&config),
-                            &specs(&config),
-                            if config.filter == widget::Filter::Nearest {
-                                icons::Filter::Nearest
-                            } else {
-                                icons::Filter::Lanczos3
-                            },
-                            icons::WriteLimits::default(),
-                            &|| Ok(()),
-                            policy,
-                        )
-                    },
-                )
+                spatial_workspace::legacy_document(&self.copy.frozen.document, || {
+                    icons::prepare_document_with_policies(
+                        &self.copy.frozen.document,
+                        kind(&config),
+                        &specs(&config),
+                        if config.filter == widget::Filter::Nearest {
+                            icons::Filter::Nearest
+                        } else {
+                            icons::Filter::Lanczos3
+                        },
+                        icons::WriteLimits::default(),
+                        &|| Ok(()),
+                        policy,
+                    )
+                })
                 .map_err(|e| e.to_string())
             },
         ) {

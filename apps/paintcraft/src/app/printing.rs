@@ -32,7 +32,7 @@ impl App {
             ));
             return;
         }
-        let png = spatial_workspace::with_job(spatial_workspace::needed(document), || {
+        let png = spatial_workspace::legacy_document(document, || {
             paintcraft_render::render_flat(document)
         })
         .and_then(|rgba| {

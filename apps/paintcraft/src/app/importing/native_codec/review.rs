@@ -47,9 +47,7 @@ impl Review {
         let mut copy = budget.account(AllocationClass::PaintMetadata);
         copy.resize(pixels * 4 + thumbnail_bytes * 2)?;
         let rgba =
-            crate::spatial_workspace::with_job(crate::spatial_workspace::needed(doc), || {
-                paintcraft_render::render_flat(doc)
-            })?;
+            crate::spatial_workspace::legacy_document(doc, || paintcraft_render::render_flat(doc))?;
         let mut thumbnail = vec![0; thumbnail_bytes as usize];
         for y in 0..th {
             for x in 0..tw {

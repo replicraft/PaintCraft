@@ -94,7 +94,7 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
-        match spatial_workspace::with_job(spatial_workspace::needed(&frozen.document), || {
+        match spatial_workspace::legacy_document(&frozen.document, || {
             export::export_flat_options(&frozen.document, options, &all)
         }) {
             Ok(plan) => {
@@ -190,11 +190,10 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
-        let result =
-            spatial_workspace::with_job(spatial_workspace::needed(&frozen.document), || {
-                export::export_flat_options(&frozen.document, options, losses)
-            })
-            .map_err(|e| e.to_string());
+        let result = spatial_workspace::legacy_document(&frozen.document, || {
+            export::export_flat_options(&frozen.document, options, losses)
+        })
+        .map_err(|e| e.to_string());
         let status = match result {
             Ok(flat) => {
                 let outcome = save::save(path, &flat.bytes, true);
