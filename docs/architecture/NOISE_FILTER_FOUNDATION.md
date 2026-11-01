@@ -365,6 +365,25 @@ Actual UI qualification of Studio sampling and flattening remains pending on
 this new build; the eighteen-case output receipt above belongs to its earlier
 explicitly pinned build.
 
+CI for checkpoint `c378f626` subsequently exposes a debug-only fixture problem:
+fourteen headless tests drop unapplied font texture deltas. The macOS job fails;
+Ubuntu is cancelled, and the other five jobs pass. The failed run and sources are
+retained in `docs/validation/noise-ci-41306090921/final-freeze.json`, SHA256
+`396c473f2573bd2b1989fd8ae52e51a20568a42628884263c6860acdae7a62ca`.
+Three test initializers now explicitly clear unused deltas as pinned epaint
+requires for intentional non-rendering consumers. No assertion or product hook
+is bypassed. Full **debug-profile** Web tests pass 442 with three existing ignores,
+followed by native all-target strict checks and workspace formatting:
+`docs/validation/noise-debug-fixtures/attempt-1/final.json`, SHA256
+`74590a3df9ed5db192d5c67dcd587246577c976bfb2233eff556ec143d27f668`.
+A fresh production build keeps all 53 artifacts byte-identical to the preceding
+build while pinning the corrected 3,300 source inputs:
+`docs/validation/noise-debug-production/attempt-1/final.json`, SHA256
+`bc548f349fdf8434133b8f5b2375f644fd5b7584d47e15acb3787c16e2e800c4`.
+The new CI run for `6641216f` is separate from the failed checkpoint; its overall
+result remains pending. Local release-profile results alone did not establish
+debug-profile or integrated CI success.
+
 Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
 background job; retained preview handles keep their source reservation after
 cancellation or source replacement. The full App suite passes 772 tests with 29
