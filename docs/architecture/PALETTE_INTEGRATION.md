@@ -21,7 +21,14 @@ pass. Later local DDS8/flatten-eligibility checks pass selected packages, Native
 287 Node tests and native/Wasm strict checks. An explicit GPU-feature run passes fifty
 GPU integration tests on Apple M1 Pro Metal; the earlier default-feature GPU target
 ran zero tests and supplies no hardware evidence. This is CPU filtering with GPU
-presentation, not a Noise GPU kernel. Actual DDS8 browser export remains pending.
+presentation, not a Noise GPU kernel. Actual DDS8 passes 43 Worker checks
+(27 positives and 16 refusal/resource/lifecycle controls) and three Main browser
+cases with 18 checkpoints: Uniform/two mips, Gaussian/two mips and Uniform/default
+one-level settings. Real consent/revocation, fresh recheck, decoded downloads,
+late-cancel fencing and unchanged source/history pass. The final in-flight Worker
+abort retains a declared 640 MiB quarantine until page close; this is not immediate
+zero-byte release or RSS evidence. These finite DDS8 results do not establish
+MSP/JXR support or an all-consumer thirteen-profile baseline.
 
 Actual Noise flattening now passes six small browser cases: single-layer Image
 menu, multilayer shortcut, three delayed-result fences and a 128×64 diagnostic.

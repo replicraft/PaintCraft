@@ -19,8 +19,13 @@ CPU-evaluated GPU presentation preserve their source intentions.
 
 Noise adds a thirteenth stored descriptor with qualified numerical/native/CLI/MCP
 and Source6 execution. Its bounded flat-copy routes and Image picker have finite
-actual browser proof. DDS8 has passed local native/Wasm/Node and explicit Metal
-presentation checks; actual DDS8 browser export is pending. Actual Noise Flatten
+actual browser proof. DDS8 passes local native/Wasm/Node and explicit Metal
+presentation checks, 43 actual Worker checks and three Main browser cases with
+18 checkpoints (Uniform/two mips, Gaussian/two mips, default/one level). Consent,
+fresh recheck/download, late cancellation and unchanged source/history pass.
+The final in-flight Worker abort quarantines the declared 640 MiB until page
+close; this is not immediate zero-byte release or RSS evidence. MSP/JXR and a
+blanket thirteen-profile all-consumer baseline are not established. Actual Noise Flatten
 passes six small browser cases and a separate 4MP/16 MiB boundary, with exact
 independent pixels and retained metadata. The boundary observes a 91.4 ms
 close-ACK-to-rAF-publication interval, an 84 ms Main long task and a separate

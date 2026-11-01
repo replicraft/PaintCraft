@@ -427,8 +427,37 @@ Apple M1 Pro Metal, with no ignores. Repeated Renderer groups are not additive
 unique coverage. Receipt
 `docs/validation/noise-dds-eligibility-native/final-freeze.json`, SHA256
 `8e047e46027cbe85bc650c2c2e1c8b567a21e1a8ca34990e8125a938aaa528ec`,
-records these scopes. Actual DDS8 browser consent/download/replay remains pending;
-older Export4–7 profiles remain closed to Noise. No GPU Noise kernel is claimed.
+records these scopes. Older Export4–7 profiles remain closed to Noise. No GPU
+Noise kernel is claimed.
+
+Actual DDS8 subsequently passes 43 Worker checks: nine independent fixtures through
+direct FFI, maintained runtime and isolated Worker service give 27 positives,
+with 16 refusal, resource and lifecycle controls. Successful completion releases
+its declared service lease without quarantine. The final genuine in-flight abort
+instead retains the 640 MiB declaration and one pending job, quarantined until
+the isolated page/realm closes: Worker termination is not a join, and this is not
+an immediate zero-byte-release or RSS claim. The qualification producer's maximum
+64 MiB memory is distinct from the actual codec's unchanged 256 MiB limit. The
+first helper environment failure, artificial 16 MiB helper snapshot refusal,
+diagnostic36519 and corrected build3 remain preserved in the Worker aggregate.
+
+The actual bundled Main then passes three cases with 18 checkpoints: Uniform
+with two mips, Gaussian with two mips, and Uniform with untouched default
+one-level settings. Genuine 704-byte requests and 864-byte responses bind source,
+owner, settings, nonce and complete context echoes. Explicit bake prepares a
+preview; revoking consent prevents download, and rechecking uses a fresh nonce.
+Real DDS downloads equal the captured payload and independent decoded top/mip
+pixels. Cancellation witnesses actual Worker termination before release of the
+unchanged late reply, with no download. Exact saved source, title, dirty state and
+observable history remain unchanged. Calibration-only and two failed harness
+attempts are retained separately from these final passing cases.
+
+`docs/validation/noise-dds8-integration/complete-consumer-final-freeze.json`, SHA256
+`d9a4ce1a87d7750cddadde0789f8e296a3c5464cf48e3efbb3861c21145e6083`,
+binds the immutable Worker aggregate to Main session7799's passing receipt, the
+same a9af producer, 3,326 current inputs, 53 artifacts and 27 dist assets, and
+successful browser/server cleanup. This is finite DDS8 evidence, not MSP/JXR,
+a broader thirteen-profile all-consumer baseline or a performance guarantee.
 
 The first actual Flatten attempt passes the single filtered-layer Image-menu
 case: independent source/pixels, whole-canvas Source6 binding and close ordering,
