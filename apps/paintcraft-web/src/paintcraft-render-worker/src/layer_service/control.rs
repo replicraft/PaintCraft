@@ -27,13 +27,24 @@ pub(super) fn fact(
     job.spend_control(metadata::framing_work_quote(required)?)?;
     Fact7::capture(required, admission, inventory, check)
 }
-pub(super) fn union(
+/// Same structural work model, caller selects a real owner or bounded scalar debt.
+pub(super) fn fact_metered(
+    required: &Requirements7,
+    admission: Admission7,
+    inventory: Inventory7,
+    check: &dyn Fn() -> Result<()>,
+    spend: &dyn Fn(u64) -> Result<()>,
+) -> Result<Fact7> {
+    spend(metadata::framing_work_quote(required)?)?;
+    Fact7::capture(required, admission, inventory, check)
+}
+pub(super) fn union_metered(
     required: &Requirements7,
     admission: Admission7,
     source: [u8; 32],
-    job: &OpenJob,
     check: &dyn Fn() -> Result<()>,
+    spend: &dyn Fn(u64) -> Result<()>,
 ) -> Result<Union7> {
-    job.spend_control(metadata::framing_work_quote(required)?)?;
+    spend(metadata::framing_work_quote(required)?)?;
     Union7::capture(required, admission, source, check)
 }

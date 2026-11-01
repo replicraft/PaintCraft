@@ -37,7 +37,7 @@ impl AppearanceFrame {
     pub fn quote(
         doc: &Document,
         request: DisplayRequest,
-        job: &OpenJob,
+        job: &execution::QuoteJob<'_>,
         render: bool,
         policy: SlicePolicy,
         check: &dyn Fn() -> Result<()>,

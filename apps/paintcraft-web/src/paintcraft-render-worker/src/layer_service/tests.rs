@@ -34,6 +34,7 @@ fn fixture(value: u8, enabled: bool) -> Document {
 }
 fn admission(noise: bool) -> Admission7 {
     Admission7 {
+        work_authority: metadata::Origin7::StandaloneViewJobs,
         mode: if noise { Mode7::Noise } else { Mode7::Base },
         workspace_bytes: 64 << 20,
         base_work: 268_435_456,
@@ -291,7 +292,8 @@ fn disabled_and_empty_intents_remain_required_but_quoteonly_does_not_compile_or_
         assert!(s.state.frame.is_none());
         assert!(!s.state.job.workspace().has_prepared_programs());
         assert_eq!(s.state.job.workspace().scope().footprint().live, live);
-        assert!(s.state.job.workspace().work_used() > old);
+        assert_eq!(s.state.job.workspace().work_used(), old);
+        assert!(s.state.execution.pending_work() > 0);
         let r = request(&s, 2, true, Value::Null);
         s.prepare(&text(&r)).unwrap();
         finish(&mut s);
@@ -612,3 +614,6 @@ fn escaped_packet_keeps_budget_until_pixels_are_dropped_after_service_close() {
 // Explicit availability diagnostic; ignored in ordinary package suites.
 #[path = "tests/view_lifetime_diagnostic.rs"]
 mod view_lifetime_diagnostic;
+
+#[path = "tests/execution_jobs.rs"]
+mod execution_jobs;

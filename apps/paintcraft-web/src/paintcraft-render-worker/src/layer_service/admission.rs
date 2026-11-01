@@ -1,4 +1,4 @@
-//! One OPEN owner; no frame/BEGIN constructor and no counter reset on retire.
+//! Source7 explicit captured-parent or bounded default execution authority.
 use super::*;
 use paintcraft_render::{
     noise_work::{
@@ -21,22 +21,34 @@ impl OpenJob {
     /// the legacy base counter's Arc/Mutex allocation on a true-absence root.
     /// NoiseAdmission additionally charges its existing sidecar controls itself.
     /// root_scope is a reserved slice of the SAME outer operation budget.
-    pub fn capture(mode: Mode, limits: NoiseLimits, root_scope: BudgetScope) -> Result<Self> {
+    pub fn capture(
+        mode: Mode,
+        limits: NoiseLimits,
+        root_scope: BudgetScope,
+    ) -> Result<(Self, bool)> {
+        let fallback_used = std::cell::Cell::new(false);
         NoiseJobPolicy::BrowserV1.validate(limits)?;
         if mode == Mode::Base && limits.noise_work != 0 {
             return Err(bad("Source7 Base cannot admit Noise work"));
         }
-        match mode {
-            Mode::Base => Ok(Self::Base(capture_workspace_or_current(
-                || WorkspaceAdmission::new(root_scope, limits.bytes, limits.base_work),
+        let job = match mode {
+            Mode::Base => Self::Base(capture_workspace_or_current(
+                || {
+                    fallback_used.set(true);
+                    WorkspaceAdmission::new(root_scope, limits.bytes, limits.base_work)
+                },
                 limits.bytes,
                 limits.base_work,
-            )?)),
-            Mode::Noise => Ok(Self::Noise(capture_noise_or_current(
-                || NoiseAdmission::new_root(root_scope, NoiseJobPolicy::BrowserV1, limits),
+            )?),
+            Mode::Noise => Self::Noise(capture_noise_or_current(
+                || {
+                    fallback_used.set(true);
+                    NoiseAdmission::new_root(root_scope, NoiseJobPolicy::BrowserV1, limits)
+                },
                 limits,
-            )?)),
-        }
+            )?),
+        };
+        Ok((job, fallback_used.get()))
     }
     pub fn workspace(&self) -> &WorkspaceAdmission {
         match self {
@@ -71,6 +83,56 @@ impl OpenJob {
             }
             Self::Noise(a) => a.check_available(work),
         }
+    }
+    pub fn used(&self) -> Result<WorkComponents> {
+        match self {
+            Self::Base(a) => Ok(WorkComponents {
+                base: a.work_used(),
+                noise: 0,
+            }),
+            Self::Noise(a) => a.used(),
+        }
+    }
+    pub fn limits(&self) -> NoiseLimits {
+        match self {
+            Self::Base(a) => NoiseLimits {
+                bytes: a.bytes_limit(),
+                base_work: a.work_limit(),
+                noise_work: 0,
+            },
+            Self::Noise(a) => a.limits(),
+        }
+    }
+    /// Pure validation/forecast: no requirement that a prior execution is unspent.
+    pub fn validate_quote_document(
+        &self,
+        doc: &Document,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
+        if matches!(self, Self::Base(_))
+            && doc.layers.values().any(|l| {
+                l.filters.iter().any(|f| {
+                    matches!(
+                        f.descriptor(),
+                        paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(_)
+                    )
+                })
+            })
+        {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Source7 stored Noise requires a Noise OPEN",
+            ));
+        }
+        if self.workspace().has_prepared_programs() {
+            for l in doc.layers.values() {
+                check()?;
+                paintcraft_render::prepared::validate_layer_programs(l, self.workspace(), check)?;
+            }
+        } else {
+            paintcraft_render::prepared::quote_document_programs(doc, check)?;
+        }
+        Ok(())
     }
     pub fn validate_document(&self, doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<()> {
         if matches!(self, Self::Base(_))

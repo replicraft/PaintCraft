@@ -1,4 +1,4 @@
-//! Source7 only. Every generation retains one immutable OPEN accounting owner.
+//! Source7 retained source storage plus bounded execution jobs.
 use crate::*;
 use paintcraft_core::types::resources::BudgetAccount;
 use paintcraft_formats::{
@@ -17,6 +17,7 @@ mod admission;
 mod begin;
 mod control;
 mod copy;
+mod execution;
 mod frame;
 mod open;
 mod owner;
@@ -38,6 +39,7 @@ struct State {
     adopted: AdoptedCoverage7,
     admission_sha256: [u8; 32],
     job: OpenJob,
+    execution: execution::ExecutionAuthority,
     _workspace: BudgetScope,
     output: BudgetScope,
     inventory: BudgetScope,
@@ -84,7 +86,13 @@ impl LayerAppearanceService {
             .and_then(|n| n.checked_add(owner::arc_bytes::<BudgetAccount>().ok()?))
             // New7 honestly prices the one base counter allocation on root mint.
             // Inherited owner needs no new allocation; same bound is conservative.
-            .and_then(|n| n.checked_add(owner::arc_bytes::<std::sync::Mutex<u64>>().ok()?))
+            .and_then(|n| {
+                n.checked_add(
+                    owner::arc_bytes::<std::sync::Mutex<u64>>()
+                        .ok()?
+                        .checked_mul(2)?,
+                )
+            })
             .ok_or_else(|| resource("Source7 retained controls"))?;
         Ok(ControlQuote {
             retained_bytes,
@@ -203,6 +211,9 @@ impl LayerAppearanceService {
             return Err(bad("Source7 frame incomplete"));
         }
         let f = self.state.frame.take().expect("checked frame");
+        if f.copy.is_none() && f.encoded_account.is_none() {
+            self.state.execution.success();
+        }
         Ok(CompletedFrame {
             binding: f.binding,
             pixels: f.pixels,
@@ -232,21 +243,26 @@ impl LayerAppearanceService {
         }
         bytes.extend_from_slice(&f.pixels);
         f.delivered = true;
+        if f.copy.is_none() && f.encoded_account.is_none() {
+            self.state.execution.success();
+        }
         Ok(bytes)
     }
     pub fn cancel(&mut self, generation: u64) -> Result<()> {
         if self.state.generation != Some(generation) {
             return Err(stale());
         }
+        self.state.execution.fail();
         self.retire();
         Ok(())
     }
     pub fn retire(&mut self) {
+        self.state.execution.retire();
         self.state.frame = None;
         self.state.candidate = None;
         self.state.last_binding = None;
         self.state.last_copy_admission = None;
-        // OPEN job and cumulative used work intentionally survive retirement.
+        // Storage and captured authority survive; default eligibility is recorded, never reset here.
     }
 }
 #[cfg(test)]

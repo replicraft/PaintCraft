@@ -54,7 +54,7 @@ pub(super) fn open(
         Mode7::Base => Mode::Base,
         Mode7::Noise => Mode::Noise,
     };
-    let job = OpenJob::capture(
+    let (job, default_authority) = OpenJob::capture(
         mode,
         NoiseLimits {
             bytes: profile.admission.workspace_bytes,
@@ -210,6 +210,11 @@ pub(super) fn open(
         (base, adopted)
     };
     check()?;
+    let execution = execution::ExecutionAuthority::new(
+        default_authority
+            && profile.admission.work_authority == metadata::Origin7::StandaloneViewJobs,
+        &job,
+    )?;
     Ok(LayerAppearanceService {
         state: Box::new(State {
             source,
@@ -223,6 +228,7 @@ pub(super) fn open(
             adopted,
             admission_sha256,
             job,
+            execution,
             _workspace: workspace,
             output,
             inventory,

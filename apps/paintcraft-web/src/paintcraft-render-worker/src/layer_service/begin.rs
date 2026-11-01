@@ -73,10 +73,19 @@ pub(super) fn prepare(
     control: &str,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Value> {
+    prepare_intent(service, control, None, check)
+}
+pub(super) fn prepare_intent(
+    service: &mut LayerAppearanceService,
+    control: &str,
+    copy: Option<[u8; 32]>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Value> {
+    // The debt is charged even when parsing, owner, generation or facts fail.
     service
         .state
-        .job
-        .spend_control(control::parse_quote(control.len())?)?;
+        .execution
+        .spend(&service.state.job, control::parse_quote(control.len())?)?;
     let parsed = wire::begin(control, check)?;
     parsed.matches_source(&service.state.source, &service.state.profile)?;
     if service
@@ -87,10 +96,9 @@ pub(super) fn prepare(
         return Err(stale());
     }
     service.ensure_no_escape()?;
-    service.retire();
-    service.state.generation = Some(parsed.generation);
-    let result = inner(service, parsed, check);
-    if result.is_err() {
+    let before = service.state.generation;
+    let result = inner(service, parsed, copy, check);
+    if result.is_err() && service.state.generation != before {
         service.retire();
     }
     result
@@ -98,6 +106,7 @@ pub(super) fn prepare(
 fn inner(
     service: &mut LayerAppearanceService,
     parsed: wire::Begin,
+    copy: Option<[u8; 32]>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Value> {
     check()?;
@@ -105,8 +114,11 @@ fn inner(
     let operation = field(value, "operation")?;
     let target = field(value, "target")?;
     let job = service.state.job.clone();
-    let checked = control::checked(&job, check);
-    let spend = |n| job.spend_control(n);
+    let spend = |n| service.state.execution.spend(&job, n);
+    let checked = || {
+        spend(control::CHECK_SLOTS)?;
+        check()
+    };
     let staged = if *operation == Value::Null {
         if *target != Value::Null {
             return Err(bad("Source7 BASE has no target"));
@@ -114,6 +126,21 @@ fn inner(
         None
     } else {
         Some(batch(&service.state, operation, uuid(target)?, &checked)?)
+    };
+    // Typed normalization prevents optional spelling or alias-only changes from
+    // manufacturing a different execution intent after a refusal.
+    let semantic_operation = if let Some((batch, _)) = &staged {
+        spend(control::parse_quote(4096)?)?;
+        let Some(Op::Filter(op)) = batch.operations.first() else {
+            return Err(bad("Source7 typed operation"));
+        };
+        let mut normalized = op.to_value()?;
+        if let Value::Object(object) = &mut normalized {
+            object.remove("ref");
+        }
+        normalized
+    } else {
+        Value::Null
     };
     let introduced = staged
         .as_ref()
@@ -128,17 +155,18 @@ fn inner(
         .adopted
         .requirements()
         .union(&introduced, &checked)?;
-    let actual_union = control::union(
+    let actual_union = control::union_metered(
         &union,
         service.state.profile.admission,
         service.state.profile.source.source_coverage,
-        &job,
         check,
+        &spend,
     )?;
     if actual_union != parsed.union {
         return Err(stale());
     }
     let mut provenance = CandidateProvenance::Unchanged;
+    let mut candidate_owner = None;
     if let Some((batch, _)) = staged {
         let duplicate = match &batch.operations[0] {
             Op::Filter(FilterOp::Duplicate {
@@ -180,11 +208,10 @@ fn inner(
                 new_filter,
             };
         }
-        service.state.candidate = Some(staged);
+        candidate_owner = Some(staged);
     }
-    let state = &mut service.state;
-    let doc = state
-        .candidate
+    let state = &service.state;
+    let doc = candidate_owner
         .as_ref()
         .map(|c| c.document())
         .unwrap_or(&state.base);
@@ -199,24 +226,61 @@ fn inner(
         check,
         &spend,
     )?;
-    let fact = control::fact(&candidate, state.profile.admission, inventory, &job, check)?;
+    let fact = control::fact_metered(
+        &candidate,
+        state.profile.admission,
+        inventory,
+        check,
+        &spend,
+    )?;
     if fact != parsed.candidate {
         return Err(stale());
     }
     let union = state.adopted.requirements().union(&candidate, &checked)?;
-    let actual_union = control::union(
+    let actual_union = control::union_metered(
         &union,
         state.profile.admission,
         state.profile.source.source_coverage,
-        &job,
         check,
+        &spend,
     )?;
     if actual_union != parsed.union {
         return Err(stale());
     }
     let request = DisplayRequest::new(doc, parsed.view.rect, parsed.view.level)?;
+    spend(control::CHECK_SLOTS)?;
+    let semantic_intent = execution::intent(value, &semantic_operation, request, copy)?;
+    // All semantic identities and geometry are now validated. End previous job
+    // before a new root; escaped results were checked before the metadata phase.
+    service.retire();
+    service.state.generation = Some(parsed.generation);
+    service.state.candidate = candidate_owner;
+    let state = &mut service.state;
+    if parsed.render
+        && let Err(error) = state.execution.accept(&mut state.job, semantic_intent)
+    {
+        service.retire();
+        return Err(error);
+    }
+    let doc = state
+        .candidate
+        .as_ref()
+        .map(|c| c.document())
+        .unwrap_or(&state.base);
     let policy = SlicePolicy::for_mode(state.profile.admission.mode == Mode7::Noise);
-    let q = frame::AppearanceFrame::quote(doc, request, &job, parsed.render, policy, check)?;
+    let meter = execution::QuoteJob {
+        job: &state.job,
+        authority: &state.execution,
+        intent: semantic_intent,
+    };
+    let q = match frame::AppearanceFrame::quote(doc, request, &meter, parsed.render, policy, check)
+    {
+        Ok(q) => q,
+        Err(error) => {
+            service.retire();
+            return Err(error);
+        }
+    };
     let [width, height] = request.size();
     let rect = request.region();
     let binding = Value::object([
@@ -261,10 +325,11 @@ fn inner(
     ]);
     check()?;
     if parsed.render {
+        state.execution.flush(&state.job)?;
         state.frame = Some(frame::AppearanceFrame::prepare(
             doc,
             request,
-            (&job, policy),
+            (&state.job, policy),
             &state.output,
             binding.clone(),
             q,

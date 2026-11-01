@@ -170,13 +170,13 @@ impl LayerAppearanceService {
     ) -> Result<Value> {
         self.ensure_no_escape()?;
         self.state
-            .job
-            .spend_control(control::parse_quote(control.len())?)?;
+            .execution
+            .spend(&self.state.job, control::parse_quote(control.len())?)?;
         let spec = Spec::parse(control)?;
         spec.validate(&self.state.base)?;
         self.state
-            .job
-            .spend_control(control::parse_quote(begin.len())?)?;
+            .execution
+            .spend(&self.state.job, control::parse_quote(begin.len())?)?;
         let parsed = wire::begin(begin, check)?;
         parsed.matches_source(&self.state.source, &self.state.profile)?;
         if *field(parsed.value(), "operation")? != Value::Null
@@ -204,7 +204,7 @@ impl LayerAppearanceService {
         let mut output = self.state.output.account();
         output.resize(q.output_bytes)?;
         // Accounts remain private/live across normal preparation's retire().
-        let mut binding = self.prepare_checked(begin, check)?.clone();
+        let mut binding = begin::prepare_intent(self, begin, Some(spec.digest), check)?;
         let result = (|| {
             let frame = self
                 .state
@@ -343,6 +343,7 @@ impl LayerAppearanceService {
         let (bytes, account) = encoded.into_parts();
         f.encoded_account = Some(account);
         f.delivered = true;
+        self.state.execution.success();
         Ok(bytes)
     }
 }

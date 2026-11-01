@@ -1,4 +1,4 @@
-//! Diagnostic only: never reset/reopen/increase an OPEN grant after refusal.
+//! Source7 bounded view-job regression. Original90864 red log remains immutable.
 use super::*;
 use sha2::{Digest, Sha256};
 const WIDTH: u32 = 1000;
@@ -227,17 +227,14 @@ fn diagnostic(name: &str, value: u8, enabled: bool, expected: [u8; 4], pan: bool
     ]));
 }
 #[test]
-#[ignore = "explicit availability diagnostic; known budget refusal must stay a failure"]
 fn open_view_lifetime_uniform128() {
     diagnostic("uniform128-constant", 128, true, [20, 115, 200, 32], false);
 }
 #[test]
-#[ignore = "explicit availability diagnostic; known budget refusal must stay a failure"]
 fn open_view_lifetime_enabled_zero() {
     diagnostic("enabled-zero-constant", 0, true, [0, 0, 0, 0], false);
 }
 #[test]
-#[ignore = "explicit availability diagnostic; known budget refusal must stay a failure"]
 fn open_view_lifetime_disabled_some() {
     diagnostic(
         "disabled-Some-constant",
@@ -249,17 +246,14 @@ fn open_view_lifetime_disabled_some() {
 }
 
 #[test]
-#[ignore = "explicit changed-ROI availability diagnostic; budget refusal stays failure"]
 fn open_view_lifetime_uniform128_pan() {
     diagnostic("uniform128-pan", 128, true, [20, 115, 200, 32], true);
 }
 #[test]
-#[ignore = "explicit changed-ROI availability diagnostic; budget refusal stays failure"]
 fn open_view_lifetime_enabled_zero_pan() {
     diagnostic("enabled-zero-pan", 0, true, [0, 0, 0, 0], true);
 }
 #[test]
-#[ignore = "explicit changed-ROI availability diagnostic; budget refusal stays failure"]
 fn open_view_lifetime_disabled_some_pan() {
     diagnostic("disabled-Some-pan", 128, false, [20, 115, 200, 64], true);
 }

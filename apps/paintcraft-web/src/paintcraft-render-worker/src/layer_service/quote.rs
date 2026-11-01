@@ -152,7 +152,7 @@ pub(super) fn frame_quote(
     doc: &Document,
     request: DisplayRequest,
     policy: SlicePolicy,
-    job: &OpenJob,
+    job: &execution::QuoteJob<'_>,
     render: bool,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<FrameQuote> {
