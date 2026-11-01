@@ -46,9 +46,14 @@ and [Noise checkpoint](architecture/NOISE_FILTER_FOUNDATION.md) distinguish each
 route, failure and pinned source. All seven CI jobs for exact `6641216f` pass;
 later local changes are separate evidence.
 
-Next structural work is selection-derived layer masks, Multiply/Screen layer
-blending, then Color Overlay as the first live style. The remaining author's
-132-entry inventory and broader styles are open, not implied by these profiles.
+Saved layer masks now have locally qualified persistence, history, geometry,
+CPU rendering with GPU presentation, CLI/MCP and desktop Studio controls.
+The [layer-mask checkpoint](architecture/LAYER_MASK_FOUNDATION.md) records the
+scope and test results. Browser rendering and asynchronous mask editing remain
+in progress. Unsupported browser mask actions refuse before session mutation.
+Next is completing that browser integration, then Multiply/Screen layer blending
+and Color Overlay as the first live style. The remaining author's 132-entry
+inventory and broader styles are open, not implied by these profiles.
 The following counts describe historical initial checkpoints.
 The initial 95 renderer tests passed on
 required offscreen Metal, including 32 GPU controls. [Typed editing and CLI/MCP inspection](FILTER_COMMANDS.md) are also implemented,
@@ -70,7 +75,7 @@ with independent descriptor order and raw-pixel checks. Initial source
 capture/hash stages remain synchronous. Stored-Noise ordinary
 previews now use Source6; this does not establish a strict latency bound for
 all Main capture, publication or other profile paths. Persistent
-whole-layer masks, layer styles and the remaining catalog are still work.
+whole-layer masks in the browser, layer styles and the remaining catalog are still work.
 
 Actual browser metadata-limit refusal retains parameters for retry and preserves
 the compact source/profile byte-for-byte after Cancel and fresh reopen. Host
