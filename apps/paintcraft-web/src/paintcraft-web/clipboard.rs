@@ -181,3 +181,6 @@ mod tests;
 
 mod read;
 pub(crate) use read::{Decoded, read, read_supported};
+
+/// Encoded Source6 background clipboard; no Main-thread codec path.
+pub(crate) mod background;

@@ -41,6 +41,9 @@ impl Drop for State {
 }
 
 impl State {
+    pub(crate) fn request_encoded(&mut self, ctx: &egui::Context, bytes: Vec<u8>, title: String) {
+        self.request(ctx, bytes, title);
+    }
     fn request(&mut self, ctx: &egui::Context, bytes: Vec<u8>, title: String) {
         if self.pending {
             return;
@@ -107,7 +110,20 @@ impl WebApp {
         self.editor.tools.cancel_gesture();
         self.sync_text();
         let snapshot = self.editor.copy_snapshot();
-        match snapshot.and_then(|document| capture(&document)) {
+        let snapshot = match snapshot {
+            Ok(document) => document,
+            Err(error) => {
+                self.message = error.to_string();
+                return;
+            }
+        };
+        if crate::app::filter_editing::render::stored_scoped(&snapshot) {
+            if let Err(error) = self.queue_noise_print(ctx, snapshot, self.document_title()) {
+                self.message = error.to_string();
+            }
+            return;
+        }
+        match capture(&snapshot) {
             Ok(bytes) => self.printer.request(ctx, bytes, self.document_title()),
             Err(error) => self.message = error.to_string(),
         }

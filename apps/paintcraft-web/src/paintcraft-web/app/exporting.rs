@@ -64,6 +64,7 @@ impl WebApp {
                     preview_ready=self.pcx_preview.show(ui,key,|| {
                         if !preedit {return Err("text composition pending".into());}
                         let doc=snapshot;
+                        if crate::app::filter_editing::render::stored_scoped(&doc) {return Err("PCX has no bounded background Noise encoder".into());}
                         let rgba=crate::spatial_host::with_document(&doc, || paintcraft_render::render_flat(&doc)).map_err(|error|error.to_string())?;
                         let prepared=paintcraft_formats::pcx::prepare_rgba(doc.canvas.0,doc.canvas.1,&rgba,crate::files::pcx_mode(encoding),&||Ok(())).map_err(|error|error.to_string())?;
                         let preview=prepared.preview(192,&||Ok(())).map_err(|error|error.to_string())?;

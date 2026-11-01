@@ -27,6 +27,11 @@ impl Default for State {
     }
 }
 impl State {
+    pub(crate) fn accept_background(&mut self, job: clipboard::Job) {
+        self.job = Some(job);
+        self.capture = None;
+        self.cut = None;
+    }
     pub(crate) fn busy(&self) -> bool {
         self.job.is_some()
     }
@@ -117,6 +122,12 @@ impl WebApp {
         };
         let source = self.editor.session.snapshot();
         let selection = self.editor.session.selection();
+        if visible && crate::app::filter_editing::render::stored_scoped(&source) {
+            if let Err(error) = self.queue_noise_visible_copy(ctx, source, selection) {
+                self.message = error.to_string();
+            }
+            return;
+        }
         let result = if visible {
             crate::spatial_host::with_document(&source, || {
                 paintcraft_render::clipboard::capture_visible(

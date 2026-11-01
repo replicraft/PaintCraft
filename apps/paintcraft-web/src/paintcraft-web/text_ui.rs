@@ -131,6 +131,29 @@ impl WebApp {
                     Default::default()
                 };
                 let name = self.download_name(format);
+                if format.is_some() && crate::app::filter_editing::render::stored_scoped(&snapshot)
+                {
+                    let result = self.queue_noise_download(
+                        ctx,
+                        snapshot.clone(),
+                        crate::files::ExportOptions {
+                            format,
+                            jpeg_quality: self.export_quality,
+                            jpeg_matte: (format == Some(ImageExport::Jpeg)).then(|| {
+                                paintcraft_formats::image::JpegMatte::new(self.export_jpeg_matte)
+                            }),
+                            pcx_encoding: self.export_pcx_encoding,
+                            frontend: self.format_profile(),
+                            source_metadata,
+                            filter_bake,
+                        },
+                        name,
+                    );
+                    if let Err(error) = result {
+                        self.message = error.to_string();
+                    }
+                    return;
+                }
                 self.files.download(
                     ctx,
                     &snapshot,
