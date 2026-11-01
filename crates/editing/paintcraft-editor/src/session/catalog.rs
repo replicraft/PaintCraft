@@ -2,12 +2,14 @@
 use super::*;
 
 pub fn catalog_document_requirements(doc: &Document) -> Vec<&'static str> {
-    if !doc.layers.values().any(|layer| {
-        layer
-            .filters
-            .iter()
-            .any(|filter| filter.descriptor().is_catalog_only())
-    }) {
+    if !doc.has_layer_masks()
+        && !doc.layers.values().any(|layer| {
+            layer
+                .filters
+                .iter()
+                .any(|filter| filter.descriptor().is_catalog_only())
+        })
+    {
         return Vec::new();
     }
     doc.layers

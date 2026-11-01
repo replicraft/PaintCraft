@@ -19,7 +19,7 @@ pub fn error_value(e: &Error) -> Value {
     Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect())
 }
 
-/// File-command/v4 carries spatial result/v4; older results retain their exact profile.
+/// File-command/v5 carries own-layer-mask result/v5; older results retain their exact profile.
 /// The engine result and external file receipt are
 /// reported independently.
 pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_code: u8) -> Value {
@@ -30,7 +30,9 @@ pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_
     Value::object([
         (
             "schema",
-            Value::str(if engine_schema == Some("paintcraft.result/catalog-v1") {
+            Value::str(if engine_schema == Some("paintcraft.result/v5") {
+                "paintcraft.file-command/v5"
+            } else if engine_schema == Some("paintcraft.result/catalog-v1") {
                 "paintcraft.file-command/catalog-v1"
             } else if engine_schema == Some("paintcraft.result/v4") {
                 "paintcraft.file-command/v4"
@@ -82,5 +84,30 @@ mod tests {
             panic!("error object")
         };
         assert_eq!(fields.len(), 5);
+    }
+}
+
+#[cfg(test)]
+mod layer_mask_profile_tests {
+    use super::*;
+    #[test]
+    fn own_masks_use_v5_without_downgrading_any_existing_engine_profile() {
+        for (engine_schema, outer) in [
+            ("paintcraft.result/v5", "paintcraft.file-command/v5"),
+            (
+                "paintcraft.result/catalog-v1",
+                "paintcraft.file-command/catalog-v1",
+            ),
+            ("paintcraft.result/v4", "paintcraft.file-command/v4"),
+            ("paintcraft.result/v3", "paintcraft.file-command/v3"),
+            ("paintcraft.result/v2", "paintcraft.file-command/v2"),
+            ("paintcraft.result/v1", "paintcraft.file-command/v1"),
+        ] {
+            let engine = Value::object([("schema", Value::str(engine_schema))]);
+            let reply = envelope(Some(engine.clone()), None, "ok", 0);
+            assert_eq!(reply.get("schema").and_then(Value::as_str), Some(outer));
+            assert_eq!(reply.get("engine"), Some(&engine));
+            assert_eq!(reply.get("file"), Some(&Value::Null));
+        }
     }
 }

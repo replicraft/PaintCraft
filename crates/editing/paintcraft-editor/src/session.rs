@@ -25,7 +25,9 @@ pub use paintcraft_history::{
 use paintcraft_history::{History, Snapshot};
 
 mod catalog;
+mod features;
 mod flatten;
+pub use features::masked_document_features;
 mod history;
 mod paste;
 mod persistence;
@@ -38,45 +40,6 @@ pub use history::{HistoryTicket, HistoryView};
 pub use persistence::PersistentValidator;
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
-
-/// Stored spatial intentions require result/v4, masks require v3; otherwise
-/// preserve the minimal v1/v2 profile.
-/// Extensions disclose inherited point-filter semantics in canonical feature order.
-pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
-    let catalog = doc.layers.values().any(|layer| {
-        layer
-            .filters
-            .iter()
-            .any(|entry| entry.descriptor().is_catalog_only())
-    });
-    let masks = doc
-        .layers
-        .values()
-        .any(|layer| layer.filters.iter().any(|entry| entry.mask().is_some()));
-    let spatial = doc.layers.values().any(|layer| {
-        layer
-            .filters
-            .iter()
-            .any(|entry| entry.descriptor().is_spatial())
-    });
-    if !masks && !spatial && !catalog {
-        return Vec::new();
-    }
-    let mut features = vec!["layer-point-filters.v1"];
-    if masks {
-        features.push("layer-filter-masks.v1");
-    }
-    if spatial {
-        features.push("layer-spatial-filters.v1");
-    }
-    if catalog {
-        features.push("layer-filter-catalog.v1");
-    }
-    if doc.source_metadata.is_some() {
-        features.push("source-metadata.v1");
-    }
-    features
-}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Receipt {
@@ -95,7 +58,9 @@ impl Receipt {
         let Value::Object(mut fields) = Value::object([
             (
                 "schema",
-                Value::str(if !self.required_filters.is_empty() {
+                Value::str(if self.document_features.contains(&"layer-masks.v1") {
+                    "paintcraft.result/v5"
+                } else if !self.required_filters.is_empty() {
                     "paintcraft.result/catalog-v1"
                 } else if self.document_features.contains(&"layer-spatial-filters.v1") {
                     "paintcraft.result/v4"
@@ -143,7 +108,7 @@ impl Receipt {
                 ),
             );
         }
-        if !self.required_filters.is_empty() {
+        if !self.required_filters.is_empty() || self.document_features.contains(&"layer-masks.v1") {
             fields.insert(
                 "required_filters".into(),
                 Value::Array(
@@ -798,3 +763,7 @@ mod tests {
         assert_eq!(s.history_view().entries, entries);
     }
 }
+
+#[cfg(test)]
+#[path = "session/layer_mask_disclosure_tests.rs"]
+mod layer_mask_disclosure_tests;

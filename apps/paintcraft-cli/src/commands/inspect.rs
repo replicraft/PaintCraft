@@ -133,6 +133,9 @@ pub fn run(a: Options, json: bool) -> Reply {
     };
     match super::source_metadata::read(&bytes) {
         Ok(doc) => {
+            if let Err(error) = doc.require_no_layer_masks() {
+                return bare(json, Err(error));
+            }
             let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
             let assessed = match catalog_assessment(&sha, &header, "editable", &[], &bytes) {
                 Ok(value) => value,

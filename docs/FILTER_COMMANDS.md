@@ -248,8 +248,9 @@ published aliases**, not merely the input batch version:
 
 | Final result | Engine result | CLI envelope |
 |---|---|---|
+| Any stored own-layer mask, including disabled/zero/full (also with catalog filters) | `paintcraft.result/v5` | `paintcraft.file-command/v5` |
 | Any stored Box Blur, including disabled/radius zero | `paintcraft.result/v4` | `paintcraft.file-command/v4` |
-| No spatial intention, any stored mask, including zero/disabled | `paintcraft.result/v3` | `paintcraft.file-command/v3` |
+| No own-layer mask or spatial intention, any stored filter mask, including zero/disabled | `paintcraft.result/v3` | `paintcraft.file-command/v3` |
 | No spatial intentions or masks, nonempty new filter aliases | `paintcraft.result/v2` | `paintcraft.file-command/v2` |
 | No spatial intentions, masks or new filter aliases | exact `paintcraft.result/v1` | exact `paintcraft.file-command/v1` |
 
@@ -412,3 +413,22 @@ independent exact 2×1 opaque-white pixels. The frozen 27-asset production recei
 regression counts are recorded in the [spatial qualification](architecture/SPATIAL_FILTER_INTEGRATION.md#production-browser-qualification).
 Previous six-point browser results retain their original scope. Higher catalog
 entries, layer masks and styles remain open.
+
+
+Own-layer-mask receipt profile (v5)
+
+`layer-masks.v1` is the own-layer A8 feature, distinct from the frozen
+`layer-filter-masks.v1`. Any stored own mask selects `paintcraft.result/v5`
+and its `paintcraft.file-command/v5` envelope, including disabled, zero and full
+coverage. The feature remains present for filterless documents. Combined
+features retain their existing order, followed by `layer-masks.v1`, then source
+metadata when present. `required_filters` is always present in v5 as the sorted unique IDs of ALL
+stored filters, including legacy descriptors; filterless Some emits an empty
+array. Actual legacy-only filters also disclose `layer-point-filters.v1`. The
+own-mask profile takes precedence over `catalog-v1` so its
+capability is never hidden. Removing the final own mask restores the existing
+minimal result/envelope selection. No old result schema or immutable catalog
+bundle is widened. Fetch the new schemas with `schema result-v5` and
+`schema file-command-v5`. These output disclosures do not authorize a worker,
+foreign bake, mask command or input-batch capability; existing unsupported
+routes continue to refuse rather than discard own-mask intent.

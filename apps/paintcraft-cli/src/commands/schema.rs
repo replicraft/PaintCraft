@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
+    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v5", "file-command-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
     schema: String,
 }
 
@@ -33,6 +33,8 @@ pub fn run(a: Options, _json: bool) -> Reply {
                 "batch-v3" => BATCH_V3_SCHEMA,
                 "batch-v4" => BATCH_V4_SCHEMA,
                 "batch-v5" => BATCH_V5_SCHEMA,
+                "result-v5" => include_str!("../../schemas/result-v5.schema.json"),
+                "file-command-v5" => include_str!("../../schemas/file-command-v5.schema.json"),
                 "result-v4" => include_str!("../../schemas/result-v4.schema.json"),
                 "file-command-v4" => include_str!("../../schemas/file-command-v4.schema.json"),
                 "inspect-v4" => include_str!("../../schemas/inspect-v4.schema.json"),

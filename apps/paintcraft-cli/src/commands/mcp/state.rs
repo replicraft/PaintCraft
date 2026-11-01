@@ -127,6 +127,7 @@ impl State {
     pub fn inspection(&mut self) -> Result<Json> {
         let session = self.session()?;
         let doc = session.document();
+        doc.require_no_layer_masks()?;
         let layers = doc.layers_in_order().map(|layer| {
             let mut value = json!({"id":layer.id.to_string(),"name":layer.name,"visible":layer.visible,"opacity":layer.opacity});
             if !layer.filters.is_empty() {value["filters"] = core_json(&paintcraft_document::filters::inspection(&layer.filters))?;}
@@ -281,3 +282,58 @@ mod cancellation_tests;
 #[cfg(test)]
 #[path = "state/source_tests.rs"]
 mod source_tests;
+
+#[cfg(test)]
+mod own_mask_inspection_tests {
+    use super::*;
+    #[test]
+    fn legacy_inspection_refuses_own_presence_without_mutation_or_mask_drop() {
+        use paintcraft_core::types::{Rect, resources::SharedBudget};
+        use paintcraft_document::LayerMask;
+        use paintcraft_raster::coverage_mask::A8Mask;
+        let budget = SharedBudget::new(8192);
+        for enabled in [false, true] {
+            for coverage in [0, 255] {
+                let mut doc = paintcraft_document::new_document(
+                    2,
+                    1,
+                    Some(paintcraft_core::types::Rgba::TRANSPARENT),
+                    0,
+                    POLICY,
+                )
+                .unwrap();
+                let id = doc.roots[0];
+                let field = A8Mask::uniform(
+                    Rect::new(0, 0, 2, 1).unwrap(),
+                    coverage,
+                    &budget,
+                    Default::default(),
+                    &|| Ok(()),
+                )
+                .unwrap();
+                doc.layers.get_mut(&id).unwrap().mask = Some(LayerMask::new(enabled, field));
+                let mut state = State {
+                    session: Some(Session::new(doc)),
+                    ..Default::default()
+                };
+                let before = state.session.as_ref().unwrap().snapshot();
+                assert_eq!(
+                    state.inspection().unwrap_err().code,
+                    ErrorCode::CapabilityUnsupported
+                );
+                assert!(std::sync::Arc::ptr_eq(
+                    &before,
+                    &state.session.as_ref().unwrap().snapshot()
+                ));
+            }
+        }
+        let mut state = State {
+            session: Some(Session::new(
+                paintcraft_document::new_document(2, 1, None, 0, POLICY).unwrap(),
+            )),
+            ..Default::default()
+        };
+        assert!(state.inspection().is_ok());
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}
