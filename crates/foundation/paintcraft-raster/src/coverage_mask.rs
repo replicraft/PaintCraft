@@ -7,6 +7,7 @@ use sha2::{Digest, Sha256};
 use std::{cell::Cell, sync::Arc};
 mod builder;
 mod capture;
+mod invert;
 mod mapping;
 mod query;
 mod views;
@@ -305,6 +306,8 @@ fn limit() -> Error {
         "A8 mask work or storage admission exceeded",
     )
 }
+#[cfg(test)]
+mod invert_tests;
 #[cfg(test)]
 mod lifecycle_tests;
 #[cfg(test)]
