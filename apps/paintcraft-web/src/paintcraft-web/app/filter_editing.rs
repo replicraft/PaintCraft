@@ -5,10 +5,12 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_studio::filters::{self, Action as Intent, ParameterResponse, Parameters};
 use paintcraft_tools::FilterEdit;
 use uuid::Uuid;
+mod appearance;
 #[cfg(target_arch = "wasm32")]
 mod bridge;
 #[cfg(any(target_arch = "wasm32", test))]
 mod cancel_once;
+mod channel;
 mod flat_action;
 #[cfg(test)]
 mod flat_action_tests;
@@ -150,6 +152,7 @@ impl WebApp {
             if state.base_view != Some(view) {
                 self.filter_display.renderer.want(
                     Capture {
+                        publication: None,
                         scoped: render::stored_scoped(&draft.source)
                             || draft
                                 .parameters
@@ -185,6 +188,7 @@ impl WebApp {
         match draft.operation() {
             Ok(edit) => self.filter_display.renderer.want(
                 Capture {
+                    publication: None,
                     scoped: render::stored_scoped(&draft.source)
                         || draft
                             .parameters
@@ -231,6 +235,7 @@ impl WebApp {
                 self.filter_display.footprint = self.canvas.filter_footprint;
                 self.filter_display.view = state.base_view;
                 self.filter_display.committed = Some(Capture {
+                    publication: None,
                     scoped: render::stored_scoped(&state.draft.source),
                     owner: state.draft.base.owner,
                     ticket: state.draft.ticket(),
@@ -387,6 +392,12 @@ impl WebApp {
     }
     fn filter_capture(&self) -> Capture {
         Capture {
+            publication: self.editor.session.document().has_layer_masks().then(|| {
+                appearance::Public7 {
+                    ticket: self.editor.session.ticket(),
+                    base: self.editor.session.snapshot(),
+                }
+            }),
             scoped: render::stored_scoped(self.editor.session.document()),
             owner: self.editor.session.owner_id(),
             ticket: self.editor.session.ticket(),
@@ -399,8 +410,16 @@ impl WebApp {
     }
     fn filter_source_current(&self, source: &Capture) -> bool {
         source.owner == self.editor.session.owner_id()
-            && source.ticket == self.editor.session.ticket()
-            && std::sync::Arc::ptr_eq(&source.document, &self.editor.session.snapshot())
+            && source.publication.as_ref().map_or_else(
+                || {
+                    source.ticket == self.editor.session.ticket()
+                        && std::sync::Arc::ptr_eq(&source.document, &self.editor.session.snapshot())
+                },
+                |public| {
+                    public.ticket == self.editor.session.ticket()
+                        && std::sync::Arc::ptr_eq(&public.base, &self.editor.session.snapshot())
+                },
+            )
     }
     pub(crate) fn worker_filter_canvas(&mut self, ctx: &egui::Context) -> bool {
         if self.filter_display.copy_action.is_some() || self.filter_display.picker_wanted.is_some()
@@ -426,7 +445,7 @@ impl WebApp {
             .document()
             .layers
             .values()
-            .any(|l| !l.filters.is_empty());
+            .any(|l| !l.filters.is_empty() || l.mask.is_some());
         if !has_filters {
             // A Worker ROI is not a full-canvas texture for the legacy cache key.
             if self.canvas.filter_footprint.is_some() {

@@ -10,6 +10,7 @@ fn source() -> Capture {
         paintcraft_document::import_image(1, 1, &[10, 20, 30, 255], "profile-upgrade").unwrap(),
     );
     Capture {
+        publication: None,
         scoped: false,
         owner: Uuid::from_u128(1),
         ticket: Ticket {
@@ -53,20 +54,28 @@ fn adding_box_upgrades_capture_identity_and_base_requests_retain_the_chosen_prof
         original.clone(),
         request(&original, Descriptor::InvertRgbV1),
     );
-    assert!(!renderer.wanted.as_ref().unwrap().capture.spatial);
+    assert!(!renderer.wanted.as_ref().unwrap().capture.legacy().spatial);
     renderer.want(
         original.clone(),
         request(&original, Descriptor::BoxBlurV1(BoxBlurV1::new(0).unwrap())),
     );
-    let upgraded = renderer.wanted.as_ref().unwrap().capture.clone();
+    let upgraded = renderer.wanted.as_ref().unwrap().capture.legacy().clone();
     assert!(upgraded.spatial);
     assert!(!original.same(&upgraded)); // existing poll closes+acks before source replacement
     assert!(Arc::ptr_eq(&original.document, &upgraded.document));
     let mut base = request(&upgraded, Descriptor::InvertRgbV1);
     base.edit = None;
     renderer.want(upgraded.clone(), base);
-    assert!(renderer.wanted.as_ref().unwrap().capture.same(&upgraded));
-    assert!(renderer.wanted.as_ref().unwrap().capture.spatial);
+    assert!(
+        renderer
+            .wanted
+            .as_ref()
+            .unwrap()
+            .capture
+            .legacy()
+            .same(&upgraded)
+    );
+    assert!(renderer.wanted.as_ref().unwrap().capture.legacy().spatial);
 }
 
 #[test]
@@ -81,7 +90,7 @@ fn exposure_requires_generic_source_but_levels_retains_closed_source4() {
             Descriptor::LevelsRgbV1(LevelsRgbV1::new(0, 255, 100, 0, 255).unwrap()),
         ),
     );
-    let legacy = &renderer.wanted.as_ref().unwrap().capture;
+    let legacy = &renderer.wanted.as_ref().unwrap().capture.legacy();
     assert!(legacy.catalog);
     assert!(!legacy.programs);
     let mut edit = request(
@@ -90,13 +99,13 @@ fn exposure_requires_generic_source_but_levels_retains_closed_source4() {
     );
     edit.render = false;
     renderer.want(original.clone(), edit);
-    let generic = renderer.wanted.as_ref().unwrap().capture.clone();
+    let generic = renderer.wanted.as_ref().unwrap().capture.legacy().clone();
     assert!(generic.programs);
     assert!(!original.same(&generic));
     let mut base = request(&generic, Descriptor::InvertRgbV1);
     base.edit = None;
     renderer.want(generic, base);
-    assert!(renderer.wanted.as_ref().unwrap().capture.programs);
+    assert!(renderer.wanted.as_ref().unwrap().capture.legacy().programs);
 }
 
 #[test]
@@ -109,8 +118,8 @@ fn neutral_or_disabled_noise_selects_source_six_and_replaces_old_capture_class()
         AddNoiseRgbV1::new(0, 65535, false, NoiseDistribution::Gaussian).unwrap(),
     );
     renderer.want(c.clone(), request(&c, d));
-    assert!(renderer.wanted.as_ref().unwrap().capture.scoped);
-    assert!(renderer.wanted.as_ref().unwrap().capture.programs);
+    assert!(renderer.wanted.as_ref().unwrap().capture.legacy().scoped);
+    assert!(renderer.wanted.as_ref().unwrap().capture.legacy().programs);
     let mut stored = c.clone();
     let mut doc = (*stored.document).clone();
     doc.layers.get_mut(&doc.roots[0]).unwrap().filters =
@@ -118,7 +127,40 @@ fn neutral_or_disabled_noise_selects_source_six_and_replaces_old_capture_class()
     stored.document = Arc::new(doc);
     assert!(stored_scoped(&stored.document));
     renderer.want(stored.clone(), request(&stored, Descriptor::InvertRgbV1));
-    assert!(renderer.wanted.as_ref().unwrap().capture.scoped);
+    assert!(renderer.wanted.as_ref().unwrap().capture.legacy().scoped);
     renderer.want(c.clone(), request(&c, Descriptor::InvertRgbV1));
-    assert!(!renderer.wanted.as_ref().unwrap().capture.scoped);
+    assert!(!renderer.wanted.as_ref().unwrap().capture.legacy().scoped);
+}
+
+#[test]
+fn disabled_filterless_mask_selects_source7_and_view_changes_keep_the_fixed_context() {
+    use paintcraft_core::types::resources::SharedBudget;
+    use paintcraft_document::LayerMask;
+    use paintcraft_raster::coverage_mask::{A8Mask, Limits};
+    let mut capture = source();
+    let mut document = (*capture.document).clone();
+    let mask = A8Mask::uniform(
+        Rect::new(0, 0, 1, 1).unwrap(),
+        0,
+        &SharedBudget::new(4096),
+        Limits::default(),
+        &|| Ok(()),
+    )
+    .unwrap();
+    document.layers.get_mut(&document.roots[0]).unwrap().mask = Some(LayerMask::new(false, mask));
+    capture.document = Arc::new(document);
+    assert!(stored_background(&capture.document));
+    assert!(!stored_scoped(&capture.document));
+    let mut renderer = Renderer::default();
+    let mut wanted = request(&capture, Descriptor::InvertRgbV1);
+    wanted.edit = None;
+    renderer.want(capture.clone(), wanted.clone());
+    let fixed = renderer.wanted.as_ref().unwrap().capture.clone();
+    assert!(matches!(fixed, SourceKey::Appearance(_)));
+    wanted.view = View::new(&capture.document, Rect::new(0, 0, 1, 1).unwrap(), 1).unwrap();
+    renderer.want(capture.clone(), wanted.clone());
+    assert!(fixed.same(&renderer.wanted.as_ref().unwrap().capture));
+    wanted.edit = request(&capture, Descriptor::InvertRgbV1).edit;
+    renderer.want(capture, wanted);
+    assert!(!fixed.same(&renderer.wanted.as_ref().unwrap().capture));
 }

@@ -70,7 +70,7 @@ impl WebApp {
     pub(super) fn worker_noise_preview(&mut self, ctx: &egui::Context) -> bool {
         if self.filter_editing.is_some()
             || !self.ordinary_filter_preview()
-            || !render::stored_scoped(self.editor.session.document())
+            || !render::stored_background(self.editor.session.document())
         {
             self.forget_noise_preview();
             return false;

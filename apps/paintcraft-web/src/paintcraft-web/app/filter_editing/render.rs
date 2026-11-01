@@ -1,7 +1,7 @@
 //! One source client, one in-flight request, and one replaceable desired request.
 #[cfg(target_arch = "wasm32")]
-use super::bridge;
-use super::state::Revision;
+use super::channel;
+use super::{channel::SourceKey, state::Revision};
 use eframe::egui;
 #[cfg(target_arch = "wasm32")]
 use paintcraft_core::types::Result;
@@ -20,6 +20,7 @@ pub(super) struct Capture {
     pub ticket: Ticket,
     pub draft: Uuid,
     pub document: Arc<Document>,
+    pub publication: Option<super::appearance::Public7>,
     pub spatial: bool,
     pub catalog: bool,
     pub programs: bool,
@@ -76,7 +77,7 @@ pub(super) struct Reply {
 }
 #[derive(Clone, Debug)]
 struct Work {
-    capture: Capture,
+    capture: SourceKey,
     request: Request,
 }
 impl Work {
@@ -94,11 +95,11 @@ pub(super) struct Renderer {
     pub error: Option<(Revision, Error)>,
     blocked: bool,
     #[cfg(target_arch = "wasm32")]
-    live: Option<Capture>,
+    live: Option<SourceKey>,
     #[cfg(target_arch = "wasm32")]
-    opening: Option<(Outcome<bridge::Client>, bridge::CancelSlot)>,
+    opening: Option<(Outcome<channel::Client>, channel::CancelSlot)>,
     #[cfg(target_arch = "wasm32")]
-    client: Option<bridge::Client>,
+    client: Option<channel::Client>,
     #[cfg(target_arch = "wasm32")]
     flight: Option<(Request, Outcome<Reply>, bool, u64)>,
     #[cfg(target_arch = "wasm32")]
@@ -115,6 +116,16 @@ impl Renderer {
         capture.scoped |= stored_scoped(&capture.document) || request.edit.as_ref().is_some_and(|edit| {
             matches!(&edit.operation,paintcraft_commands::FilterOp::Add{descriptor,..}|paintcraft_commands::FilterOp::Update{descriptor,..} if descriptor_scoped(*descriptor))
         });
+        let capture =
+            match SourceKey::new(capture, request.edit.as_ref().map(|e| &e.operation), None) {
+                Ok(capture) => capture,
+                Err(error) => {
+                    self.wanted = None;
+                    self.accepted = None;
+                    self.error = Some((request.revision, error));
+                    return;
+                }
+            };
         let work = Work { capture, request };
         if self.wanted.as_ref().is_none_or(|w| !w.same(&work)) {
             self.accepted = None;
@@ -207,10 +218,8 @@ impl Renderer {
                 .is_none_or(|w| !source.same(&w.capture))
         });
         if changed {
-            if let Some((_, slot)) = &self.opening
-                && let Some(cancel) = slot.borrow().as_ref()
-            {
-                cancel.cancel();
+            if let Some((_, slot)) = &self.opening {
+                slot.cancel();
             }
             if let Some((_, _, cancelled, sequence)) = &mut self.flight
                 && !*cancelled
@@ -288,11 +297,13 @@ impl Renderer {
         if self.live.is_none() {
             self.live = Some(work.capture.clone());
             let outcome = Rc::new(RefCell::new(None));
-            let slot = Rc::new(RefCell::new(None));
+            let slot = channel::CancelSlot::default();
             self.opening = Some((outcome.clone(), slot.clone()));
             let ctx = ctx.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                *outcome.borrow_mut() = Some(bridge::open(work.capture, slot).await);
+                *outcome.borrow_mut() = Some(
+                    channel::open(work.capture, slot, paintcraft_raster::Admission::new(0)).await,
+                );
                 ctx.request_repaint();
             });
         } else if let Some(client) = &self.client {
@@ -374,4 +385,9 @@ pub(super) fn descriptor_scoped(d: paintcraft_core::types::filters::Descriptor) 
 pub(crate) fn stored_scoped(doc: &Document) -> bool {
     paintcraft_formats::export::prepared_capabilities::requires_scoped_noise(doc, &|| Ok(()))
         .unwrap_or(true)
+}
+
+/// Stored own intent selects Source7 even disabled, empty, or filterless.
+pub(crate) fn stored_background(doc: &Document) -> bool {
+    doc.has_layer_masks() || stored_scoped(doc)
 }
