@@ -512,7 +512,9 @@ impl WebApp {
         self.editor.tools.color = self.controls.primary;
         self.editor.tools.secondary = self.controls.secondary;
         self.editor.tools.options = self.controls.options;
-        if self.controls.tool == Tool::ColorPicker {
+        if self.controls.tool == Tool::ColorPicker
+            && self.frontend != paintcraft_ui::actions::Frontend::Studio
+        {
             use paintcraft_core::types::picker::{PickerAfter, SampleSize, SampleSource};
             self.editor.tools.options.picker_source = SampleSource::Image;
             self.editor.tools.options.picker_size = SampleSize::One;
@@ -684,9 +686,20 @@ impl WebApp {
                                     );
                                 }
                             } else if !self.begin_selection_float(point(pos), button) {
+                                let source = self.editor.tools.options.picker_source;
+                                if self.controls.tool == Tool::ColorPicker
+                                    && self.frontend == paintcraft_ui::actions::Frontend::Studio
+                                    && modifiers.ctrl
+                                {
+                                    self.editor.tools.options.picker_source =
+                                        paintcraft_core::types::picker::SampleSource::Image;
+                                }
                                 self.editor
                                     .tools
                                     .pointer_down_subpixel(layer, point(pos), button);
+                                // Gesture owns its copied policy. Restore before
+                                // release/async intent capture, not when Ctrl lifts.
+                                self.editor.tools.options.picker_source = source;
                             }
                             if self.editor.tools.pointer_is_down() {
                                 self.pen.legacy_canvas_owned = true;

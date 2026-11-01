@@ -3,6 +3,47 @@ use paintcraft_core::types::brush::BrushMedia;
 use paintcraft_input::{Modifiers, tablet::*};
 use paintcraft_ui::pen_input::Source;
 
+#[test]
+fn picker_pen_fallback_reaches_canvas_with_ctrl_capture_and_released_modifiers() {
+    use paintcraft_core::types::{
+        Rgba,
+        picker::{PickerAfter, SampleSize, SampleSource},
+    };
+    let mut h = harness();
+    h.state_mut().editor =
+        crate::editor::Editor::from_document(crate::picker_tests::option_fixture()).unwrap();
+    h.state_mut().frontend = Frontend::Studio;
+    h.state_mut().controls.tool = paintcraft_tools::Tool::ColorPicker;
+    h.state_mut().controls.options.picker_source = SampleSource::Layer;
+    h.state_mut().controls.options.picker_size = SampleSize::Three;
+    h.state_mut().controls.options.picker_after = PickerAfter::Stay;
+    h.run();
+    let ticket = h.state().editor.session.ticket();
+    let mut down = raw(&h, 1, Phase::Down, 1.0, Buttons::TIP);
+    let rect = h.state().canvas.rect.unwrap();
+    let at = rect.min + egui::vec2(4.5, 4.5) * h.state().zoom;
+    down.logical_position = Some((f64::from(at.x), f64::from(at.y)));
+    down.modifiers.control = true;
+    submit(&mut h, down);
+    assert!(h.state().editor.tools.pointer_is_down());
+    assert!(!h.state().editor.tools.pen_in_progress());
+    assert_eq!(
+        h.state().editor.tools.options.picker_source,
+        SampleSource::Layer
+    );
+    let mut up = raw(&h, 2, Phase::Up, 1.0, 0);
+    up.logical_position = down.logical_position;
+    submit(&mut h, up);
+    h.run();
+    assert_eq!(h.state().controls.primary, Rgba([224, 226, 223, 255]));
+    assert_eq!(
+        h.state().controls.options.picker_source,
+        SampleSource::Layer
+    );
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+    assert!(!h.state().editor.session.is_dirty());
+}
+
 struct Host {
     app: WebApp,
     ctx: egui::Context,
