@@ -107,7 +107,13 @@ fn source(doc: &Document, a: Admission7) -> (Vec<u8>, Value) {
         ),
         ("document", Value::str(doc.document_id.to_string())),
         ("sourceSha256", Value::str(hex(&sha))),
-        ("size", Value::Array(vec![Value::Int(2), Value::Int(1)])),
+        (
+            "size",
+            Value::Array(vec![
+                Value::Int(i64::from(doc.canvas.0)),
+                Value::Int(i64::from(doc.canvas.1)),
+            ]),
+        ),
         ("layers", Value::Int(doc.layers.len() as i64)),
         (
             "residentBytes",
@@ -602,3 +608,7 @@ fn escaped_packet_keeps_budget_until_pixels_are_dropped_after_service_close() {
     drop(packet);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+// Explicit availability diagnostic; ignored in ordinary package suites.
+#[path = "tests/view_lifetime_diagnostic.rs"]
+mod view_lifetime_diagnostic;
