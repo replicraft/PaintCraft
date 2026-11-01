@@ -37,6 +37,7 @@ impl Admission7 {
                     Mode7::Noise => "noise",
                 }),
             ),
+            ("workAuthority", Value::str(self.work_authority.id())),
             ("workspaceBytes", number(self.workspace_bytes)),
             ("baseWorkLimit", number(self.base_work)),
             ("noiseWorkLimit", number(self.noise_work)),

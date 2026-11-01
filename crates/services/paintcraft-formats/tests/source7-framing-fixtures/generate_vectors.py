@@ -43,9 +43,9 @@ def bounds(rows):
         result += struct.pack(">qqqq", *domain) + coverage + n(bands, 8) + n(runs, 8) + n(upper, 8)
     return result
 
-def admission(noise):
+def admission(noise, origin=0):
     base, extra = 268435456, (1 << 35) if noise else 0
-    return b"paintcraft.source7-admission/v1\0" + n(int(noise), 1) + b"".join(
+    return b"paintcraft.source7-admission/v2\0" + n(int(noise), 1) + n(origin, 1) + b"".join(
         n(value, 8) for value in [64 << 20, base, extra, base + extra]
     ) + n(1, 2) + n(64, 2) + n(8388608, 8) + n(134217728 if noise else 0, 8)
 
@@ -170,6 +170,21 @@ def build():
                 "candidateCapability": {"hex": frame.hex(), "sha256": digest(frame).hex()},
                 "unionCapability": {"hex": union_frame.hex(), "sha256": digest(union_frame).hex()},
             })
+    origin_vectors = []
+    rows = [(a, 1, coverage)]
+    occurrence = [(a, 1, bytes(16), 1, (0, 0, 2, 1), coverage, 0, 0, 0)]
+    source_bounds = digest(bounds(occurrence))
+    for noise in [False, True]:
+        for origin, authority in [(0, "captured-job"), (1, "standalone-view-jobs")]:
+            grant = admission(noise, origin)
+            frames = {"admission": grant,
+                "capability": capability(required, resolution, grant, ids, rows, (0, 0, 0), source_bounds, self_inventory(occurrence)),
+                "union": union_capability(required, resolution, grant, ids, source_bounds)}
+            origin_vectors.append({"noise": noise, "workAuthority": authority,
+                "frames": {key: {"hex": raw.hex(), "sha256": digest(raw).hex(), "bytes": len(raw)} for key, raw in frames.items()}})
+    assert len({v["frames"]["admission"]["sha256"] for v in origin_vectors}) == 4
+    assert len({v["frames"]["capability"]["sha256"] for v in origin_vectors}) == 4
+    assert len({v["frames"]["union"]["sha256"] for v in origin_vectors}) == 4
     # Wider count regression without allocating 65536 rows: canonical prefix
     # literal demonstrates there is no legacy u16 wrap/acceptance ceiling.
     wide_count = n(65536, 4)
@@ -195,15 +210,15 @@ def build():
         accounting.append({"phase": phase, "owner": "one-open-owner", "before": before,
                            "illustrativeCharge": charge, "admitted": admitted, "after": used})
     assert used == 35 and not accounting[-1]["admitted"]
-    return {"status": "PROPOSED_FRAMING_ONLY_NOT_EXECUTION_AUTHORITY", "vectors": scenarios, "candidateMutationVectors": fixture, "count65536_u32be": wide_count.hex(), "authorityVectors": authority, "illustrativeAccountingTrace": accounting}
+    return {"status": "PROPOSED_FRAMING_ONLY_NOT_EXECUTION_AUTHORITY", "vectors": scenarios, "originVectors": origin_vectors, "candidateMutationVectors": fixture, "count65536_u32be": wide_count.hex(), "authorityVectors": authority, "illustrativeAccountingTrace": accounting}
 
 def main():
-    output = json.dumps(build(), indent=2) + "\n"
+    output = json.dumps(build(), indent="\t") + "\n"
     target = ROOT / "framing-vectors.json"
     if sys.argv[1:] == ["--check"]:
         if target.read_text() != output:
             raise SystemExit("framing vector drift")
-        print("6 framing +12 mutation +4 authority +1 accounting trace verified; synthetic digests/bounds only")
+        print("6 framing +12 mutation +4 origin +4 stored-Noise mode +1 accounting trace verified; synthetic digests/bounds only")
     elif not sys.argv[1:]:
         target.write_text(output)
     else:

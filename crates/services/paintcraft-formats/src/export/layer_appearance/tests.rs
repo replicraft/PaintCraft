@@ -58,6 +58,7 @@ impl Input<'_> {
 fn grant(noise: bool) -> Admission7 {
     Admission7 {
         mode: if noise { Mode7::Noise } else { Mode7::Base },
+        work_authority: Origin7::CapturedJob,
         workspace_bytes: 64 << 20,
         base_work: 268_435_456,
         noise_work: if noise { 1 << 35 } else { 0 },
@@ -103,14 +104,20 @@ fn replay(value: &Value) {
             }
             h.finish().unwrap()
         }
-        b"paintcraft.source7-admission/v1\0" => {
+        b"paintcraft.source7-admission/v2\0" => {
             let mode = if input.byte() == 0 {
                 Mode7::Base
             } else {
                 Mode7::Noise
             };
+            let origin = match input.byte() {
+                0 => Origin7::CapturedJob,
+                1 => Origin7::StandaloneViewJobs,
+                _ => panic!("unknown independent origin"),
+            };
             let a = Admission7 {
                 mode,
+                work_authority: origin,
                 workspace_bytes: input.u64(),
                 base_work: input.u64(),
                 noise_work: input.u64(),
@@ -127,12 +134,21 @@ fn replay(value: &Value) {
             let required = input.take();
             let resolution = input.take();
             let admission = input.take::<32>();
-            let a = if grant(false).digest().unwrap() == admission {
-                grant(false)
-            } else {
-                assert_eq!(grant(true).digest().unwrap(), admission);
-                grant(true)
-            };
+            let a = [
+                grant(false),
+                grant(true),
+                Admission7 {
+                    work_authority: Origin7::StandaloneViewJobs,
+                    ..grant(false)
+                },
+                Admission7 {
+                    work_authority: Origin7::StandaloneViewJobs,
+                    ..grant(true)
+                },
+            ]
+            .into_iter()
+            .find(|candidate| candidate.digest().unwrap() == admission)
+            .expect("one of four independently framed origins");
             let p = appearance_registration();
             assert_eq!(input.text(), p.feature_id);
             assert_eq!(input.text(), p.resource_contract_id);
@@ -202,7 +218,13 @@ fn independent_preimage_frames_cover_source_candidates_and_capability_union() {
             count += 1;
         }
     }
-    assert!(count >= 60);
+    for row in value.get("originVectors").unwrap().as_array().unwrap() {
+        for frame in row.get("frames").unwrap().as_object().unwrap().values() {
+            replay(frame);
+            count += 1;
+        }
+    }
+    assert_eq!(count, 72);
 }
 #[test]
 fn registry3_preserves_thirteen_numerical_resolutions_and_independent_appearance_grant() {
@@ -256,4 +278,32 @@ fn standalone_admission_hash_has_explicit_finite_preseal_quote() {
     })
     .unwrap();
     assert!(framing_work_quote(&r).unwrap() > admission_work_quote());
+}
+
+#[test]
+fn authority_origin_is_bound_even_when_mode_and_all_numeric_limits_match() {
+    let captured = grant(false);
+    let standalone = Admission7 {
+        work_authority: Origin7::StandaloneViewJobs,
+        ..captured
+    };
+    assert_ne!(captured.digest().unwrap(), standalone.digest().unwrap());
+    assert_eq!(
+        captured
+            .value()
+            .unwrap()
+            .get("workAuthority")
+            .unwrap()
+            .as_str(),
+        Some("captured-job")
+    );
+    assert_eq!(
+        standalone
+            .value()
+            .unwrap()
+            .get("workAuthority")
+            .unwrap()
+            .as_str(),
+        Some("standalone-view-jobs")
+    );
 }

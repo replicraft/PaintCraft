@@ -6,9 +6,25 @@ pub enum Mode7 {
     Base = 0,
     Noise = 1,
 }
+/// Explicit cross-realm origin; metadata never infers authority from TLS absence.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Origin7 {
+    CapturedJob = 0,
+    StandaloneViewJobs = 1,
+}
+impl Origin7 {
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::CapturedJob => "captured-job",
+            Self::StandaloneViewJobs => "standalone-view-jobs",
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Admission7 {
     pub mode: Mode7,
+    pub work_authority: Origin7,
     pub workspace_bytes: u64,
     pub base_work: u64,
     pub noise_work: u64,
@@ -53,8 +69,8 @@ impl Admission7 {
     pub fn digest(self) -> Result<[u8; 32]> {
         self.validate()?;
         let mut h = Sha256::new();
-        h.update(b"paintcraft.source7-admission/v1\0");
-        h.update([self.mode as u8]);
+        h.update(b"paintcraft.source7-admission/v2\0");
+        h.update([self.mode as u8, self.work_authority as u8]);
         for n in [
             self.workspace_bytes,
             self.base_work,

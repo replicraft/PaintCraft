@@ -6,7 +6,7 @@ mod admission;
 mod framing;
 mod value;
 pub use crate::pcnd::layer_appearance::filter_digest_checked;
-pub use admission::{Admission7, Mode7};
+pub use admission::{Admission7, Mode7, Origin7};
 pub use framing::{
     CoverageAbi, CoverageHasher, CoverageKey, CoverageRow, Fact7, IdentityHasher, Inventory7,
     InventoryHasher, LayerMasks7, Union7,
@@ -159,6 +159,6 @@ pub fn framing_work_quote(required: &Requirements7) -> Result<u64> {
 /// One standalone cached admission SHA, in addition to admission hashes included
 /// inside Fact/Union framing quotes. Precharge before sealing the final limits.
 pub const fn admission_work_quote() -> u64 {
-    let bytes = b"paintcraft.source7-admission/v1\0".len() as u64 + 1 + 4 * 8 + 2 + 2 + 2 * 8;
+    let bytes = b"paintcraft.source7-admission/v2\0".len() as u64 + 2 + 4 * 8 + 2 + 2 + 2 * 8;
     4096 + 16 * bytes
 }

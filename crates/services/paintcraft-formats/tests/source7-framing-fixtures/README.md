@@ -3,3 +3,11 @@ These are synthetic digests/upper bounds, not valid A8 numerical quote or execut
 authority fixtures. The generator uses only Python stdlib and no product imports.
 Tests replay literal preimages through streaming Rust hash APIs. No claim of
 executed qualification is made by this source-only candidate.
+
+Origin amendment (new unreleased Source7 only): admission/v2 is domain+modeu8+
+originu8+the previous limits/slice bytes. CapturedJob=0, StandaloneViewJobs=1.
+Four independent origin vectors prove admission/source-capability/union binding.
+Stored-Noise Base|Noise selection is separate from origin. No parser/hash itself
+grants a new counter. Earlier pre-origin fixture bytes are preserved by the
+source7-origin candidate preimages; old numeric required/resolution framing and
+PCND file bytes are unaffected. Python generation is independent stdlib only.
