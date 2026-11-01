@@ -16,6 +16,7 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         blocked: false,
         layer_index: None,
         layer_count: 0,
+        can_flatten: false,
         layer_visible: false,
         zoom: 1.0,
         pixel_grid: false,

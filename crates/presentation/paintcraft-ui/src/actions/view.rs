@@ -194,6 +194,7 @@ mod tests {
             blocked: false,
             layer_index: Some(0),
             layer_count: 1,
+            can_flatten: false,
             layer_visible: true,
             zoom: ZOOM_MAX,
             pixel_grid: true,

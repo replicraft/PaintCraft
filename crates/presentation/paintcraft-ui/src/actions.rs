@@ -83,6 +83,8 @@ pub struct Context {
     pub blocked: bool,
     pub layer_index: Option<usize>,
     pub layer_count: usize,
+    /// Exact document projection eligibility, independently of the real layer count.
+    pub can_flatten: bool,
     pub layer_visible: bool,
     pub zoom: f32,
     pub pixel_grid: bool,
@@ -374,7 +376,7 @@ impl Action {
             }
             Self::RecentFiles => ctx.can_recent,
             Self::SaveAll => ctx.document_open && ctx.can_save_all,
-            Self::FlattenImage => ctx.document_open && ctx.layer_count > 1,
+            Self::FlattenImage => ctx.document_open && ctx.can_flatten,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
@@ -728,3 +730,6 @@ mod save_all_tests;
 
 #[cfg(test)]
 mod selection_tests;
+
+#[cfg(test)]
+mod flatten_tests;

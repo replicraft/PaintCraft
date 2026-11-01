@@ -80,6 +80,7 @@ fn metadata_preserves_identity_and_context_gates_actions() {
         blocked: false,
         layer_index: None,
         layer_count: 0,
+        can_flatten: false,
         layer_visible: false,
         zoom: 1.0,
         pixel_grid: false,
@@ -99,11 +100,13 @@ fn metadata_preserves_identity_and_context_gates_actions() {
     let layered = Context {
         document_open: true,
         layer_count: 2,
+        can_flatten: true,
         ..context
     };
     assert!(Action::FlattenImage.enabled(layered));
     assert!(!Action::FlattenImage.enabled(Context {
         layer_count: 1,
+        can_flatten: false,
         ..layered
     }));
     assert!(!Action::FlattenImage.enabled(Context {

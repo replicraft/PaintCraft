@@ -15,6 +15,7 @@ fn context(frontend: Frontend) -> Context {
         blocked: false,
         layer_index: None,
         layer_count: 0,
+        can_flatten: false,
         layer_visible: false,
         zoom: 1.0,
         pixel_grid: false,
@@ -161,6 +162,7 @@ fn copy_requires_a_visible_target_and_nonempty_field_and_shares_the_command_shor
         let context = Context {
             layer_index: Some(0),
             layer_count: 1,
+            can_flatten: false,
             layer_visible: true,
             ..context(frontend)
         };
@@ -237,6 +239,7 @@ fn cut_uses_the_active_layer_and_exact_selection_admission() {
         let ctx = Context {
             layer_index: Some(0),
             layer_count: 1,
+            can_flatten: false,
             layer_visible: true,
             ..context(frontend)
         };

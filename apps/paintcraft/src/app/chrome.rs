@@ -43,6 +43,7 @@ impl App {
             tool: self.editor.tool,
             layer_index,
             layer_count: self.editor.document().roots.len(),
+            can_flatten: self.editor.document().requires_flatten(),
             layer_visible,
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
@@ -644,3 +645,7 @@ mod tests {
         assert_eq!(app.editor.secondary, Rgba([65, 43, 21, 255]));
     }
 }
+
+#[cfg(test)]
+#[path = "chrome/flatten_tests.rs"]
+mod flatten_tests;

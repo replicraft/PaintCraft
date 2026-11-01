@@ -52,6 +52,7 @@ fn save_all_requires_a_modified_document_and_an_unblocked_studio_workspace() {
         blocked: false,
         layer_index: Some(0),
         layer_count: 1,
+        can_flatten: false,
         layer_visible: true,
         zoom: 1.0,
         pixel_grid: false,

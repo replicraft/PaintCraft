@@ -127,6 +127,7 @@ mod tests {
             blocked: false,
             layer_index: Some(0),
             layer_count: 2,
+            can_flatten: true,
             layer_visible: true,
             zoom: 1.0,
             pixel_grid: false,
@@ -150,6 +151,7 @@ mod tests {
         }));
         assert!(!Action::Layer(LayerAction::Duplicate).enabled(Context {
             layer_count: paintcraft_core::types::policy::LAYER_COUNT_MAX,
+            can_flatten: true,
             ..context
         }));
         assert_eq!(

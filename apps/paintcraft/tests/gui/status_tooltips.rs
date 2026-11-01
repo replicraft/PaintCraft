@@ -39,6 +39,7 @@ fn elided_classic_status_fields_show_one_complete_tooltip() {
                         blocked: false,
                         layer_index: Some(0),
                         layer_count: 1,
+                        can_flatten: false,
                         layer_visible: true,
                         zoom: 1.0,
                         pixel_grid: false,

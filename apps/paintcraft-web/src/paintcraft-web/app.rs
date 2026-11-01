@@ -251,6 +251,7 @@ impl WebApp {
             blocked: self.blocked() || self.paste.is_placing(),
             layer_index: index,
             layer_count: doc.roots.len(),
+            can_flatten: doc.requires_flatten(),
             layer_visible: self
                 .editor
                 .target
@@ -791,3 +792,6 @@ impl eframe::App for WebApp {
         }
     }
 }
+
+#[cfg(test)]
+mod flatten_eligibility_tests;
