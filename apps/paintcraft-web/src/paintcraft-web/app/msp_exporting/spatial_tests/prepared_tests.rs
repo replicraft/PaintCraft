@@ -35,7 +35,7 @@ fn main_prepared7_actual_codec_pixels_final_source_facts_and_every_context_echo_
     let captured = Arc::new(doc.clone());
     let plan = plan(&doc);
     assert_eq!(plan.protocol_version(), 7);
-    admit_version(7).unwrap();
+    admit_version(7, paintcraft_formats::msp::Version::RowRleV2).unwrap();
     let owner = Owner {
         session: doc.document_id,
         state: doc.state_id,

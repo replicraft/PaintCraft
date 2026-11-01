@@ -82,7 +82,7 @@ impl WebApp {
                 ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));
                 if format == ImageExport::Jpeg { ui.label(t!(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
                 let advanced=advanced_dds&&(dds_exporting::advanced(self.dds_settings,self.editor.session.document().canvas)||self.export_frozen.as_ref().is_some_and(|f|dds_exporting::needs_noise_worker(&f.document)));
-                let msp2=advanced_msp&&self.msp_version==paintcraft_ui::msp_export::Version::RowRleV2;
+                let msp2=advanced_msp&&(self.msp_version==paintcraft_ui::msp_export::Version::RowRleV2||self.export_frozen.as_ref().is_some_and(|f|msp_exporting::needs_noise_worker(&f.document)));
                 if !advanced && !msp2 && self.export_frozen.as_ref().is_some_and(|frozen| frozen.document.source_metadata.is_some()) {
                     paintcraft_ui::source_metadata_export::controls(ui, &mut self.export_omit_source_metadata);
                     preview_ready &= self.export_omit_source_metadata;

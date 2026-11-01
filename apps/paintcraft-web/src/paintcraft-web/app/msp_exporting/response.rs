@@ -65,6 +65,18 @@ pub(super) fn validate_request(
                 wire::v7::Frame::Refused(error) => Err(error),
             }
         }
+        Request::V8(h) => {
+            match wire::v8::decode_response(&response, h, h.owner, env!("CARGO_PKG_VERSION"))? {
+                wire::v8::Frame::Success {
+                    encoded,
+                    preview,
+                    preview_size,
+                    losses,
+                    ..
+                } => Ok((encoded, preview, preview_size, losses)),
+                wire::v8::Frame::Refused(error) => Err(error),
+            }
+        }
     };
     on_validated();
     let (encoded, preview, preview_size, losses) = parts?;
@@ -73,7 +85,7 @@ pub(super) fn validate_request(
     let mut pixels = Vec::new();
     pixels
         .try_reserve_exact(preview.len() / 4)
-        .map_err(|_| Error::new(ErrorCode::ResourceLimit, "MSP2 preview allocation"))?;
+        .map_err(|_| Error::new(ErrorCode::ResourceLimit, "MSP preview allocation"))?;
     for pixel in preview.as_chunks::<4>().0 {
         let pixel = *pixel;
         pixels.push(egui::Color32::from_rgba_unmultiplied(

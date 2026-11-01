@@ -11,7 +11,7 @@ impl WebApp {
             self.retire_msp_export();
             return;
         }
-        let mut metadata_changed = false;
+
         let response = egui::Modal::new(egui::Id::unique("browser-msp-export")).show(ctx, |ui| {
             ui.set_max_width((ctx.content_rect().width() - 32.0).clamp(1.0, 440.0));
             ui.heading(t!(ctx, "MSP picture"));
@@ -24,19 +24,17 @@ impl WebApp {
                 .max_height((ctx.content_rect().height() - 96.0).max(1.0))
                 .show(ui, |ui| {
             ui.label(&review.filename);
-            ui.label(t!(ctx, "This browser MSP2 profile allows up to 4,194,304 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
+            ui.label(t!(ctx, "This browser MSP profile allows up to 4,194,304 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
             let mut changed = controls::controls(ui, &mut review.version);
             if review.frozen.document.source_metadata.is_some() {
                 let previous = review.omit_source_metadata;
                 paintcraft_ui::source_metadata_export::controls(ui, &mut review.omit_source_metadata);
-                metadata_changed = previous != review.omit_source_metadata;
-                changed |= metadata_changed;
+                changed |= previous != review.omit_source_metadata;
             }
             if review.frozen.has_filters {
                 let previous = review.bake_filters;
                 paintcraft_ui::filter_bake_export::controls(ui, &mut review.bake_filters);
-                metadata_changed |= previous != review.bake_filters;
-                changed |= metadata_changed;
+                changed |= previous != review.bake_filters;
             }
             if let Some(texture) = &review.texture {
                 ui.label(t!(ctx, "Base image preview"));
@@ -101,12 +99,9 @@ impl WebApp {
         }
         if changed {
             self.msp_version = review.version;
-            if metadata_changed {
-                review.revoke_metadata_intent();
-            } else {
-                review.retire_preview();
-            }
-            if review.version != Version::RowRleV2 {
+            // Version and consent both bind the pending lease and preview.
+            review.revoke_metadata_intent();
+            if !supports_review_version(review.version, &review.frozen.document) {
                 self.msp.review = Some(review);
                 self.msp.cancel();
                 // A version change returns to the legacy MSP1 dialog. Metadata
@@ -135,8 +130,9 @@ impl WebApp {
                     .ok_or_else(stale)?
                     .header
                     .protocol_version(),
+                codec_version(review.version),
             )?;
-            if self.msp_version != Version::RowRleV2 {
+            if !supports_review_version(self.msp_version, &review.frozen.document) {
                 return Err(stale());
             }
             review.take_ready(ctx.cumulative_frame_nr())

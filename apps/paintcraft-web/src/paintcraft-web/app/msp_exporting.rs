@@ -1,4 +1,4 @@
-//! Opt-in advanced browser MSP2 uses the one host-installed isolated service.
+//! Opt-in admitted browser MSP uses the one host-installed isolated service.
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_formats::msp::web_export as wire;
@@ -10,12 +10,14 @@ use std::{
 };
 #[cfg(target_arch = "wasm32")]
 mod bridge;
+mod plan;
 mod request;
 #[cfg(any(target_arch = "wasm32", test))]
 mod response;
 #[cfg(test)]
 mod tests;
 mod view;
+use plan::{Plan, codec_version};
 use request::Request;
 #[cfg(any(target_arch = "wasm32", test))]
 fn failed(message: &str) -> Error {
@@ -65,7 +67,7 @@ struct Review {
     frozen: super::exporting::Frozen,
     omit_source_metadata: bool,
     bake_filters: bool,
-    plan: Option<wire::SourcePlan>,
+    plan: Option<Plan>,
     owner: crate::importing::Owner,
     name: String,
     filename: String,
@@ -90,7 +92,7 @@ impl Review {
             && self.frozen.current(app)
             && self.name == app.name
             && self.version == app.msp_version
-            && self.version == Version::RowRleV2
+            && supports_review_version(self.version, &self.frozen.document)
             && app.frontend == Frontend::Studio
             && app.export_confirm == Some(ImageExport::Msp)
             && !app.files.busy
@@ -105,7 +107,7 @@ impl Review {
     }
     fn take_ready(&mut self, frame: u64) -> Result<Prepared> {
         let prepared = self.prepared.as_ref().ok_or_else(stale)?;
-        if self.version != Version::RowRleV2
+        if !supports_review_version(self.version, &self.frozen.document)
             || !self.matches_prepared(prepared)
             || (prepared.requires_consent() && !self.approved)
             || self.shown.is_none_or(|f| f >= frame)
@@ -125,9 +127,10 @@ impl Review {
     }
     fn matches_prepared(&self, prepared: &Prepared) -> bool {
         self.omit_source_metadata == prepared.header.metadata().omit_intent()
+            && prepared.header.encoding_version() == codec_version(self.version)
             && prepared.header.owner() == self.wire_owner()
             && self.plan.as_ref().is_some_and(|plan| {
-                prepared.header.matches_plan(plan)
+                prepared.header.matches_captured(plan)
                     && plan.validate_policies(&self.frozen.document).is_ok()
                     && plan.bake_intent() == u8::from(self.bake_filters)
             })
@@ -186,9 +189,9 @@ impl Drop for State {
 }
 // This named variant remains denied until the separate production qualification.
 pub(super) fn admit() -> Result<()> {
-    admit_version(4)
+    admit_version(4, paintcraft_formats::msp::Version::RowRleV2)
 }
-fn admit_version(version: u16) -> Result<()> {
+fn admit_version(version: u16, encoding: paintcraft_formats::msp::Version) -> Result<()> {
     use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform, Request};
     let mut request = Request::new(
         Frontend::Studio,
@@ -198,6 +201,7 @@ fn admit_version(version: u16) -> Result<()> {
     );
     request.extension = Some("msp");
     request.variant = Some(match version {
+        8 => wire::v8::export_variant(encoding),
         7 => wire::v7::EXPORT_VARIANT,
         6 => wire::v6::EXPORT_VARIANT,
         4 => wire::EXPORT_VARIANT,
@@ -296,8 +300,8 @@ impl WebApp {
                 source_metadata: policy,
                 filter_bake,
             };
-            let plan = wire::SourcePlan::capture_with_policies(&doc, policies)?;
-            admit_version(plan.protocol_version())?;
+            let plan = Plan::capture(&doc, review.version, policies)?;
+            admit_version(plan.protocol_version(), plan.version())?;
             review.plan = Some(plan.clone());
             #[cfg(target_arch = "wasm32")]
             {
@@ -419,3 +423,20 @@ impl WebApp {
 
 #[cfg(test)]
 mod spatial_tests;
+
+/// Stored Noise selects scoped8 even when disabled/default and version1.
+pub(super) fn needs_noise_worker(doc: &paintcraft_document::Document) -> bool {
+    doc.layers.values().any(|layer| {
+        layer.filters.iter().any(|f| {
+            matches!(
+                f.descriptor(),
+                paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(_)
+            )
+        })
+    })
+}
+fn supports_review_version(version: Version, doc: &paintcraft_document::Document) -> bool {
+    version == Version::RowRleV2 || needs_noise_worker(doc)
+}
+#[cfg(test)]
+mod noise_tests;

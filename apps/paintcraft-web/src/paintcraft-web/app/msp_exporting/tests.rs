@@ -33,7 +33,7 @@ fn review(app: &mut WebApp) -> Review {
     let prepared = response::validate(&header, &header.encode(), bytes, || {}).unwrap();
     Review {
         frozen,
-        plan: Some(plan),
+        plan: Some(plan.into()),
         omit_source_metadata: false,
         bake_filters: false,
         owner,

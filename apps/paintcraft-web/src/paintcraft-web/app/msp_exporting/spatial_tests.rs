@@ -36,7 +36,24 @@ fn plan(doc: &Document) -> wire::SourcePlan {
     };
     wire::SourcePlan::capture_with_policies(doc, policies).unwrap()
 }
-fn artifact(plan: &wire::SourcePlan, doc: &Document, owner: Owner) -> (Request, Vec<u8>) {
+trait LegacyPlan {
+    fn legacy(&self) -> &wire::SourcePlan;
+}
+impl LegacyPlan for wire::SourcePlan {
+    fn legacy(&self) -> &wire::SourcePlan {
+        self
+    }
+}
+impl LegacyPlan for Plan {
+    fn legacy(&self) -> &wire::SourcePlan {
+        match self {
+            Plan::Legacy(p) => p,
+            Plan::Noise(_) => panic!("legacy control requires old plan"),
+        }
+    }
+}
+fn artifact(plan: &impl LegacyPlan, doc: &Document, owner: Owner) -> (Request, Vec<u8>) {
+    let plan = plan.legacy();
     let source = plan.snapshot(doc).unwrap();
     if matches!(plan.protocol_version(), 5..=7) {
         let exact = plan.spatial_context(source.len()).unwrap();
