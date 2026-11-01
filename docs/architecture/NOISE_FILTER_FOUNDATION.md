@@ -246,6 +246,35 @@ Native App/Studio passes 764/27 tests with 29 existing App ignores and required
 Metal access. That proof precedes subsequent print/export preparation changes:
 `docs/validation/noise-worker-native/final-freeze.json`, SHA256
 `219423e0aad851430f631ec6a08c76a534f5acda3c21aed859b008571e22cccb`.
-Actual Source6 Wasm/browser frames, slice latency, cancellation acknowledgement,
-Main tool-preview lifecycle and Export8 remain separate open gates. No GPU Noise
-kernel or upstream floating-point byte parity is claimed.
+Native ordinary printing and flat-image export now prepare appearance and encode
+copies in background jobs. The full App suite passes 768 tests with 29 existing
+ignores; four focused tests and strict checks pass after a borrow-only lint fix.
+The receipt `docs/validation/noise-native-output/final-freeze.json`, SHA256
+`212db21f25f968d20410915cd836e630f9292b5525766203f28385a2d37115aa`,
+keeps the pre-lint full run and post-lint focused/strict boundary separate.
+
+Actual Source6 qualification-constructor delivery passes 26 complete native and
+Chrome Worker frames plus 26 matching-generation cancellation cases. Complete
+native/Wasm output hashes match, including independent tiny literals; source,
+owner, generation, reuse and cleanup checks pass. On the tested M1 Pro with
+Chrome 156, the longest synchronous service call is 12.2 ms and the longest
+cancellation acknowledgement is 6.5 ms. Default-size service jobs take
+609.9–1051.7 ms and 1080p jobs 2545.7–4284.2 ms. These finite observations include
+Worker yielding and output verification, exclude Main serialization/UI transport,
+and do not establish statistical or global bounds. All proposed service targets
+pass separately from functional checks. Receipt
+`docs/validation/noise-source6-qualification/final-freeze.json`, SHA256
+`cb8cfc2ab3ca93efcd21f6852ffe9b2be57a0712d7fdea834f7825b597c5e8a8`,
+pins all 2,820 inputs and actual emitted artifacts. Runtime memory high-water was
+not measured.
+
+Main tool-preview headless regression passes 413 web Rust tests with three
+existing ignores, strict native checks and all 274 JavaScript tests. An earlier
+fixture incorrectly assumed source-coordinate selection movement was supported;
+the corrected test verifies the explicit bake refusal preserves source, gesture
+and the last good display. Both failed attempts remain recorded in
+`docs/validation/noise-main-native/final-freeze.json`, SHA256
+`f0948564d11effdaa20995a5c49e84c95d9f4675034fd313a46ab4515ee5f66c`.
+Strict Main Wasm checks also pass with unchanged source inputs
+(`docs/validation/noise-main-wasm/attempt-1/final.json`). Production UI, ordinary
+browser copy routes and Export8 remain separate open gates. No GPU Noise kernel or upstream floating-point byte parity is claimed.
