@@ -80,6 +80,7 @@ pub fn fixture(case: &str) -> Document {
                 .unwrap();
         }
         let layer = Layer {
+            mask: None,
             id,
             name: format!("Fixture {n}"),
             origin: if case == "clipped100" {

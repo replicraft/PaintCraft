@@ -71,6 +71,7 @@ pub(crate) fn missing() -> Error {
 }
 /// Callback-free for old-only documents; runs before public CPU/GPU cache hits.
 pub(crate) fn require_document(doc: &Document) -> Result<()> {
+    crate::layer_mask::require_document(doc)?;
     if coordinate_document(doc) {
         crate::noise_work::required()?;
     }
@@ -106,7 +107,7 @@ pub(crate) fn preflight(
     region: Rect,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
-    if doc.layers.values().any(active) {
+    if doc.layers.values().any(active) || crate::layer_mask::active_document(doc) {
         crate::spatial::preflight(doc, region, check)?;
     }
     Ok(())

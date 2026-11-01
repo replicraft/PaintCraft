@@ -24,6 +24,7 @@ fn fixture(width: u32, height: u32, count: u32) -> Document {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: format!("Batch {n}"),
                 origin: (-i64::from(n % 4), -i64::from(n % 3)),

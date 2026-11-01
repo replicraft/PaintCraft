@@ -161,6 +161,19 @@ impl Workspace {
                 }
             }
         }
+        if crate::layer_mask::active(plan.layer) {
+            let width = plan.output.width() as usize;
+            for (i, pixel) in self.front[..pixels(plan.output)?].iter_mut().enumerate() {
+                if i.is_multiple_of(64) {
+                    check()?;
+                }
+                let point = (
+                    plan.output.x0 + (i % width) as i64,
+                    plan.output.y0 + (i / width) as i64,
+                );
+                crate::layer_mask::apply_precharged(plan.layer, point, pixel);
+            }
+        }
         check()
     }
     pub fn result(&self, length: usize) -> &[Rgba] {

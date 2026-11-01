@@ -61,6 +61,7 @@ struct Key {
     extent: (u32, u32),
     default: Rgba,
     filters: [u8; 32],
+    mask: crate::layer_mask::Identity,
     area: Rect,
     local: Rect,
     versions: Vec<(RegionCoord, RegionVersion)>,
@@ -73,6 +74,7 @@ impl Key {
             && self.extent == other.extent
             && self.default == other.default
             && self.filters == other.filters
+            && self.mask == other.mask
     }
     fn same_view(&self, other: &Self) -> bool {
         self.same_layer(other) && self.area == other.area && self.local == other.local
@@ -112,6 +114,7 @@ impl Key {
             extent: (layer.raster.width(), layer.raster.height()),
             default: layer.raster.default_pixel(),
             filters: layer.filters.digest(),
+            mask: crate::layer_mask::identity(layer),
             area,
             local,
             versions,
@@ -447,5 +450,36 @@ mod tests {
             .code,
             ErrorCode::InputSchema
         );
+    }
+    #[test]
+    fn target_observed_layer_mask_gpu_key_and_table_capacity_charge() {
+        eprintln!(
+            "LAYER_MASK_GPU_KEY_LAYOUT target={} pointer={} source_key={} entry={} mask_component={} source_cache={}",
+            std::env::consts::ARCH,
+            size_of::<usize>(),
+            size_of::<Key>(),
+            size_of::<Entry>(),
+            size_of::<crate::layer_mask::Identity>(),
+            size_of::<SourceCache>()
+        );
+        let too_small = SourceCache::new(SourceCacheLimits {
+            buffer_bytes: 0,
+            metadata_bytes: size_of::<Entry>() - 1,
+            entries: 4,
+        })
+        .unwrap();
+        assert_eq!(too_small.entries.capacity(), 0);
+        let one = SourceCache::new(SourceCacheLimits {
+            buffer_bytes: 0,
+            metadata_bytes: size_of::<Entry>(),
+            entries: 4,
+        })
+        .unwrap();
+        assert!(one.entries.capacity() <= 1);
+        assert_eq!(
+            one.usage().metadata_bytes,
+            one.entries.capacity() * size_of::<Entry>()
+        );
+        assert!(one.usage().metadata_bytes <= size_of::<Entry>());
     }
 }

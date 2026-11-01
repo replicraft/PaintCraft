@@ -13,6 +13,7 @@ use paintcraft_raster::RowSpan;
 mod appearance;
 mod direct;
 mod kernels;
+mod layer_mask;
 pub mod noise_work;
 pub mod spatial;
 
@@ -205,7 +206,7 @@ pub(crate) fn compose_row(
                 }
             }
             RowSpan::Pixels(src) => {
-                if layer.filters.is_empty() {
+                if layer.filters.is_empty() && !layer_mask::active(layer) {
                     kernels::dense(dst, src, layer.opacity);
                 } else {
                     // Only private bounded scratch is transformed. Source tiles

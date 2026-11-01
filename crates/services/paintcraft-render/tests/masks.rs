@@ -202,6 +202,7 @@ fn source_local_coordinates_cross_dense_tiles_negative_origins_and_backdrops() {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "offset".into(),
             origin: (-255, -1),

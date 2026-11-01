@@ -112,18 +112,27 @@ pub(crate) fn preflight(
         return crate::noise_work::preflight(doc, region, check);
     }
     let mut direct = 0u64;
-    for layer in doc
-        .layers_in_order()
-        .filter(|l| l.visible && l.opacity != 0 && !active(l) && crate::direct::active(l))
-    {
+    for layer in doc.layers_in_order().filter(|l| {
+        l.visible
+            && l.opacity != 0
+            && !active(l)
+            && (crate::direct::active(l) || crate::layer_mask::active(l))
+    }) {
         if let Some(area) = region.intersect(&layer.extent()) {
             let local = area
                 .translated(-layer.origin.0, -layer.origin.1)
                 .ok_or_else(|| invalid("Direct source coordinates overflow"))?;
             direct = direct
+                .checked_add(crate::layer_mask::work(layer, local.area() as u64)?)
+                .ok_or_else(|| limit("Layer mask request work overflows"))?;
+            direct = direct
                 .checked_add(
                     quote_direct_work(layer, local, check)?
-                        .checked_mul(2)
+                        .checked_mul(if crate::layer_mask::active(layer) {
+                            1
+                        } else {
+                            2
+                        })
                         .ok_or_else(|| limit("Direct fallback work overflows"))?,
                 )
                 .ok_or_else(|| limit("Direct request work overflows"))?;
@@ -159,7 +168,9 @@ pub(crate) fn preflight(
                 "Spatial rendering requires an explicit shared workspace admission",
             )
         })?;
-        let prior = if doc.layers.values().any(crate::direct::active) {
+        let prior = if doc.layers.values().any(crate::direct::active)
+            || crate::layer_mask::active_document(doc)
+        {
             admission.work_used()
         } else {
             0

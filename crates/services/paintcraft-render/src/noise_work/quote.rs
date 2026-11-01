@@ -140,10 +140,23 @@ pub(crate) fn preflight(
             quote.bytes = quote.bytes.max(q.bytes);
             quote.work = quote.work.checked_add(q.work)?;
             quote.tiles = quote.tiles.checked_add(q.tiles).ok_or_else(limit)?;
-        } else if crate::direct::active(layer) {
-            quote.work = quote
-                .work
-                .checked_add(quote_direct(layer, local, check)?.checked_mul(2)?)?;
+        } else {
+            if crate::direct::active(layer) {
+                quote.work =
+                    quote
+                        .work
+                        .checked_add(quote_direct(layer, local, check)?.checked_mul(
+                            if crate::layer_mask::active(layer) {
+                                1
+                            } else {
+                                2
+                            },
+                        )?)?;
+            }
+            quote.work = quote.work.checked_add(WorkComponents {
+                base: crate::layer_mask::work(layer, local.area() as u64)?,
+                noise: 0,
+            })?;
         }
     }
     if quote.bytes > caller.limits().bytes {

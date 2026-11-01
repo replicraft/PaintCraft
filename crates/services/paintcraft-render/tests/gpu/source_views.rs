@@ -24,6 +24,7 @@ fn fixture() -> Document {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: format!("Source {n}"),
                 origin: (0, 0),

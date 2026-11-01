@@ -33,6 +33,7 @@ fn layered() -> paintcraft_document::Document {
         d.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "Sample".into(),
                 origin,

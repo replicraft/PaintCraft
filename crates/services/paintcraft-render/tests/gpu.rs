@@ -32,6 +32,7 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "Brush".into(),
             origin: (0, 0),
@@ -79,6 +80,7 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: format!("Layer {i}"),
                 origin,
@@ -230,6 +232,7 @@ fn resident_sources_skip_unchanged_uploads_and_patch_clipped_row_strips() {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "Ink".into(),
             origin: (-3, 5),
@@ -303,6 +306,7 @@ fn source_cache_limits_stream_oversized_layers_and_evict_without_pixel_changes()
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "Top".into(),
             origin: (0, 0),
@@ -704,3 +708,6 @@ mod hue_saturation;
 
 #[path = "gpu/noise.rs"]
 mod noise;
+
+#[path = "gpu/layer_masks.rs"]
+mod layer_masks;

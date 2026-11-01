@@ -116,7 +116,10 @@ pub(crate) fn uniform(
     mut pixel: Rgba,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<Rgba>> {
-    if crate::spatial::active(layer) || crate::direct::coordinate_dependent(layer) {
+    if crate::spatial::active(layer)
+        || crate::direct::coordinate_dependent(layer)
+        || crate::layer_mask::active(layer)
+    {
         return Ok(None);
     }
     let admission = crate::spatial::current();
@@ -187,13 +190,14 @@ pub(crate) fn pixels(
             "Filter row lies outside its source",
         ));
     }
-    if !layer.filters.iter().any(|filter| filter.enabled()) {
+    if !layer.filters.iter().any(|filter| filter.enabled()) && !crate::layer_mask::active(layer) {
         return Ok(());
     }
     let admission = crate::spatial::current();
     for (index, chunk) in bytes.chunks_mut(64 * 4).enumerate() {
         check()?;
         let x0 = local.0 + (index * 64) as i64;
+        crate::layer_mask::reserve(layer, (chunk.len() / 4) as u64)?;
         for filter in layer.filters.iter().filter(|filter| filter.enabled()) {
             check()?;
             let program = PointProgram::new(filter.descriptor(), admission.as_ref())?;
@@ -204,6 +208,13 @@ pub(crate) fn pixels(
             )?;
             for (x, pixel) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
                 *pixel = mix(filter, &program, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
+            }
+        }
+        if crate::layer_mask::active(layer) {
+            for (x, bytes) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
+                let mut pixel = Rgba(*bytes);
+                crate::layer_mask::apply_precharged(layer, (x0 + x as i64, local.1), &mut pixel);
+                *bytes = pixel.0;
             }
         }
     }

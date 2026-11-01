@@ -158,6 +158,7 @@ fn partial_multiple_and_noncontributing_layers_use_exact_eligibility() {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "extra".into(),
             origin: (0, 0),

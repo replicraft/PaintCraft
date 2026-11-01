@@ -50,6 +50,7 @@ fn fixture() -> Document {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "scaled offsets".into(),
                 origin: (-3 + i64::from(n) * 7, -2 + i64::from(n) * 3),
@@ -151,6 +152,7 @@ fn wide_gpu_resolve_matches_analytic_million_square_composites_without_native_ex
             doc.layers.insert(
                 id,
                 Layer {
+                    mask: None,
                     id,
                     name: "wide exact overlay".into(),
                     origin: (0, 0),
@@ -268,6 +270,7 @@ fn dense_carries(edge: u32) {
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "dense wide carries".into(),
             origin: (0, 0),

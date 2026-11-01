@@ -11,6 +11,7 @@ struct LayerKey {
     opacity: u8,
     default: Rgba,
     filters: [u8; 32],
+    mask: crate::layer_mask::Identity,
     versions: Vec<(RegionCoord, RegionVersion)>,
 }
 #[derive(Debug, PartialEq, Eq)]
@@ -104,6 +105,7 @@ impl Key {
                 opacity: layer.opacity,
                 default: layer.raster.default_pixel(),
                 filters: layer.filters.digest(),
+                mask: crate::layer_mask::identity(layer),
                 versions,
             });
         }
@@ -132,6 +134,7 @@ impl Key {
                 || new.opacity != old.opacity
                 || new.default != old.default
                 || new.filters != old.filters
+                || new.mask != old.mask
                 || new.versions.len() != old.versions.len()
             {
                 return None;
@@ -178,5 +181,36 @@ impl Key {
             }
         }
         Some(regions)
+    }
+}
+
+#[cfg(test)]
+mod layer_mask_layout_tests {
+    use super::*;
+    #[test]
+    fn target_observed_layer_mask_cpu_key_controls_and_short_budget() {
+        eprintln!(
+            "LAYER_MASK_CPU_KEY_LAYOUT target={} pointer={} layer_key={} key={} mask_component={} region_version={}",
+            std::env::consts::ARCH,
+            size_of::<usize>(),
+            size_of::<LayerKey>(),
+            size_of::<Key>(),
+            size_of::<crate::layer_mask::Identity>(),
+            size_of::<(RegionCoord, RegionVersion)>()
+        );
+        let doc = paintcraft_document::new_document(
+            1,
+            1,
+            Some(Rgba([7, 11, 13, 255])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        assert!(
+            Key::build(&doc, doc.canvas_rect(), size_of::<LayerKey>() - 1)
+                .unwrap()
+                .is_none(),
+            "inline layer keys must fit actual target size before allocation"
+        );
     }
 }

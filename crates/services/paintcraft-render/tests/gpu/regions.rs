@@ -24,6 +24,7 @@ fn regional_gpu_output_rebases_offsets_and_preserves_source_scope() {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "offset".into(),
                 origin,

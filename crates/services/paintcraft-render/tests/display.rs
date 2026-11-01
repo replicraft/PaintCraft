@@ -35,6 +35,7 @@ fn fixture() -> Document {
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "offset".into(),
                 origin: (-3 + n as i64 * 7, -2 + n as i64 * 3),
@@ -148,6 +149,7 @@ fn layerwise_downsampling_is_not_used_and_levels_and_previews_have_separate_vali
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "order".into(),
                 origin: (0, 0),
@@ -306,6 +308,7 @@ fn dense_reduction_across_unaligned_recursive_splits_matches_the_full_pixel_orac
         doc.layers.insert(
             id,
             Layer {
+                mask: None,
                 id,
                 name: "recursive split".into(),
                 origin: (-7 + i64::from(n) * 11, 5 - i64::from(n) * 9),

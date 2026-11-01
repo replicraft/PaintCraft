@@ -123,7 +123,7 @@ pub(crate) fn uniform(
     // Optional display-level proofs would evaluate a charged direct prefix
     // repeatedly before native composition. Its one appearance proof+dense
     // fallback already has the admitted two-pass bound. Also shared by GPU LOD.
-    if crate::direct::relevant(doc, rect) {
+    if crate::direct::relevant(doc, rect) || crate::layer_mask::relevant(doc, rect) {
         return Ok(None);
     }
     let mut color = Rgba::TRANSPARENT;
@@ -323,7 +323,8 @@ impl DisplayCache {
             };
             let step = i64::from(request.step());
             let span = step * i64::from(self.limits.tile_edge);
-            let clip_direct = crate::direct::active_document(doc);
+            let clip_direct =
+                crate::direct::active_document(doc) || crate::layer_mask::active_document(doc);
             let bounds = request.region;
             for ty in bounds.y0 / span..=(bounds.y1 - 1) / span {
                 for tx in bounds.x0 / span..=(bounds.x1 - 1) / span {

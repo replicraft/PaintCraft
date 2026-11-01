@@ -123,6 +123,7 @@ fn masked_source_local_coordinates_and_alpha_precede_gpu_opacity_and_backdrop() 
     doc.layers.insert(
         id,
         Layer {
+            mask: None,
             id,
             name: "offset".into(),
             visible: true,

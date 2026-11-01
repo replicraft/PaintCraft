@@ -103,6 +103,9 @@ impl<'a> LayerAppearancePlan<'a> {
         }
         let capacity = pixels(input)?;
         work = work
+            .checked_add(crate::layer_mask::work(layer, pixels(output)? as u64)?)
+            .ok_or_else(|| limit("Layer mask output work overflows"))?;
+        work = work
             .checked_add(capacity as u64)
             .ok_or_else(|| limit("Appearance work overflows"))?;
         let bytes = capacity
