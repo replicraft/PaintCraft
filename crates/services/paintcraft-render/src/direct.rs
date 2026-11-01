@@ -9,6 +9,16 @@ pub(crate) fn active(layer: &Layer) -> bool {
         .iter()
         .any(|f| f.enabled() && priced(f.descriptor()))
 }
+/// Even zero-amount Noise keeps the coordinate-profile proof and pricing path.
+pub(crate) fn coordinate_dependent(layer: &Layer) -> bool {
+    layer
+        .filters
+        .iter()
+        .any(|f| f.enabled() && matches!(f.descriptor(), Descriptor::AddNoiseRgbV1(_)))
+}
+pub(crate) fn coordinate_document(doc: &Document) -> bool {
+    doc.layers.values().any(coordinate_dependent)
+}
 pub(crate) fn active_document(doc: &Document) -> bool {
     doc.layers.values().any(active)
 }
@@ -23,13 +33,19 @@ pub(crate) fn relevant(doc: &Document, rect: Rect) -> bool {
 pub(crate) fn priced(descriptor: Descriptor) -> bool {
     matches!(
         descriptor,
-        Descriptor::VibranceRgbV1(_) | Descriptor::HueSaturationRgbV1(_)
+        Descriptor::VibranceRgbV1(_)
+            | Descriptor::HueSaturationRgbV1(_)
+            | Descriptor::AddNoiseRgbV1(_)
     )
 }
 /// Derive each direct stage's price from its qualified Effects contract.
 /// Old scalar/prepared profiles contribute no additional direct work.
 pub(crate) fn work(descriptor: Descriptor, count: u64) -> Result<u64> {
     match descriptor {
+        Descriptor::AddNoiseRgbV1(policy) => {
+            let count = usize::try_from(count).map_err(|_| limit())?;
+            Ok(paintcraft_effects::noise::quote(policy, count)?.work)
+        }
         Descriptor::VibranceRgbV1(_) => {
             let count = usize::try_from(count).map_err(|_| limit())?;
             Ok(paintcraft_effects::vibrance::quote(count)?.work)
@@ -55,6 +71,9 @@ pub(crate) fn missing() -> Error {
 }
 /// Callback-free for old-only documents; runs before public CPU/GPU cache hits.
 pub(crate) fn require_document(doc: &Document) -> Result<()> {
+    if coordinate_document(doc) {
+        crate::noise_work::required()?;
+    }
     if doc.layers.values().any(active) && crate::spatial::current().is_none() {
         return Err(missing());
     }
@@ -65,6 +84,14 @@ pub(crate) fn reserve(
     count: u64,
     admission: Option<&crate::spatial::WorkspaceAdmission>,
 ) -> Result<()> {
+    if matches!(descriptor, Descriptor::AddNoiseRgbV1(_)) {
+        return crate::noise_work::current_for(admission.ok_or_else(missing)?)?.reserve_components(
+            crate::noise_work::WorkComponents {
+                base: 0,
+                noise: work(descriptor, count)?,
+            },
+        );
+    }
     if priced(descriptor) {
         admission
             .ok_or_else(missing)?

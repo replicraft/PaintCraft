@@ -37,9 +37,13 @@ pub(super) fn compose(
     edge: u32,
     budget: usize,
     pixels: &mut [u8],
-    workspace: &Option<crate::spatial::WorkspaceAdmission>,
+    contexts: (
+        &Option<crate::spatial::WorkspaceAdmission>,
+        &Option<crate::noise_work::NoiseAdmission>,
+    ),
     check: &(impl Fn() -> Result<()> + Sync),
 ) -> Result<()> {
+    let (workspace, noise) = contexts;
     let edge = edge as usize;
     let columns = (region.width() as usize).div_ceil(edge);
     let bands = (region.height() as usize).div_ceil(edge);
@@ -79,57 +83,62 @@ pub(super) fn compose(
         }
     }
     views.into_par_iter().try_for_each(|mut tile| {
-        crate::spatial::captured(workspace, || {
-            check()?;
-            for layer in doc
-                .layers_in_order()
-                .filter(|layer| layer.visible && layer.opacity != 0)
-            {
+        crate::noise_work::captured(noise, || {
+            crate::spatial::captured(workspace, || {
                 check()?;
-                let Some(area) = tile.region.intersect(&layer.extent()) else {
-                    continue;
-                };
-                if crate::spatial::active(layer) {
-                    let local = area
-                        .translated(-layer.origin.0, -layer.origin.1)
-                        .ok_or_else(|| {
-                            Error::new(ErrorCode::InputSchema, "Spatial tile source overflows")
-                        })?;
-                    crate::spatial::visit(layer, local, check, |part, pixels| {
-                        for (i, source) in pixels.iter().enumerate() {
-                            if i.is_multiple_of(64) {
-                                check()?;
-                            }
-                            let x = part.x0 + layer.origin.0 + (i % part.width() as usize) as i64;
-                            let y = part.y0 + layer.origin.1 + (i / part.width() as usize) as i64;
-                            let row = &mut tile.rows[(y - tile.region.y0) as usize];
-                            let offset = (x - tile.region.x0) as usize * 4;
-                            let destination: [u8; 4] = row[offset..offset + 4].try_into().unwrap();
-                            row[offset..offset + 4].copy_from_slice(
-                                &source
-                                    .with_opacity(layer.opacity)
-                                    .source_over(paintcraft_core::types::Rgba(destination))
-                                    .0,
-                            );
-                        }
-                        Ok(())
-                    })?;
-                    continue;
-                }
-                for y in area.y0..area.y1 {
+                for layer in doc
+                    .layers_in_order()
+                    .filter(|layer| layer.visible && layer.opacity != 0)
+                {
                     check()?;
-                    let row = &mut tile.rows[(y - tile.region.y0) as usize];
-                    let start = (area.x0 - tile.region.x0) as usize * 4;
-                    compose_row(
-                        layer,
-                        y,
-                        area.x0,
-                        &mut row[start..start + area.width() as usize * 4],
-                        &check,
-                    )?;
+                    let Some(area) = tile.region.intersect(&layer.extent()) else {
+                        continue;
+                    };
+                    if crate::spatial::active(layer) {
+                        let local = area
+                            .translated(-layer.origin.0, -layer.origin.1)
+                            .ok_or_else(|| {
+                                Error::new(ErrorCode::InputSchema, "Spatial tile source overflows")
+                            })?;
+                        crate::spatial::visit(layer, local, check, |part, pixels| {
+                            for (i, source) in pixels.iter().enumerate() {
+                                if i.is_multiple_of(64) {
+                                    check()?;
+                                }
+                                let x =
+                                    part.x0 + layer.origin.0 + (i % part.width() as usize) as i64;
+                                let y =
+                                    part.y0 + layer.origin.1 + (i / part.width() as usize) as i64;
+                                let row = &mut tile.rows[(y - tile.region.y0) as usize];
+                                let offset = (x - tile.region.x0) as usize * 4;
+                                let destination: [u8; 4] =
+                                    row[offset..offset + 4].try_into().unwrap();
+                                row[offset..offset + 4].copy_from_slice(
+                                    &source
+                                        .with_opacity(layer.opacity)
+                                        .source_over(paintcraft_core::types::Rgba(destination))
+                                        .0,
+                                );
+                            }
+                            Ok(())
+                        })?;
+                        continue;
+                    }
+                    for y in area.y0..area.y1 {
+                        check()?;
+                        let row = &mut tile.rows[(y - tile.region.y0) as usize];
+                        let start = (area.x0 - tile.region.x0) as usize * 4;
+                        compose_row(
+                            layer,
+                            y,
+                            area.x0,
+                            &mut row[start..start + area.width() as usize * 4],
+                            &check,
+                        )?;
+                    }
                 }
-            }
-            Ok(())
+                Ok(())
+            })
         })
     })
 }

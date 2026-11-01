@@ -701,3 +701,6 @@ mod vibrance;
 
 #[path = "gpu/hue_saturation.rs"]
 mod hue_saturation;
+
+#[path = "gpu/noise.rs"]
+mod noise;

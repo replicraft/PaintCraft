@@ -46,7 +46,8 @@ fn stage(index: usize, descriptor: Descriptor, source: Rect, output: Rect) -> Re
         | Descriptor::ExposureSrgbV1(_)
         | Descriptor::CurvesRgbV1(_)
         | Descriptor::VibranceRgbV1(_)
-        | Descriptor::HueSaturationRgbV1(_) => None,
+        | Descriptor::HueSaturationRgbV1(_)
+        | Descriptor::AddNoiseRgbV1(_) => None,
     };
     Ok(Stage {
         index,
@@ -124,6 +125,35 @@ impl<'a> LayerAppearancePlan<'a> {
                 scratch_elements: scratch,
             },
         })
+    }
+    /// Trusted Noise subtotal over the same reverse-planned stage rectangles.
+    /// No new fields or allocation; disabled/old-only stacks are callback-free.
+    pub(crate) fn noise_work(&self, check: &dyn Fn() -> Result<()>) -> Result<u64> {
+        if !crate::direct::coordinate_dependent(self.layer) {
+            return Ok(0);
+        }
+        let mut output = self.output;
+        let mut work = 0u64;
+        for (index, filter) in self
+            .layer
+            .filters
+            .iter()
+            .enumerate()
+            .rev()
+            .filter(|(_, f)| f.enabled())
+        {
+            check()?;
+            let value = stage(index, filter.descriptor(), self.source, output)?;
+            if let Descriptor::AddNoiseRgbV1(policy) = filter.descriptor() {
+                let count = usize::try_from(value.output.area())
+                    .map_err(|_| limit("Noise region overflow"))?;
+                work = work
+                    .checked_add(paintcraft_effects::noise::quote(policy, count)?.work)
+                    .ok_or_else(|| limit("Noise work overflow"))?;
+            }
+            output = value.input;
+        }
+        Ok(work)
     }
     /// Extra direct arithmetic bound, with the same reverse prefix halos. No
     /// new priced fields. Old-only layers return zero without callbacks.

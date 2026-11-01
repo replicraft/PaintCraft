@@ -107,6 +107,18 @@ impl WorkspaceAdmission {
         self.bytes_limit = self.bytes_limit.min(bytes);
         self
     }
+    pub(crate) fn same_work_owner(&self, other: &Self) -> bool {
+        std::sync::Arc::ptr_eq(&self.work_used, &other.work_used)
+    }
+    pub(crate) fn tightened(&self, bytes: u64, work: u64) -> Result<Self> {
+        let mut value = self.clone();
+        value.bytes_limit = value.bytes_limit.min(bytes);
+        value.work_limit = value.work_limit.min(work);
+        if value.work_used() > value.work_limit {
+            return Err(limit("Tightened caller already exhausted"));
+        }
+        Ok(value)
+    }
     pub fn scope(&self) -> &BudgetScope {
         &self.scope
     }
@@ -195,7 +207,10 @@ impl LayerAppearancePlan<'_> {
         if output.len() != pixels(self.output)? {
             return Err(invalid("Appearance output length differs from its region"));
         }
-        if self.quote.bytes > admission.bytes_limit || self.quote.work > admission.work_limit {
+        if crate::direct::coordinate_dependent(self.layer) {
+            crate::noise_work::check_plan(self, admission, check)?;
+        } else if self.quote.bytes > admission.bytes_limit || self.quote.work > admission.work_limit
+        {
             return Err(limit(
                 "Spatial appearance exceeds its workspace or work limit",
             ));
@@ -217,14 +232,21 @@ impl LayerAppearancePlan<'_> {
         check: &dyn Fn() -> Result<()>,
         consume: impl FnOnce(&[Rgba]) -> Result<T>,
     ) -> Result<T> {
-        if self.quote.bytes > admission.bytes_limit || self.quote.work > admission.work_limit {
+        if crate::direct::coordinate_dependent(self.layer) {
+            crate::noise_work::check_plan(self, admission, check)?;
+        } else if self.quote.bytes > admission.bytes_limit || self.quote.work > admission.work_limit
+        {
             return Err(limit(
                 "Spatial appearance exceeds its workspace or work limit",
             ));
         }
         crate::prepared::validate_layer_programs(self.layer, admission, check)?;
         check()?;
-        admission.reserve_work(self.quote.work)?;
+        if crate::direct::coordinate_dependent(self.layer) {
+            crate::noise_work::reserve_plan(self, admission, check)?;
+        } else {
+            admission.reserve_work(self.quote.work)?;
+        }
         let mut workspace = workspace::Workspace::new(self, admission, check)?;
         workspace.extract(self, check)?;
         workspace.evaluate(self, admission, check)?;

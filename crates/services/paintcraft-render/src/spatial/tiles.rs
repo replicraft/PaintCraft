@@ -85,7 +85,14 @@ pub(crate) fn visit(
         )
     })?;
     let quote = quote_layer(layer, local, check)?;
-    if quote.bytes > admission.bytes_limit || quote.work > admission.work_limit {
+    if crate::direct::coordinate_dependent(layer) {
+        let scoped = crate::noise_work::quote_layer(layer, local, check)?;
+        let caller = crate::noise_work::current_for(&admission)?;
+        if scoped.bytes > caller.limits().bytes {
+            return Err(limit("Scoped tiled workspace"));
+        }
+        caller.check_available(scoped.work)?;
+    } else if quote.bytes > admission.bytes_limit || quote.work > admission.work_limit {
         return Err(limit("Spatial tiled appearance exceeds its request limit"));
     }
     each(local, |tile| {
@@ -101,6 +108,9 @@ pub(crate) fn preflight(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<TiledQuote> {
     crate::direct::require_document(doc)?;
+    if crate::direct::coordinate_document(doc) {
+        return crate::noise_work::preflight(doc, region, check);
+    }
     let mut direct = 0u64;
     for layer in doc
         .layers_in_order()

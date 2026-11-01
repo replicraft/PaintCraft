@@ -13,6 +13,7 @@ use paintcraft_raster::RowSpan;
 mod appearance;
 mod direct;
 mod kernels;
+pub mod noise_work;
 pub mod spatial;
 
 pub mod parallel;

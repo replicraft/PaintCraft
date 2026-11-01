@@ -150,7 +150,12 @@ impl Workspace {
                     let y = stage.output.y0 + (i / width) as i64;
                     let m = coverage(x, y);
                     if m != 0 {
-                        let candidate = program.evaluate(*pixel)?;
+                        let candidate = program.evaluate(
+                            paintcraft_core::types::coordinates::SourcePixel::try_from_signed(
+                                x, y,
+                            )?,
+                            *pixel,
+                        )?;
                         *pixel = paintcraft_effects::mix_point_coverage(*pixel, candidate, m);
                     }
                 }

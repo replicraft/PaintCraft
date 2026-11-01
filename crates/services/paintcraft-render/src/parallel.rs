@@ -32,6 +32,11 @@ pub fn render_in_pool(
         let bytes = region_bytes(doc, region)?;
         crate::spatial::preflight(doc, region, &check)?;
         let workspace = crate::spatial::current();
+        let noise = match (&workspace, crate::noise_work::current()) {
+            (Some(base), Some(noise)) => Some(noise.for_workspace(base)?),
+            (_, None) => None,
+            _ => return Err(crate::noise_work::missing()),
+        };
         let edge = match partition {
             Partition::Bands { rows } => rows,
             Partition::Tiles { edge } => edge,
@@ -61,8 +66,10 @@ pub fn render_in_pool(
                             y1: (y0 + i64::from(rows)).min(region.y1),
                             ..region
                         };
-                        crate::spatial::captured(&workspace, || {
-                            compose_roots_into(doc, part, 0..doc.roots.len(), out, &check)
+                        crate::noise_work::captured(&noise, || {
+                            crate::spatial::captured(&workspace, || {
+                                compose_roots_into(doc, part, 0..doc.roots.len(), out, &check)
+                            })
                         })
                     })
             }
@@ -72,7 +79,7 @@ pub fn render_in_pool(
                 edge,
                 view_bytes,
                 &mut pixels,
-                &workspace,
+                (&workspace, &noise),
                 &check,
             ),
         })?;

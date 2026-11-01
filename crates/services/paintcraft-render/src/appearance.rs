@@ -1,10 +1,12 @@
 //! Source-local point appearances. No source tile or document is mutated.
+use paintcraft_core::types::coordinates::SourcePixel;
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use paintcraft_document::{FilterInstance, Layer};
 
 /// A candidate binding is resolved once per stage/chunk, never per pixel.
 pub(crate) enum PointProgram<'a> {
     Scalar(paintcraft_core::types::filters::Descriptor),
+    Noise(paintcraft_core::types::filters::AddNoiseRgbV1),
     Vibrance(paintcraft_core::types::filters::VibranceRgbV1),
     HueSaturation(paintcraft_core::types::filters::HueSaturationRgbV1),
     Levels(&'a crate::prepared::PreparedLevels),
@@ -17,6 +19,10 @@ impl<'a> PointProgram<'a> {
         admission: Option<&'a crate::spatial::WorkspaceAdmission>,
     ) -> Result<Self> {
         match descriptor {
+            paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(p) => {
+                crate::noise_work::current_for(admission.ok_or_else(crate::direct::missing)?)?;
+                Ok(Self::Noise(p))
+            }
             paintcraft_core::types::filters::Descriptor::HueSaturationRgbV1(p) => {
                 admission.ok_or_else(crate::direct::missing)?;
                 Ok(Self::HueSaturation(p))
@@ -58,8 +64,11 @@ impl<'a> PointProgram<'a> {
             other => Ok(Self::Scalar(other)),
         }
     }
-    pub(crate) fn evaluate(&self, incoming: Rgba) -> Result<Rgba> {
+    pub(crate) fn evaluate(&self, point: SourcePixel, incoming: Rgba) -> Result<Rgba> {
         match self {
+            Self::Noise(policy) => {
+                paintcraft_effects::noise::evaluate_pixel(*policy, point, incoming)
+            }
             Self::HueSaturation(policy) => {
                 paintcraft_effects::hue_saturation::evaluate_pixel(*policy, incoming)
             }
@@ -89,7 +98,7 @@ fn mix(
     if coverage == 0 {
         return Ok(incoming);
     }
-    let candidate = program.evaluate(incoming)?;
+    let candidate = program.evaluate(SourcePixel::try_from_signed(local.0, local.1)?, incoming)?;
     if coverage == 255 {
         Ok(candidate)
     } else {
@@ -107,7 +116,7 @@ pub(crate) fn uniform(
     mut pixel: Rgba,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<Rgba>> {
-    if crate::spatial::active(layer) {
+    if crate::spatial::active(layer) || crate::direct::coordinate_dependent(layer) {
         return Ok(None);
     }
     let admission = crate::spatial::current();
@@ -115,7 +124,8 @@ pub(crate) fn uniform(
         check()?;
         let program = PointProgram::new(filter.descriptor(), admission.as_ref())?;
         crate::direct::reserve(filter.descriptor(), 1, admission.as_ref())?;
-        let candidate = program.evaluate(pixel)?;
+        let candidate =
+            program.evaluate(SourcePixel::try_from_signed(local.x0, local.y0)?, pixel)?;
         if candidate == pixel {
             continue;
         }
