@@ -1,5 +1,7 @@
 #[path = "app/appearance.rs"]
 mod appearance;
+#[path = "app/asset_output.rs"]
+mod asset_output;
 #[path = "app/auto_scroll.rs"]
 mod auto_scroll;
 #[path = "app/brushes.rs"]
