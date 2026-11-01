@@ -175,6 +175,12 @@ impl Editor {
     }
 
     pub fn apply(&mut self, action: Action) -> Result<()> {
+        if matches!(&action, Action::LayerMask(_)) {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Layer masks require Source7",
+            ));
+        }
         if let Action::Filter(edit) = &action {
             let operation = self.filter_operation(edit)?;
             // Command output aliases identify filters, not a new active layer.
@@ -491,3 +497,7 @@ mod mask_tests;
 
 #[cfg(test)]
 pub(crate) mod persistence_tests;
+
+#[cfg(test)]
+#[path = "editor/layer_mask_closed_tests.rs"]
+mod layer_mask_closed_tests;
