@@ -323,8 +323,19 @@ build also passes, retaining 53 artifacts:
 `docs/validation/noise-picker-production/attempt-1/final.json`, SHA256
 `1e0386de358994953813d99797ef095c5d26d7dea1e32a4248a20f60ee552c3c`.
 Its Main Wasm is new; codec and render Worker bytes match the preceding build.
-Actual browser replay of the fix and the new picker remains pending. These checks
-do not establish Export8, browser flattening or other specialty-copy support.
+Actual Main replay on that new build now passes all eighteen output cases: six
+positive routes and twelve delayed-publication fences across cancellation, owner
+replacement, a new filter draft and a real accepted clipboard paste. Every fence
+observes exactly one forwarded cancellation and its matching ACK before releasing
+the held genuine result. All 3,297 inputs, 53 artifacts and harness files remain
+unchanged; browser/server cleanup completes without page errors. The aggregate
+receipt is `docs/validation/noise-main-flat-output-browser/browser-final-freeze.json`,
+SHA256 `e73aae35e92290347ee82e20b1992bbe824ab13dcb38098e3d073a14ee3d5704`.
+It retains five preceding failed attempts and their distinct harness/product
+causes. The print image is genuinely decoded, but OS printer invocation is mocked;
+clipboard success includes real browser write/read and independently decoded bytes.
+Actual UI qualification of the new picker remains pending. These checks do not
+establish Export8, browser flattening or other specialty-copy support.
 
 Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
 background job; retained preview handles keep their source reservation after
