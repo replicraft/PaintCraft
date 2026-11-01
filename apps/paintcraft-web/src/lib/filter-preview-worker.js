@@ -1,3 +1,4 @@
+import { joinableCopy, makeEncodedCopy } from './filter-preview-copy.js';
 import {
 	capabilityFacts6,
 	facts6,
@@ -122,6 +123,7 @@ export function beginFilterPreview(input) {
 					pumpScheduled = false,
 					closing = false;
 				const pending = new Map();
+				let copying = false;
 				function hardFail(error) {
 					if (closed) return;
 					closed = true;
@@ -388,6 +390,7 @@ export function beginFilterPreview(input) {
 						closed ||
 						closing ||
 						frameHeld ||
+						copying ||
 						active ||
 						hashing ||
 						cancelInFlight ||
@@ -467,12 +470,91 @@ export function beginFilterPreview(input) {
 				if (plan.protocol === 6) freezeSource6(ready.binding);
 				Object.freeze(ready.binding.owner);
 				Object.freeze(ready.binding.size);
+				const rawEncodedCopy =
+					plan.protocol === 6
+						? makeEncodedCopy({
+								plan,
+								send,
+								start(options) {
+									if (
+										closing ||
+										closed ||
+										frameHeld ||
+										active ||
+										hashing ||
+										desired ||
+										copying ||
+										cancelInFlight
+									)
+										throw fail(
+											'ResourceLimit',
+											'Flat output slot busy',
+										);
+									const generation = BigInt(
+										options.generation,
+									);
+									if (generation <= latest)
+										throw fail(
+											'ConflictStaleBase',
+											'Flat output generation',
+										);
+									const request = JSON.parse(
+										encodeProgram(
+											{
+												...options,
+												owner: plan.owner,
+												draft: plan.draft,
+												sourceSha256,
+												protocol: 6,
+												registryContract: 2,
+												workloadSha256:
+													plan.workload.sha256,
+											},
+											BEGIN_BYTES_MAX,
+										),
+									);
+									latest = generation;
+									copying = true;
+									return request;
+								},
+								finish() {
+									copying = false;
+									frameHeld = false;
+									schedulePump();
+								},
+								hold() {
+									frameHeld = true;
+								},
+								markUpdate() {
+									const slot = pending.get(sequence);
+									if (slot) slot.update = true;
+								},
+								checkCurrent(request) {
+									if (
+										closing ||
+										closed ||
+										BigInt(request.generation) <=
+											retiredThrough
+									)
+										throw fail(
+											'OperationCancelled',
+											'Flat output cancelled',
+										);
+								},
+							})
+						: undefined;
+				const copyFinalization =
+					plan.protocol === 6 ? joinableCopy(rawEncodedCopy) : null;
+				const encodedCopy = copyFinalization
+					? (...args) => copyFinalization.run(...args)
+					: undefined;
 				const client = {
+					...(plan.protocol === 6 ? { encodedCopy } : {}),
 					binding: Object.freeze(ready.binding),
 					...(plan.protocol === 6 ? { runtimeFacts } : {}),
 					update(options) {
 						try {
-							if (closing || closed)
+							if (closing || closed || copying)
 								throw fail(
 									'CodecFailed',
 									'Filter Worker closing',
@@ -567,6 +649,7 @@ export function beginFilterPreview(input) {
 							await retireThrough(
 								latest < 0n ? '0' : latest.toString(),
 							);
+							if (copyFinalization) await copyFinalization.join();
 							const ack = await send('close', {});
 							if (ack.kind !== 'closed')
 								throw fail(
