@@ -524,3 +524,10 @@ pub mod noise_service;
 mod noise_wasm;
 #[cfg(target_arch = "wasm32")]
 pub use noise_wasm::NoiseRenderWorker;
+
+// Separate Source7 types; all old Service/Frame/Source6 layouts stay untouched.
+#[cfg(target_arch = "wasm32")]
+mod appearance_wasm;
+pub mod layer_service;
+#[cfg(target_arch = "wasm32")]
+pub use appearance_wasm::LayerAppearanceRenderWorker;
