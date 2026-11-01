@@ -311,4 +311,6 @@ mod invert_tests;
 #[cfg(test)]
 mod lifecycle_tests;
 #[cfg(test)]
+mod scoped_tests;
+#[cfg(test)]
 mod tests;
