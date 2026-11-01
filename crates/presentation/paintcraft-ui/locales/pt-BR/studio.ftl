@@ -432,7 +432,7 @@ download-dds = Baixar DDS
 dds-download-could-not-be-requested = Não foi possível solicitar o download DDS.
 requesting-dds-download-more = Solicitando download DDS…
 
-this-browser-msp2-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = Este perfil MSP2 do navegador permite até 4.194.304 pixels na tela e 8 camadas. Capturas maiores ou mais complexas são recusadas.
+this-browser-msp-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = Este perfil MSP do navegador permite até 4.194.304 pixels na tela e 8 camadas. Capturas maiores ou mais complexas são recusadas.
 msp-export-failed-the-current-document-was-kept = A exportação MSP falhou; o documento atual foi mantido.
 download-msp = Baixar MSP
 requesting-msp-download-more = Solicitando o download MSP…

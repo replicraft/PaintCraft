@@ -432,7 +432,7 @@ download-dds = DDS をダウンロード
 dds-download-could-not-be-requested = DDS のダウンロードを開始できませんでした。
 requesting-dds-download-more = DDS のダウンロードを開始しています…
 
-this-browser-msp2-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = このブラウザーの MSP2 出力では、キャンバスは最大 4,194,304 ピクセル、レイヤーは最大 8 枚です。これを超える、または複雑すぎるデータは出力できません。
+this-browser-msp-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = このブラウザーの MSP 出力では、キャンバスは最大 4,194,304 ピクセル、レイヤーは最大 8 枚です。これを超える、または複雑すぎるデータは出力できません。
 msp-export-failed-the-current-document-was-kept = MSP の書き出しに失敗しました。現在のドキュメントは保持されています。
 download-msp = MSP をダウンロード
 requesting-msp-download-more = MSP のダウンロードを要求しています…
