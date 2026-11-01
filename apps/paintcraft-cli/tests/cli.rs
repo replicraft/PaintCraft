@@ -147,3 +147,6 @@ mod vibrance;
 
 #[path = "cli/hsl.rs"]
 mod hsl;
+
+#[path = "cli/noise.rs"]
+mod noise;

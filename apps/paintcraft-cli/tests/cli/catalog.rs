@@ -29,7 +29,7 @@ pub(super) fn read_catalog(bytes: &[u8]) -> paintcraft_document::Document {
     .unwrap()
 }
 
-const BUNDLE: &str = "a152a29d66e211f4261deba1c47ecb5f191d925eccede1ecd2ae7c04006bc87a";
+const BUNDLE: &str = "d8d4b881b9124340bc3ddb246bccc66909e3387ccb3873e5d21ebc4d3e80d7f4";
 fn descriptor() -> Json {
     json!({"kind":"levels-rgb-v1","input_black":0,"input_white":255,
         "gamma_hundredths":100,"output_black":0,"output_white":255})

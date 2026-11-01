@@ -264,3 +264,6 @@ mod vibrance;
 
 #[path = "mcp/hsl.rs"]
 mod hsl;
+
+#[path = "mcp/noise.rs"]
+mod noise;
