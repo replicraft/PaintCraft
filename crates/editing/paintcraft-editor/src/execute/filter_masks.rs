@@ -7,6 +7,7 @@ use paintcraft_core::types::{
     resources::{AllocationClass, BudgetAccount},
 };
 use paintcraft_document::{FilterMask, FilterStack, LayerMask};
+mod layer;
 mod mapping;
 pub(super) use mapping::Counts;
 use paintcraft_raster::coverage_mask::{A8Mask, Band, Limits};
@@ -175,16 +176,17 @@ impl Stage<'_> {
                 *enabled,
                 from_input(coverage, self, limits, &check)?,
             )),
-            MaskOp::FromSelection { enabled } => Some(FilterMask::new(
-                *enabled,
-                A8Mask::from_selection(
+            MaskOp::FromSelection { enabled } => {
+                let (coverage, spent) = A8Mask::from_selection_measured(
                     &self.selection,
                     self.doc.layers[&layer].extent(),
                     &self.adm.coverage_budget(),
                     limits,
-                    &check,
-                )?,
-            )),
+                    self.check,
+                )?;
+                remaining.set(remaining.get().checked_sub(spent).ok_or_else(limit)?);
+                Some(FilterMask::new(*enabled, coverage))
+            }
             MaskOp::SetEnabled { enabled } => Some(
                 entry
                     .mask()

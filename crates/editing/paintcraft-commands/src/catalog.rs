@@ -47,13 +47,28 @@ impl Batch {
     /// Add requirements only to an internally generated catalog envelope, then
     /// run the same strict public parser. Untrusted callers use from_value.
     pub fn from_generated_value(mut value: Value) -> Result<Self> {
-        if value.get("schema").and_then(Value::as_str) == Some(CATALOG_BATCH_SCHEMA) {
+        let schema = value.get("schema").and_then(Value::as_str);
+        let appearance = schema == Some(LAYER_APPEARANCE_BATCH_SCHEMA);
+        if appearance || schema == Some(CATALOG_BATCH_SCHEMA) {
             let requirements = required(&value)?;
+            let layers = if appearance {
+                Some(layer_appearance::required(&value)?)
+            } else {
+                None
+            };
             let Value::Object(ref mut fields) = value else {
                 return Err(bad("expected a batch object"));
             };
-            if fields.contains_key("required_filters") {
+            if fields.contains_key("required_filters")
+                || (appearance && fields.contains_key("required_layer_features"))
+            {
                 return Err(bad("generated batch already declares required filters"));
+            }
+            if let Some(layers) = layers {
+                fields.insert(
+                    "required_layer_features".into(),
+                    Value::Array(layers.into_iter().map(Value::str).collect()),
+                );
             }
             fields.insert(
                 "required_filters".into(),

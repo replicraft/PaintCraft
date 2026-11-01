@@ -337,6 +337,7 @@ impl Stage<'_> {
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
             Op::Filter(op) => self.edit_filter(index, op)?,
+            Op::LayerMask(op) => self.edit_layer_mask(op)?,
             Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
                 self.mask_selection(index, op)?
             }

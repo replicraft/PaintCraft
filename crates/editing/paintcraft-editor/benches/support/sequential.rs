@@ -238,6 +238,12 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::LayerMask(_) => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Historical sequential baseline predates layer mask operations",
+                ));
+            }
             Op::Filter(_) => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,

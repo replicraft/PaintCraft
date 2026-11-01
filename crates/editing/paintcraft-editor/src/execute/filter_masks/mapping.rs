@@ -34,6 +34,7 @@ fn inventory(
     stage: &Stage<'_>,
     excluded: impl Fn(&Layer) -> bool,
     filter: Option<(Uuid, Uuid)>,
+    own: Option<Uuid>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Counts> {
     let mut counts = Counts::default();
@@ -51,7 +52,7 @@ fn inventory(
                 counts.include(mask.coverage())?;
             }
         }
-        if let Some(mask) = &layer.mask {
+        if let Some(mask) = layer.mask.as_ref().filter(|_| own != Some(layer.id)) {
             check()?;
             counts.include(mask.coverage())?;
         }
@@ -78,7 +79,7 @@ impl Stage<'_> {
             remaining.set(remaining.get().checked_sub(1).ok_or_else(limit)?);
             Ok(())
         };
-        let counts = inventory(self, excluded, None, &check)?;
+        let counts = inventory(self, excluded, None, None, &check)?;
         self.coverage_work = remaining.get();
         Ok(counts)
     }
@@ -89,7 +90,18 @@ impl Stage<'_> {
             remaining.set(remaining.get().checked_sub(1).ok_or_else(limit)?);
             Ok(())
         };
-        let counts = inventory(self, |_| false, Some((layer, filter)), &check)?;
+        let counts = inventory(self, |_| false, Some((layer, filter)), None, &check)?;
+        self.coverage_work = remaining.get();
+        Ok(counts)
+    }
+    pub(super) fn layer_mask_counts(&mut self, layer: Uuid) -> Result<Counts> {
+        let remaining = Cell::new(self.coverage_work);
+        let check = || {
+            (self.check)()?;
+            remaining.set(remaining.get().checked_sub(1).ok_or_else(limit)?);
+            Ok(())
+        };
+        let counts = inventory(self, |_| false, None, Some(layer), &check)?;
         self.coverage_work = remaining.get();
         Ok(counts)
     }

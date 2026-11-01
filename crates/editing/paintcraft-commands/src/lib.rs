@@ -14,6 +14,10 @@ use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
 mod filters;
 pub use filters::{FilterOp, FilterRef, MaskOp};
+mod layer_masks;
+pub use layer_masks::LayerMaskOp;
+mod layer_appearance;
+pub use layer_appearance::LAYER_APPEARANCE_BATCH_SCHEMA;
 mod catalog;
 pub use catalog::CATALOG_BATCH_SCHEMA;
 mod mask;
@@ -50,6 +54,7 @@ pub enum ShapeKind {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     Filter(FilterOp),
+    LayerMask(LayerMaskOp),
     /// v2: removal half of Cut; hosts must acknowledge their clipboard write first.
     /// Clear only canvas/layer/selection coverage and preserve the selection.
     CutSelection {
@@ -238,7 +243,9 @@ impl Batch {
         let version = operations
             .into_iter()
             .map(|(name, kind)| {
-                if matches!(name, "filter.add" | "filter.update")
+                if name.starts_with("layer.mask.") {
+                    7
+                } else if matches!(name, "filter.add" | "filter.update")
                     && matches!(
                         kind,
                         Some(
@@ -277,6 +284,7 @@ impl Batch {
             .max()
             .unwrap_or(2);
         match version {
+            7 => LAYER_APPEARANCE_BATCH_SCHEMA,
             6 => CATALOG_BATCH_SCHEMA,
             5 => "paintcraft.batch/v5",
             4 => "paintcraft.batch/v4",
@@ -305,8 +313,20 @@ impl Batch {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Batch> {
         check()?;
+        let appearance =
+            v.get("schema").and_then(Value::as_str) == Some(LAYER_APPEARANCE_BATCH_SCHEMA);
         let catalog = v.get("schema").and_then(Value::as_str) == Some(CATALOG_BATCH_SCHEMA);
-        let required: &[&str] = if catalog {
+        let required: &[&str] = if appearance {
+            &[
+                "schema",
+                "atomic",
+                "policy",
+                "base",
+                "operations",
+                "required_filters",
+                "required_layer_features",
+            ]
+        } else if catalog {
             &[
                 "schema",
                 "atomic",
@@ -326,6 +346,7 @@ impl Batch {
             Some("paintcraft.batch/v4") => 4,
             Some("paintcraft.batch/v5") => 5,
             Some(CATALOG_BATCH_SCHEMA) => 6,
+            Some(LAYER_APPEARANCE_BATCH_SCHEMA) => 7,
             _ => {
                 return Err(bad(
                     "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3, paintcraft.batch/v4 or paintcraft.batch/v5",
@@ -352,8 +373,11 @@ impl Batch {
         if ops.is_empty() || ops.len() > MAX_OPERATIONS {
             return Err(bad("operations must contain 1..=1024 items"));
         }
-        if catalog {
+        if catalog || appearance {
             catalog::validate(v)?;
+        }
+        if appearance {
+            layer_appearance::validate(v)?;
         }
         let operations = ops
             .iter()

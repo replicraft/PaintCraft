@@ -10,6 +10,11 @@ pub(super) fn op(
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if name.starts_with("layer.mask.") && version < 7 {
+        return Err(bad(
+            "layer mask operations require paintcraft.batch/layer-appearance-v1",
+        ));
+    }
     if name.starts_with("filter.mask.") && version < 3 {
         return Err(bad("filter mask operations require paintcraft.batch/v3"));
     }
@@ -41,6 +46,7 @@ pub(super) fn op(
         )));
     }
     Ok(match name {
+        name if name.starts_with("layer.mask.") => layer_masks::parse(v)?,
         name if name.starts_with("filter.") => {
             let parsed = filters::parse_with_coverage(v, version, budget, check)?;
             let Op::Filter(filter) = &parsed else {
