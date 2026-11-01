@@ -11,6 +11,7 @@ use paintcraft_core::types::{
     resources::BudgetScope,
 };
 use std::{cell::Cell, fmt};
+pub mod appearance;
 mod shape;
 
 /// Immutable borrowed bytes with a validated outer PCND trailer.

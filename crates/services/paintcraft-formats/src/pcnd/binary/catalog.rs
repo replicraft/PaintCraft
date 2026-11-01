@@ -185,6 +185,42 @@ impl<'a> Manifest<'a> {
         }
         Ok(())
     }
+    pub(in crate::pcnd) fn resolve_appearance(
+        &mut self,
+        index: usize,
+        bytes: &[u8],
+    ) -> Result<paintcraft_core::types::filters::Descriptor> {
+        use crate::export::prepared_capabilities::{RegistryContract, resolve_for};
+        let entry = self
+            .entries
+            .get(index)
+            .filter(|_| index < self.len)
+            .and_then(|e| *e)
+            .ok_or_else(invalid)?;
+        let descriptor = resolve_for(
+            RegistryContract::LayerAppearance3,
+            entry.profile,
+            entry.codec,
+        )?
+        .decode(bytes)?;
+        self.used[index] = true;
+        Ok(descriptor)
+    }
+    pub(in crate::pcnd) fn appearance_requirements(
+        &self,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<crate::export::layer_appearance::Requirements7> {
+        use crate::export::{
+            layer_appearance::{Requirements7, appearance_registration},
+            prepared_capabilities::Requirements,
+        };
+        let mut requirements = Requirements::default();
+        for entry in self.entries[..self.len].iter().flatten() {
+            check()?;
+            requirements.insert(entry.profile, entry.codec)?;
+        }
+        Requirements7::new(requirements, appearance_registration(), check)
+    }
     pub(super) fn finish(&self) -> Result<()> {
         if self.used[..self.len].iter().any(|v| !v) {
             return Err(codec("unused PCND catalog requirement"));

@@ -1,6 +1,7 @@
 //! PCND 1: fixed semantic schema, binary IDs/integers and inline tiles.
 //! The whole stream is integrity checked by a trailing SHA-256 before tile inflation.
 use super::*;
+pub(super) mod admitted;
 use std::io::Write;
 pub(super) mod catalog;
 mod filters;

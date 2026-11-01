@@ -5,6 +5,7 @@ use paintcraft_core::types::Rect;
 use paintcraft_document::{FilterMask, LayerMask};
 use paintcraft_raster::coverage_mask::A8Mask;
 use paintcraft_raster::coverage_mask::{Run, Visit};
+pub(super) mod appearance;
 mod assessment;
 mod decode;
 pub(super) use assessment::skip as skip_requirements_checked;
