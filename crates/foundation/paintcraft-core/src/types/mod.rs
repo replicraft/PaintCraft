@@ -3,10 +3,12 @@
 pub mod error;
 pub mod geometry;
 pub mod json;
+pub mod layer_blend;
 pub mod pixel;
 
 pub use error::{Error, ErrorCode, Result};
 pub use geometry::Rect;
+pub use layer_blend::LayerBlendMode;
 pub use pixel::Rgba;
 
 pub mod ids;
