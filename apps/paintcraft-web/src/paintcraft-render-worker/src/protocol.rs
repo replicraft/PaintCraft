@@ -4,6 +4,7 @@ use paintcraft_core::types::{
     json::{self, Value},
 };
 use uuid::Uuid;
+pub mod appearance_programs;
 pub mod programs;
 pub mod scoped_programs;
 pub mod spatial;
