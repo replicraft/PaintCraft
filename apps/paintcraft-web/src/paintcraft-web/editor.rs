@@ -44,6 +44,28 @@ pub(crate) struct Editor {
 }
 
 impl Editor {
+    /// Publish only a session color; no rendering, history, or source mutation.
+    pub(crate) fn apply_sampled_color(
+        &mut self,
+        pick: &paintcraft_tools::ColorPick,
+        color: Rgba,
+    ) -> Result<()> {
+        if !self.tools.can_apply_color_pick(pick)
+            || !self.resource_shape_owner(pick.return_resource_shape)
+        {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Color sample owner, tool, color slot, or resource changed",
+            ));
+        }
+        if !self.tools.apply_picked_color(pick, color) {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Color sample changed",
+            ));
+        }
+        Ok(())
+    }
     pub fn new(width: u32, height: u32) -> Result<Self> {
         if u64::from(width) * u64::from(height) > MAX_PIXELS {
             return Err(Error::new(

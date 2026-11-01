@@ -38,6 +38,7 @@ pub(super) struct Display {
     renderer: Renderer,
     transient: Option<ordinary::Transient>,
     copy_action: Option<flat_action::Job>,
+    picker_wanted: Option<flat_action::Job>,
     source: Option<Capture>,
     committed: Option<Capture>,
     texture: Option<egui::TextureHandle>,
@@ -402,7 +403,8 @@ impl WebApp {
             && std::sync::Arc::ptr_eq(&source.document, &self.editor.session.snapshot())
     }
     pub(crate) fn worker_filter_canvas(&mut self, ctx: &egui::Context) -> bool {
-        if self.filter_display.copy_action.is_some() {
+        if self.filter_display.copy_action.is_some() || self.filter_display.picker_wanted.is_some()
+        {
             self.pump_filter_editing(ctx);
             return true;
         }

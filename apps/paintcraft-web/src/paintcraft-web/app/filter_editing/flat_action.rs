@@ -1,5 +1,8 @@
 //! One frozen background action borrows the display's SINGLE admitted slot.
 use super::*;
+mod picker;
+#[cfg(test)]
+mod picker_tests;
 use paintcraft_core::types::{
     Rect, Result,
     json::Value,
@@ -59,12 +62,18 @@ enum Purpose {
     Download { name: String },
     Print { title: String },
     Clipboard(crate::clipboard::background::Deferred),
+    Picker(picker::Intent),
 }
 struct Encoded {
     bytes: Vec<u8>,
     mime: String,
 }
-type Outcome = Rc<RefCell<Option<Result<Encoded>>>>;
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+enum Output {
+    Encoded(Encoded),
+    Picked(paintcraft_core::types::Rgba),
+}
+type Outcome = Rc<RefCell<Option<Result<Output>>>>;
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(super) struct Job {
     frozen: Frozen,
@@ -97,7 +106,8 @@ impl WebApp {
         output: (Value, Mask),
     ) -> Result<()> {
         let (spec, mask) = output;
-        if self.filter_display.copy_action.is_some() {
+        if self.filter_display.copy_action.is_some() || self.filter_display.picker_wanted.is_some()
+        {
             return Err(rejected("Another background image action is pending"));
         }
         if !render::stored_scoped(&doc) {
@@ -204,7 +214,8 @@ impl WebApp {
         doc: Arc<Document>,
         selection: Selection,
     ) -> Result<()> {
-        if self.filter_display.copy_action.is_some() {
+        if self.filter_display.copy_action.is_some() || self.filter_display.picker_wanted.is_some()
+        {
             return Err(rejected("Another background image action is pending"));
         }
         // Consume activation before selection bounds/capture or async awaits.
@@ -254,6 +265,7 @@ impl WebApp {
         self.queue_flat_action(ctx, doc, Purpose::Clipboard(deferred), bounds, (spec, mask))
     }
     pub(crate) fn cancel_background_image(&mut self) {
+        self.filter_display.picker_wanted = None;
         if let Some(job) = &self.filter_display.copy_action {
             job.cancelled.set(true);
             #[cfg(target_arch = "wasm32")]
@@ -263,6 +275,15 @@ impl WebApp {
         }
     }
     pub(super) fn pump_flat_action(&mut self, ctx: &egui::Context) -> bool {
+        if self.filter_display.copy_action.is_none() {
+            self.filter_display.copy_action = self.filter_display.picker_wanted.take();
+        }
+        let busy = self.pump_background_action(ctx);
+        // Do not resume display between closing an old picker and its latest
+        // replacement. Both use the existing single admitted slot.
+        busy || self.filter_display.picker_wanted.is_some()
+    }
+    fn pump_background_action(&mut self, ctx: &egui::Context) -> bool {
         if self.filter_display.copy_action.is_some() {
             let cancel =
                 ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape));
@@ -283,7 +304,7 @@ impl WebApp {
         let Some(mut job) = self.filter_display.copy_action.take() else {
             return false;
         };
-        if !job.frozen.current(self) {
+        if !job.current(self) {
             job.cancelled.set(true);
             #[cfg(target_arch = "wasm32")]
             if let Some(control) = job.control.borrow().as_ref() {
@@ -297,6 +318,7 @@ impl WebApp {
                     return true;
                 }
                 Err(error) => {
+                    self.filter_display.picker_wanted = None;
                     self.message = error.to_string();
                     return false;
                 }
@@ -317,21 +339,28 @@ impl WebApp {
                 let mask = job.mask.take().expect("pending mask");
                 let cancelled = job.cancelled.clone();
                 let control = job.control.clone();
+                let is_picker = matches!(job.purpose, Some(Purpose::Picker(_)));
                 let ctx = ctx.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let slot = Rc::default();
-                    let result = match bridge::open(capture, slot).await {
+                    let result = match bridge::open(capture.clone(), slot).await {
                         Ok(client) => {
                             *control.borrow_mut() = Some(client.copy_control());
                             let encoded = if cancelled.get() {
                                 Err(rejected("Background action cancelled"))
+                            } else if is_picker {
+                                picker::sample(&client, &capture, region)
+                                    .await
+                                    .map(Output::Picked)
                             } else {
                                 client
                                     .encode_copy(region, &spec, &mask.bytes)
                                     .await
-                                    .map(|e| Encoded {
-                                        bytes: e.bytes,
-                                        mime: e.mime,
+                                    .map(|e| {
+                                        Output::Encoded(Encoded {
+                                            bytes: e.bytes,
+                                            mime: e.mime,
+                                        })
                                     })
                             };
                             // Even a stale/error result cannot hand the slot back
@@ -363,25 +392,40 @@ impl WebApp {
             self.filter_display.copy_action = Some(job);
             return true;
         };
-        if job.cancelled.get() || !job.frozen.current(self) {
+        if job.cancelled.get() || !job.current(self) {
             self.message = "Background image action cancelled because its source changed".into();
         } else {
             match result {
-                Ok(encoded) => match job.purpose.take().expect("pending purpose") {
-                    Purpose::Download { name } => self.files.download_asset_as(
-                        ctx,
-                        &encoded.bytes,
-                        &name,
-                        &encoded.mime,
-                        job.frozen.owner,
-                    ),
-                    Purpose::Print { title } => {
+                Ok(output) => match (job.purpose.take().expect("pending purpose"), output) {
+                    (Purpose::Download { name }, Output::Encoded(encoded)) => {
+                        self.files.download_asset_as(
+                            ctx,
+                            &encoded.bytes,
+                            &name,
+                            &encoded.mime,
+                            job.frozen.owner,
+                        )
+                    }
+                    (Purpose::Print { title }, Output::Encoded(encoded)) => {
                         self.printer.request_encoded(ctx, encoded.bytes, title)
                     }
-                    Purpose::Clipboard(deferred) => match deferred.complete(ctx, &encoded.bytes) {
-                        Ok(ack) => self.clipboard.accept_background(ack),
-                        Err(error) => self.message = error.to_string(),
-                    },
+                    (Purpose::Clipboard(deferred), Output::Encoded(encoded)) => {
+                        match deferred.complete(ctx, &encoded.bytes) {
+                            Ok(ack) => self.clipboard.accept_background(ack),
+                            Err(error) => self.message = error.to_string(),
+                        }
+                    }
+                    (Purpose::Picker(intent), Output::Picked(color)) => {
+                        match self.editor.apply_sampled_color(&intent.pick, color) {
+                            Ok(()) => {
+                                self.controls.primary = self.editor.tools.color;
+                                self.controls.secondary = self.editor.tools.secondary;
+                                self.controls.tool = self.editor.tools.tool;
+                            }
+                            Err(error) => self.message = error.to_string(),
+                        }
+                    }
+                    _ => self.message = "Background result kind changed".into(),
                 },
                 Err(error) => self.message = format!("Background image unavailable: {error}"),
             }

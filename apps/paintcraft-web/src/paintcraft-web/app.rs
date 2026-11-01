@@ -295,6 +295,9 @@ impl WebApp {
             self.message = "Finish placing the pasted image before editing or saving.".into();
             return;
         }
+        if self.queue_noise_picker(&action) {
+            return;
+        }
         let remember_size = matches!(
             action,
             Edit::CropToSelection
@@ -783,5 +786,8 @@ impl eframe::App for WebApp {
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.show(ui);
+        if self.noise_picker_pending() {
+            ui.ctx().request_repaint();
+        }
     }
 }
