@@ -39,6 +39,9 @@ fn layer_info(doc: &Document) -> Value {
                         paintcraft_document::filters::inspection(&layer.filters),
                     );
                 }
+                if let Some(mask) = &layer.mask {
+                    fields.insert("mask".into(), super::layer_mask_inspection::value(mask));
+                }
                 Value::Object(fields)
             })
             .collect(),
@@ -86,21 +89,29 @@ fn catalog_assessment(
     bytes: &[u8],
 ) -> Result<Value> {
     let mut result = assessment(sha, header, mode, reasons);
-    if header.container_version == 6 {
+    if matches!(header.container_version, 6 | 7) {
         let requirements = pcnd::catalog_manifest(bytes)?;
         let Value::Object(ref mut fields) = result else {
             unreachable!("assessment object");
         };
         fields.insert(
             "schema".into(),
-            Value::str("paintcraft.open-assessment/catalog-v1"),
+            Value::str(if header.container_version == 7 {
+                "paintcraft.open-assessment/layer-appearance-v1"
+            } else {
+                "paintcraft.open-assessment/catalog-v1"
+            }),
         );
         // Header support describes grammar only. A known adoption profile is
         // reported only after the complete document reader accepted every pair.
         if mode == "editable" && header.require_supported().is_ok() {
             fields.insert(
                 "profile".into(),
-                Value::str("paintcraft.native/binary6-document6-filter-catalog1"),
+                Value::str(if header.container_version == 7 {
+                    "paintcraft.native/binary7-document7-layer-masks1"
+                } else {
+                    "paintcraft.native/binary6-document6-filter-catalog1"
+                }),
             );
         }
         fields.insert(
@@ -133,9 +144,6 @@ pub fn run(a: Options, json: bool) -> Reply {
     };
     match super::source_metadata::read(&bytes) {
         Ok(doc) => {
-            if let Err(error) = doc.require_no_layer_masks() {
-                return bare(json, Err(error));
-            }
             let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
             let assessed = match catalog_assessment(&sha, &header, "editable", &[], &bytes) {
                 Ok(value) => value,
@@ -174,7 +182,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             ]);
             let features = paintcraft_editor::session::masked_document_features(&doc);
             let requirements = paintcraft_editor::session::catalog_document_requirements(&doc);
-            if !requirements.is_empty() {
+            if !requirements.is_empty() || doc.has_layer_masks() {
                 let Value::Object(ref mut fields) = value else {
                     unreachable!("inspection object");
                 };

@@ -1,0 +1,331 @@
+{
+	"schema": "paintcraft.layer-appearance-schema-manifest/v1",
+	"profile_contract_sha256": "8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676",
+	"contract_hash_encoding": "SHA256 canonical compact sorted-key ensure_ascii JSON; no final newline",
+	"profile_contract": {
+		"schema": "paintcraft.layer-appearance-profile-contract/v1",
+		"filter_catalog_contract_sha256": "d8d4b881b9124340bc3ddb246bccc66909e3387ccb3873e5d21ebc4d3e80d7f4",
+		"filter_ids": [
+			"add-noise-rgb-v1",
+			"black-white-rgb-v1",
+			"box-blur-v1",
+			"brightness-contrast-v1",
+			"curves-rgb-v1",
+			"exposure-srgb-v1",
+			"hue-saturation-rgb-v1",
+			"invert-rgb-v1",
+			"levels-rgb-v1",
+			"posterize-rgb-v1",
+			"solarize-rgb-v1",
+			"threshold-luma-v1",
+			"vibrance-rgb-v1"
+		],
+		"feature": "layer-masks.v1",
+		"operations": [
+			{
+				"type": "object",
+				"properties": {
+					"op": {
+						"const": "layer.mask.from_selection"
+					},
+					"layer_ref": {
+						"oneOf": [
+							{
+								"type": "object",
+								"properties": {
+									"ref": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+									}
+								},
+								"required": [
+									"ref"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"format": "uuid"
+									}
+								},
+								"required": [
+									"id"
+								],
+								"additionalProperties": false
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"op",
+					"layer_ref",
+					"enabled"
+				],
+				"additionalProperties": false
+			},
+			{
+				"type": "object",
+				"properties": {
+					"op": {
+						"const": "layer.mask.set_enabled"
+					},
+					"layer_ref": {
+						"oneOf": [
+							{
+								"type": "object",
+								"properties": {
+									"ref": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+									}
+								},
+								"required": [
+									"ref"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"format": "uuid"
+									}
+								},
+								"required": [
+									"id"
+								],
+								"additionalProperties": false
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"op",
+					"layer_ref",
+					"enabled"
+				],
+				"additionalProperties": false
+			},
+			{
+				"type": "object",
+				"properties": {
+					"op": {
+						"const": "layer.mask.invert"
+					},
+					"layer_ref": {
+						"oneOf": [
+							{
+								"type": "object",
+								"properties": {
+									"ref": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+									}
+								},
+								"required": [
+									"ref"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"format": "uuid"
+									}
+								},
+								"required": [
+									"id"
+								],
+								"additionalProperties": false
+							}
+						]
+					}
+				},
+				"required": [
+					"op",
+					"layer_ref"
+				],
+				"additionalProperties": false
+			},
+			{
+				"type": "object",
+				"properties": {
+					"op": {
+						"const": "layer.mask.remove"
+					},
+					"layer_ref": {
+						"oneOf": [
+							{
+								"type": "object",
+								"properties": {
+									"ref": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+									}
+								},
+								"required": [
+									"ref"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"format": "uuid"
+									}
+								},
+								"required": [
+									"id"
+								],
+								"additionalProperties": false
+							}
+						]
+					}
+				},
+				"required": [
+					"op",
+					"layer_ref"
+				],
+				"additionalProperties": false
+			}
+		],
+		"batch_schema": "paintcraft.batch/layer-appearance-v1",
+		"result_schema": "paintcraft.result/v5",
+		"file_command_schema": "paintcraft.file-command/v5",
+		"inspect_schemas": [
+			"paintcraft.inspect/v5",
+			"paintcraft.mcp-inspect/v5"
+		],
+		"mask_metadata": {
+			"type": "object",
+			"properties": {
+				"schema": {
+					"const": "a8-bands/v1"
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"domain": {
+					"type": "array",
+					"minItems": 4,
+					"maxItems": 4,
+					"items": {
+						"type": "integer",
+						"minimum": -140737488355327,
+						"maximum": 140737488355327
+					}
+				},
+				"bands": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 262144
+				},
+				"runs": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 262144
+				},
+				"digest": {
+					"type": "string",
+					"pattern": "^[0-9a-f]{64}$"
+				},
+				"intent_digest": {
+					"type": "string",
+					"pattern": "^[0-9a-f]{64}$"
+				}
+			},
+			"required": [
+				"schema",
+				"enabled",
+				"domain",
+				"bands",
+				"runs",
+				"digest",
+				"intent_digest"
+			],
+			"additionalProperties": false
+		},
+		"source_version": 7,
+		"header7_features": [
+			"raster.rgba8",
+			"canvas.finite",
+			"layers.flat",
+			"layer-point-filters.v1",
+			"layer-filter-masks.v1",
+			"layer-filter-catalog.v1",
+			"layer-masks.v1"
+		],
+		"selection": "Actual live/staged Editor selection; no numeric layer-mask Set and no persisted live selection claim.",
+		"runtime_constraints": [
+			"exact sorted all stored filter IDs in v5 outputs",
+			"exact prospective numerical union in batch",
+			"exact operation feature array",
+			"canonical integer tokens",
+			"finite domain relationships",
+			"atomic selection capture",
+			"aggregate coverage admission",
+			"old worker capabilities remain closed"
+		],
+		"inputs": {
+			"catalog/d8d4b881b9124340bc3ddb246bccc66909e3387ccb3873e5d21ebc4d3e80d7f4/batch.schema.json": "f28e9e31a980699224d88cfee4a37df96209a4258be43d0ec1353049d7797abb",
+			"catalog/d8d4b881b9124340bc3ddb246bccc66909e3387ccb3873e5d21ebc4d3e80d7f4/inspect.schema.json": "e0c7d2c94e1e8d1aab9f737b1379697e55075d552ec09226c058a67a98e7d6f7",
+			"catalog/d8d4b881b9124340bc3ddb246bccc66909e3387ccb3873e5d21ebc4d3e80d7f4/mcp-inspect.schema.json": "c597b012317d184c94f1de65cd9887cf4fa81f40429fd77f6fedbf4e6ed897e0",
+			"result-v5.schema.json": "3012df04bb941c01d7e96cd5d3cc72020a1b0cc6ed664426ce555b1e556f374c",
+			"file-command-v5.schema.json": "2f16b95ae4ec7a19f60f1a831ab92c2c576a45bf62beed3ee251efd542047894"
+		},
+		"template_sha256": {
+			"batch": "96e7602fe93b1aea2b40c56e729025d85787d4336faad07e11053b23b4b6d4a8",
+			"result": "59fb4d59faf82f7c444b8e1c80563df92b66fb86c2467caac4e4e1ddb4804e09",
+			"file-command": "5658af1282754e7a0c2e742cd3eba3b9c6f806ff5bfd8a7728782e7cfd34974e",
+			"inspect": "253e6e9e337457df950517e8f94387706ed0a7cb69834e78ac33a0aaf6cfdc11",
+			"mcp-inspect": "b831d696918a699ebba25d1a3db607d613d9ba7841db630e43589846cabe7003"
+		}
+	},
+	"schemas": [
+		{
+			"kind": "batch",
+			"file": "batch.schema.json",
+			"id": "urn:paintcraft:schema:layer-appearance-v1:8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676:batch",
+			"sha256": "ca91c62415b450779141618e881aff65a13dca88c2ee94d9d0416f5114aec0ec"
+		},
+		{
+			"kind": "result",
+			"file": "result.schema.json",
+			"id": "urn:paintcraft:schema:layer-appearance-v1:8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676:result",
+			"sha256": "74eb7df3e7f782276d11beb1d56048f1eb1f1013e4e3f7d4a408ed80b1dfa1d1"
+		},
+		{
+			"kind": "file-command",
+			"file": "file-command.schema.json",
+			"id": "urn:paintcraft:schema:layer-appearance-v1:8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676:file-command",
+			"sha256": "02ec87f783ba2c12cd967d03ad21e140d0819e909ed3f780f8b3dd98401330fb"
+		},
+		{
+			"kind": "inspect",
+			"file": "inspect.schema.json",
+			"id": "urn:paintcraft:schema:layer-appearance-v1:8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676:inspect",
+			"sha256": "e45f308c951494d7ebe5065aeee1dfac63a86999501d21679aad54aade8699ef"
+		},
+		{
+			"kind": "mcp-inspect",
+			"file": "mcp-inspect.schema.json",
+			"id": "urn:paintcraft:schema:layer-appearance-v1:8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676:mcp-inspect",
+			"sha256": "49fcc706631bf6e345107d065d4580beba808c34a2193cdfb32006cfd9412803"
+		}
+	],
+	"availability": "Schema/source definition; qualified runtime consumers require separate execution evidence."
+}

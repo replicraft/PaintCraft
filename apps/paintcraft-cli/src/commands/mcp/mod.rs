@@ -6,6 +6,7 @@ mod floats;
 mod icns;
 mod icons;
 mod jxr;
+mod layer_masks;
 mod layered;
 mod msp;
 mod native_codec;

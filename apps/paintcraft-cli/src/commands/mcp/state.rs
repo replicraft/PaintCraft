@@ -127,10 +127,10 @@ impl State {
     pub fn inspection(&mut self) -> Result<Json> {
         let session = self.session()?;
         let doc = session.document();
-        doc.require_no_layer_masks()?;
         let layers = doc.layers_in_order().map(|layer| {
             let mut value = json!({"id":layer.id.to_string(),"name":layer.name,"visible":layer.visible,"opacity":layer.opacity});
             if !layer.filters.is_empty() {value["filters"] = core_json(&paintcraft_document::filters::inspection(&layer.filters))?;}
+            if let Some(mask) = &layer.mask {value["mask"] = core_json(&super::super::layer_mask_inspection::value(mask))?;}
             Ok(value)
         }).collect::<Result<Vec<_>>>()?;
         let mut value = json!({
@@ -148,7 +148,7 @@ impl State {
             value["document_features"] = json!(features);
         }
         let requirements = paintcraft_editor::session::catalog_document_requirements(doc);
-        if !requirements.is_empty() {
+        if !requirements.is_empty() || doc.has_layer_masks() {
             value["required_filters"] = json!(requirements);
         }
         Ok(value)
@@ -207,7 +207,13 @@ impl State {
         if bytes.len() as u64 > OPERATIONS_MAX {
             return Err(invalid("batch exceeds size limit"));
         }
-        let parsed = paintcraft_commands::Batch::from_json(&bytes)?;
+        let parsed = if schema == paintcraft_commands::LAYER_APPEARANCE_BATCH_SCHEMA {
+            let value = paintcraft_core::types::json::parse(&bytes)
+                .map_err(|_| invalid("invalid operations"))?;
+            paintcraft_commands::Batch::from_generated_value(value)?
+        } else {
+            paintcraft_commands::Batch::from_json(&bytes)?
+        };
         let mode = super::super::render_workspace::Mode::capture(session.document(), Some(&parsed));
         let receipt =
             super::super::render_workspace::run_captured(mode, || session.apply(&parsed))?;
@@ -287,21 +293,16 @@ mod source_tests;
 mod own_mask_inspection_tests {
     use super::*;
     #[test]
-    fn legacy_inspection_refuses_own_presence_without_mutation_or_mask_drop() {
+    fn own_mask_inspection_discloses_finite_intent_without_mutation_or_payload() {
         use paintcraft_core::types::{Rect, resources::SharedBudget};
         use paintcraft_document::LayerMask;
         use paintcraft_raster::coverage_mask::A8Mask;
         let budget = SharedBudget::new(8192);
         for enabled in [false, true] {
             for coverage in [0, 255] {
-                let mut doc = paintcraft_document::new_document(
-                    2,
-                    1,
-                    Some(paintcraft_core::types::Rgba::TRANSPARENT),
-                    0,
-                    POLICY,
-                )
-                .unwrap();
+                let mut doc =
+                    paintcraft_document::new_document(2, 1, Some(Rgba::TRANSPARENT), 0, POLICY)
+                        .unwrap();
                 let id = doc.roots[0];
                 let field = A8Mask::uniform(
                     Rect::new(0, 0, 2, 1).unwrap(),
@@ -317,10 +318,12 @@ mod own_mask_inspection_tests {
                     ..Default::default()
                 };
                 let before = state.session.as_ref().unwrap().snapshot();
-                assert_eq!(
-                    state.inspection().unwrap_err().code,
-                    ErrorCode::CapabilityUnsupported
-                );
+                let inspected = state.inspection().unwrap();
+                assert_eq!(inspected["schema"], "paintcraft.mcp-inspect/v5");
+                assert_eq!(inspected["required_filters"], json!([]));
+                assert_eq!(inspected["document_features"], json!(["layer-masks.v1"]));
+                assert_eq!(inspected["layers"][0]["mask"]["enabled"], enabled);
+                assert!(inspected["layers"][0]["mask"].get("pixels").is_none());
                 assert!(std::sync::Arc::ptr_eq(
                     &before,
                     &state.session.as_ref().unwrap().snapshot()

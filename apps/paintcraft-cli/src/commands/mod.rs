@@ -4,6 +4,8 @@
 mod export_metadata;
 mod filter_inspection;
 mod import_source;
+mod layer_appearance_schemas;
+mod layer_mask_inspection;
 mod persistence;
 mod render_workspace;
 pub(crate) use render_workspace::command as with_render_workspace;

@@ -619,6 +619,7 @@ impl PaintingServer {
             + Self::palette_router()
             + Self::shapes_router()
             + Self::brush_router()
+            + Self::layer_mask_router()
     }
 }
 

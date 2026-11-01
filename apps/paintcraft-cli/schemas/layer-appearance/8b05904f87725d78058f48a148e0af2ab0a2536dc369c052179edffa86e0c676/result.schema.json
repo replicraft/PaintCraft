@@ -1,0 +1,257 @@
+{
+	"type": "object",
+	"properties": {
+		"schema": {
+			"const": "paintcraft.result/v5"
+		},
+		"committed": {
+			"type": "boolean"
+		},
+		"state_id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"publication_epoch": {
+			"type": "string",
+			"pattern": "^(0|[1-9][0-9]{0,19})$"
+		},
+		"history_id": {
+			"anyOf": [
+				{
+					"type": "string",
+					"format": "uuid"
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"aliases": {
+			"type": "object",
+			"propertyNames": {
+				"type": "string",
+				"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+			},
+			"additionalProperties": {
+				"type": "string",
+				"format": "uuid"
+			}
+		},
+		"warnings": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"minItems": 0
+		},
+		"filter_aliases": {
+			"type": "object",
+			"minProperties": 1,
+			"propertyNames": {
+				"type": "string",
+				"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+			},
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"layer_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"filter_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				},
+				"required": [
+					"layer_id",
+					"filter_id"
+				],
+				"additionalProperties": false
+			}
+		},
+		"document_features": {
+			"oneOf": [
+				{
+					"const": [
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-masks.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-masks.v1",
+						"source-metadata.v1"
+					]
+				}
+			]
+		},
+		"required_filters": {
+			"type": "array",
+			"items": {
+				"enum": [
+					"add-noise-rgb-v1",
+					"black-white-rgb-v1",
+					"box-blur-v1",
+					"brightness-contrast-v1",
+					"curves-rgb-v1",
+					"exposure-srgb-v1",
+					"hue-saturation-rgb-v1",
+					"invert-rgb-v1",
+					"levels-rgb-v1",
+					"posterize-rgb-v1",
+					"solarize-rgb-v1",
+					"threshold-luma-v1",
+					"vibrance-rgb-v1"
+				]
+			},
+			"uniqueItems": true,
+			"minItems": 0,
+			"maxItems": 13,
+			"$comment": "Runtime requires sorted unique ALL stored profile IDs for own-mask v5, including legacy descriptors; filterless Some emits an empty array."
+		}
+	},
+	"required": [
+		"schema",
+		"committed",
+		"state_id",
+		"publication_epoch",
+		"history_id",
+		"aliases",
+		"warnings",
+		"document_features",
+		"required_filters"
+	],
+	"additionalProperties": false,
+	"title": "PaintCraft layer appearance result",
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:paintcraft:schema:layer-appearance-v1:8b05904f87725d78058f48a148e0af2ab0a2536dc369c052179edffa86e0c676:result",
+	"$comment": "Additive immutable own-layer-mask contract; runtime verifies exact inventories, lexical integers, finite domain and actual selection capture. Old profiles remain unchanged."
+}

@@ -18,7 +18,7 @@ fn painting_history_atomicity_preview_and_guarded_files() {
     let mut c = Client::at(std::path::Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
     let tools = c.request("tools/list", json!({}));
     let tools = tools["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 30);
+    assert_eq!(tools.len(), 35);
     assert!(tools.iter().any(|tool| tool["name"] == "inspect_source"));
     assert_eq!(c.call("inspect_document", json!({}))["isError"], true);
     c.ok("create_canvas", json!({"width":32,"height":24}));
@@ -267,3 +267,6 @@ mod hsl;
 
 #[path = "mcp/noise.rs"]
 mod noise;
+
+#[path = "mcp/layer_masks.rs"]
+mod layer_masks;

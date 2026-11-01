@@ -432,3 +432,46 @@ bundle is widened. Fetch the new schemas with `schema result-v5` and
 `schema file-command-v5`. These output disclosures do not authorize a worker,
 foreign bake, mask command or input-batch capability; existing unsupported
 routes continue to refuse rather than discard own-mask intent.
+
+
+Selection-derived own-layer mask commands
+
+The additive `paintcraft.batch/layer-appearance-v1` envelope carries both exact
+`required_filters` (the sorted numerical Add/Update union) and
+`required_layer_features` (`["layer-masks.v1"]` when any `layer.mask.*` operation
+is present, otherwise `[]`). It admits four closed operations:
+`layer.mask.from_selection` and `layer.mask.set_enabled` require `layer_ref` and
+an explicit Boolean `enabled`; `layer.mask.invert` and `layer.mask.remove`
+require only `layer_ref`. No numeric layer-mask Set payload is accepted.
+Old batch envelopes and all historical schemas/catalog bundles stay closed.
+
+CLI uses the existing `apply --operations` path. Select in the same atomic batch
+before `layer.mask.from_selection` (e.g. `selection.set_rect`/polygon). A PCND
+project persists coverage and intent, not the former live selection; a new CLI
+process cannot reconstruct an unpersisted selection. MCP tools
+`layer_mask_from_selection`, `layer_mask_set_enabled`, `layer_mask_invert` and
+`layer_mask_remove` use the actual mutex-owned Session and its current selection.
+Inactive selection refuses; explicit empty selection produces stored zero
+coverage. Missing masks cannot be invented by enable/invert; removing an absent
+mask remains a no-op. Undo retains source pixels, masks and selection.
+
+Discover the independent immutable bundle with `schema layer-appearance` or MCP
+`get_layer_appearance_schema`; choose `batch-layer-appearance`,
+`result-layer-appearance`, `file-command-layer-appearance`, `inspect-v5` or
+`mcp-inspect-v5`. The thirteen numerical filter IDs are unchanged.
+`get_batch_schema` and `get_catalog_schema` retain their old replies.
+
+Any stored own mask selects `paintcraft.inspect/v5` or
+`paintcraft.mcp-inspect/v5`, including disabled/zero/full. Each affected layer
+has a `mask` object containing `schema: "a8-bands/v1"`, enabled, finite domain,
+band/run counts, coverage `digest` and distinct `intent_digest` (also binding
+enabled). No A8 samples or runs are exported through inspection. V5 always
+includes sorted all-stored `required_filters`, possibly empty; ordinary
+mask-free documents keep their old inspection shapes. The CLI's actual PCND7
+assessment uses `paintcraft.open-assessment/layer-appearance-v1` and
+`paintcraft.native/binary7-document7-layer-masks1`; actual manifest pairs may be
+empty and remain separate from numerical ID inventory.
+
+These command/inspection contracts do not widen old Source2–6/Export4–8 or
+foreign filter-bake authority. Persistence/command/render consumer qualification
+is reported separately; schema discovery alone grants none of those capabilities.

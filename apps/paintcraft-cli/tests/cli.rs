@@ -150,3 +150,6 @@ mod hsl;
 
 #[path = "cli/noise.rs"]
 mod noise;
+
+#[path = "cli/layer_masks.rs"]
+mod layer_masks;

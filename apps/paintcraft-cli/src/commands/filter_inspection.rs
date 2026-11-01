@@ -33,7 +33,9 @@ pub(super) fn expanded(doc: &Document) -> bool {
     })
 }
 pub(super) fn cli_schema(doc: &Document) -> &'static str {
-    if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
+    if doc.has_layer_masks() {
+        "paintcraft.inspect/v5"
+    } else if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
         "paintcraft.inspect/catalog-v1"
     } else if spatial(doc) {
         "paintcraft.inspect/v4"
@@ -46,7 +48,9 @@ pub(super) fn cli_schema(doc: &Document) -> &'static str {
     }
 }
 pub(super) fn mcp_schema(doc: &Document, masked: bool) -> Option<&'static str> {
-    if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
+    if doc.has_layer_masks() {
+        Some("paintcraft.mcp-inspect/v5")
+    } else if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
         Some("paintcraft.mcp-inspect/catalog-v1")
     } else if spatial(doc) {
         Some("paintcraft.mcp-inspect/v4")
