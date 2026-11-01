@@ -64,6 +64,42 @@ impl PaintingServer {
             ))]),
         }
     }
+    async fn work_unscoped(
+        &self,
+        job: impl FnOnce(&mut State) -> paintcraft_core::types::Result<CallToolResult> + Send + 'static,
+    ) -> CallToolResult {
+        let state = self.state.clone();
+        match tokio::task::spawn_blocking(move || {
+            let mut state = state
+                .lock()
+                .map_err(|_| state::invalid("painting session unavailable"))?;
+            job(&mut state)
+        })
+        .await
+        {
+            Ok(Ok(result)) => result,
+            Ok(Err(error)) => CallToolResult::error(vec![ContentBlock::text(
+                String::from_utf8_lossy(&crate::report::json_line(&crate::report::error_value(
+                    &error,
+                )))
+                .into_owned(),
+            )]),
+            Err(error) => CallToolResult::error(vec![ContentBlock::text(format!(
+                "painting worker failed: {error}"
+            ))]),
+        }
+    }
+    // Called only by current-document render endpoints, after typed request decoding.
+    async fn work_document(
+        &self,
+        job: impl FnOnce(&mut State) -> paintcraft_core::types::Result<CallToolResult> + Send + 'static,
+    ) -> CallToolResult {
+        self.work_unscoped(move |state| {
+            let mode = super::render_workspace::Mode::capture(state.session()?.document(), None);
+            super::render_workspace::run_captured(mode, || job(state))
+        })
+        .await
+    }
 }
 
 pub fn run(_: Options) -> std::process::ExitCode {

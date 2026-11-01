@@ -78,6 +78,9 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
     let command = match cli.command {
         Command::Mcp(options) => return commands::mcp::run(options),
+        Command::Render(options) => return print_reply(commands::render::run(options, cli.json)),
+        Command::Apply(options) => return print_reply(commands::apply::run(options, cli.json)),
+        Command::Flatten(options) => return print_reply(commands::flatten::run(options, cli.json)),
         command => command,
     };
     let reply = commands::with_render_workspace(cli.json, || match command {
@@ -106,6 +109,9 @@ fn main() -> ExitCode {
         Command::Shape(a) => commands::shapes::run(a, cli.json),
         Command::Brush(a) => commands::brushes::run(a, cli.json),
     });
+    print_reply(reply)
+}
+fn print_reply(reply: commands::Reply) -> ExitCode {
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);
     ExitCode::from(reply.exit)

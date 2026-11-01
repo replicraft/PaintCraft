@@ -149,30 +149,36 @@ pub fn run(a: Options, json: bool) -> Reply {
             )?;
             captured_source.check(dest)?;
             // Missing acknowledgements fail here, before anything is written.
-            let flat = if a.render_workers == 1 {
-                export::export_flat_options(&doc, options, &allowed)?
-            } else {
-                let pool = rayon::ThreadPoolBuilder::new()
-                    .num_threads(usize::from(a.render_workers))
-                    .thread_name(|i| format!("paintcraft-export-{i}"))
-                    .build()
-                    .map_err(|e| {
-                        Error::new(
-                            ErrorCode::ResourceLimit,
-                            format!("cannot create export workers: {e}"),
-                        )
-                    })?;
-                export::export_flat_options_with(&doc, options, &allowed, |doc| {
-                    paintcraft_render::parallel::render_in_pool(
-                        &pool,
-                        doc,
-                        doc.canvas_rect(),
-                        paintcraft_render::parallel::Partition::Bands { rows: 64 },
-                        0,
-                        || Ok(()),
-                    )
-                })?
-            };
+            let flat = super::render_workspace::run_captured(
+                super::render_workspace::Mode::capture(&doc, None),
+                || {
+                    let flat = if a.render_workers == 1 {
+                        export::export_flat_options(&doc, options, &allowed)?
+                    } else {
+                        let pool = rayon::ThreadPoolBuilder::new()
+                            .num_threads(usize::from(a.render_workers))
+                            .thread_name(|i| format!("paintcraft-export-{i}"))
+                            .build()
+                            .map_err(|e| {
+                                Error::new(
+                                    ErrorCode::ResourceLimit,
+                                    format!("cannot create export workers: {e}"),
+                                )
+                            })?;
+                        export::export_flat_options_with(&doc, options, &allowed, |doc| {
+                            paintcraft_render::parallel::render_in_pool(
+                                &pool,
+                                doc,
+                                doc.canvas_rect(),
+                                paintcraft_render::parallel::Partition::Bands { rows: 64 },
+                                0,
+                                || Ok(()),
+                            )
+                        })?
+                    };
+                    Ok(flat)
+                },
+            )?;
             let ctx = Context {
                 operation: "export",
                 source_state: doc.state_id,
@@ -242,46 +248,51 @@ fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
             &|| Ok(()),
         )?,
     };
-    let (receipt, ok, summary, details) =
-        if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
-            dds_export::write_copy_with_policies(
-                &doc,
-                a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                paintcraft_runtime::SharedBudget::new(512 << 20),
-                &protect,
-                &|| Ok(()),
-                policies,
-            )?
-        } else if a.source_metadata == export::metadata_policy::Intent::Refuse {
-            dds_export::write_copy(
-                &doc,
-                a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                paintcraft_runtime::SharedBudget::new(512 << 20),
-                &protect,
-                &|| Ok(()),
-            )?
-        } else {
-            dds_export::write_copy_with_metadata_policy(
-                &doc,
-                a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                paintcraft_runtime::SharedBudget::new(512 << 20),
-                &protect,
-                &|| Ok(()),
-                policy,
-            )?
-        };
+    let (receipt, ok, summary, details) = super::render_workspace::run_captured(
+        super::render_workspace::Mode::capture(&doc, None),
+        || {
+            let result = if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
+                dds_export::write_copy_with_policies(
+                    &doc,
+                    a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+                    dest,
+                    a.output.overwrite,
+                    &allowed,
+                    Some(sha),
+                    paintcraft_runtime::SharedBudget::new(512 << 20),
+                    &protect,
+                    &|| Ok(()),
+                    policies,
+                )?
+            } else if a.source_metadata == export::metadata_policy::Intent::Refuse {
+                dds_export::write_copy(
+                    &doc,
+                    a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+                    dest,
+                    a.output.overwrite,
+                    &allowed,
+                    Some(sha),
+                    paintcraft_runtime::SharedBudget::new(512 << 20),
+                    &protect,
+                    &|| Ok(()),
+                )?
+            } else {
+                dds_export::write_copy_with_metadata_policy(
+                    &doc,
+                    a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+                    dest,
+                    a.output.overwrite,
+                    &allowed,
+                    Some(sha),
+                    paintcraft_runtime::SharedBudget::new(512 << 20),
+                    &protect,
+                    &|| Ok(()),
+                    policy,
+                )?
+            };
+            Ok(result)
+        },
+    )?;
 
     Ok(Written {
         engine: Some(details),
@@ -340,46 +351,51 @@ fn explicit_msp(a: &Options, version: msp_options::Version) -> Result<Written> {
             &|| Ok(()),
         )?,
     };
-    let (receipt, ok, summary, details) =
-        if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
-            msp_export::write_copy_with_policies(
-                &doc,
-                version,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                paintcraft_runtime::SharedBudget::new(512 << 20),
-                &protect,
-                &|| Ok(()),
-                policies,
-            )?
-        } else if a.source_metadata == export::metadata_policy::Intent::Refuse {
-            msp_export::write_copy(
-                &doc,
-                version,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                paintcraft_runtime::SharedBudget::new(512 << 20),
-                &protect,
-                &|| Ok(()),
-            )?
-        } else {
-            msp_export::write_copy_with_metadata_policy(
-                &doc,
-                version,
-                dest,
-                a.output.overwrite,
-                &allowed,
-                Some(sha),
-                paintcraft_runtime::SharedBudget::new(512 << 20),
-                &protect,
-                &|| Ok(()),
-                policy,
-            )?
-        };
+    let (receipt, ok, summary, details) = super::render_workspace::run_captured(
+        super::render_workspace::Mode::capture(&doc, None),
+        || {
+            let result = if a.losses.filter_bake_intent() == export::filter_bake::Intent::Bake {
+                msp_export::write_copy_with_policies(
+                    &doc,
+                    version,
+                    dest,
+                    a.output.overwrite,
+                    &allowed,
+                    Some(sha),
+                    paintcraft_runtime::SharedBudget::new(512 << 20),
+                    &protect,
+                    &|| Ok(()),
+                    policies,
+                )?
+            } else if a.source_metadata == export::metadata_policy::Intent::Refuse {
+                msp_export::write_copy(
+                    &doc,
+                    version,
+                    dest,
+                    a.output.overwrite,
+                    &allowed,
+                    Some(sha),
+                    paintcraft_runtime::SharedBudget::new(512 << 20),
+                    &protect,
+                    &|| Ok(()),
+                )?
+            } else {
+                msp_export::write_copy_with_metadata_policy(
+                    &doc,
+                    version,
+                    dest,
+                    a.output.overwrite,
+                    &allowed,
+                    Some(sha),
+                    paintcraft_runtime::SharedBudget::new(512 << 20),
+                    &protect,
+                    &|| Ok(()),
+                    policy,
+                )?
+            };
+            Ok(result)
+        },
+    )?;
 
     Ok(Written {
         engine: Some(details),

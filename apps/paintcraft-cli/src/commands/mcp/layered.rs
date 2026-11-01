@@ -40,7 +40,7 @@ impl PaintingServer {
         description = "Export a fresh PSD/PSB/PDN/PAINT layered copy, only when its registry writer qualification is available. Does not flatten or clear dirty state. Preserving Save is unavailable. Currently refused pending required original-application qualification; loss consent cannot override that gate."
     )]
     async fn export_layered(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
-        self.work(move |state| {
+        self.work_document(move |state| {
             let path = PathBuf::from(p.path);
             export_layered::admit(Frontend::Studio, p.format, &path)?;
             let target = p.format.target(

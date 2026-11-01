@@ -206,7 +206,10 @@ impl State {
         if bytes.len() as u64 > OPERATIONS_MAX {
             return Err(invalid("batch exceeds size limit"));
         }
-        let receipt = session.apply_json(&bytes)?;
+        let parsed = paintcraft_commands::Batch::from_json(&bytes)?;
+        let mode = super::super::render_workspace::Mode::capture(session.document(), Some(&parsed));
+        let receipt =
+            super::super::render_workspace::run_captured(mode, || session.apply(&parsed))?;
         Ok(reply(core_json(&receipt.to_value())?))
     }
     pub fn save(&mut self, path: PathBuf, overwrite: bool) -> Result<CallToolResult> {

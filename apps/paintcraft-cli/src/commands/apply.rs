@@ -23,7 +23,9 @@ pub fn run(a: Options, json: bool) -> Reply {
             guard(a.expect_input_sha256.as_deref(), &sha)?;
             let (ops, _) = read_bounded(&a.operations, OPERATIONS_MAX, "operations file")?;
             let mut session = super::persistence::session(super::source_metadata::read(&bytes)?);
-            let receipt = session.apply_json(&ops)?;
+            let batch = paintcraft_commands::Batch::from_json(&ops)?;
+            let mode = super::render_workspace::Mode::capture(session.document(), Some(&batch));
+            let receipt = super::render_workspace::run_captured(mode, || session.apply(&batch))?;
             let ctx = Context {
                 operation: if in_place { "save" } else { "save-as" },
                 source_state: session.document().state_id,

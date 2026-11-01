@@ -29,8 +29,10 @@ pub fn run(options: Options, json: bool) -> Reply {
                 ));
             }
             let mut session = super::persistence::session(super::source_metadata::read(&bytes)?);
-            let engine =
-                session.flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))?;
+            let mode = super::render_workspace::Mode::capture(session.document(), None);
+            let engine = super::render_workspace::run_captured(mode, || {
+                session.flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))
+            })?;
             let ctx = Context {
                 operation: if in_place { "save" } else { "save-as" },
                 source_state: session.document().state_id,

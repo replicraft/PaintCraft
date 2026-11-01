@@ -63,7 +63,7 @@ impl PaintingServer {
         description = "Export fresh multi-size ICO/CUR assets with explicit PNG/bitmap entries and cursor hotspots. Fits each size from the original canvas. Requires allow_losses consent, including icon-resized when sizes differ. Preserves the open project and dirty state."
     )]
     async fn export_icons(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
-        self.work(move |state| {
+        self.work_document(move |state| {
             icons::check_export_loss_codes(&p.allow_losses)?;
             let path = PathBuf::from(p.path);
             state.protect_copy_sources(&path)?;

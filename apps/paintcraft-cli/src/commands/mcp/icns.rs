@@ -102,7 +102,7 @@ impl PaintingServer {
         description = "Export a fresh ICNS set using explicit PNG tags and logical/Retina densities. ic11 is 16@2; ic12 is 32@2. Fits each size independently and requires actual loss consent. Small 1x, legacy RGB/mask, and ARGB writing are refused. Leaves the project and dirty state unchanged."
     )]
     async fn export_icns(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
-        self.work(move |state| {
+        self.work_document(move |state| {
             icons::check_export_loss_codes(&p.allow_losses)?;
             let path = PathBuf::from(p.path);
             state.protect_copy_sources(&path)?;

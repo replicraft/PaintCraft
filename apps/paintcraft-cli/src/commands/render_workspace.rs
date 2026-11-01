@@ -5,6 +5,8 @@ use super::*;
 use paintcraft_core::types::resources::{AllocationClass, SharedBudget};
 use paintcraft_render::spatial::{WorkspaceAdmission, with_workspace};
 use std::sync::OnceLock;
+mod noise;
+pub(super) use noise::{Mode, run_captured};
 const BYTES: u64 = 64 << 20;
 const WORK: u64 = 1_000_000_000;
 fn realm() -> &'static SharedBudget {

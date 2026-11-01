@@ -36,7 +36,7 @@ impl PaintingServer {
         let life = super::native_codec::RpcLife::new();
         let dropped = life.0.clone();
         let cancellation = context.ct.clone();
-        self.work(move |state| {
+        self.work_document(move |state| {
             let check: super::super::jxr_export_job::Check = std::sync::Arc::new(move || {
                 if cancellation.is_cancelled() || dropped.load(std::sync::atomic::Ordering::Acquire)
                 {

@@ -304,7 +304,7 @@ impl PaintingServer {
         description = "Paint a continuous brush stroke. Points use canvas pixel coordinates; color is #RRGGBBAA. Defaults to smooth-round on the top layer."
     )]
     async fn paint_stroke(&self, Parameters(p): Parameters<Stroke>) -> CallToolResult {
-        self.work(move |s| {
+        self.work_unscoped(move |s| {
             let layer = s.layer(p.layer_id)?;
             s.apply(vec![json!({"op":"raster.stroke_path","layer_ref":layer,"points":p.points,
                 "color":p.color,"size":p.size,"brush":p.brush.unwrap_or_else(||"smooth-round".into()),"mode":"source-over"})])
@@ -314,7 +314,7 @@ impl PaintingServer {
         description = "Draw a shape with optional fill and outline. Supply at least one of fill or stroke_color. Colors are #RRGGBBAA."
     )]
     async fn draw_shape(&self, Parameters(p): Parameters<Shape>) -> CallToolResult {
-        self.work(move |s| {
+        self.work_unscoped(move |s| {
             let layer = s.layer(p.layer_id)?;
             let mut op = json!({"op":"raster.shape","layer_ref":layer,"kind":p.kind,"from":p.from,"to":p.to,"mode":"source-over"});
             if let Some(fill) = p.fill {op["fill"] = json!(fill);}
@@ -341,7 +341,7 @@ impl PaintingServer {
         description = "Apply engine operations as one atomic, undoable batch. Use get_batch_schema for operation definitions. The server captures the current base ticket; failures publish no edits."
     )]
     async fn apply_operations(&self, Parameters(p): Parameters<Batch>) -> CallToolResult {
-        self.work(move |s| s.apply(p.operations)).await
+        self.work_unscoped(move |s| s.apply(p.operations)).await
     }
     #[tool(description = "Undo the previous batch, or redo it when redo is true.")]
     async fn history(&self, Parameters(p): Parameters<Navigate>) -> CallToolResult {
@@ -359,7 +359,7 @@ impl PaintingServer {
         description = "Flatten the visible canvas into one layer as a single undoable edit. Hidden layers and off-canvas pixels are removed from the current state; Undo restores them. Does nothing when there is at most one layer."
     )]
     async fn flatten_image(&self) -> CallToolResult {
-        self.work(|state| {
+        self.work_document(|state| {
             let receipt = state
                 .session()?
                 .flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))?;
@@ -371,7 +371,7 @@ impl PaintingServer {
         description = "Return a PNG preview of the composited canvas, at most 256 pixels per side. Does not save or alter the project."
     )]
     async fn preview(&self) -> CallToolResult {
-        self.work(|s| {
+        self.work_document(|s| {
             let frame = paintcraft_render::thumbnail::render_document(
                 s.session()?.document(),
                 256,
@@ -404,7 +404,7 @@ impl PaintingServer {
         let life = super::native_codec::RpcLife::new();
         let dropped = life.0.clone();
         let cancellation = context.ct.clone();
-        self.work(move |s| {
+        self.work_document(move |s| {
             let path = PathBuf::from(p.path);
             s.protect_copy_sources(&path)?;
             let format = ImageFormat::from_extension(&path)
