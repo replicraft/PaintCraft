@@ -131,7 +131,8 @@ impl WebApp {
                     Default::default()
                 };
                 let name = self.download_name(format);
-                if format.is_some() && crate::app::filter_editing::render::stored_scoped(&snapshot)
+                if format.is_some()
+                    && crate::app::filter_editing::render::stored_background(&snapshot)
                 {
                     let result = self.queue_noise_download(
                         ctx,

@@ -82,7 +82,7 @@ impl WebApp {
             return false;
         };
         if pick.source != SampleSource::Image
-            || !render::stored_scoped(self.editor.session.document())
+            || !render::stored_background(self.editor.session.document())
         {
             return false;
         }
@@ -107,11 +107,14 @@ impl WebApp {
             self.forget_noise_preview();
         }
         let capture = self.filter_capture();
+        // Latest-click replacement retains this click's actual original caller.
+        let source = channel::SourceKey::new(capture.clone(), None, None)?;
         let area = region(&capture.document, &pick)?;
         let job = Job {
             frozen: Frozen::capture(self),
             flatten: None,
             capture,
+            source,
             region: area,
             spec: Value::Null,
             mask: Some(self.empty_copy_mask()),
@@ -145,7 +148,11 @@ impl WebApp {
     }
 }
 #[cfg(target_arch = "wasm32")]
-pub(super) async fn sample(client: &bridge::Client, capture: &Capture, area: Rect) -> Result<Rgba> {
+pub(super) async fn sample(
+    client: &channel::Client,
+    capture: &Capture,
+    area: Rect,
+) -> Result<Rgba> {
     let reply = client
         .run(
             Request {

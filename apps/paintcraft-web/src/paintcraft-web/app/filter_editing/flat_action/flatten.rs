@@ -24,7 +24,7 @@ impl WebApp {
     }
     pub(crate) fn queue_noise_flatten(&mut self, action: &paintcraft_tools::Action) -> bool {
         if !matches!(action, paintcraft_tools::Action::FlattenImage)
-            || !render::stored_scoped(self.editor.session.document())
+            || !render::stored_background(self.editor.session.document())
         {
             return false;
         }
@@ -53,6 +53,8 @@ impl WebApp {
         self.forget_noise_preview();
         let preparation = self.editor.session.preparation()?;
         let capture = self.filter_capture();
+        // Keep the original caller through later display suspension/close ACK.
+        let source = channel::SourceKey::new(capture.clone(), None, None)?;
         let mut account = self.clipboard.budget.account(AllocationClass::SharedBudget);
         // Reserve the complete raw output bound BEFORE Client::run allocates.
         // This uses the existing Main clipboard realm, not the Worker lease.
@@ -67,6 +69,7 @@ impl WebApp {
             region: capture.document.canvas_rect(),
             flatten: Some(transaction),
             capture,
+            source,
             spec: Value::Null,
             mask: Some(self.empty_copy_mask()),
             purpose: Some(Purpose::Flatten),
@@ -80,7 +83,7 @@ impl WebApp {
 }
 #[cfg(target_arch = "wasm32")]
 pub(super) async fn render(
-    client: &bridge::Client,
+    client: &channel::Client,
     capture: &Capture,
     region: Rect,
     account: BudgetAccount,

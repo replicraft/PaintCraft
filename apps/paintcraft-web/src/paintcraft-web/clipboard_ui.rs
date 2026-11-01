@@ -122,7 +122,7 @@ impl WebApp {
         };
         let source = self.editor.session.snapshot();
         let selection = self.editor.session.selection();
-        if visible && crate::app::filter_editing::render::stored_scoped(&source) {
+        if visible && crate::app::filter_editing::render::stored_background(&source) {
             if let Err(error) = self.queue_noise_visible_copy(ctx, source, selection) {
                 self.message = error.to_string();
             }

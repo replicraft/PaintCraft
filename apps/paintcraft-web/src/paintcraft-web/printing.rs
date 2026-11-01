@@ -117,7 +117,7 @@ impl WebApp {
                 return;
             }
         };
-        if crate::app::filter_editing::render::stored_scoped(&snapshot) {
+        if crate::app::filter_editing::render::stored_background(&snapshot) {
             if let Err(error) = self.queue_noise_print(ctx, snapshot, self.document_title()) {
                 self.message = error.to_string();
             }

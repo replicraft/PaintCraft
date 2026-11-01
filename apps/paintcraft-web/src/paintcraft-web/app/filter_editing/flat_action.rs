@@ -1,5 +1,7 @@
 //! One frozen background action borrows the display's SINGLE admitted slot.
 use super::*;
+#[cfg(test)]
+mod appearance_tests;
 mod flatten;
 #[cfg(test)]
 mod flatten_tests;
@@ -84,6 +86,7 @@ pub(super) struct Job {
     frozen: Frozen,
     flatten: Option<flatten::Transaction>,
     capture: Capture,
+    source: channel::SourceKey,
     region: Rect,
     spec: Value,
     mask: Option<Mask>,
@@ -91,7 +94,7 @@ pub(super) struct Job {
     outcome: Option<Outcome>,
     cancelled: Rc<Cell<bool>>,
     #[cfg(target_arch = "wasm32")]
-    control: Rc<RefCell<Option<bridge::CopyControl>>>,
+    control: Rc<RefCell<Option<channel::CopyControl>>>,
 }
 fn rejected(message: &str) -> paintcraft_core::types::Error {
     paintcraft_core::types::Error::new(
@@ -112,12 +115,19 @@ impl WebApp {
         output: (Value, Mask),
     ) -> Result<()> {
         let (spec, mask) = output;
+        if doc.has_layer_masks() && matches!(&purpose, Purpose::Download { .. }) {
+            return Err(rejected(
+                "Foreign layer-mask download requires an appearance export profile",
+            ));
+        }
         if self.filter_display.copy_action.is_some() || self.filter_display.picker_wanted.is_some()
         {
             return Err(rejected("Another background image action is pending"));
         }
-        if !render::stored_scoped(&doc) {
-            return Err(rejected("Background image action requires stored Noise"));
+        if !render::stored_background(&doc) {
+            return Err(rejected(
+                "Background image action requires stored appearance",
+            ));
         }
         if let Purpose::Download { name } | Purpose::Print { title: name } = &purpose
             && name.len() > 1024
@@ -136,10 +146,13 @@ impl WebApp {
         capture.document = doc;
         capture.scoped = true;
         capture.programs = true;
+        // Capture the actual caller now, before display close ACK or async work.
+        let source = channel::SourceKey::new(capture.clone(), None, Some(&spec))?;
         self.filter_display.copy_action = Some(Job {
             frozen,
             flatten: None,
             capture,
+            source,
             region,
             spec,
             mask: Some(mask),
@@ -341,6 +354,7 @@ impl WebApp {
             #[cfg(target_arch = "wasm32")]
             {
                 let capture = job.capture.clone();
+                let source = job.source.clone();
                 let region = job.region;
                 let spec = job.spec.clone();
                 let mask = job.mask.take().expect("pending mask");
@@ -350,8 +364,11 @@ impl WebApp {
                 let raw_account = job.flatten.as_mut().and_then(|t| t.account.take());
                 let ctx = ctx.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                    let slot = Rc::default();
-                    let result = match bridge::open(capture.clone(), slot).await {
+                    let slot = channel::CancelSlot::with_flag(cancelled.clone());
+                    *control.borrow_mut() = Some(channel::CopyControl::Opening(slot.clone()));
+                    let opened =
+                        channel::open(source, slot, paintcraft_raster::Admission::new(0)).await;
+                    let result = match opened {
                         Ok(client) => {
                             *control.borrow_mut() = Some(client.copy_control());
                             let encoded = if cancelled.get() {
@@ -386,6 +403,7 @@ impl WebApp {
                         }
                         Err(error) => Err(error),
                     };
+                    control.borrow_mut().take();
                     *outcome.borrow_mut() = Some(result);
                     ctx.request_repaint();
                 });
