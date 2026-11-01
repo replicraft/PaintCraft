@@ -69,6 +69,25 @@ fn paired_denials_are_atomic_and_each_component_has_its_own_ceiling() {
     assert_eq!(a.workspace().work_used(), 3);
 }
 #[test]
+fn external_base_debits_keep_the_pair_and_respect_a_depleted_child_noise_ceiling() {
+    let budget = SharedBudget::new(1 << 20);
+    let parent = root(&budget, 4, 3);
+    let child = parent.child(limits(3, 2)).unwrap();
+    parent
+        .reserve_components(WorkComponents { base: 0, noise: 3 })
+        .unwrap();
+    assert!(parent.same_job(&child));
+    assert_eq!(
+        child.reserve_base_work(1).unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(parent.used().unwrap(), WorkComponents { base: 0, noise: 3 });
+    parent.reserve_base_work(1).unwrap();
+    assert_eq!(child.used().unwrap(), WorkComponents { base: 1, noise: 3 });
+    assert!(parent.reserve_base_work(4).is_err());
+    assert_eq!(parent.used().unwrap(), WorkComponents { base: 1, noise: 3 });
+}
+#[test]
 fn child_limits_identity_and_prior_usage_cannot_reset_or_enlarge_either_counter() {
     let b = SharedBudget::new(1 << 20);
     let a = root(&b, 20, 30);

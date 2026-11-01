@@ -188,6 +188,14 @@ impl NoiseAdmission {
         let used = self.counter.used.lock().unwrap_or_else(|e| e.into_inner());
         self.next(*used, quote).map(|_| ())
     }
+    /// Spend codec or conversion work on this same paired ledger. Both captured
+    /// component ceilings remain effective; this grants no additional Noise work.
+    pub fn reserve_base_work(&self, work: u64) -> Result<()> {
+        self.reserve_components(WorkComponents {
+            base: work,
+            noise: 0,
+        })
+    }
     pub(crate) fn reserve_components(&self, delta: WorkComponents) -> Result<()> {
         // All combined operations lock Noise BEFORE base; never reverse that order.
         let mut noise = self.counter.used.lock().unwrap_or_else(|e| e.into_inner());
