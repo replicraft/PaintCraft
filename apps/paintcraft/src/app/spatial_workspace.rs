@@ -19,12 +19,14 @@ fn budget() -> SharedBudget {
     SHARED.get_or_init(|| SharedBudget::new(BYTES)).clone()
 }
 pub(crate) fn needed(doc: &Document) -> bool {
-    doc.layers.values().any(|layer| {
-        layer
+    doc.layers.values().any(needed_layer)
+}
+pub(crate) fn needed_layer(layer: &paintcraft_document::Layer) -> bool {
+    layer.mask.as_ref().is_some_and(|mask| mask.enabled())
+        || layer
             .filters
             .iter()
             .any(|filter| filter.descriptor().is_spatial() || filter.descriptor().is_catalog_only())
-    })
 }
 /// The executing thread installs the context; submitting a closure on the UI
 /// thread does not propagate a thread-local factory into an executor worker.
@@ -43,3 +45,7 @@ fn with_admission<T>(budget: SharedBudget, work: impl FnOnce() -> Result<T>) -> 
 #[cfg(test)]
 #[path = "spatial_workspace/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "spatial_workspace/layer_mask_tests.rs"]
+mod layer_mask_tests;
