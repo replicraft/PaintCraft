@@ -122,6 +122,33 @@ impl Renderer {
             self.wanted = Some(work);
         }
     }
+    /// Pause without discarding the host's last-good texture. A new admitted
+    /// action may acquire the SAME slot only after this returns true/close ACK.
+    pub(super) fn suspend_for_copy(
+        &mut self,
+        ctx: &egui::Context,
+    ) -> paintcraft_core::types::Result<bool> {
+        self.reset();
+        let _ = self.poll(ctx);
+        #[cfg(target_arch = "wasm32")]
+        {
+            if self.blocked {
+                return Err(Error::new(
+                    ErrorCode::CodecFailed,
+                    "Display Worker close was not acknowledged",
+                ));
+            }
+            Ok(self.live.is_none()
+                && self.opening.is_none()
+                && self.client.is_none()
+                && self.flight.is_none()
+                && self.closing.is_none())
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Ok(true)
+        }
+    }
     pub fn reset(&mut self) {
         self.wanted = None;
         self.accepted = None;
@@ -344,7 +371,7 @@ pub(super) fn descriptor_scoped(d: paintcraft_core::types::filters::Descriptor) 
         paintcraft_core::types::filters::Descriptor::AddNoiseRgbV1(_)
     )
 }
-pub(super) fn stored_scoped(doc: &Document) -> bool {
+pub(crate) fn stored_scoped(doc: &Document) -> bool {
     paintcraft_formats::export::prepared_capabilities::requires_scoped_noise(doc, &|| Ok(()))
         .unwrap_or(true)
 }

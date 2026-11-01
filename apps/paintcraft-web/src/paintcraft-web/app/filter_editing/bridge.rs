@@ -1,6 +1,8 @@
 //! Calls an admitted, real dedicated Worker; no rendering runs in spawn_local.
 use super::render::{Capture, Reply, Request, View};
+mod copy;
 mod programs;
+pub(super) use copy::CopyControl;
 mod scoped;
 use js_sys::{Array, Function, Reflect, Uint8Array};
 use paintcraft_core::types::{Error, ErrorCode, Result, json};

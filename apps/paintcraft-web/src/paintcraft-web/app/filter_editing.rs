@@ -7,6 +7,9 @@ use paintcraft_tools::FilterEdit;
 use uuid::Uuid;
 #[cfg(target_arch = "wasm32")]
 mod bridge;
+mod flat_action;
+#[cfg(test)]
+mod flat_action_tests;
 mod ordinary;
 #[cfg(test)]
 mod ordinary_tests;
@@ -32,6 +35,7 @@ mod tests;
 pub(super) struct Display {
     renderer: Renderer,
     transient: Option<ordinary::Transient>,
+    copy_action: Option<flat_action::Job>,
     source: Option<Capture>,
     committed: Option<Capture>,
     texture: Option<egui::TextureHandle>,
@@ -241,6 +245,9 @@ impl WebApp {
         }
     }
     pub(crate) fn pump_filter_editing(&mut self, ctx: &egui::Context) {
+        if self.pump_flat_action(ctx) {
+            return;
+        }
         if self
             .filter_editing
             .as_ref()
@@ -393,6 +400,10 @@ impl WebApp {
             && std::sync::Arc::ptr_eq(&source.document, &self.editor.session.snapshot())
     }
     pub(crate) fn worker_filter_canvas(&mut self, ctx: &egui::Context) -> bool {
+        if self.filter_display.copy_action.is_some() {
+            self.pump_filter_editing(ctx);
+            return true;
+        }
         if self.worker_noise_preview(ctx) {
             return true;
         }
