@@ -80,3 +80,31 @@ pub(crate) fn apply_precharged(layer: &Layer, point: (i64, i64), pixel: &mut Rgb
 #[cfg(test)]
 #[path = "layer_mask/tests.rs"]
 mod tests;
+
+/// Pure revision1 own-mask base work for a final source-local output rectangle.
+/// Validates the finite source even for None/disabled masks. No clipping, halo,
+/// counters, callbacks, owners or allocation; callers walk their actual output
+/// tiles and defer this subtotal from any bulk debit before renderer execution.
+/// Enabled zero/full fields retain their fixed structural query price. Disabled
+/// and absent fields cost zero; this does not grant capability negotiation.
+pub fn quote_work(layer: &Layer, output: Rect) -> Result<u64> {
+    if output.x0 < 0
+        || output.y0 < 0
+        || output.x1 <= output.x0
+        || output.y1 <= output.y0
+        || output.x1 > i64::from(layer.raster.width())
+        || output.y1 > i64::from(layer.raster.height())
+    {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Layer mask output is outside its finite source",
+        ));
+    }
+    // Finite u32 raster dimensions bound these subtractions before Rect::area.
+    let samples = u64::try_from(output.area()).map_err(|_| limit())?;
+    work(layer, samples)
+}
+
+#[cfg(test)]
+#[path = "layer_mask/quote_tests.rs"]
+mod quote_tests;

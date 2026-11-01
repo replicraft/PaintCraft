@@ -13,7 +13,7 @@ use paintcraft_raster::RowSpan;
 mod appearance;
 mod direct;
 mod kernels;
-mod layer_mask;
+pub mod layer_mask;
 pub mod noise_work;
 pub mod spatial;
 
