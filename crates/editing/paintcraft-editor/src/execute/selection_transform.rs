@@ -33,6 +33,7 @@ impl Stage<'_> {
         let Some(area) = self.selected_area()? else {
             return Ok(None);
         };
+        self.refuse_noise_geometry(id)?;
         let l = &self.doc.layers[&id];
         let old = l.extent();
         let (w, h) = t.dimensions(area.width() as u32, area.height() as u32);
@@ -75,6 +76,7 @@ impl Stage<'_> {
         }))
     }
     pub(super) fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) -> Result<()> {
+        self.refuse_noise_geometry(id)?;
         let origin = self.doc.layers[&id].origin;
         self.map_filter_masks(
             id,

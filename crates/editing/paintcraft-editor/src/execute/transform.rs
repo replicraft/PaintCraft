@@ -72,6 +72,9 @@ impl Stage<'_> {
         Ok(())
     }
     pub(super) fn transform_layout(&mut self, t: OrthogonalTransform) -> Result<()> {
+        for id in &self.doc.roots {
+            self.refuse_noise_geometry(*id)?;
+        }
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let source = &self.doc.layers[&id].raster;
@@ -86,6 +89,9 @@ impl Stage<'_> {
         self.transform_selection(t)
     }
     pub(super) fn transform_canvas(&mut self, t: OrthogonalTransform) -> Result<()> {
+        for id in &self.doc.roots {
+            self.refuse_noise_geometry(*id)?;
+        }
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let source = &self.doc.layers[&id].raster;

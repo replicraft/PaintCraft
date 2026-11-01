@@ -7,6 +7,7 @@ mod crop;
 mod fill;
 mod filter_masks;
 mod filters;
+mod noise_geometry;
 mod staged;
 pub use filters::PublishedAliases as FilterAliases;
 mod layers;

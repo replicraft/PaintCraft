@@ -10,6 +10,7 @@ impl Stage<'_> {
         let Some(area) = self.selected_area()? else {
             return Ok(None);
         };
+        self.refuse_noise_geometry(id)?;
         let destination = area.translated(offset.0, offset.1).ok_or_else(move_limit)?;
         if [
             destination.x0,

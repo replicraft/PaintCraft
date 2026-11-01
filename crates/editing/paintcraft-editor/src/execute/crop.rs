@@ -55,6 +55,12 @@ impl Stage<'_> {
     }
     pub(super) fn crop_layout(&mut self, rect: Rect) -> Result<()> {
         self.validate_crop(rect)?;
+        // Validate all affected layers before any layout, masks or raster mutation.
+        for id in &self.doc.roots {
+            if !matches!(mapping(&self.doc.layers[id], rect).0, LayerCrop::Keep) {
+                self.refuse_noise_geometry(*id)?;
+            }
+        }
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let (action, origin) = mapping(&self.doc.layers[&id], rect);
@@ -79,6 +85,12 @@ impl Stage<'_> {
     }
     pub(super) fn crop_canvas(&mut self, rect: Rect) -> Result<()> {
         self.validate_crop(rect)?;
+        // Validate all affected layers before any layout, masks or raster mutation.
+        for id in &self.doc.roots {
+            if !matches!(mapping(&self.doc.layers[id], rect).0, LayerCrop::Keep) {
+                self.refuse_noise_geometry(*id)?;
+            }
+        }
         for id in self.doc.roots.clone() {
             (self.check)()?;
             let (action, origin) = mapping(&self.doc.layers[&id], rect);
