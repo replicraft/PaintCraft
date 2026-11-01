@@ -333,3 +333,7 @@ impl<C: Clone + PartialEq, P: Send + Sync + 'static> Async<C, P> {
 #[cfg(test)]
 #[path = "asset_output/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "asset_output/write_tests.rs"]
+mod write_tests;
