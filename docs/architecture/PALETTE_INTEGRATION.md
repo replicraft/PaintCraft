@@ -18,8 +18,10 @@ headless Native Studio controls pass. The dedicated Source6 Worker passes native
 tests and its qualification constructor passes 26 complete Chrome Worker frames
 plus 26 cancellation cases. Native printing, flat-image copies and ICO/CUR/ICNS
 asset preparation/encoding also pass headless checks. The production web build
-passes, while the actual Studio browser workflow, remaining browser copy routes
-and Export8 are still under qualification. The fully qualified cross-frontend
+passes. Its frozen Studio browser checkpoint passes 35 semantic checks, including
+real brush/text previews, stack changes, persistence and delayed-response fences;
+subsequent navigation/output changes need fresh regression. Remaining browser
+copy routes and Export8 are still under qualification. The fully qualified cross-frontend
 baseline above remains twelve. No GPU Noise kernel or upstream floating-point
 byte parity is claimed. The foundation document records exact local receipts,
 finite measured latency and remaining boundaries.

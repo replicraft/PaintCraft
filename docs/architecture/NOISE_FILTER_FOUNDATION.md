@@ -280,8 +280,18 @@ Strict Main Wasm checks also pass with unchanged source inputs
 codec Worker, render Worker and Astro bundle pass with all inputs unchanged and
 27 checked assets (`docs/validation/noise-web-production/attempt-1/final.json`,
 SHA256 `124a5fce2056caecf9064e0ae5a6f5d6245148bf2333baa0c9fcdd8cc80cdbb0`).
-Production UI, ordinary browser copy routes and Export8 remain separate open
-gates. No GPU Noise kernel or upstream floating-point byte parity is claimed.
+Actual Studio browser UI subsequently passes 35 semantic checks on that frozen
+production build, plus eight screenshot-calibrated coordinates: all four Noise
+controls, private Apply/Cancel and preview-off publication, PCND6 save/reopen,
+filter stack changes and minimal legacy header after final removal, real brush/
+text previews and single Undo/Redo, authentic delayed view/source replies, and ten
+finite old-profile samples. All 3,283 inputs and 52 artifacts remain unchanged.
+Receipt `docs/validation/noise-studio-browser/browser-final-freeze.json`, SHA256
+`b86d6a272d0bc1ac5c4349973f5adff89da11cb433927454ffa64d7f4800a368`,
+retains earlier fixture/observer premise failures. This proof precedes subsequent
+document-navigation and flat-output changes, which need fresh browser regression.
+Ordinary browser copy routes and Export8 remain open. No GPU Noise kernel or
+upstream floating-point byte parity is claimed.
 
 Native ICO, CUR and ICNS preparation and accepted encoding now share one captured
 background job; retained preview handles keep their source reservation after
