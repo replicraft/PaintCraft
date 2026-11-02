@@ -370,11 +370,15 @@ impl App {
             }
             return;
         }
-        let admission = if self.experience() == Experience::Studio {
-            self.check_tab_capacity()
-        } else {
-            self.prepare_editor_replacement()
-        };
+        // Refuse before resolving current input or retiring its recovery owner.
+        // The existing failure path disposes the claim, not its checkpoint.
+        let admission = claim.document.require_normal_blends().and_then(|()| {
+            if self.experience() == Experience::Studio {
+                self.check_tab_capacity()
+            } else {
+                self.prepare_editor_replacement()
+            }
+        });
         if let Err(error) = admission {
             self.editor
                 .set_status(format!("Recovery not applied: {error}"));

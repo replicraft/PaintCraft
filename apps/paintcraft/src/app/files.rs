@@ -268,6 +268,8 @@ impl App {
     }
 
     pub(super) fn install(&mut self, editor: Editor) -> paintcraft_core::types::Result<()> {
+        // Frontend rendering is closed even though typed PCND8/Editor remain supported.
+        editor.document().require_normal_blends()?;
         if self.experience() == Experience::Studio || self.tabs.is_empty() {
             return self.add_document_tab(editor, &self.context.clone());
         }
@@ -662,3 +664,7 @@ impl App {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "files/blend_adoption_tests.rs"]
+mod blend_adoption_tests;

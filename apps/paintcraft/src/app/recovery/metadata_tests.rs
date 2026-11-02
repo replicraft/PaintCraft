@@ -146,3 +146,52 @@ fn classic_discard_confirmation_does_not_publish_private_text_and_success_still_
     assert!(!app.editor.is_editing_text());
     assert_eq!(app.editor.document().document_id, offer.document_id);
 }
+
+#[test]
+fn reader_known_blend_recovery_refuses_ui_and_keeps_checkpoint_offer_and_private_draft() {
+    use paintcraft_core::types::{LayerBlendMode, Rgba};
+    let folder = Folder::new();
+    let mut doc = paintcraft_document::new_document(
+        2,
+        1,
+        Some(Rgba::TRANSPARENT),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().blend_mode = LayerBlendMode::Multiply;
+    let recovery = Recovery::start(&folder.0).unwrap();
+    recovery.checkpoint_document(&doc, None).unwrap();
+    drop(recovery);
+    let offer = Recovery::scan(&folder.0).remove(0);
+    let payload = fs::read(&offer.checkpoint).unwrap();
+    assert!(
+        Recovery::read_checkpoint(&offer.checkpoint)
+            .unwrap()
+            .same_semantics(&doc)
+    );
+    let mut app = App::new(None);
+    app.recoverable.push(offer.clone());
+    app.editor.tool = Tool::Text;
+    app.editor.pointer_down((3, 2));
+    app.editor.type_text("keep recovery draft");
+    let before = app.editor.document_snapshot();
+    let ticket = app.editor.history_view().ticket;
+    let stamp = app.editor.preview_stamp();
+    let text = app.editor.canvas_text_content().unwrap().to_owned();
+    assert_eq!(
+        app.recover_found(&offer).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert!(std::sync::Arc::ptr_eq(
+        &before,
+        &app.editor.document_snapshot()
+    ));
+    assert_eq!(app.editor.history_view().ticket, ticket);
+    assert_eq!(app.editor.preview_stamp(), stamp);
+    assert_eq!(app.editor.canvas_text_content(), Some(text.as_str()));
+    assert_eq!(app.recoverable, vec![offer.clone()]);
+    assert!(app.recovery_source.is_none());
+    assert_eq!(fs::read(&offer.checkpoint).unwrap(), payload);
+    assert_eq!(Recovery::scan(&folder.0).len(), 1);
+}

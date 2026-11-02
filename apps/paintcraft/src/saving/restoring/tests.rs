@@ -404,3 +404,60 @@ fn a_recovered_zero_state_uuid_is_unsaved_and_gets_a_protective_checkpoint() {
     assert_eq!(found[0].state_id, Uuid::nil());
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn asynchronous_blend_claim_is_not_published_or_deleted_as_corrupt_recovery() {
+    use paintcraft_core::types::LayerBlendMode;
+    let dir = scratch();
+    let mut doc = paintcraft_document::new_document(
+        2,
+        1,
+        Some(Rgba::TRANSPARENT),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().blend_mode = LayerBlendMode::Screen;
+    let recovery = Recovery::start(&dir).unwrap();
+    recovery.checkpoint_document(&doc, None).unwrap();
+    drop(recovery);
+    let offer = Recovery::scan(&dir).remove(0);
+    let payload = std::fs::read(&offer.checkpoint).unwrap();
+    let mut app = recovery_app(dir.clone());
+    app.editor.tool = Tool::Text;
+    app.editor.pointer_down((3, 2));
+    app.editor.type_text("keep background recovery draft");
+    let before = app.editor.document_snapshot();
+    let history = app.editor.history_view().ticket;
+    let stamp = app.editor.preview_stamp();
+    let text = app.editor.canvas_text_content().unwrap().to_owned();
+    app.do_recover(offer.clone());
+    let (request, result) = take_restore(&mut app);
+    assert!(
+        matches!(&result, Ok(Completion::Claimed(_))),
+        "the general reader recognizes PCND8"
+    );
+    app.apply_claimed_recovery(request, result);
+    drain(&mut app); // Actual disposal drops the claim without discarding its checkpoint.
+    assert!(std::sync::Arc::ptr_eq(
+        &before,
+        &app.editor.document_snapshot()
+    ));
+    assert_eq!(app.editor.history_view().ticket, history);
+    assert_eq!(app.editor.preview_stamp(), stamp);
+    assert_eq!(app.editor.canvas_text_content(), Some(text.as_str()));
+    assert!(
+        app.recoverable
+            .iter()
+            .any(|item| item.session == offer.session)
+    );
+    assert!(app.recovery_source.is_none());
+    assert_eq!(std::fs::read(&offer.checkpoint).unwrap(), payload);
+    drop(app);
+    assert!(
+        Recovery::scan(&dir)
+            .iter()
+            .any(|item| item.session == offer.session)
+    );
+    std::fs::remove_dir_all(dir).unwrap();
+}

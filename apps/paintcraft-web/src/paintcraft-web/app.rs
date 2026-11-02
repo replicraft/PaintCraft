@@ -795,3 +795,6 @@ impl eframe::App for WebApp {
 
 #[cfg(test)]
 mod flatten_eligibility_tests;
+
+#[cfg(test)]
+mod blend_adoption_tests;
