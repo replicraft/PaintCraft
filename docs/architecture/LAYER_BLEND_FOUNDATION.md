@@ -1,8 +1,9 @@
 # Layer blend foundation
 
 Multiply and Screen are being integrated as stored, editable layer properties.
-The current slice covers numerical behavior, typed editing, persistence and
-history. It does not expose blend controls or enable visual blend rendering.
+The current slice covers numerical behavior, typed editing, persistence, history
+and scoped serial CPU composition. It does not expose frontend blend controls or
+enable GPU/browser blend execution.
 
 ## Numerical contract
 
@@ -53,3 +54,29 @@ Rendering and frontend adoption remain separate gates. Unsupported consumers
 must reject stored modes before installing a replacement document or producing a
 visual copy. No provisional blend execution price or higher resource cap is
 activated by this metadata slice. Full Palette blend/style parity remains open.
+
+## Scoped CPU composition
+
+Serial native rendering now evaluates Multiply and Screen with the existing
+caller workspace. The fixed opaque-backdrop reduction is exact; translucent
+backdrops retain the general integer implementation. Filters precede the own-layer
+mask, then opacity and ordered blending; complete native composition precedes LOD.
+Normal numerical kernels remain unchanged.
+
+New modeled work uses 32 extra source-action units per proved-opaque sample and
+256 for the general call, plus bounded context setup. These are policy units,
+not instruction counts or measured timings. No new counter, pool, cap or mask-query
+revision is introduced. Captured base/Noise ownership remains paired. Public nested
+requests recheck their actual ROI and remaining budget; cache misses and dirty
+patches stay inside the requested footprint.
+
+Local gates pass 262 Render tests across 17 targets, including 54 required-adapter
+GPU tests on Apple M1 Pro Metal. The new GPU test proves refusal, not blend arithmetic
+parity. Independent literal checks, true partial dirty patches, exact-budget calls,
+cancellation, nested reentry and native/Wasm strict checks pass. Original compile
+and test-fixture failures remain under
+`docs/validation/layer-blend-cpu-integration/`. Active control sizes are observed on
+the native target; private Wasm layouts and performance remain unclaimed.
+
+GPU composition, frontend adoption, foreign-copy consent and new browser execution
+authority remain open. Existing frontend guards and closed consumers stay in place.
