@@ -104,7 +104,30 @@ along with formatting and source-length checks. The source hashes and complete
 eight-step gate are retained under
 `docs/validation/layer-blend-gpu-integration/final-freeze.json`.
 
+A later full renderer regression passes 270 tests across 17 nonempty targets with
+the adapter required. Its first sandboxed attempt passes 134 unit tests but fails
+11 adapter-dependent tests because Metal cannot be enumerated there; the same
+source passes outside that restriction. Both attempts remain recorded separately
+under the same integration directory.
+
 This is native Metal execution evidence; Wasm lint does not establish browser GPU
 execution, other GPU adapters, runtime performance or RSS. Frontend adoption,
 foreign-copy consent and new browser execution authority remain open. Existing
 frontend guards and closed consumers stay in place.
+
+## Native host admission prerequisite
+
+Stored non-Normal modes now select the desktop's existing workspace policy,
+including hidden and zero-opacity intentions. The synchronous helper captures an
+installed caller lazily instead of replacing its scope and work counter. Stored
+Noise keeps priority and retains its paired base/Noise admission.
+
+Fifteen selected native workspace tests pass, including actual CPU and required
+Metal rendering through the synchronous helper, exact 544-unit parent exhaustion,
+unchanged source/cache on denial and disabled-Noise pair continuity. The first
+source-only proposal missed the helper's pre-existing counter reset; independent
+review caught it before execution, and the amended candidate tests the actual
+consumer helper. Candidate revisions and execution logs remain under
+`docs/validation/layer-blend-native-admission-integration/` and its adjacent
+candidate directory. This prerequisite does not remove open/install/recovery
+guards or activate blend controls, clipboard or foreign exports.
