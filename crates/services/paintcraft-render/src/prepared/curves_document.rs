@@ -14,10 +14,17 @@ const CAPTURE: u64 = (MAX
         + std::mem::size_of::<ExposureSrgbV1>()
         + std::mem::size_of::<CurvesRgbV1>())) as u64;
 // Bounded host eligibility at the document-program gateway, not per row/tile.
-fn active(doc: &Document) -> Result<bool> {
+#[derive(Clone, Copy)]
+enum Eligibility {
+    NormalOnly,
+    Cpu,
+}
+fn active(doc: &Document, eligibility: Eligibility) -> Result<bool> {
     let mut active = false;
     for layer in doc.layers.values() {
-        if layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal {
+        if layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal
+            && !(matches!(eligibility, Eligibility::Cpu) && crate::blend::allowed(doc))
+        {
             return Err(paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::CapabilityUnsupported,
                 "Layer blend modes require a qualified appearance route",
@@ -85,11 +92,12 @@ fn capture(
 }
 /// Metadata-only quote; fixed bounded capture arrays are excluded for this
 /// query and explicitly charged throughout actual preparation. No compile occurs.
-pub fn quote_document_programs(
+fn quote_profile(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
+    eligibility: Eligibility,
 ) -> Result<DocumentProgramsQuote> {
-    if !active(doc)? {
+    if !active(doc, eligibility)? {
         return super::programs::quote_legacy_programs(doc, check);
     }
     quote_active(doc, check)
@@ -139,12 +147,13 @@ pub(super) fn validate_layer_curves(
     Ok(())
 }
 /// Any bound complete owner is immutable; never attach a missing family/key.
-pub fn prepare_document_programs(
+fn prepare_profile(
     doc: &Document,
     a: WorkspaceAdmission,
     check: &dyn Fn() -> Result<()>,
+    eligibility: Eligibility,
 ) -> Result<WorkspaceAdmission> {
-    let curves_active = active(doc)?;
+    let curves_active = active(doc, eligibility)?;
     if a.prepared_curves().is_some() {
         validate_doc(doc, &a, check)?;
         return Ok(a);
@@ -185,12 +194,13 @@ fn prepare_active(
     check()?;
     Ok(a.with_curves(Arc::new(job)))
 }
-pub fn with_document_programs<T>(
+fn with_profile<T>(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
+    eligibility: Eligibility,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
-    let curves_active = active(doc)?;
+    let curves_active = active(doc, eligibility)?;
     crate::direct::require_document(doc)?;
     if let Some(a) = crate::spatial::current()
         && a.prepared_curves().is_some()
@@ -202,10 +212,52 @@ pub fn with_document_programs<T>(
         return super::programs::with_legacy_programs(doc, check, work);
     }
     let a = crate::spatial::current().ok_or_else(super::programs::unprepared_curves)?;
-    let a = prepare_document_programs(doc, a, check)?;
+    let a = prepare_profile(doc, a, check, eligibility)?;
     crate::spatial::with_workspace(a, work)
 }
 
 #[cfg(test)]
 #[path = "curves_tests.rs"]
 mod tests;
+
+/// Legacy/public gateways remain Normal-only regardless of private CPU reentry.
+pub fn quote_document_programs(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<DocumentProgramsQuote> {
+    quote_profile(doc, check, Eligibility::NormalOnly)
+}
+pub fn prepare_document_programs(
+    doc: &Document,
+    a: WorkspaceAdmission,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<WorkspaceAdmission> {
+    prepare_profile(doc, a, check, Eligibility::NormalOnly)
+}
+pub fn with_document_programs<T>(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+    work: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    with_profile(doc, check, Eligibility::NormalOnly, work)
+}
+pub(crate) fn quote_cpu_document_programs(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<DocumentProgramsQuote> {
+    quote_profile(doc, check, Eligibility::Cpu)
+}
+pub(crate) fn with_cpu_document_programs<T>(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+    work: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    with_profile(doc, check, Eligibility::Cpu, work)
+}
+pub(crate) fn with_normal_document_programs<T>(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+    work: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    with_profile(doc, check, Eligibility::NormalOnly, work)
+}

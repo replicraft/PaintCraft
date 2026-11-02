@@ -163,3 +163,7 @@ impl PreparedLevels {
 
 #[cfg(test)]
 mod tests;
+
+pub(crate) use curves_document::{
+    quote_cpu_document_programs, with_cpu_document_programs, with_normal_document_programs,
+};
