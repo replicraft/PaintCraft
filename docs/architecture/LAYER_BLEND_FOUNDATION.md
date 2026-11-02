@@ -76,7 +76,9 @@ parity. Independent literal checks, true partial dirty patches, exact-budget cal
 cancellation, nested reentry and native/Wasm strict checks pass. Original compile
 and test-fixture failures remain under
 `docs/validation/layer-blend-cpu-integration/`. Active control sizes are observed on
-the native target; private Wasm layouts and performance remain unclaimed.
+the native target; private Wasm layouts remain unclaimed. The separate
+[CPU measurement record](../performance/CPU_LAYER_BLENDS.md) reports the finite
+host workloads, raw evidence and unresolved comparisons.
 
 GPU composition, frontend adoption, foreign-copy consent and new browser execution
 authority remain open. Existing frontend guards and closed consumers stay in place.
