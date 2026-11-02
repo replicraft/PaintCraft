@@ -61,6 +61,13 @@ are finite correctness checks, not latency, RSS or physical-GPU measurements.
 The aggregate receipt is
 `docs/validation/source7-complete-consumer-final-freeze.json`.
 
+[Selection Snapshot1](SELECTION_SNAPSHOT_TRANSPORT.md) now provides a locally
+qualified private binary-selection transport with a borrowed cursor and same-scope
+resumable decoder. Its 112-test Raster gate includes 13 new groups; this is a
+separate scope from the earlier counts. Actual browser transport/mutation and
+bounded asynchronous finalization remain open; the foundation does not activate
+Web mask controls or extend Source7.
+
 Appearance-aware foreign export consent, actual OS print/Clipboard publication
 and asynchronous browser mask editing remain open. Browser mask mutation controls
 remain closed. Palette's full 132-filter catalog, blend modes and layer styles
