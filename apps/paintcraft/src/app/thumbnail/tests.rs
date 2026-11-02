@@ -171,3 +171,41 @@ fn reopening_same_source_during_cancellation_remains_eligible() {
     drain(&mut service, &ctx, Some(doc), &budget);
     assert!(matches!(service.preview(), ImagePreview::Ready { .. }));
 }
+
+#[test]
+fn actual_document_thumbnail_job_composes_blend_mask_box_noise_and_releases_owners() {
+    use crate::files::blend_adoption_tests::{expected, source as blend_source};
+    use paintcraft_core::types::LayerBlendMode;
+    let ctx = egui::Context::default();
+    for mode in [LayerBlendMode::Multiply, LayerBlendMode::Screen] {
+        let doc = blend_source(mode, 2, 1, true);
+        let editor = controller::Editor::with_document(doc.clone(), None);
+        let before = editor.document_snapshot();
+        let ticket = editor.history_view().ticket;
+        let capture = Source::capture(&editor);
+        assert!(capture.requires_spatial_workspace());
+        let budget = paintcraft_runtime::SharedBudget::new(128 << 20);
+        let mut service = Thumbnail::default();
+        service.update_source(&ctx, Some(capture), &budget, true);
+        let (_, handle) = service
+            .pending
+            .expect("real admitted document-thumbnail job");
+        let deadline = Instant::now() + Duration::from_secs(20);
+        let frame = loop {
+            if let Some(result) = service.executor.as_mut().unwrap().poll_for(handle) {
+                break result.unwrap();
+            }
+            assert!(Instant::now() < deadline);
+            std::thread::yield_now();
+        };
+        service.pending = None;
+        assert_eq!(frame.request.size(), [2, 1]);
+        assert_eq!(frame.pixels, expected(mode, true).repeat(2));
+        assert!(Arc::ptr_eq(&before, &editor.document_snapshot()));
+        assert_eq!(editor.history_view().ticket, ticket);
+        assert!(editor.document().same_semantics(&doc));
+        drop(frame);
+        drop(service);
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}

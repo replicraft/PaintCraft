@@ -325,3 +325,7 @@ mod tests {
 #[cfg(test)]
 #[path = "layer_thumbnails/noise_tests.rs"]
 mod noise_tests;
+
+#[cfg(test)]
+#[path = "layer_thumbnails/blend_tests.rs"]
+mod blend_tests;

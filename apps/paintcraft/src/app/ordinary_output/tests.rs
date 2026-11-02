@@ -234,3 +234,41 @@ fn noise_pcx_preparation_is_background_and_literal_preview_keeps_its_lease() {
     drop(packet);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn actual_native_print_png_preparation_adopts_blends_without_foreign_bake_authority() {
+    use crate::files::blend_adoption_tests::{expected, source as blend_source};
+    use paintcraft_core::types::LayerBlendMode;
+    for mode in [LayerBlendMode::Multiply, LayerBlendMode::Screen] {
+        for decorated in [false, true] {
+            let doc = blend_source(mode, 2, 1, decorated);
+            let mut a = App::new(None);
+            a.install(Editor::with_document(doc.clone(), None)).unwrap();
+            let source = a.editor.document_snapshot();
+            let ticket = a.editor.history_view().ticket;
+            let budget = paintcraft_runtime::SharedBudget::new(256 << 20);
+            let mut state = State::default();
+            state
+                .start(
+                    Frozen::capture(&a).unwrap(),
+                    Intent::Print("Blend PNG only".into()),
+                    &budget,
+                    &a.context,
+                )
+                .unwrap();
+            let packet = collect(&mut state).unwrap();
+            assert!(budget.usage().reserved > 0);
+            let Output::Flat(flat) = &packet.output else {
+                panic!("print PNG only")
+            };
+            let decoded = image::decode(&flat.bytes).unwrap();
+            assert_eq!((decoded.width, decoded.height), (2, 1));
+            assert_eq!(decoded.rgba, expected(mode, decorated).repeat(2));
+            assert!(Arc::ptr_eq(&source, &a.editor.document_snapshot()));
+            assert!(a.editor.document().same_semantics(&doc));
+            assert_eq!(a.editor.history_view().ticket, ticket);
+            drop(packet);
+            assert_eq!(budget.usage().reserved, 0);
+        }
+    }
+}
