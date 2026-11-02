@@ -166,3 +166,25 @@ checkpoint handoff. Original failures, amendments and actual gate logs are under
 This admits native document viewing and existing editing consumers. It does not
 add a blend selector, activate browser PCND8 execution, grant foreign-bake consent
 or open the old visible-clipboard route. Those remain separate consumer gates.
+
+## Browser metadata groundwork
+
+Separate Source8 metadata now defines registry contract 4, both mask and blend
+registrations, framed admission origins, numerical counts, coverage ABI and the
+ordered layer-mode identity. Eleven independent byte-frame scenarios verify the
+new SHA domains. Zero own masks are valid metadata for a blend source; they do
+not relax Source7's own-mask requirement. Metadata construction and hash binding
+are not source authentication, decoded-storage attestation or execution grants.
+
+Local gates pass 632 Formats library tests with 12 existing ignored tests and all
+97 render-Worker library tests, plus native workspace all-target and Main/both-
+Worker Wasm strict lint, formatting and source-length checks. The first Worker
+run caught a new test's incorrect assumption about Source5's existing error code;
+the corrected test verifies its exact registry refusal and a valid positive
+control without changing the old endpoint. Sources and failures are retained in
+`docs/validation/layer-blend-source8-metadata-integration/`.
+
+Existing Source5/6/7 endpoints remain closed to registry 4 and blend execution.
+This groundwork does not add a Worker8 endpoint, admitted portable PCND8 source,
+CPU preparation service or Main consumer. Those still need their own ownership,
+work-accounting and actual browser qualification.
