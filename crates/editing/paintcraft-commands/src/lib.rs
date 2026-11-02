@@ -17,7 +17,9 @@ pub use filters::{FilterOp, FilterRef, MaskOp};
 mod layer_masks;
 pub use layer_masks::LayerMaskOp;
 mod layer_appearance;
+mod layer_blends;
 pub use layer_appearance::LAYER_APPEARANCE_BATCH_SCHEMA;
+pub use layer_blends::LAYER_BLEND_BATCH_SCHEMA;
 mod catalog;
 pub use catalog::CATALOG_BATCH_SCHEMA;
 mod mask;
@@ -104,6 +106,10 @@ pub enum Op {
     },
     LayerDelete {
         layer: LayerRef,
+    },
+    LayerSetBlendMode {
+        layer: LayerRef,
+        mode: paintcraft_core::types::LayerBlendMode,
     },
     LayerSetProperties {
         layer: LayerRef,
@@ -243,7 +249,9 @@ impl Batch {
         let version = operations
             .into_iter()
             .map(|(name, kind)| {
-                if name.starts_with("layer.mask.") {
+                if name == "layer.set_blend_mode" {
+                    8
+                } else if name.starts_with("layer.mask.") {
                     7
                 } else if matches!(name, "filter.add" | "filter.update")
                     && matches!(
@@ -284,6 +292,7 @@ impl Batch {
             .max()
             .unwrap_or(2);
         match version {
+            8 => LAYER_BLEND_BATCH_SCHEMA,
             7 => LAYER_APPEARANCE_BATCH_SCHEMA,
             6 => CATALOG_BATCH_SCHEMA,
             5 => "paintcraft.batch/v5",
@@ -315,8 +324,9 @@ impl Batch {
         check()?;
         let appearance =
             v.get("schema").and_then(Value::as_str) == Some(LAYER_APPEARANCE_BATCH_SCHEMA);
+        let blends = v.get("schema").and_then(Value::as_str) == Some(LAYER_BLEND_BATCH_SCHEMA);
         let catalog = v.get("schema").and_then(Value::as_str) == Some(CATALOG_BATCH_SCHEMA);
-        let required: &[&str] = if appearance {
+        let required: &[&str] = if appearance || blends {
             &[
                 "schema",
                 "atomic",
@@ -347,6 +357,7 @@ impl Batch {
             Some("paintcraft.batch/v5") => 5,
             Some(CATALOG_BATCH_SCHEMA) => 6,
             Some(LAYER_APPEARANCE_BATCH_SCHEMA) => 7,
+            Some(LAYER_BLEND_BATCH_SCHEMA) => 8,
             _ => {
                 return Err(bad(
                     "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3, paintcraft.batch/v4 or paintcraft.batch/v5",
@@ -373,10 +384,12 @@ impl Batch {
         if ops.is_empty() || ops.len() > MAX_OPERATIONS {
             return Err(bad("operations must contain 1..=1024 items"));
         }
-        if catalog || appearance {
+        if catalog || appearance || blends {
             catalog::validate(v)?;
         }
-        if appearance {
+        if blends {
+            layer_blends::validate(v)?;
+        } else if appearance {
             layer_appearance::validate(v)?;
         }
         let operations = ops

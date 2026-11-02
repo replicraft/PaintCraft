@@ -10,6 +10,14 @@ pub(super) fn op(
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if name == "layer.set_blend_mode" {
+        if version < 8 {
+            return Err(bad(
+                "layer blend operations require paintcraft.batch/layer-appearance-v2",
+            ));
+        }
+        return super::layer_blends::parse(v);
+    }
     if name.starts_with("layer.mask.") && version < 7 {
         return Err(bad(
             "layer mask operations require paintcraft.batch/layer-appearance-v1",
