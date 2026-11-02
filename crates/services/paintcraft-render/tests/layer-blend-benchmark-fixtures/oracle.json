@@ -1,0 +1,70 @@
+{
+	"status": "independent-before-benchmark-source-not-product-results",
+	"back": [
+		31,
+		127,
+		241,
+		255
+	],
+	"front": [
+		204,
+		77,
+		13,
+		128
+	],
+	"opacity": 128,
+	"cases": [
+		{
+			"id": "default-multiply",
+			"width": 1000,
+			"height": 486,
+			"document_height": 768,
+			"rgba": [
+				29,
+				105,
+				184,
+				255
+			],
+			"output_sha256": "bb20bdae06161e3176051911393aa08c5f8b1f5202904aa0efc0abddc5e426d0"
+		},
+		{
+			"id": "default-screen",
+			"width": 1000,
+			"height": 486,
+			"document_height": 768,
+			"rgba": [
+				76,
+				137,
+				241,
+				255
+			],
+			"output_sha256": "83354147e8bc59985471487c560d441abe35ae3f8691fefd739c9d64e260030e"
+		},
+		{
+			"id": "1080p-multiply",
+			"width": 1920,
+			"height": 1080,
+			"document_height": 1536,
+			"rgba": [
+				29,
+				105,
+				184,
+				255
+			],
+			"output_sha256": "e7575c307d4ed4f12b2316fc45012d7b72b460bb6fcff2af005c1bb7f3eb11e5"
+		},
+		{
+			"id": "1080p-screen",
+			"width": 1920,
+			"height": 1080,
+			"document_height": 1536,
+			"rgba": [
+				76,
+				137,
+				241,
+				255
+			],
+			"output_sha256": "c4494c8148a7cb016ef81f9d1d76b2951a740fad4cce16827b2457abf2e5d006"
+		}
+	]
+}
