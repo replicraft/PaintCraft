@@ -22,7 +22,8 @@ pub(crate) fn needed(doc: &Document) -> bool {
     doc.layers.values().any(needed_layer)
 }
 pub(crate) fn needed_layer(layer: &paintcraft_document::Layer) -> bool {
-    layer.mask.as_ref().is_some_and(|mask| mask.enabled())
+    layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal
+        || layer.mask.as_ref().is_some_and(|mask| mask.enabled())
         || layer
             .filters
             .iter()
@@ -37,8 +38,11 @@ pub(crate) fn with_job<T>(required: bool, work: impl FnOnce() -> Result<T>) -> R
     with_admission(budget(), work)
 }
 fn with_admission<T>(budget: SharedBudget, work: impl FnOnce() -> Result<T>) -> Result<T> {
-    let admission =
-        WorkspaceAdmission::new(budget.scope(AllocationClass::SharedBudget), BYTES, WORK);
+    let admission = paintcraft_render::spatial::capture_workspace_or_current(
+        || WorkspaceAdmission::new(budget.scope(AllocationClass::SharedBudget), BYTES, WORK),
+        BYTES,
+        WORK,
+    )?;
     with_workspace(admission, work)
 }
 
@@ -49,3 +53,7 @@ mod tests;
 #[cfg(test)]
 #[path = "spatial_workspace/layer_mask_tests.rs"]
 mod layer_mask_tests;
+
+#[cfg(test)]
+#[path = "spatial_workspace/blend_tests.rs"]
+mod blend_tests;
