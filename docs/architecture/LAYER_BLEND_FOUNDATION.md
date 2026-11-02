@@ -2,8 +2,8 @@
 
 Multiply and Screen are being integrated as stored, editable layer properties.
 The current slice covers numerical behavior, typed editing, persistence, history
-and scoped serial CPU composition. It does not expose frontend blend controls or
-enable GPU/browser blend execution.
+and scoped serial CPU and GPU composition. It does not expose frontend blend
+controls or enable browser blend execution.
 
 ## Numerical contract
 
@@ -80,5 +80,31 @@ the native target; private Wasm layouts remain unclaimed. The separate
 [CPU measurement record](../performance/CPU_LAYER_BLENDS.md) reports the finite
 host workloads, raw evidence and unresolved comparisons.
 
-GPU composition, frontend adoption, foreign-copy consent and new browser execution
-authority remain open. Existing frontend guards and closed consumers stay in place.
+## Scoped GPU composition
+
+The native GPU compositor now evaluates Multiply and Screen through a separate
+private admission scope. CPU admission cannot authorize a GPU request. Each entry
+checks the actual region and remaining caller budget, retaining the same captured
+base/Noise pair. Integer WGSL implements the opaque and general formulas with
+unchanged Normal arithmetic. The two mode controls occupy existing uniform padding;
+layout assertions retain the 32-byte structure and verify its little-endian bytes.
+
+Filters and the own-layer mask are evaluated before shader opacity and blending.
+Composition precedes LOD reduction and display premultiplication. Mode-only edits
+reuse eligible source uploads while recomposing the output. Spatially filtered
+sources retain their existing cache exclusion; this is not an all-source upload
+reuse claim.
+
+The first serial qualification attempt passes 145 renderer unit tests and all 62
+required-adapter GPU tests on Apple M1 Pro Metal, including eight new numerical,
+ordering, cache and admission groups. Independent literal vectors cover straight
+and display output, mask/opacity ordering, Box Blur prefixes and partial-edge LOD.
+Native GPU all-target and actual Main/both-Worker Wasm strict lint checks pass,
+along with formatting and source-length checks. The source hashes and complete
+eight-step gate are retained under
+`docs/validation/layer-blend-gpu-integration/final-freeze.json`.
+
+This is native Metal execution evidence; Wasm lint does not establish browser GPU
+execution, other GPU adapters, runtime performance or RSS. Frontend adoption,
+foreign-copy consent and new browser execution authority remain open. Existing
+frontend guards and closed consumers stay in place.

@@ -68,9 +68,10 @@ remain open; unsupported mask actions refuse before changing the document or ges
 See [the layer-mask record](LAYER_MASK_FOUNDATION.md) for the tested scope.
 
 The [Multiply/Screen foundation](LAYER_BLEND_FOUNDATION.md) now covers exact
-numerical behavior and locally tested metadata, history and native PCND8 persistence.
-Visual blend rendering and frontend controls remain open. The next slices finish
-browser layer-mask editing and blend rendering, then **Color Overlay** as the first
+numerical behavior, metadata, history, native PCND8 persistence and scoped CPU/GPU
+composition. Native Metal tests qualify the GPU arithmetic and stage order;
+frontend controls and browser blend execution remain open. The next slices finish
+browser layer-mask editing and blend adoption, then **Color Overlay** as the first
 live layer style. Each slice needs its own persistence, history, automation and
 rendering contract.
 Other filters can follow through individually specified numerical/spatial
@@ -151,6 +152,12 @@ entries are implied by this work.
 ## Evidence and upstream identity
 
 The reviewed repository is [spiffyfitz/palette](https://github.com/spiffyfitz/palette), commit [`aefc84fe9233e66344147078de866860326d8cfa`](https://github.com/spiffyfitz/palette/commit/aefc84fe9233e66344147078de866860326d8cfa). GitHub reference verification identified root tree `862c118edfc402f66ae34aea34d940b1a7d119c9`. The read-only source snapshot and individual blob hashes are recorded under `docs/validation/palette-source/`.
+
+A fresh upstream `main` lookup on 2026-11-02 returns that same commit and tree.
+The supplied [author inventory](../temp/IMPLEMENTED_FUNCTIONS.md), reviewed
+2026-10-29, remains the functionality map. PaintCraft retains its own document,
+transaction, history and rendering architecture; the integration adds editable
+appearance descriptors and independently qualified algorithms to those services.
 
 Evidence labels below mean:
 
