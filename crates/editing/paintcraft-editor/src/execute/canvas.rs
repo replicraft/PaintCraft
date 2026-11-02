@@ -13,6 +13,7 @@ impl Stage<'_> {
                     && layer.origin == (0, 0)
                     && layer.visible
                     && layer.opacity == 255
+                    && layer.blend_mode == paintcraft_core::types::LayerBlendMode::Normal
                     && layer.filters.is_empty()
                     && layer.mask.is_none()
                     && layer.raster.width() == width
@@ -54,6 +55,7 @@ impl Stage<'_> {
                     origin: (0, 0),
                     visible: true,
                     opacity: 255,
+                    blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
                     raster: RasterLayer::new(width, height, color),
                 },

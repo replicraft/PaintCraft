@@ -100,6 +100,7 @@ impl Session {
                 origin: draft.origin,
                 visible: true,
                 opacity: 255,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 raster,
             },

@@ -107,7 +107,7 @@ pub(super) fn label(batch: &Batch) -> Label {
         Op::LayerAdd { .. } => Label::AddLayer,
         Op::LayerDuplicate { .. } => Label::DuplicateLayer,
         Op::LayerDelete { .. } => Label::DeleteLayer,
-        Op::LayerSetProperties { .. } => Label::LayerProperties,
+        Op::LayerSetProperties { .. } | Op::LayerSetBlendMode { .. } => Label::LayerProperties,
         Op::LayerReorder { .. } => Label::ReorderLayer,
         Op::FillRect { .. } | Op::FloodFill { .. } => Label::Fill,
         Op::PencilPath { .. } => Label::Pencil,

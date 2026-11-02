@@ -58,19 +58,23 @@ impl Receipt {
         let Value::Object(mut fields) = Value::object([
             (
                 "schema",
-                Value::str(if self.document_features.contains(&"layer-masks.v1") {
-                    "paintcraft.result/v5"
-                } else if !self.required_filters.is_empty() {
-                    "paintcraft.result/catalog-v1"
-                } else if self.document_features.contains(&"layer-spatial-filters.v1") {
-                    "paintcraft.result/v4"
-                } else if !self.document_features.is_empty() {
-                    "paintcraft.result/v3"
-                } else if self.filter_aliases.is_empty() {
-                    "paintcraft.result/v1"
-                } else {
-                    "paintcraft.result/v2"
-                }),
+                Value::str(
+                    if self.document_features.contains(&"layer-blend-modes.v1") {
+                        "paintcraft.result/v6"
+                    } else if self.document_features.contains(&"layer-masks.v1") {
+                        "paintcraft.result/v5"
+                    } else if !self.required_filters.is_empty() {
+                        "paintcraft.result/catalog-v1"
+                    } else if self.document_features.contains(&"layer-spatial-filters.v1") {
+                        "paintcraft.result/v4"
+                    } else if !self.document_features.is_empty() {
+                        "paintcraft.result/v3"
+                    } else if self.filter_aliases.is_empty() {
+                        "paintcraft.result/v1"
+                    } else {
+                        "paintcraft.result/v2"
+                    },
+                ),
             ),
             ("committed", Value::Bool(self.committed)),
             ("state_id", Value::str(self.state_id.to_string())),
@@ -108,7 +112,12 @@ impl Receipt {
                 ),
             );
         }
-        if !self.required_filters.is_empty() || self.document_features.contains(&"layer-masks.v1") {
+        if !self.required_filters.is_empty()
+            || self
+                .document_features
+                .iter()
+                .any(|feature| matches!(*feature, "layer-masks.v1" | "layer-blend-modes.v1"))
+        {
             fields.insert(
                 "required_filters".into(),
                 Value::Array(
@@ -767,3 +776,7 @@ mod tests {
 #[cfg(test)]
 #[path = "session/layer_mask_disclosure_tests.rs"]
 mod layer_mask_disclosure_tests;
+
+#[cfg(test)]
+#[path = "session/layer_blend_disclosure_tests.rs"]
+mod layer_blend_disclosure_tests;

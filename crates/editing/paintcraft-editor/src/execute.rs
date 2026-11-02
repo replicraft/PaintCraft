@@ -339,6 +339,7 @@ impl Stage<'_> {
         match op {
             Op::Filter(op) => self.edit_filter(index, op)?,
             Op::LayerMask(op) => self.edit_layer_mask(op)?,
+            Op::LayerSetBlendMode { layer, mode } => self.set_layer_blend_mode(layer, *mode)?,
             Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
                 self.mask_selection(index, op)?
             }
@@ -408,6 +409,7 @@ impl Stage<'_> {
                     origin: *origin,
                     visible: true,
                     opacity: 255,
+                    blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
                     raster: RasterLayer::new(*width, *height, *default),
                 };
@@ -446,17 +448,7 @@ impl Stage<'_> {
                 visible,
                 opacity,
             } => {
-                let id = self.resolve(layer)?;
-                let l = self.doc.layers.get_mut(&id).expect("resolved");
-                if let Some(n) = name {
-                    l.name.clone_from(n);
-                }
-                if let Some(v) = visible {
-                    l.visible = *v;
-                }
-                if let Some(o) = opacity {
-                    l.opacity = *o;
-                }
+                self.set_layer_properties(layer, name, *visible, *opacity)?;
             }
             Op::CutSelection { layer, clear } => {
                 // Reuse the admitted paint compiler and exact mask clipping.

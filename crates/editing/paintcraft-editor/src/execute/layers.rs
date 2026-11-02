@@ -60,3 +60,35 @@ impl Stage<'_> {
         Ok(())
     }
 }
+
+impl Stage<'_> {
+    pub(super) fn set_layer_properties(
+        &mut self,
+        layer: &LayerRef,
+        name: &Option<String>,
+        visible: Option<bool>,
+        opacity: Option<u8>,
+    ) -> Result<()> {
+        let id = self.resolve(layer)?;
+        let l = self.doc.layers.get_mut(&id).expect("resolved");
+        if let Some(n) = name {
+            l.name.clone_from(n);
+        }
+        if let Some(v) = visible {
+            l.visible = v;
+        }
+        if let Some(o) = opacity {
+            l.opacity = o;
+        }
+        Ok(())
+    }
+    pub(super) fn set_layer_blend_mode(
+        &mut self,
+        layer: &LayerRef,
+        mode: paintcraft_core::types::LayerBlendMode,
+    ) -> Result<()> {
+        let id = self.resolve(layer)?;
+        self.doc.layers.get_mut(&id).expect("resolved").blend_mode = mode;
+        Ok(())
+    }
+}

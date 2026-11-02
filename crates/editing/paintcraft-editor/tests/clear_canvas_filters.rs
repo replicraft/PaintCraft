@@ -142,3 +142,30 @@ fn clear_matching_pristine_source_discards_stored_layer_mask_and_undo_restores_i
         }
     }
 }
+
+#[test]
+fn clear_matching_empty_background_resets_stored_blend_and_undo_restores_it() {
+    for mode in [
+        paintcraft_core::types::LayerBlendMode::Multiply,
+        paintcraft_core::types::LayerBlendMode::Screen,
+    ] {
+        let mut d = paintcraft_document::new_document(2, 1, Some(COLOR), 0, POLICY).unwrap();
+        d.layers.get_mut(&d.roots[0]).unwrap().blend_mode = mode;
+        let mut s = Session::new(d);
+        let before = s.snapshot();
+        assert!(s.apply(&clear(&s)).unwrap().committed);
+        let layer = &s.document().layers[&s.document().roots[0]];
+        assert_eq!(
+            layer.blend_mode,
+            paintcraft_core::types::LayerBlendMode::Normal
+        );
+        assert_eq!(layer.raster.resident_tiles(), 0);
+        s.undo().unwrap();
+        assert!(s.document().same_semantics(&before));
+        s.redo().unwrap();
+        assert_eq!(
+            s.document().layers[&s.document().roots[0]].blend_mode,
+            paintcraft_core::types::LayerBlendMode::Normal
+        );
+    }
+}

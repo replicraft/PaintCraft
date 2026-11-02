@@ -132,6 +132,7 @@ fn compact_seed(
                     origin: layer.origin,
                     visible: layer.visible,
                     opacity: layer.opacity,
+                    blend_mode: layer.blend_mode,
                     raster,
                     filters,
                     mask: layer.mask.clone(),

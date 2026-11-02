@@ -58,6 +58,7 @@ fn setup() -> (Session, Uuid) {
             name: "Hidden target".into(),
             visible: false,
             opacity: 73,
+            blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             origin: (2, 1),
             filters: Default::default(),
             raster,

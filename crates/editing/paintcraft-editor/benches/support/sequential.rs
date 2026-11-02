@@ -238,6 +238,12 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::LayerSetBlendMode { .. } => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Historical sequential baseline predates layer blends",
+                ));
+            }
             Op::LayerMask(_) => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
@@ -309,6 +315,7 @@ impl Stage<'_> {
                     origin: *origin,
                     visible: true,
                     opacity: 255,
+                    blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
                     raster: RasterLayer::new(*width, *height, *default),
                 };

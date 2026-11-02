@@ -1,6 +1,6 @@
 use super::*;
 
-/// Own-layer masks require result/v5, spatial intentions v4, filter masks v3; otherwise
+/// Stored non-Normal blends require result/v6, own masks v5, spatial v4, filter masks v3; otherwise
 /// preserve the minimal v1/v2 profile.
 /// Extensions disclose inherited point-filter semantics in canonical feature order.
 pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
@@ -21,10 +21,12 @@ pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
             .any(|entry| entry.descriptor().is_spatial())
     });
     let layer_masks = doc.has_layer_masks();
-    if !masks && !spatial && !catalog && !layer_masks {
+    let blends = doc.has_non_normal_blends();
+    if !masks && !spatial && !catalog && !layer_masks && !blends {
         return Vec::new();
     }
-    let has_filters = layer_masks && doc.layers.values().any(|layer| !layer.filters.is_empty());
+    let has_filters =
+        (layer_masks || blends) && doc.layers.values().any(|layer| !layer.filters.is_empty());
     let mut features = if has_filters || masks || spatial || catalog {
         vec!["layer-point-filters.v1"]
     } else {
@@ -41,6 +43,9 @@ pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
     }
     if layer_masks {
         features.push("layer-masks.v1");
+    }
+    if blends {
+        features.push("layer-blend-modes.v1");
     }
     if doc.source_metadata.is_some() {
         features.push("source-metadata.v1");

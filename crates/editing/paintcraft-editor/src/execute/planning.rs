@@ -292,7 +292,8 @@ fn kind(op: &Op) -> Kind {
         | Op::CanvasTransform { .. }
         | Op::TransformSelection { .. }
         | Op::MoveSelection { .. } => Kind::Transform,
-        Op::LayerMask(_)
+        Op::LayerSetBlendMode { .. }
+        | Op::LayerMask(_)
         | Op::Filter(_)
         | Op::LayerAdd { .. }
         | Op::LayerDuplicate { .. }

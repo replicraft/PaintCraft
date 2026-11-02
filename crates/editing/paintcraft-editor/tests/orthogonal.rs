@@ -60,6 +60,7 @@ fn all_orientations_keep_full_layer_extents_metadata_hidden_rgb_and_recorded_his
                 origin: (-2, 3),
                 visible: false,
                 opacity: 123,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 raster,
             },

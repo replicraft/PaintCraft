@@ -2,7 +2,8 @@
 use super::*;
 
 pub fn catalog_document_requirements(doc: &Document) -> Vec<&'static str> {
-    if !doc.has_layer_masks()
+    if !doc.has_non_normal_blends()
+        && !doc.has_layer_masks()
         && !doc.layers.values().any(|layer| {
             layer
                 .filters

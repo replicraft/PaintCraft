@@ -71,6 +71,7 @@ fn setup(origin: (i64, i64)) -> (Session, Uuid) {
             origin,
             visible: false,
             opacity: 73,
+            blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
             raster,
         },
