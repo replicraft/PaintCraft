@@ -67,9 +67,12 @@ Asynchronous browser mask mutation and appearance-aware foreign export consent
 remain open; unsupported mask actions refuse before changing the document or gesture.
 See [the layer-mask record](LAYER_MASK_FOUNDATION.md) for the tested scope.
 
-The next slices are completing browser layer-mask integration, then
-**Multiply/Screen layer blending**, then **Color Overlay** as the first live layer
-style. Each slice needs its own persistence, history, automation and rendering contract.
+The [Multiply/Screen foundation](LAYER_BLEND_FOUNDATION.md) now covers exact
+numerical behavior and locally tested metadata, history and native PCND8 persistence.
+Visual blend rendering and frontend controls remain open. The next slices finish
+browser layer-mask editing and blend rendering, then **Color Overlay** as the first
+live layer style. Each slice needs its own persistence, history, automation and
+rendering contract.
 Other filters can follow through individually specified numerical/spatial
 contracts. The author's pinned 132 filters, ten style families and nineteen blend
 modes are an inventory, not completed PaintCraft parity or a wholesale port.
