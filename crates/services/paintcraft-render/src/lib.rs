@@ -11,6 +11,7 @@ use paintcraft_document::Document;
 use paintcraft_raster::RowSpan;
 
 mod appearance;
+pub mod blend;
 mod direct;
 mod kernels;
 pub mod layer_mask;
@@ -44,9 +45,6 @@ pub fn render_region(doc: &Document, region: Rect) -> Result<Vec<u8>> {
 }
 
 pub(crate) fn validate_region(doc: &Document, region: Rect) -> Result<()> {
-    // Bounded host eligibility at region admission; never repeated by the
-    // tile/prefix compositor. Existing metadata limits bound stored layers.
-    doc.require_normal_blends()?;
     if region.x0 < 0
         || region.y0 < 0
         || region.x1 <= region.x0
@@ -91,7 +89,7 @@ pub fn render_region_cancellable(
 ) -> Result<Vec<u8>> {
     let levels_caller_check = &check;
     let check = || levels_caller_check();
-    crate::prepared::with_document_programs(doc, &check, || {
+    crate::blend::with_programs(doc, region, &check, || {
         check()?;
         let bytes = region_bytes(doc, region)?;
         spatial::preflight(doc, region, &check)?;
@@ -111,13 +109,23 @@ pub(crate) fn compose_roots_into(
     check: &impl Fn() -> Result<()>,
 ) -> Result<()> {
     let width = region.width() as usize;
-    for layer in doc.layers_in_order().skip(roots.start).take(roots.len()) {
+    for (index, layer) in doc
+        .layers_in_order()
+        .enumerate()
+        .skip(roots.start)
+        .take(roots.len())
+    {
+        let blend = crate::blend::kind(doc, layer, index)?;
         if !layer.visible || layer.opacity == 0 {
             continue;
         }
         let Some(area) = region.intersect(&layer.extent()) else {
             continue;
         };
+        if spatial::active(layer) && !matches!(blend, crate::blend::Kind::Normal) {
+            crate::blend::spatial(layer, area, region, out, blend, check)?;
+            continue;
+        }
         if spatial::active(layer) {
             let local = area
                 .translated(-layer.origin.0, -layer.origin.1)
@@ -152,7 +160,7 @@ pub(crate) fn compose_roots_into(
             let row = &mut out
                 [((y - region.y0) as usize * width + (area.x0 - region.x0) as usize) * 4..]
                 [..area.width() as usize * 4];
-            compose_row(layer, y, area.x0, row, check)?;
+            compose_row(layer, y, area.x0, row, blend, check)?;
         }
     }
     Ok(())
@@ -164,8 +172,12 @@ pub(crate) fn compose_row(
     y: i64,
     x: i64,
     mut row: &mut [u8],
+    blend: crate::blend::Kind,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
+    if !matches!(blend, crate::blend::Kind::Normal) {
+        return crate::blend::row(layer, y, x, row, blend, check);
+    }
     let local_y = y - layer.origin.1;
     let mut local_x = x - layer.origin.0;
     for span in layer.raster.row_spans(

@@ -120,6 +120,10 @@ pub(crate) fn uniform(
     rect: Rect,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<Rgba>> {
+    // A new-mode proof would add extra composition calls beyond the dense quote.
+    if crate::blend::allowed(doc) {
+        return Ok(None);
+    }
     // Optional display-level proofs would evaluate a charged direct prefix
     // repeatedly before native composition. Its one appearance proof+dense
     // fallback already has the admitted two-pass bound. Also shared by GPU LOD.
@@ -300,7 +304,7 @@ impl DisplayCache {
     ) -> Result<DisplayFrame> {
         let levels_caller_check = &check;
         let check = || levels_caller_check();
-        crate::prepared::with_document_programs(doc, &check, || {
+        crate::blend::with_programs(doc, request.region, &check, || {
             crate::direct::preflight(doc, request.region, &check)?;
             let request = DisplayRequest::new(doc, request.region, request.level)?;
             if crate::spatial::relevant(doc, request.region) {
@@ -323,8 +327,11 @@ impl DisplayCache {
             };
             let step = i64::from(request.step());
             let span = step * i64::from(self.limits.tile_edge);
-            let clip_direct =
-                crate::direct::active_document(doc) || crate::layer_mask::active_document(doc);
+            // The CPU certificate covers ANY stored non-Normal mode, even
+            // outside this ROI. No second document walk is needed here.
+            let clip_direct = crate::direct::active_document(doc)
+                || crate::layer_mask::active_document(doc)
+                || crate::blend::allowed(doc);
             let bounds = request.region;
             for ty in bounds.y0 / span..=(bounds.y1 - 1) / span {
                 for tx in bounds.x0 / span..=(bounds.x1 - 1) / span {

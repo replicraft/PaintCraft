@@ -104,7 +104,7 @@ impl CompositeCache {
     ) -> Result<CachedRegion> {
         let levels_caller_check = &check;
         let check = || levels_caller_check();
-        crate::prepared::with_document_programs(doc, &check, || {
+        crate::blend::with_programs(doc, region, &check, || {
             crate::direct::preflight(doc, region, &check)?;
             check()?;
             if crate::spatial::relevant(doc, region) {
@@ -132,8 +132,11 @@ impl CompositeCache {
             }
             // Any enabled direct filter can lie outside the priced ROI but
             // inside an expanded cache tile. Never evaluate that extra area.
-            let clip_direct =
-                crate::direct::active_document(doc) || crate::layer_mask::active_document(doc);
+            // The CPU certificate covers ANY stored non-Normal mode, even
+            // outside this ROI. No second document walk is needed here.
+            let clip_direct = crate::direct::active_document(doc)
+                || crate::layer_mask::active_document(doc)
+                || crate::blend::allowed(doc);
             let edge = i64::from(self.limits.tile_edge);
             for ty in region.y0 / edge..=(region.y1 - 1) / edge {
                 for tx in region.x0 / edge..=(region.x1 - 1) / edge {
