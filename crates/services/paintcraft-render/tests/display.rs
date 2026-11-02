@@ -40,6 +40,7 @@ fn fixture() -> Document {
                 name: "offset".into(),
                 origin: (-3 + n as i64 * 7, -2 + n as i64 * 3),
                 opacity: 137 + n as u8 * 31,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 visible: true,
                 filters: Default::default(),
                 raster: RasterLayer::from_rgba(
@@ -155,6 +156,7 @@ fn layerwise_downsampling_is_not_used_and_levels_and_previews_have_separate_vali
                 origin: (0, 0),
                 visible: true,
                 opacity: 255,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 raster: RasterLayer::from_rgba(
                     2,
@@ -314,6 +316,7 @@ fn dense_reduction_across_unaligned_recursive_splits_matches_the_full_pixel_orac
                 origin: (-7 + i64::from(n) * 11, 5 - i64::from(n) * 9),
                 visible: true,
                 opacity: 173 + n as u8 * 31,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 raster: RasterLayer::from_rgba(523, 307, Rgba::TRANSPARENT, &bytes, &mut admission)
                     .unwrap(),

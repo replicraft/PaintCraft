@@ -208,6 +208,7 @@ fn source_local_coordinates_cross_dense_tiles_negative_origins_and_backdrops() {
             origin: (-255, -1),
             visible: true,
             opacity: 128,
+            blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             raster,
             filters: FilterStack::new(vec![instance(
                 "offset-invert",

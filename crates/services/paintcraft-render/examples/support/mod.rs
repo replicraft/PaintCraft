@@ -94,6 +94,7 @@ pub fn fixture(case: &str) -> Document {
             } else {
                 255
             },
+            blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
             raster,
         };

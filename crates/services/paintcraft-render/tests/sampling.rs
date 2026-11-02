@@ -39,6 +39,7 @@ fn layered() -> paintcraft_document::Document {
                 origin,
                 visible,
                 opacity,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 raster: r,
             },

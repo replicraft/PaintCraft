@@ -13,13 +13,24 @@ const CAPTURE: u64 = (MAX
     * (std::mem::size_of::<LevelsRgbV1>()
         + std::mem::size_of::<ExposureSrgbV1>()
         + std::mem::size_of::<CurvesRgbV1>())) as u64;
-fn active(doc: &Document) -> bool {
-    doc.layers.values().any(|l| {
-        l.filters
+// Bounded host eligibility at the document-program gateway, not per row/tile.
+fn active(doc: &Document) -> Result<bool> {
+    let mut active = false;
+    for layer in doc.layers.values() {
+        if layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                "Layer blend modes require a qualified appearance route",
+            ));
+        }
+        active |= layer
+            .filters
             .iter()
-            .any(|f| f.enabled() && matches!(f.descriptor(), Descriptor::CurvesRgbV1(_)))
-    })
+            .any(|f| f.enabled() && matches!(f.descriptor(), Descriptor::CurvesRgbV1(_)));
+    }
+    Ok(active)
 }
+
 fn capture(
     doc: &Document,
     l: &mut [LevelsRgbV1; MAX],
@@ -78,7 +89,7 @@ pub fn quote_document_programs(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<DocumentProgramsQuote> {
-    if !active(doc) {
+    if !active(doc)? {
         return super::programs::quote_legacy_programs(doc, check);
     }
     quote_active(doc, check)
@@ -133,11 +144,12 @@ pub fn prepare_document_programs(
     a: WorkspaceAdmission,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<WorkspaceAdmission> {
+    let curves_active = active(doc)?;
     if a.prepared_curves().is_some() {
         validate_doc(doc, &a, check)?;
         return Ok(a);
     }
-    if !active(doc) {
+    if !curves_active {
         return super::programs::prepare_legacy_programs(doc, a, check);
     }
     if a.has_prepared_programs() {
@@ -178,6 +190,7 @@ pub fn with_document_programs<T>(
     check: &dyn Fn() -> Result<()>,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
+    let curves_active = active(doc)?;
     crate::direct::require_document(doc)?;
     if let Some(a) = crate::spatial::current()
         && a.prepared_curves().is_some()
@@ -185,7 +198,7 @@ pub fn with_document_programs<T>(
         validate_doc(doc, &a, check)?;
         return work();
     }
-    if !active(doc) {
+    if !curves_active {
         return super::programs::with_legacy_programs(doc, check, work);
     }
     let a = crate::spatial::current().ok_or_else(super::programs::unprepared_curves)?;

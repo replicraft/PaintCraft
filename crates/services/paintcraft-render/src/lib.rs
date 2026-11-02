@@ -44,6 +44,9 @@ pub fn render_region(doc: &Document, region: Rect) -> Result<Vec<u8>> {
 }
 
 pub(crate) fn validate_region(doc: &Document, region: Rect) -> Result<()> {
+    // Bounded host eligibility at region admission; never repeated by the
+    // tile/prefix compositor. Existing metadata limits bound stored layers.
+    doc.require_normal_blends()?;
     if region.x0 < 0
         || region.y0 < 0
         || region.x1 <= region.x0

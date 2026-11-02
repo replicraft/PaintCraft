@@ -128,6 +128,7 @@ fn masked_source_local_coordinates_and_alpha_precede_gpu_opacity_and_backdrop() 
             name: "offset".into(),
             visible: true,
             opacity: 128,
+            blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             origin: (-1, 0),
             raster: RasterLayer::new(6, 2, Rgba([10, 60, 200, 128])),
             filters: FilterStack::new(vec![

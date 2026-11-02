@@ -9,6 +9,7 @@ struct LayerKey {
     origin: (i64, i64),
     size: (u32, u32),
     opacity: u8,
+    blend_mode: paintcraft_core::types::LayerBlendMode,
     default: Rgba,
     filters: [u8; 32],
     mask: crate::layer_mask::Identity,
@@ -103,6 +104,7 @@ impl Key {
                 origin: layer.origin,
                 size: (layer.raster.width(), layer.raster.height()),
                 opacity: layer.opacity,
+                blend_mode: layer.blend_mode,
                 default: layer.raster.default_pixel(),
                 filters: layer.filters.digest(),
                 mask: crate::layer_mask::identity(layer),
@@ -132,6 +134,7 @@ impl Key {
                 || new.origin != old.origin
                 || new.size != old.size
                 || new.opacity != old.opacity
+                || new.blend_mode != old.blend_mode
                 || new.default != old.default
                 || new.filters != old.filters
                 || new.mask != old.mask
@@ -190,7 +193,7 @@ mod layer_mask_layout_tests {
     #[test]
     fn target_observed_layer_mask_cpu_key_controls_and_short_budget() {
         eprintln!(
-            "LAYER_MASK_CPU_KEY_LAYOUT target={} pointer={} layer_key={} key={} mask_component={} region_version={}",
+            "BLEND_CPU_KEY_LAYOUT target={} pointer={} layer_key={} key={} mask_component={} region_version={}",
             std::env::consts::ARCH,
             size_of::<usize>(),
             size_of::<LayerKey>(),
