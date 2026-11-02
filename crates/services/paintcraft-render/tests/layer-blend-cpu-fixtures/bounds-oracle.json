@@ -1,0 +1,84 @@
+{
+  "status": "independent literals frozen before correction test source",
+  "cases": [
+    {
+      "modes": [
+        "multiply"
+      ],
+      "backdrop": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "initial": [
+        249,
+        233,
+        225,
+        255
+      ],
+      "dirty": [
+        239,
+        231,
+        248,
+        255
+      ],
+      "setup": 512,
+      "extra": 32,
+      "limit": 544
+    },
+    {
+      "modes": [
+        "screen"
+      ],
+      "backdrop": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "initial": [
+        26,
+        10,
+        2,
+        255
+      ],
+      "dirty": [
+        16,
+        8,
+        25,
+        255
+      ],
+      "setup": 512,
+      "extra": 32,
+      "limit": 544
+    },
+    {
+      "modes": [
+        "multiply",
+        "screen"
+      ],
+      "backdrop": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "initial": [
+        249,
+        235,
+        228,
+        255
+      ],
+      "dirty": [
+        239,
+        233,
+        249,
+        255
+      ],
+      "setup": 768,
+      "extra": 64,
+      "limit": 832
+    }
+  ]
+}
