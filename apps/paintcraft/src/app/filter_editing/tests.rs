@@ -610,3 +610,6 @@ mod box_tests;
 
 #[path = "hsl_tests.rs"]
 mod hsl_tests;
+
+#[path = "blend_tests.rs"]
+mod blend_tests;

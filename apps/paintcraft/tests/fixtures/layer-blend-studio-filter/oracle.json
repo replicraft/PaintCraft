@@ -1,0 +1,150 @@
+{
+	"schema": "paintcraft.native-studio-filter-blends-independent/v1",
+	"rounding": "exact Fraction final nearest ties-up; opaque Normal backdrop",
+	"sourceBack": [
+		31,
+		127,
+		241,
+		255
+	],
+	"sourceFront": [
+		204,
+		77,
+		13,
+		255
+	],
+	"records": [
+		{
+			"mode": "multiply",
+			"stage": "initial",
+			"back": [
+				31,
+				127,
+				241,
+				255
+			],
+			"front": [
+				204,
+				77,
+				13,
+				255
+			],
+			"expected": [
+				25,
+				38,
+				12,
+				255
+			]
+		},
+		{
+			"mode": "multiply",
+			"stage": "invert-top",
+			"back": [
+				31,
+				127,
+				241,
+				255
+			],
+			"front": [
+				51,
+				178,
+				242,
+				255
+			],
+			"expected": [
+				6,
+				89,
+				229,
+				255
+			]
+		},
+		{
+			"mode": "multiply",
+			"stage": "invert-bottom",
+			"back": [
+				224,
+				128,
+				14,
+				255
+			],
+			"front": [
+				204,
+				77,
+				13,
+				255
+			],
+			"expected": [
+				179,
+				39,
+				1,
+				255
+			]
+		},
+		{
+			"mode": "screen",
+			"stage": "initial",
+			"back": [
+				31,
+				127,
+				241,
+				255
+			],
+			"front": [
+				204,
+				77,
+				13,
+				255
+			],
+			"expected": [
+				210,
+				166,
+				242,
+				255
+			]
+		},
+		{
+			"mode": "screen",
+			"stage": "invert-top",
+			"back": [
+				31,
+				127,
+				241,
+				255
+			],
+			"front": [
+				51,
+				178,
+				242,
+				255
+			],
+			"expected": [
+				76,
+				216,
+				254,
+				255
+			]
+		},
+		{
+			"mode": "screen",
+			"stage": "invert-bottom",
+			"back": [
+				224,
+				128,
+				14,
+				255
+			],
+			"front": [
+				204,
+				77,
+				13,
+				255
+			],
+			"expected": [
+				249,
+				166,
+				26,
+				255
+			]
+		}
+	]
+}
