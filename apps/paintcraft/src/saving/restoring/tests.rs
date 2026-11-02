@@ -406,7 +406,133 @@ fn a_recovered_zero_state_uuid_is_unsaved_and_gets_a_protective_checkpoint() {
 }
 
 #[test]
-fn asynchronous_blend_claim_is_not_published_or_deleted_as_corrupt_recovery() {
+fn asynchronous_blend_claim_retains_checkpoint_until_native_protection_and_reopens() {
+    use paintcraft_core::types::LayerBlendMode;
+    for experience in [Experience::Classic, Experience::Studio] {
+        for mode in [LayerBlendMode::Multiply, LayerBlendMode::Screen] {
+            let dir = scratch();
+            let mut doc = paintcraft_document::new_document(
+                2,
+                1,
+                Some(Rgba([17, 32, 255, 0])),
+                0,
+                paintcraft_document::POLICY,
+            )
+            .unwrap();
+            let layer = doc.layers.get_mut(&doc.roots[0]).unwrap();
+            layer.blend_mode = mode;
+            layer.visible = false;
+            layer.opacity = 0;
+            let recovery = Recovery::start(&dir).unwrap();
+            recovery.checkpoint_document(&doc, None).unwrap();
+            drop(recovery);
+            let offer = Recovery::scan(&dir).remove(0);
+            let payload = std::fs::read(&offer.checkpoint).unwrap();
+            let mut app = recovery_app(dir.clone());
+            app.settings.experience = experience;
+            app.editor.request(0x62a1, Action::AddLayer);
+            app.editor.run_pending();
+            let old_owner = app.active_tab_id();
+            let old_source = app.editor.document_snapshot();
+            let old_ticket = app.editor.history_view().ticket;
+            let old_tabs = app.tabs.len();
+            app.do_recover(offer.clone());
+            let (request, result) = take_restore(&mut app);
+            assert!(matches!(&result, Ok(Completion::Claimed(_))));
+            let release = pause_queue(&mut app);
+            app.apply_claimed_recovery(request, result);
+            let recovered_owner = app.active_tab_id();
+            assert!(app.editor.document().same_semantics(&doc));
+            assert!(app.editor.is_dirty());
+            assert_eq!(app.editor.undo_depth(), 0);
+            assert!(app.editor.checkpoint_info().is_none());
+            assert_eq!(std::fs::read(&offer.checkpoint).unwrap(), payload);
+            assert!(Recovery::discard(&dir, offer.session).is_err());
+            if experience == Experience::Studio {
+                assert_eq!(app.tabs.len(), old_tabs + 1);
+                assert_ne!(recovered_owner, old_owner);
+                assert!(app.swap_tab_state(old_owner));
+                assert!(std::sync::Arc::ptr_eq(
+                    &old_source,
+                    &app.editor.document_snapshot()
+                ));
+                assert_eq!(app.editor.history_view().ticket, old_ticket);
+                assert_eq!(app.editor.undo_depth(), 1);
+                assert!(app.swap_tab_state(recovered_owner));
+                assert!(app.editor.document().same_semantics(&doc));
+                assert!(app.recovery_source.is_some());
+            } else {
+                assert_eq!(app.tabs.len(), old_tabs);
+                assert_eq!(recovered_owner, old_owner);
+                assert!(!std::sync::Arc::ptr_eq(
+                    &old_source,
+                    &app.editor.document_snapshot()
+                ));
+            }
+            release.send(()).unwrap();
+            drain(&mut app);
+            assert!(app.editor.has_checkpoint());
+            assert!(app.recovery_source.is_none());
+            assert!(!offer.checkpoint.exists());
+            drop(app);
+            let found = Recovery::scan(&dir);
+            if experience == Experience::Classic {
+                assert_eq!(found.len(), 1);
+            }
+            assert!(found.iter().any(|item| {
+                Recovery::read_checkpoint(&item.checkpoint)
+                    .unwrap()
+                    .same_semantics(&doc)
+            }));
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+    }
+}
+#[test]
+fn stale_blend_recovery_completion_keeps_current_source_and_original_checkpoint() {
+    use paintcraft_core::types::LayerBlendMode;
+    let dir = scratch();
+    let mut doc = paintcraft_document::new_document(
+        2,
+        1,
+        Some(Rgba::TRANSPARENT),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().blend_mode = LayerBlendMode::Multiply;
+    let recovery = Recovery::start(&dir).unwrap();
+    recovery.checkpoint_document(&doc, None).unwrap();
+    drop(recovery);
+    let offer = Recovery::scan(&dir).remove(0);
+    let payload = std::fs::read(&offer.checkpoint).unwrap();
+    let mut app = recovery_app(dir.clone());
+    app.do_recover(offer.clone());
+    let (request, result) = take_restore(&mut app);
+    app.editor.request(0x6294, Action::AddLayer);
+    app.editor.run_pending();
+    let before = app.editor.document_snapshot();
+    let ticket = app.editor.history_view().ticket;
+    app.apply_claimed_recovery(request, result);
+    drain(&mut app);
+    assert!(std::sync::Arc::ptr_eq(
+        &before,
+        &app.editor.document_snapshot()
+    ));
+    assert_eq!(app.editor.history_view().ticket, ticket);
+    assert!(app.recovery_source.is_none());
+    assert_eq!(std::fs::read(&offer.checkpoint).unwrap(), payload);
+    drop(app);
+    assert!(
+        Recovery::scan(&dir)
+            .iter()
+            .any(|item| item.session == offer.session)
+    );
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn studio_full_tab_capacity_refuses_claim_without_replacing_or_deleting_recovery() {
     use paintcraft_core::types::LayerBlendMode;
     let dir = scratch();
     let mut doc = paintcraft_document::new_document(
@@ -423,35 +549,46 @@ fn asynchronous_blend_claim_is_not_published_or_deleted_as_corrupt_recovery() {
     drop(recovery);
     let offer = Recovery::scan(&dir).remove(0);
     let payload = std::fs::read(&offer.checkpoint).unwrap();
-    let mut app = recovery_app(dir.clone());
-    app.editor.tool = Tool::Text;
-    app.editor.pointer_down((3, 2));
-    app.editor.type_text("keep background recovery draft");
+    let ctx = egui::Context::default();
+    let mut app = App::new(None);
+    app.settings.experience = Experience::Studio;
+    // Real bounded tab creation, before attaching recovery, avoids inventing
+    // impossible parked states or turning this into recovery-worker pressure.
+    while app.tabs.len() < crate::tabs::MAX_TABS {
+        app.add_document_tab(Editor::new_document(1, 1).unwrap(), &ctx)
+            .unwrap();
+    }
+    app.saving = Some(crate::saving::NativeSaving::new(ctx).unwrap());
+    app = app.with_recovery(dir.clone());
+    drain(&mut app);
+    let owner = app.active_tab_id();
     let before = app.editor.document_snapshot();
-    let history = app.editor.history_view().ticket;
+    let ticket = app.editor.history_view().ticket;
     let stamp = app.editor.preview_stamp();
-    let text = app.editor.canvas_text_content().unwrap().to_owned();
+    let tabs = app.tabs.iter().map(|tab| tab.id).collect::<Vec<_>>();
     app.do_recover(offer.clone());
     let (request, result) = take_restore(&mut app);
     assert!(
         matches!(&result, Ok(Completion::Claimed(_))),
-        "the general reader recognizes PCND8"
+        "known PCND8 was read before capacity check"
     );
     app.apply_claimed_recovery(request, result);
-    drain(&mut app); // Actual disposal drops the claim without discarding its checkpoint.
+    drain(&mut app);
+    assert_eq!(app.active_tab_id(), owner);
+    assert_eq!(app.tabs.iter().map(|tab| tab.id).collect::<Vec<_>>(), tabs);
     assert!(std::sync::Arc::ptr_eq(
         &before,
         &app.editor.document_snapshot()
     ));
-    assert_eq!(app.editor.history_view().ticket, history);
+    assert_eq!(app.editor.history_view().ticket, ticket);
     assert_eq!(app.editor.preview_stamp(), stamp);
-    assert_eq!(app.editor.canvas_text_content(), Some(text.as_str()));
+    assert!(app.recovery_source.is_none());
+    assert!(app.editor.status().contains("Open-document limit reached"));
     assert!(
         app.recoverable
             .iter()
             .any(|item| item.session == offer.session)
     );
-    assert!(app.recovery_source.is_none());
     assert_eq!(std::fs::read(&offer.checkpoint).unwrap(), payload);
     drop(app);
     assert!(

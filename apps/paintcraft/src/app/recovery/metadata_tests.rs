@@ -147,19 +147,19 @@ fn classic_discard_confirmation_does_not_publish_private_text_and_success_still_
     assert_eq!(app.editor.document().document_id, offer.document_id);
 }
 
-#[test]
-fn reader_known_blend_recovery_refuses_ui_and_keeps_checkpoint_offer_and_private_draft() {
-    use paintcraft_core::types::{LayerBlendMode, Rgba};
-    let folder = Folder::new();
+fn blend_orphan(
+    folder: &Folder,
+    mode: paintcraft_core::types::LayerBlendMode,
+) -> (Found, paintcraft_document::Document, Vec<u8>) {
     let mut doc = paintcraft_document::new_document(
         2,
         1,
-        Some(Rgba::TRANSPARENT),
+        Some(paintcraft_core::types::Rgba::TRANSPARENT),
         0,
         paintcraft_document::POLICY,
     )
     .unwrap();
-    doc.layers.get_mut(&doc.roots[0]).unwrap().blend_mode = LayerBlendMode::Multiply;
+    doc.layers.get_mut(&doc.roots[0]).unwrap().blend_mode = mode;
     let recovery = Recovery::start(&folder.0).unwrap();
     recovery.checkpoint_document(&doc, None).unwrap();
     drop(recovery);
@@ -170,28 +170,131 @@ fn reader_known_blend_recovery_refuses_ui_and_keeps_checkpoint_offer_and_private
             .unwrap()
             .same_semantics(&doc)
     );
-    let mut app = App::new(None);
-    app.recoverable.push(offer.clone());
-    app.editor.tool = Tool::Text;
-    app.editor.pointer_down((3, 2));
-    app.editor.type_text("keep recovery draft");
-    let before = app.editor.document_snapshot();
-    let ticket = app.editor.history_view().ticket;
-    let stamp = app.editor.preview_stamp();
-    let text = app.editor.canvas_text_content().unwrap().to_owned();
-    assert_eq!(
-        app.recover_found(&offer).unwrap_err().code,
-        ErrorCode::CapabilityUnsupported
-    );
-    assert!(std::sync::Arc::ptr_eq(
-        &before,
-        &app.editor.document_snapshot()
-    ));
-    assert_eq!(app.editor.history_view().ticket, ticket);
-    assert_eq!(app.editor.preview_stamp(), stamp);
-    assert_eq!(app.editor.canvas_text_content(), Some(text.as_str()));
-    assert_eq!(app.recoverable, vec![offer.clone()]);
+    (offer, doc, payload)
+}
+fn protect_confirmed_recovery(app: App, offer: &Found, doc: &paintcraft_document::Document) {
+    let protected = Folder::new();
+    // No existing checkpoint owner: this public startup attachment is permitted.
+    // Handoff remains retained while the new owner has not written a checkpoint.
+    let mut app = app.with_recovery(protected.0.clone());
+    assert!(offer.checkpoint.exists());
+    assert!(app.recovery_source.is_some());
+    assert!(!app.editor.has_checkpoint());
+    assert!(app.editor.autosave());
+    assert!(app.editor.has_checkpoint());
+    app.protect_recovery_source();
+    app.pump_recovery_handoff();
     assert!(app.recovery_source.is_none());
-    assert_eq!(fs::read(&offer.checkpoint).unwrap(), payload);
-    assert_eq!(Recovery::scan(&folder.0).len(), 1);
+    assert!(!offer.checkpoint.exists());
+    drop(app);
+    let copies = Recovery::scan(&protected.0);
+    assert_eq!(copies.len(), 1);
+    assert!(
+        Recovery::read_checkpoint(&copies[0].checkpoint)
+            .unwrap()
+            .same_semantics(doc)
+    );
+}
+#[test]
+fn classic_blend_recovery_explicit_discard_keeps_private_draft_until_acceptance() {
+    use paintcraft_core::types::LayerBlendMode;
+    for mode in [LayerBlendMode::Multiply, LayerBlendMode::Screen] {
+        let folder = Folder::new();
+        let (offer, doc, payload) = blend_orphan(&folder, mode);
+        let mut app = App::new(None);
+        app.settings.experience = Experience::Classic;
+        app.recoverable.push(offer.clone());
+        app.editor.tool = Tool::Text;
+        app.editor.pointer_down((3, 2));
+        app.editor.type_text("private until explicit discard");
+        let before = app.editor.document_snapshot();
+        let ticket = app.editor.history_view().ticket;
+        let stamp = app.editor.preview_stamp();
+        let text = app.editor.canvas_text_content().unwrap().to_owned();
+        for _ in 0..2 {
+            app.recover_requested(offer.clone());
+            assert!(
+                matches!(&app.confirm, Some(Confirm::DiscardForRecovery(found)) if found == &offer)
+            );
+            assert!(std::sync::Arc::ptr_eq(
+                &before,
+                &app.editor.document_snapshot()
+            ));
+            assert_eq!(app.editor.history_view().ticket, ticket);
+            assert_eq!(app.editor.preview_stamp(), stamp);
+            assert_eq!(app.editor.canvas_text_content(), Some(text.as_str()));
+            assert_eq!(fs::read(&offer.checkpoint).unwrap(), payload);
+            app.confirm = None; // Explicit Cancel on the first decision preserves all state.
+        }
+        app.recover_requested(offer.clone());
+        let Some(Confirm::DiscardForRecovery(accepted)) = app.confirm.take() else {
+            panic!("explicit Classic discard decision")
+        };
+        let owner = app.active_tab_id();
+        app.do_recover(accepted);
+        assert_eq!(app.active_tab_id(), owner);
+        assert!(app.editor.document().same_semantics(&doc));
+        assert!(!app.editor.is_editing_text());
+        assert!(app.editor.is_dirty());
+        assert_eq!(app.editor.undo_depth(), 0);
+        assert!(
+            !app.recoverable
+                .iter()
+                .any(|item| item.session == offer.session)
+        );
+        assert!(app.recovery_source.is_some());
+        assert_eq!(fs::read(&offer.checkpoint).unwrap(), payload);
+        assert!(Recovery::discard(&folder.0, offer.session).is_err());
+        protect_confirmed_recovery(app, &offer, &doc);
+    }
+}
+#[test]
+fn studio_blend_recovery_opens_new_owner_and_preserves_prior_input_source_and_history() {
+    use paintcraft_core::types::{LayerBlendMode, Rgba};
+    for mode in [LayerBlendMode::Multiply, LayerBlendMode::Screen] {
+        let folder = Folder::new();
+        let (offer, doc, payload) = blend_orphan(&folder, mode);
+        let mut app = App::new(None);
+        app.settings.experience = Experience::Studio;
+        app.recoverable.push(offer.clone());
+        app.editor.request(0x62af, Action::AddLayer);
+        app.editor.run_pending();
+        app.editor.select_tool(Tool::ColorPicker);
+        app.editor.color = Rgba([11, 37, 191, 255]);
+        app.editor.secondary = Rgba([201, 43, 7, 255]);
+        let input = (app.editor.tool, app.editor.color, app.editor.secondary);
+        let old_owner = app.active_tab_id();
+        let before = app.editor.document_snapshot();
+        let ticket = app.editor.history_view().ticket;
+        let tabs = app.tabs.len();
+        app.recover_requested(offer.clone());
+        assert!(
+            app.confirm.is_none(),
+            "Studio opens a new tab instead of Classic discard"
+        );
+        let recovered_owner = app.active_tab_id();
+        assert_ne!(recovered_owner, old_owner);
+        assert_eq!(app.tabs.len(), tabs + 1);
+        assert!(app.editor.document().same_semantics(&doc));
+        assert!(app.editor.is_dirty());
+        assert_eq!(app.editor.undo_depth(), 0);
+        assert!(app.recovery_source.is_some());
+        assert_eq!(fs::read(&offer.checkpoint).unwrap(), payload);
+        assert!(Recovery::discard(&folder.0, offer.session).is_err());
+        assert!(app.swap_tab_state(old_owner));
+        assert!(std::sync::Arc::ptr_eq(
+            &before,
+            &app.editor.document_snapshot()
+        ));
+        assert_eq!(app.editor.history_view().ticket, ticket);
+        assert_eq!(app.editor.undo_depth(), 1);
+        assert_eq!(
+            (app.editor.tool, app.editor.color, app.editor.secondary),
+            input
+        );
+        assert!(app.swap_tab_state(recovered_owner));
+        assert!(app.editor.document().same_semantics(&doc));
+        assert!(app.recovery_source.is_some());
+        protect_confirmed_recovery(app, &offer, &doc);
+    }
 }
