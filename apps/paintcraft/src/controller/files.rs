@@ -50,7 +50,6 @@ impl Editor {
             },
             &|| Ok(()),
         )?;
-        document.require_normal_blends()?;
         let mut e = Editor::with_document(document, Some(path.to_path_buf()));
         e.destination = Some(binding);
         e.status = format!("Opened {}", path.display());
