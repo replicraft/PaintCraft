@@ -34,9 +34,23 @@ integration. Actual scalar and partitioned row results match both packed hashes.
 
 Native Core and Effects library suites pass 102 and 85 tests, including six new
 groups. Native all-target strict lint, Main/both-Worker Wasm strict lint, formatting
-and source-length checks pass. This does not establish actual Wasm numerical
-execution; its separate harness qualification is pending. Original sources,
-oracle-first receipt and gate logs are retained under
+and source-length checks pass. Separate actual Wasm execution through the real
+generated glue also passes all 6,912 scalar vectors, 216 primitive-stage inputs
+and 155 single-round controls. It exercises 184,320 row calls by repeating the
+existing independent literals across partitions, plus 15 cancellation cases,
+six empty-row cancellations and 272 refusals. Repetition adds boundary coverage,
+not independent numerical cases. Source and output guards remain intact.
+
+All 119 defining source/config/harness inputs match before and after build and
+execution. The actual module has nonshared memory, 2 MiB initially and 16 MiB
+maximum, and only the real glue's externref initializer import. The first build
+driver wrongly required Cargo's emitted root-package libraries to be under
+`release/deps`; its failure and corrected fresh attempt remain separate. No kernel
+change was required. This Node Wasm result does not establish browser UI, Worker
+support, resource admission or physical memory use. The aggregate receipt is
+`docs/validation/color-overlay-foundation/wasm/final-freeze.json`, with defining
+sources and actual libraries preserved. Original sources,
+oracle-first receipt and native gate logs are retained under
 `docs/validation/color-overlay-foundation/`. The scalar baseline has no comparative
 performance or RSS claim, and its source-action ledger has no adopted work price.
 
