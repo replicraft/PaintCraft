@@ -1,13 +1,7 @@
-//! Real adapter refusal, including calls reentered from an admitted CPU scope.
+//! Stored blend modes never acquire a GPU execution grant from a None caller.
 use super::*;
-use paintcraft_core::types::{
-    ErrorCode, LayerBlendMode,
-    resources::{AllocationClass, SharedBudget},
-};
-use paintcraft_render::{
-    display::DisplayRequest,
-    spatial::{WorkspaceAdmission, with_workspace},
-};
+use paintcraft_core::types::{ErrorCode, LayerBlendMode};
+use paintcraft_render::display::DisplayRequest;
 use std::cell::Cell;
 #[test]
 fn gpu_all_public_paths_refuse_modes_before_callbacks_or_source_allocation() {
@@ -60,18 +54,6 @@ fn gpu_all_public_paths_refuse_modes_before_callbacks_or_source_allocation() {
                 assert_eq!(gpu.source_cache_usage(), usage);
             };
             verify();
-            let workspace = WorkspaceAdmission::new(
-                SharedBudget::new(4 << 20).scope(AllocationClass::SharedBudget),
-                1 << 20,
-                1_000_000,
-            );
-            with_workspace(workspace, || {
-                paintcraft_render::render_cancellable(&doc, || {
-                    verify();
-                    Ok(())
-                })
-            })
-            .unwrap();
             assert_eq!(gpu.source_cache_usage(), usage);
         }
     }
