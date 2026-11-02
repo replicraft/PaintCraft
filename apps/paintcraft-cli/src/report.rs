@@ -30,7 +30,9 @@ pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_
     Value::object([
         (
             "schema",
-            Value::str(if engine_schema == Some("paintcraft.result/v5") {
+            Value::str(if engine_schema == Some("paintcraft.result/v6") {
+                "paintcraft.file-command/v6"
+            } else if engine_schema == Some("paintcraft.result/v5") {
                 "paintcraft.file-command/v5"
             } else if engine_schema == Some("paintcraft.result/catalog-v1") {
                 "paintcraft.file-command/catalog-v1"
@@ -93,6 +95,7 @@ mod layer_mask_profile_tests {
     #[test]
     fn own_masks_use_v5_without_downgrading_any_existing_engine_profile() {
         for (engine_schema, outer) in [
+            ("paintcraft.result/v6", "paintcraft.file-command/v6"),
             ("paintcraft.result/v5", "paintcraft.file-command/v5"),
             (
                 "paintcraft.result/catalog-v1",
@@ -111,3 +114,7 @@ mod layer_mask_profile_tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "report/blend_schema_tests.rs"]
+mod blend_schema_tests;

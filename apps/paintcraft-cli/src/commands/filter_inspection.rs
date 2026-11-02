@@ -62,3 +62,50 @@ pub(super) fn mcp_schema(doc: &Document, masked: bool) -> Option<&'static str> {
         None
     }
 }
+
+/// Old inspection profiles cannot truthfully disclose stored composition intent.
+pub(super) fn require_supported(doc: &Document) -> paintcraft_core::types::Result<()> {
+    doc.require_normal_blends()
+}
+pub(super) fn require_source(bytes: &[u8]) -> paintcraft_core::types::Result<()> {
+    if bytes.len() >= 8 && &bytes[..8] == b"PCND\x08\r\n\x1a" {
+        return Err(paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+            "PCND8 requires a new blend-aware inspection profile",
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod blend_closed_tests {
+    use super::*;
+    #[test]
+    fn known_pcnd8_and_stored_hidden_modes_are_closed_to_old_inspection() {
+        assert_eq!(
+            require_source(b"PCND\x08\r\n\x1a").unwrap_err().code,
+            paintcraft_core::types::ErrorCode::CapabilityUnsupported
+        );
+        for version in 1..=7 {
+            let mut bytes = *b"PCND\x01\r\n\x1a";
+            bytes[4] = version;
+            require_source(&bytes).unwrap();
+        }
+        let mut doc = paintcraft_document::new_document(
+            1,
+            1,
+            Some(paintcraft_core::types::Rgba([1, 2, 3, 0])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        let layer = doc.layers.get_mut(&doc.roots[0]).unwrap();
+        layer.visible = false;
+        layer.opacity = 0;
+        layer.blend_mode = paintcraft_core::types::LayerBlendMode::Multiply;
+        assert_eq!(
+            require_supported(&doc).unwrap_err().code,
+            paintcraft_core::types::ErrorCode::CapabilityUnsupported
+        );
+    }
+}

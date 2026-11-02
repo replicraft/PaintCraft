@@ -136,6 +136,7 @@ pub fn run(a: Options, json: bool) -> Reply {
     let parsed = (|| {
         let (bytes, sha) = read_bounded(&a.input, INPUT_MAX, "input")?;
         guard(a.expect_input_sha256.as_deref(), &sha)?;
+        super::filter_inspection::require_source(&bytes)?;
         Ok((bytes, sha))
     })();
     let (bytes, sha) = match parsed {
@@ -144,6 +145,9 @@ pub fn run(a: Options, json: bool) -> Reply {
     };
     match super::source_metadata::read(&bytes) {
         Ok(doc) => {
+            if let Err(error) = super::filter_inspection::require_supported(&doc) {
+                return bare(json, Err(error));
+            }
             let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
             let assessed = match catalog_assessment(&sha, &header, "editable", &[], &bytes) {
                 Ok(value) => value,

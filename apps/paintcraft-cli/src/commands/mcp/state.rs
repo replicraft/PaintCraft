@@ -127,6 +127,7 @@ impl State {
     pub fn inspection(&mut self) -> Result<Json> {
         let session = self.session()?;
         let doc = session.document();
+        super::super::filter_inspection::require_supported(doc)?;
         let layers = doc.layers_in_order().map(|layer| {
             let mut value = json!({"id":layer.id.to_string(),"name":layer.name,"visible":layer.visible,"opacity":layer.opacity});
             if !layer.filters.is_empty() {value["filters"] = core_json(&paintcraft_document::filters::inspection(&layer.filters))?;}
@@ -167,7 +168,17 @@ impl State {
         Ok(json!({"id":id}))
     }
     pub fn apply(&mut self, operations: Vec<Json>) -> Result<CallToolResult> {
+        if operations
+            .iter()
+            .any(|o| o.get("op").and_then(Json::as_str) == Some("layer.set_blend_mode"))
+        {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "MCP layer blend operations require a new adapter profile",
+            ));
+        }
         let session = self.session()?;
+        super::super::filter_inspection::require_supported(session.document())?;
         let ticket = session.ticket();
         let schema = paintcraft_commands::Batch::schema_for_operation_fields(
             operations.iter().map(|value| {
@@ -338,5 +349,17 @@ mod own_mask_inspection_tests {
         };
         assert!(state.inspection().is_ok());
         assert_eq!(budget.usage().reserved, 0);
+    }
+}
+
+#[cfg(test)]
+mod blend_closed_tests {
+    use super::*;
+    #[test]
+    fn blend_adapter_refusal_precedes_session_creation_and_mutation() {
+        let mut state = State::default();
+        let error=state.apply(vec![json!({"op":"layer.set_blend_mode","layer_ref":{"id":"00000000-0000-0000-0000-000000000001"},"blend_mode":"multiply"})]).unwrap_err();
+        assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+        assert!(state.session.is_none());
     }
 }

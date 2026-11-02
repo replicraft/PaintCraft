@@ -60,7 +60,9 @@ impl PaintingServer {
                     "open_project expects PCND; use import_image for pictures",
                 ));
             }
+            super::super::filter_inspection::require_source(&bytes)?;
             let doc = state.metadata_realm.read(&bytes, &|| Ok(()))?;
+            super::super::filter_inspection::require_supported(&doc)?;
             state.session = Some(super::super::persistence::session(doc));
             state.source = Some((path, sha));
             state.project_identity = Some(identity);
