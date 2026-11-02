@@ -56,3 +56,7 @@ harness = false
 [[bench]]
 name = "simd_composite"
 harness = false
+
+[[bench]]
+name = "layer_blend_region"
+harness = false
