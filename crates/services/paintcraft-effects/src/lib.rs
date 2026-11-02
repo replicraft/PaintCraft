@@ -4,6 +4,7 @@
 //! recorded in docs/architecture/PALETTE_INTEGRATION.md (no source copied here).
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, filters::Descriptor};
 
+pub mod color_overlay;
 mod coverage;
 pub mod curves;
 mod exact;
