@@ -68,6 +68,13 @@ separate scope from the earlier counts. Actual browser transport/mutation and
 bounded asynchronous finalization remain open; the foundation does not activate
 Web mask controls or extend Source7.
 
+History's private memo now retains a proven table-allocation bound through
+reserves and deletions. Memory weighting keeps the existing live-control allowance,
+and reclamation uses the tracked size so tombstones cannot hide an oversized
+table. Six new regression groups pass with the existing history and selected
+Editor history suites. This remains a synchronous prerequisite: immutable history
+leases, resumable pressure handling and bounded cancellation cleanup are still open.
+
 Appearance-aware foreign export consent, actual OS print/Clipboard publication
 and asynchronous browser mask editing remain open. Browser mask mutation controls
 remain closed. Palette's full 132-filter catalog, blend modes and layer styles
