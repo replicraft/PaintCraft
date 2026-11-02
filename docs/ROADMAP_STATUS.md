@@ -54,11 +54,16 @@ sampling and Flatten now pass finite source/history and pixel checks. Asynchrono
 browser mask editing and appearance-aware foreign export consent remain open.
 Unsupported browser mask actions refuse before session mutation.
 Multiply/Screen now have locally qualified metadata, history, PCND8 persistence
-and scoped CPU/GPU composition, including actual Metal execution. Frontend
-controls and browser execution remain open; see the
+and scoped CPU/GPU composition, including actual Metal execution. Native
+Classic/Studio open, save and recovery adoption passes the full native library
+suite, including real display, filter-preview and derived-image consumers.
+Blend selectors and browser execution remain open; see the
 [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md).
-Next is completing the browser mask actions and blend adoption, then Color Overlay
-as the first live style. The remaining author's 132-entry
+Next is completing browser mask actions, browser blend adoption and native blend
+controls, then Color Overlay as the first live style. Its
+[numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
+independent native and actual Wasm scalar/row checks; document persistence and
+rendering integration remain open. The remaining author's 132-entry
 inventory and broader styles are open, not implied by these profiles.
 The following counts describe historical initial checkpoints.
 The initial 95 renderer tests passed on

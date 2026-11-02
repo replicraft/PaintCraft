@@ -75,8 +75,12 @@ browser layer-mask editing and blend adoption, then **Color Overlay** as the fir
 live layer style. Each slice needs its own persistence, history, automation and
 rendering contract.
 The [Color Overlay numerical foundation](COLOR_OVERLAY_FOUNDATION.md) now has
-independent native scalar/row checks. Its document, rendering and frontend
+independent native and actual Wasm scalar/row checks. Its document, rendering and frontend
 integration remain open; it is not a fourteenth filter.
+Native Classic/Studio can now open, save and recover blend documents, with actual
+display, filter-preview, sampling, Flatten, thumbnail and print-image preparation
+tests. Native selectors, browser execution and foreign/clipboard adoption remain
+separate work.
 Other filters can follow through individually specified numerical/spatial
 contracts. The author's pinned 132 filters, ten style families and nineteen blend
 modes are an inventory, not completed PaintCraft parity or a wholesale port.

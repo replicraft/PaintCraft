@@ -111,9 +111,9 @@ source passes outside that restriction. Both attempts remain recorded separately
 under the same integration directory.
 
 This is native Metal execution evidence; Wasm lint does not establish browser GPU
-execution, other GPU adapters, runtime performance or RSS. Frontend adoption,
-foreign-copy consent and new browser execution authority remain open. Existing
-frontend guards and closed consumers stay in place.
+execution, other GPU adapters, runtime performance or RSS. Browser adoption,
+native blend controls and foreign-copy consent remain open. Browser guards and
+closed clipboard/foreign consumers stay in place.
 
 ## Native host admission prerequisite
 
@@ -131,3 +131,38 @@ consumer helper. Candidate revisions and execution logs remain under
 `docs/validation/layer-blend-native-admission-integration/` and its adjacent
 candidate directory. This prerequisite does not remove open/install/recovery
 guards or activate blend controls, clipboard or foreign exports.
+
+## Native document viewing and recovery
+
+Native Classic and Studio now open, install, save and recover typed PCND8
+documents. Studio opens a new owner while retaining prior tabs and history;
+Classic retains its existing explicit recovery discard decision. Pending recovery
+claims keep the original checkpoint until a new durable checkpoint protects the
+recovered document. Stale completion and full Studio tab capacity preserve the
+current owner and recoverable source.
+
+Actual host tests cover synchronous/background CPU display, Metal texture
+readback, a genuine GPU storage-limit fallback and later GPU ROI recovery. Image
+sampling uses the composed result; layer sampling remains raw. Flatten records one
+Undo and restores modes, filters, masks and source pixels on Undo/Redo. Document
+and isolated-layer thumbnail jobs and print PNG preparation are exercised without
+invoking a physical printer. Failed rendering keeps the established explicit
+clear/error presentation rather than publishing partial or stale pixels.
+
+Real Studio filter controls also pass eight combinations of synchronous/background
+execution, Multiply/Screen and editing either the top layer or opaque-proof root.
+Independent literals verify Preview, Cancel, Apply, one-step Undo/Redo and PCND8
+save/reopen. Filtering the proof root recomputes its classification instead of
+reusing the cheaper opaque estimate. Source raster and private-preview history
+remain unchanged until Apply.
+
+The full native library suite passes 805 tests with 29 existing ignored tests and
+the GPU adapter required. Native all-target strict lint, formatting, source caps
+and independent fixture checks pass. The first full run retained one obsolete
+recovery-refusal failure; its replacement tests actual consent, tab ownership and
+checkpoint handoff. Original failures, amendments and actual gate logs are under
+`docs/validation/layer-blend-native-view-integration/`.
+
+This admits native document viewing and existing editing consumers. It does not
+add a blend selector, activate browser PCND8 execution, grant foreign-bake consent
+or open the old visible-clipboard route. Those remain separate consumer gates.
