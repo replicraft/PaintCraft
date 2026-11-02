@@ -1,0 +1,3 @@
+# Independent PCND8 blend specimens
+
+`generate.py` uses Python standard library framing and frozen legacy PCND1/source-metadata parents, with no product codec imports. Run `python3 generate.py --check` from this directory or the repository root. `oracle.json` was frozen before `pcnd_blends.rs` was authored. Nine positives and seven negative specimens cover both stored modes, mixed stacking, hidden/zero-opacity intent, source metadata, filters/own masks, explicit retained default records, strict tags/canonical counts/trailer and old minimal bytes. This is persistence evidence only; visual execution stays closed until its own cohort.

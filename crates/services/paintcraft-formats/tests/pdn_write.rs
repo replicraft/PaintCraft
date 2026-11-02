@@ -23,6 +23,7 @@ fn source() -> Document {
         origin: (1, 1),
         visible: true,
         opacity: 127,
+        blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
         filters: Default::default(),
         mask: None,
         raster: RasterLayer::new(2, 2, hidden),
@@ -33,6 +34,7 @@ fn source() -> Document {
         origin: (-1, 0),
         visible: false,
         opacity: 1,
+        blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
         filters: Default::default(),
         mask: None,
         raster: RasterLayer::from_rgba(3, 2, Rgba([0; 4]), &pixels, &mut Admission::new(65536))
