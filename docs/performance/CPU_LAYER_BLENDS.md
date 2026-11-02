@@ -42,4 +42,4 @@ Raw run: `benchmarks/results/layer-blend-cpu-20261102-1/`. Build and eight-case 
 
 Source manifest SHA256: `480275adf2c586f25ec23e417879b7caf91d67874803d0448bff1cacb3c421ed`. Numerical expected output comes from the separately frozen Fraction generator in `crates/services/paintcraft-render/tests/layer-blend-benchmark-fixtures/`.
 
-The committed runner is `benchmarks/tools/run_layer_blend.py`; it consumes prebuilt exact Cargo artifacts and a compiled-graph manifest, defaults to plan-only, validates inputs before/after each phase and requires explicit execution. Native CPU support is separate from the still-open GPU, frontend and browser blend work.
+The committed runner is `benchmarks/tools/run_layer_blend.py`; it consumes prebuilt exact Cargo artifacts and a compiled-graph manifest, defaults to plan-only, validates inputs before/after each phase and requires explicit execution. These measurements precede the separately [qualified native GPU composition](../architecture/LAYER_BLEND_FOUNDATION.md#scoped-gpu-composition); they measure CPU rendering only. Frontend and browser blend adoption remain open.

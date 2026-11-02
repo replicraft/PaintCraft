@@ -53,8 +53,12 @@ scope and test results. Actual browser rendering, private numeric filters, Image
 sampling and Flatten now pass finite source/history and pixel checks. Asynchronous
 browser mask editing and appearance-aware foreign export consent remain open.
 Unsupported browser mask actions refuse before session mutation.
-Next is completing those browser actions, then Multiply/Screen layer blending
-and Color Overlay as the first live style. The remaining author's 132-entry
+Multiply/Screen now have locally qualified metadata, history, PCND8 persistence
+and scoped CPU/GPU composition, including actual Metal execution. Frontend
+controls and browser execution remain open; see the
+[blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md).
+Next is completing the browser mask actions and blend adoption, then Color Overlay
+as the first live style. The remaining author's 132-entry
 inventory and broader styles are open, not implied by these profiles.
 The following counts describe historical initial checkpoints.
 The initial 95 renderer tests passed on
