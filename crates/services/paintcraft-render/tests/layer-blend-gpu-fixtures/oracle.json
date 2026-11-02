@@ -1,0 +1,2008 @@
+{
+  "status": "independent public-stage expectations frozen before tests; transparent-start Normal backdrop projection is explicit",
+  "parent_sha256": "96f0a8debfec8d571b333691bb7a6f9d1fe894b4248b3c32fe7493c52ac49ff7",
+  "vectors": [
+    {
+      "name": "opaque-distinct-normal",
+      "back": [
+        31,
+        127,
+        241,
+        255
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "display": [
+        204,
+        77,
+        13,
+        255
+      ]
+    },
+    {
+      "name": "opaque-distinct-multiply",
+      "back": [
+        31,
+        127,
+        241,
+        255
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        25,
+        38,
+        12,
+        255
+      ],
+      "display": [
+        25,
+        38,
+        12,
+        255
+      ]
+    },
+    {
+      "name": "opaque-distinct-screen",
+      "back": [
+        31,
+        127,
+        241,
+        255
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        210,
+        166,
+        242,
+        255
+      ],
+      "display": [
+        210,
+        166,
+        242,
+        255
+      ]
+    },
+    {
+      "name": "black-source-normal",
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "front": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "name": "black-source-multiply",
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "front": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "name": "black-source-screen",
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "front": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "display": [
+        23,
+        99,
+        201,
+        255
+      ]
+    },
+    {
+      "name": "white-source-normal",
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "white-source-multiply",
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "display": [
+        23,
+        99,
+        201,
+        255
+      ]
+    },
+    {
+      "name": "white-source-screen",
+      "back": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "black-backdrop-normal",
+      "back": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "display": [
+        23,
+        99,
+        201,
+        255
+      ]
+    },
+    {
+      "name": "black-backdrop-multiply",
+      "back": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "name": "black-backdrop-screen",
+      "back": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "display": [
+        23,
+        99,
+        201,
+        255
+      ]
+    },
+    {
+      "name": "white-backdrop-normal",
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "display": [
+        23,
+        99,
+        201,
+        255
+      ]
+    },
+    {
+      "name": "white-backdrop-multiply",
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "display": [
+        23,
+        99,
+        201,
+        255
+      ]
+    },
+    {
+      "name": "white-backdrop-screen",
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "front": [
+        23,
+        99,
+        201,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "both-partial-normal",
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        128
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        137,
+        100,
+        147,
+        192
+      ],
+      "display": [
+        103,
+        75,
+        111,
+        192
+      ]
+    },
+    {
+      "name": "both-partial-multiply",
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        128
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        72,
+        99,
+        105,
+        192
+      ],
+      "display": [
+        54,
+        75,
+        79,
+        192
+      ]
+    },
+    {
+      "name": "both-partial-screen",
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        128
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        138,
+        171,
+        155,
+        192
+      ],
+      "display": [
+        104,
+        129,
+        117,
+        192
+      ]
+    },
+    {
+      "name": "source-opaque-backdrop-partial-normal",
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        200,
+        30,
+        180,
+        255
+      ],
+      "display": [
+        200,
+        30,
+        180,
+        255
+      ]
+    },
+    {
+      "name": "source-opaque-backdrop-partial-multiply",
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        104,
+        29,
+        118,
+        255
+      ],
+      "display": [
+        104,
+        29,
+        118,
+        255
+      ]
+    },
+    {
+      "name": "source-opaque-backdrop-partial-screen",
+      "back": [
+        10,
+        240,
+        80,
+        128
+      ],
+      "front": [
+        200,
+        30,
+        180,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        201,
+        136,
+        192,
+        255
+      ],
+      "display": [
+        201,
+        136,
+        192,
+        255
+      ]
+    },
+    {
+      "name": "transparent-backdrop-hidden-normal",
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "display": [
+        102,
+        39,
+        7,
+        128
+      ]
+    },
+    {
+      "name": "transparent-backdrop-hidden-multiply",
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "display": [
+        102,
+        39,
+        7,
+        128
+      ]
+    },
+    {
+      "name": "transparent-backdrop-hidden-screen",
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "display": [
+        102,
+        39,
+        7,
+        128
+      ]
+    },
+    {
+      "name": "transparent-source-hidden-normal",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "transparent-source-hidden-multiply",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "transparent-source-hidden-screen",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "both-transparent-hidden-normal",
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "both-transparent-hidden-multiply",
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "both-transparent-hidden-screen",
+      "back": [
+        91,
+        7,
+        241,
+        0
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        0
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "opacity-zero-normal",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 0,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "opacity-zero-multiply",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 0,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "opacity-zero-screen",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 0,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "mask-zero-normal",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "normal",
+      "mask": 0,
+      "opacity": 255,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "mask-zero-multiply",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 0,
+      "opacity": 255,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "mask-zero-screen",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        255
+      ],
+      "mode": "screen",
+      "mask": 0,
+      "opacity": 255,
+      "straight": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "display": [
+        46,
+        4,
+        121,
+        128
+      ]
+    },
+    {
+      "name": "alpha128-mask128-opacity128-normal",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "mode": "normal",
+      "mask": 128,
+      "opacity": 128,
+      "straight": [
+        116,
+        23,
+        190,
+        144
+      ],
+      "display": [
+        66,
+        13,
+        107,
+        144
+      ]
+    },
+    {
+      "name": "alpha128-mask128-opacity128-multiply",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "mode": "multiply",
+      "mask": 128,
+      "opacity": 128,
+      "straight": [
+        101,
+        14,
+        190,
+        144
+      ],
+      "display": [
+        57,
+        8,
+        107,
+        144
+      ]
+    },
+    {
+      "name": "alpha128-mask128-opacity128-screen",
+      "back": [
+        91,
+        7,
+        241,
+        128
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        128
+      ],
+      "mode": "screen",
+      "mask": 128,
+      "opacity": 128,
+      "straight": [
+        118,
+        23,
+        216,
+        144
+      ],
+      "display": [
+        67,
+        13,
+        122,
+        144
+      ]
+    },
+    {
+      "name": "two-stage-alpha-counterexample-normal",
+      "back": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "front": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "mode": "normal",
+      "mask": 128,
+      "opacity": 128,
+      "straight": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "display": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "two-stage-alpha-counterexample-multiply",
+      "back": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "front": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "mode": "multiply",
+      "mask": 128,
+      "opacity": 128,
+      "straight": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "display": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "two-stage-alpha-counterexample-screen",
+      "back": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "front": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "mode": "screen",
+      "mask": 128,
+      "opacity": 128,
+      "straight": [
+        200,
+        60,
+        10,
+        1
+      ],
+      "display": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "u32-maximum-normal",
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "u32-maximum-multiply",
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "u32-maximum-screen",
+      "back": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "front": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "small-alpha-normal",
+      "back": [
+        254,
+        1,
+        128,
+        1
+      ],
+      "front": [
+        1,
+        254,
+        127,
+        2
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        85,
+        170,
+        127,
+        3
+      ],
+      "display": [
+        1,
+        2,
+        1,
+        3
+      ]
+    },
+    {
+      "name": "small-alpha-multiply",
+      "back": [
+        254,
+        1,
+        128,
+        1
+      ],
+      "front": [
+        1,
+        254,
+        127,
+        2
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        85,
+        169,
+        127,
+        3
+      ],
+      "display": [
+        1,
+        2,
+        1,
+        3
+      ]
+    },
+    {
+      "name": "small-alpha-screen",
+      "back": [
+        254,
+        1,
+        128,
+        1
+      ],
+      "front": [
+        1,
+        254,
+        127,
+        2
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        86,
+        170,
+        128,
+        3
+      ],
+      "display": [
+        1,
+        2,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "opacity127-normal",
+      "back": [
+        31,
+        127,
+        241,
+        254
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        129
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 127,
+      "straight": [
+        75,
+        114,
+        184,
+        254
+      ],
+      "display": [
+        75,
+        114,
+        183,
+        254
+      ]
+    },
+    {
+      "name": "opacity127-multiply",
+      "back": [
+        31,
+        127,
+        241,
+        254
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        129
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 127,
+      "straight": [
+        30,
+        105,
+        183,
+        254
+      ],
+      "display": [
+        30,
+        105,
+        182,
+        254
+      ]
+    },
+    {
+      "name": "opacity127-screen",
+      "back": [
+        31,
+        127,
+        241,
+        254
+      ],
+      "front": [
+        204,
+        77,
+        13,
+        129
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 127,
+      "straight": [
+        76,
+        137,
+        241,
+        254
+      ],
+      "display": [
+        76,
+        136,
+        240,
+        254
+      ]
+    },
+    {
+      "name": "primaries-normal",
+      "back": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "front": [
+        0,
+        255,
+        255,
+        255
+      ],
+      "mode": "normal",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        0,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "primaries-multiply",
+      "back": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "front": [
+        0,
+        255,
+        255,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "display": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "name": "primaries-screen",
+      "back": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "front": [
+        0,
+        255,
+        255,
+        255
+      ],
+      "mode": "screen",
+      "mask": 255,
+      "opacity": 255,
+      "straight": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "display": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "name": "mask127-255-multiply",
+      "back": [
+        31,
+        127,
+        241,
+        255
+      ],
+      "front": [
+        20,
+        115,
+        200,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 127,
+      "opacity": 128,
+      "straight": [
+        24,
+        110,
+        228,
+        255
+      ],
+      "display": [
+        24,
+        110,
+        228,
+        255
+      ]
+    },
+    {
+      "name": "mask127-255-screen",
+      "back": [
+        31,
+        127,
+        241,
+        255
+      ],
+      "front": [
+        20,
+        115,
+        200,
+        255
+      ],
+      "mode": "screen",
+      "mask": 127,
+      "opacity": 128,
+      "straight": [
+        35,
+        141,
+        244,
+        255
+      ],
+      "display": [
+        35,
+        141,
+        244,
+        255
+      ]
+    },
+    {
+      "name": "mask127-128-multiply",
+      "back": [
+        31,
+        127,
+        241,
+        128
+      ],
+      "front": [
+        20,
+        115,
+        200,
+        255
+      ],
+      "mode": "multiply",
+      "mask": 127,
+      "opacity": 128,
+      "straight": [
+        23,
+        111,
+        222,
+        160
+      ],
+      "display": [
+        14,
+        70,
+        139,
+        160
+      ]
+    },
+    {
+      "name": "mask127-128-screen",
+      "back": [
+        31,
+        127,
+        241,
+        128
+      ],
+      "front": [
+        20,
+        115,
+        200,
+        255
+      ],
+      "mode": "screen",
+      "mask": 127,
+      "opacity": 128,
+      "straight": [
+        32,
+        136,
+        235,
+        160
+      ],
+      "display": [
+        20,
+        85,
+        147,
+        160
+      ]
+    }
+  ],
+  "ordered": [
+    {
+      "order": [
+        0,
+        1
+      ],
+      "straight": [
+        47,
+        136,
+        180,
+        255
+      ],
+      "display": [
+        47,
+        136,
+        180,
+        255
+      ]
+    },
+    {
+      "order": [
+        1,
+        0
+      ],
+      "straight": [
+        46,
+        115,
+        159,
+        255
+      ],
+      "display": [
+        46,
+        115,
+        159,
+        255
+      ]
+    }
+  ],
+  "spatial": [
+    {
+      "mode": "multiply",
+      "back": [
+        31,
+        127,
+        241,
+        128
+      ],
+      "raw": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        0,
+        255,
+        255
+      ],
+      "mask": 127,
+      "opacity": 128,
+      "straight": [
+        57,
+        76,
+        178,
+        160,
+        31,
+        127,
+        241,
+        128
+      ],
+      "display": [
+        36,
+        48,
+        112,
+        160,
+        16,
+        64,
+        121,
+        128
+      ],
+      "lod1_straight": [
+        45,
+        99,
+        206,
+        144
+      ],
+      "lod1_display": [
+        25,
+        56,
+        116,
+        144
+      ]
+    },
+    {
+      "mode": "screen",
+      "back": [
+        31,
+        127,
+        241,
+        128
+      ],
+      "raw": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        0,
+        255,
+        255
+      ],
+      "mask": 127,
+      "opacity": 128,
+      "straight": [
+        89,
+        102,
+        211,
+        160,
+        31,
+        127,
+        241,
+        128
+      ],
+      "display": [
+        56,
+        64,
+        132,
+        160,
+        16,
+        64,
+        121,
+        128
+      ],
+      "lod1_straight": [
+        63,
+        113,
+        224,
+        144
+      ],
+      "lod1_display": [
+        36,
+        64,
+        126,
+        144
+      ]
+    }
+  ],
+  "edge": [
+    {
+      "mode": "multiply",
+      "back": [
+        31,
+        127,
+        241,
+        128
+      ],
+      "raw": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        255,
+        0,
+        128,
+        0,
+        0,
+        255,
+        64
+      ],
+      "native": [
+        76,
+        76,
+        145,
+        160,
+        24,
+        141,
+        187,
+        144,
+        27,
+        112,
+        242,
+        136
+      ],
+      "lod1_straight": [
+        51,
+        107,
+        165,
+        152,
+        27,
+        112,
+        242,
+        136
+      ],
+      "lod1_display": [
+        30,
+        64,
+        98,
+        152,
+        14,
+        60,
+        129,
+        136
+      ]
+    },
+    {
+      "mode": "screen",
+      "back": [
+        31,
+        127,
+        241,
+        128
+      ],
+      "raw": [
+        255,
+        0,
+        0,
+        255,
+        0,
+        255,
+        0,
+        128,
+        0,
+        0,
+        255,
+        64
+      ],
+      "native": [
+        121,
+        102,
+        193,
+        160,
+        28,
+        155,
+        214,
+        144,
+        29,
+        120,
+        243,
+        136
+      ],
+      "lod1_straight": [
+        77,
+        127,
+        203,
+        152,
+        29,
+        120,
+        243,
+        136
+      ],
+      "lod1_display": [
+        46,
+        76,
+        121,
+        152,
+        15,
+        64,
+        130,
+        136
+      ]
+    }
+  ]
+}
