@@ -355,5 +355,29 @@
     "result_artifacts": [
       "docs/benchmarks/noise-kernel-2026-10-31/DECISION.md"
     ]
-  }
+  },
+	{
+		"id": "BLEND-CPU-OPAQUE-V1",
+		"title": "Exact CPU region opaque specialization versus general composition",
+		"choice": "layer-blend-cpu",
+		"activation_tasks": [
+			"T12"
+		],
+		"status": "source-only-candidate-unmeasured",
+		"tier": "both",
+		"hyperfine_required": true,
+		"hyperfine_role": "decision",
+		"adapter_path": "crates/services/paintcraft-render/examples/layer_blend_region.rs",
+		"result_artifacts": [],
+		"variants": [
+			"actual opaque certificate",
+			"actual general fallback,one outside-ROI resident default tile"
+		],
+		"workloads": [
+			"default1000x486 Multiply/Screen",
+			"1920x1080 Multiply/Screen",
+			"separate zero-render process/caller calibration"
+		],
+		"remaining_scope": "Root native correctness qualification and canonical optimized build must precede timing. Full public CPU-render comparison only; no isolated kernel/GPU/UI/RSS claim."
+	}
 ]
