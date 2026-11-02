@@ -133,6 +133,7 @@ pub(super) fn compose(
                             y,
                             area.x0,
                             &mut row[start..start + area.width() as usize * 4],
+                            crate::blend::Kind::Normal,
                             &check,
                         )?;
                     }

@@ -715,3 +715,6 @@ mod noise;
 
 #[path = "gpu/layer_masks.rs"]
 mod layer_masks;
+
+#[path = "gpu/blends_closed.rs"]
+mod blends_closed;

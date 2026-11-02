@@ -11,6 +11,7 @@ pub fn capture_visible(
     budget: &SharedBudget,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Option<(Image, (i64, i64))>> {
+    document.require_normal_blends()?;
     check()?;
     let canvas = document.canvas_rect();
     let bounds = match selection {
