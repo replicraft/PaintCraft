@@ -7,7 +7,7 @@ use paintcraft_document::{
         SourceMetadata,
     },
 };
-fn attachment(budget: &SharedBudget) -> SourceMetadata {
+pub(super) fn attachment(budget: &SharedBudget) -> SourceMetadata {
     SourceMetadata::capture(
         SourceDescriptor {
             format: SourceFormat::Png,

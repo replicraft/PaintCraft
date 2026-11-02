@@ -37,6 +37,7 @@ struct SavedLayer {
     origin: (i64, i64),
     visible: bool,
     opacity: u8,
+    blend_mode: paintcraft_core::types::LayerBlendMode,
     filters: paintcraft_document::FilterStack,
     mask: Option<paintcraft_document::LayerMask>,
     width: u32,
@@ -206,6 +207,7 @@ impl Packed {
                 origin: layer.origin,
                 visible: layer.visible,
                 opacity: layer.opacity,
+                blend_mode: layer.blend_mode,
                 filters: layer.filters.clone(),
                 mask: layer.mask.clone(),
                 width: layer.raster.width(),
@@ -264,6 +266,7 @@ impl Packed {
                     origin: layer.origin,
                     visible: layer.visible,
                     opacity: layer.opacity,
+                    blend_mode: layer.blend_mode,
                     filters: layer.filters.clone(),
                     mask: layer.mask.clone(),
                     raster,
@@ -364,6 +367,19 @@ pub(crate) fn corrupt() -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn target_observed_blend_history_layout() {
+        eprintln!(
+            "BLEND_HISTORY_LAYOUT arch={} pointer={} layer={} saved={} packed={} document={}",
+            std::env::consts::ARCH,
+            std::mem::size_of::<usize>(),
+            std::mem::size_of::<Layer>(),
+            std::mem::size_of::<SavedLayer>(),
+            std::mem::size_of::<Packed>(),
+            std::mem::size_of::<Document>()
+        );
+    }
+
     #[test]
     fn corrupted_recorded_patch_does_not_advance_the_history_cursor() {
         let mut doc = paintcraft_document::new_document(

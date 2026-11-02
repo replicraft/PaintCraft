@@ -111,6 +111,7 @@ mod tests {
                 origin: (0, 0),
                 visible: true,
                 opacity: 255,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 mask: None,
                 width: 512,

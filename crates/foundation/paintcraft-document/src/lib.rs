@@ -22,6 +22,8 @@ mod layer_mask;
 pub mod source_metadata;
 pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
 pub use layer_mask::LayerMask;
+mod layer_blends;
+pub use paintcraft_core::types::LayerBlendMode;
 pub use source_metadata::SourceMetadata;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -32,6 +34,8 @@ pub struct Layer {
     pub origin: (i64, i64),
     pub visible: bool,
     pub opacity: u8,
+    /// Stored layer composition policy; evaluated render support is explicit.
+    pub blend_mode: LayerBlendMode,
     pub raster: RasterLayer,
     /// Ordered non-destructive intentions, independent of the raw source.
     pub filters: FilterStack,
@@ -100,6 +104,7 @@ impl Document {
                     && self.layers.get(id).is_some_and(|layer| {
                         layer.visible
                             && layer.opacity == 255
+                            && layer.blend_mode == LayerBlendMode::Normal
                             && layer.origin == (0, 0)
                             && (layer.raster.width(), layer.raster.height()) == self.canvas
                             && layer.filters.is_empty()
@@ -210,6 +215,7 @@ pub fn new_document(
                 origin: (0, 0),
                 visible: true,
                 opacity: 255,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 mask: None,
                 raster: RasterLayer::new(width, height, color),
@@ -293,6 +299,7 @@ fn imported_document(
         origin: (0, 0),
         visible: true,
         opacity: 255,
+        blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
         filters: Default::default(),
         mask: None,
         raster,
