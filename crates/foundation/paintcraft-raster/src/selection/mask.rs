@@ -13,6 +13,8 @@ mod outline;
 pub use outline::{BoundarySegment, MaskOutline, OutlineLimits};
 mod polygon;
 mod rows;
+/// Scoped immutable selection capture transport, separate from persistence.
+pub mod snapshot;
 mod transform;
 mod views;
 

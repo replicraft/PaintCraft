@@ -14,6 +14,8 @@ pub enum Selection {
 }
 
 mod mask;
+/// Scoped private selection capture transport.
+pub use mask::snapshot;
 pub use mask::{
     BOUNDS_CACHE_WORK, BinaryMask, BoundarySegment, BoundsCache, MaskLimits, MaskOutline,
     OutlineLimits,
