@@ -127,6 +127,7 @@ pub fn preflight(
             origin: _,
             visible: _,
             opacity: _,
+            blend_mode: _,
             filters: _,
             mask: _,
             raster: _,

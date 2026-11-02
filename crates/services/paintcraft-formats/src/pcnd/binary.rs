@@ -3,8 +3,10 @@
 use super::*;
 pub(super) mod admitted;
 use std::io::Write;
+mod blends;
 pub(super) mod catalog;
 mod filters;
+pub use blends::layer_blend_identity_checked;
 mod masks;
 pub(super) mod requirements;
 mod source_metadata;
@@ -74,22 +76,26 @@ fn write_encoded(
     }
     super::coverage::validate_counts(doc, check)?;
     let mut magic = *MAGIC;
+    let blends = doc.has_non_normal_blends();
     let layer_masks = doc.has_layer_masks();
-    let live_filters = layer_masks || doc.layers.values().any(|layer| !layer.filters.is_empty());
+    let extended = layer_masks || blends;
+    let live_filters = extended || doc.layers.values().any(|layer| !layer.filters.is_empty());
     let masked = doc
         .layers
         .values()
         .any(|layer| layer.filters.iter().any(|filter| filter.mask().is_some()));
     let spatial = has_spatial(doc);
     let catalog_only = has_catalog(doc);
-    let manifest = if layer_masks {
+    let manifest = if extended {
         Some(catalog::Manifest::capture_v7(doc, check)?)
     } else if catalog_only {
         Some(catalog::Manifest::capture(doc, check)?)
     } else {
         None
     };
-    if layer_masks {
+    if blends {
+        magic[4] = 8;
+    } else if layer_masks {
         magic[4] = 7;
     } else if catalog_only {
         magic[4] = 6;
@@ -158,6 +164,7 @@ fn write_encoded(
         output.bytes(id.as_bytes())?;
         output.string(&layer.name)?;
         output.bytes(&[u8::from(layer.visible), layer.opacity])?;
+        blends::write(magic[4], layer.blend_mode, &mut output)?;
         output.signed(layer.origin.0)?;
         output.signed(layer.origin.1)?;
         output.number(u64::from(layer.raster.width()))?;
@@ -170,7 +177,7 @@ fn write_encoded(
                 filters::write(&layer.filters, &mut output, magic[4], check, &mask_check)?;
             }
         }
-        if layer_masks {
+        if extended {
             masks::write_layer(layer.mask.as_ref(), &mut output, &mask_check)?;
         }
         // A terminator avoids a counting pass over decoded tiles. Each record is
@@ -237,9 +244,9 @@ fn probe_verified(verified: &requirements::CheckedContainer<'_>) -> Result<Heade
     let bytes = verified.bytes();
     let body = verified.body();
     let mut result = header(bytes[4]);
-    if matches!(bytes[4], 3..=7) {
+    if matches!(bytes[4], 3..=8) {
         let mut input = Input::new(body);
-        if bytes[4] == 7 {
+        if matches!(bytes[4], 7 | 8) {
             catalog::Manifest::read_v7(&mut input, false, &|| Ok(()))?;
         } else if bytes[4] == 6 {
             catalog::Manifest::read(&mut input, false, &|| Ok(()))?;
@@ -265,7 +272,7 @@ fn probe_verified(verified: &requirements::CheckedContainer<'_>) -> Result<Heade
     Ok(result)
 }
 fn header(version: u8) -> Header {
-    let known = matches!(version, 1..=7);
+    let known = matches!(version, 1..=8);
     Header {
         container_version: i64::from(version),
         document_schema: if known {
@@ -281,8 +288,10 @@ fn header(version: u8) -> Header {
                 "paintcraft.document/v5"
             } else if version == 6 {
                 "paintcraft.document/v6"
-            } else {
+            } else if version == 7 {
                 "paintcraft.document/v7"
+            } else {
+                "paintcraft.document/v8"
             }
         } else {
             "unknown"
@@ -297,7 +306,8 @@ fn header(version: u8) -> Header {
                 .chain((version >= 4).then_some(LAYER_MASKS_FEATURE.to_owned()))
                 .chain((version == 5).then_some(LAYER_SPATIAL_FILTERS_FEATURE.to_owned()))
                 .chain((version >= 6).then_some(LAYER_CATALOG_FEATURE.to_owned()))
-                .chain((version == 7).then_some(LAYER_RASTER_MASKS_FEATURE.to_owned()))
+                .chain((version >= 7).then_some(LAYER_RASTER_MASKS_FEATURE.to_owned()))
+                .chain((version == 8).then_some(LAYER_BLEND_MODES_FEATURE.to_owned()))
                 .collect()
         } else {
             Vec::new()
@@ -382,11 +392,13 @@ fn read_verified_admitted(
 ) -> Result<Document> {
     let bytes = verified.bytes();
     let body = verified.body();
-    if !matches!(verified.version(), 1..=7) {
+    if !matches!(verified.version(), 1..=8) {
         return Err(unsupported("unknown native document version"));
     }
-    if matches!(bytes[4], 4..=7) && coverage.is_none() {
-        return Err(unsupported(if bytes[4] == 7 {
+    if matches!(bytes[4], 4..=8) && coverage.is_none() {
+        return Err(unsupported(if bytes[4] == 8 {
+            "PCND8 requires explicit shared coverage admission"
+        } else if bytes[4] == 7 {
             "PCND7 requires explicit shared coverage admission"
         } else if bytes[4] == 6 {
             "PCND6 requires explicit shared coverage admission"
@@ -396,7 +408,7 @@ fn read_verified_admitted(
     }
     let mut coverage = coverage.map(super::coverage::CoverageReader::new);
     let mut input = Input::new(body);
-    let mut manifest = if bytes[4] == 7 {
+    let mut manifest = if matches!(bytes[4], 7 | 8) {
         Some(catalog::Manifest::read_v7(&mut input, true, check)?)
     } else if bytes[4] == 6 {
         Some(catalog::Manifest::read(&mut input, true, check)?)
@@ -417,7 +429,7 @@ fn read_verified_admitted(
         1 => Some(input.string(4096)?),
         _ => return Err(codec("invalid title flag")),
     };
-    let has_source = if matches!(bytes[4], 3..=7) {
+    let has_source = if matches!(bytes[4], 3..=8) {
         match input.byte()? {
             0 => false,
             1 => true,
@@ -457,6 +469,7 @@ fn read_verified_admitted(
     let mut seen = HashSet::new();
     let mut tiles = 0u64;
     let mut any_layer_masks = false;
+    let mut any_blends = false;
     let mut any_filters = false;
     let mut any_masks = false;
     let mut any_spatial = false;
@@ -477,11 +490,13 @@ fn read_verified_admitted(
             _ => return Err(codec("invalid visibility flag")),
         };
         let opacity = input.byte()?;
+        let blend_mode = blends::read(bytes[4], &mut input)?;
+        any_blends |= blend_mode != paintcraft_document::LayerBlendMode::Normal;
         let origin = (input.signed()?, input.signed()?);
         let width = input.dimension()?;
         let height = input.dimension()?;
         let default = Rgba(input.take(4)?.try_into().unwrap());
-        let layer_filters = if matches!(bytes[4], 3..=7) {
+        let layer_filters = if matches!(bytes[4], 3..=8) {
             let available = (DOCUMENT_MAX as usize)
                 .checked_sub(metadata + start - input.remaining())
                 .ok_or_else(|| {
@@ -514,7 +529,7 @@ fn read_verified_admitted(
         } else {
             paintcraft_document::FilterStack::default()
         };
-        let layer_mask = if bytes[4] == 7 {
+        let layer_mask = if matches!(bytes[4], 7 | 8) {
             let available = (DOCUMENT_MAX as usize)
                 .checked_sub(metadata + start - input.remaining())
                 .ok_or_else(|| {
@@ -613,6 +628,7 @@ fn read_verified_admitted(
                 origin,
                 visible,
                 opacity,
+                blend_mode,
                 filters: layer_filters,
                 mask: layer_mask,
                 raster: RasterLayer::new(width, height, default),
@@ -622,6 +638,9 @@ fn read_verified_admitted(
     }
     if input.remaining() != 0 {
         return Err(codec("trailing compact PCND data"));
+    }
+    if bytes[4] == 8 && !any_blends {
+        return Err(codec("PCND8 requires a stored nonNormal layer blend"));
     }
     if bytes[4] == 7 && !any_layer_masks {
         return Err(codec("PCND7 requires a stored layer mask"));
@@ -723,11 +742,11 @@ pub(super) fn catalog_manifest(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<catalog::Requirement>> {
     let body = payload(bytes, check)?;
-    if !matches!(bytes[4], 6 | 7) {
+    if !matches!(bytes[4], 6..=8) {
         header(bytes[4]).require_supported()?;
         return Ok(Vec::new());
     }
-    if bytes[4] == 7 {
+    if matches!(bytes[4], 7 | 8) {
         catalog::Manifest::read_v7(&mut Input::new(body), false, check)?.requirements(check)
     } else {
         catalog::Manifest::read(&mut Input::new(body), false, check)?.requirements(check)

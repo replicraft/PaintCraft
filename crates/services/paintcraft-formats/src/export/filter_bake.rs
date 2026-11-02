@@ -88,7 +88,19 @@ fn invalid(message: &str) -> Error {
 /// layer cap. This bounded scratch is not a total process-memory/RSS guarantee.
 pub fn inspect(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Inventory> {
     check()?;
-    doc.require_no_layer_masks()?;
+    // Existing bounded stored-mask eligibility walk now also rejects blends.
+    // Cancellation still wins via the contractual initial check above.
+    for layer in doc.layers.values() {
+        if layer.mask.is_some() {
+            doc.require_no_layer_masks()?;
+        }
+        if layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Foreign copy cannot preserve layer blend modes",
+            ));
+        }
+    }
     if doc.roots.len() > LAYER_COUNT_MAX || doc.layers.len() > LAYER_COUNT_MAX {
         return Err(Error::new(
             ErrorCode::ResourceLimit,

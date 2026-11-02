@@ -11,6 +11,7 @@ use uuid::Uuid;
 pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
+pub const LAYER_BLEND_MODES_FEATURE: &str = "layer-blend-modes.v1";
 pub const LAYER_RASTER_MASKS_FEATURE: &str = "layer-masks.v1";
 pub const LAYER_MASKS_FEATURE: &str = "layer-filter-masks.v1";
 pub const LAYER_SPATIAL_FILTERS_FEATURE: &str = "layer-spatial-filters.v1";
@@ -101,18 +102,21 @@ impl Header {
                 | (5, "paintcraft.document/v5")
                 | (6, "paintcraft.document/v6")
                 | (7, "paintcraft.document/v7")
+                | (8, "paintcraft.document/v8")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(matches!(self.container_version, 2..=7) && feature == SOURCE_METADATA_FEATURE)
-                && !(matches!(self.container_version, 3..=7) && feature == LAYER_FILTERS_FEATURE)
-                && !(matches!(self.container_version, 4..=7) && feature == LAYER_MASKS_FEATURE)
-                && !(matches!(self.container_version, 5..=7)
+                && !(matches!(self.container_version, 2..=8) && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 3..=8) && feature == LAYER_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 4..=8) && feature == LAYER_MASKS_FEATURE)
+                && !(matches!(self.container_version, 5..=8)
                     && feature == LAYER_SPATIAL_FILTERS_FEATURE)
-                && !(matches!(self.container_version, 6 | 7) && feature == LAYER_CATALOG_FEATURE)
-                && !(self.container_version == 7 && feature == LAYER_RASTER_MASKS_FEATURE)
+                && !(matches!(self.container_version, 6..=8) && feature == LAYER_CATALOG_FEATURE)
+                && !(matches!(self.container_version, 7 | 8)
+                    && feature == LAYER_RASTER_MASKS_FEATURE)
+                && !(self.container_version == 8 && feature == LAYER_BLEND_MODES_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
         }
@@ -144,7 +148,7 @@ impl Header {
                 "PCND5 header omits required grammar capability",
             ));
         }
-        if self.container_version == 7
+        if matches!(self.container_version, 7 | 8)
             && SUPPORTED_FEATURES
                 .iter()
                 .copied()
@@ -164,6 +168,14 @@ impl Header {
             return Err(unsupported(
                 "PCND7 header omits required grammar capability",
             ));
+        }
+        if self.container_version == 8
+            && !self
+                .required_features
+                .iter()
+                .any(|f| f == LAYER_BLEND_MODES_FEATURE)
+        {
+            return Err(unsupported("PCND8 header omits layer blend capability"));
         }
         Ok(())
     }
@@ -301,3 +313,6 @@ pub fn catalog_manifest_checked(
 ) -> Result<Vec<Requirement>> {
     binary::catalog_manifest(bytes, check)
 }
+
+/// Separately framed blend identity; grants no visual or foreign-copy authority.
+pub use binary::layer_blend_identity_checked;

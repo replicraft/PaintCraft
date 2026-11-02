@@ -85,6 +85,7 @@ fn convert(
                 origin: (i64::from(layer.origin.0), i64::from(layer.origin.1)),
                 visible: layer.visible,
                 opacity: layer.opacity,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 mask: None,
                 raster,

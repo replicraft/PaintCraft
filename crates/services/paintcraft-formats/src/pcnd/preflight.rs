@@ -46,7 +46,8 @@ fn metadata_bound(
         return Ok(None);
     }
     super::coverage::validate_counts(doc, check)?;
-    let layer_masks = doc.has_layer_masks();
+    let blends = doc.has_non_normal_blends();
+    let layer_masks = doc.has_layer_masks() || blends;
     let live_filters = layer_masks || doc.layers.values().any(|layer| !layer.filters.is_empty());
     let catalog_only = layer_masks || binary::has_catalog(doc);
     let masked = catalog_only
@@ -101,6 +102,7 @@ fn metadata_bound(
             + integer_bytes(layer.name.len() as u64)
             + layer.name.len() as u64
             + 2
+            + u64::from(blends)
             + x
             + y
             + integer_bytes(u64::from(layer.raster.width()))

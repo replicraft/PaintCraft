@@ -13,6 +13,9 @@ fn write_encoded_admitted(
 ) -> Result<()> {
     check()?;
     crate::pcnd::layer_appearance::validate_flat_shape_checked(doc, scope, check, spend)?;
+    // Explicit bounded host eligibility: paid once at snapshot freeze, not per tile.
+    spend(doc.layers.len() as u64)?;
+    doc.require_normal_blends()?;
     if [doc.canvas.0, doc.canvas.1]
         .iter()
         .any(|value| !(1..=1_048_576).contains(value))

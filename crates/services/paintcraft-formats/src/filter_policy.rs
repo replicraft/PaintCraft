@@ -4,11 +4,10 @@ use paintcraft_document::Document;
 
 pub(crate) fn require_unfiltered_layers(document: &Document) -> Result<()> {
     document.require_no_layer_masks()?;
-    if document
-        .layers
-        .values()
-        .any(|layer| !layer.filters.is_empty())
-    {
+    if document.layers.values().any(|layer| {
+        !layer.filters.is_empty()
+            || layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal
+    }) {
         return Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "This layered format cannot preserve editable filters; use a native project or an explicit flat copy",
