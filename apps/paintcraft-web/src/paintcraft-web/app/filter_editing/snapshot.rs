@@ -24,6 +24,7 @@ impl std::io::Write for Bounded {
     }
 }
 pub(super) fn encode(doc: &Document, check: &dyn Fn() -> Result<()>) -> Result<Vec<u8>> {
+    doc.require_normal_blends()?;
     encode_with_limit(doc, SOURCE_MAX, check)
 }
 fn encode_with_limit(
@@ -90,6 +91,7 @@ mod tests {
                 origin: (0, 0),
                 visible: true,
                 opacity: 255,
+                blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
                 raster,
             },
