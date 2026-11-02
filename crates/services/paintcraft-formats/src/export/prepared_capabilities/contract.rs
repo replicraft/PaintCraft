@@ -7,6 +7,7 @@ pub enum RegistryContract {
     Legacy1 = 1,
     ScopedNoise2 = 2,
     LayerAppearance3 = 3,
+    LayerAppearance4 = 4,
 }
 impl RegistryContract {
     pub const fn revision(self) -> u16 {
@@ -20,6 +21,7 @@ impl TryFrom<u16> for RegistryContract {
             1 => Ok(Self::Legacy1),
             2 => Ok(Self::ScopedNoise2),
             3 => Ok(Self::LayerAppearance3),
+            4 => Ok(Self::LayerAppearance4),
             _ => Err(unsupported(
                 "Prepared worker registry contract is unavailable",
             )),
@@ -47,13 +49,16 @@ impl Registration {
                 "Noise requires scoped worker registry contract 2",
             )),
             (
-                RegistryContract::ScopedNoise2 | RegistryContract::LayerAppearance3,
+                RegistryContract::ScopedNoise2
+                | RegistryContract::LayerAppearance3
+                | RegistryContract::LayerAppearance4,
                 Execution::DirectNoise,
             )
             | (
                 RegistryContract::Legacy1
                 | RegistryContract::ScopedNoise2
-                | RegistryContract::LayerAppearance3,
+                | RegistryContract::LayerAppearance3
+                | RegistryContract::LayerAppearance4,
                 Execution::DirectPoint
                 | Execution::RegionBox
                 | Execution::PreparedLevels
