@@ -74,6 +74,9 @@ frontend controls and browser blend execution remain open. The next slices finis
 browser layer-mask editing and blend adoption, then **Color Overlay** as the first
 live layer style. Each slice needs its own persistence, history, automation and
 rendering contract.
+The [Color Overlay numerical foundation](COLOR_OVERLAY_FOUNDATION.md) now has
+independent native scalar/row checks. Its document, rendering and frontend
+integration remain open; it is not a fourteenth filter.
 Other filters can follow through individually specified numerical/spatial
 contracts. The author's pinned 132 filters, ten style families and nineteen blend
 modes are an inventory, not completed PaintCraft parity or a wholesale port.
