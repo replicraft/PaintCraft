@@ -210,10 +210,11 @@ impl History {
     }
     fn reclaim_tables(&mut self) {
         self.memo.retain(|key, _| key.resident_bytes() != 0);
-        if self.memo.capacity() > 16 && self.memo.len().saturating_mul(4) < self.memo.capacity() {
+        if self.memo.needs_reclaim() {
             let mut small = archive::Memo::new();
-            if small.try_reserve(self.memo.len()).is_ok() {
-                small.extend(std::mem::take(&mut self.memo));
+            if small.try_reserve(self.memo.len()).is_ok()
+                && small.move_from_reserved(&mut self.memo).is_ok()
+            {
                 self.memo = small;
             }
         }
@@ -277,7 +278,7 @@ impl History {
         for doc in docs {
             for layer in doc.layers.values() {
                 for (_, lease) in layer.raster.tile_leases() {
-                    self.memo.entry(lease.version()).or_default();
+                    self.memo.ensure_default_reserved(lease.version())?;
                 }
             }
         }

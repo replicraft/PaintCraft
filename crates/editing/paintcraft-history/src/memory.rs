@@ -54,10 +54,10 @@ impl History {
         let mut filter_masks = HashSet::new();
         let mut source_metadata = HashSet::new();
         let mut usage = MemoryUsage {
-            metadata_weight: (self.entries.capacity() * size_of::<Entry>()
-                + self.memo.capacity()
-                    * (size_of::<(TileVersion, std::sync::Weak<archive::Blob>)>() + 160))
-                as u64,
+            metadata_weight: (self.entries.capacity() * size_of::<Entry>()) as u64
+                + self.memo.metadata_weight(
+                    size_of::<(TileVersion, std::sync::Weak<archive::Blob>)>() + 160,
+                ),
             ..Default::default()
         };
         for entry in &self.entries {

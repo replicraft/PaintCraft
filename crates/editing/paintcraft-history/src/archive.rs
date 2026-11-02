@@ -13,7 +13,8 @@ pub(crate) mod payload;
 mod restoration;
 pub(crate) use payload::Blob;
 
-pub(crate) type Memo = HashMap<TileVersion, Weak<Blob>>;
+mod memo;
+pub(crate) use memo::Memo;
 pub(crate) fn limit(message: &str) -> Error {
     Error::new(ErrorCode::ResourceLimit, message)
 }
@@ -196,7 +197,7 @@ impl Packed {
                     });
                     memo.try_reserve(1)
                         .map_err(|_| limit("cannot allocate history version index"))?;
-                    memo.insert(version, Arc::downgrade(&blob));
+                    let _ = memo.insert_reserved(version, Arc::downgrade(&blob))?;
                     blob
                 };
                 tiles.push((coord, blob));
@@ -255,7 +256,7 @@ impl Packed {
             for (coord, blob) in &layer.tiles {
                 check()?;
                 let lease = plan.tile(blob, admission)?;
-                memo.insert(lease.version(), Arc::downgrade(blob));
+                let _ = memo.insert_reserved(lease.version(), Arc::downgrade(blob))?;
                 raster.install_tile(*coord, lease)?;
             }
             layers.insert(
@@ -341,14 +342,12 @@ pub(crate) fn clone_memo(memo: &Memo, budget: &mut usize) -> Result<Memo> {
         return Err(limit("history version index admission exceeded"));
     }
     *budget -= charge;
-    let mut copy = HashMap::new();
+    let mut copy = Memo::new();
     copy.try_reserve(count)
         .map_err(|_| limit("cannot stage history version index"))?;
-    copy.extend(
-        memo.iter()
-            .filter(|(k, _)| k.resident_bytes() != 0)
-            .map(|(k, v)| (k.clone(), v.clone())),
-    );
+    for (key, value) in memo.iter().filter(|(key, _)| key.resident_bytes() != 0) {
+        let _ = copy.insert_reserved(key.clone(), value.clone())?;
+    }
     Ok(copy)
 }
 
