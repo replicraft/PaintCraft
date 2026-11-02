@@ -1,0 +1,413 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:paintcraft:schema:result-v6",
+	"type": "object",
+	"properties": {
+		"schema": {
+			"const": "paintcraft.result/v6"
+		},
+		"committed": {
+			"type": "boolean"
+		},
+		"state_id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"publication_epoch": {
+			"type": "string",
+			"pattern": "^(0|[1-9][0-9]{0,19})$"
+		},
+		"history_id": {
+			"anyOf": [
+				{
+					"type": "string",
+					"format": "uuid"
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"aliases": {
+			"type": "object",
+			"propertyNames": {
+				"type": "string",
+				"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+			},
+			"additionalProperties": {
+				"type": "string",
+				"format": "uuid"
+			}
+		},
+		"warnings": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"minItems": 0
+		},
+		"filter_aliases": {
+			"type": "object",
+			"minProperties": 1,
+			"propertyNames": {
+				"type": "string",
+				"pattern": "^[a-z][a-z0-9_-]{0,63}$"
+			},
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"layer_id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"filter_id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				},
+				"required": [
+					"layer_id",
+					"filter_id"
+				],
+				"additionalProperties": false
+			}
+		},
+		"document_features": {
+			"oneOf": [
+				{
+					"const": [
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1"
+					]
+				},
+				{
+					"const": [
+						"layer-point-filters.v1",
+						"layer-filter-masks.v1",
+						"layer-spatial-filters.v1",
+						"layer-filter-catalog.v1",
+						"layer-masks.v1",
+						"layer-blend-modes.v1",
+						"source-metadata.v1"
+					]
+				}
+			]
+		},
+		"required_filters": {
+			"type": "array",
+			"items": {
+				"enum": [
+					"add-noise-rgb-v1",
+					"black-white-rgb-v1",
+					"box-blur-v1",
+					"brightness-contrast-v1",
+					"curves-rgb-v1",
+					"exposure-srgb-v1",
+					"hue-saturation-rgb-v1",
+					"invert-rgb-v1",
+					"levels-rgb-v1",
+					"posterize-rgb-v1",
+					"solarize-rgb-v1",
+					"threshold-luma-v1",
+					"vibrance-rgb-v1"
+				]
+			},
+			"uniqueItems": true,
+			"minItems": 0,
+			"maxItems": 13,
+			"$comment": "Sorted unique stored numerical profile IDs, including disabled filters; no blend numerical profile. Filterless blends emit an empty array."
+		}
+	},
+	"required": [
+		"schema",
+		"committed",
+		"state_id",
+		"publication_epoch",
+		"history_id",
+		"aliases",
+		"warnings",
+		"document_features",
+		"required_filters"
+	],
+	"additionalProperties": false,
+	"title": "PaintCraft blend-aware engine result v6"
+}
