@@ -41,19 +41,35 @@ struct LayerParams {
     extent: [u32; 2],
     canvas_width: u32,
     opacity: u32,
-    padding: [u32; 2],
+    blend_mode: u32,
+    opaque_backdrop: u32,
 }
 impl LayerParams {
-    fn new(origin: [u32; 2], extent: [u32; 2], canvas_width: u32, opacity: u8) -> Self {
+    fn new(
+        origin: [u32; 2],
+        extent: [u32; 2],
+        canvas_width: u32,
+        opacity: u8,
+        mode: paintcraft_core::types::LayerBlendMode,
+        opaque: bool,
+    ) -> Self {
         Self {
             origin: origin.map(u32::to_le),
             extent: extent.map(u32::to_le),
             canvas_width: canvas_width.to_le(),
             opacity: u32::from(opacity).to_le(),
-            padding: [0; 2],
+            blend_mode: (mode as u32).to_le(),
+            opaque_backdrop: u32::from(opaque).to_le(),
         }
     }
 }
+
+// Evaluated by EACH actual compiled target, including GPU-enabled Wasm builds.
+const _: () = {
+    assert!(std::mem::size_of::<LayerParams>() == 32);
+    assert!(std::mem::offset_of!(LayerParams, blend_mode) == 24);
+    assert!(std::mem::offset_of!(LayerParams, opaque_backdrop) == 28);
+};
 
 #[derive(Debug)]
 pub struct GpuRenderer {
@@ -256,7 +272,7 @@ impl GpuRenderer {
     ) -> Result<GpuFrame> {
         let levels_caller_check = &caller_check;
         let caller_check = || levels_caller_check();
-        crate::prepared::with_normal_document_programs(doc, &caller_check, || {
+        crate::blend::with_gpu_programs(doc, region, &caller_check, || {
             crate::direct::preflight(doc, region, &caller_check)?;
             let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
                 let mut cache = poisoned.into_inner();
@@ -358,17 +374,20 @@ impl GpuRenderer {
         let mut clear_pending = output.reused;
         let mut batch = batch::Batch::new(self);
         let canvas = region;
-        for layer in doc.layers_in_order() {
+        for (index, layer) in doc.layers_in_order().enumerate() {
             check()?;
             if !layer.visible
                 || layer.opacity == 0
-                || (layer.raster.resident_tiles() == 0 && layer.raster.default_pixel().a() == 0)
+                || (layer.blend_mode == paintcraft_core::types::LayerBlendMode::Normal
+                    && layer.raster.resident_tiles() == 0
+                    && layer.raster.default_pixel().a() == 0)
             {
                 continue;
             }
             let Some(area) = canvas.intersect(&layer.extent()) else {
                 continue;
             };
+            let dispatch = crate::blend::gpu_dispatch(doc, layer, index, area)?;
             let width = area.width() as u32;
             let height = area.height() as u32;
             batch.before(area.area() as u64 * 4, cache, check, &mut stats)?;
@@ -384,6 +403,8 @@ impl GpuRenderer {
                 [width, height],
                 w,
                 layer.opacity,
+                dispatch.mode,
+                dispatch.opaque,
             );
             let uniform = self
                 .device
@@ -443,11 +464,28 @@ mod layout_tests {
         assert_eq!(std::mem::offset_of!(LayerParams, extent), 8);
         assert_eq!(std::mem::offset_of!(LayerParams, canvas_width), 16);
         assert_eq!(std::mem::offset_of!(LayerParams, opacity), 20);
-        assert_eq!(std::mem::offset_of!(LayerParams, padding), 24);
-        let params = LayerParams::new([1, 2], [0x12345678, 4], 5, 127);
+        assert_eq!(std::mem::offset_of!(LayerParams, blend_mode), 24);
+        assert_eq!(std::mem::offset_of!(LayerParams, opaque_backdrop), 28);
+        let params = LayerParams::new(
+            [1, 2],
+            [0x12345678, 4],
+            5,
+            127,
+            paintcraft_core::types::LayerBlendMode::Normal,
+            false,
+        );
         let bytes = bytemuck::bytes_of(&params);
         assert_eq!(&bytes[8..12], &[0x78, 0x56, 0x34, 0x12]);
         assert_eq!(&bytes[20..24], &[127, 0, 0, 0]);
         assert_eq!(&bytes[24..], &[0; 8]);
+        let mode = LayerParams::new(
+            [1, 2],
+            [3, 4],
+            5,
+            127,
+            paintcraft_core::types::LayerBlendMode::Screen,
+            true,
+        );
+        assert_eq!(&bytemuck::bytes_of(&mode)[24..], &[2, 0, 0, 0, 1, 0, 0, 0]);
     }
 }

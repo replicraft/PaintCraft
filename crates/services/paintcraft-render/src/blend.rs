@@ -4,6 +4,18 @@ use paintcraft_core::types::LayerBlendMode as Mode;
 use paintcraft_document::{Document, Layer};
 use std::cell::Cell;
 mod compose;
+#[cfg(feature = "gpu")]
+mod gpu;
+#[cfg(feature = "gpu")]
+pub(crate) use gpu::{
+    allowed as gpu_allowed, dispatch as gpu_dispatch, with_programs as with_gpu_programs,
+};
+#[derive(Clone, Copy)]
+enum Target {
+    Cpu,
+    #[cfg(feature = "gpu")]
+    Gpu,
+}
 mod kernel;
 mod quote;
 pub(crate) use compose::{row, spatial};
@@ -166,7 +178,7 @@ pub(crate) fn with_programs<T>(
         // tightened child of the same cumulative parent.
         let c = CPU.with(Cell::get).ok_or_else(missing)?;
         crate::validate_region(doc, region)?;
-        quote::preflight(doc, region, c, check)?;
+        quote::preflight(doc, region, c, Target::Cpu, check)?;
         return crate::prepared::with_cpu_document_programs(doc, check, work);
     }
     let controls = control_quote();
@@ -198,7 +210,7 @@ pub(crate) fn with_programs<T>(
         let prior = CPU.with(|s| s.replace(Some(c)));
         let _restore = Restore(prior);
         crate::validate_region(doc, region)?;
-        quote::preflight(doc, region, c, check)?;
+        quote::preflight(doc, region, c, Target::Cpu, check)?;
         crate::prepared::with_cpu_document_programs(doc, check, work)
     })
 }

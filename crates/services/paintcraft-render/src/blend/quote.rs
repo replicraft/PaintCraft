@@ -53,11 +53,16 @@ pub(super) fn preflight(
     doc: &Document,
     region: Rect,
     c: Context,
+    target: Target,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     let q = quote(doc, region, c)?;
     let base = crate::spatial::current().ok_or_else(missing)?;
-    let programs = crate::prepared::quote_cpu_document_programs(doc, check)?;
+    let programs = match target {
+        Target::Cpu => crate::prepared::quote_cpu_document_programs(doc, check)?,
+        #[cfg(feature = "gpu")]
+        Target::Gpu => crate::prepared::quote_gpu_document_programs(doc, check)?,
+    };
     let compile = if base.has_prepared_programs() {
         0
     } else {

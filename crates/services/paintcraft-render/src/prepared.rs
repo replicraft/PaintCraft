@@ -167,3 +167,6 @@ mod tests;
 pub(crate) use curves_document::{
     quote_cpu_document_programs, with_cpu_document_programs, with_normal_document_programs,
 };
+
+#[cfg(feature = "gpu")]
+pub(crate) use curves_document::{quote_gpu_document_programs, with_gpu_document_programs};

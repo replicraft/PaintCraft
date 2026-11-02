@@ -18,12 +18,19 @@ const CAPTURE: u64 = (MAX
 enum Eligibility {
     NormalOnly,
     Cpu,
+    #[cfg(feature = "gpu")]
+    Gpu,
 }
 fn active(doc: &Document, eligibility: Eligibility) -> Result<bool> {
     let mut active = false;
     for layer in doc.layers.values() {
         if layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal
-            && !(matches!(eligibility, Eligibility::Cpu) && crate::blend::allowed(doc))
+            && !match eligibility {
+                Eligibility::NormalOnly => false,
+                Eligibility::Cpu => crate::blend::allowed(doc),
+                #[cfg(feature = "gpu")]
+                Eligibility::Gpu => crate::blend::gpu_allowed(doc),
+            }
         {
             return Err(paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::CapabilityUnsupported,
@@ -260,4 +267,20 @@ pub(crate) fn with_normal_document_programs<T>(
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
     with_profile(doc, check, Eligibility::NormalOnly, work)
+}
+
+#[cfg(feature = "gpu")]
+pub(crate) fn quote_gpu_document_programs(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<DocumentProgramsQuote> {
+    quote_profile(doc, check, Eligibility::Gpu)
+}
+#[cfg(feature = "gpu")]
+pub(crate) fn with_gpu_document_programs<T>(
+    doc: &Document,
+    check: &dyn Fn() -> Result<()>,
+    work: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    with_profile(doc, check, Eligibility::Gpu, work)
 }

@@ -426,6 +426,12 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(opacity.changed_strips(&after).unwrap().is_empty());
+        doc.layers.get_mut(&id).unwrap().blend_mode =
+            paintcraft_core::types::LayerBlendMode::Screen;
+        let mode = Key::build(&doc, &doc.layers[&id], area, 1 << 20)
+            .unwrap()
+            .unwrap();
+        assert!(mode.changed_strips(&opacity).unwrap().is_empty());
         doc.layers.get_mut(&id).unwrap().origin = (-1, 0);
         let moved = Key::build(&doc, &doc.layers[&id], area, 1 << 20)
             .unwrap()

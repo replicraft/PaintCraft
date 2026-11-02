@@ -91,7 +91,7 @@ impl GpuRenderer {
     ) -> Result<GpuTextureFrame> {
         let levels_caller_check = &caller_check;
         let caller_check = || levels_caller_check();
-        crate::prepared::with_normal_document_programs(doc, &caller_check, || {
+        crate::blend::with_gpu_programs(doc, request.region(), &caller_check, || {
             if doc.canvas.0 > paintcraft_core::types::policy::CANVAS_SIDE_MAX
                 || doc.canvas.1 > paintcraft_core::types::policy::CANVAS_SIDE_MAX
             {
@@ -191,7 +191,11 @@ impl GpuRenderer {
                     .unwrap()
                     .intersect(&region)
                     .unwrap();
-                let color = uniform(doc, rect, check)?;
+                let color = if crate::blend::gpu_allowed(doc) {
+                    None
+                } else {
+                    uniform(doc, rect, check)?
+                };
                 let mut words = Words([[0; 2]; 4]);
                 if let Some(color) = color {
                     words.0[0] = [u32::from_le_bytes(color.0).to_le(), 1u32.to_le()];
@@ -387,7 +391,12 @@ struct Reduction<'a> {
 impl Reduction<'_> {
     fn visit(&mut self, rect: Rect) -> Result<()> {
         (self.check)()?;
-        if let Some(color) = uniform(self.doc, rect, self.check)? {
+        let color = if crate::blend::gpu_allowed(self.doc) {
+            None
+        } else {
+            uniform(self.doc, rect, self.check)?
+        };
+        if let Some(color) = color {
             self.stats.scaled_uniform_pixels += rect.area() as u64;
             let step = i64::from(self.request.step());
             let width = (self.tile.width() as u32).div_ceil(self.request.step()) as usize;

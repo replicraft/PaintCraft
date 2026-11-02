@@ -7,6 +7,9 @@ pub(super) fn eligible<'a>(
     region: Rect,
     check: &impl Fn() -> Result<()>,
 ) -> Result<Option<&'a Layer>> {
+    if crate::blend::gpu_allowed(doc) {
+        return Ok(None);
+    }
     let mut candidate = None;
     for layer in doc.layers_in_order() {
         check()?;
