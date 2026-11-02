@@ -65,6 +65,19 @@ pub(crate) fn exercise(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<(
             "PCND fuzz source allowance",
         ));
     }
+    // This historical target's invariants/output proof cover PCND1..4 only.
+    // Fixed header eligibility is not authentication or general reader support.
+    // Keep supported inputs on their exact old parser/callback path.
+    if bytes.len() >= 8
+        && &bytes[..4] == b"PCND"
+        && &bytes[5..8] == b"\r\n\x1a"
+        && !matches!(bytes[4], 1..=4)
+    {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Historical PCND fuzz target admits only PCND1 through PCND4",
+        ));
+    }
     let first = SharedBudget::new(METADATA_BYTES_MAX);
     let coverage = SharedBudget::new(2 * MASK_BYTES_MAX);
     let doc = pcnd::read_with_admission_checked(
@@ -256,3 +269,6 @@ fn admission<'a>(
     admission.coverage.limits.runs = MASK_RUNS_MAX;
     admission
 }
+
+#[cfg(test)]
+mod profile_tests;
