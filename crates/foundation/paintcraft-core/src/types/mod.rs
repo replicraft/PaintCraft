@@ -5,6 +5,7 @@ pub mod geometry;
 pub mod json;
 pub mod layer_blend;
 pub mod pixel;
+pub mod styles;
 
 pub use error::{Error, ErrorCode, Result};
 pub use geometry::Rect;
