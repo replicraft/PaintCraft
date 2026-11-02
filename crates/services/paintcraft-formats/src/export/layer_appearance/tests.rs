@@ -247,7 +247,7 @@ fn registry3_preserves_thirteen_numerical_resolutions_and_independent_appearance
     let mut unknown = appearance_registration();
     unknown.query_revision = 2;
     assert!(Requirements7::new(Requirements::default(), unknown, &|| Ok(())).is_err());
-    assert!(RegistryContract::try_from(4).is_err());
+    assert!(RegistryContract::try_from(5).is_err());
 }
 #[test]
 fn stream_order_duplicates_and_u32_occurrence_width_refuse_before_unbounded_storage() {

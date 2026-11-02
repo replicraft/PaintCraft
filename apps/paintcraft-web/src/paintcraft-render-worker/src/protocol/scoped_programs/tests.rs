@@ -159,6 +159,7 @@ fn hello2_returns_only_resolved_subset_with_class_and_exact_workload_binding() {
     assert!(text(&reply).len() <= CAPABILITY_BYTES_MAX);
     for (key, bad) in [
         ("registryContract", Value::Int(1)),
+        ("registryContract", Value::Int(4)),
         ("protocol", Value::Int(5)),
     ] {
         assert_eq!(

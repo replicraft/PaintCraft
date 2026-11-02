@@ -360,3 +360,81 @@ fn admission_work_authority_is_required_closed_and_digest_bound() {
         ErrorCode::InputSchema
     );
 }
+
+#[test]
+fn source7_never_inherits_new_registry4_acceptance_from_shared_enum() {
+    let c = control(false);
+    let bad = replace(c.clone(), "registryContract", Value::Int(4));
+    assert_eq!(
+        open(&text(&bad), &|| Ok(())).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    let hello_bad = Value::object([
+        ("protocol", Value::Int(7)),
+        ("registryContract", Value::Int(4)),
+        ("pairs", pair_value(&required(false))),
+        ("appearance", appearance_registration().value()),
+        ("admission", grant(false).value().unwrap()),
+        ("slice", grant(false).slice_value()),
+    ]);
+    assert_eq!(
+        hello(&text(&hello_bad), CONTROL_BYTES, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::CapabilityUnsupported
+    );
+    let (source, profile) = open(&text(&c), &|| Ok(())).unwrap();
+    let bad = replace(
+        begin_value(&source, &profile),
+        "registryContract",
+        Value::Int(4),
+    );
+    assert_eq!(
+        begin(&text(&bad), &|| Ok(())).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    let old5 = Value::object([
+        ("registryContract", Value::Int(4)),
+        ("pairs", Value::Array(vec![])),
+    ]);
+    let accepted5 = replace(old5.clone(), "registryContract", Value::Int(1));
+    assert!(super::super::programs::hello(&text(&accepted5)).is_ok());
+    let error = super::super::programs::hello(&text(&old5)).unwrap_err();
+    // Source5 keeps its existing schema error for an unsupported registry.
+    // The exact message and valid control prove the registry check is reached.
+    assert_eq!(error.code, ErrorCode::InputSchema);
+    assert_eq!(error.message, "Prepared registry contract");
+}
+
+#[test]
+fn source7_zero_own_is_still_closed_with_a_correctly_framed_old_fact() {
+    let abi = CoverageAbi::current().unwrap();
+    let own = LayerMasks7 {
+        stored: 0,
+        enabled: 0,
+        bands: 0,
+        runs: 0,
+        decode_upper_bytes: 0,
+        identity: metadata::IdentityHasher::new(0).unwrap().finish().unwrap(),
+        abi,
+    };
+    let inventory = metadata::Inventory7 {
+        own,
+        occurrences: 0,
+        bands: 0,
+        runs: 0,
+        decode_upper_bytes: 0,
+        source_coverage: metadata::CoverageHasher::new(abi, 0)
+            .unwrap()
+            .finish()
+            .unwrap(),
+        mask_inventory: metadata::InventoryHasher::new(0).unwrap().finish().unwrap(),
+    };
+    let r = required(false);
+    let fact = Fact7::capture(&r, grant(false), inventory, &|| Ok(())).unwrap();
+    let full = replace(fact.value(), "pairs", pair_value(&r));
+    let c = replace(control(false), "sourceRequirements", full);
+    let error = open(&text(&c), &|| Ok(())).unwrap_err();
+    assert_eq!(error.code, ErrorCode::InputSchema);
+    assert_eq!(error.message, "Source7 requires own-mask intent");
+}
