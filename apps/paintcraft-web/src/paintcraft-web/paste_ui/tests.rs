@@ -21,6 +21,7 @@ fn decoded(losses: Vec<String>) -> clipboard::Decoded {
     }
 }
 fn stage(app: &mut WebApp, ctx: &egui::Context, losses: Vec<String>) {
+    app.paste.options = true;
     app.paste_with(ctx, || Ok(clipboard::Job::completed(Ok(decoded(losses)))));
     app.poll_paste(ctx);
     assert!(app.paste.ready.is_some());
@@ -199,4 +200,30 @@ fn modal_controls_accept_or_cancel_in_all_skins_and_two_languages() {
             );
         }
     }
+}
+
+#[test]
+fn ordinary_paste_shortcut_creates_an_immediately_moveable_new_layer_without_a_dialog() {
+    let ctx = egui::Context::default();
+    let mut app = fixture(&ctx);
+    let before = app.editor.session.snapshot();
+    let old_target = app.editor.target;
+    app.paste.next_read = Some(clipboard::Job::completed(Ok(decoded(vec![]))));
+    app.paste_default_requested(&ctx);
+    app.poll_paste(&ctx);
+    assert!(!app.paste.busy());
+    assert_eq!(
+        app.editor.session.document().roots.len(),
+        before.roots.len() + 1
+    );
+    assert_ne!(app.editor.target, old_target);
+    let layer = &app.editor.session.document().layers[&app.editor.target.unwrap()];
+    assert_eq!(layer.raster.get(1, 0).0, [44, 55, 66, 127]);
+    assert_eq!(app.controls.tool, paintcraft_tools::Tool::Select);
+    assert_eq!(
+        app.controls.options.selection_mode,
+        paintcraft_tools::SelectionMode::Rectangle
+    );
+    app.editor.session.undo().unwrap();
+    assert!(Arc::ptr_eq(&before, &app.editor.session.snapshot()));
 }

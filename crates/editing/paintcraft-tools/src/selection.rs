@@ -34,6 +34,17 @@ impl ToolState {
         })
     }
 
+    pub fn gesture_is_selection_brush(&self) -> bool {
+        self.gesture.as_ref().is_some_and(|g| {
+            g.tool == Tool::Select && g.options.selection_mode == SelectionMode::Brush
+        })
+    }
+
+    /// Both retain every sample, but only a lasso closes a polygon.
+    pub fn gesture_is_selection_path(&self) -> bool {
+        self.gesture_is_lasso() || self.gesture_is_selection_brush()
+    }
+
     /// Admit the final integer document position before closing a gesture. A
     /// mismatched release button cannot append points or finish the active drag.
     pub fn try_pointer_up_at(
@@ -50,21 +61,26 @@ impl ToolState {
         Ok(self.pointer_up_button(button))
     }
 
-    pub(super) fn append_lasso_admitted(
+    pub(super) fn append_selection_path_admitted(
         &mut self,
         at: (i64, i64),
         points: usize,
         capacity: usize,
     ) -> Result<()> {
-        let result = self.grow_lasso(at, points, capacity);
+        let result = self.grow_selection_path(at, points, capacity);
         if result.is_err() {
-            // A truncated lasso changes coverage. Never publish the retained prefix.
+            // A truncated selection path changes coverage. Never publish the retained prefix.
             self.cancel_gesture();
         }
         result
     }
 
-    fn grow_lasso(&mut self, at: (i64, i64), points: usize, capacity: usize) -> Result<()> {
+    fn grow_selection_path(
+        &mut self,
+        at: (i64, i64),
+        points: usize,
+        capacity: usize,
+    ) -> Result<()> {
         if !valid_point(at) {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -84,7 +100,12 @@ impl ToolState {
             )
         };
         let needed = gesture.points.len().checked_add(1).ok_or_else(limit)?;
-        if needed > points.min(POINTS_PER_OP) || needed > capacity.min(POINTS_PER_OP) {
+        let maximum = if gesture.options.selection_mode == SelectionMode::Brush {
+            16384
+        } else {
+            POINTS_PER_OP
+        };
+        if needed > points.min(maximum) || needed > capacity.min(maximum) {
             return Err(limit());
         }
         if gesture.points.capacity() < needed {
@@ -94,13 +115,13 @@ impl ToolState {
                 .saturating_mul(2)
                 .max(4)
                 .min(capacity)
-                .min(POINTS_PER_OP);
+                .min(maximum);
             if wanted < needed {
                 return Err(limit());
             }
             let mut next = Vec::new();
             next.try_reserve_exact(wanted).map_err(|_| limit())?;
-            if next.capacity() > capacity.min(POINTS_PER_OP) {
+            if next.capacity() > capacity.min(maximum) {
                 return Err(limit());
             }
             next.extend_from_slice(&gesture.points);
@@ -109,5 +130,30 @@ impl ToolState {
         gesture.points.push(at);
         self.preview_revision.advance();
         Ok(())
+    }
+}
+
+impl ToolState {
+    /// Immutable captured recipe for an asynchronous selection-only preview.
+    pub fn selection_recipe(
+        &self,
+    ) -> Option<(
+        uuid::Uuid,
+        Vec<(i64, i64)>,
+        paintcraft_core::types::selection::Settings,
+    )> {
+        let g = self.gesture.as_ref()?;
+        if g.tool != Tool::Select || self.floating_selection().is_some() {
+            return None;
+        }
+        let shape = g.options.selection_mode;
+        if matches!(shape, SelectionMode::FreeForm | SelectionMode::Polygon)
+            && !has_three_vertices(&g.points)
+        {
+            return None;
+        }
+        let mut settings = g.options.selection;
+        settings.shape = shape;
+        Some((g.layer, g.points.clone(), settings))
     }
 }

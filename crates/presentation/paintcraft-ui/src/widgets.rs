@@ -4,6 +4,35 @@ use egui::{Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2};
 
 pub use crate::icons::Icon;
 
+/// Palette's selection brush footprint and add/subtract indicator.
+pub fn selection_brush_cursor(
+    painter: &egui::Painter,
+    position: egui::Pos2,
+    radius: f32,
+    subtract: bool,
+) {
+    painter.circle_stroke(
+        position,
+        radius.max(1.),
+        Stroke::new(2., egui::Color32::BLACK),
+    );
+    painter.circle_stroke(
+        position,
+        radius.max(1.),
+        Stroke::new(1., egui::Color32::WHITE),
+    );
+    painter.line_segment(
+        [position - Vec2::new(3., 0.), position + Vec2::new(3., 0.)],
+        Stroke::new(1., egui::Color32::BLACK),
+    );
+    if !subtract {
+        painter.line_segment(
+            [position - Vec2::new(0., 3.), position + Vec2::new(0., 3.)],
+            Stroke::new(1., egui::Color32::BLACK),
+        );
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum IconArtwork {
     Colorful,

@@ -11,7 +11,17 @@ impl WebApp {
         point: (i64, i64),
         button: PointerButton,
     ) -> bool {
-        if self.controls.tool != Tool::Select || button != PointerButton::Primary {
+        if self.controls.tool != Tool::Select
+            || button != PointerButton::Primary
+            || !matches!(
+                self.controls.options.selection_mode,
+                paintcraft_tools::SelectionMode::Rectangle
+                    | paintcraft_tools::SelectionMode::FreeForm
+                    | paintcraft_tools::SelectionMode::Polygon
+            )
+            || self.controls.options.selection.combine
+                != paintcraft_core::types::selection::Combine::Replace
+        {
             return false;
         }
         let at = (point.0.div_euclid(256), point.1.div_euclid(256));
@@ -43,6 +53,14 @@ impl WebApp {
     }
     pub(crate) fn selection_move_cursor(&self, at: (i64, i64)) -> bool {
         self.controls.tool == Tool::Select
+            && matches!(
+                self.controls.options.selection_mode,
+                paintcraft_tools::SelectionMode::Rectangle
+                    | paintcraft_tools::SelectionMode::FreeForm
+                    | paintcraft_tools::SelectionMode::Polygon
+            )
+            && self.controls.options.selection.combine
+                == paintcraft_core::types::selection::Combine::Replace
             && self
                 .editor
                 .display_selection()

@@ -23,7 +23,7 @@ impl Stage<'_> {
             _ => None,
         };
         let predicate = |x: i64, y: i64| -> Result<bool> {
-            Ok(mask.is_none_or(|mask| mask.coverage(x + ox, y + oy) == 255))
+            Ok(mask.is_none_or(|mask| mask.coverage(x + ox, y + oy) > 0))
         };
         let allowed = mask.map(|_| &predicate as &dyn Fn(i64, i64) -> Result<bool>);
         // A blocked seed is empty without allocating a classifier or reading pixels.

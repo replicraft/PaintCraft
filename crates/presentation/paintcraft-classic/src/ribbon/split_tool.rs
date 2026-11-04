@@ -11,10 +11,12 @@ pub(super) fn show(
 ) {
     let (icon, label) = match tool {
         Tool::Select => (
-            if state.options.selection_mode == paintcraft_tools::SelectionMode::FreeForm {
-                Icon::LassoSelect
-            } else {
-                Icon::RectangleSelect
+            match state.options.selection_mode {
+                paintcraft_tools::SelectionMode::Rectangle => Icon::RectangleSelect,
+                paintcraft_tools::SelectionMode::FreeForm
+                | paintcraft_tools::SelectionMode::Polygon => Icon::LassoSelect,
+                paintcraft_tools::SelectionMode::Wand => Icon::MagicWand,
+                paintcraft_tools::SelectionMode::Brush => Icon::Brush,
             },
             "Selection options",
         ),

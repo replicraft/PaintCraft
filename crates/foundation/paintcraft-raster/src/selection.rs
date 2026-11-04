@@ -9,7 +9,7 @@ pub enum Selection {
     Empty,
     /// Binary coverage over a half-open document rectangle.
     Rect(Rect),
-    /// Immutable finite binary coverage; bounds alone never authorize painting.
+    /// Immutable finite R8 coverage; bounds alone never authorize painting.
     Mask(BinaryMask),
 }
 
@@ -42,3 +42,5 @@ impl Selection {
         }
     }
 }
+
+pub mod region;

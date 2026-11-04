@@ -387,16 +387,18 @@ impl App {
     pub(super) fn has_document_drafts(&self) -> bool {
         self.editor.gesture_in_progress()
             || self.editor.is_editing_text()
-            || self.name_edit.as_ref().is_some_and(|(id, name, _)| {
-                self.editor
-                    .layer_properties(*id)
-                    .is_some_and(|p| p.0 != *name)
-            })
-            || self.opacity_edit.is_some_and(|(id, opacity)| {
-                self.editor
-                    .layer_properties(id)
-                    .is_some_and(|p| p.1 != opacity)
-            })
+            || self.has_layer_property_drafts()
+    }
+    pub(super) fn has_layer_property_drafts(&self) -> bool {
+        self.name_edit.as_ref().is_some_and(|(id, name, _)| {
+            self.editor
+                .layer_properties(*id)
+                .is_some_and(|p| p.0 != *name)
+        }) || self.opacity_edit.is_some_and(|(id, opacity)| {
+            self.editor
+                .layer_properties(id)
+                .is_some_and(|p| p.1 != opacity)
+        })
     }
 
     pub fn document_count(&self) -> usize {

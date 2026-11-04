@@ -38,6 +38,7 @@ fn fixture(ctx: &egui::Context) -> WebApp {
 }
 fn stage(app: &mut WebApp, ctx: &egui::Context) {
     app.paste.intent = Intent::CurrentLayer;
+    app.paste.options = true;
     app.paste_with(ctx, || Ok(clipboard::Job::completed(Ok(decoded()))));
     app.poll_paste(ctx);
     let ready = app.paste.ready.take().unwrap();
@@ -173,6 +174,7 @@ fn canvas_growth_is_private_until_placement_and_invalid_movement_preserves_the_l
     let ctx = egui::Context::default();
     let mut app = fixture(&ctx);
     app.paste.intent = Intent::CurrentLayer;
+    app.paste.options = true;
     app.paste_with(&ctx, || Ok(clipboard::Job::completed(Ok(decoded()))));
     app.poll_paste(&ctx);
     let mut ready = app.paste.ready.take().unwrap();
@@ -194,7 +196,8 @@ fn canvas_growth_is_private_until_placement_and_invalid_movement_preserves_the_l
     assert_eq!(app.editor.session.document().canvas, (10, 7));
 }
 #[test]
-fn actual_shortcut_modal_drag_release_regrab_and_apply_work_in_each_skin_and_two_languages() {
+fn explicit_current_layer_modal_drag_release_regrab_and_apply_work_in_each_skin_and_two_languages()
+{
     use egui_kittest::{
         Harness,
         kittest::{NodeT, Queryable},
@@ -212,13 +215,8 @@ fn actual_shortcut_modal_drag_release_regrab_and_apply_work_in_each_skin_and_two
                     app
                 });
             h.run();
-            h.event(egui::Event::Key {
-                key: egui::Key::V,
-                physical_key: None,
-                pressed: true,
-                repeat: false,
-                modifiers: egui::Modifiers::COMMAND,
-            });
+            let ctx = h.ctx.clone();
+            h.state_mut().paste_current_requested(&ctx);
             h.run();
             assert!(h.state().paste.ready.is_some());
             let label = t!(&h.ctx, "Paste");

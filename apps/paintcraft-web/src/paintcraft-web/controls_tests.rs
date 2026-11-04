@@ -98,3 +98,60 @@ fn pencil_size_is_independent_and_control_scroll_does_not_zoom_the_canvas() {
     assert_eq!(h.ctx.zoom_factor(), 1.0);
     assert_eq!(h.state().editor.session.undo_depth(), 0);
 }
+
+#[test]
+fn selection_brush_previews_live_without_polygon_fill_and_escape_preserves_the_selection() {
+    use paintcraft_core::types::selection::{Combine, Shape};
+    use paintcraft_raster::Selection;
+    let mut h = harness();
+    h.state_mut().controls.tool = paintcraft_tools::Tool::Select;
+    h.state_mut().controls.options.selection_mode = Shape::Brush;
+    h.state_mut().controls.options.selection.diameter = 24;
+    h.state_mut().controls.options.selection.hardness = 50;
+    h.state_mut().controls.options.selection.strength = 60;
+    h.run();
+    let canvas = h.state().canvas.rect.unwrap();
+    let scale = h.state().zoom;
+    let position = |x, y| canvas.min + Vec2::new(x, y) * scale;
+    let start = position(50.5, 80.5);
+    let before = h.state().editor.session.ticket();
+    pointer(&mut h, start, true);
+    h.event(Event::PointerMoved(position(170.5, 80.5)));
+    h.event(Event::PointerMoved(position(170.5, 180.5)));
+    h.run();
+    let draft = h
+        .state()
+        .canvas
+        .selection_brush
+        .as_ref()
+        .expect("live brush draft");
+    let exact = draft.selection.clone();
+    let Selection::Mask(mask) = &exact else {
+        panic!()
+    };
+    assert!(mask.coverage(170, 170) > 0);
+    assert_eq!(mask.coverage(100, 130), 0, "no polygon closure");
+
+    assert_eq!(h.state().editor.session.ticket(), before);
+    assert_eq!(h.state().editor.session.selection(), Selection::Inactive);
+    pointer(&mut h, position(170.5, 180.5), false);
+    h.run();
+    assert!(
+        h.state()
+            .editor
+            .session
+            .selection()
+            .same_field_checked(&exact, 2_000_000, &|| Ok(()))
+            .unwrap()
+    );
+    assert_eq!(h.state().controls.options.selection.combine, Combine::Add);
+    let committed = h.state().editor.session.selection();
+    let ticket = h.state().editor.session.ticket();
+    pointer(&mut h, position(250.5, 180.5), true);
+    h.run();
+    h.key_press(egui::Key::Escape);
+    h.run();
+    assert!(h.state().canvas.selection_brush.is_none());
+    assert_eq!(h.state().editor.session.selection(), committed);
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+}

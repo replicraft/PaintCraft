@@ -59,13 +59,12 @@ impl Builder {
         if span.x0 > span.x1
             || !self.domain.contains(span.x0, span.y)
             || !self.domain.contains(span.x1, span.y)
-            || !matches!(span.coverage, 0 | 255)
             || self
                 .previous
                 .is_some_and(|(y, x)| span.y < y || (span.y == y && span.x0 <= x))
         {
             return Err(schema(
-                "selection runs must be ordered, disjoint, binary and inside their domain",
+                "selection runs must be ordered, disjoint and inside their domain",
             ));
         }
         self.spans += 1;
@@ -94,12 +93,18 @@ impl Builder {
             let start = iy as usize * EDGE + ix as usize;
             dense.values[start..start + length].fill(span.coverage);
             dense.written += length;
+            dense.weighted |= !matches!(span.coverage, 0 | 255);
+            if let Some(value) = dense.uniform {
+                dense.mixed |= value != span.coverage;
+            } else {
+                dense.uniform = Some(span.coverage);
+            }
             let tile_area = Rect::new(tx * EDGE as i64, ty * EDGE as i64, EDGE as i64, EDGE as i64)
                 .unwrap()
                 .intersect(&self.domain)
                 .expect("validated span is inside the tile")
                 .area();
-            if dense.written as u128 == tile_area {
+            if dense.written as u128 == tile_area && !dense.mixed {
                 *tile = Tile::Solid(span.coverage);
             }
             x = end + 1;
@@ -146,7 +151,7 @@ impl Builder {
         for tile in self.tiles.values() {
             check()?;
             spend(&mut self.remaining, 1)?;
-            full &= matches!(tile,Tile::Solid(value) if *value != self.default);
+            full &= matches!(tile,Tile::Solid(value) if *value == 255 - self.default);
         }
         if full {
             return BinaryMask::uniform(self.domain, self.default == 0);
@@ -173,6 +178,7 @@ impl Builder {
             inverted: false,
             offset: (0, 0),
             storage,
+            base: None,
         })
     }
 }
@@ -188,6 +194,9 @@ fn dense(default: u8, mut charge: BudgetAccount) -> Result<Dense> {
     Ok(Dense {
         values,
         written: 0,
+        uniform: None,
+        mixed: false,
+        weighted: false,
         _charge: charge,
     })
 }

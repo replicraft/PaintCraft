@@ -128,6 +128,8 @@ pub(super) fn label(batch: &Batch) -> Label {
         }
         Op::SelectionSetRect { .. }
         | Op::SelectionSetPolygon { .. }
+        | Op::SelectionRegion { .. }
+        | Op::SelectionFeather { .. }
         | Op::SelectionInvert
         | Op::SelectionClear => Label::Selection,
         Op::Shape { .. } => Label::Shape,

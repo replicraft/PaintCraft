@@ -75,6 +75,18 @@ The [CLI installer](docs/RELEASING.md#headless-cli-distribution) installs the co
 
 ## Run
 
+Build the desktop app with `cargo build --locked`, or all native workspace
+components (including the codec helper) with `cargo build --locked --workspace`.
+
+The codec helper's default AVIF support requires Python 3.12 or newer, Meson
+1.12.1, Ninja 1.13.2, and a native C compiler. Install the Python tools using
+your Python interpreter's `-m pip install meson==1.12.1 ninja==1.13.2` command.
+On Windows, install Visual Studio's C++ build tools and a Windows SDK. The build
+discovers standard Windows Python installations, Python-installed Meson/Ninja,
+and the Visual Studio compiler without requiring a Developer Command Prompt.
+Custom installations can set `PYTHON`, `MESON`, `NINJA`, or `CC` to override
+discovery; executable paths may contain spaces.
+
 Desktop:
 
 ```sh

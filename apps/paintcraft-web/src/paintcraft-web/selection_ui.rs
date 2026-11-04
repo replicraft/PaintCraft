@@ -1,7 +1,8 @@
 //! Browser lasso input admission and cached true selection boundaries.
 use crate::{app::WebApp, editor::MAX_POINTS};
-use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
+use eframe::egui::{self, Pos2, Rect, Vec2};
 use paintcraft_ui::{t, view::View};
+pub(crate) mod brush;
 impl WebApp {
     pub(crate) fn visible_selection(
         &self,
@@ -11,6 +12,11 @@ impl WebApp {
                 paintcraft_raster::Selection::Empty,
                 paintcraft_raster::Selection::Rect,
             ));
+        }
+        if self.editor.tools.gesture_is_selection_brush()
+            && let Some(draft) = &self.canvas.selection_brush
+        {
+            return Ok(draft.selection.clone());
         }
         self.editor.display_selection()
     }
@@ -43,7 +49,7 @@ impl WebApp {
     }
 
     pub(crate) fn move_selection_pointer(&mut self, point: (i64, i64)) {
-        if self.editor.tools.gesture_is_lasso() {
+        if self.editor.tools.gesture_is_selection_path() {
             if let Err(error) = self
                 .editor
                 .tools
@@ -74,14 +80,16 @@ impl WebApp {
         ) else {
             return;
         };
+        let phase = paintcraft_ui::selection_ants::phase(painter.ctx().input(|i| i.time));
+        let mut visible = false;
         match self.canvas.outline.get(&mask, area) {
             Ok(outline) => {
                 for segment in outline.segments() {
                     let a = view.to_screen(segment.from);
                     let b = view.to_screen(segment.to);
                     let line = [Pos2::new(a.0, a.1), Pos2::new(b.0, b.1)];
-                    painter.line_segment(line, egui::Stroke::new(3.0 / ppp, Color32::WHITE));
-                    painter.line_segment(line, egui::Stroke::new(1.0 / ppp, Color32::BLACK));
+                    visible |=
+                        paintcraft_ui::selection_ants::ants(painter, &line, phase - a.0 - a.1);
                 }
             }
             Err(_) => {
@@ -100,6 +108,11 @@ impl WebApp {
                         .text_color(),
                 );
             }
+        }
+        if visible {
+            painter
+                .ctx()
+                .request_repaint_after(std::time::Duration::from_millis(50));
         }
     }
 }

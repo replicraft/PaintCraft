@@ -25,19 +25,31 @@ impl BinaryMask {
         let mut build = builder::Builder::new(domain, false, budget, limits)?;
         let mut work = limits.work;
         for y in overlap.y0..overlap.y1 {
-            let spent = self.visit_row(y, overlap.x0, overlap.x1, work, check, |x0, x1| {
-                build.span(
-                    MaskSpan {
-                        y,
-                        x0,
-                        x1: x1 - 1,
-                        coverage: 255,
-                    },
-                    check,
-                )
-            })?;
+            let spent = self.visit_coverage_row(
+                y,
+                overlap.x0,
+                overlap.x1,
+                work,
+                check,
+                |x0, x1, coverage| {
+                    build.span(
+                        MaskSpan {
+                            y,
+                            x0,
+                            x1: x1 - 1,
+                            coverage,
+                        },
+                        check,
+                    )
+                },
+            )?;
             spend(&mut work, spent)?;
         }
-        build.finish(check)
+        let result = build.finish(check)?;
+        Ok(if let Some(base) = self.base() {
+            result.with_base(base.reframed(domain, budget, limits, check)?)
+        } else {
+            result
+        })
     }
 }

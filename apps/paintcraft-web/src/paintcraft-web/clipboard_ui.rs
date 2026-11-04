@@ -27,6 +27,16 @@ impl Default for State {
     }
 }
 impl State {
+    pub(crate) fn matching_origin(&self, image: &Image) -> Option<(i64, i64)> {
+        self.last
+            .as_ref()
+            .filter(|capture| {
+                capture.image.width() == image.width()
+                    && capture.image.height() == image.height()
+                    && capture.image.rgba() == image.rgba()
+            })
+            .map(|capture| capture.origin)
+    }
     pub(crate) fn accept_background(&mut self, job: clipboard::Job) {
         self.job = Some(job);
         self.capture = None;
@@ -87,7 +97,7 @@ impl WebApp {
             || self.editor.tools.is_constructing_shape()
             || self.editor.tools.is_editing_text()
             || self.text.is_composing()
-            || ctx.egui_wants_keyboard_input()
+            || ctx.text_edit_focused()
         {
             self.message = t!(ctx, "Finish the current edit before copying.");
             return;

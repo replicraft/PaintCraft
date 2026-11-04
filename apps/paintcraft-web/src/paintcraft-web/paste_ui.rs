@@ -56,6 +56,7 @@ pub(crate) struct State {
     #[cfg(test)]
     next_read: Option<clipboard::Job<clipboard::Decoded>>,
     intent: Intent,
+    options: bool,
     placing: Option<placement::Placing>,
     owner: Option<Owner>,
     job: Option<clipboard::Job<clipboard::Decoded>>,
@@ -89,9 +90,16 @@ impl WebApp {
             && !self.text.is_composing()
     }
     pub(crate) fn paste_requested(&mut self, ctx: &egui::Context) {
+        self.paste.options = true;
         self.paste_requested_kind(ctx, Intent::NewLayer);
     }
+    pub(crate) fn paste_default_requested(&mut self, ctx: &egui::Context) {
+        self.paste.options = false;
+        self.paste_requested_kind(ctx, Intent::NewLayer);
+    }
+    #[cfg(test)]
     pub(crate) fn paste_current_requested(&mut self, ctx: &egui::Context) {
+        self.paste.options = true;
         self.paste_requested_kind(ctx, Intent::CurrentLayer);
     }
     fn paste_requested_kind(&mut self, ctx: &egui::Context, intent: Intent) {
@@ -128,7 +136,7 @@ impl WebApp {
             || self.clipboard.busy()
             || self.blocked()
             || !self.paste_safe()
-            || ctx.egui_wants_keyboard_input()
+            || ctx.text_edit_focused()
         {
             self.message = t!(ctx, "Finish the current edit before pasting.");
             return;
@@ -195,17 +203,27 @@ impl WebApp {
                     "Unrecognized clipboard import limitation",
                 ));
             }
+            let origin = self
+                .clipboard
+                .matching_origin(&decoded.image)
+                .unwrap_or((0, 0));
             Ok(Ready {
                 intent: self.paste.intent,
                 draft: PasteDraft::new(&self.editor.session, decoded.image)?,
                 losses: decoded.losses,
                 accept_losses: false,
-                origin: (0, 0),
+                origin,
                 grow: false,
                 name: t!(ctx, "Pasted image"),
             })
         }) {
-            Ok(ready) => self.paste.ready = Some(ready),
+            Ok(ready) => {
+                if !self.paste.options && ready.losses.is_empty() {
+                    self.accept_paste(ctx, ready);
+                } else {
+                    self.paste.ready = Some(ready);
+                }
+            }
             Err(error) => {
                 self.paste.owner = None;
                 self.message = format!("{}: {error}", t!(ctx, "Clipboard paste failed"));
@@ -260,6 +278,10 @@ impl WebApp {
                     .get("pasted")
                     .copied()
                     .or(self.editor.target);
+                self.controls.tool = paintcraft_tools::Tool::Select;
+                self.controls.options.selection_mode = paintcraft_tools::SelectionMode::Rectangle;
+                self.controls.options.selection.combine =
+                    paintcraft_core::types::selection::Combine::Replace;
                 let size = self.editor.session.document().canvas;
                 if size != before {
                     self.remember_canvas_size(size);
@@ -377,6 +399,7 @@ impl WebApp {
         image: paintcraft_core::types::clipboard::Image,
     ) {
         self.paste.intent = Intent::CurrentLayer;
+        self.paste.options = true;
         self.paste_with(ctx, || {
             Ok(clipboard::Job::completed(Ok(clipboard::Decoded {
                 image,

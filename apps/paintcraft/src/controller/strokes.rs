@@ -326,7 +326,7 @@ impl PreviewPreparation {
     }
 }
 
-pub(super) fn captured_batch(
+pub(crate) fn captured_batch(
     ticket: paintcraft_editor::session::Ticket,
     operations: Vec<Value>,
 ) -> Result<Batch> {

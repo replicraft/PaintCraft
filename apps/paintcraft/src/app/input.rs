@@ -24,6 +24,7 @@ impl App {
             egui::Event::Key {key: egui::Key::X, pressed: true, modifiers, ..} if modifiers.command)
         });
         let widget_focus = ctx.egui_wants_keyboard_input();
+        let clipboard_focus = ctx.text_edit_focused();
         let popup_open = egui::Popup::is_any_open(&ctx);
         let picker_open = self.picking.is_some();
         for event in events {
@@ -37,14 +38,42 @@ impl App {
                 && !picker_open;
             match event {
                 egui::Event::Copy
-                    if !copy_key && !widget_focus && !self.ime_composing && !text_focus =>
+                    if !copy_key && !clipboard_focus && !self.ime_composing && !text_focus =>
                 {
                     self.copy_requested(&ctx);
                 }
                 egui::Event::Cut
-                    if !cut_key && !widget_focus && !self.ime_composing && !text_focus =>
+                    if !cut_key && !clipboard_focus && !self.ime_composing && !text_focus =>
                 {
                     self.cut_requested(&ctx);
+                }
+                // Winit can replace Ctrl+V with PasteImage instead of a Key
+                // event. Use the bounded native read to retain straight RGBA.
+                egui::Event::PasteImage(_)
+                    if !clipboard_focus && !self.ime_composing && !text_focus =>
+                {
+                    self.paste_requested(&ctx);
+                }
+                egui::Event::Key {
+                    key,
+                    pressed: true,
+                    repeat: false,
+                    modifiers,
+                    ..
+                } if matches!(key, egui::Key::C | egui::Key::X | egui::Key::V)
+                    && modifiers.command
+                    && !clipboard_focus
+                    && !self.ime_composing
+                    && !text_focus
+                    && !picker_open =>
+                {
+                    if let Some(action) = paintcraft_ui::actions::Action::from_shortcut_for(
+                        self.action_context().frontend,
+                        key,
+                        modifiers,
+                    ) {
+                        self.dispatch_chrome(&ctx, vec![action]);
+                    }
                 }
                 egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
                     // Receipt-time shortcut exclusion has no text target or

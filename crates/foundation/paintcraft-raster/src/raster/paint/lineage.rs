@@ -67,12 +67,19 @@ pub struct PaintReader<'a> {
     bounds: Rect,
     chain: Vec<Frame<'a>>,
     charge: BudgetAccount,
-    positions: Option<std::sync::Mutex<Vec<(i64, i64)>>>,
+    positions: Option<std::sync::Mutex<Vec<ReadState>>>,
 }
 #[derive(Debug)]
 struct Frame<'a> {
     node: &'a Node,
     coordinates: sampling::Coordinates,
+}
+#[derive(Clone, Copy, Debug)]
+struct ReadState {
+    at: (i64, i64),
+    weighted: Option<super::patch::Weighted>,
+    source: Rgba,
+    phase: u8,
 }
 fn node_charge(admission: &Admission, extra: usize) -> Result<BudgetAccount> {
     let bytes = size_of::<Node>()
@@ -411,7 +418,12 @@ impl<'a> PaintReader<'a> {
             for _ in &chain {
                 check()?;
                 metadata.vector(&mut positions, &mut charge)?;
-                positions.push((0, 0));
+                positions.push(ReadState {
+                    at: (0, 0),
+                    weighted: None,
+                    source: Rgba::TRANSPARENT,
+                    phase: 0,
+                });
             }
             Some(std::sync::Mutex::new(positions))
         } else {
@@ -501,7 +513,7 @@ impl<'a> PaintReader<'a> {
         &self,
         x: i64,
         y: i64,
-        positions: &std::sync::Mutex<Vec<(i64, i64)>>,
+        positions: &std::sync::Mutex<Vec<ReadState>>,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Rgba> {
         let mut positions = positions.lock().map_err(|_| {
@@ -511,39 +523,93 @@ impl<'a> PaintReader<'a> {
             )
         })?;
         let mut at = (x, y);
-        let mut end = 0;
+        let mut index = 0usize;
+        let mut returning = false;
         let mut pixel = self.source.default;
-        for (i, frame) in self.chain.iter().enumerate() {
+        let mut remaining = 1_048_576u64;
+        loop {
             check()?;
-            positions[i] = at;
-            end = i + 1;
-            let node = frame.node;
+            remaining = remaining.checked_sub(1).ok_or_else(metadata::exhausted)?;
+            if returning {
+                if index == 0 {
+                    break;
+                }
+                index -= 1;
+                let state = positions[index];
+                if let Some(w) = state.weighted {
+                    if state.phase == 0 {
+                        positions[index].source = pixel;
+                        positions[index].phase = 1;
+                        if let Some(destination) = w.destination {
+                            at = destination;
+                            index += 1;
+                            returning = false;
+                            continue;
+                        }
+                        pixel = w.pixel(Rgba::TRANSPARENT, pixel);
+                    } else {
+                        pixel = w.pixel(pixel, state.source);
+                    }
+                } else if let Data::Program(p) = &self.chain[index].node.data {
+                    if self.chain[index]
+                        .node
+                        .bounds
+                        .contains(state.at.0, state.at.1)
+                    {
+                        pixel = p.read_checked(state.at.0, state.at.1, |_, _| Ok(pixel), check)?;
+                    }
+                }
+                continue;
+            }
+            if index == self.chain.len() {
+                pixel = self.source.default;
+                returning = true;
+                continue;
+            }
+            let node = self.chain[index].node;
+            positions[index] = ReadState {
+                at,
+                weighted: None,
+                source: Rgba::TRANSPARENT,
+                phase: 0,
+            };
             if !node.bounds.contains(at.0, at.1) {
                 pixel = node.default;
-                break;
+                index += 1;
+                returning = true;
+                continue;
             }
             match &node.data {
                 Data::Raster(r) => {
                     pixel = r.get(at.0, at.1);
-                    break;
+                    index += 1;
+                    returning = true;
                 }
-                Data::Program(_) => {}
+                Data::Program(_) => {
+                    index += 1;
+                }
                 Data::Mapped(m) => match m.sample(at.0, at.1)? {
-                    super::patch::Sample::Source(x, y) => at = (x, y),
+                    super::patch::Sample::Source(x, y) => {
+                        at = (x, y);
+                        index += 1;
+                    }
                     super::patch::Sample::Color(c) => {
                         pixel = c;
-                        break;
+                        index += 1;
+                        returning = true;
+                    }
+                    super::patch::Sample::Weighted(w) => {
+                        positions[index].weighted = Some(w);
+                        if let Some(source) = w.source {
+                            at = source;
+                            index += 1;
+                        } else {
+                            pixel = Rgba::TRANSPARENT;
+                            index += 1;
+                            returning = true;
+                        }
                     }
                 },
-            }
-        }
-        for i in (0..end).rev() {
-            check()?;
-            if let Data::Program(p) = &self.chain[i].node.data {
-                let at = positions[i];
-                if self.chain[i].node.bounds.contains(at.0, at.1) {
-                    pixel = p.read_checked(at.0, at.1, |_, _| Ok(pixel), check)?;
-                }
             }
         }
         if let Some(p) = self.program {

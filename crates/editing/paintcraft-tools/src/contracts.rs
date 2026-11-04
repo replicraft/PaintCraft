@@ -114,16 +114,13 @@ impl Tool {
 }
 
 /// Captured selection gesture; changing preferences never changes an active drag.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum SelectionMode {
-    #[default]
-    Rectangle,
-    FreeForm,
-}
+pub use paintcraft_core::types::selection::Shape as SelectionMode;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ToolOptions {
     pub selection_mode: SelectionMode,
+
+    pub selection: paintcraft_core::types::selection::Settings,
     /// Ignore the captured secondary color while placing a moved selection.
     pub transparent_selection: bool,
     /// Pencil thickness in pixels, captured at pointer-down (1..=1024).
@@ -137,6 +134,8 @@ pub struct ToolOptions {
     pub eraser_color: Rgba,
     /// Capped Brush opacity in percent, 0..=100; captured at pointer-down.
     pub brush_opacity: u8,
+    /// Solid inner radius in percent; 100 retains the original hard brush.
+    pub brush_hardness: u8,
     /// Captured PaintCraft pressure policy; never inferred from device axes.
     pub pen: paintcraft_core::types::pen::Settings,
     pub style: ShapeStyle,
@@ -153,6 +152,8 @@ impl Default for ToolOptions {
     fn default() -> Self {
         ToolOptions {
             selection_mode: SelectionMode::Rectangle,
+
+            selection: Default::default(),
             transparent_selection: false,
             pencil_size: 1,
             size: 4,
@@ -160,6 +161,7 @@ impl Default for ToolOptions {
             media: Default::default(),
             eraser_color: Rgba::TRANSPARENT,
             brush_opacity: 100,
+            brush_hardness: 100,
             pen: Default::default(),
             style: ShapeStyle::Outline,
             tolerance: 0,
@@ -225,6 +227,14 @@ pub enum Action {
     },
     SelectPolygon {
         points: Vec<(i64, i64)>,
+    },
+    SelectionRegion {
+        layer: Uuid,
+        points: Vec<(i64, i64)>,
+        settings: paintcraft_core::types::selection::Settings,
+    },
+    FeatherSelection {
+        radius: u16,
     },
     InvertSelection,
     PickColor(ColorPick),

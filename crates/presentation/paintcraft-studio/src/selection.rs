@@ -7,24 +7,15 @@ pub(super) fn options(ui: &mut egui::Ui, state: &mut Controls) {
         return;
     }
     egui::ComboBox::from_label(t!(ui.ctx(), "Selection shapes"))
-        .selected_text(t!(
-            ui.ctx(),
-            match state.options.selection_mode {
-                SelectionMode::Rectangle => "Rectangular selection",
-                SelectionMode::FreeForm => "Free-form selection",
-            }
-        ))
+        .selected_text(t!(ui.ctx(), state.options.selection_mode.label()))
         .show_ui(ui, |ui| {
-            ui.selectable_value(
-                &mut state.options.selection_mode,
-                SelectionMode::Rectangle,
-                t!(ui.ctx(), "Rectangular selection"),
-            );
-            ui.selectable_value(
-                &mut state.options.selection_mode,
-                SelectionMode::FreeForm,
-                t!(ui.ctx(), "Free-form selection"),
-            );
+            for mode in SelectionMode::ALL {
+                ui.selectable_value(
+                    &mut state.options.selection_mode,
+                    mode,
+                    t!(ui.ctx(), mode.label()),
+                );
+            }
         });
     let label = t!(ui.ctx(), "Transparent selection");
     let help = t!(

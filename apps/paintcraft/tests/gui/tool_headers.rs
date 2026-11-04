@@ -26,7 +26,7 @@ fn classic_tool_control_headers_identify_size_and_opacity_without_painting() {
             h.run();
             let label = format!("{tool} size");
             let header = h.get_by_role_and_label(Role::Image, &label);
-            assert_eq!(header.rect().size(), Vec2::splat(22.0));
+            assert_eq!(header.rect().size(), Vec2::splat(24.0));
             header.hover();
             h.run();
             assert_eq!(
@@ -48,7 +48,7 @@ fn classic_tool_control_headers_identify_size_and_opacity_without_painting() {
             );
             if tool == "Brush" {
                 let header = h.get_by_role_and_label(Role::Image, "Brush opacity");
-                assert_eq!(header.rect().size(), Vec2::splat(22.0));
+                assert_eq!(header.rect().size(), Vec2::splat(24.0));
                 header.hover();
                 h.run();
                 assert_eq!(
@@ -123,7 +123,7 @@ fn floating_slider_accent_centers_follow_egui_handles_in_the_same_frame() {
         h.event(release(end));
         h.run();
         assert_thumb_centers(&h, "Tool size");
-        assert!(h.state().editor().options.size <= 64);
+        assert!(h.state().editor().options.size <= 256);
         assert!(!h.state().editor().gesture_in_progress());
         assert!(h.state().editor().document().same_semantics(&snapshot));
         assert_eq!(h.state().editor().history_view().ticket, ticket);
@@ -132,33 +132,26 @@ fn floating_slider_accent_centers_follow_egui_handles_in_the_same_frame() {
     }
     fn assert_thumb_centers(h: &Harness<App>, label: &str) {
         let rect = h.get_by_role_and_label(Role::Slider, label).rect();
-        assert_eq!(rect.width(), 32.0);
-        let circles: Vec<_> = h
+        assert_eq!(rect.width(), 16.0);
+        let shell = h
             .output()
             .shapes
             .iter()
-            .filter_map(|shape| match &shape.shape {
-                Shape::Circle(circle) if rect.contains(circle.center) => Some(circle),
+            .find_map(|shape| match &shape.shape {
+                Shape::Circle(circle)
+                    if rect.contains(circle.center) && circle.stroke.width == 3.0 =>
+                {
+                    Some(circle)
+                }
                 _ => None,
             })
-            .collect();
-        let shell = circles.iter().find(|circle| circle.radius > 10.0).unwrap();
-        let accent = circles
-            .iter()
-            .find(|circle| (5.0..=7.0).contains(&circle.radius))
-            .unwrap();
-        assert!(
-            shell.center.distance(accent.center) < 0.01,
-            "{label}: {:?} != {:?}",
-            shell.center,
-            accent.center
+            .expect("Palette-style outlined circular handle");
+        assert_eq!(
+            shell.stroke.color,
+            eframe::egui::Color32::from_rgb(24, 205, 219)
         );
-        assert!(
-            accent.fill.b() > accent.fill.r(),
-            "accent center must be blue"
-        );
-        assert_eq!(shell.fill.r(), shell.fill.g());
-        assert_eq!(shell.fill.g(), shell.fill.b());
+        assert_eq!(shell.fill, eframe::egui::Color32::from_gray(135));
+        assert!((shell.center.x - rect.center().x).abs() < 0.01);
     }
 }
 

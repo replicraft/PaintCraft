@@ -15,6 +15,10 @@ pub(super) struct ColorDraft {
 #[derive(Debug)]
 pub(super) enum Form {
     Colors(ColorDraft),
+    Feather {
+        ticket: paintcraft_editor::session::HistoryTicket,
+        radius: u16,
+    },
     Canvas(CanvasDraft),
     ResizeSkew {
         ticket: paintcraft_editor::session::HistoryTicket,
@@ -131,6 +135,39 @@ impl WebApp {
                 );
                 if ctx.current_pass_index() != 0 || !close {
                     self.form = Some(Form::ResizeSkew { ticket, view });
+                }
+            }
+            Some(Form::Feather { ticket, mut radius }) => {
+                if ticket != self.editor.session.history_ticket() {
+                    return;
+                }
+                let mut apply = false;
+                let modal =
+                    egui::Modal::new(egui::Id::unique("feather-selection")).show(ctx, |ui| {
+                        ui.set_width(300.);
+                        ui.heading("Feather selection");
+                        let mut value = f32::from(radius) / 10.;
+                        if ui
+                            .add(
+                                egui::Slider::new(&mut value, 0. ..=128.)
+                                    .text("Radius (px)")
+                                    .step_by(0.1),
+                            )
+                            .changed()
+                        {
+                            radius = (value * 10.).round() as u16;
+                        }
+                        ui.horizontal(|ui| {
+                            apply = ui.button("Apply").clicked();
+                            ui.button("Cancel").clicked()
+                        })
+                        .inner
+                    });
+                if apply && ctx.current_pass_index() == 0 {
+                    self.controls.options.selection.feather = radius;
+                    self.edit(Edit::FeatherSelection { radius });
+                } else if !modal.inner && !modal.should_close() {
+                    self.form = Some(Form::Feather { ticket, radius });
                 }
             }
             Some(Form::Colors(draft)) => self.color_form(ctx, draft),

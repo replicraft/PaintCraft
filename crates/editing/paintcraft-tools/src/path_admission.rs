@@ -56,8 +56,8 @@ impl ToolState {
         if let Some(result) = self.update_floating(at) {
             return result;
         }
-        if self.gesture_is_lasso() {
-            return self.append_lasso_admitted(at, points, capacity);
+        if self.gesture_is_selection_path() {
+            return self.append_selection_path_admitted(at, points, capacity);
         }
         if self.construction.is_some() {
             self.append_point(at);

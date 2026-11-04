@@ -55,6 +55,8 @@ pub(super) struct State {
     pending: Option<Pending>,
     // Only acknowledged writes may replace this exact internal capture.
     last_capture: Option<Capture>,
+    offset: (i64, i64),
+    cut_float: Option<(Uuid, Option<u64>)>,
 }
 
 pub(super) fn budget() -> SharedBudget {
@@ -63,6 +65,16 @@ pub(super) fn budget() -> SharedBudget {
 }
 
 impl State {
+    pub(super) fn matching_origin(&self, image: &Image) -> Option<(i64, i64)> {
+        self.last_capture
+            .as_ref()
+            .filter(|capture| {
+                capture.image.width() == image.width()
+                    && capture.image.height() == image.height()
+                    && capture.image.rgba() == image.rgba()
+            })
+            .map(|capture| capture.origin)
+    }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some()
     }
@@ -102,6 +114,7 @@ impl State {
         let cancelled = Arc::new(AtomicBool::new(false));
         let worker_cancelled = cancelled.clone();
         let wake = ctx.clone();
+        let offset = self.offset;
         std::thread::Builder::new()
             .name("paintcraft-copy-capture".into())
             .spawn(move || {
@@ -133,7 +146,17 @@ impl State {
                             })
                         }),
                     })
+                    .map(|capture| {
+                        capture.map(|mut capture| {
+                            capture.origin.0 += offset.0;
+                            capture.origin.1 += offset.1;
+                            capture
+                        })
+                    })
                     .map_err(|e| e.to_string());
+                // The pending write retains its own reservation until acknowledgment.
+                // Retire the executing clone before publishing completion.
+                drop(_parent);
                 let _ = send.send(result);
                 wake.request_repaint();
             })
@@ -212,11 +235,12 @@ impl App {
         if self.document_count() == 0 || self.clipboard.pending.is_some() || self.paste.busy() {
             return;
         }
-        if ctx.egui_wants_keyboard_input()
+        if ctx.text_edit_focused()
             || self.ime_composing
             || self.editor.is_editing_text()
-            || self.has_document_drafts()
-            || self.editor.has_floating_selection()
+            || self.editor.pointer_is_down()
+            || self.has_layer_property_drafts()
+            || (visible && self.editor.has_floating_selection())
             || self.editor.is_constructing_shape()
             || self.editor.has_pending_edits()
         {
@@ -224,7 +248,7 @@ impl App {
                 .set_status(t!(ctx, "Finish the current edit before copying."));
             return;
         }
-        let target = self.editor.target();
+        let (document, selection, target, offset) = self.editor.clipboard_source();
         if !visible && target.is_none() {
             self.editor
                 .set_status(t!(ctx, "There are no selected pixels to copy."));
@@ -247,10 +271,13 @@ impl App {
         } else {
             None
         };
+        self.clipboard.offset = offset;
+        self.clipboard.cut_float = (cut.is_some() && self.editor.has_floating_selection())
+            .then(|| self.editor.preview_owner());
         match self.clipboard.start(
             self.active_tab_id(),
-            self.editor.document_snapshot(),
-            self.editor.selection(),
+            document,
+            selection,
             if visible { None } else { target },
             cut,
             ctx,
@@ -269,14 +296,27 @@ impl App {
             if result == Ok(true)
                 && let Some(cut) = cut
             {
+                let floating = self.clipboard.cut_float.take();
+                let floating_current = match floating {
+                    Some(owner) => {
+                        self.editor.has_floating_selection() && owner == self.editor.preview_owner()
+                    }
+                    None => !self.editor.has_floating_selection(),
+                };
                 let unchanged = self.document_count() > 0
                     && owner == self.active_tab_id()
                     && !self.ime_composing
-                    && !self.has_document_drafts()
+                    && !self.editor.pointer_is_down()
+                    && !self.has_layer_property_drafts()
                     && !self.editor.is_editing_text()
-                    && !self.editor.has_floating_selection()
+                    && floating_current
                     && !self.editor.is_constructing_shape()
                     && !self.editor.has_pending_edits();
+                if unchanged {
+                    if floating.is_some() {
+                        self.editor.cancel_gesture();
+                    }
+                }
                 if unchanged && self.editor.complete_cut(&cut).is_ok() {
                     return;
                 }

@@ -172,6 +172,23 @@ impl App {
         self.rendered_preview = preview;
         self.rendered_image_paste = image_paste;
         let key = self.presentation_key();
+        if self.gpu_target.is_some() {
+            if self.move_preview.update(
+                ctx,
+                &self.editor,
+                self.rendered_preview.as_deref(),
+                &self.worker_budget,
+            ) {
+                if let Some((_, handle)) = self.pending_frame.take()
+                    && let Some(renderer) = &self.renderer
+                {
+                    renderer.cancel(handle);
+                }
+                return;
+            }
+        } else {
+            self.move_preview.clear();
+        }
         self.retry_reclaimed_render();
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
             let expected = self
@@ -574,6 +591,20 @@ fn preserves_preview_progress(previous: Option<&Preview>, next: Option<&Preview>
             && tail.points.starts_with(&last.points);
     }
     match (previous, next) {
+        (
+            Preview::MoveSelection {
+                layer: a,
+                clear: ca,
+                transparent_key: ka,
+                ..
+            },
+            Preview::MoveSelection {
+                layer: b,
+                clear: cb,
+                transparent_key: kb,
+                ..
+            },
+        ) => a == b && ca == cb && ka == kb,
         (
             Preview::Shape {
                 layer: a,

@@ -133,6 +133,14 @@ pub enum Op {
         rect: Rect,
     },
     SelectionClear,
+    SelectionRegion {
+        layer: LayerRef,
+        points: Vec<(i64, i64)>,
+        settings: paintcraft_core::types::selection::Settings,
+    },
+    SelectionFeather {
+        radius: u16,
+    },
     /// v2: finite canvas-domain binary polygon at pixel centers.
     SelectionSetPolygon {
         points: Vec<(i64, i64)>,

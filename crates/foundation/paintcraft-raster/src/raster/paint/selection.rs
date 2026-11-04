@@ -55,20 +55,45 @@ impl PaintPlan {
             }
             for y in area.y0..area.y1 {
                 check()?;
-                let spent = mask.visit_row(y, area.x0, area.x1, *work, check, |x0, x1| {
-                    output.push(Write {
-                        area: local(
-                            Rect {
-                                x0,
-                                x1,
-                                y0: y,
-                                y1: y + 1,
-                            },
-                            origin,
-                        )?,
-                        ..*write
-                    })
-                })?;
+                let spent = mask.visit_coverage_row(
+                    y,
+                    area.x0,
+                    area.x1,
+                    *work,
+                    check,
+                    |x0, x1, coverage| {
+                        let mut selected = *write;
+                        if coverage == 255 {
+                            // Preserve the original coverage denominator exactly.
+                        } else if selected.destination_out {
+                            selected.samples = ((u16::from(selected.samples) * u16::from(coverage)
+                                + 127)
+                                / 255) as u8;
+                        } else if selected.mode == BlendMode::SourceOver {
+                            selected.color.0[3] =
+                                ((u16::from(selected.color.a()) * u16::from(coverage) + 127) / 255)
+                                    as u8;
+                        } else {
+                            selected.samples = ((u32::from(selected.samples) * u32::from(coverage)
+                                + u32::from(selected.sample_scale) / 2)
+                                / u32::from(selected.sample_scale))
+                                as u8;
+                            selected.sample_scale = 255;
+                        }
+                        output.push(Write {
+                            area: local(
+                                Rect {
+                                    x0,
+                                    x1,
+                                    y0: y,
+                                    y1: y + 1,
+                                },
+                                origin,
+                            )?,
+                            ..selected
+                        })
+                    },
+                )?;
                 spend(work, spent)?;
             }
         }

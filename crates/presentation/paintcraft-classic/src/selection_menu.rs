@@ -10,8 +10,14 @@ mod legacy;
 enum Item {
     Rectangle,
     FreeForm,
+    Polygon,
+    Wand,
+    Brush,
     SelectAll,
     Invert,
+    Feather,
+    Mask,
+    Options,
     Transparent,
     Delete,
     Deselect,
@@ -21,9 +27,15 @@ enum Item {
 const MODERN: &[Item] = &[
     Item::Rectangle,
     Item::FreeForm,
+    Item::Polygon,
+    Item::Wand,
+    Item::Brush,
+    Item::Options,
     Item::Separator,
     Item::SelectAll,
     Item::Invert,
+    Item::Feather,
+    Item::Mask,
     Item::Separator,
     Item::Transparent,
     Item::Separator,
@@ -35,9 +47,15 @@ const HISTORICAL: &[Item] = &[
     Item::Heading("Selection shapes"),
     Item::Rectangle,
     Item::FreeForm,
+    Item::Polygon,
+    Item::Wand,
+    Item::Brush,
+    Item::Options,
     Item::Heading("Selection options"),
     Item::SelectAll,
     Item::Invert,
+    Item::Feather,
+    Item::Mask,
     Item::Delete,
     Item::Transparent,
     Item::Separator,
@@ -103,6 +121,23 @@ fn show_profile(
                         SelectionMode::FreeForm,
                         variant,
                     ),
+                    Item::Polygon | Item::Wand | Item::Brush => mode(
+                        ui,
+                        state,
+                        context,
+                        actions,
+                        match item {
+                            Item::Polygon => SelectionMode::Polygon,
+                            Item::Wand => SelectionMode::Wand,
+                            _ => SelectionMode::Brush,
+                        },
+                        variant,
+                    ),
+                    Item::Feather => {
+                        action(ui, Action::FeatherSelection, context, actions, variant)
+                    }
+                    Item::Mask => action(ui, Action::MaskFromSelection, context, actions, variant),
+                    Item::Options => options(ui, state),
                     Item::Invert => action(ui, Action::InvertSelection, context, actions, variant),
                     Item::Transparent => transparent(ui, state, context, variant),
                     Item::SelectAll => action(ui, Action::SelectAll, context, actions, variant),
@@ -134,6 +169,9 @@ fn mode(
             "Rectangular selection",
             Icon::RectangleSelect,
         ),
+        SelectionMode::Polygon => ("Polygon", "Polygon selection", Icon::LassoSelect),
+        SelectionMode::Wand => ("Magic wand", "Magic wand selection", Icon::MagicWand),
+        SelectionMode::Brush => ("Brush selection", "Brush selection", Icon::Brush),
         SelectionMode::FreeForm => (
             if variant.is_some() {
                 "Free-form selection"
@@ -324,4 +362,52 @@ fn modern_row(
         );
     }
     response
+}
+
+fn options(ui: &mut egui::Ui, state: &mut Controls) {
+    use paintcraft_core::types::selection::{Combine, Shape};
+    ui.menu_button("Combine selection", |ui| {
+        for mode in Combine::ALL {
+            if ui
+                .selectable_value(&mut state.options.selection.combine, mode, mode.label())
+                .clicked()
+            {
+                ui.close();
+            }
+        }
+    });
+    if matches!(state.options.selection_mode, Shape::Wand | Shape::Brush) {
+        ui.menu_button(
+            if state.options.selection_mode == Shape::Wand {
+                "Magic Wand options"
+            } else {
+                "Selection brush options"
+            },
+            |ui| {
+                let s = &mut state.options.selection;
+                let mut tolerance = f32::from(s.tolerance) / 10.;
+                if ui
+                    .add(
+                        egui::Slider::new(&mut tolerance, 0. ..=100.)
+                            .text("Tolerance")
+                            .step_by(0.1),
+                    )
+                    .changed()
+                {
+                    s.tolerance = (tolerance * 10.).round() as u16;
+                }
+                if state.options.selection_mode == Shape::Wand {
+                    ui.checkbox(&mut s.contiguous, "Contiguous");
+                    ui.checkbox(&mut s.antialias, "Antialias edges");
+                } else {
+                    ui.checkbox(&mut s.edge_aware, "Color matching / edge aware");
+
+                    ui.add(egui::Slider::new(&mut s.diameter, 1..=256).text("Size"));
+                    ui.add(egui::Slider::new(&mut s.strength, 0..=100).text("Strength"));
+                    ui.add(egui::Slider::new(&mut s.hardness, 0..=100).text("Hardness"));
+                }
+                ui.checkbox(&mut s.sample_merged, "Sample all visible layers");
+            },
+        );
+    }
 }

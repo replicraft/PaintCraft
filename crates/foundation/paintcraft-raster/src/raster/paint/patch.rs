@@ -7,6 +7,55 @@ use std::mem::size_of;
 pub(super) enum Sample {
     Source(i64, i64),
     Color(Rgba),
+    Weighted(Weighted),
+}
+/// Two frozen reads are joined in premultiplied space, retaining soft overlap.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct Weighted {
+    pub source: Option<(i64, i64)>,
+    pub destination: Option<(i64, i64)>,
+    pub old: u8,
+    pub new: u8,
+    pub clear: Rgba,
+}
+impl Weighted {
+    pub fn pixel(self, before: Rgba, source: Rgba) -> Rgba {
+        let old = f32::from(self.old) / 255.;
+        let new = f32::from(self.new) / 255.;
+        let sa = f32::from(source.a()) / 255.;
+        let base = (1. - old - (new - old).max(0.) * sa).clamp(0., 1.);
+        let clear = (old - new).max(0.);
+        let a = f32::from(before.a()) * base;
+        let b = f32::from(source.a()) * new;
+        let c = f32::from(self.clear.a()) * clear;
+        let alpha = a + b + c;
+        let mut out = before;
+        out.0[3] = alpha.round().clamp(0., 255.) as u8;
+        if alpha > 0. {
+            for i in 0..3 {
+                out.0[i] = ((f32::from(before.0[i]) * a
+                    + f32::from(source.0[i]) * b
+                    + f32::from(self.clear.0[i]) * c)
+                    / alpha)
+                    .round()
+                    .clamp(0., 255.) as u8;
+            }
+        }
+        out
+    }
+    pub fn read(self, mut read: impl FnMut(i64, i64) -> Result<Rgba>) -> Result<Rgba> {
+        let source = self
+            .source
+            .map(|(x, y)| read(x, y))
+            .transpose()?
+            .unwrap_or(Rgba::TRANSPARENT);
+        let before = self
+            .destination
+            .map(|(x, y)| read(x, y))
+            .transpose()?
+            .unwrap_or(Rgba::TRANSPARENT);
+        Ok(self.pixel(before, source))
+    }
 }
 #[derive(Debug)]
 pub(super) struct Patch {
@@ -26,9 +75,17 @@ impl Patch {
             && self
                 .mask
                 .as_ref()
-                .is_none_or(|mask| mask.coverage(x, y) == 255)
+                .is_none_or(|mask| mask.coverage(x, y) > 0)
     }
     pub fn sample(&self, x: i64, y: i64) -> Result<Sample> {
+        let at = (x - self.source_origin.0, y - self.source_origin.1);
+        let old = if self.selected_pixel(at.0, at.1) {
+            self.mask.as_ref().map_or(255, |m| m.coverage(at.0, at.1))
+        } else {
+            0
+        };
+        let mut new = 0;
+        let mut incoming = None;
         if self.destination.contains(x, y) {
             let (sx, sy) = self
                 .coordinates
@@ -37,7 +94,30 @@ impl Patch {
                 && self
                     .paste_mask
                     .as_ref()
-                    .is_none_or(|mask| mask.coverage(sx, sy) == 255)
+                    .is_none_or(|m| m.coverage(sx, sy) > 0)
+            {
+                new = self.mask.as_ref().map_or(255, |m| m.coverage(sx, sy));
+                incoming = self.source_bounds.contains(sx, sy).then_some((sx, sy));
+            }
+        }
+        if !matches!(old, 0 | 255) || !matches!(new, 0 | 255) {
+            return Ok(Sample::Weighted(Weighted {
+                source: incoming,
+                destination: self.source_bounds.contains(at.0, at.1).then_some(at),
+                old,
+                new,
+                clear: self.clear,
+            }));
+        }
+        if self.destination.contains(x, y) {
+            let (sx, sy) = self
+                .coordinates
+                .pixel(x - self.destination.x0, y - self.destination.y0)?;
+            if self.selected_pixel(sx, sy)
+                && self
+                    .paste_mask
+                    .as_ref()
+                    .is_none_or(|mask| mask.coverage(sx, sy) > 0)
             {
                 return Ok(if self.source_bounds.contains(sx, sy) {
                     Sample::Source(sx, sy)
@@ -353,6 +433,7 @@ impl MappedPlan {
                     let c = match mapping.sample(x, y)? {
                         Sample::Source(sx, sy) => reader.read_checked(sx, sy, check)?,
                         Sample::Color(c) => c,
+                        Sample::Weighted(w) => w.read(|x, y| reader.read_checked(x, y, check))?,
                     };
                     nondefault |= c != source.default_pixel();
                 }
@@ -449,7 +530,7 @@ fn keyed_paste_mask(
             if ((x - area.x0) as u64).is_multiple_of(256) {
                 check()?;
             }
-            let selected = mask.is_none_or(|mask| mask.coverage(x, y) == 255);
+            let selected = mask.is_none_or(|mask| mask.coverage(x, y) > 0);
             let paste = if selected {
                 let color = if source.bounds().contains(x, y) {
                     reader.read_checked(x, y, check)?

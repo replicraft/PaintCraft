@@ -7,6 +7,7 @@ struct Entry {
     mask: BinaryMask,
     clip: Rect,
     activity: u64,
+    threshold: u8,
     result: Result<Arc<MaskOutline>>,
 }
 #[derive(Debug)]
@@ -33,9 +34,18 @@ impl OutlineCache {
     /// Cache success and failure for an unchanged field/viewport. Resource
     /// activity invalidates only failures, so released shared capacity can retry.
     pub fn get(&mut self, mask: &BinaryMask, clip: Rect) -> Result<Arc<MaskOutline>> {
+        self.get_at(mask, clip, 128)
+    }
+    pub fn get_at(
+        &mut self,
+        mask: &BinaryMask,
+        clip: Rect,
+        threshold: u8,
+    ) -> Result<Arc<MaskOutline>> {
         if let Some(entry) = &self.entry
             && entry.mask == *mask
             && entry.clip == clip
+            && entry.threshold == threshold
             && (entry.result.is_ok() || entry.activity == self.budget.activity())
         {
             return entry.result.clone();
@@ -44,8 +54,9 @@ impl OutlineCache {
         // keep their own resource ownership until finished.
         self.clear();
         let result = mask
-            .outline_checked(
+            .outline_at_checked(
                 clip,
+                threshold,
                 &self.budget,
                 OutlineLimits {
                     work: 2_097_152,
@@ -56,6 +67,7 @@ impl OutlineCache {
             .map(Arc::new);
         self.entry = Some(Entry {
             mask: mask.clone(),
+            threshold,
             clip,
             activity: self.budget.activity(),
             result: result.clone(),

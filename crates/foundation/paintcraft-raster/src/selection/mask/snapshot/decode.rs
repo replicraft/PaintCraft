@@ -33,10 +33,9 @@ impl Record {
         let part = bytes
             .get(at..end)
             .ok_or_else(|| bad("truncated selection record"))?;
-        if part[16] > 1
+        if part[16] > 2
             || part[18..20].iter().chain(&part[28..32]).any(|v| *v != 0)
-            || (part[16] == 0 && !matches!(part[17], 0 | 255))
-            || (part[16] == 1 && part[17] != 0)
+            || (part[16] != 0 && part[17] != 0)
         {
             return Err(bad("selection record flags"));
         }
@@ -57,6 +56,8 @@ impl Record {
         let samples = (rect.x1 - rect.x0) as usize * (rect.y1 - rect.y0) as usize;
         let expected = if part[16] == 0 {
             0
+        } else if part[16] == 2 {
+            samples
         } else {
             samples.div_ceil(8)
         };
@@ -210,7 +211,7 @@ impl<'a> SnapshotDecoder<'a> {
             self.previous = Some(order);
             self.scan_count += 1;
             self.scan_at = record.next;
-            if record.kind == 1 {
+            if record.kind != 0 {
                 self.dense_count = add(self.dense_count, 1)?;
                 self.samples = add(self.samples, record.samples() as u64)?;
             }
@@ -279,10 +280,14 @@ impl<'a> SnapshotDecoder<'a> {
                     let ox = origin(pending.record.coordinate.tx, self.header.offset.0)?;
                     let oy = origin(pending.record.coordinate.ty, self.header.offset.1)?;
                     for i in pending.at..pending.at + count {
-                        let bit = (self.bytes[pending.record.payload + i / 8] >> (i % 8)) & 1;
+                        let value = if pending.record.kind == 2 {
+                            self.bytes[pending.record.payload + i]
+                        } else {
+                            ((self.bytes[pending.record.payload + i / 8] >> (i % 8)) & 1) * 255
+                        };
                         let x = pending.record.rect.x0 + (i % width) as i64 - ox;
                         let y = pending.record.rect.y0 + (i / width) as i64 - oy;
-                        pending.dense.values[y as usize * 256 + x as usize] = bit * 255;
+                        pending.dense.values[y as usize * 256 + x as usize] = value;
                     }
                     pending.at += count;
                     continue;
@@ -311,7 +316,7 @@ impl<'a> SnapshotDecoder<'a> {
                 self.building = Some(Record::parse(self.bytes, self.build_at, self.header)?);
             }
             let record = self.building.expect("charged parsed build record");
-            let work = if record.kind == 1 {
+            let work = if record.kind != 0 {
                 DENSE_INIT_WORK
             } else {
                 RECORD_WORK
@@ -352,6 +357,9 @@ impl<'a> SnapshotDecoder<'a> {
                     dense: Dense {
                         values,
                         written: record.samples(),
+                        uniform: None,
+                        mixed: true,
+                        weighted: record.kind == 2,
                         _charge: charge,
                     },
                     at: 0,
@@ -400,6 +408,7 @@ impl<'a> SnapshotDecoder<'a> {
                     inverted: header.inverted,
                     offset: header.offset,
                     storage,
+                    base: None,
                 }
             })
         } else {

@@ -400,7 +400,7 @@ fn private_gestures_text_and_pending_edits_refuse_clipboard_access_without_flush
 }
 
 #[test]
-fn ordinary_paste_shortcut_dialog_nudge_apply_and_cancel_work_in_each_interface() {
+fn explicit_current_layer_placement_nudge_apply_and_cancel_work_in_each_interface() {
     use egui_kittest::{
         Harness,
         kittest::{NodeT, Queryable},
@@ -424,13 +424,8 @@ fn ordinary_paste_shortcut_dialog_nudge_apply_and_cancel_work_in_each_interface(
                 .with_size(Vec2::new(1360.0, 900.0))
                 .build_ui_state(|ui, app: &mut App| app.ui(ui), app);
             h.run();
-            h.input_mut().events.push(egui::Event::Key {
-                key: egui::Key::V,
-                physical_key: None,
-                pressed: true,
-                repeat: false,
-                modifiers: egui::Modifiers::COMMAND,
-            });
+            let ctx = h.ctx.clone();
+            h.state_mut().begin_clipboard_paste(&ctx, true, true);
             h.step();
             let deadline = std::time::Instant::now() + Duration::from_secs(5);
             while h.state().paste.ready.is_none()
@@ -533,7 +528,7 @@ fn ordinary_paste_shortcut_dialog_nudge_apply_and_cancel_work_in_each_interface(
 }
 
 #[test]
-fn ordinary_paste_rejects_a_target_switch_while_the_clipboard_read_is_pending() {
+fn current_layer_paste_rejects_a_target_switch_while_the_clipboard_read_is_pending() {
     let (mut app, ctx, fake) = fixture();
     let first = app.editor.target().unwrap();
     app.editor.request(88, Action::AddLayer);
@@ -541,7 +536,7 @@ fn ordinary_paste_rejects_a_target_switch_while_the_clipboard_read_is_pending() 
     let second = app.editor.target().unwrap();
     assert_ne!(first, second);
     let original = app.editor.document_snapshot();
-    app.paste_requested(&ctx);
+    app.begin_clipboard_paste(&ctx, true, true);
     assert_eq!(fake.calls.load(Ordering::SeqCst), 1);
     *fake.outcome.lock().unwrap() = Some(Ok(encoded()));
     assert!(app.editor.set_target(first));

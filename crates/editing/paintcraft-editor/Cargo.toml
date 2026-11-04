@@ -13,6 +13,7 @@ paintcraft-core.workspace = true
 paintcraft-document.workspace = true
 paintcraft-history.workspace = true
 paintcraft-raster.workspace = true
+paintcraft-render.workspace = true
 
 uuid.workspace = true
 sha2.workspace = true
@@ -21,7 +22,6 @@ sha2.workspace = true
 paintcraft-platform.workspace = true
 criterion.workspace = true
 crc32fast.workspace = true
-paintcraft-render.workspace = true
 
 [[bench]]
 name = "history"

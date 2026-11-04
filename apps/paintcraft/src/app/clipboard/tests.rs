@@ -469,3 +469,225 @@ fn visible_box_copy_has_real_worker_context_parent_charge_and_exact_pixels() {
     assert!(Arc::ptr_eq(&source, &app.editor.document_snapshot()));
     assert_eq!(app.editor.undo_depth(), 0);
 }
+
+#[test]
+fn feathered_cut_copy_and_framework_paste_preserve_alpha_and_create_a_new_layer() {
+    use paintcraft_core::types::selection::Settings;
+    assert_eq!(
+        paintcraft_tools::ToolOptions::default().selection.feather,
+        0
+    );
+    for cut in [false, true] {
+        for background in [false, true] {
+            let ctx = egui::Context::default();
+            let mut app = App::new(None);
+            let doc = paintcraft_document::import_image(
+                32,
+                24,
+                &[200, 40, 70, 200].repeat(32 * 24),
+                "feathered-clipboard",
+            )
+            .unwrap();
+            app.editor = Editor::with_document(doc, None);
+            let layer = app.editor.target().unwrap();
+            app.editor.request(
+                100,
+                Action::SelectionRegion {
+                    layer,
+                    points: vec![(8, 6), (20, 17)],
+                    settings: Settings {
+                        feather: 25,
+                        ..Default::default()
+                    },
+                },
+            );
+            app.editor.run_pending();
+            let before = app.editor.document_snapshot();
+            let expected = capture(
+                &before,
+                app.editor.selection(),
+                layer,
+                &budget(),
+                &|| Ok(()),
+            )
+            .unwrap()
+            .unwrap();
+            assert!(
+                expected
+                    .image
+                    .rgba()
+                    .iter()
+                    .skip(3)
+                    .step_by(4)
+                    .any(|&a| a > 0 && a < 200)
+            );
+            if background {
+                app.context = ctx.clone();
+                app.initialize_editing(ctx.clone());
+            }
+            let fake = Fake::default();
+            app.clipboard.writer = Some(Box::new(fake.clone()));
+            let key = if cut { egui::Key::X } else { egui::Key::C };
+            input(
+                &mut app,
+                &ctx,
+                vec![
+                    if cut {
+                        egui::Event::Cut
+                    } else {
+                        egui::Event::Copy
+                    },
+                    egui::Event::Key {
+                        key,
+                        physical_key: None,
+                        pressed: true,
+                        repeat: false,
+                        modifiers: egui::Modifiers::COMMAND,
+                    },
+                ],
+            );
+            wait_write(&mut app.clipboard, &ctx);
+            assert_eq!(fake.images.lock().unwrap()[0].rgba(), expected.image.rgba());
+            *fake.acknowledgement.lock().unwrap() = Some(Ok(()));
+            app.poll_clipboard(&ctx);
+            let deadline = std::time::Instant::now() + Duration::from_secs(5);
+            while app.editor.has_pending_edits() {
+                app.poll_edits(&ctx);
+                assert!(std::time::Instant::now() < deadline);
+                std::thread::yield_now();
+            }
+            let underlying = app.editor.document_snapshot();
+            if !cut {
+                assert!(underlying.same_semantics(&before));
+            }
+            let calls = app.paste.test_image(&expected.image);
+            input(
+                &mut app,
+                &ctx,
+                vec![
+                    egui::Event::PasteImage(Arc::new(egui::ColorImage::new(
+                        [1, 1],
+                        vec![Color32::WHITE],
+                    ))),
+                    egui::Event::Key {
+                        key: egui::Key::V,
+                        physical_key: None,
+                        pressed: true,
+                        repeat: false,
+                        modifiers: egui::Modifiers::COMMAND,
+                    },
+                ],
+            );
+            while app.paste.busy() || app.editor.has_pending_edits() {
+                app.poll_paste(&ctx);
+                app.poll_edits(&ctx);
+                assert!(
+                    std::time::Instant::now() < deadline,
+                    "{}",
+                    app.editor.status()
+                );
+                std::thread::yield_now();
+            }
+            assert_eq!(
+                calls.load(Ordering::SeqCst),
+                1,
+                "image event and Ctrl+V coalesce into one paste"
+            );
+            assert_eq!(
+                app.editor.document().roots.len(),
+                underlying.roots.len() + 1
+            );
+            let pasted = app
+                .editor
+                .document()
+                .layers
+                .get(&app.editor.target().unwrap())
+                .unwrap();
+            assert_ne!(pasted.id, layer);
+            assert_eq!(pasted.origin, expected.origin);
+            for y in 0..expected.image.height() {
+                for x in 0..expected.image.width() {
+                    let i = ((y * expected.image.width() + x) * 4) as usize;
+                    assert_eq!(
+                        pasted.raster.get(i64::from(x), i64::from(y)).0,
+                        &expected.image.rgba()[i..i + 4],
+                        "feathered alpha is applied exactly once"
+                    );
+                }
+            }
+            assert_eq!(
+                app.editor.document().layers[&layer].raster,
+                underlying.layers[&layer].raster
+            );
+            assert_eq!(app.editor.tool, Tool::Select);
+            assert_eq!(
+                app.editor.options.selection_mode,
+                paintcraft_tools::SelectionMode::Rectangle
+            );
+            app.editor.request(200, Action::Undo);
+            app.editor.run_pending();
+            while app.editor.has_pending_edits() {
+                app.poll_edits(&ctx);
+                assert!(std::time::Instant::now() < deadline);
+                std::thread::yield_now();
+            }
+            assert!(app.editor.document().same_semantics(&underlying));
+        }
+    }
+}
+
+#[test]
+fn released_floating_selection_can_be_copied_and_cut_at_its_visible_position() {
+    for cut in [false, true] {
+        let ctx = egui::Context::default();
+        let mut app = App::new(None);
+        app.settings.experience = Experience::Studio;
+        app.editor = Editor::with_document(
+            paintcraft_document::import_image(
+                16,
+                12,
+                &[200, 40, 70, 255].repeat(16 * 12),
+                "floating-clipboard",
+            )
+            .unwrap(),
+            None,
+        );
+        app.editor.request(
+            1,
+            Action::Select {
+                corners: Some(((2, 2), (5, 5))),
+            },
+        );
+        app.editor.run_pending();
+        app.editor.select_tool(Tool::Select);
+        app.editor.set_floating_commit_on_release(false);
+        app.editor.pointer_down((3, 3));
+        app.editor.pointer_move((8, 6));
+        app.editor.pointer_up();
+        assert!(app.editor.has_floating_selection());
+        assert!(!app.editor.pointer_is_down());
+        let fake = Fake::default();
+        app.clipboard.writer = Some(Box::new(fake.clone()));
+        if cut {
+            app.cut_requested(&ctx);
+        } else {
+            app.copy_requested(&ctx);
+        }
+        wait_write(&mut app.clipboard, &ctx);
+        *fake.acknowledgement.lock().unwrap() = Some(Ok(()));
+        app.poll_clipboard(&ctx);
+        let capture = app.clipboard.last_capture.as_ref().unwrap();
+        assert_eq!(capture.origin, (7, 5));
+        assert_eq!(capture.image.rgba(), &[200, 40, 70, 255].repeat(16));
+        assert_eq!(app.editor.has_floating_selection(), !cut);
+        if cut {
+            assert_eq!(
+                app.editor.document().layers[&app.editor.target().unwrap()]
+                    .raster
+                    .get(3, 3)
+                    .a(),
+                0
+            );
+        }
+    }
+}

@@ -310,21 +310,21 @@ fn paste_as_new_layer_requires_host_support_and_uses_its_explicit_shortcut() {
 }
 
 #[test]
-fn ordinary_paste_requires_host_support_and_a_visible_existing_target() {
+fn ordinary_paste_requires_host_support_and_creates_a_layer_without_an_existing_target() {
     let base = context(Frontend::Classic);
     assert!(!Action::Paste.enabled(base));
     let allowed = Context {
-        can_paste_onto: true,
+        can_paste: true,
         layer_index: Some(0),
         layer_visible: true,
         ..base
     };
     assert!(Action::Paste.enabled(allowed));
-    assert!(!Action::Paste.enabled(Context {
+    assert!(Action::Paste.enabled(Context {
         layer_visible: false,
         ..allowed
     }));
-    assert!(!Action::Paste.enabled(Context {
+    assert!(Action::Paste.enabled(Context {
         layer_index: None,
         ..allowed
     }));
