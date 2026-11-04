@@ -67,6 +67,28 @@ fn decode(bytes: &[u8], scope: &BudgetScope) -> DecodedSnapshot {
     ) {}
     decoder.finish().unwrap()
 }
+#[test]
+fn weighted_selection_capture_preserves_fractional_samples_in_small_chunks() {
+    let budget = SharedBudget::new(16 << 20);
+    let scope = budget.scope(AllocationClass::SelectionMasks);
+    let domain = rect(-2, -1, 4, 2);
+    let values = [0, 1, 128, 255, 255, 63, 254, 0];
+    let mask = BinaryMask::from_values(domain, &values, &budget, &ok)
+        .unwrap()
+        .inverted()
+        .translated(3, 2)
+        .unwrap();
+    let bytes = encode(&mask, mask.domain(), &scope, 3);
+    let decoded = decode(&bytes, &scope);
+    let CapturedSelection::Field(field) = decoded.selection else {
+        panic!("captured weighted field")
+    };
+    for y in mask.domain().y0..mask.domain().y1 {
+        for x in mask.domain().x0..mask.domain().x1 {
+            assert_eq!(field.coverage(x, y), mask.coverage(x, y));
+        }
+    }
+}
 fn sparse(
     domain: Rect,
     default: bool,

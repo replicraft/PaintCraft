@@ -162,13 +162,13 @@ impl A8Mask {
                                             default,
                                         )?;
                                     }
-                                    let spent = mask.visit_row(
+                                    let spent = mask.visit_coverage_row(
                                         row,
                                         left,
                                         right,
                                         probe.remaining.get(),
                                         &|| probe.step(),
-                                        |x0, x1| {
+                                        |x0, x1, coverage| {
                                             emit(
                                                 Rect {
                                                     x0,
@@ -176,7 +176,7 @@ impl A8Mask {
                                                     y0: row,
                                                     y1: row + 1,
                                                 },
-                                                255,
+                                                coverage,
                                             )
                                         },
                                     )?;

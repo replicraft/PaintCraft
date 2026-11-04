@@ -38,7 +38,33 @@ impl App {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Progress);
             return;
         }
+        let selection_brush = self.editor.tool == Tool::Select
+            && self.editor.options.selection_mode == paintcraft_tools::SelectionMode::Brush;
+        if selection_brush {
+            let a = view.to_screen((0, 0));
+            let b = view.to_screen((i64::from(self.editor.options.selection.diameter), 0));
+            let radius = (b.0 - a.0).abs() * 0.5;
+            let subtract = ui.input(|i| {
+                if i.modifiers.shift {
+                    false
+                } else if i.modifiers.alt {
+                    true
+                } else {
+                    self.editor.options.selection.combine
+                        == paintcraft_core::types::selection::Combine::Subtract
+                }
+            });
+            paintcraft_ui::widgets::selection_brush_cursor(painter, pos, radius, subtract);
+        }
         let move_selection = self.editor.tool == Tool::Select
+            && matches!(
+                self.editor.options.selection_mode,
+                paintcraft_tools::SelectionMode::Rectangle
+                    | paintcraft_tools::SelectionMode::FreeForm
+                    | paintcraft_tools::SelectionMode::Polygon
+            )
+            && self.editor.options.selection.combine
+                == paintcraft_core::types::selection::Combine::Replace
             && view.to_doc((pos.x, pos.y)).is_some_and(|point| {
                 paintcraft_tools::FloatingSelection::hit_test(
                     &self.editor.display_selection(),

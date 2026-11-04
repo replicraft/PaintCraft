@@ -258,6 +258,8 @@ impl Stage<'_> {
             }
             Op::CutSelection { .. }
             | Op::SelectionSetPolygon { .. }
+            | Op::SelectionRegion { .. }
+            | Op::SelectionFeather { .. }
             | Op::SelectionInvert
             | Op::CanvasCrop { .. }
             | Op::CanvasTransform { .. }

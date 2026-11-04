@@ -12,6 +12,27 @@ pub(super) struct Source {
     bounds: paintcraft_core::types::Rect,
 }
 impl Editor {
+    /// A released floating selection still owns its original pixels. Copy is
+    /// read-only; retain that source and carry its new position as metadata.
+    pub(crate) fn clipboard_source(&self) -> (Arc<Document>, Selection, Option<Uuid>, (i64, i64)) {
+        if self.floating_source_current()
+            && let (Some(source), Some(floating)) =
+                (&self.floating_source, self.tools.floating_selection())
+        {
+            return (
+                source.document.clone(),
+                floating.source_selection().clone(),
+                Some(source.target),
+                floating.offset(),
+            );
+        }
+        (
+            self.document_snapshot(),
+            self.selection(),
+            self.target,
+            (0, 0),
+        )
+    }
     /// Queue one activation, deduplicating before resolving private drafts.
     pub fn request(&mut self, token: Token, action: Action) -> bool {
         if self.outbox.has_seen(token) {
@@ -125,7 +146,16 @@ impl Editor {
     }
     pub(super) fn begin_floating(&mut self, at: (i64, i64), button: PointerButton) -> bool {
         self.guard_floating_source();
-        if self.tool != Tool::Select || button != PointerButton::Primary {
+        if self.tool != Tool::Select
+            || button != PointerButton::Primary
+            || !matches!(
+                self.options.selection_mode,
+                paintcraft_tools::SelectionMode::Rectangle
+                    | paintcraft_tools::SelectionMode::FreeForm
+                    | paintcraft_tools::SelectionMode::Polygon
+            )
+            || self.options.selection.combine != paintcraft_core::types::selection::Combine::Replace
+        {
             return false;
         }
         let Some(layer) = self.target.filter(|id| {

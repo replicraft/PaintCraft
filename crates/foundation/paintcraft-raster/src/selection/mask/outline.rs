@@ -32,13 +32,23 @@ impl MaskOutline {
     }
 }
 impl BinaryMask {
+    pub fn outline_checked(
+        &self,
+        clip: Rect,
+        budget: &SharedBudget,
+        limits: OutlineLimits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<MaskOutline> {
+        self.outline_at_checked(clip, 128, budget, limits, check)
+    }
     /// Pixel-edge boundaries, including holes and the true finite domain edge.
     /// Clip coordinates include their perimeter. A viewport through a selected
     /// area does not introduce an edge at its own boundary. All work and retained
     /// output/scratch capacities are bounded; failures return no partial outline.
-    pub fn outline_checked(
+    pub fn outline_at_checked(
         &self,
         clip: Rect,
+        threshold: u8,
         budget: &SharedBudget,
         limits: OutlineLimits,
         check: &dyn Fn() -> Result<()>,
@@ -91,12 +101,12 @@ impl BinaryMask {
         let last = clip.y1.min(self.domain.y1);
         let mut previous = Buffer::new(budget, limits.segments);
         let mut current = Buffer::new(budget, limits.segments);
-        self.outline_row(first - 1, clip, &mut previous, &mut work, check)?;
+        self.outline_row(first - 1, clip, threshold, &mut previous, &mut work, check)?;
         for y in first..=last {
             check()?;
             spend(&mut work, 1)?;
             current.values.clear();
-            self.outline_row(y, clip, &mut current, &mut work, check)?;
+            self.outline_row(y, clip, threshold, &mut current, &mut work, check)?;
             horizontal(
                 &previous.values,
                 &current.values,
@@ -132,14 +142,21 @@ impl BinaryMask {
         &self,
         y: i64,
         clip: Rect,
+        threshold: u8,
         row: &mut Buffer<(i64, i64)>,
         work: &mut u64,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<()> {
         // The one-pixel halo distinguishes a real run endpoint from a viewport cut.
-        let spent = self.visit_row(y, clip.x0 - 1, clip.x1 + 1, *work, check, |x0, x1| {
-            row.push((x0, x1))
-        })?;
+        let spent = self.visit_threshold_row(
+            y,
+            clip.x0 - 1,
+            clip.x1 + 1,
+            *work,
+            threshold,
+            check,
+            |x0, x1| row.push((x0, x1)),
+        )?;
         spend(work, spent)
     }
 }

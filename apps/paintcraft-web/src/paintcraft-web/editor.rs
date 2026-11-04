@@ -229,6 +229,30 @@ impl Editor {
             Action::SelectPolygon { points } => {
                 self.commit(vec![commands::selection_polygon(&points)?])
             }
+            Action::SelectionRegion {
+                layer,
+                points,
+                settings,
+            } => {
+                let result =
+                    self.commit(vec![commands::selection_region(layer, &points, settings)]);
+                if result.is_ok()
+                    && self
+                        .publication_witness
+                        .as_ref()
+                        .is_some_and(|w| w.committed)
+                    && settings.shape == paintcraft_core::types::selection::Shape::Brush
+                    && self.tools.options.selection.combine
+                        == paintcraft_core::types::selection::Combine::Replace
+                {
+                    self.tools.options.selection.combine =
+                        paintcraft_core::types::selection::Combine::Add;
+                }
+                result
+            }
+            Action::FeatherSelection { radius } => {
+                self.commit(vec![commands::selection_feather(radius)])
+            }
             Action::InvertSelection => {
                 self.tools.cancel_gesture();
                 self.commit(vec![commands::invert_selection()])

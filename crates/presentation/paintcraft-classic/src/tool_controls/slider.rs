@@ -10,13 +10,24 @@ pub(super) fn show<Num: Numeric>(
     clamping: egui::SliderClamping,
 ) -> Response {
     ui.scope(|ui| {
-        crate::slider_thumb::style(ui);
-        ui.spacing_mut().interact_size.y = 32.0;
+        let accent = egui::Color32::from_rgb(24, 205, 219);
+        ui.visuals_mut().selection.bg_fill = accent;
+        let widgets = &mut ui.visuals_mut().widgets;
+        for state in [
+            &mut widgets.inactive,
+            &mut widgets.hovered,
+            &mut widgets.active,
+        ] {
+            state.bg_fill = egui::Color32::from_gray(135);
+            state.fg_stroke = egui::Stroke::new(3.0, accent);
+        }
+        ui.spacing_mut().slider_rail_height = 3.0;
+        ui.spacing_mut().interact_size.y = 16.0;
         ui.spacing_mut().slider_width = height;
         let min = range.start().to_f64();
         let max = range.end().to_f64();
         let response = ui.add_sized(
-            Vec2::new(32.0, height),
+            Vec2::new(16.0, height),
             egui::Slider::new(value, range)
                 .vertical()
                 .show_value(false)
@@ -37,8 +48,6 @@ pub(super) fn show<Num: Numeric>(
                 crate::slider_input::changed_tap(ui, &mut response);
             }
         }
-        let fraction = ((value.to_f64() - min) / (max - min)).clamp(0.0, 1.0) as f32;
-        crate::slider_thumb::paint(ui, &response, fraction, true);
         response
     })
     .inner

@@ -26,6 +26,8 @@ impl App {
                 .set_floating_commit_on_release(self.experience() == Experience::Classic);
             if self.document_count() == 0 {
                 self.selection_outline.clear();
+                self.selection_feather_outline.clear();
+                self.selection_preview.clear();
                 self.selection_bounds.borrow_mut().clear();
             }
             let title = self.document_window_title();
@@ -66,6 +68,7 @@ impl App {
             self.prepare_name_input(&ctx);
             if !self.closing_workspace
                 && self.confirm.is_none()
+                && self.selection_feather_dialog.is_none()
                 && self.tab_closing.is_none()
                 && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
             {
@@ -77,6 +80,7 @@ impl App {
             || self.closing_workspace
             || self.close_after_edits
             || self.confirm.is_some()
+            || self.selection_feather_dialog.is_some()
             || self.tab_closing.is_some()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
         {
@@ -193,6 +197,7 @@ impl App {
         self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);
+        self.selection_feather_window(&ctx, first_pass);
         self.tab_close_dialog(&ctx);
         if first_pass
             && (self.tab_closing.is_some() || self.confirm.is_some())

@@ -70,7 +70,7 @@ fn legacy_dib_opaque_alpha_requires_consent_and_places_exact_pixels_once() {
             let original = app.editor.document_snapshot();
             let target = app.editor.target().unwrap();
             *fake.outcome.lock().unwrap() = Some(Ok(source(false, false)));
-            app.paste_requested(&ctx);
+            app.begin_clipboard_paste(&ctx, true, true);
             ready(&mut app, &ctx);
             let draft = app.paste.ready.take().unwrap();
             assert_eq!(draft.losses, ["dib-alpha-unspecified"]);
@@ -201,9 +201,13 @@ fn dib_loss_consent_is_translated_and_blocks_actual_dialog_actions_until_accepte
             .unwrap()
             .click();
         h.run();
-        assert!(h.state().editor.has_image_paste());
-        assert_eq!(h.state().editor.undo_depth(), 0);
-        h.get_by_label(&translate(language, "Cancel")).click();
+        assert!(!h.state().editor.has_image_paste());
+        assert_eq!(
+            h.state().editor.document().layers.len(),
+            original.layers.len() + 1
+        );
+        assert_eq!(h.state().editor.undo_depth(), 1);
+        h.get_by_label(&translate(language, "Undo")).click();
         h.run();
         assert!(!h.state().editor.has_image_paste());
         assert!(Arc::ptr_eq(

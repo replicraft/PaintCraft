@@ -57,7 +57,7 @@ impl BinaryMask {
             return Ok(None);
         };
         let result = if self.storage.is_none() {
-            (self.default_coverage() == 255).then_some(area)
+            (self.default_coverage() > 0).then_some(area)
         } else if self.default_coverage() == 0 {
             self.sparse_bounds(area, work, check)?
         } else {
@@ -107,7 +107,7 @@ impl BinaryMask {
             };
             match tile {
                 Tile::Solid(value) => {
-                    if self.logical(*value) == 255 {
+                    if self.logical(*value) > 0 {
                         include(&mut result, part);
                     }
                 }
@@ -120,7 +120,7 @@ impl BinaryMask {
                             }
                             spend(work, 1)?;
                             let index = ((y - y0) * EDGE + x - x0) as usize;
-                            if self.logical(tile.values[index]) == 255 {
+                            if self.logical(tile.values[index]) > 0 {
                                 include(
                                     &mut result,
                                     Rect {
@@ -202,7 +202,7 @@ impl BinaryMask {
             match storage.tiles.get(&TileCoord { tx, ty }) {
                 None => return Ok((true, dense)), // This path has a selected default.
                 Some(Tile::Solid(value)) => {
-                    if self.logical(*value) == 255 {
+                    if self.logical(*value) > 0 {
                         return Ok((true, dense));
                     }
                 }
@@ -215,7 +215,7 @@ impl BinaryMask {
                             check()?;
                         }
                         spend(work, 1)?;
-                        if self.logical(tile.values[index]) == 255 {
+                        if self.logical(tile.values[index]) > 0 {
                             return Ok((true, dense));
                         }
                         index += stride;

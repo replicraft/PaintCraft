@@ -38,10 +38,10 @@ impl Compiler {
         let mut needs_pixels = false;
         for operations in batch.operations.chunks(1024) {
             check()?;
-            if operations
-                .iter()
-                .any(|op| matches!(kind(op), Kind::ReadWrite | Kind::Transform))
-            {
+            if operations.iter().any(|op| {
+                matches!(kind(op), Kind::ReadWrite | Kind::Transform)
+                    || matches!(op, Op::SelectionRegion { .. })
+            }) {
                 needs_pixels = true;
                 break;
             }
@@ -210,6 +210,24 @@ impl Compiler {
             PaintSnapshot::capture(source, admission, check)
         }
     }
+    /// Materialize earlier private writes only when appearance sampling needs them.
+    pub fn appearance_source(
+        &mut self,
+        id: Uuid,
+        source: &RasterLayer,
+        admission: &mut Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<RasterLayer> {
+        if self
+            .position(id)
+            .is_none_or(|i| self.layers.values[i].1.pixels.is_none())
+        {
+            return Ok(source.clone());
+        }
+        let snapshot = self.snapshot(id, source, admission, check)?;
+        paintcraft_raster::MappedPlan::prepare(snapshot, source.bounds(), admission, check)?
+            .replay(admission, check)
+    }
     pub fn replace_mapping(
         &mut self,
         id: Uuid,
@@ -304,6 +322,8 @@ fn kind(op: &Op) -> Kind {
         | Op::CanvasClear { .. }
         | Op::CanvasResize { .. }
         | Op::SelectionSetPolygon { .. }
+        | Op::SelectionRegion { .. }
+        | Op::SelectionFeather { .. }
         | Op::SelectionInvert
         | Op::SelectionSetRect { .. }
         | Op::SelectionClear => Kind::Structural,

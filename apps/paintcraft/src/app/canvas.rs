@@ -9,6 +9,9 @@ impl App {
             && self.settings.classic_tool_controls
     }
     pub(super) fn canvas(&mut self, ui: &mut egui::Ui, first_pass: bool) {
+        if first_pass && self.editor.tool != Tool::Select {
+            self.update_selection_preview(ui.ctx(), None);
+        }
         let mut viewport = ui.available_rect_before_wrap();
         if self.experience() == Experience::Classic && self.settings.classic_rulers {
             viewport.min =
@@ -23,11 +26,14 @@ impl App {
                 self.editor.tool,
                 &mut options,
                 !self.action_context().blocked,
+                self.editor.adopted_brush.is_some(),
             )
         } else {
             None
         };
         self.editor.options = options;
+        let selection_controls = self.selection_toolbar(ui, viewport, first_pass);
+        let controls = [controls, selection_controls];
         let left_clearance = if self.tool_controls_visible() {
             paintcraft_classic::tool_controls::CANVAS_CLEARANCE
         } else {
@@ -86,7 +92,7 @@ impl App {
         response: egui::Response,
         painter: egui::Painter,
         first_pass: bool,
-        controls: Option<egui::Rect>,
+        controls: [Option<egui::Rect>; 2],
     ) {
         // Disabled chrome must not tint texture vertices: the modal owns the scrim.
         let painter = egui::Painter::new(ui.ctx().clone(), painter.layer_id(), painter.clip_rect());
@@ -104,7 +110,9 @@ impl App {
         let view = self.canvas_view((rect.min.x, rect.min.y), ppp);
         self.hover_doc = ui
             .input(|i| i.pointer.hover_pos())
-            .filter(|p| visible_canvas.contains(*p) && controls.is_none_or(|r| !r.contains(*p)))
+            .filter(|p| {
+                visible_canvas.contains(*p) && controls.iter().flatten().all(|r| !r.contains(*p))
+            })
             .and_then(|p| view.to_doc((p.x, p.y)));
 
         self.validate_studio_pan(ui, viewport);
@@ -117,7 +125,12 @@ impl App {
             let events = {
                 let mut events = events;
                 if !navigation_only {
-                    self.tablet_canvas_input(&mut events, first_pass, painter.layer_id(), controls);
+                    self.tablet_canvas_input(
+                        &mut events,
+                        first_pass,
+                        painter.layer_id(),
+                        controls[0],
+                    );
                 }
                 events
             };
@@ -131,7 +144,7 @@ impl App {
                     ui,
                     painter.layer_id(),
                     visible_canvas,
-                    controls,
+                    controls[0],
                     view,
                     &event,
                 ) {
@@ -192,7 +205,7 @@ impl App {
                             _ => continue,
                         };
                         if (visible_canvas.contains(pos)
-                            && controls.is_none_or(|r| !r.contains(pos))
+                            && controls.iter().flatten().all(|r| !r.contains(pos))
                             && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
                             && let Some(d) = view.to_doc_subpixel((pos.x, pos.y))
                         {
@@ -227,9 +240,21 @@ impl App {
                                     self.editor.options.picker_source = SampleSource::Image;
                                 }
                             }
+                            use paintcraft_core::types::selection::Combine;
+                            let combine = self.editor.options.selection.combine;
+                            if self.editor.tool == Tool::Select {
+                                self.editor.options.selection.combine =
+                                    match (modifiers.shift, modifiers.alt) {
+                                        (true, true) => Combine::Intersect,
+                                        (true, false) => Combine::Add,
+                                        (false, true) => Combine::Subtract,
+                                        _ => combine,
+                                    };
+                            }
                             let was_down = self.editor.pointer_is_down();
                             self.editor.pointer_down_subpixel(d, button);
                             self.editor.options.picker_source = source;
+                            self.editor.options.selection.combine = combine;
                             self.editor.constrain_shape(modifiers.shift);
                             if !was_down && self.editor.pointer_is_down() {
                                 self.begin_studio_auto_scroll(ui, rect, viewport);
@@ -243,7 +268,7 @@ impl App {
                         if self.editor.is_constructing_shape()
                             && !self.editor.pointer_is_down()
                             && (!visible_canvas.contains(pos)
-                                || controls.is_some_and(|r| r.contains(pos)))
+                                || controls.iter().flatten().any(|r| r.contains(pos)))
                         {
                             continue;
                         }
@@ -285,6 +310,7 @@ impl App {
                 }
             }
             self.advance_studio_auto_scroll(ui, &painter, rect, viewport);
+            self.refresh_brush_selection_preview(ui.ctx());
         }
 
         // Shift may change without a pointer event. Apply it before preview or release.
@@ -369,11 +395,12 @@ impl App {
             row += 1;
         }
         painter.add(checker);
-        if let Some(id) = self
-            .gpu_texture
-            .as_ref()
-            .map(|texture| texture.id)
-            .or_else(|| self.texture.as_ref().map(egui::TextureHandle::id))
+        if !self.move_preview.paint(&painter, &view, rect)
+            && let Some(id) = self
+                .gpu_texture
+                .as_ref()
+                .map(|texture| texture.id)
+                .or_else(|| self.texture.as_ref().map(egui::TextureHandle::id))
         {
             painter
                 .with_clip_rect(painter.clip_rect().intersect(rect))
@@ -424,21 +451,27 @@ impl App {
             )
         };
         let ants = |r: Rect| {
-            painter.rect_stroke(
-                r,
-                0.0,
-                egui::Stroke::new(1.0 / ppp, Color32::BLACK),
-                egui::StrokeKind::Outside,
-            );
-            painter.rect_stroke(
-                r.expand(1.0 / ppp),
-                0.0,
-                egui::Stroke::new(1.0 / ppp, Color32::WHITE),
-                egui::StrokeKind::Outside,
-            );
+            let points = [
+                r.left_top(),
+                r.right_top(),
+                r.right_bottom(),
+                r.left_bottom(),
+                r.left_top(),
+            ];
+            if selection_ants::ants(
+                painter,
+                &points,
+                selection_ants::phase(painter.ctx().input(|i| i.time)),
+            ) {
+                painter
+                    .ctx()
+                    .request_repaint_after(std::time::Duration::from_millis(50));
+            }
         };
         self.draw_mask_overlay(painter, view, ppp);
-        if let Selection::Rect(r) = self.editor.display_selection() {
+        if self.selection_preview.selection().is_none()
+            && let Selection::Rect(r) = self.editor.display_selection()
+        {
             ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
         }
         let snapshot = self.canvas_text_preview();
@@ -468,16 +501,23 @@ impl App {
                 | Preview::Contour(_)
                 | Preview::MoveSelection { .. },
             ) => {} // Staged raster pixels, not vector approximations.
+            Some(Preview::SelectionPath { .. } | Preview::Marquee { .. })
+                if self.selection_preview.selection().is_some() => {}
             Some(Preview::SelectionPath { points }) => {
                 let path: Vec<_> = points.into_iter().map(screen).collect();
-                painter.add(egui::Shape::closed_line(
-                    path.clone(),
-                    egui::Stroke::new(3.0 / ppp, Color32::WHITE),
-                ));
-                painter.add(egui::Shape::closed_line(
-                    path,
-                    egui::Stroke::new(1.0 / ppp, Color32::BLACK),
-                ));
+                let mut path = path;
+                if let Some(first) = path.first().copied() {
+                    path.push(first);
+                }
+                if selection_ants::ants(
+                    painter,
+                    &path,
+                    selection_ants::phase(painter.ctx().input(|i| i.time)),
+                ) {
+                    painter
+                        .ctx()
+                        .request_repaint_after(std::time::Duration::from_millis(50));
+                }
             }
             Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
             Some(Preview::Text {

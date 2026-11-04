@@ -202,6 +202,9 @@ impl MappedPlan {
                                 reader.read_checked(sx, sy, check)?
                             }
                             super::patch::Sample::Color(c) => c,
+                            super::patch::Sample::Weighted(w) => {
+                                w.read(|x, y| reader.read_checked(x, y, check))?
+                            }
                         };
                         let pixel = ((y % i64::from(TILE_EDGE)) * i64::from(TILE_EDGE)
                             + x % i64::from(TILE_EDGE))

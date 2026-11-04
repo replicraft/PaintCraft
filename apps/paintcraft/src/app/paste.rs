@@ -99,6 +99,7 @@ struct Pending {
     owner: Owner,
     cancelled: Arc<AtomicBool>,
     stage: Stage,
+    options: bool,
 }
 impl Drop for Pending {
     fn drop(&mut self) {
@@ -131,6 +132,32 @@ impl Default for State {
     }
 }
 impl State {
+    #[cfg(test)]
+    pub(super) fn test_image(&mut self, image: &Image) -> Arc<std::sync::atomic::AtomicUsize> {
+        let bytes = paintcraft_formats::image::encode(
+            paintcraft_formats::image::ImageFormat::Png,
+            image.width(),
+            image.height(),
+            image.rgba(),
+            90,
+        )
+        .unwrap();
+        let encoded = EncodedImage::capture(
+            paintcraft_platform::clipboard::Encoding::Png,
+            bytes.len(),
+            &encoded_budget(),
+            &|| Ok(()),
+            || Ok(bytes),
+        )
+        .unwrap();
+        let fake = tests::Fake {
+            outcome: Arc::new(std::sync::Mutex::new(Some(Ok(encoded)))),
+            calls: Default::default(),
+        };
+        let calls = fake.calls.clone();
+        self.reader = Some(Box::new(fake));
+        calls
+    }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some() || self.ready.is_some()
     }
@@ -146,18 +173,16 @@ fn encoded_budget() -> SharedBudget {
 }
 impl App {
     pub(super) fn paste_layer_requested(&mut self, ctx: &egui::Context) {
-        self.begin_clipboard_paste(ctx, false);
+        self.begin_clipboard_paste(ctx, false, true);
     }
     pub(super) fn paste_requested(&mut self, ctx: &egui::Context) {
-        self.begin_clipboard_paste(ctx, true);
+        self.begin_clipboard_paste(ctx, false, false);
     }
-    fn begin_clipboard_paste(&mut self, ctx: &egui::Context, onto: bool) {
+    fn begin_clipboard_paste(&mut self, ctx: &egui::Context, onto: bool, options: bool) {
         if self.paste.busy() || self.clipboard.busy() || self.document_count() == 0 {
             return;
         }
-        if !Owner::capture(self).current(self)
-            || ctx.egui_wants_keyboard_input()
-            || self.confirm.is_some()
+        if !Owner::capture(self).current(self) || ctx.text_edit_focused() || self.confirm.is_some()
         {
             self.editor
                 .set_status(t!(ctx, "Finish the current edit before pasting."));
@@ -190,6 +215,7 @@ impl App {
                 owner,
                 cancelled: Arc::new(AtomicBool::new(false)),
                 stage: Stage::Read(job),
+                options,
             })
         })();
         match result {
@@ -281,18 +307,27 @@ impl App {
                     return;
                 }
                 Ok(Ok(decoded)) => {
+                    let origin = self
+                        .clipboard
+                        .matching_origin(&decoded.image)
+                        .unwrap_or((0, 0));
                     match self.editor.paste_draft(decoded.image) {
                         Ok(draft) => {
-                            self.paste.ready = Some(Ready {
+                            let ready = Ready {
                                 owner: pending.owner.clone(),
                                 draft,
                                 losses: decoded.losses,
                                 accept_losses: false,
-                                origin: (0, 0),
+                                origin,
                                 grow: false,
                                 name: t!(ctx, "Pasted image"),
-                            });
-                            self.confirm = Some(Confirm::PasteLayer);
+                            };
+                            if !pending.options && ready.losses.is_empty() {
+                                self.commit_ready_paste(ctx, ready);
+                            } else {
+                                self.paste.ready = Some(ready);
+                                self.confirm = Some(Confirm::PasteLayer);
+                            }
                         }
                         Err(error) => self.paste_error(ctx, &error.to_string()),
                     }

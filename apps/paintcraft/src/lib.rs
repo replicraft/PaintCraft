@@ -67,6 +67,8 @@ mod layer_panel;
 mod layer_thumbnails;
 #[path = "app/layers.rs"]
 mod layers;
+#[path = "app/move_preview.rs"]
+mod move_preview;
 #[path = "app/msp_export.rs"]
 mod msp_export;
 #[cfg(target_os = "macos")]
@@ -100,6 +102,10 @@ mod resize_skew;
 #[path = "app/save_all.rs"]
 mod save_all;
 mod saving;
+#[path = "app/selection_ants.rs"]
+mod selection_ants;
+#[path = "app/selection_preview.rs"]
+mod selection_preview;
 #[path = "app/selection_ui.rs"]
 mod selection_ui;
 pub mod settings;
@@ -286,7 +292,11 @@ pub struct App {
     budget_wakes: Option<residency::BudgetWakes>,
     cpu_renderer: cpu_rendering::CpuRenderer,
     layer_thumbnails: layer_thumbnails::LayerThumbnails,
+    selection_feather_dialog: Option<selection_ui::FeatherDialog>,
+    selection_preview: selection_preview::Worker,
+    move_preview: move_preview::State,
     selection_outline: paintcraft_raster::selection::OutlineCache,
+    selection_feather_outline: paintcraft_raster::selection::OutlineCache,
     selection_bounds: std::cell::RefCell<paintcraft_raster::selection::BoundsCache>,
     thumbnail: thumbnail::Thumbnail,
     pending_frame: Option<(RenderKey, JobHandle)>,
@@ -442,7 +452,11 @@ impl App {
             budget_wakes: None,
             cpu_renderer: cpu_rendering::CpuRenderer::new(),
             layer_thumbnails: Default::default(),
+            selection_feather_dialog: None,
+            selection_preview: Default::default(),
+            move_preview: Default::default(),
             selection_outline: Default::default(),
+            selection_feather_outline: Default::default(),
             selection_bounds: Default::default(),
             thumbnail: Default::default(),
             pending_frame: None,

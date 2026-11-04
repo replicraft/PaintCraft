@@ -71,7 +71,8 @@ impl App {
             desktop_download: false,
             auto_hide_toolbar: self.settings.classic_toolbar_auto_hide,
             thumbnail: self.classic.thumbnail,
-            blocked: self.save_all.is_some()
+            blocked: self.selection_feather_dialog.is_some()
+                || self.save_all.is_some()
                 || self.picking.is_some()
                 || self.switching.is_some()
                 || self.closing_workspace
@@ -269,6 +270,20 @@ impl App {
                 }),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
+                Chrome::FeatherSelection => self.begin_selection_feather(),
+                Chrome::MaskFromSelection => {
+                    if let Some(layer) = self.editor.target()
+                        && !self.editor.has_pending_edits()
+                    {
+                        let edit = self.editor.layer_mask_capture(
+                            paintcraft_commands::LayerMaskOp::FromSelection {
+                                layer: paintcraft_commands::LayerRef::Id(layer),
+                                enabled: true,
+                            },
+                        );
+                        self.request(ctx, action.activation_code(), Action::LayerMask(edit));
+                    }
+                }
                 Chrome::InvertSelection => {
                     self.editor.cancel_gesture();
                     self.request(ctx, action.activation_code(), Action::InvertSelection);

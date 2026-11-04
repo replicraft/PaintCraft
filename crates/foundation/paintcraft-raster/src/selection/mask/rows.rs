@@ -6,6 +6,7 @@ pub(super) fn visit(
     x0: i64,
     x1: i64,
     allowance: u64,
+    threshold: u8,
     check: &dyn Fn() -> Result<()>,
     mut emit: impl FnMut(i64, i64) -> Result<()>,
 ) -> Result<u64> {
@@ -20,7 +21,7 @@ pub(super) fn visit(
     let mut work = allowance;
     if mask.storage.is_none() {
         spend(&mut work, 1)?;
-        if mask.default_coverage() == 255 {
+        if mask.default_coverage() >= threshold {
             emit(x, end)?;
         }
         return Ok(allowance - work);
@@ -42,7 +43,7 @@ pub(super) fn visit(
             _ => None,
         };
         if let Some(value) = solid {
-            segment(&mut start, x, mask.logical(value) == 255, &mut emit)?;
+            segment(&mut start, x, mask.logical(value) >= threshold, &mut emit)?;
         } else if let Some(Tile::Dense(tile)) = tile {
             let mut index = iy as usize * crate::TILE_EDGE as usize + ix as usize;
             let mut at = x;
@@ -54,7 +55,7 @@ pub(super) fn visit(
                 segment(
                     &mut start,
                     at,
-                    mask.logical(tile.values[index]) == 255,
+                    mask.logical(tile.values[index]) >= threshold,
                     &mut emit,
                 )?;
                 index += 1;

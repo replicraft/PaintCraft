@@ -20,6 +20,8 @@ pub(crate) struct Canvas {
     pub(crate) texture: Option<TextureHandle>,
     pub(crate) pixel_grid: bool,
     pub(crate) outline: paintcraft_raster::selection::OutlineCache,
+    pub(crate) selection_brush: Option<crate::selection_ui::brush::Draft>,
+
     pub(crate) bounds: std::cell::RefCell<paintcraft_raster::selection::BoundsCache>,
     pub(crate) filter_view: Option<crate::app::filter_editing::render::View>,
     pub(crate) filter_footprint: Option<paintcraft_core::types::Rect>,
@@ -106,6 +108,7 @@ impl WebApp {
                 self.controls.tool,
                 &mut self.controls.options,
                 enabled,
+                self.editor.tools.sampled_tip.is_some(),
             )
         } else {
             None
@@ -182,6 +185,7 @@ impl WebApp {
             response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "Canvas"));
             if ui.ctx().current_pass_index() == 0 {
                 self.canvas_input(ui, &response);
+                self.update_selection_brush(ui.ctx());
             }
             let clip = ui.clip_rect().intersect(viewport).intersect(response.rect);
             self.canvas.filter_view = self.visible_filter_view(ui.ctx(), response.rect, clip);
@@ -230,19 +234,21 @@ impl WebApp {
             self.text_overlay(ui, &painter, response.rect);
             self.draw_mask_overlay(&painter, response.rect);
             if let Some(Preview::SelectionPath { points }) = self.editor.tools.preview() {
-                let path: Vec<_> = points
+                let mut path: Vec<_> = points
                     .into_iter()
                     .map(|p| response.rect.min + Vec2::new(p.0 as f32, p.1 as f32) * self.zoom)
                     .collect();
-                let ppp = ui.ctx().pixels_per_point();
-                painter.add(egui::Shape::closed_line(
-                    path.clone(),
-                    egui::Stroke::new(3.0 / ppp, Color32::WHITE),
-                ));
-                painter.add(egui::Shape::closed_line(
-                    path,
-                    egui::Stroke::new(1.0 / ppp, Color32::BLACK),
-                ));
+                if let Some(first) = path.first().copied() {
+                    path.push(first);
+                }
+                if paintcraft_ui::selection_ants::ants(
+                    &painter,
+                    &path,
+                    paintcraft_ui::selection_ants::phase(ui.input(|i| i.time)),
+                ) {
+                    ui.ctx()
+                        .request_repaint_after(std::time::Duration::from_millis(50));
+                }
             }
             let selection = match self.editor.tools.preview() {
                 Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
@@ -261,12 +267,21 @@ impl WebApp {
                     response.rect.min + Vec2::new(a.0 as f32, a.1 as f32) * self.zoom,
                     response.rect.min + Vec2::new(b.0 as f32, b.1 as f32) * self.zoom,
                 );
-                painter.rect_stroke(
-                    rect,
-                    0,
-                    egui::Stroke::new(1.0, Color32::from_rgb(0, 120, 215)),
-                    egui::StrokeKind::Inside,
-                );
+                let path = [
+                    rect.left_top(),
+                    rect.right_top(),
+                    rect.right_bottom(),
+                    rect.left_bottom(),
+                    rect.left_top(),
+                ];
+                if paintcraft_ui::selection_ants::ants(
+                    &painter,
+                    &path,
+                    paintcraft_ui::selection_ants::phase(ui.input(|i| i.time)),
+                ) {
+                    ui.ctx()
+                        .request_repaint_after(std::time::Duration::from_millis(50));
+                }
             }
             if response.hovered()
                 && !self.blocked()
@@ -307,6 +322,28 @@ impl WebApp {
                         0,
                         egui::Stroke::new(1.0, Color32::BLACK),
                         egui::StrokeKind::Middle,
+                    );
+                }
+                if self.controls.tool == Tool::Select
+                    && self.controls.options.selection_mode
+                        == paintcraft_tools::SelectionMode::Brush
+                    && let Some(pos) = ui.ctx().pointer_hover_pos()
+                {
+                    let subtract = ui.input(|i| {
+                        if i.modifiers.shift {
+                            false
+                        } else if i.modifiers.alt {
+                            true
+                        } else {
+                            self.controls.options.selection.combine
+                                == paintcraft_core::types::selection::Combine::Subtract
+                        }
+                    });
+                    paintcraft_ui::widgets::selection_brush_cursor(
+                        &painter,
+                        pos,
+                        f32::from(self.controls.options.selection.diameter) * self.zoom * 0.5,
+                        subtract,
                     );
                 }
             }
@@ -687,6 +724,17 @@ impl WebApp {
                                 }
                             } else if !self.begin_selection_float(point(pos), button) {
                                 let source = self.editor.tools.options.picker_source;
+                                let combine = self.editor.tools.options.selection.combine;
+                                if self.controls.tool == Tool::Select {
+                                    use paintcraft_core::types::selection::Combine;
+                                    self.editor.tools.options.selection.combine =
+                                        match (modifiers.shift, modifiers.alt) {
+                                            (true, true) => Combine::Intersect,
+                                            (true, false) => Combine::Add,
+                                            (false, true) => Combine::Subtract,
+                                            _ => combine,
+                                        };
+                                }
                                 if self.controls.tool == Tool::ColorPicker
                                     && self.frontend == paintcraft_ui::actions::Frontend::Studio
                                     && modifiers.ctrl
@@ -700,6 +748,7 @@ impl WebApp {
                                 // Gesture owns its copied policy. Restore before
                                 // release/async intent capture, not when Ctrl lifts.
                                 self.editor.tools.options.picker_source = source;
+                                self.editor.tools.options.selection.combine = combine;
                             }
                             if self.editor.tools.pointer_is_down() {
                                 self.pen.legacy_canvas_owned = true;
@@ -736,7 +785,7 @@ impl WebApp {
                     {
                         continue;
                     }
-                    if self.editor.tools.gesture_is_lasso() {
+                    if self.editor.tools.gesture_is_selection_path() {
                         self.move_selection_pointer(p);
                     } else if self.editor.tools.gesture_points().len() >= MAX_POINTS {
                         self.editor.tools.cancel_gesture();

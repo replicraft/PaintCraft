@@ -34,6 +34,8 @@ pub(super) fn op(
                     | "raster.cut_selection"
                     | "selection.set_polygon"
                     | "selection.invert"
+                    | "selection.region"
+                    | "selection.feather"
                     | "layer.expand"
                     | "raster.stroke_path"
                     | "raster.flood_fill"
@@ -285,6 +287,77 @@ pub(super) fn op(
                 points: pts.iter().map(point).collect::<Result<_>>()?,
                 color: color(&o["color"])?,
                 mode: mode(&o["mode"])?,
+            }
+        }
+        "selection.feather" => {
+            let o = obj(v, &["op", "radius"], &[])?;
+            Op::SelectionFeather {
+                radius: int_in(&o["radius"], 0, 1280, "radius")? as u16,
+            }
+        }
+        "selection.region" => {
+            use paintcraft_core::types::selection::{Combine, Settings, Shape};
+            let o = obj(
+                v,
+                &[
+                    "op",
+                    "layer_ref",
+                    "points",
+                    "shape",
+                    "combine",
+                    "feather",
+                    "tolerance",
+                    "diameter",
+                    "hardness",
+                    "strength",
+                    "contiguous",
+                    "antialias",
+                    "edge_aware",
+                    "sample_merged",
+                ],
+                &[],
+            )?;
+            let pts = o["points"]
+                .as_array()
+                .ok_or_else(|| bad("selection needs points"))?;
+            if pts.is_empty() || pts.len() > 16384 {
+                return Err(bad("selection needs 1..=16384 points"));
+            }
+            let shape = match o["shape"].as_str() {
+                Some("rectangle") => Shape::Rectangle,
+                Some("freeform") => Shape::FreeForm,
+                Some("polygon") => Shape::Polygon,
+                Some("wand") => Shape::Wand,
+                Some("brush") => Shape::Brush,
+                _ => return Err(bad("invalid selection shape")),
+            };
+            let combine = match o["combine"].as_str() {
+                Some("Replace") => Combine::Replace,
+                Some("Add") => Combine::Add,
+                Some("Subtract") => Combine::Subtract,
+                Some("Intersect") => Combine::Intersect,
+                _ => return Err(bad("invalid selection combination")),
+            };
+            let flag = |name: &str| match &o[name] {
+                Value::Bool(value) => Ok(*value),
+                _ => Err(bad("selection option must be boolean")),
+            };
+            Op::SelectionRegion {
+                layer: layer_ref(&o["layer_ref"])?,
+                points: pts.iter().map(point).collect::<Result<_>>()?,
+                settings: Settings {
+                    shape,
+                    combine,
+                    feather: int_in(&o["feather"], 0, 1280, "feather")? as u16,
+                    tolerance: int_in(&o["tolerance"], 0, 1000, "tolerance")? as u16,
+                    diameter: int_in(&o["diameter"], 1, 256, "diameter")? as u16,
+                    hardness: int_in(&o["hardness"], 0, 100, "hardness")? as u8,
+                    strength: int_in(&o["strength"], 0, 100, "strength")? as u8,
+                    contiguous: flag("contiguous")?,
+                    antialias: flag("antialias")?,
+                    edge_aware: flag("edge_aware")?,
+                    sample_merged: flag("sample_merged")?,
+                },
             }
         }
         "selection.set_rect" => {

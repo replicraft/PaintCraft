@@ -55,6 +55,8 @@ pub enum Action {
     SelectTool(Tool),
     SelectAll,
     InvertSelection,
+    FeatherSelection,
+    MaskFromSelection,
     Deselect,
     Close,
     Exit,
@@ -229,6 +231,8 @@ impl Action {
             Self::SelectTool(tool) => (tool.name(), None),
             Self::SelectAll => ("Select all", Some((Key::A, false))),
             Self::InvertSelection => ("Invert selection", Some((Key::I, false))),
+            Self::FeatherSelection => ("Feather selection…", None),
+            Self::MaskFromSelection => ("Mask from selection", None),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
             Self::Close => ("Close", Some((Key::W, false))),
             Self::Exit => ("Exit", None),
@@ -361,12 +365,7 @@ impl Action {
                     && ctx.layer_visible
                     && (!ctx.selection_active || ctx.can_crop_selection)
             }
-            Self::Paste => {
-                ctx.document_open
-                    && ctx.can_paste_onto
-                    && ctx.layer_index.is_some()
-                    && ctx.layer_visible
-            }
+            Self::Paste => ctx.document_open && ctx.can_paste,
             Self::PasteLayer => ctx.document_open && ctx.can_paste,
             Self::CopyVisible => {
                 ctx.document_open && (!ctx.selection_active || ctx.can_crop_selection)
@@ -379,7 +378,10 @@ impl Action {
             Self::FlattenImage => ctx.document_open && ctx.can_flatten,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
-            Self::Deselect => ctx.document_open && ctx.selection_active,
+            Self::Deselect | Self::FeatherSelection => ctx.document_open && ctx.selection_active,
+            Self::MaskFromSelection => {
+                ctx.document_open && ctx.selection_active && ctx.layer_index.is_some()
+            }
             Self::Crop => ctx.document_open && ctx.can_crop_selection,
             Self::EraseSelection => {
                 ctx.document_open && ctx.can_erase_selection && ctx.layer_index.is_some()
@@ -464,6 +466,8 @@ impl Action {
             Self::Interface => 1007,
             Self::SelectAll => 1008,
             Self::InvertSelection => 1026,
+            Self::FeatherSelection => 1060,
+            Self::MaskFromSelection => 1061,
             Self::Deselect => 1009,
             Self::Close => 1010,
             Self::Exit => 1019,

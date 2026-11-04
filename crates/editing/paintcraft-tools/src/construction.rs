@@ -39,7 +39,10 @@ impl Construction {
             return false;
         }
         self.cursor = at;
-        if self.pressed && self.base.tool == Tool::Polygon && self.base.points.len() >= 3 {
+        if self.pressed
+            && matches!(self.base.tool, Tool::Polygon | Tool::Select)
+            && self.base.points.len() >= 3
+        {
             self.closing = near(at, self.base.points[0]) || at == *self.base.points.last().unwrap();
         }
         true
@@ -60,7 +63,7 @@ impl Construction {
         }
         self.pressed = true;
         self.cursor = at;
-        self.closing = self.base.tool == Tool::Polygon
+        self.closing = matches!(self.base.tool, Tool::Polygon | Tool::Select)
             && self.base.points.len() >= 3
             && (near(at, self.base.points[0]) || at == *self.base.points.last().unwrap());
         true
@@ -70,7 +73,7 @@ impl Construction {
             return false;
         }
         self.pressed = false;
-        if self.base.tool == Tool::Polygon {
+        if matches!(self.base.tool, Tool::Polygon | Tool::Select) {
             if self.closing {
                 return true;
             }
@@ -107,7 +110,7 @@ impl Construction {
         if self.pressed {
             return false;
         }
-        if self.base.tool == Tool::Polygon && self.base.points.len() > 1 {
+        if matches!(self.base.tool, Tool::Polygon | Tool::Select) && self.base.points.len() > 1 {
             self.base.points.pop();
             self.cursor = *self.base.points.last().unwrap();
             return true;
@@ -125,7 +128,7 @@ impl Construction {
     }
     pub(super) fn view(&self, finalize: bool) -> Option<Contour> {
         let mut points = self.base.points.clone();
-        let closed = if self.base.tool == Tool::Polygon {
+        let closed = if matches!(self.base.tool, Tool::Polygon | Tool::Select) {
             if !finalize && !self.closing {
                 let end = self.endpoint();
                 if points.last() != Some(&end) && points.len() < VERTICES_MAX {
@@ -170,14 +173,14 @@ impl Construction {
     }
     pub(super) fn can_finish(&self) -> bool {
         !self.pressed
-            && if self.base.tool == Tool::Polygon {
+            && if matches!(self.base.tool, Tool::Polygon | Tool::Select) {
                 self.base.points.len() >= 3
             } else {
                 self.phase > 0
             }
     }
     pub(super) fn hint(&self) -> &'static str {
-        if self.base.tool == Tool::Polygon {
+        if matches!(self.base.tool, Tool::Polygon | Tool::Select) {
             "Polygon: click to add vertices; click the start or click the last vertex again to close; Enter finishes, Backspace removes, Escape cancels"
         } else {
             match self.phase {
@@ -244,7 +247,17 @@ impl ToolState {
         if !draft.can_finish() {
             return None;
         }
-        let action = Action::Contour(draft.view(true)?);
+        let action = if draft.base.tool == Tool::Select {
+            let mut settings = draft.base.options.selection;
+            settings.shape = SelectionMode::Polygon;
+            Action::SelectionRegion {
+                layer: draft.base.layer,
+                points: draft.view(true)?.points,
+                settings,
+            }
+        } else {
+            Action::Contour(draft.view(true)?)
+        };
         let token = draft.base.token;
         self.construction = None;
         self.preview_revision.advance();

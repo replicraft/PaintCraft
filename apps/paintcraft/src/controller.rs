@@ -37,7 +37,7 @@ mod preview_cache;
 mod selection;
 use paintcraft_tools::commands as raster_commands;
 pub(crate) use preview_cache::Stamp as PreviewStamp;
-pub(crate) use strokes::PreviewPreparation;
+pub(crate) use strokes::{PreviewPreparation, captured_batch};
 #[cfg(any(target_os = "windows", test))]
 #[path = "controller/framework_force.rs"]
 mod framework_force;
@@ -550,6 +550,26 @@ impl Editor {
                 transparent_key,
             } => self.move_selection(layer, offset, clear, transparent_key),
             Action::SelectPolygon { points } => self.select_polygon(&points),
+            Action::SelectionRegion {
+                layer,
+                points,
+                settings,
+            } => {
+                self.commit(
+                    vec![raster_commands::selection_region(layer, &points, settings)],
+                    if settings.shape == paintcraft_core::types::selection::Shape::Brush {
+                        "Brush selection"
+                    } else {
+                        "Selection changed"
+                    },
+                );
+            }
+            Action::FeatherSelection { radius } => {
+                self.commit(
+                    vec![raster_commands::selection_feather(radius)],
+                    "Selection feather changed",
+                );
+            }
             Action::InvertSelection => self.invert_selection(),
             Action::PickColor(pick) => self.pick_color(pick),
             Action::CropToSelection => self.crop_to_selection(),

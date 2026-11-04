@@ -65,6 +65,7 @@ impl BinaryMask {
             for dy in 0..dh {
                 check()?;
                 let mut start = None;
+                let mut previous = 0u8;
                 for dx in 0..dw {
                     if dx % 64 == 0 {
                         check()?;
@@ -77,19 +78,23 @@ impl BinaryMask {
                         OrthogonalTransform::FlipHorizontal => (width - 1 - dx, dy),
                         OrthogonalTransform::FlipVertical => (dx, height - 1 - dy),
                     };
-                    let selected = self.coverage(area.x0 + sx, area.y0 + sy) == 255;
-                    if selected {
-                        start.get_or_insert(dx);
-                    } else if let Some(first) = start.take() {
-                        build.span(
-                            MaskSpan {
-                                y: area.y0 + dy,
-                                x0: area.x0 + first,
-                                x1: area.x0 + dx - 1,
-                                coverage: 255,
-                            },
-                            check,
-                        )?;
+                    let coverage = self.coverage(area.x0 + sx, area.y0 + sy);
+                    if coverage != previous {
+                        if let Some(first) = start.take() {
+                            build.span(
+                                MaskSpan {
+                                    y: area.y0 + dy,
+                                    x0: area.x0 + first,
+                                    x1: area.x0 + dx - 1,
+                                    coverage: previous,
+                                },
+                                check,
+                            )?;
+                        }
+                        if coverage > 0 {
+                            start = Some(dx);
+                        }
+                        previous = coverage;
                     }
                 }
                 if let Some(first) = start {
@@ -98,7 +103,7 @@ impl BinaryMask {
                             y: area.y0 + dy,
                             x0: area.x0 + first,
                             x1: area.x0 + dw - 1,
-                            coverage: 255,
+                            coverage: previous,
                         },
                         check,
                     )?;
@@ -112,6 +117,15 @@ impl BinaryMask {
         // before handing ownership over; a later cancellation may conservatively
         // consume that finalization allowance without returning a partial mask.
         spend(work, build.retained_tiles() as u64)?;
-        build.finish(check)
+        let result = build.finish(check)?;
+        Ok(if let Some(base) = self.base() {
+            result.with_base(
+                base.transformed_with_remaining_checked(
+                    area, transform, budget, limits, work, check,
+                )?,
+            )
+        } else {
+            result
+        })
     }
 }

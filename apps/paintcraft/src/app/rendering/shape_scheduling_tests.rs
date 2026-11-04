@@ -110,3 +110,96 @@ fn shape_progress_rejects_new_origins_layers_tools_and_styles() {
         assert!(!preserves_preview_progress(Some(&shape), Some(&changed)));
     }
 }
+
+#[test]
+fn feathered_selection_motion_keeps_inflight_frames_and_converges_during_dragging() {
+    let mut app = App::new(None);
+    let ctx = egui::Context::default();
+    app.editor = Editor::with_document(
+        paintcraft_document::import_image(
+            64,
+            48,
+            &[180, 40, 70, 180].repeat(64 * 48),
+            "soft-move-scheduling",
+        )
+        .unwrap(),
+        None,
+    );
+    let layer = app.editor.target().unwrap();
+    app.editor.request(
+        1,
+        Action::SelectionRegion {
+            layer,
+            points: vec![(12, 10), (35, 30)],
+            settings: paintcraft_core::types::selection::Settings {
+                feather: 25,
+                ..Default::default()
+            },
+        },
+    );
+    app.editor.run_pending();
+    app.editor.select_tool(Tool::Select);
+    app.editor.set_floating_commit_on_release(false);
+    app.editor.pointer_down((20, 20));
+    app.editor.pointer_move((22, 21));
+    app.sync_texture(&ctx);
+    let old = app.presentation_key();
+    let pixels = app.rendered.clone();
+    let (send, wait) = std::sync::mpsc::channel();
+    let mut worker = Executor::new(WorkerLimits {
+        workers: 1,
+        pending_jobs: 2,
+        transient_bytes: 512 << 20,
+    })
+    .unwrap();
+    let handle = worker
+        .submit(
+            1024,
+            move |_| {
+                wait.recv_timeout(Duration::from_secs(5)).unwrap();
+                Ok(RenderedFrame {
+                    key: old,
+                    pixels,
+                    fallback: None,
+                    device_epoch: None,
+                    gpu_texture: None,
+                })
+            },
+            || {},
+        )
+        .unwrap();
+    app.renderer = Some(worker);
+    app.pending_frame = Some((old, handle));
+    app.texture_key = None;
+    for point in [(30, 25), (24, 18), (40, 30), (26, 24)] {
+        app.editor.pointer_move(point);
+        app.sync_texture(&ctx);
+        assert_eq!(
+            app.pending_frame,
+            Some((old, handle)),
+            "motion must not cancel admitted work"
+        );
+        assert!(app.accept_render_key(old));
+    }
+    send.send(()).unwrap();
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while app.texture_key != Some(app.presentation_key()) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "move render did not converge during dragging"
+        );
+        app.sync_texture(&ctx);
+        std::thread::yield_now();
+    }
+    let preview = paintcraft_editor::execute::execute(
+        app.editor.document(),
+        app.editor.selection(),
+        &app.editor.preview_batch().unwrap().unwrap(),
+    )
+    .unwrap();
+    assert_eq!(app.rendered, render_flat(&preview.doc).unwrap());
+    assert!(app.editor.pointer_is_down());
+    app.editor.cancel_gesture();
+    app.sync_texture(&ctx);
+    assert!(!app.accept_render_key(old));
+}

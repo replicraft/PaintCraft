@@ -94,11 +94,14 @@ impl History {
                 Storage::Hot(snapshot) => &snapshot.selection,
                 Storage::Cold(packed) => &packed.selection,
             };
-            if let Selection::Mask(mask) = selection
-                && let Some((identity, bytes)) = mask.storage_usage()
-                && masks.insert(identity)
-            {
-                usage.selection_bytes += bytes;
+            if let Selection::Mask(mask) = selection {
+                for field in std::iter::once(mask).chain(mask.base()) {
+                    if let Some((identity, bytes)) = field.storage_usage()
+                        && masks.insert(identity)
+                    {
+                        usage.selection_bytes += bytes;
+                    }
+                }
             }
             match &entry.storage {
                 Storage::Hot(s) => {

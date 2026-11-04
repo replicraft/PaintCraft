@@ -57,7 +57,17 @@ impl BinaryMask {
         } else {
             (0, 0, 0, HEADER_WORK)
         };
-        let payload = add(samples, mul(records, 7)?)? / 8;
+        let weighted = self.storage.as_ref().is_some_and(|s| {
+            s.tiles.values().any(|t| match t {
+                Tile::Solid(v) => !matches!(*v, 0 | 255),
+                Tile::Dense(d) => d.weighted,
+            })
+        });
+        let payload = if weighted {
+            samples
+        } else {
+            add(samples, mul(records, 7)?)? / 8
+        };
         let bytes = add(
             HEADER_BYTES as u64,
             add(mul(records, RECORD_BYTES as u64)?, payload)?,
@@ -173,6 +183,18 @@ impl<'a> SnapshotCursor<'a> {
                 }
                 let width = (emit.rect.x1 - emit.rect.x0) as usize;
                 let samples = width * (emit.rect.y1 - emit.rect.y0) as usize;
+                if emit.prefix[16] == 2 {
+                    if !meter.take(BYTE_WORK + SAMPLE_WORK, 0)? {
+                        break;
+                    }
+                    let index = emit.payload_at;
+                    let x = emit.rect.x0 + (index % width) as i64 - emit.origin.0;
+                    let y = emit.rect.y0 + (index / width) as i64 - emit.origin.1;
+                    output[written] = emit.tile.at(y as usize * 256 + x as usize);
+                    emit.payload_at += 1;
+                    written += 1;
+                    continue;
+                }
                 let at = emit.payload_at * 8;
                 let count = 8.min(samples - at);
                 if !meter.take(BYTE_WORK + count as u64 * SAMPLE_WORK, 0)? {
@@ -223,15 +245,16 @@ impl<'a> SnapshotCursor<'a> {
             let samples = (rect.x1 - rect.x0) as usize * (rect.y1 - rect.y0) as usize;
             let payload = match tile {
                 Tile::Solid(value) => {
-                    if !matches!(value, 0 | 255) {
-                        return Err(bad("nonbinary solid selection"));
-                    }
                     prefix[17] = *value;
                     0
                 }
-                Tile::Dense(_) => {
-                    prefix[16] = 1;
-                    samples.div_ceil(8)
+                Tile::Dense(dense) => {
+                    prefix[16] = if dense.weighted { 2 } else { 1 };
+                    if dense.weighted {
+                        samples
+                    } else {
+                        samples.div_ceil(8)
+                    }
                 }
             };
             prefix[20..22].copy_from_slice(&((rect.x1 - rect.x0) as u16).to_be_bytes());

@@ -34,6 +34,7 @@ impl Action {
             Self::Redo => Icon::Redo,
             Self::SelectAll | Self::Deselect => Icon::RectangleSelect,
             Self::InvertSelection => Icon::InvertSelection,
+            Self::FeatherSelection | Self::MaskFromSelection => Icon::LassoSelect,
             Self::ChooseFrontend(_)
             | Self::Interface
             | Self::CanvasDefaults

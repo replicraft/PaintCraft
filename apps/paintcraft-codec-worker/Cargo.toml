@@ -21,6 +21,7 @@ avif-sdr-codec = ["avif-codec"]
 
 [build-dependencies]
 sha2.workspace = true
+find-msvc-tools = "0.1.14"
 
 [dependencies]
 paintcraft-core.workspace = true

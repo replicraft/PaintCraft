@@ -27,6 +27,67 @@ impl Stage<'_> {
             Op::SelectionSetPolygon { points } => {
                 BinaryMask::polygon(domain, points, &budget, limits, self.check)?
             }
+            Op::SelectionFeather { radius } => {
+                self.selection = paintcraft_raster::selection::region::refine(
+                    domain,
+                    &self.selection,
+                    *radius,
+                    &budget,
+                    self.check,
+                )?;
+                return self.selections.push((index, self.selection.clone()));
+            }
+            Op::SelectionRegion {
+                layer,
+                points,
+                settings,
+            } => {
+                let id = self.resolve(layer)?;
+                use paintcraft_core::types::{resources::AllocationClass, selection::Shape};
+                let needs_sample = matches!(settings.shape, Shape::Wand | Shape::Brush);
+                let mut sample_charge = budget.scope(AllocationClass::SelectionMasks).account();
+                let rendered = if needs_sample
+                    && (settings.shape == Shape::Wand || settings.edge_aware)
+                {
+                    sample_charge.resize(u64::try_from(domain.area() * 4).map_err(|_| {
+                        Error::new(ErrorCode::ResourceLimit, "Selection sample is too large")
+                    })?)?;
+                    let mut sampled = self.doc.clone();
+                    if !settings.sample_merged {
+                        sampled.roots = vec![id];
+                        let layer = sampled.layers.get_mut(&id).expect("resolved layer");
+                        layer.visible = true;
+                        layer.blend_mode = paintcraft_core::types::LayerBlendMode::Normal;
+                    }
+                    for id in sampled.roots.clone() {
+                        let layer = sampled.layers.get_mut(&id).expect("root layer");
+                        layer.raster = self
+                            .planning
+                            .as_mut()
+                            .expect("selection compilation")
+                            .appearance_source(id, &layer.raster, &mut self.adm, self.check)?;
+                    }
+                    Some(paintcraft_render::render_cancellable(&sampled, self.check)?)
+                } else {
+                    None
+                };
+                self.selection = paintcraft_raster::selection::region::create(
+                    domain,
+                    &self.selection,
+                    points,
+                    *settings,
+                    &budget,
+                    self.check,
+                    |x, y| {
+                        Ok(rendered.as_ref().map_or(Rgba::TRANSPARENT, |pixels| {
+                            let at =
+                                ((y - domain.y0) * domain.width() + x - domain.x0) as usize * 4;
+                            Rgba(pixels[at..at + 4].try_into().expect("canvas sample"))
+                        }))
+                    },
+                )?;
+                return self.selections.push((index, self.selection.clone()));
+            }
             Op::SelectionInvert => {
                 let mask = match &self.selection {
                     // With no active selection, Invert selects the whole canvas.

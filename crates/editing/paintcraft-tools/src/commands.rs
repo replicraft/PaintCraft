@@ -574,3 +574,46 @@ mod first_layer_tests {
         );
     }
 }
+
+/// Captured selection recipe, evaluated against an ordered worker snapshot.
+pub fn selection_region(
+    layer: Uuid,
+    points: &[(i64, i64)],
+    s: paintcraft_core::types::selection::Settings,
+) -> Value {
+    use paintcraft_core::types::selection::Shape;
+    Value::object([
+        ("op", Value::str("selection.region")),
+        ("layer_ref", layer_ref(layer)),
+        (
+            "points",
+            Value::Array(points.iter().map(|&p| point(p)).collect()),
+        ),
+        (
+            "shape",
+            Value::str(match s.shape {
+                Shape::Rectangle => "rectangle",
+                Shape::FreeForm => "freeform",
+                Shape::Polygon => "polygon",
+                Shape::Wand => "wand",
+                Shape::Brush => "brush",
+            }),
+        ),
+        ("combine", Value::str(s.combine.label())),
+        ("feather", Value::Int(s.feather.into())),
+        ("tolerance", Value::Int(s.tolerance.into())),
+        ("diameter", Value::Int(s.diameter.into())),
+        ("hardness", Value::Int(s.hardness.into())),
+        ("strength", Value::Int(s.strength.into())),
+        ("contiguous", Value::Bool(s.contiguous)),
+        ("antialias", Value::Bool(s.antialias)),
+        ("edge_aware", Value::Bool(s.edge_aware)),
+        ("sample_merged", Value::Bool(s.sample_merged)),
+    ])
+}
+pub fn selection_feather(radius: u16) -> Value {
+    Value::object([
+        ("op", Value::str("selection.feather")),
+        ("radius", Value::Int(radius.into())),
+    ])
+}

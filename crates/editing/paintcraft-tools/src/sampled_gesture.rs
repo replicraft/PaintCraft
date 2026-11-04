@@ -1,6 +1,47 @@
 //! Capture immutable native-size tips alongside ordinary pointer ownership.
 use super::*;
 impl ToolState {
+    /// Generate a static soft tip once at pointer-down. Preview and release
+    /// retain this immutable tip even when the toolbar preferences change.
+    pub(super) fn soft_tip(
+        &self,
+    ) -> paintcraft_core::types::Result<Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>>
+    {
+        if self.tool != Tool::Brush
+            || self.options.brush_hardness >= 100
+            || self.options.media != Default::default()
+            || self.sampled_tip.is_some()
+        {
+            return Ok(None);
+        }
+        let side = self.options.size.clamp(1, 1024);
+        let radius = f64::from(side) / 2.0;
+        let inner = f64::from(self.options.brush_hardness) / 100.0;
+        let mut alpha = vec![0; (side * side) as usize];
+        for y in 0..side {
+            for x in 0..side {
+                let dx = (f64::from(x) + 0.5 - radius).abs() / radius;
+                let dy = (f64::from(y) + 0.5 - radius).abs() / radius;
+                let distance = if self.options.round {
+                    dx.hypot(dy)
+                } else {
+                    dx.max(dy)
+                };
+                let coverage = ((1.0 - distance) / (1.0 - inner)).clamp(0.0, 1.0);
+                alpha[(y * side + x) as usize] = (coverage * 255.0).round() as u8;
+            }
+        }
+        let budget = paintcraft_core::types::resources::SharedBudget::new(2 << 20);
+        let tip = paintcraft_raster::sampled_brush::SampledTip::from_alpha(
+            side,
+            side,
+            (side / 2, side / 2),
+            &alpha,
+            &budget,
+            &|| Ok(()),
+        )?;
+        Ok(Some((tip, (side * 256 / 10).max(1))))
+    }
     pub(super) fn sampled_gesture(
         g: &Gesture,
     ) -> paintcraft_core::types::Result<sampled_brush::SampledStroke> {
@@ -35,6 +76,56 @@ impl ToolState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn soft_brush_captures_hardness_and_preview_matches_release() {
+        let mut tools = ToolState {
+            tool: Tool::Brush,
+            ..Default::default()
+        };
+        tools.options.size = 20;
+        tools.options.brush_hardness = 25;
+        tools.pointer_down_subpixel(Uuid::nil(), (40 * 256, 40 * 256), PointerButton::Primary);
+        tools.pointer_move_subpixel((48 * 256, 40 * 256));
+        let Some(Preview::SampledStroke(preview)) = tools.preview() else {
+            panic!("soft tip preview")
+        };
+        tools.options.brush_hardness = 100;
+        tools.options.size = 1;
+        let (_, Action::SampledStroke(released)) = tools.pointer_up().unwrap() else {
+            panic!("soft tip release")
+        };
+        assert_eq!(preview, released);
+        let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
+        let clip = paintcraft_core::types::Rect::new(0, 0, 100, 100).unwrap();
+        let resolved = released.finish(clip, &budget, &|| Ok(())).unwrap();
+        assert!(
+            resolved
+                .coverage()
+                .spans()
+                .iter()
+                .any(|span| (1..255).contains(&span.coverage))
+        );
+        assert!(
+            resolved
+                .coverage()
+                .spans()
+                .iter()
+                .any(|span| span.coverage == 255)
+        );
+        assert_eq!(
+            preview
+                .preview(clip, &budget, &|| Ok(()))
+                .unwrap()
+                .operations(&|| Ok(()))
+                .unwrap(),
+            resolved.operations(&|| Ok(())).unwrap()
+        );
+        tools.pointer_down(Uuid::nil(), (40, 40));
+        assert!(
+            matches!(tools.preview(), Some(Preview::Path(_))),
+            "100 hardness retains the original stroke path"
+        );
+    }
     fn tools() -> ToolState {
         let budget = paintcraft_core::types::resources::SharedBudget::new(1 << 20);
         let tip = paintcraft_raster::sampled_brush::SampledTip::from_alpha(

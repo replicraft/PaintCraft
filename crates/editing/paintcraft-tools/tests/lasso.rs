@@ -38,7 +38,14 @@ fn lasso_retains_integer_path_and_captured_mode_but_never_becomes_a_paint_path()
             points: vec![(-3, 2), (5, 2), (7, 6)]
         })
     );
-    let (_, Action::SelectPolygon { points }) = tools
+    let (
+        _,
+        Action::SelectionRegion {
+            points,
+            settings: _,
+            layer: _,
+        },
+    ) = tools
         .try_pointer_up_at((1, 8), PointerButton::Primary, 10, 10)
         .unwrap()
         .unwrap()

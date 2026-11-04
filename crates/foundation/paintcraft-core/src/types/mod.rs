@@ -35,3 +35,4 @@ pub mod canvas;
 pub mod clipboard;
 
 pub mod filters;
+pub mod selection;

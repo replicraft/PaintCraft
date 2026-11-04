@@ -163,6 +163,12 @@ impl ToolState {
         self.pointer_down_button(layer, at, PointerButton::Primary);
     }
     pub fn pointer_down_button(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if self.tool == Tool::Select
+            && self.options.selection_mode == SelectionMode::Brush
+            && self.options.selection.strength == 0
+        {
+            return;
+        }
         if self.pen.is_some() {
             return;
         }
@@ -179,7 +185,10 @@ impl ToolState {
             return;
         }
         if self.tool == Tool::Select
-            && self.options.selection_mode == SelectionMode::FreeForm
+            && matches!(
+                self.options.selection_mode,
+                SelectionMode::FreeForm | SelectionMode::Brush
+            )
             && !selection::valid_point(at)
         {
             return;
@@ -196,6 +205,9 @@ impl ToolState {
         } else {
             (self.secondary, self.color)
         };
+        let soft_tip = self.soft_tip();
+        let sampled_failure = soft_tip.is_err();
+        let sampled = self.sampled_tip.clone().or_else(|| soft_tip.ok().flatten());
         self.gesture = Some(Gesture {
             button,
             token: self.next_gesture,
@@ -208,17 +220,17 @@ impl ToolState {
                 .then_some(self.resource_shape)
                 .flatten(),
             sampled_source: self.sampled_source,
-            sampled_failure: false,
-            sampled: (self.tool == Tool::Brush)
-                .then(|| self.sampled_tip.clone())
-                .flatten(),
+            sampled_failure,
+            sampled: (self.tool == Tool::Brush).then_some(sampled).flatten(),
             points: vec![at],
             point_scale: 1,
             constrain_shape: false,
             return_tool: self.previous_tool,
             return_resource_shape: self.previous_resource_shape,
         });
-        if matches!(self.tool, Tool::Polygon | Tool::Curve) {
+        if matches!(self.tool, Tool::Polygon | Tool::Curve)
+            || (self.tool == Tool::Select && self.options.selection_mode == SelectionMode::Polygon)
+        {
             self.construction = Some(construction::Construction::new(
                 self.gesture.take().unwrap(),
             ));
@@ -318,8 +330,8 @@ impl ToolState {
             .gesture
             .as_ref()
             .filter(|gesture| gesture.tool == Tool::Select)?;
-        if gesture.options.selection_mode == SelectionMode::FreeForm {
-            return None; // A lasso is not a rectangular selection preview.
+        if gesture.options.selection_mode != SelectionMode::Rectangle {
+            return None; // Brushes and lassos do not preview endpoint rectangles.
         }
         let (a, b) = geometry::endpoints(gesture.tool, &gesture.points, false);
         let size = paintcraft_core::types::Rect::new(
@@ -351,13 +363,19 @@ impl ToolState {
             });
         }
         if let Some(draft) = &self.construction {
-            return draft.view(false).map(Preview::Contour);
+            return if draft.base.tool == Tool::Select {
+                draft
+                    .view(false)
+                    .map(|c| Preview::SelectionPath { points: c.points })
+            } else {
+                draft.view(false).map(Preview::Contour)
+            };
         }
         let g = self.gesture.as_ref()?;
         if g.resource_shape.is_some() {
             return Some(Preview::ResourceShape(Self::resource_shape_gesture(g)));
         }
-        if g.sampled.is_some() {
+        if g.sampled.is_some() || g.sampled_failure {
             return Self::sampled_gesture(g).ok().map(Preview::SampledStroke);
         }
         let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
@@ -386,6 +404,14 @@ impl ToolState {
             | Tool::Text
             | Tool::Polygon
             | Tool::Curve => {
+                return None;
+            }
+            Tool::Select
+                if matches!(
+                    g.options.selection_mode,
+                    SelectionMode::Brush | SelectionMode::Wand
+                ) =>
+            {
                 return None;
             }
             Tool::Select if g.options.selection_mode == SelectionMode::FreeForm => {
@@ -484,9 +510,9 @@ impl ToolState {
         if self.update_floating(doc_point).is_some() {
             return;
         }
-        if self.gesture_is_lasso() {
+        if self.gesture_is_selection_path() {
             // Infallible legacy hosts still discard an oversized path completely.
-            let _ = self.append_lasso_admitted(doc_point, POINTS_PER_OP, POINTS_PER_OP);
+            let _ = self.append_selection_path_admitted(doc_point, POINTS_PER_OP, POINTS_PER_OP);
             return;
         }
         if let Some(draft) = &mut self.construction {
@@ -555,7 +581,7 @@ impl ToolState {
                 Action::ResourceShape(Self::resource_shape_gesture(&g)),
             ));
         }
-        if g.sampled.is_some() {
+        if g.sampled.is_some() || g.sampled_failure {
             return Some((
                 g.token,
                 match Self::sampled_gesture(&g) {
@@ -593,11 +619,31 @@ impl ToolState {
                 color: g.color,
                 tolerance: g.options.tolerance,
             },
-            Tool::Select if g.options.selection_mode == SelectionMode::FreeForm => {
-                if !selection::has_three_vertices(&g.points) {
+            Tool::Select
+                if matches!(
+                    g.options.selection_mode,
+                    SelectionMode::FreeForm
+                        | SelectionMode::Polygon
+                        | SelectionMode::Wand
+                        | SelectionMode::Brush
+                ) || g.options.selection.feather > 0
+                    || g.options.selection.combine
+                        != paintcraft_core::types::selection::Combine::Replace =>
+            {
+                if matches!(
+                    g.options.selection_mode,
+                    SelectionMode::FreeForm | SelectionMode::Polygon
+                ) && !selection::has_three_vertices(&g.points)
+                {
                     return None;
                 }
-                Action::SelectPolygon { points: g.points }
+                let mut settings = g.options.selection;
+                settings.shape = g.options.selection_mode;
+                Action::SelectionRegion {
+                    layer: g.layer,
+                    points: g.points,
+                    settings,
+                }
             }
             Tool::Select => Action::Select {
                 corners: Some((first, last)),

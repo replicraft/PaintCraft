@@ -58,6 +58,17 @@ impl Editor {
         if self.begin_floating(point, button) {
             return;
         }
+        if self.tool == Tool::Select
+            && self.options.selection_mode == paintcraft_tools::SelectionMode::Brush
+            && self.selection() == paintcraft_raster::Selection::Inactive
+            && matches!(
+                self.options.selection.combine,
+                paintcraft_core::types::selection::Combine::Subtract
+                    | paintcraft_core::types::selection::Combine::Intersect
+            )
+        {
+            return;
+        }
         let layer = match (
             self.tool,
             self.target

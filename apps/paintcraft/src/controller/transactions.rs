@@ -88,6 +88,13 @@ impl Editor {
         before_canvas: (u32, u32),
     ) {
         self.finish_image_paste_publication(target_alias);
+        if receipt.committed
+            && done == "Brush selection"
+            && self.tools.options.selection.combine
+                == paintcraft_core::types::selection::Combine::Replace
+        {
+            self.tools.options.selection.combine = paintcraft_core::types::selection::Combine::Add;
+        }
         if receipt.committed && self.document().canvas != before_canvas {
             self.canvas_size_edit = Some(self.document().canvas);
         }
@@ -98,6 +105,12 @@ impl Editor {
         };
         if let Some(alias) = target_alias {
             self.target = receipt.aliases.get(alias).copied().or(self.target);
+            if alias == "pasted" && receipt.committed {
+                self.tools.options.selection_mode = paintcraft_tools::SelectionMode::Rectangle;
+                self.tools.options.selection.combine =
+                    paintcraft_core::types::selection::Combine::Replace;
+                self.tools.choose_tool(Tool::Select);
+            }
         }
         self.retarget();
         if receipt.committed && self.session.last_trimmed() > 0 {

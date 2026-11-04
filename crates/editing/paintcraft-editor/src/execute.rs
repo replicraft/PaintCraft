@@ -340,9 +340,10 @@ impl Stage<'_> {
             Op::Filter(op) => self.edit_filter(index, op)?,
             Op::LayerMask(op) => self.edit_layer_mask(op)?,
             Op::LayerSetBlendMode { layer, mode } => self.set_layer_blend_mode(layer, *mode)?,
-            Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
-                self.mask_selection(index, op)?
-            }
+            Op::SelectionSetPolygon { .. }
+            | Op::SelectionRegion { .. }
+            | Op::SelectionFeather { .. }
+            | Op::SelectionInvert => self.mask_selection(index, op)?,
             Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
             Op::CanvasTransform { transform } => self.transform_canvas(*transform)?,
             Op::MoveSelection {

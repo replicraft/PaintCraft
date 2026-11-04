@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
+mod build_tools;
 const HASH: &str = "9edb11a2108b375cc58370354e705feebc93430bb780130363815c1e1ac0c250";
 fn run(command: &mut Command) {
     let status = command
@@ -20,6 +21,19 @@ fn changed(path: &Path, contents: &str) {
 fn main() {
     println!("cargo:rerun-if-env-changed=CARGO_FEATURE_AVIF_CODEC");
     println!("cargo:rerun-if-env-changed=CC");
+    println!("cargo:rerun-if-changed=build_tools.rs");
+    for variable in [
+        "PYTHON",
+        "MESON",
+        "NINJA",
+        "PATH",
+        "LOCALAPPDATA",
+        "ProgramFiles",
+        "ProgramFiles(x86)",
+        "VCToolsVersion",
+    ] {
+        println!("cargo:rerun-if-env-changed={variable}");
+    }
     if env::var_os("CARGO_FEATURE_AVIF_CODEC").is_none() {
         return;
     }
@@ -28,6 +42,7 @@ fn main() {
         env::var("TARGET").unwrap(),
         "AVIF native cross-compilation is not qualified yet"
     );
+    let tools = build_tools::Tools::discover();
     let archive = PathBuf::from("vendor/dav1d/dav1d-1.5.4.tar.gz");
     println!("cargo:rerun-if-changed={}", archive.display());
     println!("cargo:rerun-if-changed=native/dav1d_mem.h");
@@ -46,8 +61,7 @@ fn main() {
     if !root.exists() {
         // Only fixed-hash regular files/directories are extracted. No symlink,
         // absolute or parent-relative archive member can escape OUT_DIR.
-        let python = if cfg!(windows) { "python" } else { "python3" };
-        run(Command::new(python).arg("-c").arg("import pathlib,sys,tarfile\nwith tarfile.open(sys.argv[1]) as t:\n m=t.getmembers()\n for e in m:\n  p=pathlib.PurePosixPath(e.name)\n  assert not p.is_absolute() and '..' not in p.parts and (e.isfile() or e.isdir())\n t.extractall(sys.argv[2],members=m,filter='data')").arg(&archive).arg(&out));
+        run(Command::new(&tools.python).arg("-c").arg("import pathlib,sys,tarfile\nwith tarfile.open(sys.argv[1]) as t:\n m=t.getmembers()\n for e in m:\n  p=pathlib.PurePosixPath(e.name)\n  assert not p.is_absolute() and '..' not in p.parts and (e.isfile() or e.isdir())\n t.extractall(sys.argv[2],members=m,filter='data')").arg(&archive).arg(&out));
     }
     let header = root.join("src/mem.h");
     let pristine = out.join("dav1d-1.5.4-pristine-mem.h");
@@ -128,18 +142,20 @@ fn main() {
         changed(&meson_path, &meson);
     }
     let build = out.join("dav1d-build");
-    let compiler = env::var("CC").unwrap_or_else(|_| {
-        if cfg!(windows) {
-            "cl".into()
-        } else {
-            "cc".into()
-        }
-    });
+    let compiler = &tools.compiler;
     let compiler_marker = build.join(".paintcraft-compiler");
-    if build.exists() && fs::read_to_string(&compiler_marker).ok().as_deref() != Some(&compiler) {
+    if build.exists()
+        && fs::read_to_string(&compiler_marker).ok().as_deref() != Some(&tools.compiler_identity)
+    {
+        let resolved = build.canonicalize().expect("Resolve codec build directory");
+        let output = out.canonicalize().expect("Resolve Cargo output directory");
+        assert!(
+            resolved.starts_with(&output) && resolved != output,
+            "Codec build directory must stay inside Cargo OUT_DIR"
+        );
         fs::remove_dir_all(&build).unwrap();
     }
-    let mut setup = Command::new("meson");
+    let mut setup = tools.meson();
     setup.env("CC", &compiler).arg("setup");
     if build.exists() {
         setup.arg("--reconfigure");
@@ -167,11 +183,8 @@ fn main() {
         });
     }
     run(&mut setup);
-    changed(&compiler_marker, &compiler);
-    run(Command::new("ninja")
-        .arg("-C")
-        .arg(&build)
-        .args(["-j", "4"]));
+    changed(&compiler_marker, &tools.compiler_identity);
+    run(tools.ninja().arg("-C").arg(&build).args(["-j", "4"]));
     println!(
         "cargo:rustc-link-search=native={}",
         build.join("src").display()

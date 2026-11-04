@@ -307,9 +307,14 @@ impl WebApp {
                 | Edit::TransformImage { .. }
         );
         let picked = matches!(action, Edit::PickColor(_));
+        let brush_selection = matches!(&action, Edit::SelectionRegion { settings, .. } if settings.shape == paintcraft_core::types::selection::Shape::Brush);
         let before_size = self.editor.session.document().canvas;
         match self.editor.apply(action) {
             Ok(()) => {
+                if brush_selection {
+                    self.controls.options.selection.combine =
+                        self.editor.tools.options.selection.combine;
+                }
                 if picked {
                     self.controls.primary = self.editor.tools.color;
                     self.controls.secondary = self.editor.tools.secondary;
@@ -393,7 +398,7 @@ impl WebApp {
             Action::Cut => self.cut_requested(ctx),
             Action::CopyVisible => self.copy_visible_requested(ctx),
             Action::PasteLayer => self.paste_requested(ctx),
-            Action::Paste => self.paste_current_requested(ctx),
+            Action::Paste => self.paste_default_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
                 color: self.clear_color(),
@@ -451,6 +456,28 @@ impl WebApp {
                 color: self.clear_color(),
             }),
             Action::Deselect => self.edit(Edit::Select { corners: None }),
+            Action::FeatherSelection => {
+                self.editor.tools.cancel_gesture();
+                self.form = Some(forms::Form::Feather {
+                    ticket: self.editor.session.history_ticket(),
+                    radius: self.controls.options.selection.feather,
+                });
+            }
+            Action::MaskFromSelection => {
+                if let Some(layer) = self.editor.target {
+                    let ticket = self.editor.session.ticket();
+                    let edit = paintcraft_tools::LayerMaskEdit {
+                        owner: self.editor.session.owner_id(),
+                        state_id: ticket.state_id,
+                        publication_epoch: ticket.publication_epoch,
+                        operation: paintcraft_commands::LayerMaskOp::FromSelection {
+                            layer: paintcraft_commands::LayerRef::Id(layer),
+                            enabled: true,
+                        },
+                    };
+                    self.edit(Edit::LayerMask(edit));
+                }
+            }
             Action::InvertSelection => {
                 self.editor.tools.cancel_gesture();
                 self.edit(Edit::InvertSelection);
@@ -654,13 +681,24 @@ impl WebApp {
             self.fullscreen.exit(ctx);
             return true;
         }
+        let clipboard_event = matches!(
+            event,
+            egui::Event::Copy | egui::Event::Cut | egui::Event::PasteImage(_)
+        ) || matches!(event, egui::Event::Key { key: egui::Key::C | egui::Key::X | egui::Key::V, modifiers, .. } if modifiers.command);
         if self.blocked()
-            || self.text.widget_owned_input
-            || ctx.egui_wants_keyboard_input()
+            || ctx.text_edit_focused()
+            || (!clipboard_event
+                && (self.text.widget_owned_input || ctx.egui_wants_keyboard_input()))
             || egui::Popup::is_any_open(ctx)
             || self.text.is_composing()
         {
             return false;
+        }
+        if matches!(event, egui::Event::PasteImage(_)) && !self.editor.tools.is_editing_text() {
+            if Action::Paste.enabled(self.context()) {
+                self.action(ctx, Action::Paste);
+            }
+            return true;
         }
         if matches!(event, egui::Event::Cut) && !self.editor.tools.is_editing_text() {
             if Action::Cut.enabled(self.context()) {

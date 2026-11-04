@@ -53,7 +53,12 @@ pub fn capture(
             {
                 Ok(Rgba::TRANSPARENT)
             } else {
-                Ok(layer.raster.get(x - layer.origin.0, y - layer.origin.1))
+                let mut pixel = layer.raster.get(x - layer.origin.0, y - layer.origin.1);
+                if let Selection::Mask(mask) = &selection {
+                    pixel.0[3] =
+                        ((u16::from(pixel.a()) * u16::from(mask.coverage(x, y)) + 127) / 255) as u8;
+                }
+                Ok(pixel)
             }
         },
     )?;
