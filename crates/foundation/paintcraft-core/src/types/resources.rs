@@ -16,7 +16,7 @@ pub use reservation::BudgetReservation;
 mod denial;
 pub use denial::{AllocationClass, AllocationDenial};
 mod account;
-pub use account::{BudgetAccount, BudgetScope, ScopeFootprint};
+pub use account::{BudgetAccount, BudgetScope, ScopeCapacity, ScopeFootprint};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BudgetUsage {

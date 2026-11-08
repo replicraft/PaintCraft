@@ -243,3 +243,76 @@ mod tests {
         assert_eq!(budget.usage().reserved, 0);
     }
 }
+
+/// Advisory snapshot of the SAME underlying capacity, never an admission grant.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ScopeCapacity {
+    pub reserved: bool,
+    pub ceiling: u64,
+    pub available: u64,
+}
+impl BudgetScope {
+    /// A reserved scope cannot borrow its realm's unrelated free bytes.
+    /// Sibling races remain subject to the existing atomic account resize.
+    pub fn capacity_snapshot(&self) -> ScopeCapacity {
+        match &self.reservation {
+            Some(reservation) => ScopeCapacity {
+                reserved: true,
+                ceiling: reservation.capacity(),
+                available: reservation.available(),
+            },
+            None => {
+                let usage = self.budget.usage();
+                ScopeCapacity {
+                    reserved: false,
+                    ceiling: usage.limit,
+                    available: usage.limit - usage.reserved,
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod capacity_snapshot_tests {
+    use super::*;
+    #[test]
+    fn snapshot_observes_original_reservation_across_differently_tracked_scopes() {
+        let budget = SharedBudget::new(1000);
+        let reserved = budget.reserve_capacity(100).unwrap();
+        let first = reserved.clone().scope(AllocationClass::SharedBudget);
+        let second = reserved.clone().scope(AllocationClass::PaintMetadata);
+        let mut account = first.account();
+        account.resize(70).unwrap();
+        assert_eq!(second.footprint().live, 0);
+        for scope in [&first, &second] {
+            assert_eq!(
+                scope.capacity_snapshot(),
+                ScopeCapacity {
+                    reserved: true,
+                    ceiling: 100,
+                    available: 30
+                }
+            );
+        }
+        let mut sibling = second.account();
+        assert!(sibling.resize(31).is_err());
+        assert_eq!(reserved.available(), 30);
+        assert_eq!(budget.usage().reserved, 100);
+        drop(account);
+        assert_eq!(second.capacity_snapshot().available, 100);
+        assert_eq!(budget.usage().reserved, 100);
+        drop(first);
+        drop(second);
+        drop(reserved);
+        let unreserved = budget.scope(AllocationClass::SharedBudget);
+        assert_eq!(
+            unreserved.capacity_snapshot(),
+            ScopeCapacity {
+                reserved: false,
+                ceiling: 1000,
+                available: 1000
+            }
+        );
+    }
+}
