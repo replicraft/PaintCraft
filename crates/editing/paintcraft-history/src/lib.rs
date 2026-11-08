@@ -69,6 +69,8 @@ impl Label {
 mod archive;
 mod compression;
 pub use compression::Compression;
+mod fork;
+pub use fork::ForkedHistory;
 mod memory;
 mod pressure;
 mod spill;

@@ -57,6 +57,14 @@ impl<K: Eq + Hash, V, S: BuildHasher> TrackedMap<K, V, S> {
     pub(crate) fn len(&self) -> usize {
         self.values.len()
     }
+    /// Proven retained table extent, including tombstones and empty buckets.
+    /// This is modeled traversal work, not a preemptible iterator quantum.
+    pub(crate) fn scan_work_upper(&self) -> Result<u64> {
+        self.allocation_upper
+            .checked_add(self.bucket_upper as u64)
+            .ok_or_else(|| limit("history memo scan work overflow"))
+    }
+
     pub(crate) fn capacity(&self) -> usize {
         self.values.capacity()
     }
