@@ -11,6 +11,7 @@ use paintcraft_raster::Admission;
 #[derive(Clone, Debug)]
 enum Request {
     Edit(Arc<Batch>),
+    LayerProperties(Arc<Batch>),
     Paste(
         Arc<paintcraft_editor::clipboard::PasteDraft>,
         PasteDestination,
@@ -83,6 +84,20 @@ pub(super) fn prepare_batch(
         .apply_with_admission(&batch, admission, &check)
         .map(Completion::Edit);
     defer_failure(base, Request::Edit(batch), result, realms, check)
+}
+/// Preserve the property dialog's narrow history intention across admission retries.
+pub(super) fn prepare_layer_properties(
+    preparation: Preparation,
+    batch: Arc<Batch>,
+    admission: Admission,
+    check: impl Fn() -> Result<()>,
+) -> Result<Completion> {
+    let base = preparation.history_ticket();
+    let realms = Realms::capture(&admission);
+    let result = preparation
+        .apply_layer_properties_with_admission(&batch, admission, &check)
+        .map(Completion::Edit);
+    defer_failure(base, Request::LayerProperties(batch), result, realms, check)
 }
 pub(super) fn prepare_paste(
     preparation: Preparation,
@@ -250,6 +265,9 @@ impl Editor {
                 let check = || cancellation.check();
                 match request {
                     Request::Edit(batch) => prepare_batch(preparation, batch, admission, check),
+                    Request::LayerProperties(batch) => {
+                        prepare_layer_properties(preparation, batch, admission, check)
+                    }
                     Request::Paste(draft, destination) => {
                         prepare_paste(preparation, draft, destination, admission, check)
                     }
@@ -300,3 +318,7 @@ mod metadata_tests;
 #[cfg(test)]
 #[path = "retry/paste_tests.rs"]
 mod paste_tests;
+
+#[cfg(test)]
+#[path = "retry/properties_tests.rs"]
+mod properties_tests;

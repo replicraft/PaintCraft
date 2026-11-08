@@ -75,6 +75,10 @@ fn combined_request_uses_actual_fifo_dedupe_one_undo_and_noop_with_paused_worker
             "dedupe precedes now-stale capture validation"
         );
         assert_eq!(e.undo_depth(), 1);
+        assert_eq!(
+            e.history_view().entries.last().unwrap().label.text(),
+            "Layer properties"
+        );
         let applied = e.document_snapshot();
         let value = &applied.layers[&layer];
         assert_eq!(value.name, "Combined");
@@ -292,4 +296,95 @@ fn actual_prepared_properties_recheck_retired_native_source_before_any_publicati
     assert_eq!(e.session.ticket(), ticket);
     assert_eq!(e.undo_depth(), 0);
     assert!(e.take_native_publication().is_none());
+}
+
+#[test]
+fn generic_property_and_blend_batches_keep_their_existing_batch_label() {
+    for asynchronous in [false, true] {
+        let mut e = editor();
+        if asynchronous {
+            e.connect_editing(
+                background::Service::with_budget(
+                    eframe::egui::Context::default(),
+                    SharedBudget::new(3 << 30),
+                )
+                .unwrap(),
+            );
+        }
+        let source = e.document_snapshot();
+        let layer = e.target().unwrap();
+        let batch = strokes::captured_batch(
+            e.session.ticket(),
+            vec![
+                Value::object([
+                    ("op", Value::str("layer.set_properties")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("name", Value::str("Generic")),
+                ]),
+                Value::object([
+                    ("op", Value::str("layer.set_blend_mode")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("blend_mode", Value::str("screen")),
+                ]),
+            ],
+        )
+        .unwrap();
+        e.commit_batch(batch, "Generic batch", None);
+        complete(&mut e);
+        assert_eq!(e.undo_depth(), 1);
+        assert_eq!(
+            e.history_view().entries.last().unwrap().label.text(),
+            "Batch edit"
+        );
+        assert_eq!(e.document().layers[&layer].name, "Generic");
+        assert_eq!(
+            e.document().layers[&layer].blend_mode,
+            LayerBlendMode::Screen
+        );
+        assert_eq!(
+            e.document().layers[&layer].raster,
+            source.layers[&layer].raster
+        );
+    }
+}
+
+#[test]
+fn fields_only_properties_keep_one_layer_properties_intent_when_mode_is_unchanged() {
+    for asynchronous in [false, true] {
+        let mut e = editor();
+        if asynchronous {
+            e.connect_editing(
+                background::Service::with_budget(
+                    eframe::egui::Context::default(),
+                    SharedBudget::new(3 << 30),
+                )
+                .unwrap(),
+            );
+        }
+        let source = e.document_snapshot();
+        let edit = request(&e, LayerBlendMode::Normal);
+        assert!(e.request_layer_properties(7070, edit));
+        complete(&mut e);
+        assert_eq!(e.undo_depth(), 1);
+        assert_eq!(
+            e.history_view().entries.last().unwrap().label.text(),
+            "Layer properties"
+        );
+        let layer = &e.document().layers[&e.target().unwrap()];
+        assert_eq!(
+            (&*layer.name, layer.visible, layer.opacity, layer.blend_mode),
+            ("Combined", false, 127, LayerBlendMode::Normal)
+        );
+        assert!(e.request_layer_properties(7071, request(&e, LayerBlendMode::Normal)));
+        complete(&mut e);
+        assert_eq!(e.undo_depth(), 1);
+        assert_eq!(
+            e.history_view().entries.last().unwrap().label.text(),
+            "Layer properties"
+        );
+        assert!(e.request(7072, Action::Undo));
+        complete(&mut e);
+        assert!(e.document().same_semantics(&source));
+        assert_eq!(e.undo_depth(), 0);
+    }
 }

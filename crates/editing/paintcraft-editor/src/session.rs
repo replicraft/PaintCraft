@@ -29,6 +29,7 @@ mod features;
 mod flatten;
 pub use features::masked_document_features;
 mod history;
+mod layer_properties;
 mod paste;
 mod persistence;
 mod preparation;

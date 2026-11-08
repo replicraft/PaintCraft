@@ -143,9 +143,49 @@ impl Editor {
             });
         match result {
             Ok(batch) => {
-                self.commit_batch(batch, "Layer properties changed", None);
+                self.commit_properties_batch(batch);
             }
             Err(error) => self.status = format!("Edit failed: {error}"),
+        }
+    }
+    /// Dedicated UI intention; generic commit_batch and its labels stay unchanged.
+    fn commit_properties_batch(&mut self, batch: Batch) {
+        if self.text_placement_failed() && self.text_submission.executing.is_none() {
+            self.status = "Finish pending edits before changing the document".into();
+            return;
+        }
+        if let Err(error) = self.check_text_attempt(self.text_submission.executing) {
+            self.fail_text_attempt(self.text_submission.executing);
+            self.status = format!("Edit failed: {error}");
+            return;
+        }
+        if let Some(service) = &self.editing {
+            let admission = service.admission(u64::MAX);
+            let task = self.session.preparation().map(|preparation| {
+                Box::new(move |cancel: paintcraft_runtime::Cancellation| {
+                    super::retry::prepare_layer_properties(
+                        preparation,
+                        Arc::new(batch),
+                        admission,
+                        || cancel.check(),
+                    )
+                }) as dispatch::Task
+            });
+            self.dispatch_initial(task, "Layer properties changed".into(), "", None);
+            return;
+        }
+        let before_canvas = self.document().canvas;
+        let before = self.session.ticket();
+        match self.session.apply_layer_properties(&batch) {
+            Ok(receipt) => {
+                self.record_native_publication(before, &receipt);
+                self.accept_edit(&receipt, "Layer properties changed", None, before_canvas);
+                self.finish_text_attempt(self.text_submission.executing, true);
+            }
+            Err(error) => {
+                self.fail_text_attempt(self.text_submission.executing);
+                self.status = format!("Edit failed: {error}");
+            }
         }
     }
 }
