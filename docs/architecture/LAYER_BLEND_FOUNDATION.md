@@ -340,3 +340,25 @@ receipts are `docs/validation/layer-blend-candidates/source8-snapshot-wasm/build
 and `docs/validation/layer-blend-candidates/source8-snapshot-wasm/node-attempt-2/final.json`;
 source hashes remain unchanged. The original attempt-1 evidence and general-reader
 work/heap exclusions above remain intact.
+
+### Owned immutable History source
+
+The opt-in History read-source primitive now moves an existing timeline into an
+immutable shared carrier, retaining actual Vec/Memo/Error storage credit with it.
+Capture performs O(1) backing/control assessment and returns the exact original
+owner on refusal. Owned cooperative forks keep that source through real Future
+Pending/cancellation/drop, and opaque handoff retires unused reservation factories
+while assigned storage remains funded. Already-funded backing and new carrier
+controls may retain their distinct original realms without fallback or double charge.
+
+Native History 63 and Editor 51 tests pass with current strict checks. The native
+private tests cover retained table/error capacities, pinned Arc layout and causal
+last-owner/account order; their native-only concurrency case is not Wasm evidence.
+A separate actual Node Wasm run passes 77 finite cases: the previous 65 plus 12
+public-API owned-source/future/factory controls using independently fixed limits.
+Its immutable receipt is
+`docs/validation/layer-blend-candidates/history-read-source-l1-wasm-effective/node-attempt-1/final.json`.
+Source hashes match before/after execution. The external Wasm harness does not
+claim execution of private layout/tombstone hooks or native concurrency. Session
+holders, funded mutation/publication, asynchronous retirement, persistent broker
+credit transfer and browser mask finalization remain separate integration gates.
