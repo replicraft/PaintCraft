@@ -74,7 +74,7 @@ impl RasterLayer {
         self.tiles
             .try_reserve(1)
             .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot allocate tile index"))?;
-        self.tiles.insert(coord, lease.0);
+        self.tiles.insert_reserved(coord, lease.0)?;
         Ok(())
     }
     /// Conservative index admission weight, distinct from pixel capacity or RSS.

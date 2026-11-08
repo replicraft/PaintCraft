@@ -154,8 +154,8 @@ impl PaintSnapshot {
             metadata::Metadata::new(size_of::<Node>(), admission.paint_metadata_limit)?;
         for (&coord, tile) in &source.tiles {
             check()?;
-            metadata.table(&mut captured.tiles, &mut charge)?;
-            captured.tiles.insert(coord, tile.clone());
+            metadata.raster_table(&mut captured.tiles, &mut charge)?;
+            captured.tiles.insert_reserved(coord, tile.clone())?;
         }
         Self::owned(captured, charge, check)
     }

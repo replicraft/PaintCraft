@@ -87,7 +87,7 @@ impl RasterLayer {
             return Err(limit());
         }
         spend(layout.bytes)?; // fresh table/control initialization upper
-        let mut tiles = HashMap::new();
+        let mut tiles = TileTable::new();
         tiles.try_reserve(self.tiles.len()).map_err(|_| limit())?;
         if tiles.capacity() != layout.capacity {
             return Err(bad("fresh tile map differs from pinned layout"));
@@ -95,7 +95,7 @@ impl RasterLayer {
         for (coord, tile) in &self.tiles {
             check()?;
             spend((size_of::<(TileCoord, Arc<Tile>)>() + size_of::<TileCoord>()) as u64)?;
-            tiles.insert(*coord, Arc::clone(tile));
+            tiles.insert_reserved(*coord, Arc::clone(tile))?;
         }
         Ok(Self {
             width: self.width,
@@ -131,7 +131,11 @@ mod tests {
             .unwrap();
         let tile = source.tiles.values().next().unwrap().clone();
         for tx in 1..4096 {
-            source.tiles.insert(TileCoord { tx, ty: 0 }, tile.clone());
+            source.tiles.try_reserve(1).unwrap();
+            source
+                .tiles
+                .insert_reserved(TileCoord { tx, ty: 0 }, tile.clone())
+                .unwrap();
         }
         let allocated_capacity = source.tiles.capacity();
         for tx in 1..4096 {

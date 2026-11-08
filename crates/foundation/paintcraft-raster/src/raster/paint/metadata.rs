@@ -116,4 +116,47 @@ impl Metadata {
             }
         }
     }
+    // Compatibility adapter for the existing logical paint-metadata policy.
+    // Tracker bounds are separate facts; this does not activate new admission.
+    pub(super) fn raster_table(
+        &mut self,
+        tiles: &mut TileTable,
+        charge: &mut BudgetAccount,
+    ) -> Result<()> {
+        if tiles.len() < tiles.capacity() {
+            return Ok(());
+        }
+        let width = size_of::<(TileCoord, Arc<Tile>)>();
+        self.check(width)?;
+        let old = tiles.capacity();
+        let before = charge.bytes();
+        charge.resize(before.checked_add(width as u64).ok_or_else(exhausted)?)?;
+        if tiles.try_reserve(1).is_err() {
+            charge.resize(before)?;
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "cannot allocate paint tile plan",
+            ));
+        }
+        let actual = (tiles.capacity() - old)
+            .checked_mul(width)
+            .ok_or_else(exhausted);
+        let result = actual.and_then(|bytes| {
+            charge.resize(before.checked_add(bytes as u64).ok_or_else(exhausted)?)?;
+            self.check(bytes)?;
+            Ok(bytes)
+        });
+        match result {
+            Ok(bytes) => {
+                self.used += bytes;
+                Ok(())
+            }
+            Err(error) => {
+                // This account owns the map and all of its index vectors.
+                drop(std::mem::take(tiles));
+                charge.resize(0)?;
+                Err(error)
+            }
+        }
+    }
 }

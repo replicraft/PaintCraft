@@ -166,7 +166,7 @@ impl ReservedDecodeAdmission {
             let (s, d) = ((y * w * 4) as usize, (y * TILE_EDGE * 4) as usize);
             tile.pixels[d..d + (w * 4) as usize].copy_from_slice(&data[s..s + (w * 4) as usize]);
         }
-        layer.tiles.insert(coord, Arc::new(tile));
+        layer.tiles.insert_reserved(coord, Arc::new(tile))?;
         Ok(())
     }
 }

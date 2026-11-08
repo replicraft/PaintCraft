@@ -143,9 +143,11 @@ fn expanding_partial_tiles_clears_padding_that_was_outside_the_finite_source() {
     let mut source = RasterLayer::new(1, 1, Rgba::TRANSPARENT);
     let mut tile = Tile::filled(Rgba([17; 4]), &mut Admission::new(65536)).unwrap();
     tile.mark_all();
+    source.tiles.try_reserve(1).unwrap();
     source
         .tiles
-        .insert(TileCoord { tx: 0, ty: 0 }, Arc::new(tile));
+        .insert_reserved(TileCoord { tx: 0, ty: 0 }, Arc::new(tile))
+        .unwrap();
     let mut adm = Admission::new(65536);
     let plan = RgbaPastePlan::prepare(
         &source,

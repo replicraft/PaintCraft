@@ -19,6 +19,9 @@ pub use paint::{
     PaintOverlay, PaintPlan, PaintProjection, PaintReader, PaintSnapshot, RgbaPastePlan,
     SimulatedLayer, TileFootprint, TilePlanner,
 };
+mod tile_table;
+pub use tile_table::RetainedTileTableQuote;
+use tile_table::TileTable;
 mod decode_factories;
 mod tile;
 pub use decode_factories::{
@@ -313,7 +316,7 @@ pub struct RasterLayer {
     width: u32,
     height: u32,
     default: Rgba,
-    tiles: HashMap<TileCoord, Arc<Tile>>,
+    tiles: TileTable,
 }
 
 impl RasterLayer {
@@ -322,7 +325,7 @@ impl RasterLayer {
             width,
             height,
             default,
-            tiles: HashMap::new(),
+            tiles: TileTable::new(),
         }
     }
 
@@ -447,42 +450,26 @@ impl RasterLayer {
         adm: &mut Admission,
         write: impl FnOnce(&mut Tile) -> R,
     ) -> Result<R> {
-        use std::collections::hash_map::Entry;
-        if self.tiles.len() == self.tiles.capacity() && !self.tiles.contains_key(&c) {
-            self.tiles.try_reserve(1).map_err(|_| {
-                Error::new(ErrorCode::ResourceLimit, "cannot allocate raster index")
-            })?;
-        }
         let default = self.default;
-        match self.tiles.entry(c) {
-            Entry::Occupied(entry) => {
-                let arc = entry.into_mut();
-                if let Some(tile) = Arc::get_mut(arc) {
-                    return Ok(write(tile));
+        let arc = self
+            .tiles
+            .get_or_try_insert_with(c, || Tile::filled(default, adm).map(Arc::new))?;
+        if let Some(tile) = Arc::get_mut(arc) {
+            return Ok(write(tile));
+        }
+        {
+            // Preserve weak-reader arbitration and admitted fallible COW.
+            let original = std::mem::replace(arc, Arc::new(Tile::empty()));
+            match Arc::try_unwrap(original) {
+                Ok(tile) => *arc = Arc::new(tile),
+                Err(original) => {
+                    *arc = original;
+                    let tile = Tile::copied(arc, adm)?;
+                    *arc = Arc::new(tile);
                 }
-                {
-                    // try_unwrap atomically arbitrates weak-reader upgrades. A
-                    // successful transfer moves the existing Vec without copying;
-                    // a racing/live reader requires admitted, fallible COW.
-                    let original = std::mem::replace(arc, Arc::new(Tile::empty()));
-                    match Arc::try_unwrap(original) {
-                        Ok(tile) => *arc = Arc::new(tile),
-                        Err(original) => {
-                            *arc = original;
-                            let tile = Tile::copied(arc, adm)?;
-                            *arc = Arc::new(tile);
-                        }
-                    }
-                }
-                Ok(write(Arc::get_mut(arc).expect("private admitted tile")))
-            }
-            Entry::Vacant(entry) => {
-                let tile = Tile::filled(default, adm)?;
-                Ok(write(
-                    Arc::get_mut(entry.insert(Arc::new(tile))).expect("new private tile"),
-                ))
             }
         }
+        Ok(write(Arc::get_mut(arc).expect("private admitted tile")))
     }
 
     /// Blend one pixel; out-of-bounds coordinates are ignored. Unwritten tiles are

@@ -80,13 +80,13 @@ impl RasterLayer {
                     let start = (y * TILE_EDGE * 4) as usize;
                     tile.pixels[start..start + source.len()].copy_from_slice(source);
                 }
-                layer.tiles.insert(
+                layer.tiles.insert_reserved(
                     TileCoord {
                         tx: i64::from(tx),
                         ty: i64::from(ty),
                     },
                     Arc::new(tile),
-                );
+                )?;
             }
         }
         check()?;

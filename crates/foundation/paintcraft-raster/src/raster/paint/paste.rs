@@ -271,7 +271,7 @@ impl RgbaPastePlan {
                             tile.pixels[at..at + 4].copy_from_slice(&color.0);
                         }
                     }
-                    output.tiles.insert(coord, Arc::new(tile));
+                    output.tiles.insert_reserved(coord, Arc::new(tile))?;
                 }
             }
         }
