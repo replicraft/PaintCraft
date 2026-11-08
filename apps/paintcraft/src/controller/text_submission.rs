@@ -106,6 +106,7 @@ impl Editor {
             action,
             scope: self.native_activation.clone(),
             text: Some(attempt),
+            properties: None,
         };
         let accepted = if let Some(index) = replacement {
             if self.outbox.remember(token) {

@@ -5,6 +5,7 @@ pub(in crate::controller) struct QueuedEdit {
     pub(in crate::controller) action: Action,
     pub(in crate::controller) scope: Option<Scope>,
     pub(in crate::controller) text: Option<text_submission::Attempt>,
+    pub(in crate::controller) properties: Option<properties::QueuedProperties>,
 }
 #[derive(Debug, Default)]
 pub(in crate::controller) struct Activations(paintcraft_ui::outbox::Outbox<QueuedEdit>);
@@ -14,6 +15,7 @@ impl Activations {
         token: Token,
         action: Action,
         scope: Option<Scope>,
+        properties: Option<properties::QueuedProperties>,
     ) -> bool {
         self.0.push(
             token,
@@ -21,6 +23,7 @@ impl Activations {
                 action,
                 scope,
                 text: None,
+                properties,
             },
         )
     }
@@ -91,7 +94,11 @@ impl Editor {
         }
         let prior = self.native_activation.take();
         self.native_activation = queued.scope;
-        self.execute(queued.action);
+        if let Some(properties) = queued.properties {
+            self.execute_properties(queued.action, properties);
+        } else {
+            self.execute(queued.action);
+        }
         self.text_submission.executing = None;
         self.native_activation = prior;
     }

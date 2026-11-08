@@ -14,7 +14,21 @@ pub(super) struct Source {
 impl Editor {
     /// Queue one activation, deduplicating before resolving private drafts.
     pub fn request(&mut self, token: Token, action: Action) -> bool {
+        self.request_with_properties(token, action, None)
+    }
+    pub(super) fn request_with_properties(
+        &mut self,
+        token: Token,
+        action: Action,
+        properties: Option<properties::QueuedProperties>,
+    ) -> bool {
         if self.outbox.has_seen(token) {
+            return false;
+        }
+        if let Some(properties) = &properties
+            && let Err(error) = self.validate_properties(&action, properties, true)
+        {
+            self.status = format!("Edit failed: {error}");
             return false;
         }
         if let Action::LayerMask(edit) = &action
@@ -58,7 +72,7 @@ impl Editor {
         }
         let accepted = self
             .outbox
-            .push(token, action, self.native_activation.clone());
+            .push(token, action, self.native_activation.clone(), properties);
         if accepted {
             self.preview_queue_revision.advance();
         }
