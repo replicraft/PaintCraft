@@ -642,6 +642,17 @@ extents. Pure layout, original-capacity refusal, paid callback errors/retries,
 alias lifetime and fresh-index controls pass. The native receipt is
 `docs/validation/layer-blend-candidates/source8-r2-core-icc-index/native-attempt-2/final.json`;
 `qualified-freeze.json` binds all 13 effective source paths. The initial strict
-failure and test-only lexical-scope correction remain preserved. Actual Wasm
-qualification is pending; exact A8/pixel materializers, closed source assembly,
-candidate/frame ownership and browser activation remain separate work.
+failure and test-only lexical-scope correction remain preserved.
+
+Actual Node Wasm qualification now passes 207 finite cases: the previous 173
+plus 14 metadata wires and 20 public reservation, cancellation, paid retry,
+alias-lifetime and fresh-index controls. The build uses the six actual Cargo
+packages and generated wasm-bindgen glue. Source hashes stay unchanged, and
+linear memory finishes at 3,473,408 bytes under the unchanged 16 MiB maximum.
+The runtime receipt is
+`docs/validation/layer-blend-candidates/source8-r2-core-icc-index-wasm/node-attempt-1/final.json`;
+the build receipt SHA256 is
+`cdbb0f61fa7368374942131f5e17e17590c7937f9f59c4bf73c3ba47b8d11caa`.
+This is actual Wasm execution in Node, with no browser UI, Worker activation,
+timing target or physical memory claim. Exact A8/pixel materializers, closed
+source assembly and candidate/frame ownership remain separate work.
