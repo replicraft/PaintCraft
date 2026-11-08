@@ -1,9 +1,10 @@
 # Layer blend foundation
 
 Multiply and Screen are being integrated as stored, editable layer properties.
-The current slice covers numerical behavior, typed editing, persistence, history
-and scoped serial CPU and GPU composition. It does not expose frontend blend
-controls or enable browser blend execution.
+The current slices cover numerical behavior, typed editing, persistence, history
+and scoped serial CPU and GPU composition. Native Studio now exposes staged blend
+controls; browser blend execution remains gated. The native selector checkpoint
+below records its separate qualification scope.
 
 ## Numerical contract
 
@@ -111,9 +112,10 @@ source passes outside that restriction. Both attempts remain recorded separately
 under the same integration directory.
 
 This is native Metal execution evidence; Wasm lint does not establish browser GPU
-execution, other GPU adapters, runtime performance or RSS. Browser adoption,
-native blend controls and foreign-copy consent remain open. Browser guards and
-closed clipboard/foreign consumers stay in place.
+execution, other GPU adapters, runtime performance or RSS. At this GPU checkpoint,
+browser adoption, native blend controls and foreign-copy consent were still open.
+The later native selector checkpoint does not relax browser guards or closed
+clipboard/foreign consumers.
 
 ## Native host admission prerequisite
 
@@ -163,9 +165,9 @@ recovery-refusal failure; its replacement tests actual consent, tab ownership an
 checkpoint handoff. Original failures, amendments and actual gate logs are under
 `docs/validation/layer-blend-native-view-integration/`.
 
-This admits native document viewing and existing editing consumers. It does not
-add a blend selector, activate browser PCND8 execution, grant foreign-bake consent
-or open the old visible-clipboard route. Those remain separate consumer gates.
+This viewing checkpoint admits native document viewing and existing editing
+consumers. The later native selector checkpoint is separate. Browser PCND8
+execution, foreign-bake consent and the old visible-clipboard route remain gated.
 
 ## Browser metadata groundwork
 
@@ -188,3 +190,56 @@ Existing Source5/6/7 endpoints remain closed to registry 4 and blend execution.
 This groundwork does not add a Worker8 endpoint, admitted portable PCND8 source,
 CPU preparation service or Main consumer. Those still need their own ownership,
 work-accounting and actual browser qualification.
+
+## Native Studio layer-properties controls
+
+Native Studio's Layer Properties dialog now stages Normal, Multiply and Screen
+alongside name, visibility and opacity. Apply submits one atomic two-operation
+batch through the existing activation FIFO, producing one Undo entry. An unchanged
+Apply is a no-op. Cancel and Escape discard the draft without changing source
+pixels or history; switching the layer, tab, document owner or publication retires
+stale drafts rather than rebasing them.
+
+The dialog waits for earlier accepted edits and text to resolve before capturing
+its values. Acceptance and queue-head checks retain the actual owner, state,
+publication epoch and target. Native activation retirement still reaches the
+existing prepared-publication guard. Closing the last Studio tab disables the
+real F4/menu action, and the private dispatch/dialog handlers also refuse the
+placeholder document. The existing Classic/browser presentation entry remains
+unchanged and exposes no blend selector. Seven locales include the new controls.
+
+The full native library suite passes **817 tests with 29 existing ignored tests**
+with the GPU adapter required. Native all-target strict lint and actual Main/both-
+Worker Wasm library strict lint pass, as do formatting, translation coverage
+(1,478 messages across seven locales), source-length limits and whitespace checks.
+The first lint attempt failed writing compiler metadata because the disk filled;
+the remaining-only retry passes without repeating the successful native suite.
+Earlier harness-frame and test-budget corrections remain recorded separately.
+
+An actual Apple M1 Pro Metal offscreen diagnostic renders eight English/German
+mode and popup images. Four representative images were visually reviewed for
+readable choices, the long German Screen label and complete Apply/Cancel controls.
+This is modal-layout evidence at 900 × 850, not whole-application visual parity.
+The temporary diagnostic source was restored byte-for-byte before the full suite.
+All 17 product inputs match before and after qualification. Original failures,
+source hashes, terminal results and visual artifacts are retained under
+`docs/validation/layer-blend-native-controls-integration/` and
+`docs/validation/native-controls-ui/`.
+
+Actual before/after private native64 layout probes observe `QueuedEdit` and its
+background queue slot growing from 2,304 to 2,368 bytes, and `PropertiesDraft`
+(including its optional representation) from 88 to 152 bytes: **+64 bytes** in
+each measured case. `ToolsAction` remains 136 bytes. These are unpriced native
+queue/modal bookkeeping bytes, not newly reserved capacity, a Wasm/public-ABI
+claim or a full native memory bound. The generic activation FIFO and retained
+vector capacities are not capped by its 4,096 remembered-token history. Layer
+names are limited to 1,024 characters when applying, which does not bound draft
+String capacity. The existing preparation estimate and Worker workspace do not
+account for this host bookkeeping. The finite audit and layout receipts remain
+under `docs/validation/layer-blend-native-controls-bookkeeping/` and
+`docs/validation/layer-blend-native-controls-layout-probe/`.
+
+This selector does not activate browser blend execution, asynchronous browser mask
+editing, appearance-aware foreign-copy consent or the closed visible-clipboard
+route. Those consumers require separate source ownership, admission and actual
+runtime qualification. Full Palette blend/style parity remains open.

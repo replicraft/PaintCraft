@@ -57,10 +57,13 @@ Multiply/Screen now have locally qualified metadata, history, PCND8 persistence
 and scoped CPU/GPU composition, including actual Metal execution. Native
 Classic/Studio open, save and recovery adoption passes the full native library
 suite, including real display, filter-preview and derived-image consumers.
-Blend selectors and browser execution remain open; see the
+Native Studio now has staged Normal/Multiply/Screen properties with atomic Apply
+and one-step Undo. The full native suite, native/Wasm strict checks and finite
+offscreen layout review pass. Browser execution and appearance-aware
+foreign/clipboard consent remain gated; see the
 [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md).
-Next is completing browser mask actions, browser blend adoption and native blend
-controls, then Color Overlay as the first live style. Its
+Next is completing browser mask actions and browser blend adoption, then Color
+Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
 independent native and actual Wasm scalar/row checks; document persistence and
 rendering integration remain open. The remaining author's 132-entry

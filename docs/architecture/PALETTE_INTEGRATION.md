@@ -69,8 +69,11 @@ See [the layer-mask record](LAYER_MASK_FOUNDATION.md) for the tested scope.
 
 The [Multiply/Screen foundation](LAYER_BLEND_FOUNDATION.md) now covers exact
 numerical behavior, metadata, history, native PCND8 persistence and scoped CPU/GPU
-composition. Native Metal tests qualify the GPU arithmetic and stage order;
-frontend controls and browser blend execution remain open. The next slices finish
+composition. Native Metal tests qualify the GPU arithmetic and stage order.
+Native Studio now stages blend choices in Layer Properties with atomic Apply and
+one-step Undo. The full native suite, native/Wasm strict checks and finite
+offscreen layout review pass. Browser blend execution remains gated.
+The next slices finish
 browser layer-mask editing and blend adoption, then **Color Overlay** as the first
 live layer style. Each slice needs its own persistence, history, automation and
 rendering contract.
@@ -79,8 +82,10 @@ independent native and actual Wasm scalar/row checks. Its document, rendering an
 integration remain open; it is not a fourteenth filter.
 Native Classic/Studio can now open, save and recover blend documents, with actual
 display, filter-preview, sampling, Flatten, thumbnail and print-image preparation
-tests. Native selectors, browser execution and foreign/clipboard adoption remain
-separate work.
+tests. The native selector retains existing source/FIFO/publication guards; its
+measured +64-byte private queue/modal growth is unpriced host bookkeeping, not a
+full memory bound. Browser execution and foreign/clipboard adoption remain separate
+work.
 Other filters can follow through individually specified numerical/spatial
 contracts. The author's pinned 132 filters, ten style families and nineteen blend
 modes are an inventory, not completed PaintCraft parity or a wholesale port.
