@@ -544,8 +544,9 @@ unchanged pixel ceiling. The Wasm harness also preserves a pre-execution metric
 slot correction, separating clone quotes from demand peaks. Product grants,
 wire/pixel expectations and old writer callback prices remain unchanged.
 
-History registration, compact metadata cloning and rooted writers still need
-their separately reviewed scan and ownership supplements. This tracker does not
+History registration and compact metadata cloning still need their separately
+reviewed scan and ownership supplements. Rooted writer work is amended below.
+This tracker does not
 retroactively fund old storage, establish physical probe/allocator timing or RSS,
 or activate browser mask/blend consumers.
 
@@ -585,3 +586,32 @@ Document, root, reservation, materializer or publication authority. Native Zstd
 remains supported by the separate general reader; this portable transport refuses
 its code3 before decoder initialization. Original-realm materializers, complete
 source/index/header ownership and browser activation remain separate work.
+
+### Rooted snapshot collector work amendment
+
+Rooted Normal and Source8 writers now explicitly prepay their retained tile-table
+scan, copied tuple/strong-handle lifecycle and a conservative heapsort move upper
+before collection begins. The scalar quote costs 64 work units. A fresh one-tile
+table adds 210 units in total, a retained sparse one-tile table 938, and a fresh
+two-tile table 452. Zero-entry tables pay only 64 and skip iterator/index creation,
+including allocated-empty tables. These are declared structural policy units,
+not measured CPU timings. Both complete counted passes pay the supplement; output
+initialization remains a separate debit. Original counters/scopes and wire bytes
+are preserved. Ordinary writer, block collector and sort bodies stay unchanged.
+
+Formats passes 691 native tests with 12 existing ignores, six documentation
+checks and strict workspace/Main/Worker checks. Actual Node Wasm passes 173
+finite cases, including twelve new public scan, wire-parity, scope and paid-retry
+controls. This explicitly requalifies the changed rooted callback prices rather
+than relabeling earlier receipts. The module ends at 3,473,408 bytes under the
+unchanged 16 MiB maximum, with source hashes unchanged. The runtime receipt is
+`docs/validation/layer-blend-candidates/source8-rooted-collector-wasm/node-attempt-1/final.json`;
+the build receipt SHA256 is
+`bd53101e5b22025cb5284362ce1d5b1976d1ec2a1e70583b3e16ddd197668454`.
+
+The preserved initial failures required only a missing import and a type alias
+in the new test helper. Trailer-cancellation controls explicitly distinguish the
+new 64-unit scalar debit from the later SHA trailer debit, keeping the same paid
+work counter. Compact staging, history registration, D1 forecasts and complete
+reader ownership remain separate gates. No physical hash-probe, allocator/RSS,
+latency or browser activation claim follows from this work amendment.
