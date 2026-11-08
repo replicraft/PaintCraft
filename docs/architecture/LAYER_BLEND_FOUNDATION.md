@@ -407,3 +407,34 @@ checks also pass. The immutable receipt is
 Diagnostic Option conversions and public caller capture were corrected; initial
 compilation failures and original literals remain archived. These additions change
 tests only and do not activate browser consumers.
+
+### Rooted Normal portable snapshots
+
+A separate admitted writer now covers Normal-only PCND1–7 with root-ordered
+identity/uniqueness, stored blend eligibility, filter catalog and coverage passes.
+It preserves portable bytes/default elision, disabled descriptors and masks,
+metadata and codec choice. Hidden or zero-opacity nonNormal layers are refused.
+Its structural root/get policy prices each lookup walk explicitly; it does not
+claim physical HashMap or inherited raster-iterator probe-time bounds. Existing
+writer bodies and callers remain unchanged.
+
+The actual native Formats run passes 652 tests (12 existing tests ignored), and
+strict workspace/Main/Worker checks pass. The separate actual Node Wasm matrix
+passes 75 finite cases: preserved 39 Source8 snapshot assertions plus 20 independent
+Normal profile1–7 wire literals and 16 admission, debt/retry, cancellation, strict
+eligibility and retained/tombstoned-map controls. Inputs and distinct encoded
+outputs are authenticated; readers use fixed explicit metadata/coverage admission.
+Returned scratch quotes never establish grants. This is not a full general-reader
+heap/work, allocator/RSS, timing, browser UI, Worker8 or persistent Main-credit claim.
+
+Immutable evidence:
+`docs/validation/layer-blend-candidates/normal-rooted-snapshot-wasm/node-attempt-1/final.json`
+(SHA256 `29d2057b303119b1907e9aa843defbbda1bf0b73da185d71990204b18b41c9ac`,
+sourceUnchanged=true); actual build receipt SHA256
+`03dabca518c53824ee49317fa29227f3de16b913d9392e33c77922e59f046c12`.
+Initial native fixture failures are preserved. Two test-only corrections added
+explicit coverage admission to four fixture reads, then corrected the canvas-pixel
+bound to 1024 for the separate 257×3 native codec fixture. Both exact deltas are in
+`docs/validation/layer-blend-candidates/normal-rooted-snapshot/root-corrections/`;
+no product behavior, independent wire or expected work was changed. Count/fixed
+wrappers and all-consumer browser credit integration remain separate prerequisites.
