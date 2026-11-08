@@ -666,6 +666,8 @@ impl PartialEq for RasterLayer {
 
 impl Eq for RasterLayer {}
 
+mod decode_index;
+
 #[cfg(test)]
 mod tests;
 
