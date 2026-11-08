@@ -462,3 +462,28 @@ This constructor funds its fixed gauge/control allocations and decoded pixels.
 Containing Tile headers, index storage and the complete reader source lifetime
 still require their own census and ownership declarations. This does not establish
 full reader heap admission, Worker8 activation, persistent Main credit or latency.
+
+### Counted fixed-size Normal snapshots
+
+The Normal-only rooted writer now has an additive count/fixed-output API. A count
+fact borrows the original immutable document, scope and callbacks; encoding accepts
+no replacements. The full container count includes its SHA trailer and refuses
+above 64 MiB. Encoding prepays buffer initialization, retains the output declaration
+with its bytes, then runs the complete writer again on the same work ledger.
+Partial failures retain paid work, and callers can retry without replacing that
+ledger. There is no public detached Vec or account escape.
+
+The native Formats suite passes 675 tests with 12 existing ignores. Documentation
+checks include three compile-fail ownership examples. Strict workspace and
+Main/bothWorker Wasm linting, formatting and source length checks pass. Twenty
+independent wire literals, portable codec parity, boundary, cancellation and
+retained-debt controls cover the new API. The first strict run caught missing
+Debug implementations; bounded manual implementations corrected only formatting
+behavior, with the failed attempt and preimages preserved.
+
+The immutable native receipt is
+`docs/validation/browser-mask-next/source-count-prerequisite/shared-formats-counted-candidate/native-attempt-2/final.json`,
+with source hashes in `qualified-freeze.json` beside that attempt. Actual Wasm
+runtime qualification is pending. This API does not establish full reader heap
+admission, physical raster-table scan bounds, persistent Main credit, Worker8
+activation, allocator/RSS bounds or latency improvements.
