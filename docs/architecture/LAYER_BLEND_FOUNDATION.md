@@ -333,3 +333,10 @@ Actual source hashes match before/after the Wasm build and execution. These
 forecasts price their declared metadata helpers, not all inherited renderer
 layer-table traversal. D1 and Worker8/Main execution remain blocked on that
 accounting/provenance gate; no browser route or activation is added.
+
+The same current D0 source closure also passes a fresh 39-case portable snapshot
+run, separately from the 65 service/style/History/forecast cases. Its immutable
+receipts are `docs/validation/layer-blend-candidates/source8-snapshot-wasm/build-attempt-2/build-final.json`
+and `docs/validation/layer-blend-candidates/source8-snapshot-wasm/node-attempt-2/final.json`;
+source hashes remain unchanged. The original attempt-1 evidence and general-reader
+work/heap exclusions above remain intact.
