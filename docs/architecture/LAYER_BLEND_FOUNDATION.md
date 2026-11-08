@@ -396,3 +396,14 @@ rooted source closure. Its immutable receipt is
 `docs/validation/layer-blend-candidates/source8-snapshot-wasm/node-attempt-3/final.json`
 (build `7a655a73911814f0bcccc6c31e9031482daf2f2d7ab3a4c816731501fda35bff`).
 The same general-reader heap/work and browser-activation exclusions apply.
+
+Additional branch controls extend the actual Wasm matrix to 90 cases while
+preserving the earlier 84 assertions. Independent pixels cover nonuniform Box Blur
+edges and a cropped region, Vibrance with an own mask, and Blur followed by Invert
+and an own mask. Cancellation and one-unit-short facts admission retain the paid
+prefix on the same counter before retry. Two native groups and renderer strict
+checks also pass. The immutable receipt is
+`docs/validation/layer-blend-candidates/rooted-branch-wasm-effective-public/node-attempt-2/final.json`.
+Diagnostic Option conversions and public caller capture were corrected; initial
+compilation failures and original literals remain archived. These additions change
+tests only and do not activate browser consumers.

@@ -316,3 +316,5 @@ fn root_facts_reject_duplicate_or_missing_identity_and_cancel_without_unpriced_s
     assert_eq!(err.code, ErrorCode::OperationCancelled);
     assert_eq!(used.get(), 4178);
 }
+
+mod branches;
