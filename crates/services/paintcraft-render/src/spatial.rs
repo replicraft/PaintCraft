@@ -6,6 +6,8 @@ use paintcraft_document::Layer;
 
 mod context;
 mod plan;
+mod rooted;
+pub(crate) use rooted::preflight as preflight_rooted;
 mod tiles;
 mod workspace;
 pub use context::{

@@ -7,6 +7,7 @@ mod compose;
 #[cfg(feature = "gpu")]
 mod gpu;
 pub mod metadata;
+pub(crate) mod rooted;
 pub mod service;
 #[cfg(feature = "gpu")]
 pub(crate) use gpu::{

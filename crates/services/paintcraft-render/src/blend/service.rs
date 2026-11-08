@@ -11,6 +11,8 @@ use crate::{Document, Rect};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 mod caller;
 mod gateway;
+mod rooted;
+pub use rooted::{RootedCallQuote, render_rooted_call_checked, rooted_call_quote_checked};
 #[derive(Clone, Copy, Debug)]
 pub enum Caller<'a> {
     Base(&'a WorkspaceAdmission),

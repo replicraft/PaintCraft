@@ -114,5 +114,7 @@ pub fn quote_unbound_call_checked(
         requires_noise,
     })
 }
+mod rooted;
+pub use rooted::{UnboundRootedCallForecast, quote_unbound_rooted_call_checked};
 #[cfg(test)]
 mod tests;
