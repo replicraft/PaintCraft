@@ -71,6 +71,8 @@ mod compression;
 pub use compression::Compression;
 mod fork;
 pub use fork::ForkedHistory;
+mod source;
+pub use source::{HistoryReadSource, ReadSourceQuote, RetainedHistoryStorage, SourceRejected};
 mod memory;
 mod pressure;
 mod spill;

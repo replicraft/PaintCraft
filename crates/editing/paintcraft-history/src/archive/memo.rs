@@ -65,6 +65,10 @@ impl<K: Eq + Hash, V, S: BuildHasher> TrackedMap<K, V, S> {
             .ok_or_else(|| limit("history memo scan work overflow"))
     }
 
+    /// Actual tracked table allocation upper, never inferred after deletion.
+    pub(crate) fn retained_allocation_upper(&self) -> u64 {
+        self.allocation_upper
+    }
     pub(crate) fn capacity(&self) -> usize {
         self.values.capacity()
     }

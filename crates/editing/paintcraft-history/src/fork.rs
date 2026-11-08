@@ -25,6 +25,35 @@ impl ForkedHistory {
     pub fn copied_bytes(&self) -> u64 {
         self.account.bytes()
     }
+    /// Move actual storage/account together, then retire only the unused factory.
+    /// No detached History or replacement reservation escapes this handoff.
+    #[allow(
+        clippy::result_large_err,
+        reason = "Refusal returns original owned storage without allocating an error box"
+    )]
+    pub fn into_retained_storage(
+        self,
+    ) -> std::result::Result<crate::RetainedHistoryStorage, crate::SourceRejected<Self>> {
+        let Self {
+            history,
+            account,
+            _scope,
+        } = self;
+        match crate::source::retained::from_fork_parts(history, account) {
+            Ok(storage) => {
+                drop(_scope);
+                Ok(storage)
+            }
+            Err(rejected) => Err(crate::SourceRejected {
+                original: Self {
+                    history: rejected.history,
+                    account: rejected.account,
+                    _scope,
+                },
+                error: rejected.error,
+            }),
+        }
+    }
 }
 // Field order also protects errors and incomplete/cancelled future destruction.
 struct Building {
