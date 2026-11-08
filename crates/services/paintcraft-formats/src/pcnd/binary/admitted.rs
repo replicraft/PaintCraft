@@ -372,5 +372,11 @@ pub use normal_rooted::{
     write_portable_normal_snapshot_rooted_admitted_checked,
 };
 
+mod counted;
+pub use counted::{
+    CountedNormalSnapshot, CountedSnapshotBytes, NormalCountedControlBytes,
+    count_portable_normal_snapshot_rooted_checked, normal_counted_snapshot_control_bytes,
+};
+
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests;

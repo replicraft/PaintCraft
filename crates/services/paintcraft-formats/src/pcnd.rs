@@ -325,3 +325,8 @@ pub use binary::admitted::{
     portable_normal_snapshot_rooted_scratch_quote,
     write_portable_normal_snapshot_rooted_admitted_checked,
 };
+
+pub use binary::admitted::{
+    CountedNormalSnapshot, CountedSnapshotBytes, NormalCountedControlBytes,
+    count_portable_normal_snapshot_rooted_checked, normal_counted_snapshot_control_bytes,
+};
