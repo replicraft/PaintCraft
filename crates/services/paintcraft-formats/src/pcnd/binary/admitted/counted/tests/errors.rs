@@ -100,7 +100,7 @@ fn count_and_real_trailer_cancel_keep_typed_first_error() {
         let spend = |n| {
             if n == 64 {
                 seen.set(seen.get() + 1);
-                if refuse.get() {
+                if refuse.get() && seen.get() == 2 {
                     return Err(expected.clone());
                 }
             }
@@ -112,6 +112,7 @@ fn count_and_real_trailer_cancel_keep_typed_first_error() {
             assert_eq!(error(result), expected);
         } else {
             let fact = result.unwrap();
+            seen.set(0); // Reset the phase ordinal, never the actual work counter.
             refuse.set(true);
             assert_eq!(error(fact.encode()), expected);
             assert_eq!(
@@ -120,7 +121,7 @@ fn count_and_real_trailer_cancel_keep_typed_first_error() {
             );
             drop(fact);
         }
-        assert!(seen.get() > 0);
+        assert_eq!(seen.get(), 2, "math64 precedes the actual trailer64");
         assert_eq!(scope.footprint().live, 0);
         assert_eq!(budget.usage().reserved, 0);
     }

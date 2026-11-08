@@ -380,3 +380,5 @@ pub use counted::{
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests;
+
+mod rooted_blocks;

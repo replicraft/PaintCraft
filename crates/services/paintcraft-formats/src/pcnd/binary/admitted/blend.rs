@@ -85,7 +85,7 @@ fn write_encoded_blend_admitted(
         masks::write_layer(layer.mask.as_ref(), &mut output, &mask_check)?;
         // A terminator avoids a counting pass over decoded tiles. Each record is
         // bounded independently, allowing the sink to apply backpressure.
-        blocks(&layer.raster, scope, check, spend, &mut |bx, by, data| {
+        rooted_blocks::collect(&layer.raster, scope, check, spend, &mut |bx, by, data| {
             let stored = compression::admitted::block(data, scope, check, spend)?;
             output.bytes(&[match stored.encoding() {
                 "raw" => 1,
