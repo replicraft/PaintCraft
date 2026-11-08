@@ -14,6 +14,9 @@ pub use filter_digest::filter_digest_checked;
 pub(in crate::pcnd) use filter_digest::{flat_shape_scratch_quote, validate_flat_shape_checked};
 mod wire;
 pub use typed::{preflight_candidate_counts, preflight_duplicate_counts};
+/// Separate PCND8 snapshot assessment; old7 entrypoints remain closed.
+pub mod blend;
+
 #[cfg(test)]
 mod tests;
 /// A pure target-ABI quote, not an allocation, counter, or capability grant.

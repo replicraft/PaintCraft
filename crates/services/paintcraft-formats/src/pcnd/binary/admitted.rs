@@ -361,5 +361,10 @@ fn limit() -> Error {
     Error::new(ErrorCode::ResourceLimit, "admitted snapshot scratch limit")
 }
 
+mod blend;
+pub use blend::{
+    portable_blend_snapshot_scratch_quote, write_portable_blend_snapshot_admitted_checked,
+};
+
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests;

@@ -21,9 +21,13 @@ const DOCUMENT_MAX: u64 = 8_388_608;
 const BLOCK_BYTES_MAX: u64 = 262_144;
 mod binary;
 pub use binary::admitted::{
+    portable_blend_snapshot_scratch_quote, write_portable_blend_snapshot_admitted_checked,
+};
+pub use binary::admitted::{
     portable_snapshot_scratch_quote, write_portable_snapshot_admitted_checked,
 };
 pub use binary::requirements::appearance as layer_appearance;
+pub use binary::requirements::appearance::blend as layer_blend_appearance;
 pub use binary::requirements::{CheckedContainer, REQUIREMENTS_CONTROL_BYTES, RequirementsLimits};
 mod compression;
 mod coverage;

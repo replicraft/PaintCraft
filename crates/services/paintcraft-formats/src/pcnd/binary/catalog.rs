@@ -150,6 +150,43 @@ impl<'a> Manifest<'a> {
         manifest.entries[..manifest.len].sort_unstable_by_key(|e| e.unwrap().profile);
         Ok(manifest)
     }
+    /// Separate Source8 rooted capture; old capture_v7/impl bodies stay exact.
+    /// Caller prepays bounded root lookups and catalog policy slots before entry.
+    pub(super) fn capture_blend_rooted(
+        doc: &Document,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Manifest<'static>> {
+        let mut manifest = Manifest::empty();
+        for id in &doc.roots {
+            check()?;
+            let layer = doc
+                .layers
+                .get(id)
+                .filter(|l| l.id == *id)
+                .ok_or_else(invalid)?;
+            for filter in layer.filters.iter() {
+                check()?;
+                let profile = filter.descriptor().id();
+                if !manifest.entries[..manifest.len]
+                    .iter()
+                    .flatten()
+                    .any(|e| e.profile == profile)
+                {
+                    if manifest.len == ENTRIES_MAX {
+                        return Err(invalid());
+                    }
+                    manifest.entries[manifest.len] = Some(Entry {
+                        profile,
+                        codec: "params-v1",
+                    });
+                    manifest.len += 1;
+                }
+            }
+        }
+        // PCND8's mandatory extended catalog may be empty.
+        manifest.entries[..manifest.len].sort_unstable_by_key(|e| e.unwrap().profile);
+        Ok(manifest)
+    }
     fn body_bytes(&self) -> u64 {
         number_bytes(self.len as u64)
             + self.entries[..self.len]
@@ -220,6 +257,48 @@ impl<'a> Manifest<'a> {
             requirements.insert(entry.profile, entry.codec)?;
         }
         Requirements7::new(requirements, appearance_registration(), check)
+    }
+    pub(in crate::pcnd) fn resolve_blend_appearance(
+        &mut self,
+        index: usize,
+        bytes: &[u8],
+    ) -> Result<paintcraft_core::types::filters::Descriptor> {
+        use crate::export::prepared_capabilities::{RegistryContract, resolve_for};
+        let entry = self
+            .entries
+            .get(index)
+            .filter(|_| index < self.len)
+            .and_then(|e| *e)
+            .ok_or_else(invalid)?;
+        let descriptor = resolve_for(
+            RegistryContract::LayerAppearance4,
+            entry.profile,
+            entry.codec,
+        )?
+        .decode(bytes)?;
+        self.used[index] = true;
+        Ok(descriptor)
+    }
+    pub(in crate::pcnd) fn blend_appearance_requirements(
+        &self,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<crate::export::layer_blend_appearance::Requirements8> {
+        use crate::export::{
+            layer_appearance::appearance_registration,
+            layer_blend_appearance::{Requirements8, blend_registration},
+            prepared_capabilities::Requirements,
+        };
+        let mut requirements = Requirements::default();
+        for entry in self.entries[..self.len].iter().flatten() {
+            check()?;
+            requirements.insert(entry.profile, entry.codec)?;
+        }
+        Requirements8::new(
+            requirements,
+            appearance_registration(),
+            blend_registration(),
+            check,
+        )
     }
     pub(super) fn finish(&self) -> Result<()> {
         if self.used[..self.len].iter().any(|v| !v) {
