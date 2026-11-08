@@ -254,7 +254,7 @@ export async function harness(options = {}) {
 		free() {
 			calls.push('free');
 		}
-		prepareCopy(control, output) {
+		prepareCopy(control, _output) {
 			const binding = JSON.parse(this.prepare(control));
 			return JSON.stringify({
 				kind: 'copy-admitted',
@@ -324,12 +324,15 @@ export async function harness(options = {}) {
 				await new Promise((resolve) => setImmediate(resolve));
 		}
 	}
-	async function until(predicate) {
+	async function until(predicate, { pump = true } = {}) {
 		const deadline = Date.now() + 5000;
 		while (!predicate()) {
 			if (Date.now() > deadline)
 				throw new Error('bounded mock condition not reached');
-			await turn();
+			// Cryptographic validation can settle while an accepted mock job's
+			// MessageChannel task is deliberately held. No runtime hook is used.
+			if (pump) await turn();
+			else await new Promise((resolve) => setImmediate(resolve));
 			await new Promise((resolve) => setTimeout(resolve, 1));
 		}
 	}

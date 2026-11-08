@@ -150,11 +150,33 @@ test('late cancellation cut never calls Rust cancel or retire on a newer accepte
 		),
 	);
 	await h.send('update', { request: await h.register(2) });
+	// Do not finish generation1 while waiting for generation2's metadata hashes.
+	// Observe the real cancellation transition first, without consuming its
+	// queued MessageChannel step. Otherwise generation1 could finish normally.
+	await h.until(
+		() =>
+			h.calls.some(
+				(c) => Array.isArray(c) && c[0] === 'cancel' && c[1] === '1',
+			),
+		{ pump: false },
+	);
+	assert.equal(
+		h.calls.filter(
+			(c) => Array.isArray(c) && c[0] === 'step' && c[1] === '1',
+		).length,
+		1,
+	);
+	assert.equal(
+		h.events.some((e) => e.kind === 'frame'),
+		false,
+	);
+	assert.equal(h.calls.includes('retire'), false);
 	await h.until(() =>
 		h.calls.some(
 			(c) => Array.isArray(c) && c[0] === 'prepare' && c[1] === '2',
 		),
 	);
+	assert.equal(h.instance.generation, '2');
 	const before = h.calls.filter(
 		(c) => c === 'retire' || (Array.isArray(c) && c[0] === 'cancel'),
 	).length;
@@ -168,6 +190,11 @@ test('late cancellation cut never calls Rust cancel or retire on a newer accepte
 	await h.until(() =>
 		h.events.some((e) => e.kind === 'frame' && e.generation === '2'),
 	);
+	assert.equal(
+		h.events.some((e) => e.kind === 'frame' && e.generation === '1'),
+		false,
+	);
+	assert.equal(h.calls.filter((c) => c === 'retire').length, 1);
 	assert.deepEqual(
 		h.calls
 			.filter((c) => Array.isArray(c) && c[0] === 'cancel')
@@ -348,15 +375,88 @@ test('bad async union hash cannot retire prior accepted Rust work', async (t) =>
 	);
 	const bad = await h.register(2);
 	bad.unionRequirements.capabilitySha256 = 'ff'.repeat(32);
+	const rejectedId = h.sequence + 1;
 	await h.send('update', { request: bad });
-	await h.until(() => h.events.some((e) => e.kind === 'error'));
+	// Hold queued accepted-work steps while real async hashes settle. Pumping
+	// here could legitimately finish generation1 and retire its private storage.
+	await h.until(
+		() => h.events.some((e) => e.kind === 'error' && e.id === rejectedId),
+		{ pump: false },
+	);
+	assert.equal(
+		h.calls.filter((c) => Array.isArray(c) && c[0] === 'step').length,
+		1,
+	);
+	assert.equal(
+		h.events.some((e) => e.kind === 'frame'),
+		false,
+	);
 	assert.equal(
 		h.calls.some((c) => Array.isArray(c) && c[0] === 'cancel'),
 		false,
 	);
 	assert.equal(h.calls.includes('retire'), false);
+	const rejection = h.events.find((e) => e.id === rejectedId);
+	assert.equal(rejection.code, 'CodecFailed');
+	assert.equal(rejection.completed, false);
+	// Release the same accepted job, with no new preparation or counter reset.
 	await h.until(() =>
 		h.events.some((e) => e.kind === 'frame' && e.generation === '1'),
+	);
+	assert.deepEqual(
+		h.calls
+			.filter((c) => Array.isArray(c) && c[0] === 'prepare')
+			.map((c) => c[1]),
+		['1'],
+	);
+	assert.equal(
+		h.calls.filter((c) => Array.isArray(c) && c[0] === 'step').length,
+		4,
+	);
+	assert.equal(h.calls.filter((c) => c === 'retire').length, 1);
+});
+
+test('bad union hash after a completed frame preserves success and later valid work', async (t) => {
+	const h = await harness();
+	t.after(() => close(h));
+	await h.start();
+	await h.send('update', { request: await h.register(1) });
+	await h.until(() =>
+		h.events.some((e) => e.kind === 'frame' && e.generation === '1'),
+	);
+	const delivered = h.events.find((e) => e.kind === 'frame');
+	assert.equal(h.calls.filter((c) => c === 'retire').length, 1);
+	const bad = await h.register(2);
+	bad.unionRequirements.capabilitySha256 = 'ff'.repeat(32);
+	const rejectedId = h.sequence + 1;
+	await h.send('update', { request: bad });
+	await h.until(
+		() => h.events.some((e) => e.kind === 'error' && e.id === rejectedId),
+		{ pump: false },
+	);
+	assert.equal(h.calls.filter((c) => c === 'retire').length, 1);
+	assert.equal(
+		h.calls.some((c) => Array.isArray(c) && c[0] === 'cancel'),
+		false,
+	);
+	assert.equal(
+		h.events.find((e) => e.kind === 'frame'),
+		delivered,
+	);
+	await h.send('update', { request: await h.register(3) });
+	await h.until(() =>
+		h.events.some((e) => e.kind === 'frame' && e.generation === '3'),
+	);
+	assert.deepEqual(
+		h.calls
+			.filter((c) => Array.isArray(c) && c[0] === 'prepare')
+			.map((c) => c[1]),
+		['1', '3'],
+	);
+	assert.equal(h.calls.filter((c) => c === 'retire').length, 2);
+	assert.equal(
+		h.calls.some((c) => Array.isArray(c) && c[0] === 'cancel'),
+		false,
 	);
 });
 
