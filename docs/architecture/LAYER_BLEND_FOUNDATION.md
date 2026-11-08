@@ -250,9 +250,10 @@ A separate admitted portable Source8 snapshot writer now preserves Multiply/Scre
 intent and stored own masks. Root-ordered layer preparation avoids full layer-table
 bucket scans; a pure advisory scratch quote requires a separately prepaid walk.
 Independent wire fixtures cover accepted and malformed profiles, explicit-default
-elision and unchanged old7 refusal boundaries. Native format tests pass; actual
-Wasm snapshot/probe execution is a separate pending qualification and is not
-included in the 57-case result below.
+elision and unchanged old7 refusal boundaries. Native format tests pass. A separate
+actual Node Wasm snapshot/probe run also passes 39 finite cases: 19 independent
+wire literals and 20 storage, admission, cancellation and typed-token controls.
+This result is separate from the 57-case service/style/History matrix below.
 
 The caller-owned prepared CPU blend service now checks the actual original scope,
 cumulative Base/Noise debits, ROI and resolved metadata minima before callbacks.
@@ -284,6 +285,27 @@ full reader heap/RSS or latency qualification.
 Native receipts are under `docs/validation/palette-next-foundations-integration/`;
 the actual Wasm receipt is
 `docs/validation/layer-blend-candidates/source8-cpu-service-wasm-history/node-attempt-1/final.json`.
+The separate snapshot receipt is
+`docs/validation/layer-blend-candidates/source8-snapshot-wasm/node-attempt-1/final.json`,
+with its immutable `build-attempt-1/build-final.json` and archived actual sources
+and libraries. Source hashes match before/after build and execution; real bindgen
+glue runs the nonshared 2 MiB module with a 16 MiB maximum. Controls exercise
+same-buffer authenticated-witness reuse, general-reader versus structural-probe
+validity, default elision, old7 closure, paid-prefix/original-headroom refusal,
+source preservation and cancellation. A clipped live A8 view projects canonical
+meaning but refuses adoption above its wire-retention bound; actual fresh decoded
+storage passes that bound.
+
+This snapshot result does not price complete general-reader work or heap.
+Authentication policy and helper callbacks share the declared cumulative counter;
+the general reader exposes cancellation and its existing coverage/metadata and
+staged-pixel admission, with decoded-tile storage observed in its separate default
+realm. Returned metadata controls and buffers retain their original accounts until
+destruction. Diagnostic JSON/reference clones and inherited metadata allocation
+are excluded from a full heap bound. One explicit authentication and witness reuse
+are observed; the private test-only hash-pass counter is not instrumented. No
+browser/Worker8/Main execution, GPU, RSS or latency result follows.
+
 The standalone style vocabulary adds no `Layer.styles` field or stored/rendered
 Color Overlay semantics. Browser mask editing, Worker8/Main blend execution and
 appearance-aware foreign/clipboard consent still require their own integration.
