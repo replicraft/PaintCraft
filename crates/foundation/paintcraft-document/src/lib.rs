@@ -18,6 +18,8 @@ pub use paintcraft_core::types::policy::POLICY;
 mod conversion_identity;
 pub mod filters;
 pub use filters::{FilterInstance, FilterMask, FilterStack};
+pub mod styles;
+pub use styles::{StyleDescriptor, StyleInstance, StyleStack};
 mod layer_mask;
 pub mod source_metadata;
 pub use conversion_identity::{RasterConversionContext, RasterConversionKey, RasterSelection};
