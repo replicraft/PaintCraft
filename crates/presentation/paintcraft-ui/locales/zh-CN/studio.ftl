@@ -528,3 +528,8 @@ saved-layer-mask-domain = 已保存图层蒙版的范围
 saved-layer-mask-bands = 已保存图层蒙版的条带数
 saved-layer-mask-runs = 已保存图层蒙版的区段数
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = 已保存蒙版外的像素会保持隐藏。更改选区不会更改此蒙版。
+
+layer-blend-mode = 图层混合模式
+normal = 正常
+multiply = 正片叠底
+screen = 滤色

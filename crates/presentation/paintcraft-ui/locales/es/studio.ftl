@@ -528,3 +528,8 @@ saved-layer-mask-domain = Dominio de la máscara de capa guardada
 saved-layer-mask-bands = Bandas de la máscara de capa guardada
 saved-layer-mask-runs = Tramos de la máscara de capa guardada
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Los píxeles fuera de la máscara guardada permanecen ocultos. Cambiar la selección no cambia esta máscara.
+
+layer-blend-mode = Modo de fusión de capa
+normal = Normal
+multiply = Multiplicar
+screen = Trama

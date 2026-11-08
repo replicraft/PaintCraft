@@ -7,7 +7,10 @@ pub use canvas_size::{CanvasResponse, CanvasSize, canvas_size_dialog};
 mod colors;
 mod history;
 mod properties;
-pub use properties::{LayerProperties, PropertiesResponse, layer_properties_dialog};
+pub use properties::{
+    LayerProperties, PropertiesResponse, layer_properties_dialog,
+    layer_properties_with_blend_dialog,
+};
 mod image_menu;
 pub mod layout;
 mod selection;

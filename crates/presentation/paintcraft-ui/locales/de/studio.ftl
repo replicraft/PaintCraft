@@ -528,3 +528,8 @@ saved-layer-mask-domain = Bereich der gespeicherten Ebenenmaske
 saved-layer-mask-bands = Bänder der gespeicherten Ebenenmaske
 saved-layer-mask-runs = Läufe der gespeicherten Ebenenmaske
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Pixel außerhalb der gespeicherten Maske bleiben verborgen. Eine Änderung der Auswahl ändert diese Maske nicht.
+
+layer-blend-mode = Ebenen-Mischmodus
+normal = Normal
+multiply = Multiplizieren
+screen = Negativ multiplizieren

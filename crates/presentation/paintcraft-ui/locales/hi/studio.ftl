@@ -528,3 +528,8 @@ saved-layer-mask-domain = सहेजे गए परत मास्क क�
 saved-layer-mask-bands = सहेजे गए परत मास्क के बैंड
 saved-layer-mask-runs = सहेजे गए परत मास्क के खंड
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = सहेजे गए मास्क के बाहर के पिक्सेल छिपे रहते हैं। चयन बदलने से यह मास्क नहीं बदलता।
+
+layer-blend-mode = परत का मिश्रण मोड
+normal = सामान्य
+multiply = गुणा
+screen = स्क्रीन

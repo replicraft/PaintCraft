@@ -528,3 +528,8 @@ saved-layer-mask-domain = 保存済みレイヤーマスクの領域
 saved-layer-mask-bands = 保存済みレイヤーマスクのバンド数
 saved-layer-mask-runs = 保存済みレイヤーマスクの区間数
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = 保存したマスクの外側のピクセルは非表示のままです。選択範囲を変更しても、このマスクは変わりません。
+
+layer-blend-mode = レイヤーの描画モード
+normal = 通常
+multiply = 乗算
+screen = スクリーン

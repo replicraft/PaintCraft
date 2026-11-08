@@ -528,3 +528,8 @@ saved-layer-mask-domain = Saved layer mask domain
 saved-layer-mask-bands = Saved layer mask bands
 saved-layer-mask-runs = Saved layer mask runs
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Pixels outside the saved mask stay hidden. Changing the selection does not change this mask.
+
+layer-blend-mode = Layer blend mode
+normal = Normal
+multiply = Multiply
+screen = Screen

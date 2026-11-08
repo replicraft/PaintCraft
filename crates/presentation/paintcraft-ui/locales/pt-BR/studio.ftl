@@ -528,3 +528,8 @@ saved-layer-mask-domain = Domínio da máscara de camada salva
 saved-layer-mask-bands = Faixas da máscara de camada salva
 saved-layer-mask-runs = Trechos da máscara de camada salva
 pixels-outside-the-saved-mask-stay-hidden-changing-the-selection-does-not-change-this-mask = Os pixels fora da máscara salva permanecem ocultos. Alterar a seleção não altera esta máscara.
+
+layer-blend-mode = Modo de mesclagem da camada
+normal = Normal
+multiply = Multiplicação
+screen = Divisão
