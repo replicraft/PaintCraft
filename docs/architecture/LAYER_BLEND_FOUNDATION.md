@@ -436,8 +436,9 @@ Initial native fixture failures are preserved. Two test-only corrections added
 explicit coverage admission to four fixture reads, then corrected the canvas-pixel
 bound to 1024 for the separate 257×3 native codec fixture. Both exact deltas are in
 `docs/validation/layer-blend-candidates/normal-rooted-snapshot/root-corrections/`;
-no product behavior, independent wire or expected work was changed. Count/fixed
-wrappers and all-consumer browser credit integration remain separate prerequisites.
+no product behavior, independent wire or expected work was changed. At that
+checkpoint, count/fixed wrappers and browser credit integration remained separate
+prerequisites; the later wrapper qualification is recorded below.
 
 ### Explicit reserved decode factories
 
@@ -483,7 +484,27 @@ behavior, with the failed attempt and preimages preserved.
 
 The immutable native receipt is
 `docs/validation/browser-mask-next/source-count-prerequisite/shared-formats-counted-candidate/native-attempt-2/final.json`,
-with source hashes in `qualified-freeze.json` beside that attempt. Actual Wasm
-runtime qualification is pending. This API does not establish full reader heap
+with source hashes in `qualified-freeze.json` beside that attempt.
+
+Actual Node Wasm execution also passes 108 finite cases: the previous 75 snapshot
+checks, 20 independent counted/fixed wire cases and 13 public ownership, refusal,
+cancellation and retry controls. The original scopes and cumulative work counters
+remain in use. Independently fixed Wasm control sizes are 56/40/40/40 bytes; no
+returned quote creates a grant. Output ownership survives dropping its count fact
+and original scope. The module ends at 3,407,872 bytes under the unchanged 16 MiB
+maximum. The immutable runtime receipt is
+`docs/validation/layer-blend-candidates/shared-formats-counted-wasm/node-attempt-2/final.json`;
+its build receipt SHA256 is
+`7315be5b6ab4c7353a7207c5ca7548e709db71c7a3f4d055e6eb4ce400f8cb58`.
+
+The first runtime attempt is preserved. Its generic peak assertion confused
+admitted storage with scope demand, which includes refused pending requests.
+The test-only amendment asserts exact rejected demand at the three one-byte-short
+boundaries, retains the other ceilings, and checks that only the original fact
+remains live after the blocker and retry output retire. No product code, grant,
+work expectation or wire fixture changed. The two frozen amendments and root
+promotion receipt are retained alongside the original evidence.
+
+This API does not establish full reader heap
 admission, physical raster-table scan bounds, persistent Main credit, Worker8
 activation, allocator/RSS bounds or latency improvements.
