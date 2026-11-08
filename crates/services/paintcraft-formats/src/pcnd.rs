@@ -330,3 +330,9 @@ pub use binary::admitted::{
     CountedNormalSnapshot, CountedSnapshotBytes, NormalCountedControlBytes,
     count_portable_normal_snapshot_rooted_checked, normal_counted_snapshot_control_bytes,
 };
+
+pub use binary::requirements::{
+    PortableBlockView, PortableFilterView, PortableHeaderView, PortableLayerCursor,
+    PortableLayerHeader, PortableMaskView, PortableSource8ControlBytes, PortableSource8Facts,
+    PortableSource8Limits, PortableSource8Plan, portable_source8_control_bytes,
+};
