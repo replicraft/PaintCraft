@@ -331,10 +331,10 @@ correction remain preserved. Immutable receipts are
 and `docs/validation/layer-blend-candidates/source8-worker8-d0-wasm/node-attempt-1/final.json`.
 Actual source hashes match before/after the Wasm build and execution. These
 forecasts price their declared metadata helpers, not all inherited renderer
-layer-table traversal. D1 and Worker8/Main execution remain blocked on that
-accounting/provenance gate; no browser route or activation is added.
+layer-table traversal. The separate rooted adapters below address that traversal
+boundary; D1 and Worker8/Main service/transport activation remain separate gates.
 
-The same current D0 source closure also passes a fresh 39-case portable snapshot
+At the D0 checkpoint, its source closure also passes a fresh 39-case portable snapshot
 run, separately from the 65 service/style/History/forecast cases. Its immutable
 receipts are `docs/validation/layer-blend-candidates/source8-snapshot-wasm/build-attempt-2/build-final.json`
 and `docs/validation/layer-blend-candidates/source8-snapshot-wasm/node-attempt-2/final.json`;
@@ -362,3 +362,37 @@ Source hashes match before/after execution. The external Wasm harness does not
 claim execution of private layout/tombstone hooks or native concurrency. Session
 holders, funded mutation/publication, asynchronous retirement, persistent broker
 credit transfer and browser mask finalization remain separate integration gates.
+
+### Rooted rendering adapters
+
+Separate Source8 rooted adapters validate root identity/uniqueness and descriptor
+requirements without full layer-table bucket scans. Quotes prepay a distinct
+2,048-unit/root quote pass in addition to context proof and canonical-key capture.
+Actual calls prepay their own facts construction and each prepared/spatial/ordered
+composition pass at its helper boundary. A private immutable witness is charged
+before retention on the same original scope: 24 bytes on native64 and 16 on Wasm32.
+The actual Base/Noise byte allowance tightens by that charge; witness and temporary
+bindings retire before credit. Existing public routes and their admission remain
+unchanged; no TLS bypass marker or new execution root is installed.
+
+Seven new native groups, 16 existing service groups and strict checks pass; expanded
+missing-root/value-identity cases also pass. Actual Node Wasm execution passes 84
+finite cases: the previous 77 plus seven public rooted controls. These include
+independently fixed 33,522-unit exact/one-unit-short work, context-plus-witness byte
+boundaries, paid quote prefixes, sparse/tombstoned versus compact layer-map traces,
+known Noise pixels and source guards. The initial malformed test guard incorrectly
+indexed an intentionally missing root; its source-only correction uses full field/
+map equality, with original candidate revisions preserved before execution.
+The immutable receipt is
+`docs/validation/layer-blend-candidates/source8-worker8-rooted-wasm-effective/node-attempt-1/final.json`.
+Actual source hashes remain unchanged. The module starts at 2 MiB and finishes at
+3,407,872 bytes within its unchanged nonshared 16 MiB maximum. These are finite
+portable adapter checks, not Worker8 service/transport activation or a latency,
+RSS or full inherited raster-policy proof. D1 still needs its actual construction,
+callback multiplicities, authenticated adoption and workspace-window ownership.
+
+The separate portable snapshot matrix also passes all 39 cases against this
+rooted source closure. Its immutable receipt is
+`docs/validation/layer-blend-candidates/source8-snapshot-wasm/node-attempt-3/final.json`
+(build `7a655a73911814f0bcccc6c31e9031482daf2f2d7ab3a4c816731501fda35bff`).
+The same general-reader heap/work and browser-activation exclusions apply.
