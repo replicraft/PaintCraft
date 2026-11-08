@@ -438,3 +438,27 @@ bound to 1024 for the separate 257×3 native codec fixture. Both exact deltas ar
 `docs/validation/layer-blend-candidates/normal-rooted-snapshot/root-corrections/`;
 no product behavior, independent wire or expected work was changed. Count/fixed
 wrappers and all-consumer browser credit integration remain separate prerequisites.
+
+### Explicit reserved decode factories
+
+A restricted Raster decoder admission now takes the original decoded reservation
+and every factory explicitly. Its gauge and control declarations remain attached
+to surviving tiles after the decoder is dropped. Cancellation and failed writes
+retain that ownership; new tiles acquire their control owner before insertion.
+Existing Admission constructors retain their behavior. The private Allocation
+tail changes Tile size, and metadata weight follows that actual size.
+
+Eight focused native tests, the backend suites, 305 renderer tests with required
+Metal, and 820 desktop tests pass. The desktop suite retains 29 existing ignores;
+Formats retains 12. Native/workspace and Main/Worker Wasm strict checks pass. Nine
+actual Node Wasm public-API controls pass, using independently fixed 64/63-byte
+control boundaries. Native-only factory inspection and concurrency remain separate
+evidence. The immutable runtime receipt is
+`docs/validation/layer-blend-candidates/source8-raster-decode-factories-wasm/node-attempt-1/final.json`.
+The 75-case portable snapshot matrix also passes again against this Raster change
+at `docs/validation/layer-blend-candidates/normal-rooted-snapshot-wasm/node-attempt-2/final.json`.
+
+This constructor funds its fixed gauge/control allocations and decoded pixels.
+Containing Tile headers, index storage and the complete reader source lifetime
+still require their own census and ownership declarations. This does not establish
+full reader heap admission, Worker8 activation, persistent Main credit or latency.
