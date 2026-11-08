@@ -615,3 +615,33 @@ new 64-unit scalar debit from the later SHA trailer debit, keeping the same paid
 work counter. Compact staging, history registration, D1 forecasts and complete
 reader ownership remain separate gates. No physical hash-probe, allocator/RSS,
 latency or browser activation claim follows from this work amendment.
+
+### Original-reservation metadata and fresh decode indices
+
+Core now exposes the defining full lease-control Arc allocation bound. Document
+adds a strict borrowed source-metadata recipe whose materializer captures the
+original ICC reservation, control scope, tail guard and callbacks once. Header,
+descriptor, tag and digest validation finish before retained allocation. Both
+canonical-header constructions, hashing, comparison, initialization and copying
+have separate prepaid phases. Materialization uses that reservation directly,
+requires exact Vec capacity and creates no second capacity lease. Resolution-only
+attachments still retain their Inner and lease controls.
+
+Raster also has a new-empty-only decode-index constructor. It checks an already
+assigned metadata declaration before reserving the actual record count and
+reconciles the tracked allocation. It accepts no existing table or caller-supplied
+bucket bound. Existing constructors, fields, drops and general readers stay exact.
+These primitives require the caller to retain the complete metadata/header union;
+they do not independently provide the closed Source8 carrier.
+
+Native validation passes Core 104, Document 55, Editor 51, Formats 691, History
+63 and Raster 132 tests, with 12 existing Formats ignores. Eight documentation
+checks and strict workspace/Main/Worker, formatting and source-limit checks pass.
+Fourteen independent metadata wires include valid nonzero tags and invalid tag
+extents. Pure layout, original-capacity refusal, paid callback errors/retries,
+alias lifetime and fresh-index controls pass. The native receipt is
+`docs/validation/layer-blend-candidates/source8-r2-core-icc-index/native-attempt-2/final.json`;
+`qualified-freeze.json` binds all 13 effective source paths. The initial strict
+failure and test-only lexical-scope correction remain preserved. Actual Wasm
+qualification is pending; exact A8/pixel materializers, closed source assembly,
+candidate/frame ownership and browser activation remain separate work.
