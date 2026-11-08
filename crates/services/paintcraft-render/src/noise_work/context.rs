@@ -12,6 +12,11 @@ impl Drop for Restore {
 pub(crate) fn current() -> Option<NoiseAdmission> {
     ACTIVE.with(|a| a.borrow().as_ref().map(|(v, _)| v.clone()))
 }
+/// Clone the actual installed pair, with no fallback, tightening or new counter.
+/// A returned handle is an observation, not evidence that Base TLS matches it.
+pub fn capture_current_noise_workspace() -> Option<NoiseAdmission> {
+    current()
+}
 pub(crate) fn current_for(base: &WorkspaceAdmission) -> Result<NoiseAdmission> {
     current().ok_or_else(missing)?.for_workspace(base)
 }

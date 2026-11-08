@@ -108,6 +108,15 @@ fn insert<T: Copy, const WIDTH: usize>(
     *all += 1;
     Ok(())
 }
+/// Explicit metadata ownership policy; unbound forecasting has no admission.
+#[derive(Clone, Copy)]
+enum OwnerPolicy<'a> {
+    Bound {
+        explicit: &'a WorkspaceAdmission,
+        ambient: Option<&'a WorkspaceAdmission>,
+    },
+    UnboundMetadata,
+}
 impl Keys {
     pub(crate) fn capture(
         doc: &Document,
@@ -117,8 +126,39 @@ impl Keys {
         check: &dyn Fn() -> Result<()>,
         spend: &dyn Fn(u64) -> Result<()>,
     ) -> Result<Self> {
+        Self::capture_with(
+            doc,
+            OwnerPolicy::Bound { explicit, ambient },
+            noise,
+            check,
+            spend,
+        )
+        .map(|(keys, _)| keys)
+    }
+    /// Stored Noise includes disabled/default descriptors; no Noise grant implied.
+    pub(crate) fn capture_unbound(
+        doc: &Document,
+        check: &dyn Fn() -> Result<()>,
+        spend: &dyn Fn(u64) -> Result<()>,
+    ) -> Result<(Self, bool)> {
+        Self::capture_with(doc, OwnerPolicy::UnboundMetadata, true, check, spend)
+    }
+    fn capture_with(
+        doc: &Document,
+        policy: OwnerPolicy<'_>,
+        noise: bool,
+        check: &dyn Fn() -> Result<()>,
+        spend: &dyn Fn(u64) -> Result<()>,
+    ) -> Result<(Self, bool)> {
         check()?;
         shape(doc)?;
+        let (ambient_lengths, ambient_distinct) = match policy {
+            OwnerPolicy::Bound { explicit, ambient } => (
+                ambient.filter(|a| a.has_prepared_programs()).map(lengths),
+                ambient.is_some_and(|a| a.has_prepared_programs() && !same_owner(explicit, a)),
+            ),
+            OwnerPolicy::UnboundMetadata => (None, false),
+        };
         let mut keys = Self {
             levels: [LevelsRgbV1::default(); MAX],
             exposures: [ExposureSrgbV1::default(); MAX],
@@ -128,12 +168,15 @@ impl Keys {
             filters: 0,
             occurrences: [0; 3],
             capture_work: 0,
-            ambient: ambient.filter(|a| a.has_prepared_programs()).map(lengths),
-            ambient_distinct: ambient
-                .is_some_and(|a| a.has_prepared_programs() && !same_owner(explicit, a)),
+            ambient: ambient_lengths,
+            ambient_distinct,
         };
         charge(&mut keys.capture_work, entry(doc.roots.len())?, spend)?;
-        let owners = owners(explicit, ambient);
+        let owners = match policy {
+            OwnerPolicy::Bound { explicit, ambient } => owners(explicit, ambient),
+            OwnerPolicy::UnboundMetadata => [None, None],
+        };
+        let mut stored_noise = false;
         let mut all = 0;
         let mut non_normal = false;
         for id in &doc.roots {
@@ -152,8 +195,11 @@ impl Keys {
             let mut occurrences = [0u64; 3];
             for filter in layer.filters.iter() {
                 check()?;
-                if matches!(filter.descriptor(), Descriptor::AddNoiseRgbV1(_)) && !noise {
-                    return Err(missing());
+                if matches!(filter.descriptor(), Descriptor::AddNoiseRgbV1(_)) {
+                    stored_noise = true;
+                    if !noise {
+                        return Err(missing());
+                    }
                 }
                 if !filter.enabled() {
                     continue;
@@ -215,7 +261,7 @@ impl Keys {
             return Err(missing());
         }
         check()?;
-        Ok(keys)
+        Ok((keys, stored_noise))
     }
     pub(crate) fn quote_metadata(&self) -> Result<u64> {
         quote_metadata(self.lengths)
@@ -224,13 +270,21 @@ impl Keys {
         constructor_metadata(self.lengths)
     }
     pub(crate) fn validation_work(&self, explicit: &WorkspaceAdmission) -> Result<u64> {
+        self.validation_work_for(
+            if explicit.has_prepared_programs() {
+                lengths(explicit)
+            } else {
+                self.lengths
+            },
+            explicit.has_prepared_programs(),
+        )
+    }
+    pub(crate) fn unbound_validation_work(&self) -> Result<u64> {
+        self.validation_work_for(self.lengths, false)
+    }
+    fn validation_work_for(&self, future: [usize; 3], bound: bool) -> Result<u64> {
         let mut work = add(entry(self.roots)?, mul(FILTER, self.filters)?)?;
-        let future = if explicit.has_prepared_programs() {
-            lengths(explicit)
-        } else {
-            self.lengths
-        };
-        if explicit.has_prepared_programs() || future.iter().any(|n| *n != 0) {
+        if bound || future.iter().any(|n| *n != 0) {
             work = add(work, validation(self.filters, self.occurrences, future)?)?;
         }
         if self.ambient_distinct

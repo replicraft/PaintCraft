@@ -8,7 +8,9 @@ mod owner;
 mod quote;
 mod work;
 pub use admission::{NoiseAdmission, NoiseControlQuote, NoiseJobPolicy, NoiseLimits};
-pub use context::{capture_noise_or_current, with_noise_workspace};
+pub use context::{
+    capture_current_noise_workspace, capture_noise_or_current, with_noise_workspace,
+};
 pub(crate) use context::{captured, current, current_for, required};
 pub use quote::{ScopedLayerQuote, quote_direct, quote_layer};
 pub(crate) use quote::{check_plan, preflight, reserve_plan};

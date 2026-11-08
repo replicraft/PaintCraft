@@ -35,6 +35,13 @@ impl Programs {
     pub fn retained_bytes(&self) -> u64 {
         self.base.prepared_retained_bytes()
     }
+    /// Actual newly allocated immutable payload, never a forecast/byte grant.
+    pub fn newly_retained_bytes(&self) -> u64 {
+        match self.origin {
+            AllocationOrigin::NewInThisPreparation => self.retained_bytes(),
+            AllocationOrigin::BorrowedExisting => 0,
+        }
+    }
     pub fn same_job(&self, caller: Caller<'_>) -> bool {
         match (&self.noise, caller) {
             (None, Caller::Base(a)) => self.base.same_job(a),
