@@ -548,3 +548,29 @@ History registration, compact metadata cloning and rooted writers still need
 their separately reviewed scan and ownership supplements. This tracker does not
 retroactively fund old storage, establish physical probe/allocator timing or RSS,
 or activate browser mask/blend consumers.
+
+### Borrowed portable Source8 plans
+
+Authenticated container8 inputs now expose a separate borrowed structural plan
+for portable block encodings 1/2/4/5. Two metered passes validate framing, catalog
+and filter intentions, mask structure, unique layer/block identities and bounded
+record counts. The plan retains exact 56/24-byte layer/block records under its
+original scope. Cursors borrow the same authenticated source and retain its
+original check/spend callbacks, with a shared cumulative work ceiling. No caller
+can construct a plan from a raw slice or substitute helper callbacks or scopes.
+
+The Formats native suite passes 685 tests with 12 existing ignores. Six
+compile-fail documentation checks pass, including three new plan ownership
+examples. Thirty independent wire cases and ten test groups cover cursor replay,
+limits, cancellation, paid retries, original scope refusal and bounded Debug.
+Workspace and Main/Worker strict checks, formatting and source limits pass.
+The native receipt is
+`docs/validation/layer-blend-candidates/source8-portable-plan-r1/native-attempt-1/final.json`;
+`qualified-freeze.json` records all nine effective source hashes and the bounded
+Debug amendment. Actual Wasm runtime qualification remains pending.
+
+This is structural planning, not pixel or ICC validation. It creates no decoded
+Document, root, reservation, materializer or publication authority. Native Zstd
+remains supported by the separate general reader; this portable transport refuses
+its code3 before decoder initialization. Original-realm materializers, complete
+source/index/header ownership and browser activation remain separate work.
