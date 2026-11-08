@@ -567,7 +567,18 @@ Workspace and Main/Worker strict checks, formatting and source limits pass.
 The native receipt is
 `docs/validation/layer-blend-candidates/source8-portable-plan-r1/native-attempt-1/final.json`;
 `qualified-freeze.json` records all nine effective source hashes and the bounded
-Debug amendment. Actual Wasm runtime qualification remains pending.
+Debug amendment.
+
+Actual Node Wasm passes 161 finite cases: the previous 117 unchanged cases plus
+30 independent structural wires and 14 public plan controls. Independently fixed
+Wasm declarations of 1,528 bytes for the plan, 7,260 for scan controls and 56/24
+for records match the actual module. Exact 8,924-byte scope admission and its
+one-byte-short refusal preserve original scope and work; no quote creates a grant.
+The module ends at 3,473,408 bytes under its unchanged 16 MiB maximum, and source
+hashes remain unchanged. The immutable runtime receipt is
+`docs/validation/layer-blend-candidates/source8-portable-plan-r1-wasm/node-attempt-1/final.json`;
+its build receipt SHA256 is
+`43b1a055f45ec0c192d2ea6ae98905b31b45847b74fcd9266ca11ac8c72cced2`.
 
 This is structural planning, not pixel or ICC validation. It creates no decoded
 Document, root, reservation, materializer or publication authority. Native Zstd
