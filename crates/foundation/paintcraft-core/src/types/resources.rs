@@ -152,6 +152,26 @@ impl WeakResourceLease {
     }
 }
 
+impl BudgetLease {
+    /// Complete fresh Arc<Charge> allocation upper, excluding leased payload.
+    /// Pure defining-type fact; no allocation, reservation or authority is created.
+    pub fn control_allocation_quote() -> Result<u64> {
+        let align = std::mem::align_of::<Charge>().max(std::mem::align_of::<usize>());
+        let error = || Error::new(ErrorCode::ResourceLimit, "lease control layout");
+        let offset = (2 * std::mem::size_of::<usize>())
+            .checked_next_multiple_of(std::mem::align_of::<Charge>())
+            .ok_or_else(error)?;
+        let bytes = offset
+            .checked_add(std::mem::size_of::<Charge>())
+            .and_then(|n| n.checked_next_multiple_of(align))
+            .ok_or_else(error)?;
+        u64::try_from(bytes).map_err(|_| error())
+    }
+}
+#[cfg(test)]
+#[path = "resources/lease_control_tests.rs"]
+mod lease_control_tests;
+
 #[cfg(test)]
 #[path = "resources/tests.rs"]
 mod tests;
