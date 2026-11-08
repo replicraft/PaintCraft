@@ -187,6 +187,19 @@ impl<'a> Manifest<'a> {
         manifest.entries[..manifest.len].sort_unstable_by_key(|e| e.unwrap().profile);
         Ok(manifest)
     }
+    /// Normal-only caller has already proved rooted shape/eligibility and paid
+    /// this bounded capture. No blend requirement is inserted by shared capture.
+    pub(super) fn capture_normal_rooted(
+        doc: &Document,
+        allow_empty: bool,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Manifest<'static>> {
+        let manifest = Self::capture_blend_rooted(doc, check)?;
+        if manifest.len == 0 && !allow_empty {
+            return Err(invalid());
+        }
+        Ok(manifest)
+    }
     fn body_bytes(&self) -> u64 {
         number_bytes(self.len as u64)
             + self.entries[..self.len]

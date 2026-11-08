@@ -366,5 +366,11 @@ pub use blend::{
     portable_blend_snapshot_scratch_quote, write_portable_blend_snapshot_admitted_checked,
 };
 
+mod normal_rooted;
+pub use normal_rooted::{
+    portable_normal_snapshot_rooted_scratch_quote,
+    write_portable_normal_snapshot_rooted_admitted_checked,
+};
+
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests;

@@ -1,0 +1,5 @@
+# Independent Normal portable1-7 snapshot literals
+
+Twenty stdlib-only wire fixtures cover all Normal PCND1-7 headers, raw/RLE and default elision, stored disabled filters/masks, catalog ordering, original resolution/ICC metadata, Unicode and negative origin. The generator does not import a product encoder. The two original PCND2 source metadata blobs are independently authored inputs whose hashes remain recorded in oracle.json. Bodies use independent LEB128, source/filter/mask/catalog framing and SHA256 definitions. Input and expected output differ only for the deliberately explicit default tile, which portable writers elide.
+
+Additional codec-heavy test comparisons to the unchanged old admitted portable writer establish encoder parity, not independent LZ4 algorithm qualification. No native Zstd byte output is used as a portable oracle. The source-only ledger/matrix/oracle were frozen before the new writer in docs/validation/layer-blend-candidates/normal-rooted-snapshot/. Native and actual Wasm qualification remain separate Root-owned steps; this README alone claims neither.

@@ -320,3 +320,8 @@ pub fn catalog_manifest_checked(
 
 /// Separately framed blend identity; grants no visual or foreign-copy authority.
 pub use binary::layer_blend_identity_checked;
+
+pub use binary::admitted::{
+    portable_normal_snapshot_rooted_scratch_quote,
+    write_portable_normal_snapshot_rooted_admitted_checked,
+};
