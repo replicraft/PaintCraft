@@ -309,3 +309,27 @@ browser/Worker8/Main execution, GPU, RSS or latency result follows.
 The standalone style vocabulary adds no `Layer.styles` field or stored/rendered
 Color Overlay semantics. Browser mask editing, Worker8/Main blend execution and
 appearance-aware foreign/clipboard consent still require their own integration.
+
+### Unbound metadata forecasts
+
+Separate pure program/call forecasts now compute canonical-key metadata debt
+without constructing a Caller, execution root, prepared tables or renderer
+context. Any actual Base or Noise TLS `Some` refuses before callbacks/helpers,
+including zero-work or matching owners; callback boundaries recheck absence.
+Every stored Noise descriptor, including disabled/default policies, explicitly
+requires later paired admission. Read-only getters observe the actual installed
+Noise owner and newly allocated prepared retention; neither creates authority,
+repairs a mismatched pair, or grants bytes/work from a quote.
+
+Eight new native groups and 16 existing service groups pass, with native/workspace
+and Main/both-Worker Wasm strict checks, formatting and source-length gates.
+Actual Node Wasm execution passes 65 finite controls: the unchanged original 57
+service/style/borrowed-History cases plus eight forecast/ownership cases. The
+original failed native counter-type compilation and its explicit `u64` test-only
+correction remain preserved. Immutable receipts are
+`docs/validation/layer-blend-candidates/source8-worker8-d0/native-attempt-2/final.json`
+and `docs/validation/layer-blend-candidates/source8-worker8-d0-wasm/node-attempt-1/final.json`.
+Actual source hashes match before/after the Wasm build and execution. These
+forecasts price their declared metadata helpers, not all inherited renderer
+layer-table traversal. D1 and Worker8/Main execution remain blocked on that
+accounting/provenance gate; no browser route or activation is added.
