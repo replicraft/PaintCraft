@@ -508,3 +508,43 @@ promotion receipt are retained alongside the original evidence.
 This API does not establish full reader heap
 admission, physical raster-table scan bounds, persistent Main credit, Worker8
 activation, allocator/RSS bounds or latency improvements.
+
+### Retained raster table bounds
+
+Raster tile indices now retain allocation and bucket provenance through every
+structural mutation, including reserved decoding, paste, replay, capture and
+compact cloning. A read-only O(1) quote reports retained allocation/bucket uppers,
+live entries and the named allocation-plus-bucket scan allowance. Deletion and
+allocated-empty cloning preserve the retained extent; successful nontrivial
+reserve reconciles the actual pinned deletion-free capacity. Occupied replacement
+avoids std HashMap insertion's implicit reserve-before-lookup behavior. There is
+no raw mutable map or Entry escape and no new dependency.
+
+The tracked controls change RasterLayer's inline size to 80 bytes on native64
+and 64 on Wasm32. Layer and its map entries consequently grow; Document, Tile
+and packed SavedLayer inline sizes do not change from this wrapper alone. The
+legacy metadata weight follows the actual RasterLayer size but remains a logical
+diagnostic. The new quote creates no budget, source lease or allocation authority.
+
+Eight focused groups pass, followed by Document 45, Editor 51, Formats 675,
+History 63 and Raster 128 native tests, 305 renderer tests with required GPU,
+and 820 desktop tests. Formats retains 12 existing ignores and desktop 29.
+Workspace/Main/Worker strict checks, formatting and source limits pass. Actual
+Node Wasm passes 117 finite cases: all previous 108 assertions and nine public
+tracker transitions. The module ends at 3,473,408 bytes under its unchanged
+16 MiB maximum. The immutable runtime receipt is
+`docs/validation/layer-blend-candidates/source8-raster-table-wasm/node-attempt-1/final.json`;
+its build receipt SHA256 is
+`9672e49aa8a6c15d3a91729b41d8039d6648eb50224527bd938ef0fbc9643f78`.
+
+The native compile failure from one unmigrated private fixture and the subsequent
+fixture reservation failure are preserved. Corrections route that fixture through
+tracked insertion and reserve four simultaneously held tiles upfront within its
+unchanged pixel ceiling. The Wasm harness also preserves a pre-execution metric
+slot correction, separating clone quotes from demand peaks. Product grants,
+wire/pixel expectations and old writer callback prices remain unchanged.
+
+History registration, compact metadata cloning and rooted writers still need
+their separately reviewed scan and ownership supplements. This tracker does not
+retroactively fund old storage, establish physical probe/allocator timing or RSS,
+or activate browser mask/blend consumers.
