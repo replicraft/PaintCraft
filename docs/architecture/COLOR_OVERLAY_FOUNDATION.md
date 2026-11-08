@@ -59,10 +59,17 @@ Its configured effect-blend dispatcher is absent from the pinned tree, so the
 integer contract above is independently specified and does not claim upstream
 floating-point or configured-mode parity.
 
-The requested persistent model is a bounded ordered style stack with stable IDs,
-not an extra numerical filter. Adding it still requires document/history semantics,
-conditional project persistence, typed commands, measured allocation weights,
-priced rendering, cache invalidation and frontend adoption. The intended first
-stage is complete filters, enabled Color Overlays in order, own mask, layer
-opacity, then layer blending; exterior style families need separate stage rules.
-Existing project and worker profiles remain unchanged and grant no style support.
+The standalone document vocabulary now includes `StyleInstance` and an ordered
+`StyleStack`, capped at 256 unique nonnil stable UUIDs. It preserves enabled state
+and strict Color Overlay semantic bytes, validates order and identity, and reports
+actual retained vector capacity. Independent native fixtures and 19 actual Node
+Wasm cases cover this vocabulary. It is not attached to `Layer` or the filter
+catalog and has no project, history, rendering or frontend activation.
+
+Integration still needs document/history semantics, conditional project
+persistence, typed commands, priced rendering, cache invalidation and frontend
+adoption. The intended first stage is complete filters, enabled Color Overlays
+in order, own mask, layer opacity, then layer blending; exterior style families
+need separate stage rules. Existing project and worker profiles grant no style
+support. The current integration evidence is recorded in
+[LAYER_BLEND_FOUNDATION.md](LAYER_BLEND_FOUNDATION.md#additional-portable-foundations).

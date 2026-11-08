@@ -243,3 +243,47 @@ This selector does not activate browser blend execution, asynchronous browser ma
 editing, appearance-aware foreign-copy consent or the closed visible-clipboard
 route. Those consumers require separate source ownership, admission and actual
 runtime qualification. Full Palette blend/style parity remains open.
+
+## Additional portable foundations
+
+A separate admitted portable Source8 snapshot writer now preserves Multiply/Screen
+intent and stored own masks. Root-ordered layer preparation avoids full layer-table
+bucket scans; a pure advisory scratch quote requires a separately prepaid walk.
+Independent wire fixtures cover accepted and malformed profiles, explicit-default
+elision and unchanged old7 refusal boundaries. Native format tests pass; actual
+Wasm snapshot/probe execution is a separate pending qualification and is not
+included in the 57-case result below.
+
+The caller-owned prepared CPU blend service now checks the actual original scope,
+cumulative Base/Noise debits, ROI and resolved metadata minima before callbacks.
+Distinct prepared owners retain both complete storage charges even with equal
+keys. Private gateway validation grants no ambient or public bypass. A cooperative
+History fork copies a borrowed source in bounded entry prefixes with original
+admission, scan/clone/probe accounting and storage-before-account destruction.
+It does not own a browser source lease or activate mask mutation.
+
+Native suites pass Core 103, Document 45, Formats 642 (12 existing ignored),
+History 48 and Editor 51 tests, plus 288 render tests across 17 nonempty targets
+with the required GPU adapter. The initial new default-elision test used an old
+inspector that correctly refused Source8; its correction uses the separate probe,
+and the failed attempt remains preserved. Strict checks also pass after moving
+an unchanged Noise getter before test items.
+
+Actual Node Wasm execution through real Cargo-produced libraries and generated
+bindgen glue passes 57 finite cases: 20 CPU-service authority/counter controls,
+eight independent mixed numerical cases, 19 standalone style-vocabulary cases
+and ten borrowed cooperative History cases. The scope includes the exact
+17,696-unit no-filter allowance and one-unit denial, paid-prefix refusal,
+original-owner minima, retained-owner union, cancellation and source guards.
+Source/config/harness hashes match before and after execution. The actual module
+remains nonshared at 2 MiB, with a 16 MiB maximum and only the real glue's externref
+initializer import. This is actual portable primitive/service evidence, not
+browser UI, Worker8/Main activation, GPU-Wasm, owned History source-lease,
+full reader heap/RSS or latency qualification.
+
+Native receipts are under `docs/validation/palette-next-foundations-integration/`;
+the actual Wasm receipt is
+`docs/validation/layer-blend-candidates/source8-cpu-service-wasm-history/node-attempt-1/final.json`.
+The standalone style vocabulary adds no `Layer.styles` field or stored/rendered
+Color Overlay semantics. Browser mask editing, Worker8/Main blend execution and
+appearance-aware foreign/clipboard consent still require their own integration.

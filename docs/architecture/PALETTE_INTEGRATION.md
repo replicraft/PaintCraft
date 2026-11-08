@@ -78,8 +78,14 @@ browser layer-mask editing and blend adoption, then **Color Overlay** as the fir
 live layer style. Each slice needs its own persistence, history, automation and
 rendering contract.
 The [Color Overlay numerical foundation](COLOR_OVERLAY_FOUNDATION.md) now has
-independent native and actual Wasm scalar/row checks. Its document, rendering and frontend
-integration remain open; it is not a fourteenth filter.
+independent native and actual Wasm scalar/row checks. A separate bounded ordered
+style vocabulary is also tested, including 19 actual Node Wasm cases. It is not
+attached to layers or rendering and is not a fourteenth filter. The prepared CPU
+blend service and borrowed cooperative History fork pass a combined 57-case
+actual Node Wasm matrix with that vocabulary; browser mask mutation, owned source
+leases and Worker8/Main execution remain open. Portable Source8 snapshots have
+native tests; their actual Wasm qualification is separate and pending. See the
+[portable foundations record](LAYER_BLEND_FOUNDATION.md#additional-portable-foundations).
 Native Classic/Studio can now open, save and recover blend documents, with actual
 display, filter-preview, sampling, Flatten, thumbnail and print-image preparation
 tests. The native selector retains existing source/FIFO/publication guards; its
