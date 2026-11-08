@@ -133,3 +133,69 @@ pub(super) fn preflight(
     }
     Ok(())
 }
+
+// Private validated-key route only. Public preflight remains byte-exact above.
+pub(super) fn preflight_prepared(
+    doc: &Document,
+    region: Rect,
+    c: Context,
+    retained: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    let q = quote(doc, region, c)?;
+    let base = crate::spatial::current().ok_or_else(missing)?;
+    let mut spatial_peak = 0u64;
+    let mut total = crate::noise_work::WorkComponents {
+        base: q.extra_work,
+        noise: 0,
+    };
+    for layer in doc
+        .layers_in_order()
+        .filter(|l| l.visible && l.opacity != 0)
+    {
+        let Some(area) = region.intersect(&layer.extent()) else {
+            continue;
+        };
+        let local = area
+            .translated(-layer.origin.0, -layer.origin.1)
+            .ok_or_else(limit)?;
+        if crate::spatial::active(layer) {
+            let spatial = crate::noise_work::quote_layer(layer, local, check)?;
+            spatial_peak = spatial_peak.max(spatial.bytes);
+            total = total.checked_add(spatial.work)?;
+        } else {
+            let mask = crate::layer_mask::quote_work(layer, local)?;
+            total = total.checked_add(
+                crate::noise_work::quote_direct(layer, local, check)?.checked_mul(
+                    if crate::layer_mask::active(layer) {
+                        1
+                    } else {
+                        2
+                    },
+                )?,
+            )?;
+            total = total.checked_add(crate::noise_work::WorkComponents {
+                base: mask,
+                noise: 0,
+            })?;
+        }
+    }
+    let render_peak = spatial_peak.checked_add(retained).ok_or_else(limit)?;
+    if render_peak > base.bytes_limit() {
+        return Err(limit());
+    }
+    if crate::noise_work::current().is_some() {
+        crate::noise_work::current_for(&base)?.check_available(total)?;
+    } else if total.noise != 0 {
+        crate::noise_work::required()?;
+        return Err(missing());
+    } else if base
+        .work_used()
+        .checked_add(total.base)
+        .filter(|n| *n <= base.work_limit())
+        .is_none()
+    {
+        return Err(limit());
+    }
+    Ok(())
+}

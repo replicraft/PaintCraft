@@ -6,6 +6,7 @@ use std::cell::Cell;
 mod compose;
 #[cfg(feature = "gpu")]
 mod gpu;
+pub mod service;
 #[cfg(feature = "gpu")]
 pub(crate) use gpu::{
     allowed as gpu_allowed, dispatch as gpu_dispatch, with_programs as with_gpu_programs,

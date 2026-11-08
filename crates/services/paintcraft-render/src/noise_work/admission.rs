@@ -212,6 +212,13 @@ impl NoiseAdmission {
     }
 }
 
+impl NoiseAdmission {
+    /// Actual already-retained control declaration, not a new reservation.
+    pub fn retained_control_bytes(&self) -> u64 {
+        self._charge.bytes()
+    }
+}
+
 #[cfg(test)]
 pub(super) fn counter_payload_bytes() -> u64 {
     std::mem::size_of::<Counter>() as u64

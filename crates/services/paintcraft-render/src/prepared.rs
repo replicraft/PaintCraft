@@ -4,6 +4,7 @@ use paintcraft_core::types::{
     Error, ErrorCode, Result, Rgba, filters::LevelsRgbV1, resources::BudgetAccount,
 };
 use paintcraft_effects::{levels, mix_point_coverage};
+pub(crate) mod blend_programs;
 mod curves;
 mod curves_document;
 mod curves_job;

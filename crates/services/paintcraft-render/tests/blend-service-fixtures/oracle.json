@@ -1,0 +1,243 @@
+{
+  "status": "independent-rational-expectations-before-Rust-tests",
+  "profiles": {
+    "levels": [
+      0,
+      255,
+      100,
+      128,
+      128
+    ],
+    "exposure": 100,
+    "curves": [
+      255,
+      191,
+      127,
+      63,
+      0
+    ]
+  },
+  "backdrop": [
+    31,
+    127,
+    241,
+    255
+  ],
+  "source": [
+    204,
+    77,
+    13,
+    128
+  ],
+  "opacity": 64,
+  "records": [
+    {
+      "filter_mask": 255,
+      "own_mask": 255,
+      "mode": "multiply",
+      "after_levels": [
+        128,
+        128,
+        128
+      ],
+      "after_exposure": [
+        176,
+        176,
+        176
+      ],
+      "after_curves": [
+        79,
+        79,
+        79
+      ],
+      "composed": [
+        28,
+        116,
+        220,
+        255
+      ]
+    },
+    {
+      "filter_mask": 255,
+      "own_mask": 255,
+      "mode": "screen",
+      "after_levels": [
+        128,
+        128,
+        128
+      ],
+      "after_exposure": [
+        176,
+        176,
+        176
+      ],
+      "after_curves": [
+        79,
+        79,
+        79
+      ],
+      "composed": [
+        40,
+        132,
+        242,
+        255
+      ]
+    },
+    {
+      "filter_mask": 255,
+      "own_mask": 128,
+      "mode": "multiply",
+      "after_levels": [
+        128,
+        128,
+        128
+      ],
+      "after_exposure": [
+        176,
+        176,
+        176
+      ],
+      "after_curves": [
+        79,
+        79,
+        79
+      ],
+      "composed": [
+        30,
+        122,
+        231,
+        255
+      ]
+    },
+    {
+      "filter_mask": 255,
+      "own_mask": 128,
+      "mode": "screen",
+      "after_levels": [
+        128,
+        128,
+        128
+      ],
+      "after_exposure": [
+        176,
+        176,
+        176
+      ],
+      "after_curves": [
+        79,
+        79,
+        79
+      ],
+      "composed": [
+        35,
+        129,
+        241,
+        255
+      ]
+    },
+    {
+      "filter_mask": 128,
+      "own_mask": 255,
+      "mode": "multiply",
+      "after_levels": [
+        166,
+        103,
+        71
+      ],
+      "after_exposure": [
+        226,
+        142,
+        99
+      ],
+      "after_curves": [
+        29,
+        113,
+        156
+      ],
+      "composed": [
+        28,
+        118,
+        229,
+        255
+      ]
+    },
+    {
+      "filter_mask": 128,
+      "own_mask": 255,
+      "mode": "screen",
+      "after_levels": [
+        166,
+        103,
+        71
+      ],
+      "after_exposure": [
+        226,
+        142,
+        99
+      ],
+      "after_curves": [
+        29,
+        113,
+        156
+      ],
+      "composed": [
+        34,
+        134,
+        242,
+        255
+      ]
+    },
+    {
+      "filter_mask": 128,
+      "own_mask": 128,
+      "mode": "multiply",
+      "after_levels": [
+        166,
+        103,
+        71
+      ],
+      "after_exposure": [
+        226,
+        142,
+        99
+      ],
+      "after_curves": [
+        29,
+        113,
+        156
+      ],
+      "composed": [
+        29,
+        123,
+        235,
+        255
+      ]
+    },
+    {
+      "filter_mask": 128,
+      "own_mask": 128,
+      "mode": "screen",
+      "after_levels": [
+        166,
+        103,
+        71
+      ],
+      "after_exposure": [
+        226,
+        142,
+        99
+      ],
+      "after_curves": [
+        29,
+        113,
+        156
+      ],
+      "composed": [
+        33,
+        131,
+        242,
+        255
+      ]
+    }
+  ]
+}
