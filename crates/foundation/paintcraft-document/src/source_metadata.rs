@@ -262,5 +262,10 @@ impl std::fmt::Debug for SourceMetadata {
     }
 }
 
+mod reserved;
+pub use reserved::{
+    ReservedSourceMetadataLayout, ReservedSourceMetadataReader, SourceMetadataRecipe,
+};
+
 #[cfg(test)]
 mod tests;
