@@ -11,6 +11,9 @@ pub(super) struct Scope {
 struct Allocation {
     budget: Option<BudgetLease>,
     scope: Arc<Mutex<Scope>>,
+    // The gauge Arc ends before this shared control declaration can release.
+    // Private layout grows on ALL paths; legacy pixel-only budgets exclude it.
+    _decode_controls: super::decode_factories::DecodeControls,
 }
 impl Allocation {
     fn new(budget: BudgetLease, scope: Arc<Mutex<Scope>>) -> Result<Self> {
@@ -25,6 +28,7 @@ impl Allocation {
         Ok(Self {
             budget: Some(budget),
             scope,
+            _decode_controls: super::decode_factories::DecodeControls::default(),
         })
     }
 }
@@ -48,6 +52,17 @@ pub(super) struct Tile {
     pub(super) regions: [u64; regions::REGIONS_PER_TILE],
 }
 impl Tile {
+    pub(super) fn attach_decode_controls(
+        &mut self,
+        gauge: &Arc<Mutex<Scope>>,
+        controls: &super::decode_factories::DecodeControls,
+    ) {
+        if let Some(allocation) = &mut self._residency
+            && Arc::ptr_eq(&allocation.scope, gauge)
+        {
+            allocation._decode_controls = controls.clone();
+        }
+    }
     /// Empty ownership-transfer sentinel; never exposed as a resident tile.
     pub(super) fn empty() -> Self {
         Self {

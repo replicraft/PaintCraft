@@ -19,7 +19,11 @@ pub use paint::{
     PaintOverlay, PaintPlan, PaintProjection, PaintReader, PaintSnapshot, RgbaPastePlan,
     SimulatedLayer, TileFootprint, TilePlanner,
 };
+mod decode_factories;
 mod tile;
+pub use decode_factories::{
+    ReservedDecodeAdmission, ReservedDecodeControlQuote, ReservedDecodeFactories,
+};
 use tile::Tile;
 
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
@@ -141,6 +145,17 @@ impl Admission {
             reservation: Some(reservation),
             allocation_scope: Some(Arc::new(std::sync::Mutex::new(tile::Scope::default()))),
         }
+    }
+    /// Reserved decode-only owner with all factories explicit. No default realm,
+    /// fallback reservation, raw Admission or unaccounted gauge escapes.
+    pub fn with_reserved_decode_factories(
+        limit_pixels: u64,
+        reservation: BudgetReservation,
+        factories: ReservedDecodeFactories,
+        control_scope: &BudgetScope,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<ReservedDecodeAdmission> {
+        ReservedDecodeAdmission::new(limit_pixels, reservation, factories, control_scope, check)
     }
     /// Set an independent fixed per-plan metadata allowance. This does not add
     /// retryable decoded demand or alter the cumulative staged-pixel policy.
