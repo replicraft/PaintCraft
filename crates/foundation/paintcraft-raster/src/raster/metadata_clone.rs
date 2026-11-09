@@ -208,3 +208,5 @@ mod tests {
         assert_eq!(source.get(0, 0), Rgba([1, 2, 3, 255]));
     }
 }
+
+mod retained;
