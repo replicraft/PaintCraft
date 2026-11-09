@@ -617,3 +617,6 @@ mod view_lifetime_diagnostic;
 
 #[path = "tests/execution_jobs.rs"]
 mod execution_jobs;
+
+#[path = "tests/compact_owners.rs"]
+mod compact_owners;

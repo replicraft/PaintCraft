@@ -29,9 +29,10 @@ use policy::SlicePolicy;
 #[derive(Debug)]
 struct State {
     source: Source,
-    base: Document,
-    candidate: Option<paintcraft_editor::execute::metadata_clone::StagedMetadata>,
+    // Raw candidate owners end while the immutable base is still alive.
     frame: Option<frame::AppearanceFrame>,
+    candidate: Option<paintcraft_editor::execute::metadata_clone::StagedMetadata>,
+    base: Document,
     last_binding: Option<Value>,
     last_copy_admission: Option<Value>,
     generation: Option<u64>,
