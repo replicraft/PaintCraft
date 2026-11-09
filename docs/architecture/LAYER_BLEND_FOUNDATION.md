@@ -804,6 +804,18 @@ not relax prices, limits or existing parser behavior.
 
 The one-layer empty-layout pass costs 13,188 declared work units. Its named control
 declaration is 1,040 bytes on Native64 and 936 on Wasm32; these are structural
-policy declarations, not RSS or latency measurements. Actual Wasm execution,
-pixel decoding, original-realm funding and closed Source8 assembly remain separate
-gates before Worker or Main publication.
+policy declarations, not RSS or latency measurements.
+
+Actual Node WebAssembly validation now passes 359 cases: the previous 303 plus
+56 public census controls. These check all twelve retained layouts, all 24
+callback prefixes, fixed debit refusals with cumulative retries, document-wide
+coverage limits, original-scope control/helper overlap and account retirement.
+The module starts with 2 MiB of nonshared memory, retains its 16 MiB maximum and
+finishes at 3,473,408 bytes. Source hashes remain unchanged during execution.
+The build and execution receipts are
+`docs/validation/layer-blend-candidates/source8-retained-layout-census-wasm/build-attempt-2/build-final.json`
+and the adjacent `node-attempt-1/final.json`. The first build remains preserved;
+its fixture JSON error-conversion failure was corrected only in the test harness.
+Pixel decoding, original-realm funding and closed Source8 assembly still need
+separate validation before Worker or Main publication. This finite Node run does
+not establish browser integration or performance.
