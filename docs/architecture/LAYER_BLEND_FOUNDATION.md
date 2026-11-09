@@ -949,3 +949,41 @@ The receipts are
 `docs/validation/layer-blend-candidates/source8-owner-union-wasm/build-attempt-1/build-final.json`
 and `node-attempt-1/final.json`. This does not establish closed-reader ownership
 or an arbitrary-many-owner union.
+
+### Closed portable source inspection
+
+The render worker now has a Rust-only Source8 inspection entry. It captures an
+actual installed caller, requires exact original reservation capacities, and
+assembles document fields, pixels, ordered filters, masks and source metadata.
+It adopts the authenticated appearance metadata, returns descriptive scalars,
+and retires the private document before returning. A failed Entry is terminal;
+a later public call is a distinct operation on the same cumulative caller and
+original factories. The existing Worker/JS protocols are unchanged.
+
+The private owner keeps original factories alive through data destruction and
+releases paired retention credit after the data. Entry controls remain 8192
+bytes with the original 16384-unit control-work charge. Named overlapping values
+occupy 8160 native or 5232 Wasm bytes, including the owned layout summary and
+probe quotation controls. Separate prepayment covers the existing wire probe's
+raw sort callbacks, descriptor resolution, parsing and hashes before it starts.
+Existing helper bodies and checked callback fees remain unchanged. Plan-local
+work is not reported as the whole caller's authentication, assembly or adoption
+cost. These conservative work bounds are not performance measurements.
+
+Native validation passes all 118 render-worker unit tests, four integration
+groups and one compile-fail documentation test. The 71-wire matrix contains 39
+valid sources and 32 refusals. Independent private assertions cover full physical
+tile bytes, hidden/default pixels, layers, filter order, masks and ICC metadata.
+Original-capacity boundaries, exact callback errors and scoped retirement also
+pass. Strict workspace and Main/both-Worker Wasm checks, formatting, source limits
+and parser-lock consistency pass. The 23-path native freeze is
+`docs/validation/layer-blend-candidates/source8-r3-reader/qualified-freeze.json`.
+
+The first private 256-mask test used the smaller ownership-test profile and
+correctly refused. Its failed log and source remain preserved; the corrected
+test uses the already-frozen whole-corpus profile without changing its grants
+or domain assertions. Initial formatting/test-lint failures and their fixes are
+also retained. Actual Wasm reader execution, public full-pixel rendering,
+Worker8/Main activation, exhaustive whole-reader fault injection and complete
+D1/physical-memory qualification remain open. Arbitrary inherited or escaped
+diagnostic heap is outside the static error shadow.
