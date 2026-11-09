@@ -267,6 +267,9 @@ impl LayerAppearancePlan<'_> {
     }
 }
 
+mod frame_layout;
+pub(crate) use frame_layout::rooted_frame_inline_layout_supported;
+
 #[cfg(test)]
 mod tests;
 

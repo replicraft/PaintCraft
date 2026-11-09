@@ -248,6 +248,9 @@ pub(crate) fn compose_row(
     Ok(())
 }
 
+mod appearance_inline_layout;
+pub use appearance_inline_layout::rooted_frame_inline_layout_supported;
+
 #[cfg(test)]
 mod tests {
     use super::*;

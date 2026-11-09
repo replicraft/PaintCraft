@@ -306,6 +306,9 @@ fn limit() -> Error {
         "A8 mask work or storage admission exceeded",
     )
 }
+mod inline_layout;
+pub use inline_layout::uniform_region_inline_layout_supported;
+
 #[cfg(test)]
 mod invert_tests;
 #[cfg(test)]
