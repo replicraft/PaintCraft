@@ -332,7 +332,8 @@ pub use binary::admitted::{
 };
 
 pub use binary::requirements::{
-    PortableBlockView, PortableFilterView, PortableHeaderView, PortableLayerCursor,
-    PortableLayerHeader, PortableMaskView, PortableSource8ControlBytes, PortableSource8Facts,
-    PortableSource8Limits, PortableSource8Plan, portable_source8_control_bytes,
+    PortableBlockView, PortableCoverageMaterializer8, PortableFilterView, PortableHeaderView,
+    PortableLayerCursor, PortableLayerHeader, PortableMaskView, PortableSource8ControlBytes,
+    PortableSource8Facts, PortableSource8Limits, PortableSource8Plan,
+    portable_source8_control_bytes,
 };

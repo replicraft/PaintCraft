@@ -1,0 +1,116 @@
+{
+    "status": "INDEPENDENT_WIRE_FIXTURES_FROZEN_BEFORE_HARNESS_RUST_OR_PRODUCT_PATCH",
+    "generator": "stdlib only; no product imports/encoder/API calls",
+    "cases": [
+        {
+            "name": "filter128-enabled",
+            "hex": "50434e44080d0a1a19010d696e766572742d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201ffffffff00000013131313131313131313131313131313054c6179657201ff0100000201cc4d0dff01333333333333333333333333333333330100000101010000040201000101000280000083aabfc5136e8e6921b283c21891ea582b36e9dfce915a2d897ea3a810411b96",
+            "sha256": "3c36ec40ee34b606d0fda6870fdd048929eb5bd3845c64dd4ebff4be5b833bca",
+            "bytes": 208,
+            "canvas": [
+                2,
+                1
+            ],
+            "layers": 2,
+            "filters": 1,
+            "filter_layer": 1,
+            "filter_index": 0,
+            "filter_enabled": true,
+            "mask_enabled": true,
+            "mask_value": 128,
+            "nonempty_instances": 1,
+            "bands": 1,
+            "runs": 1,
+            "own_present": false,
+            "source_fields": "native-readable canonical PCND8; catalog invert/params; no pixel blocks; distinct storedMultiply front; original source retained immutable"
+        },
+        {
+            "name": "filter128-disabled",
+            "hex": "50434e44080d0a1a19010d696e766572742d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201ffffffff00000013131313131313131313131313131313054c6179657201ff0100000201cc4d0dff0133333333333333333333333333333333010000010001000004020100010100028000002f1e1fb48d9c1d0c95a708d3f8c257e79123748056fa58b9af9bec31baa62c29",
+            "sha256": "eb59c44a6a7774aef3992f3676f69642b58fdf1d0e808b685516c2f97a68b620",
+            "bytes": 208,
+            "canvas": [
+                2,
+                1
+            ],
+            "layers": 2,
+            "filters": 1,
+            "filter_layer": 1,
+            "filter_index": 0,
+            "filter_enabled": true,
+            "mask_enabled": false,
+            "mask_value": 128,
+            "nonempty_instances": 1,
+            "bands": 1,
+            "runs": 1,
+            "own_present": false,
+            "source_fields": "native-readable canonical PCND8; catalog invert/params; no pixel blocks; distinct storedMultiply front; original source retained immutable"
+        },
+        {
+            "name": "filter-empty-enabled",
+            "hex": "50434e44080d0a1a19010d696e766572742d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201ffffffff00000013131313131313131313131313131313054c6179657201ff0100000201cc4d0dff01333333333333333333333333333333330100000101010000040200000069e64066ac989eda87fdd7668cdc18d1df46617f48e1aa6d42fa4c4c9e9df168",
+            "sha256": "ce3666429926171c644cd98d63423f0db9229de644cce2bedada0fbc78c9f49b",
+            "bytes": 202,
+            "canvas": [
+                2,
+                1
+            ],
+            "layers": 2,
+            "filters": 1,
+            "filter_layer": 1,
+            "filter_index": 0,
+            "filter_enabled": true,
+            "mask_enabled": true,
+            "mask_value": 0,
+            "nonempty_instances": 0,
+            "bands": 0,
+            "runs": 0,
+            "own_present": false,
+            "source_fields": "native-readable canonical PCND8; catalog invert/params; no pixel blocks; distinct storedMultiply front; original source retained immutable"
+        },
+        {
+            "name": "filter-and-own-repeated128",
+            "hex": "50434e44080d0a1a19010d696e766572742d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201ffffffff00000013131313131313131313131313131313054c6179657201ff0100000201cc4d0dff01333333333333333333333333333333330100000101010000040201000101000280010101000004020100010100028000fe4ccb2ed106bf9a8803481915d597e2ef422c01403a00d5467abf5294886876",
+            "sha256": "222cad37ab8902a1ef6b6175c7052bbbf4613413193b5cc3fe56618bdcc3f2cd",
+            "bytes": 221,
+            "canvas": [
+                2,
+                1
+            ],
+            "layers": 2,
+            "filters": 1,
+            "filter_layer": 1,
+            "filter_index": 0,
+            "filter_enabled": true,
+            "mask_enabled": true,
+            "mask_value": 128,
+            "nonempty_instances": 2,
+            "bands": 2,
+            "runs": 2,
+            "own_present": true,
+            "source_fields": "native-readable canonical PCND8; catalog invert/params; no pixel blocks; distinct storedMultiply front; original source retained immutable"
+        },
+        {
+            "name": "disabled-filter-instance-with-enabled128-mask",
+            "hex": "50434e44080d0a1a19010d696e766572742d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201ffffffff00000013131313131313131313131313131313054c6179657201ff0100000201cc4d0dff013333333333333333333333333333333300000001010100000402010001010002800000a786514191edfc2db10a266575196715b4eef1cba18a83570385578b572ce4a6",
+            "sha256": "ab4d496f38fb05ea43d11913c4e4aa78221b77a2436933b550013434d72706a4",
+            "bytes": 208,
+            "canvas": [
+                2,
+                1
+            ],
+            "layers": 2,
+            "filters": 1,
+            "filter_layer": 1,
+            "filter_index": 0,
+            "filter_enabled": false,
+            "mask_enabled": true,
+            "mask_value": 128,
+            "nonempty_instances": 1,
+            "bands": 1,
+            "runs": 1,
+            "own_present": false,
+            "source_fields": "Disabled stored FilterInstance still carries enabled nonempty canonical A8; stored Multiply front; no pixelblocks"
+        }
+    ]
+}

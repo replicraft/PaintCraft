@@ -294,3 +294,6 @@ impl std::fmt::Debug for PortableSource8Plan<'_> {
             .finish_non_exhaustive()
     }
 }
+
+mod coverage;
+pub use coverage::PortableCoverageMaterializer8;
