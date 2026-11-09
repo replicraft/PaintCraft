@@ -74,9 +74,14 @@ documents under the original caller and reservations. Native validation passes
 118 worker unit tests, four integration groups and one documentation test,
 including 71 whole-wire cases and 39 independent full-domain proofs. Actual
 Wasm reader inspection now passes its scalar and original-caller controls.
-Public full-pixel rendering and browser candidate/frame ownership remain
-required before publication. These checks do not establish browser mask editing
-or blend adoption.
+The Rust-only closed rendering entry now passes native full-pixel checks for
+22 independent outputs, an off-canvas refusal and output ownership after the
+source host retires. The original caller, reservations and cumulative counters
+fund source, workspace, frame controls and retained output. Native validation
+passes 123 worker unit cases plus a separate original-diagnostic identity case;
+strict native/Wasm compilation and formatting pass. Actual Wasm full-frame
+execution and browser candidate/frame ownership remain required before
+publication. These checks do not establish browser mask editing or blend adoption.
 Next is completing browser mask actions and browser blend adoption, then Color
 Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes

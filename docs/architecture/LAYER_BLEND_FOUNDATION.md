@@ -963,8 +963,9 @@ original factories. The existing Worker/JS protocols are unchanged.
 The private owner keeps original factories alive through data destruction and
 releases paired retention credit after the data. Entry controls remain 8192
 bytes with the original 16384-unit control-work charge. Named overlapping values
-occupy 8160 native or 5232 Wasm bytes, including the owned layout summary and
-probe quotation controls. Separate prepayment covers the existing wire probe's
+occupy 8192 native or 5260 Wasm bytes, including the owned layout summary,
+probe quotation controls and pre-frame reservation snapshot. Separate prepayment
+covers the existing wire probe's
 raw sort callbacks, descriptor resolution, parsing and hashes before it starts.
 Existing helper bodies and checked callback fees remain unchanged. Plan-local
 work is not reported as the whole caller's authentication, assembly or adoption
@@ -1008,3 +1009,33 @@ removal produces 3922967 bytes within the original 4 MiB file bound, with
 unchanged executable sections and genuine glue. Its exact three imports and
 reader signatures are checked by a separate inventory; the legacy parser stays
 unchanged. The unsigned metric decoder preserves the original golden values.
+
+### Closed portable source rendering
+
+The Rust-only rendering entry now reads a private Source8 and returns an
+immutable accounted RGBA image. It reuses the captured caller and original
+reservations. The complete declared byte envelope is checked before frame
+control admission; output bytes plus 112 bytes of retained control are admitted
+before allocating the output. The image keeps its original output factory alive
+after the document, frame controls and source host retire. Existing Worker/JS
+routes remain unchanged.
+
+Native validation passes 123 worker unit cases and a separate original-allocation
+diagnostic identity case. Three integration groups check 22 independent complete
+RGBA outputs, one off-canvas refusal and output ownership after host retirement.
+Strict native all-target and Wasm library Clippy, formatting and the 800-line
+source limit pass. The evidence is retained under
+`docs/validation/layer-blend-candidates/source8-closed-frame-native`.
+
+The first check failed with ENOSPC. Two subsequent pixel attempts exposed fixture
+grammar errors: a mask run encoded its endpoint instead of width, and eight
+prepared-filter catalogs were unsorted. Their original wires and failures remain
+preserved. Data-only corrections preserve filter order and all expected pixels;
+the production decoder is unchanged. Regenerable compiler libraries were removed
+from completed conformance build caches, preserving source, executed Wasm, logs
+and receipts.
+
+Actual Wasm full-frame execution, the complete caller/alias retirement matrix,
+browser publication and complete D1/physical-memory qualification remain open.
+Inherited prepared bookkeeping and arbitrary diagnostic heap remain outside this
+finite functional gate. This is correctness validation, not a performance claim.
