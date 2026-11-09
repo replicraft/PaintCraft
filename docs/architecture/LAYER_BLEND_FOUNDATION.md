@@ -904,5 +904,20 @@ pass. The effective sixteen-path source freeze and native receipt are
 and `native-attempt-1/final.json`. Source hashes remained unchanged throughout.
 Preserved pre-build amendments correct fixture blend modes, retain normal-only
 inputs as upstream refusals, price owning returns, and place production helpers
-before tests without modifying old definitions. Runtime Wasm execution of these
-new APIs and closed document assembly remain pending.
+before tests without modifying old definitions.
+
+Actual Node WebAssembly execution now passes 674 cases: the previous 469 plus
+205 stream/capture controls. Independent target byte projections check layer
+headers, ordered descriptors and masks, receipts and direct owned construction.
+All 155 selected callback/debit cuts preserve exact typed errors and cumulative
+retries. Scope boundaries, global limits, sequence errors, 256 distinct masks,
+owner retirement and thirteen public caller-context cases pass. The unreachable
+public Noise-only half-context remains covered by the native private-seam test;
+no production hook was added to manufacture it.
+
+The actual build and execution receipts are
+`docs/validation/layer-blend-candidates/source8-stream-capture-wasm/build-attempt-1/build-final.json`
+and `node-attempt-1/final.json`. Sources remain unchanged; nonshared initial
+memory is 2 MiB, the maximum remains 16 MiB, and final linear memory is 4 MiB.
+This primitive validation does not establish closed Source8 document assembly,
+Worker/Main integration, full D1 accounting or physical memory/latency bounds.

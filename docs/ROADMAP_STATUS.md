@@ -66,8 +66,8 @@ The portable loader prerequisites now include a Plan-bound retained-layout
 census and Raw/RLE/LZ4/RLE+LZ4 pixel materializers with explicit original
 reservation ownership. A consuming sequential intention stream and required-caller
 capture helpers also pass local native tests and strict native/Wasm checks.
-Actual Node Wasm validation passes 469 cases through the layout census and pixel
-materializers; execution of the new stream/capture APIs remains pending. Complete
+Actual Node Wasm validation passes 674 cases through the layout census, pixel
+materializers, intention stream and caller-capture helpers. Complete
 document/candidate/frame ownership is still required before browser publication. These prerequisites do
 not establish browser mask editing or blend adoption.
 Next is completing browser mask actions and browser blend adoption, then Color
