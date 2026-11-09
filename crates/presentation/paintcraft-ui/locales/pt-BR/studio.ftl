@@ -533,3 +533,15 @@ layer-blend-mode = Modo de mesclagem da camada
 normal = Normal
 multiply = Multiplicação
 screen = Divisão
+
+# Browser own-layer-mask controls.
+layer-mask-updated = Máscara de camada atualizada
+layer-mask-unchanged = Máscara de camada sem alterações
+layer-mask-source-or-target-changed = A origem ou o destino da máscara de camada mudou
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = Conclua ou cancele o rascunho da ferramenta antes de editar máscaras de camada
+captured-layer-masks-require-a-layer-uuid = As máscaras de camada capturadas exigem um UUID de camada
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = Máscaras de camada com modos de mesclagem ainda não estão disponíveis no navegador
+finish-or-cancel-the-current-action-before-editing-layer-masks = Conclua ou cancele a ação atual antes de editar máscaras de camada
+layer-mask-limits-were-exceeded = Os limites da máscara de camada foram excedidos
+layer-has-no-stored-mask = A camada não tem uma máscara salva
+selection-mask-requires-an-active-selection = a máscara de seleção exige uma seleção ativa

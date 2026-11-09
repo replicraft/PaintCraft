@@ -533,3 +533,15 @@ layer-blend-mode = Ebenen-Mischmodus
 normal = Normal
 multiply = Multiplizieren
 screen = Negativ multiplizieren
+
+# Browser own-layer-mask controls.
+layer-mask-updated = Ebenenmaske aktualisiert
+layer-mask-unchanged = Ebenenmaske unverändert
+layer-mask-source-or-target-changed = Quelle oder Ziel der Ebenenmaske wurde geändert
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = Schließe den Werkzeugentwurf ab oder brich ihn ab, bevor du Ebenenmasken bearbeitest
+captured-layer-masks-require-a-layer-uuid = Erfasste Ebenenmasken benötigen eine Ebenen-UUID
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = Ebenenmasken mit Mischmodi sind im Browser noch nicht verfügbar
+finish-or-cancel-the-current-action-before-editing-layer-masks = Schließe die aktuelle Aktion ab oder brich sie ab, bevor du Ebenenmasken bearbeitest
+layer-mask-limits-were-exceeded = Die Grenzen der Ebenenmaske wurden überschritten
+layer-has-no-stored-mask = Die Ebene hat keine gespeicherte Maske
+selection-mask-requires-an-active-selection = eine Auswahlmaske erfordert eine aktive Auswahl

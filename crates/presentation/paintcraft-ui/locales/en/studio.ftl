@@ -533,3 +533,15 @@ layer-blend-mode = Layer blend mode
 normal = Normal
 multiply = Multiply
 screen = Screen
+
+# Browser own-layer-mask controls.
+layer-mask-updated = Layer mask updated
+layer-mask-unchanged = Layer mask unchanged
+layer-mask-source-or-target-changed = Layer mask source or target changed
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = Finish or cancel the private tool draft before editing layer masks
+captured-layer-masks-require-a-layer-uuid = Captured layer masks require a layer UUID
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = Layer masks with layer blends are not available in the browser yet
+finish-or-cancel-the-current-action-before-editing-layer-masks = Finish or cancel the current action before editing layer masks
+layer-mask-limits-were-exceeded = Layer mask limits were exceeded
+layer-has-no-stored-mask = Layer has no stored mask
+selection-mask-requires-an-active-selection = selection mask requires an active selection

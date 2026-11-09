@@ -76,6 +76,32 @@ Editor history suites. This remains a synchronous prerequisite: immutable histor
 leases, resumable pressure handling and bounded cancellation cleanup are still open.
 
 Appearance-aware foreign export consent, actual OS print/Clipboard publication
-and asynchronous browser mask editing remain open. Browser mask mutation controls
-remain closed. Palette's full 132-filter catalog, blend modes and layer styles
-remain separate roadmap work.
+and asynchronous browser mask editing remain open. Palette's full 132-filter
+catalog, browser blend adoption and layer styles remain separate roadmap work.
+
+## Browser Studio own-mask actions
+
+Studio now wires selection, invert, enable/disable and remove controls to captured
+Main editor operations. Owner, document, publication epoch and stable layer checks
+run before private tool state can be discarded. The existing bounded transaction
+owns mask construction and history publication; each change has one undo.
+Semantic no-ops preserve both the editor ticket and desired display identity.
+
+A committed change invalidates the old display identity and reopens a Normal
+Source7 snapshot. Existing renderer close/ACK handling retains its credits until
+retirement. No mask intent enters Source7's numeric-preview protocol. NonNormal
+documents remain explicitly refused until the Source8 browser lane is available.
+Statuses and guard messages are translated in all seven configured languages.
+
+Eight targeted native tests and the complete web Rust unit suite pass: 485 passed
+and three existing ignored. Native all-target and Wasm library strict Clippy,
+350 Node regressions, translation, formatting and source-length checks pass.
+The PCND7 roundtrip test uses explicit coverage admission; its earlier source-only
+generic-reader draft is preserved. The pnpm retry retained signature verification
+and succeeded after network access was allowed.
+
+Evidence is under
+`docs/validation/layer-blend-candidates/web-own-layer-masks/native-qualification`.
+Actual Main browser UI execution is pending. This uses the existing synchronous
+Main transaction contract; it does not qualify asynchronous history finalization,
+complete physical memory accounting or latency.

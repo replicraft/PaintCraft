@@ -2,6 +2,7 @@
 mod filters;
 mod flatten;
 mod floating;
+mod layer_masks;
 mod pen;
 mod resource_shape;
 mod sampled_brush;
@@ -176,11 +177,11 @@ impl Editor {
     }
 
     pub fn apply(&mut self, action: Action) -> Result<()> {
-        if matches!(&action, Action::LayerMask(_)) {
-            return Err(Error::new(
-                ErrorCode::CapabilityUnsupported,
-                "Layer masks require Source7",
-            ));
+        if let Action::LayerMask(edit) = &action {
+            let operation = self.layer_mask_operation(edit)?;
+            // Validation never resolves/discards a private tool draft. The
+            // existing transaction owns A8 admission, one undo and publication.
+            return self.commit(vec![operation]);
         }
         if let Action::Filter(edit) = &action {
             let operation = self.filter_operation(edit)?;

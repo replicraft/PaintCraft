@@ -533,3 +533,15 @@ layer-blend-mode = レイヤーの描画モード
 normal = 通常
 multiply = 乗算
 screen = スクリーン
+
+# Browser own-layer-mask controls.
+layer-mask-updated = レイヤーマスクを更新しました
+layer-mask-unchanged = レイヤーマスクは変更されていません
+layer-mask-source-or-target-changed = レイヤーマスクの元データまたは対象が変更されました
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = レイヤーマスクを編集する前に、編集中のツールを確定するかキャンセルしてください
+captured-layer-masks-require-a-layer-uuid = レイヤーマスクの編集にはレイヤーの UUID が必要です
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = レイヤーブレンドを使うレイヤーマスクは、ブラウザーではまだ利用できません
+finish-or-cancel-the-current-action-before-editing-layer-masks = レイヤーマスクを編集する前に、現在の操作を完了するかキャンセルしてください
+layer-mask-limits-were-exceeded = レイヤーマスクの上限を超えました
+layer-has-no-stored-mask = レイヤーに保存済みのマスクがありません
+selection-mask-requires-an-active-selection = 選択マスクには有効な選択範囲が必要です

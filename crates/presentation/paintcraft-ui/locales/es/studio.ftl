@@ -533,3 +533,15 @@ layer-blend-mode = Modo de fusión de capa
 normal = Normal
 multiply = Multiplicar
 screen = Trama
+
+# Browser own-layer-mask controls.
+layer-mask-updated = Máscara de capa actualizada
+layer-mask-unchanged = Máscara de capa sin cambios
+layer-mask-source-or-target-changed = El origen o el destino de la máscara de capa ha cambiado
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = Finaliza o cancela el borrador de la herramienta antes de editar máscaras de capa
+captured-layer-masks-require-a-layer-uuid = Las máscaras de capa capturadas requieren un UUID de capa
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = Las máscaras de capa con modos de fusión aún no están disponibles en el navegador
+finish-or-cancel-the-current-action-before-editing-layer-masks = Finaliza o cancela la acción actual antes de editar máscaras de capa
+layer-mask-limits-were-exceeded = Se han superado los límites de la máscara de capa
+layer-has-no-stored-mask = La capa no tiene una máscara guardada
+selection-mask-requires-an-active-selection = la máscara de selección requiere una selección activa

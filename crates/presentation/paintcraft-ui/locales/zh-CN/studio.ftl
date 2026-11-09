@@ -533,3 +533,15 @@ layer-blend-mode = 图层混合模式
 normal = 正常
 multiply = 正片叠底
 screen = 滤色
+
+# Browser own-layer-mask controls.
+layer-mask-updated = 图层蒙版已更新
+layer-mask-unchanged = 图层蒙版未更改
+layer-mask-source-or-target-changed = 图层蒙版的来源或目标已更改
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = 编辑图层蒙版前，请完成或取消工具草稿
+captured-layer-masks-require-a-layer-uuid = 捕获的图层蒙版需要图层 UUID
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = 浏览器暂不支持带图层混合模式的图层蒙版
+finish-or-cancel-the-current-action-before-editing-layer-masks = 编辑图层蒙版前，请完成或取消当前操作
+layer-mask-limits-were-exceeded = 已超出图层蒙版限制
+layer-has-no-stored-mask = 图层没有已保存的蒙版
+selection-mask-requires-an-active-selection = 选区蒙版需要有效选区

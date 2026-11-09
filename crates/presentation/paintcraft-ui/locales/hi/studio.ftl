@@ -533,3 +533,15 @@ layer-blend-mode = परत का मिश्रण मोड
 normal = सामान्य
 multiply = गुणा
 screen = स्क्रीन
+
+# Browser own-layer-mask controls.
+layer-mask-updated = लेयर मास्क अपडेट किया गया
+layer-mask-unchanged = लेयर मास्क में कोई बदलाव नहीं हुआ
+layer-mask-source-or-target-changed = लेयर मास्क का स्रोत या लक्ष्य बदल गया
+finish-or-cancel-the-private-tool-draft-before-editing-layer-masks = लेयर मास्क संपादित करने से पहले टूल का ड्राफ़्ट पूरा करें या रद्द करें
+captured-layer-masks-require-a-layer-uuid = कैप्चर किए गए लेयर मास्क के लिए लेयर UUID आवश्यक है
+layer-masks-with-layer-blends-are-not-available-in-the-browser-yet = ब्लेंड मोड वाले लेयर मास्क अभी ब्राउज़र में उपलब्ध नहीं हैं
+finish-or-cancel-the-current-action-before-editing-layer-masks = लेयर मास्क संपादित करने से पहले वर्तमान कार्रवाई पूरी करें या रद्द करें
+layer-mask-limits-were-exceeded = लेयर मास्क की सीमाएँ पार हो गईं
+layer-has-no-stored-mask = लेयर में कोई सहेजा गया मास्क नहीं है
+selection-mask-requires-an-active-selection = चयन मास्क के लिए सक्रिय चयन आवश्यक है

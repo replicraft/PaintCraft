@@ -1,13 +1,16 @@
-//! No new browser control is activated before truthful Source7 support.
+//! NonNormal sources stay gated until the actual browser Source8 lane exists.
 use super::*;
 use paintcraft_commands::{LayerMaskOp, LayerRef};
 use paintcraft_input::PointerButton;
 use paintcraft_tools::LayerMaskEdit;
 use std::sync::Arc;
 #[test]
-fn layer_mask_intent_refuses_before_gesture_cancel_or_any_session_mutation() {
+fn non_normal_layer_mask_refuses_before_gesture_cancel_or_any_session_mutation() {
     let mut e = Editor::new(2, 2).unwrap();
     let id = e.target.unwrap();
+    let mut doc = (*e.session.snapshot()).clone();
+    doc.layers.get_mut(&id).unwrap().blend_mode = paintcraft_core::types::LayerBlendMode::Multiply;
+    e.session = paintcraft_editor::session::Session::new(doc);
     e.tools.tool = paintcraft_tools::Tool::Pencil;
     e.tools
         .pointer_down_subpixel(id, (256, 256), PointerButton::Primary);
@@ -26,7 +29,10 @@ fn layer_mask_intent_refuses_before_gesture_cancel_or_any_session_mutation() {
     };
     let error = e.apply(Action::LayerMask(edit)).unwrap_err();
     assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
-    assert_eq!(error.message, "Layer masks require Source7");
+    assert_eq!(
+        error.message,
+        "Layer masks with layer blends are not available in the browser yet"
+    );
     assert!(e.tools.gesture_in_progress());
     assert!(Arc::ptr_eq(&before, &e.session.snapshot()));
     assert_eq!(e.session.ticket(), ticket);

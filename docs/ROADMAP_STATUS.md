@@ -52,7 +52,12 @@ The [layer-mask checkpoint](architecture/LAYER_MASK_FOUNDATION.md) records the
 scope and test results. Actual browser rendering, private numeric filters, Image
 sampling and Flatten now pass finite source/history and pixel checks. Asynchronous
 browser mask editing and appearance-aware foreign export consent remain open.
-Unsupported browser mask actions refuse before session mutation.
+Browser Studio now wires captured own-mask selection, invert, enable/disable and
+remove actions through the existing atomic transaction and Source7 reopening.
+The native web suite passes 485 tests with three existing ignored, and 350 Node
+regressions plus strict native/Wasm checks pass. Actual browser UI execution is
+pending. NonNormal mask actions still refuse before session mutation until the
+Source8 browser lane exists.
 Multiply/Screen now have locally qualified metadata, history, PCND8 persistence
 and scoped CPU/GPU composition, including actual Metal execution. Native
 Classic/Studio open, save and recovery adoption passes the full native library

@@ -12,6 +12,12 @@ impl WebApp {
         let blocked = self.blocked() || self.paste.is_placing();
         let editor = &self.editor;
         let classic = self.frontend == paintcraft_ui::actions::Frontend::Classic;
+        let studio = self.frontend == paintcraft_ui::actions::Frontend::Studio;
+        let mask_available = !blocked
+            && !self.paste.busy()
+            && !self.clipboard.busy()
+            && !self.text.is_composing()
+            && self.editor.layer_mask_available();
         let draw = |ui: &mut egui::Ui| {
             ui.add_enabled_ui(!blocked, |ui| {
                 if classic {
@@ -67,29 +73,80 @@ impl WebApp {
                 } else {
                     Vec::new()
                 };
-                (actions, filter_actions)
+                let mask_actions = if studio {
+                    use paintcraft_studio::layer_masks::{self, SelectionState, Summary};
+                    let target = editor.target.and_then(|id| doc.layer(&id));
+                    let selection = match editor.session.selection() {
+                        paintcraft_editor::execute::Selection::Inactive => SelectionState::Inactive,
+                        paintcraft_editor::execute::Selection::Empty => SelectionState::Empty,
+                        _ => SelectionState::Active,
+                    };
+                    let mask = target.and_then(|l| l.mask.as_ref()).map(|m| {
+                        let stats = m.coverage().stats();
+                        Summary {
+                            enabled: m.enabled(),
+                            domain: m.coverage().domain(),
+                            bands: stats.bands,
+                            runs: stats.runs,
+                        }
+                    });
+                    ui.separator();
+                    layer_masks::panel(
+                        ui,
+                        layer_masks::Context {
+                            available: mask_available,
+                            selection,
+                            mask,
+                        },
+                    )
+                    .into_iter()
+                    .filter_map(|intent| {
+                        use layer_masks::Action as Intent;
+                        use paintcraft_commands::{LayerMaskOp, LayerRef};
+                        let layer = LayerRef::Id(target?.id);
+                        let operation = match intent {
+                            Intent::UseSelection => LayerMaskOp::FromSelection {
+                                layer,
+                                enabled: true,
+                            },
+                            Intent::SetEnabled(enabled) => {
+                                LayerMaskOp::SetEnabled { layer, enabled }
+                            }
+                            Intent::Invert => LayerMaskOp::Invert { layer },
+                            Intent::Remove => LayerMaskOp::Remove { layer },
+                        };
+                        Some(editor.layer_mask_capture(operation))
+                    })
+                    .collect()
+                } else {
+                    Vec::new()
+                };
+                (actions, filter_actions, mask_actions)
             })
             .inner
         };
-        let (actions, filter_actions) = if self.frontend == paintcraft_ui::actions::Frontend::Studio
-        {
-            let mut actions = (Vec::new(), Vec::new());
-            paintcraft_studio::layers_window(
-                ui.ctx(),
-                &mut self.studio.layers,
-                self.studio.canvas_top,
-                |ui| {
-                    ui.set_max_height(300.0);
-                    actions = draw(ui);
-                },
-            );
-            actions
-        } else {
-            egui::Panel::right("web-layers")
-                .default_size(240.0)
-                .show(ui, draw)
-                .inner
-        };
+        let (actions, filter_actions, mask_actions) =
+            if self.frontend == paintcraft_ui::actions::Frontend::Studio {
+                let mut actions = (Vec::new(), Vec::new(), Vec::new());
+                paintcraft_studio::layers_window(
+                    ui.ctx(),
+                    &mut self.studio.layers,
+                    self.studio.canvas_top,
+                    |ui| {
+                        ui.set_max_height(300.0);
+                        actions = draw(ui);
+                    },
+                );
+                actions
+            } else {
+                egui::Panel::right("web-layers")
+                    .default_size(240.0)
+                    .show(ui, draw)
+                    .inner
+            };
+        for edit in mask_actions {
+            self.apply_own_layer_mask(ui.ctx(), edit);
+        }
         for intent in filter_actions {
             self.begin_studio_filter(ui.ctx(), intent);
         }
