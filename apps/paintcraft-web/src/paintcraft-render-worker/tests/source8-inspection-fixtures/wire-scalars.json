@@ -1,0 +1,646 @@
+{
+  "status": "INDEPENDENT_WIRE_SCALARS_BEFORE_MATCHING_TEST_CORRECTION",
+  "parent_sha256": "d1955bcd0c0264bfbc581ab9cea74e141c86eedd7b676ff3a01bf25894631180",
+  "derivation": "stdlib direct immutable magic/catalog-length/UUID/varint projection; no product parser",
+  "cases": [
+    {
+      "name": "snapshot/zero-own-multiply",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/zero-own-screen",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/hidden-multiply",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/opacity0-screen",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/own128",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/disabled-own128",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/enabled-own-zero",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/proof-filter-disabled",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/explicit-default-record",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/explicit-nondefault-record",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/all-normal-v8",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/unknown-mode3",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/unknown-hidden255",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/duplicate-layer",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/duplicate-tile",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/tile-out-of-grid",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/valid-old7-mask",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/valid-old1",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "snapshot/bad-sha",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "codecs/manual-raw",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "codecs/manual-runs",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "codecs/manual-lz4",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "codecs/manual-runs-lz4",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/empty-document",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/empty-layer",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/one-unmasked",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/filter128",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/mask-disabled",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/instance-disabled",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/filter-empty",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/own128",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/filter-own-repeat",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/two-layer-global",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions/filters256",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/empty-document",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/empty-layer",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/one-unmasked",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/filter128",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/mask-disabled",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/instance-disabled",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/filter-empty",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/own128",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/filter-own-repeat",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/two-layer-global",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "intentions-negative/filters256",
+      "document_id": "00000000000000000000000000000010",
+      "state_id": "00000000000000000000000000000011",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/baseline",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/default-raw",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/one-disabled-filter",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/256-filters",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/empty-own",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/nonempty-disabled-own",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/global-two-masks",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/mixed-duplicate-masks",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/strings",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/icc-profile-none",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "layout/max-structural-scratch",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        256,
+        256
+      ]
+    },
+    {
+      "name": "layout/sparse-geometry",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        1048576,
+        1048576
+      ]
+    },
+    {
+      "name": "icc/resolution-only",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/descriptor-only",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/minimal-icc",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/reserved111",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/reserved188",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/bad-format",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/attachment-digest",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/profile-sha",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/source-bytes-zero",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/profile-flag-none-with-payload",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/bad-icc-signature",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/valid-one-tag-four-byte-payload",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/tag-end-past-profile",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "icc/tag-table-past-profile",
+      "document_id": "10101010101010101010101010101010",
+      "state_id": "11111111111111111111111111111111",
+      "canvas": [
+        2,
+        1
+      ]
+    }
+  ]
+}
