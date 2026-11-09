@@ -337,3 +337,5 @@ pub use binary::requirements::{
     PortableSource8Facts, PortableSource8Limits, PortableSource8Plan,
     portable_source8_control_bytes,
 };
+
+pub use binary::requirements::{PortableRetainedSourceLayout8, RetainedSourceLayoutSummary8};

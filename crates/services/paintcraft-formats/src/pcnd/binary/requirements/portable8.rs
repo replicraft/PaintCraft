@@ -297,3 +297,6 @@ impl std::fmt::Debug for PortableSource8Plan<'_> {
 
 mod coverage;
 pub use coverage::PortableCoverageMaterializer8;
+
+mod retained_layout;
+pub use retained_layout::{PortableRetainedSourceLayout8, RetainedSourceLayoutSummary8};
