@@ -983,7 +983,28 @@ The first private 256-mask test used the smaller ownership-test profile and
 correctly refused. Its failed log and source remain preserved; the corrected
 test uses the already-frozen whole-corpus profile without changing its grants
 or domain assertions. Initial formatting/test-lint failures and their fixes are
-also retained. Actual Wasm reader execution, public full-pixel rendering,
-Worker8/Main activation, exhaustive whole-reader fault injection and complete
+also retained. Public full-pixel rendering, Worker8/Main activation,
+exhaustive whole-reader fault injection and complete
 D1/physical-memory qualification remain open. Arbitrary inherited or escaped
 diagnostic heap is outside the static error shadow.
+
+Actual Node WebAssembly execution now passes 780 cases: all previous 682 plus
+71 whole-reader wires and 27 original-caller, reservation, error and ABI controls.
+The reader returns the independently expected 144 scalar bytes for 39 valid
+sources and rejects 32 negative wires. This validates scalar inspection and
+retirement, not private pixel contents or browser publication. Sources stayed
+unchanged; final linear memory is 4 MiB under the unchanged 2 MiB initial and
+16 MiB maximum settings. The real ten-package Cargo build, genuine bindgen glue
+and numeric execution are recorded separately in
+`docs/validation/layer-blend-candidates/source8-r3-reader-wasm/build-attempt-5/build-final.json`
+and `node-attempt-2/final.json`.
+
+Earlier attempts retain the missing historical-receipt, standalone macro-context,
+debug-name inventory and signed-JavaScript-sentinel failures. Six original
+receipts were restored with their historical hashes; all inherited required
+paths are checked. The standalone probe supplies explicitly labeled diagnostic
+macro metadata, without claiming a Cargo package identity. Official debug-name
+removal produces 3922967 bytes within the original 4 MiB file bound, with
+unchanged executable sections and genuine glue. Its exact three imports and
+reader signatures are checked by a separate inventory; the legacy parser stays
+unchanged. The unsigned metric decoder preserves the original golden values.
