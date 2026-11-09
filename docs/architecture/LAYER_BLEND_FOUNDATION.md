@@ -656,3 +656,34 @@ the build receipt SHA256 is
 This is actual Wasm execution in Node, with no browser UI, Worker activation,
 timing target or physical memory claim. Exact A8/pixel materializers, closed
 source assembly and candidate/frame ownership remain separate work.
+
+### Compact staging resource revision 2
+
+Compact filter staging now prepays retained source-table scans, strong-handle
+operations and local seed retirement, plus the existing generic executor's
+clones, target vectors and intermediate retirement. Its seven-field quote has a
+separate control declaration funded before quotation. Main preparation includes
+the concurrent quote in its fixed peak. Worker state releases frames and staged
+candidates before the immutable base. These changes keep the existing generic
+executor and fixed budgets; the old Raster compact helper remains unchanged.
+
+The shared appearance resource revision is now 2 in Rust and JavaScript, with
+coordinated Source7/Source8 framing vectors. Old revision 1 is explicitly refused.
+Other registration revisions and PCND wire versions stay unchanged. A fresh
+one-tile Raster supplement is 330 work units, a retained sparse one-tile table
+1058, two fresh entries 356, and an empty table 64. These are structural policy
+units, not timing measurements. Direct independently retained outputs still need
+their caller's final-owner cleanup policy; this is not a closed reader proof.
+
+Native validation passes Editor 63, Formats 692, Raster 140 and Worker 100 tests,
+with 12 existing Formats ignores. Five JavaScript framing tests, both independent
+fixture generators, strict workspace/Main/Worker checks, formatting and source
+limits pass. The receipt is
+`docs/validation/browser-mask-next/source-raster-table-prerequisite/scan-supplements/compact-lifecycle-candidate/native-attempt-5/final.json`.
+The adjacent `qualified-freeze.json` binds all 23 effective paths and correction
+receipts. Failed attempts and preimages remain preserved: corrections address a
+nested test-module path, an omitted one-entry retirement unit in test expectations,
+fixture encoding/formatting and a cumulative-counter test that needed a captured
+job rather than a standalone deferred quote. Production prices and fixed budgets
+were not relaxed. Actual resource2 Wasm execution, Worker/client and Main UI
+qualification remain pending.
