@@ -152,3 +152,6 @@ impl PortableCoverageMaterializer8<'_, '_> {
 }
 #[cfg(test)]
 mod tests;
+
+mod stream;
+pub use stream::{DocumentIntentions8, IntentionReceipt8, LayerIntentions8};

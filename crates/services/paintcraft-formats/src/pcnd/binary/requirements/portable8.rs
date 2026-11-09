@@ -303,3 +303,5 @@ pub use retained_layout::{PortableRetainedSourceLayout8, RetainedSourceLayoutSum
 
 mod pixels;
 pub use pixels::PortablePixelMaterializer8;
+
+pub use coverage::{DocumentIntentions8, IntentionReceipt8, LayerIntentions8};
