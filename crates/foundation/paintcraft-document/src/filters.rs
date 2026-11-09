@@ -199,6 +199,24 @@ fn hash(instances: &[FilterInstance]) -> [u8; 32] {
     digest.finalize().into()
 }
 
+impl FilterInstance {
+    /// Move complete owned intent without cloning an intermediate instance.
+    /// This constructor is not source validation or an admission capability.
+    pub fn from_owned_parts(
+        id: Uuid,
+        enabled: bool,
+        descriptor: Descriptor,
+        mask: Option<FilterMask>,
+    ) -> Self {
+        Self {
+            id,
+            enabled,
+            descriptor,
+            mask,
+        }
+    }
+}
+
 #[cfg(test)]
 mod mask_tests;
 #[cfg(test)]
@@ -264,3 +282,5 @@ mod catalog_tests;
 #[cfg(test)]
 #[path = "filters/exposure_tests.rs"]
 mod exposure_tests;
+#[cfg(test)]
+mod owned_parts_tests;
