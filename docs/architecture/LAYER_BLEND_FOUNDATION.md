@@ -738,7 +738,20 @@ and corrections remain preserved: test helper visibility, cursor borrow lifetime
 an old fixture's filter-root index and an equivalent array-size spelling for lint.
 No assertion, fixed grant, layout or work price was relaxed.
 
-Actual Wasm execution is pending. These are caller-guarded primitives, not a closed
-Source8 reader: pixel decoding, complete source/candidate/frame ownership, Worker
-activation and final-owner cleanup remain separate gates. No physical memory or
-latency qualification follows from the structural control/work declarations.
+Actual Node Wasm execution now passes 303 finite cases: the preserved 232 plus
+71 canonical A8 and bound-Plan controls. Both first build and runtime attempts
+pass, with source hashes unchanged and final linear memory 3,473,408 bytes under
+the unchanged 16 MiB maximum. The new cases check exact independent digests,
+target layouts, original control/storage/header limits, all seven one-run callback
+cuts and 24 debit cuts, paid retries, strict geometry/canonical failures, disabled
+filter instances, repeated storage, census equality and final alias lifetimes.
+The runtime receipt is
+`docs/validation/layer-blend-candidates/source8-r2-canonical-a8-wasm/node-attempt-1/final.json`;
+the build receipt SHA256 is
+`7e3a69332fe0ad461383ec396b2bf8743ba193c9a910b630edf45bdb6aacac3f`.
+The harness preserves its pre-build cursor-binding correction separately.
+
+These are caller-guarded primitives, not a closed Source8 reader: pixel decoding,
+complete source/candidate/frame ownership, Worker activation and final-owner
+cleanup remain separate gates. No browser, GPU, physical memory or latency
+qualification follows from this finite Node execution.
