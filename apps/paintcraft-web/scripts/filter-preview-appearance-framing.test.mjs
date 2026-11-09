@@ -207,8 +207,17 @@ test('Source7 admission v2 origin changes admission, source capability and union
 });
 
 test('Source7 stage resource revision2 rejects the old unrepriced appearance registration', async () => {
-	const { APPEARANCE7, validateAppearance7 } = await import('../src/lib/filter-preview-appearance-common.js');
+	const { APPEARANCE7, validateAppearance7 } = await import(
+		'../src/lib/filter-preview-appearance-common.js'
+	);
 	assert.equal(APPEARANCE7.resource_contract_revision, 2);
 	validateAppearance7({ ...APPEARANCE7 });
-	assert.throws(() => validateAppearance7({ ...APPEARANCE7, resource_contract_revision: 1 }), { code: 'CapabilityUnsupported' });
+	assert.throws(
+		() =>
+			validateAppearance7({
+				...APPEARANCE7,
+				resource_contract_revision: 1,
+			}),
+		{ code: 'CapabilityUnsupported' },
+	);
 });

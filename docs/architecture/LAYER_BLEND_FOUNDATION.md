@@ -687,3 +687,9 @@ fixture encoding/formatting and a cumulative-counter test that needed a captured
 job rather than a standalone deferred quote. Production prices and fixed budgets
 were not relaxed. Actual resource2 Wasm execution, Worker/client and Main UI
 qualification remain pending.
+
+The follow-up full JavaScript unit suite passes all 350 tests, including mocked
+Worker/client seams. Pinned Biome checks all 133 web files after a formatting-only
+correction to the new revision-refusal test; CI exposed this check missing from
+the earlier local gate. `biome-freeze.json` chains that correction to the native
+freeze. These unit seams do not qualify execution against the actual Worker.
