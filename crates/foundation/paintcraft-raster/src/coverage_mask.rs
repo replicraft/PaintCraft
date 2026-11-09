@@ -314,3 +314,9 @@ mod lifecycle_tests;
 mod scoped_tests;
 #[cfg(test)]
 mod tests;
+
+mod canonical;
+pub use canonical::{
+    CANONICAL_A8_CONTROL_BYTES, CanonicalA8Builder, CanonicalA8Config,
+    canonical_a8_storage_arc_quote,
+};

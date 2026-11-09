@@ -1,0 +1,24 @@
+{
+    "status": "INDEPENDENT_NEGATIVE_DOMAIN_OVERFLOW_EXPECTATIONS_BEFORE_TEST_RUST",
+    "negative_domain": [
+        -4,
+        -3,
+        -2,
+        -1
+    ],
+    "band": [
+        -3,
+        -1
+    ],
+    "run": [
+        -4,
+        -2,
+        255
+    ],
+    "hash_input_bytes": 103,
+    "digest_sha256": "8dfa3ce26057b15e94795889ebe5335a103a6245bec45c316d2c46c5b3b163ed",
+    "leaf_total_native": 4590,
+    "leaf_total_wasm": 4574,
+    "count_overflow": "B=R=usizeMAX,limitsMAX =>ResourceLimit before Vec reserve; originalpaid64+512=576",
+    "same_existing_grants": true
+}
