@@ -66,9 +66,9 @@ The portable loader prerequisites now include a Plan-bound retained-layout
 census and Raw/RLE/LZ4/RLE+LZ4 pixel materializers with explicit original
 reservation ownership. A consuming sequential intention stream and required-caller
 capture helpers also pass local native tests and strict native/Wasm checks.
-Actual Node Wasm validation passes 780 cases through the layout census, pixel
+Actual Node Wasm validation passes 819 cases through the layout census, pixel
 materializers, intention stream, caller capture, prepared-owner byte unions and
-closed source inspection.
+closed source inspection and accounted full-frame rendering.
 A Rust-only closed reader now assembles, adopts, inspects and retires portable
 documents under the original caller and reservations. Native validation passes
 118 worker unit tests, four integration groups and one documentation test,
@@ -80,8 +80,9 @@ source host retires. The original caller, reservations and cumulative counters
 fund source, workspace, frame controls and retained output. Native validation
 passes all 126 worker unit cases, including nine original-caller key combinations
 and both callback-capture drop orders;
-strict native/Wasm compilation and formatting pass. Actual Wasm full-frame
-execution and browser candidate/frame ownership remain required before
+strict native/Wasm compilation and formatting pass. Actual Wasm also matches
+all 22 pixel goldens and passes 16 public frame controls plus an off-canvas
+refusal. Browser candidate/frame ownership remains required before
 publication. These checks do not establish browser mask editing or blend adoption.
 Next is completing browser mask actions and browser blend adoption, then Color
 Overlay as the first live style. Its

@@ -1039,7 +1039,19 @@ the production decoder is unchanged. Regenerable compiler libraries were removed
 from completed conformance build caches, preserving source, executed Wasm, logs
 and receipts.
 
-Actual Wasm full-frame execution, browser publication and complete
-D1/physical-memory qualification remain open.
+Actual Node Wasm execution now passes 819 cases: all previous 780 plus 22
+complete RGBA outputs, one off-canvas refusal and 16 public frame controls.
+Original reservation, caller, output-factory, cancellation, diagnostic and
+prepared-alias checks pass. The genuine ten-package build produces a 4041891-byte
+module under the unchanged 4 MiB file bound. Initial memory remains 2 MiB,
+maximum memory 16 MiB, and final linear memory is 4 MiB. Sources stayed unchanged.
+The exact receipts are
+`docs/validation/layer-blend-candidates/source8-closed-frame-wasm-effective/build-attempt-1/build-final.json`
+and `node-attempt-1/final.json`. Source review corrected two driver errors before
+compilation: historical source projection must not replace current archive
+bytes, and relative path composition needs a Path prefix. Original drafts and
+the separate amendment remain preserved; production code and limits did not change.
+
+Browser publication and complete D1/physical-memory qualification remain open.
 Inherited prepared bookkeeping and arbitrary diagnostic heap remain outside this
 finite functional gate. This is correctness validation, not a performance claim.
