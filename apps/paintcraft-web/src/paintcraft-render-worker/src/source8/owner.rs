@@ -121,6 +121,9 @@ pub(super) fn close_checked(
     Ok(ClosedSource8 { payload, credit })
 }
 
+#[path = "frame_render.rs"]
+mod frame_render;
+
 #[cfg(test)]
 #[path = "tests/payload_cases.rs"]
 pub(super) mod payload_cases;

@@ -79,3 +79,40 @@ pub(super) fn validate_layouts() -> Result<()> {
     }
     Ok(())
 }
+
+/// Loaded source has retired all build/probe/metadata scratch before this phase.
+/// Its defining inline controls share the SAME existing C8192 account by phase,
+/// never a claim that spare padding funds a new frame allocation.
+pub(super) fn validate_frame_bootstrap() -> Result<()> {
+    let n = cfg!(target_pointer_width = "64");
+    if size_of::<entry::Entry8<'static>>() != if n { 552 } else { 392 }
+        || size_of::<owner::ClosedSource8>() != if n { 16 } else { 8 }
+        || size_of::<frame_inputs::Source8FrameRealms<'static>>() != if n { 40 } else { 32 }
+        || size_of::<frame_inputs::Source8FrameCaps>() != 24
+        || size_of::<frame_inputs::FrameValidation8<'static>>() != 32
+        || size_of::<Result<()>>() > 144
+        || size_of::<Result<u64>>() > 144
+    {
+        return Err(control_error());
+    }
+    let named = size_of::<entry::Entry8<'static>>()
+        + 2 * size_of::<Source8InspectionRequest>()
+        + 2 * size_of::<Source8ReadRealms<'static>>()
+        + 2 * size_of::<&owner::ClosedSource8>()
+        + 2 * size_of::<&entry::EntryAuth8<'static>>()
+        + 2 * size_of::<&caller::RequiredCaller8>()
+        + 2 * size_of::<frame_inputs::Source8FrameRealms<'static>>()
+        + 2 * size_of::<frame_inputs::Source8FrameCaps>()
+        + 2 * size_of::<paintcraft_core::types::Rect>()
+        + size_of::<paintcraft_core::types::resources::ScopeCapacity>()
+        + size_of::<&BudgetScope>()
+        + 128
+        + 2 * 144
+        + size_of::<[u64; 16]>()
+        + 4 * size_of::<Option<&paintcraft_render::spatial::WorkspaceAdmission>>()
+        + size_of::<frame_inputs::FrameValidation8<'static>>();
+    if named != if n { 1880 } else { 1564 } || named as u64 > ENTRY_BYTES {
+        return Err(control_error());
+    }
+    Ok(())
+}

@@ -100,6 +100,9 @@ impl<'r> Entry8<'r> {
     }
 }
 
+#[path = "frame_entry.rs"]
+mod frame_entry;
+
 #[cfg(test)]
 #[path = "tests/build_cases.rs"]
 mod build_cases;

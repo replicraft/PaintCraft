@@ -30,5 +30,14 @@ fn incomplete() -> Error {
         "Source8 read scalar inspection is incomplete",
     )
 }
+mod frame_image;
+mod frame_inputs;
+mod frame_output;
+mod frame_public;
+mod frame_work;
+pub use frame_image::Source8RgbaImage;
+pub use frame_inputs::{Source8FrameCaps, Source8FrameRealms, Source8FrameScopes};
+pub use frame_public::render_portable_source8_checked;
+
 #[cfg(test)]
 mod tests;
