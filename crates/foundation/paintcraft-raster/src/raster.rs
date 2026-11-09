@@ -674,3 +674,9 @@ mod tests;
 #[cfg(test)]
 #[path = "raster/metadata_scope_tests.rs"]
 mod metadata_scope_tests;
+
+mod portable_pixels;
+pub use portable_pixels::{
+    EncodedTilePayload, PORTABLE_PIXEL_CONTROL_BYTES, PortableLayerBuilder, PortableLayerConfig,
+    PortablePixelEncoding, portable_pixel_geometry_bytes,
+};

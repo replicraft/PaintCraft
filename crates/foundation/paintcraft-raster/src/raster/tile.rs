@@ -149,3 +149,9 @@ impl Tile {
         self.pixels[i..i + 4].copy_from_slice(&px.0);
     }
 }
+
+mod portable;
+pub(super) use portable::PendingTile;
+pub(super) fn portable_allocation_bytes() -> usize {
+    portable::allocation_bytes()
+}

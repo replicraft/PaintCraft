@@ -3672,6 +3672,7 @@ version = "0.1.1"
 dependencies = [
  "criterion",
  "font8x8",
+ "lz4_flex",
  "paintcraft-core",
  "sha2",
 ]
