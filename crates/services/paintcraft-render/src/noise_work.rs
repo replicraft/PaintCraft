@@ -33,3 +33,5 @@ pub(crate) fn missing() -> Error {
 }
 #[cfg(test)]
 mod tests;
+
+pub use context::capture_required_noise_workspace;

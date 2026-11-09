@@ -268,3 +268,5 @@ impl LayerAppearancePlan<'_> {
 
 #[cfg(test)]
 mod tests;
+
+pub use context::capture_required_workspace;

@@ -106,6 +106,18 @@ pub(crate) fn captured<T>(
     }
 }
 
+/// Capture only an actual installed caller, retaining its original scope, work
+/// counter and frozen bindings. Limits tighten without TLS installation or any
+/// absent-caller fallback/root construction. Endpoint mode policy is separate.
+pub fn capture_required_workspace(byte_limit: u64, work_limit: u64) -> Result<WorkspaceAdmission> {
+    let admission = current().ok_or_else(|| {
+        Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Required spatial caller is absent",
+        )
+    })?;
+    admission.tightened(byte_limit, work_limit)
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -301,3 +313,6 @@ mod source7_capture_tests {
         assert_eq!(budget.usage().reserved, 0);
     }
 }
+
+#[cfg(test)]
+mod required_tests;

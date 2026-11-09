@@ -87,3 +87,15 @@ pub(crate) fn captured<T>(
         None => work(),
     })
 }
+
+/// Capture only the actual matching Base/Noise pair and tighten its existing
+/// component ceilings. Absence, half-contexts and mismatches never mint a root
+/// or install TLS. Both original counters/control owners remain shared.
+pub fn capture_required_noise_workspace(requested: NoiseLimits) -> Result<NoiseAdmission> {
+    match (crate::spatial::current(), current()) {
+        (Some(base), Some(admission)) => admission.for_workspace(&base)?.child(requested),
+        _ => Err(missing()),
+    }
+}
+#[cfg(test)]
+mod required_tests;
