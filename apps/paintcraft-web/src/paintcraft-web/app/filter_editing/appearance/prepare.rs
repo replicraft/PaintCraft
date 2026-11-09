@@ -52,6 +52,7 @@ fn fixed_peak() -> Result<u64> {
     // Existing bounded JSON control copies are separately named bootstrap class.
     [
         size_of::<Prepared7>(),
+        size_of::<metadata_clone::Quote>(),
         2 * size_of::<Frames7>(),
         2 * size_of::<Projection7>(),
         size_of::<operation::Operation7>(),

@@ -6,7 +6,8 @@ use paintcraft_document::{FilterInstance, FilterStack};
 use paintcraft_raster::raster::metadata_clone::fresh_map_layout;
 use std::mem::size_of;
 mod layout;
-pub use layout::{Quote, quote_checked, retained_quote_checked};
+mod work;
+pub use layout::{Quote, quote_checked, quote_control_bytes, retained_quote_checked};
 #[cfg(test)]
 mod tests;
 #[derive(Debug)]
@@ -40,9 +41,12 @@ pub fn stage_checked(
     check: &dyn Fn() -> Result<()>,
     spend: &dyn Fn(u64) -> Result<()>,
 ) -> Result<StagedMetadata> {
+    let mut quote_guard = scope.account();
+    quote_guard.resize(quote_control_bytes())?;
     let quote = quote_checked(base, batch, check, spend)?;
     let mut account = scope.account();
-    account.resize(quote.peak_bytes)?;
+    account.resize(quote.storage_peak_bytes)?;
+    spend(quote.generic_lifecycle_work)?;
     let seed = compact_seed(base, &account, check, spend)?;
     // Precharge both generic clones and bounded target validations/hash inputs.
     // Cancellation/control callbacks below additionally debit one actual visit.
@@ -67,10 +71,11 @@ pub fn stage_checked(
     let retained = retained_quote_checked(&staged.doc, check, spend)?
         .checked_add(quote.retained_alias_bytes)
         .ok_or_else(limit)?;
-    if retained > quote.peak_bytes {
+    if retained > quote.storage_peak_bytes {
         return Err(limit());
     }
     account.resize(retained)?;
+    drop(quote_guard);
     Ok(StagedMetadata {
         staged,
         _account: account,
@@ -107,7 +112,7 @@ fn compact_seed(
             .ok_or_else(|| invalid("metadata seed root missing"))?;
         let raster = layer
             .raster
-            .compact_metadata_clone_precharged_checked(account, check, spend)?;
+            .compact_metadata_clone_retained_precharged_checked(account, check, spend)?;
         let mut instances = Vec::new();
         spend((layer.filters.len() * size_of::<FilterInstance>()) as u64)?;
         instances
@@ -171,3 +176,6 @@ fn limit() -> Error {
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::CapabilityUnsupported, message)
 }
+
+#[cfg(test)]
+mod retained_tests;

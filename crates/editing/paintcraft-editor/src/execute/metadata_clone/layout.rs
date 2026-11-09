@@ -6,8 +6,16 @@ use std::mem::{align_of, size_of};
 pub struct Quote {
     pub seed_bytes: u64,
     pub peak_bytes: u64,
+    /// Storage only; the separate query guard is never assigned twice.
+    pub storage_peak_bytes: u64,
     pub stage_work: u64,
+    /// Future compact raster work only; the quote pays its own scalar math.
+    pub raster_seed_supplement_work: u64,
+    pub generic_lifecycle_work: u64,
     pub retained_alias_bytes: u64,
+}
+pub const fn quote_control_bytes() -> u64 {
+    (size_of::<Quote>() + size_of::<BudgetAccount>()) as u64
 }
 fn add(a: u64, b: u64) -> Result<u64> {
     a.checked_add(b).ok_or_else(limit)
@@ -44,7 +52,7 @@ pub(super) fn document_bytes(
     doc: &Document,
     check: &dyn Fn() -> Result<()>,
     spend: &dyn Fn(u64) -> Result<()>,
-) -> Result<u64> {
+) -> Result<(u64, u64, u64, u64, u64)> {
     if doc.layers.len() != doc.roots.len() || doc.roots.len() > paintcraft_document::LAYER_COUNT_MAX
     {
         return Err(invalid("metadata clone requires flat source roots"));
@@ -55,6 +63,10 @@ pub(super) fn document_bytes(
     )?;
     total = add(total, bytes::<Uuid>(doc.roots.len())?)?;
     total = add(total, doc.title.as_ref().map_or(0, |s| s.len()) as u64)?;
+    let mut raster_seed_supplement_work = 0;
+    let mut filters = 0;
+    let mut tiles = 0;
+    let mut tile_scans = 0;
     for id in &doc.roots {
         check()?;
         spend(1)?;
@@ -63,11 +75,30 @@ pub(super) fn document_bytes(
             .get(id)
             .filter(|l| l.id == *id)
             .ok_or_else(|| invalid("metadata clone root missing"))?;
+        // Own arithmetic is funded before the first per-layer layout query.
+        spend(64)?;
         total = add(total, layer.name.len() as u64)?;
         total = add(total, bytes::<FilterInstance>(layer.filters.len())?)?;
-        total = add(total, layer.raster.compact_metadata_clone_quote()?.bytes)?;
+        let raster_layout = layer.raster.compact_metadata_clone_quote()?;
+        total = add(total, raster_layout.bytes)?;
+        filters = add(filters, layer.filters.len() as u64)?;
+        let n = layer.raster.resident_tiles() as u64;
+        tiles = add(tiles, n)?;
+        if n != 0 {
+            tile_scans = add(tile_scans, work::scan(raster_layout)?)?;
+        }
+        raster_seed_supplement_work = add(
+            raster_seed_supplement_work,
+            layer.raster.compact_metadata_clone_retained_work_quote()?,
+        )?;
     }
-    Ok(total)
+    Ok((
+        total,
+        raster_seed_supplement_work,
+        filters,
+        tiles,
+        tile_scans,
+    ))
 }
 pub fn quote_checked(
     doc: &Document,
@@ -89,8 +120,12 @@ pub fn quote_checked(
     operation
         .stable_uuid_refs()
         .ok_or_else(|| invalid("metadata clone needs stable filter target"))?;
+    // Fund global/target arithmetic BEFORE even the first fresh layer layout.
+    spend(64)?;
     // Target existence/alias mutation remain the actual generic executor's job.
-    let seed_bytes = document_bytes(doc, check, spend)?;
+    let (seed_bytes, raster_seed_supplement_work, filters, tiles, tile_scans) =
+        document_bytes(doc, check, spend)?;
+    let generic_lifecycle_work = work::lifecycle(doc, operation, filters, tiles, tile_scans)?;
     // Both passes may construct a256-entry target Vec while old source vectors
     // still live. Clone peak includes seed +planning clone +replay RHS clone.
     let temporary_filters = mul(bytes::<FilterInstance>(256)?, 2)?;
@@ -110,7 +145,7 @@ pub fn quote_checked(
     // index text1 and joined filter/UUID/base/digest/index bytes147. These are
     // bounded control temporaries, not an unpriced opaque allowance.
     let deterministic_text = 36 + 36 + 1 + 147;
-    let peak_bytes = add(
+    let storage_peak_bytes = add(
         mul(seed_bytes, 3)?,
         add(temporary_filters, add(alias_bytes, deterministic_text)?)?,
     )?;
@@ -131,8 +166,11 @@ pub fn quote_checked(
     };
     Ok(Quote {
         seed_bytes,
-        peak_bytes,
+        peak_bytes: add(storage_peak_bytes, quote_control_bytes())?,
+        storage_peak_bytes,
         stage_work,
+        raster_seed_supplement_work,
+        generic_lifecycle_work,
         retained_alias_bytes,
     })
 }
