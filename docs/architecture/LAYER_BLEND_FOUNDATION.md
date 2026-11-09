@@ -685,8 +685,25 @@ receipts. Failed attempts and preimages remain preserved: corrections address a
 nested test-module path, an omitted one-entry retirement unit in test expectations,
 fixture encoding/formatting and a cumulative-counter test that needed a captured
 job rather than a standalone deferred quote. Production prices and fixed budgets
-were not relaxed. Actual resource2 Wasm execution, Worker/client and Main UI
-qualification remain pending.
+were not relaxed.
+
+Actual Node Wasm execution now passes 232 finite cases: the preserved 207 plus
+25 public compact resource2 controls. The build selects nine actual Cargo package
+artifacts and Core's actual UUID dependency, then generates real wasm-bindgen
+glue. All source hashes stay unchanged; final linear memory is 3,473,408 bytes
+under the unchanged 16 MiB maximum. The runtime receipt is
+`docs/validation/layer-blend-candidates/source8-compact-resource2-wasm/node-attempt-1/final.json`;
+the build receipt SHA256 is
+`5fee317a250958e7023e2fc863f7dce7fcae101c2a14d6e46030cc0370e1d90a`.
+This separately qualifies the new prices, original counters/scopes, typed failures
+and metadata semantics. It does not qualify arbitrary final output cleanup,
+Worker/client or Main UI execution.
+
+The unchanged production scripts also build Main, codec and render WebAssembly,
+the Astro site and all asset checks at commit `82b87b3c`. The source stays unchanged
+through all eight build/check steps, and 55 output files have recorded hashes in
+`docs/validation/layer-blend-candidates/source8-compact-resource2-production/attempt-1/final.json`.
+These are actual production artifacts, with browser execution still a separate gate.
 
 The follow-up full JavaScript unit suite passes all 350 tests, including mocked
 Worker/client seams. Pinned Biome checks all 133 web files after a formatting-only
