@@ -710,3 +710,35 @@ Worker/client seams. Pinned Biome checks all 133 web files after a formatting-on
 correction to the new revision-refusal test; CI exposed this check missing from
 the earlier local gate. `biome-freeze.json` chains that correction to the native
 freeze. These unit seams do not qualify execution against the actual Worker.
+
+### Canonical source mask materialization
+
+Raster now provides a consuming canonical A8 stream builder. It fills exact final
+row/run storage directly, rejects noncanonical ordering and hashes the same bytes
+as the existing generic mask path. Existing normalizers, storage fields and mask
+semantics remain unchanged. Its fixed 4096-byte control declaration, exact retained
+storage and caller-held full Storage Arc guard are separate obligations. Failures
+consume the partial builder; the original work counter and typed error survive.
+
+Formats binds coverage materialization to one authenticated portable Plan and its
+original scope/guard. Item methods accept layer/filter indices, fetch actual views
+internally and stream parsed values without intermediate parse vectors. Disabled
+masks and disabled filter instances still materialize; present empty masks remain
+distinct from absence. Repeated materialization creates separate retained storage,
+and every actual callback updates the same Plan census without double billing.
+
+Native validation passes 698 Formats and 148 Raster tests, with 12 existing
+Formats ignores, plus eight documentation checks. Strict workspace/Main/Worker,
+formatting and source limits pass. Five independent filter wires cover enabled,
+disabled, empty, repeated own/filter storage and a disabled filter instance with
+its nonempty mask. The receipt is
+`docs/validation/layer-blend-candidates/source8-r2-canonical-a8/native-attempt-4/final.json`;
+the adjacent `qualified-freeze.json` binds all 14 effective paths. Failed attempts
+and corrections remain preserved: test helper visibility, cursor borrow lifetime,
+an old fixture's filter-root index and an equivalent array-size spelling for lint.
+No assertion, fixed grant, layout or work price was relaxed.
+
+Actual Wasm execution is pending. These are caller-guarded primitives, not a closed
+Source8 reader: pixel decoding, complete source/candidate/frame ownership, Worker
+activation and final-owner cleanup remain separate gates. No physical memory or
+latency qualification follows from the structural control/work declarations.
