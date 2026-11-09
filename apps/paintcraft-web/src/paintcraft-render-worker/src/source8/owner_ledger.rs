@@ -69,7 +69,12 @@ pub(super) fn validate_layouts() -> Result<()> {
         + 2 * size_of::<usize>()
         + 4 * size_of::<&[u64]>()
         + size_of::<paintcraft_formats::pcnd::RetainedSourceLayoutSummary8>();
-    if named != if native { 8160 } else { 5232 } || named as u64 > ENTRY_BYTES {
+    // New closed-frame F must validate its original factory before admission.
+    // Only this one immutable snapshot/ref is live; W/O snapshots use F later.
+    let named = named
+        + size_of::<paintcraft_core::types::resources::ScopeCapacity>()
+        + size_of::<&BudgetScope>();
+    if named != if native { 8192 } else { 5260 } || named as u64 > ENTRY_BYTES {
         return Err(control_error());
     }
     Ok(())
