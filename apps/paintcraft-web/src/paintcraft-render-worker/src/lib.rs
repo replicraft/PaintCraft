@@ -515,6 +515,8 @@ fn stable_target(op: &FilterOp, target: Uuid) -> Result<()> {
     Ok(())
 }
 
+pub mod source8;
+
 #[cfg(test)]
 mod tests;
 
