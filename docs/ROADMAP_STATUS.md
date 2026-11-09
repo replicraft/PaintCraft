@@ -62,6 +62,13 @@ and one-step Undo. The full native suite, native/Wasm strict checks and finite
 offscreen layout review pass. Browser execution and appearance-aware
 foreign/clipboard consent remain gated; see the
 [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md).
+The portable loader prerequisites now include a Plan-bound retained-layout
+census and Raw/RLE/LZ4/RLE+LZ4 pixel materializers with explicit original
+reservation ownership. Their local native checks pass 871 tests and 12
+documentation checks; actual Node Wasm validation passes 469 cases through the
+layout census and pixel materializers. Complete document/candidate/frame
+ownership is still required before browser publication. These prerequisites do
+not establish browser mask editing or blend adoption.
 Next is completing browser mask actions and browser blend adoption, then Color
 Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes

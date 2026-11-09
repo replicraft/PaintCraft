@@ -852,6 +852,23 @@ ABI; the fixed 4,096-byte control slot and original work fees remain unchanged.
 
 These standalone primitives require the caller to retain complete metadata
 funding through every returned alias. They do not yet close Source8 document,
-candidate and frame ownership. Runtime pixel Wasm tests, original-realm assembly
-and Worker/Main integration remain pending; no speedup or complete memory bound
-is claimed by this correctness baseline.
+candidate and frame ownership. Original-realm assembly and Worker/Main
+integration remain pending; no speedup or complete memory bound is claimed by
+this correctness baseline.
+
+Actual Node WebAssembly execution now passes 469 cases, preserving the earlier
+359 and adding 110 public pixel controls. These include independent physical-tile
+byte hashes, all Raw/RLE callback and debit cuts, exact staged-pixel debt for each
+of 59 failure/retry pairs, malformed payloads, original Q/M/scratch boundaries,
+maximum RLE scratch, sparse-index retirement and Plan binding. Initial nonshared
+memory remains 2 MiB with a 16 MiB maximum; final linear memory is 4 MiB. Test
+caller diagnostics are separate from product declarations, so this is not a full
+heap or RSS measurement.
+
+The effective build and execution receipts are
+`docs/validation/layer-blend-candidates/source8-portable-pixels-wasm-effective/build-attempt-2/build-final.json`
+and `node-attempt-2/final.json`; source hashes remained unchanged. The original
+source pack and its exact staged-debt assertion amendment are preserved separately.
+The first execution failed because a test event omitted the partial initializer's
+existing callback. Its source-derived role correction changes no work amount,
+byte oracle, product code or capacity. The failed attempt remains preserved.
