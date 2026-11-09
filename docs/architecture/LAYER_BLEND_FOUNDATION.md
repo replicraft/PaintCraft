@@ -819,3 +819,39 @@ its fixture JSON error-conversion failure was corrected only in the test harness
 Pixel decoding, original-realm funding and closed Source8 assembly still need
 separate validation before Worker or Main publication. This finite Node run does
 not establish browser integration or performance.
+
+### Bound portable pixel materialization
+
+Raster now decodes Raw, RLE, LZ4 and RLE+LZ4 into a consuming fresh layer builder.
+Formats selects those payloads through the authenticated Plan's recorded blocks;
+callers cannot substitute a block view or replace its meter. The portable path
+explicitly refuses native-only block encoding 3. Existing general import paths
+and parser/getter bodies remain unchanged.
+
+The builder checks complete planned tile/index metadata funding before decoding,
+retains original tile reservations and scratch accounts, and rejects duplicate,
+outside, extra or missing blocks. Edge blocks retain the full physical tile
+reservation. Owned full-tile decoder buffers transfer without a second pixel
+allocation; partial tiles initialize their final storage once. Both buffers and
+credits survive until their actual ownership handoff. The first insertion prepays
+retirement of the planned sparse index, including late failure with few filled
+entries. Failed admission retains its charged work and staged-pixel debt.
+
+Native validation passes 710 Formats tests with 12 existing ignores, 161 Raster
+tests and 12 documentation checks. Workspace and Main/Worker Wasm strict Clippy,
+formatting, source lengths and whitespace checks pass with unchanged source
+hashes. Independent byte/event fixtures cover all four codecs, hidden RGB,
+physical padding, maximum RLE scratch, original reservation boundaries, typed
+cancellation, cumulative retries and large sparse-index cleanup. The effective
+23-path freeze is
+`docs/validation/layer-blend-candidates/source8-r2-portable-pixels/qualified-freeze.json`;
+its native receipt is `native-attempt-3/final.json`. Earlier failed runs and their
+test-borrow and conservative Entry-envelope corrections remain preserved. The
+Entry declaration is a 40-byte control envelope, not a guaranteed standard-library
+ABI; the fixed 4,096-byte control slot and original work fees remain unchanged.
+
+These standalone primitives require the caller to retain complete metadata
+funding through every returned alias. They do not yet close Source8 document,
+candidate and frame ownership. Runtime pixel Wasm tests, original-realm assembly
+and Worker/Main integration remain pending; no speedup or complete memory bound
+is claimed by this correctness baseline.
