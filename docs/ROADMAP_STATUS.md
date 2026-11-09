@@ -64,10 +64,11 @@ foreign/clipboard consent remain gated; see the
 [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md).
 The portable loader prerequisites now include a Plan-bound retained-layout
 census and Raw/RLE/LZ4/RLE+LZ4 pixel materializers with explicit original
-reservation ownership. Their local native checks pass 871 tests and 12
-documentation checks; actual Node Wasm validation passes 469 cases through the
-layout census and pixel materializers. Complete document/candidate/frame
-ownership is still required before browser publication. These prerequisites do
+reservation ownership. A consuming sequential intention stream and required-caller
+capture helpers also pass local native tests and strict native/Wasm checks.
+Actual Node Wasm validation passes 469 cases through the layout census and pixel
+materializers; execution of the new stream/capture APIs remains pending. Complete
+document/candidate/frame ownership is still required before browser publication. These prerequisites do
 not establish browser mask editing or blend adoption.
 Next is completing browser mask actions and browser blend adoption, then Color
 Overlay as the first live style. Its

@@ -872,3 +872,37 @@ source pack and its exact staged-debt assertion amendment are preserved separate
 The first execution failed because a test event omitted the partial initializer's
 existing callback. Its source-derived role correction changes no work amount,
 byte oracle, product code or capacity. The failed attempt remains preserved.
+
+### Sequential intentions and required caller capture
+
+Formats now provides a consuming whole-document intention stream bound to the
+same Plan and coverage materializer. It reads each layer header once, then each
+filter and own mask in order. One remaining coverage-limit state spans all
+layers; errors consume the stream rather than leave a partially advanced cursor
+available for reuse. Returned filters and masks preserve stored disabled/empty
+intent and require the caller's complete original A/M lifetime. The scalar finish
+receipt does not authorize document adoption.
+
+The direct owned-parts filter constructor avoids an implicit intermediate clone.
+Construction and complete tuple returns have explicit work charges, including
+stream state and owning mask results. The native 256-filter fixture spends
+6,476,460 declared stream work units without raising the original work cap.
+This is a work-accounting result, not a timing or speedup measurement.
+
+Render also exposes required-capture helpers for an existing Base caller or a
+matching Base/Noise pair. They tighten the original ceilings, preserve prior
+work and frozen bindings, and leave the installed contexts unchanged. Missing
+or mismatched callers cannot select a fallback constructor. Private Source8
+mode negotiation, original-realm provenance and complete carrier ownership still
+need their own integration.
+
+Local validation passes 18 context tests, 56 Document tests, 717 Formats tests
+with 12 existing ignores, and 14 documentation checks. Strict workspace and
+Main/Worker Wasm checks, formatting, source limits and parser-lock consistency
+pass. The effective sixteen-path source freeze and native receipt are
+`docs/validation/layer-blend-candidates/source8-r3-native/qualified-freeze.json`
+and `native-attempt-1/final.json`. Source hashes remained unchanged throughout.
+Preserved pre-build amendments correct fixture blend modes, retain normal-only
+inputs as upstream refusals, price owning returns, and place production helpers
+before tests without modifying old definitions. Runtime Wasm execution of these
+new APIs and closed document assembly remain pending.
