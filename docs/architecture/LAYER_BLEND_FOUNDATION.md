@@ -938,5 +938,14 @@ remain unchanged by the query. Strict workspace/Main/Worker checks, formatting,
 source limits and parser-lock validation pass with unchanged source hashes. The
 three-path freeze is
 `docs/validation/layer-blend-candidates/source8-prepared-owner-union/qualified-freeze.json`.
-Actual Wasm execution of this new helper remains separate from the 674-case
-stream/capture checkpoint; no closed-reader or broader owner-union claim follows.
+Actual Node WebAssembly execution now passes 682 cases, preserving all 674
+stream/capture cases and adding eight public owner-union controls. Independent
+Wasm expectations require 260 retained payload bytes for one prepared job and
+520 for distinct equal-key jobs on the same counters. Clone deduplication and
+selected Base versus original ambient Noise bindings pass without changing
+counters, budget usage or TLS. Sources remain unchanged; final linear memory is
+4 MiB under the unchanged 2 MiB initial/16 MiB maximum configuration.
+The receipts are
+`docs/validation/layer-blend-candidates/source8-owner-union-wasm/build-attempt-1/build-final.json`
+and `node-attempt-1/final.json`. This does not establish closed-reader ownership
+or an arbitrary-many-owner union.
