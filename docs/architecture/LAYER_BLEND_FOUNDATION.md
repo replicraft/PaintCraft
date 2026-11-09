@@ -773,3 +773,37 @@ These are caller-guarded primitives, not a closed Source8 reader: pixel decoding
 complete source/candidate/frame ownership, Worker activation and final-owner
 cleanup remain separate gates. No browser, GPU, physical memory or latency
 qualification follows from this finite Node execution.
+
+### Bound retained-source layout census
+
+Formats now computes retained-source requests through one read-only pass bound
+to the authenticated Plan, original metadata scope and paid counter. Each layer
+header is parsed once, followed by every stored filter and own mask in wire order.
+One remaining coverage limit spans the whole document. Existing parser/getter
+bodies and Plan fields stay unchanged; the result exposes scalar diagnostics and
+retains its Plan borrow rather than accepting caller-supplied records or views.
+
+The census separately reports fresh metadata/index storage, every physical Tile
+and lease-control header, every nonempty mask backing, ICC attachment headers,
+retained mask/ICC policy requests and maximum actual decoder scratch. Disabled
+and empty stored intent is counted; equal occurrences are not deduplicated.
+Document inline size belongs once inside the later containing allocation, and a
+zero-tile reader must skip creating decoder controls. Counts do not grant capacity
+or prove the eventual source/candidate/frame lifetime.
+
+Native validation passes 707 Formats tests with 12 existing ignores, nine
+documentation checks, strict workspace/Main/Worker checks, formatting and source
+limits. Twelve independent wires cover retained layouts and global limits; tests
+check all 24 independently derived callback prefixes, original-scope refusal,
+helper overlap, paid retries and recipe retirement. The native receipt is
+`docs/validation/layer-blend-candidates/source8-retained-layout-census/native-attempt-1/final.json`;
+the adjacent `qualified-freeze.json` binds all seven effective paths. Preserved
+pre-build amendments fix full-container fixture hashing, move final arithmetic
+after its prepaid check and strengthen every callback-prefix assertion. They do
+not relax prices, limits or existing parser behavior.
+
+The one-layer empty-layout pass costs 13,188 declared work units. Its named control
+declaration is 1,040 bytes on Native64 and 936 on Wasm32; these are structural
+policy declarations, not RSS or latency measurements. Actual Wasm execution,
+pixel decoding, original-realm funding and closed Source8 assembly remain separate
+gates before Worker or Main publication.
