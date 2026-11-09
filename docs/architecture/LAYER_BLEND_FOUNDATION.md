@@ -921,3 +921,22 @@ and `node-attempt-1/final.json`. Sources remain unchanged; nonshared initial
 memory is 2 MiB, the maximum remains 16 MiB, and final linear memory is 4 MiB.
 This primitive validation does not establish closed Source8 document assembly,
 Worker/Main integration, full D1 accounting or physical memory/latency bounds.
+
+### Prepared-owner payload demand
+
+WorkspaceAdmission now exposes a read-only byte union for two actual complete
+prepared payload owners, using the existing qualified ownership comparison.
+A cloned owner counts once; distinct jobs with equal keys and the same work
+counter count separately. The helper returns demand only and excludes existing
+Arc bookkeeping; it neither admits capacity nor validates caller compatibility.
+The synchronous Source8 entry needs this distinction when the original ambient
+Noise binding differs from its selected Base binding.
+
+Two native integration tests and 18 context regressions pass, including a real
+matched pair with two distinct prepared bindings. Counters, budget usage and TLS
+remain unchanged by the query. Strict workspace/Main/Worker checks, formatting,
+source limits and parser-lock validation pass with unchanged source hashes. The
+three-path freeze is
+`docs/validation/layer-blend-candidates/source8-prepared-owner-union/qualified-freeze.json`.
+Actual Wasm execution of this new helper remains separate from the 674-case
+stream/capture checkpoint; no closed-reader or broader owner-union claim follows.
