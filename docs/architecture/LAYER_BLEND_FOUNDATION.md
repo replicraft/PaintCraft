@@ -1020,8 +1020,12 @@ before allocating the output. The image keeps its original output factory alive
 after the document, frame controls and source host retire. Existing Worker/JS
 routes remain unchanged.
 
-Native validation passes 123 worker unit cases and a separate original-allocation
-diagnostic identity case. Three integration groups check 22 independent complete
+Native validation passes all 126 worker unit cases, including original-allocation
+diagnostic identity. Nine ambient/selected prepared-key combinations cover
+matching, stale, distinct and cloned owners. Actual render callbacks capture
+prepared aliases in both drop orders: source and frame storage retire first,
+the original workspace factory survives its last capture, and image output
+remains independently owned. Three integration groups check 22 independent complete
 RGBA outputs, one off-canvas refusal and output ownership after host retirement.
 Strict native all-target and Wasm library Clippy, formatting and the 800-line
 source limit pass. The evidence is retained under
@@ -1035,7 +1039,7 @@ the production decoder is unchanged. Regenerable compiler libraries were removed
 from completed conformance build caches, preserving source, executed Wasm, logs
 and receipts.
 
-Actual Wasm full-frame execution, the complete caller/alias retirement matrix,
-browser publication and complete D1/physical-memory qualification remain open.
+Actual Wasm full-frame execution, browser publication and complete
+D1/physical-memory qualification remain open.
 Inherited prepared bookkeeping and arbitrary diagnostic heap remain outside this
 finite functional gate. This is correctness validation, not a performance claim.

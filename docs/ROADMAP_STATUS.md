@@ -78,7 +78,8 @@ The Rust-only closed rendering entry now passes native full-pixel checks for
 22 independent outputs, an off-canvas refusal and output ownership after the
 source host retires. The original caller, reservations and cumulative counters
 fund source, workspace, frame controls and retained output. Native validation
-passes 123 worker unit cases plus a separate original-diagnostic identity case;
+passes all 126 worker unit cases, including nine original-caller key combinations
+and both callback-capture drop orders;
 strict native/Wasm compilation and formatting pass. Actual Wasm full-frame
 execution and browser candidate/frame ownership remain required before
 publication. These checks do not establish browser mask editing or blend adoption.

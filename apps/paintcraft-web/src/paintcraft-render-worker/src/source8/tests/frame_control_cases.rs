@@ -316,3 +316,245 @@ fn original_allocation_denial_after_output_admission_keeps_its_diagnostic_realm(
     .unwrap();
     host.assert_source_retired();
 }
+
+fn prepared_fixture(keys: &[[u8; 5]]) -> paintcraft_document::Document {
+    use paintcraft_core::types::{
+        Rgba,
+        filters::{CurvesRgbV1, Descriptor},
+        ids::deterministic_id,
+    };
+    let mut doc = paintcraft_document::new_document(
+        1,
+        1,
+        Some(Rgba([0, 64, 128, 255])),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    doc.layers.get_mut(&doc.roots[0]).unwrap().filters = paintcraft_document::FilterStack::new(
+        keys.iter()
+            .enumerate()
+            .map(|(i, values)| {
+                paintcraft_document::FilterInstance::new(
+                    deterministic_id(&["closed-frame-existing-key", &i.to_string()]),
+                    true,
+                    Descriptor::CurvesRgbV1(CurvesRgbV1::new(*values)),
+                )
+            })
+            .collect(),
+    )
+    .unwrap();
+    doc
+}
+fn curves_k_wire() -> Vec<u8> {
+    const HEX: &str = "50434e44080d0a1a19010d6375727665732d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111010100000212121212121212121212121212121212054c6179657201ff0000000101004080ff0128282828282828282828282828282828010005004080c0ff00000013131313131313131313131313131313054c6179657200ff0100000101ffffffff000000d2de1b755c68d269176fed2d25a0b5470d184ed7019e6a1e07bc612b18dc9dc4";
+    HEX.as_bytes()
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
+        .collect()
+}
+#[test]
+fn original_ambient_and_selected_prepared_key_matrix_and_alias_retirement() {
+    use paintcraft_render::{
+        noise_work::{NoiseAdmission, NoiseJobPolicy, with_noise_workspace},
+        prepared::prepare_document_programs,
+    };
+    const K: [u8; 5] = [0, 64, 128, 192, 255];
+    const J: [u8; 5] = [255, 192, 128, 64, 0];
+    for case in 0..9 {
+        let mut host = Host::new(2 << 20);
+        let root = NoiseAdmission::new_root(
+            host.root.scope().clone(),
+            NoiseJobPolicy::BrowserV1,
+            NoiseLimits {
+                bytes: 16 << 20,
+                base_work: 268435456,
+                noise_work: 1048576,
+            },
+        )
+        .unwrap();
+        host.root = root.workspace().clone();
+        let ambient = match case {
+            0 | 4 | 5 | 7 => root
+                .prepare_document(&prepared_fixture(&[K]), &|| Ok(()))
+                .unwrap(),
+            1 | 6 => root
+                .prepare_document(&prepared_fixture(&[J]), &|| Ok(()))
+                .unwrap(),
+            8 => root
+                .prepare_document(&prepared_fixture(&[K, J]), &|| Ok(()))
+                .unwrap(),
+            _ => root.clone(),
+        };
+        let selected = match case {
+            2 | 4 | 6 => prepare_document_programs(
+                &prepared_fixture(&[K]),
+                root.workspace().clone(),
+                &|| Ok(()),
+            )
+            .unwrap(),
+            3 | 7 => prepare_document_programs(
+                &prepared_fixture(&[J]),
+                root.workspace().clone(),
+                &|| Ok(()),
+            )
+            .unwrap(),
+            5 | 8 => ambient.workspace().clone(),
+            _ => root.workspace().clone(),
+        };
+        let union = selected
+            .prepared_owner_union_bytes(Some(ambient.workspace()))
+            .unwrap();
+        if case == 4 {
+            let one = selected.prepared_owner_union_bytes(None).unwrap();
+            assert!(one > 0);
+            assert_eq!(union, 2 * one);
+        }
+        if case == 5 || case == 8 {
+            assert_eq!(union, selected.prepared_owner_union_bytes(None).unwrap());
+        }
+        if case == 8 {
+            assert_eq!(selected.prepared_curves().unwrap().len(), 2);
+        }
+        let original_w_live = host.root.scope().footprint().live;
+        let before = root.used().unwrap();
+        let result = with_noise_workspace(ambient.clone(), || {
+            with_workspace(selected.clone(), || {
+                let mut request = host.request();
+                request.mode = Source8InspectionMode::Noise;
+                request.caller.noise_work = 1048576;
+                frame_public::render_portable_source8_checked(
+                    &curves_k_wire(),
+                    request,
+                    host.realms(),
+                    &host.frame(),
+                    rect(),
+                    &|| Ok(()),
+                )
+            })
+        });
+        if matches!(case, 0 | 2 | 4 | 5 | 8) {
+            let image = result.unwrap_or_else(|e| panic!("matrix {case}: {e:?}"));
+            assert_eq!(image.rgba(), &[0, 64, 128, 255]);
+            drop(image);
+        } else {
+            assert_eq!(
+                result.unwrap_err().code,
+                ErrorCode::CapabilityUnsupported,
+                "matrix {case}"
+            );
+        }
+        let after = root.used().unwrap();
+        assert!(after.base > before.base);
+        assert_eq!(after.noise, before.noise);
+        assert_eq!(host.root.scope().footprint().live, original_w_live);
+        assert_eq!(host.o.footprint().live, 0);
+        host.assert_source_retired();
+        let surviving = if selected.has_prepared_programs() {
+            selected.clone()
+        } else {
+            ambient.workspace().clone()
+        };
+        let retained = surviving.prepared_retained_bytes();
+        assert!(retained > 0);
+        drop(selected);
+        drop(ambient);
+        drop(root);
+        // Existing complete programs retain W payload only. No source or F alias
+        // is present in their graph; all source roles were already checked above.
+        assert_eq!(host.root.scope().footprint().live, retained);
+        host.assert_source_retired();
+        drop(surviving);
+        assert_eq!(host.root.scope().footprint().live, 0);
+    }
+}
+
+#[test]
+fn actual_render_callback_captures_retain_only_original_workspace_after_source_and_host_retire() {
+    use paintcraft_render::{
+        noise_work::{
+            NoiseAdmission, NoiseJobPolicy, capture_current_noise_workspace, with_noise_workspace,
+        },
+        spatial::capture_current_workspace,
+    };
+    for noise_first in [false, true] {
+        let mut host = Host::new(2 << 20);
+        let root = NoiseAdmission::new_root(
+            host.root.scope().clone(),
+            NoiseJobPolicy::BrowserV1,
+            NoiseLimits {
+                bytes: 16 << 20,
+                base_work: 268435456,
+                noise_work: 1048576,
+            },
+        )
+        .unwrap();
+        host.root = root.workspace().clone();
+        assert!(!host.root.has_prepared_programs());
+        let saved = RefCell::new(None);
+        let captured_while_source_alive = Cell::new(false);
+        let check = || {
+            let base = capture_current_workspace().unwrap();
+            if host.o.footprint().live > 0
+                && base.has_prepared_programs()
+                && saved.borrow().is_none()
+            {
+                let noise = capture_current_noise_workspace().unwrap();
+                assert!(base.same_job(root.workspace()));
+                assert!(noise.same_job(&root));
+                assert!(host.m.footprint().live > 0);
+                assert!(host.f.footprint().live > 0);
+                assert!(base.prepared_retained_bytes() > 0);
+                captured_while_source_alive.set(true);
+                *saved.borrow_mut() = Some((base, noise));
+            }
+            Ok(())
+        };
+        let image = with_noise_workspace(root.clone(), || {
+            let mut request = host.request();
+            request.mode = Source8InspectionMode::Noise;
+            request.caller.noise_work = 1048576;
+            frame_public::render_portable_source8_checked(
+                &curves_k_wire(),
+                request,
+                host.realms(),
+                &host.frame(),
+                rect(),
+                &check,
+            )
+        })
+        .unwrap();
+        assert!(captured_while_source_alive.get());
+        let (base, noise) = saved.into_inner().unwrap();
+        assert_eq!(base.work_used(), root.used().unwrap().base);
+        assert_eq!(noise.used().unwrap().base, base.work_used());
+        assert_eq!(noise.used().unwrap().noise, 0);
+        assert!(base.prepared_retained_bytes() > 0);
+        host.assert_source_retired();
+        assert_eq!(host.o.footprint().live, 116);
+        assert_eq!(image.rgba(), &[0, 64, 128, 255]);
+        let budget = host.budget.clone();
+        drop(root);
+        drop(host);
+        assert_eq!(budget.usage().reserved, 6291456);
+        if noise_first {
+            drop(noise);
+            assert_eq!(
+                base.scope().footprint().live,
+                base.prepared_retained_bytes()
+            );
+            assert_eq!(budget.usage().reserved, 6291456);
+            drop(base);
+        } else {
+            drop(base);
+            assert_eq!(budget.usage().reserved, 6291456);
+            drop(noise);
+        }
+        assert_eq!(budget.usage().reserved, 2097152);
+        assert_eq!(image.rgba(), &[0, 64, 128, 255]);
+        drop(image);
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}
