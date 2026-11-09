@@ -300,3 +300,6 @@ pub use coverage::PortableCoverageMaterializer8;
 
 mod retained_layout;
 pub use retained_layout::{PortableRetainedSourceLayout8, RetainedSourceLayoutSummary8};
+
+mod pixels;
+pub use pixels::PortablePixelMaterializer8;

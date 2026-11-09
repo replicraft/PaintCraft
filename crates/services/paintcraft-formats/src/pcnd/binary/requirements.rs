@@ -389,3 +389,5 @@ pub use portable8::{
 };
 
 pub use portable8::{PortableRetainedSourceLayout8, RetainedSourceLayoutSummary8};
+
+pub use portable8::PortablePixelMaterializer8;

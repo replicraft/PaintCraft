@@ -339,3 +339,5 @@ pub use binary::requirements::{
 };
 
 pub use binary::requirements::{PortableRetainedSourceLayout8, RetainedSourceLayoutSummary8};
+
+pub use binary::requirements::PortablePixelMaterializer8;
