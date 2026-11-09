@@ -705,6 +705,24 @@ through all eight build/check steps, and 55 output files have recorded hashes in
 `docs/validation/layer-blend-candidates/source8-compact-resource2-production/attempt-1/final.json`.
 These are actual production artifacts, with browser execution still a separate gate.
 
+Actual headless Chromium execution also passes against those preserved
+`82b87b3c` production artifacts and their maintained Worker/client modules. It
+retains the original 26 RGBA cases, two independently checked PNGs, 23 controls
+and two twenty-generation view groups, then adds 14 RGBA checks, five resource2
+controls and a three-generation prepare/cancel/render lifecycle. Old resource1
+is refused before client source transfer. All source/artifact hashes stay exact,
+and the page, browser and local server close. The receipt is
+`docs/validation/source7-resource2-browser/browser-attempt-2/final-freeze.json`.
+
+Both initial helper link failures remain preserved; immutable, byte-identical
+hash-named library counterparts resolve dependency metadata without rebuilding
+against later A8 code. The first browser failure was a new assertion comparing
+JSON key insertion order; its explicit amendment compares every key/value pair
+structurally while preserving all old assertions and literal outputs. This is
+archived-production Worker/client qualification, not current A8 activation,
+Main UI/History publication, OS printing/clipboard consent, physical memory or
+latency qualification.
+
 The follow-up full JavaScript unit suite passes all 350 tests, including mocked
 Worker/client seams. Pinned Biome checks all 133 web files after a formatting-only
 correction to the new revision-refusal test; CI exposed this check missing from
