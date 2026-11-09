@@ -82,11 +82,11 @@ async function prefix(domain, fact, admission) {
 	b.hash(await admissionDigest7(admission));
 	b.text(APPEARANCE7.feature_id);
 	b.text(APPEARANCE7.resource_contract_id);
-	b.number(1, 2);
-	b.number(1, 2);
-	b.number(1, 2);
+	b.number(APPEARANCE7.resource_contract_revision, 2);
+	b.number(APPEARANCE7.query_revision, 2);
+	b.number(APPEARANCE7.alpha_revision, 2);
 	b.text(APPEARANCE7.workload_class_id);
-	b.number(1, 2);
+	b.number(APPEARANCE7.workload_class_revision, 2);
 	return b;
 }
 export async function capabilityDigest7(value, admission) {

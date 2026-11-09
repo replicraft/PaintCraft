@@ -52,7 +52,7 @@ def admission(noise, origin=0):
 def appearance_prefix(required, resolution, grant, ids):
     feature, resource, workload = ids
     return (n(3, 2) + required + resolution + digest(grant)
-            + text(feature) + text(resource) + n(1, 2) + n(1, 2) + n(1, 2)
+            + text(feature) + text(resource) + n(2, 2) + n(1, 2) + n(1, 2)
             + text(workload) + n(1, 2))
 
 def inventory(rows):

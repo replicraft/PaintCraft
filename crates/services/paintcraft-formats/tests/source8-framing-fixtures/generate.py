@@ -11,7 +11,7 @@ ADMISSION = b"paintcraft.worker-admission/v8\0"
 FACT = b"paintcraft.worker-capabilities/v8\0"
 UNION = b"paintcraft.worker-capability-union/v8\0"
 MASK = dict(feature_id="layer-masks.v1", resource_contract_id="layer-mask-final-alpha-rgba8-v1",
-            resource_contract_revision=1, query_revision=1, alpha_revision=1,
+            resource_contract_revision=2, query_revision=1, alpha_revision=1,
             workload_class_id="base-work-v1", workload_class_revision=1)
 BLEND = dict(feature_id="layer-blend-modes.v1", resource_contract_id="ordered-layer-blend-rgba8-v1",
              resource_contract_revision=1, arithmetic_revision=1, work_revision=1,
@@ -44,7 +44,9 @@ def frame(value):
 
 def mask_registration():
     return (text(MASK["feature_id"]) + text(MASK["resource_contract_id"])
-            + n(1, 2) * 3 + text(MASK["workload_class_id"]) + n(1, 2))
+            + n(MASK["resource_contract_revision"], 2)
+            + n(MASK["query_revision"], 2) + n(MASK["alpha_revision"], 2)
+            + text(MASK["workload_class_id"]) + n(MASK["workload_class_revision"], 2))
 
 
 def blend_registration():

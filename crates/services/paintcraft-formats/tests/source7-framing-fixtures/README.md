@@ -11,3 +11,10 @@ Stored-Noise Base|Noise selection is separate from origin. No parser/hash itself
 grants a new counter. Earlier pre-origin fixture bytes are preserved by the
 source7-origin candidate preimages; old numeric required/resolution framing and
 PCND file bytes are unaffected. Python generation is independent stdlib only.
+
+Resource-contract2 amendment: the shared appearance resource revision is2. Query,
+alpha, workload, numerical registry, caps, PCND wire grammar and admission inputs
+are unchanged. New compact metadata traversal/forecast work is explicitly bound
+by this resource revision. The independent generator changes only that appearance
+u16 and affected SHA frames; old revision1 inputs/evidence remain preserved in the
+retained-scan candidate preimages. This does not qualify endpoint execution.

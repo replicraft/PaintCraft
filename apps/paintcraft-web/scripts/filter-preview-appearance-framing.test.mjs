@@ -58,7 +58,7 @@ class Reader {
 		const grant = this.hash();
 		assert.equal(this.text(), 'layer-masks.v1');
 		assert.equal(this.text(), 'layer-mask-final-alpha-rgba8-v1');
-		assert.equal(this.n(2), 1n);
+		assert.equal(this.n(2), 2n);
 		assert.equal(this.n(2), 1n);
 		assert.equal(this.n(2), 1n);
 		assert.equal(this.text(), 'base-work-v1');
@@ -204,4 +204,11 @@ test('Source7 admission v2 origin changes admission, source capability and union
 	assert.equal(admissionHashes.size, 4);
 	assert.equal(capabilities.size, 4);
 	assert.equal(unions.size, 4);
+});
+
+test('Source7 stage resource revision2 rejects the old unrepriced appearance registration', async () => {
+	const { APPEARANCE7, validateAppearance7 } = await import('../src/lib/filter-preview-appearance-common.js');
+	assert.equal(APPEARANCE7.resource_contract_revision, 2);
+	validateAppearance7({ ...APPEARANCE7 });
+	assert.throws(() => validateAppearance7({ ...APPEARANCE7, resource_contract_revision: 1 }), { code: 'CapabilityUnsupported' });
 });

@@ -30,7 +30,7 @@ pub const fn appearance_registration() -> AppearanceRegistration {
     AppearanceRegistration {
         feature_id: "layer-masks.v1",
         resource_contract_id: "layer-mask-final-alpha-rgba8-v1",
-        resource_contract_revision: 1,
+        resource_contract_revision: 2,
         query_revision: 1,
         alpha_revision: 1,
         workload_class_id: "base-work-v1",

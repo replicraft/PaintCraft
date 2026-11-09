@@ -152,7 +152,7 @@ fn replay(value: &Value) {
             let p = appearance_registration();
             assert_eq!(input.text(), p.feature_id);
             assert_eq!(input.text(), p.resource_contract_id);
-            assert_eq!(input.u16(), 1);
+            assert_eq!(input.u16(), 2);
             assert_eq!(input.u16(), 1);
             assert_eq!(input.u16(), 1);
             assert_eq!(input.text(), p.workload_class_id);
@@ -306,4 +306,23 @@ fn authority_origin_is_bound_even_when_mode_and_all_numeric_limits_match() {
             .as_str(),
         Some("standalone-view-jobs")
     );
+}
+
+#[test]
+fn resource_revision_two_refuses_old_unrepriced_stage_contract() {
+    let current = appearance_registration();
+    assert_eq!(current.resource_contract_revision, 2);
+    current.validate().unwrap();
+    let old = AppearanceRegistration {
+        resource_contract_revision: 1,
+        ..current
+    };
+    assert_eq!(
+        old.validate().unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert!(Requirements7::new(Requirements::default(), old, &|| Ok(())).is_err());
+    assert_eq!(Admission7::WORKSPACE_MAX, 64 << 20);
+    assert_eq!(Admission7::BASE_MAX, 268_435_456);
+    assert_eq!(Admission7::NOISE_MAX, 1 << 35);
 }
