@@ -1,4 +1,5 @@
-use super::*;
+use super::{WorkspaceAdmission, limit};
+use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::cell::RefCell;
 
 thread_local! {
@@ -22,15 +23,30 @@ pub fn with_workspace<T>(
     admission: WorkspaceAdmission,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
+    // Keep work's original parameter-drop precedence over the input on errors.
+    let mut admission = Some(admission);
+    let callback = work;
+    let _restore = enter(&mut admission)?;
+    callback()
+}
+// One shared setup body, independent of each caller's callback/result type.
+#[inline(never)]
+fn enter(admission: &mut Option<WorkspaceAdmission>) -> Result<Restore> {
     let previous = ACTIVE.with(|active| active.borrow().clone());
     let depth = previous.as_ref().map_or(1, |(_, depth)| depth + 1);
     if depth > 16 {
         return Err(limit("Spatial workspace nesting exceeds its bound"));
     }
-    ACTIVE.with(|active| *active.borrow_mut() = Some((admission, depth)));
-    let _restore = Restore(previous);
-    work()
+    // Private wrapper always supplies Some and invokes entry exactly once.
+    ACTIVE.with(|active| {
+        *active.borrow_mut() = Some((admission.take().expect("unconsumed context input"), depth));
+    });
+    Ok(Restore(previous))
 }
+const _: () = assert!(
+    std::mem::size_of::<Option<WorkspaceAdmission>>() <= std::mem::size_of::<WorkspaceAdmission>()
+);
+
 pub(crate) fn current() -> Option<WorkspaceAdmission> {
     ACTIVE.with(|active| {
         active
@@ -121,6 +137,8 @@ pub fn capture_required_workspace(byte_limit: u64, work_limit: u64) -> Result<Wo
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::spatial::LayerAppearancePlan;
+    use paintcraft_core::types::Rgba;
     use paintcraft_core::types::resources::{AllocationClass, SharedBudget};
     #[test]
     fn captured_caller_survives_scope_exit_and_spends_without_constructing_fallback() {
@@ -316,3 +334,7 @@ mod source7_capture_tests {
 
 #[cfg(test)]
 mod required_tests;
+
+#[cfg(test)]
+#[path = "context/entry_tests.rs"]
+mod entry_tests;
