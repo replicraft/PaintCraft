@@ -657,6 +657,7 @@
 - derive future installer fixture versions (3169aab)
 - prepare v0.2.0 (b5d7d31)
 - cover functional resize and export dialogs (80d1aad)
+- respect platform print capabilities in Retro (8826605)
 
 
 ### Performance
