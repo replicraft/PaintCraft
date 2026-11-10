@@ -51,6 +51,12 @@ export const platforms = [
 				label: 'Portable archive',
 				extension: 'tar.gz',
 			},
+			{
+				suffix: '.flatpak',
+				label: 'Flatpak',
+				extension: 'Flatpak',
+				publishedOnly: true,
+			},
 		],
 		cli: '.tar.gz',
 	},

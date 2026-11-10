@@ -130,21 +130,33 @@ const tag = `v${version}`;
 										<p>{architecture.detail}</p>
 										<ul>
 											{platform.formats.map((format) => (
-												<li>
+												<li
+													hidden={
+														format.publishedOnly
+													}
+													data-published-only={
+														format.publishedOnly ||
+														undefined
+													}
+												>
 													<a
 														data-download
 														data-target={target}
 														data-suffix={
 															format.suffix
 														}
-														href={assetUrl(
-															tag,
-															assetName(
-																version,
-																target,
-																format.suffix,
-															),
-														)}
+														href={
+															format.publishedOnly
+																? undefined
+																: assetUrl(
+																		tag,
+																		assetName(
+																			version,
+																			target,
+																			format.suffix,
+																		),
+																	)
+														}
 													>
 														<span>
 															{format.label}

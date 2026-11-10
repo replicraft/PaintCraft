@@ -42,6 +42,8 @@ async function start() {
 							link.dataset.cli !== undefined,
 						);
 			const url = assets.get(name);
+			const optionalRow = link.closest('li[data-published-only]');
+			if (optionalRow) optionalRow.hidden = !url;
 			if (url) {
 				link.href = url;
 				link.removeAttribute('aria-disabled');

@@ -98,7 +98,7 @@ test('mobile, unsupported 32-bit Linux, BSD and unknown devices do not auto-down
 	assert.equal(await downloadTarget({ platform: 'Linux i686' }), null);
 });
 
-test('the catalog contains all 24 distinct published desktop and CLI assets', () => {
+test('the catalog contains 26 supported assets with Flatpak publication-gated', () => {
 	const names = platforms.flatMap((platform) =>
 		platform.architectures.flatMap((architecture) => {
 			const target = `${platform.id}-${architecture.id}`;
@@ -110,8 +110,8 @@ test('the catalog contains all 24 distinct published desktop and CLI assets', ()
 			];
 		}),
 	);
-	assert.equal(names.length, 24);
-	assert.equal(new Set(names).size, 24);
+	assert.equal(names.length, 26);
+	assert.equal(new Set(names).size, 26);
 	assert.ok(names.includes('paintcraft-cli-0.1.0-windows-arm64.zip'));
 	assert.ok(names.includes('paintcraft-0.1.0-macos-arm64-update.zip'));
 	assert.ok(names.includes('paintcraft-0.1.0-linux-x64.AppImage'));
@@ -142,4 +142,54 @@ test('latest release metadata resolves direct assets and rejects unavailable rel
 		{ tag_name: 'v0.2.0', assets: [] },
 	])
 		assert.throws(() => releaseAssets(release));
+});
+
+test('Flatpak is optional per architecture and does not replace the Linux default', async () => {
+	const linux = platforms.find((platform) => platform.id === 'linux');
+	const flatpak = linux.formats.find(
+		(format) => format.suffix === '.flatpak',
+	);
+	assert.equal(flatpak.publishedOnly, true);
+	assert.equal(linux.formats[0].suffix, '.AppImage');
+	for (const architecture of linux.architectures) {
+		const name = assetName(
+			'0.2.0',
+			`linux-${architecture.id}`,
+			flatpak.suffix,
+		);
+		for (const [size, state, available] of [
+			[123, 'uploaded', true],
+			[0, 'uploaded', false],
+			[123, 'uploading', false],
+		]) {
+			const assets = releaseAssets({
+				tag_name: 'v0.2.0',
+				assets: [
+					{ name: 'SHA256SUMS.txt', size: 42, state: 'uploaded' },
+					{ name, size, state },
+				],
+			}).assets;
+			assert.equal(assets.has(name), available);
+		}
+		assert.equal(
+			(
+				await downloadTarget({
+					platform: `Linux ${architecture.id === 'x64' ? 'x86_64' : 'aarch64'}`,
+				})
+			).suffix,
+			'.AppImage',
+		);
+	}
+	const old = releaseAssets({
+		tag_name: 'v0.1.1',
+		assets: [
+			{
+				name: 'paintcraft-0.1.1-linux-x64.AppImage',
+				size: 42,
+				state: 'uploaded',
+			},
+		],
+	});
+	assert.equal(old.assets.has('paintcraft-0.1.1-linux-x64.flatpak'), false);
+	assert.equal(old.assets.has('paintcraft-0.1.1-linux-arm64.flatpak'), false);
 });
