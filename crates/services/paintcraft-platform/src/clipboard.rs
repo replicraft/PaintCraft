@@ -35,6 +35,7 @@ struct State {
     busy: AtomicBool,
     closed: AtomicBool,
     poisoned: AtomicBool,
+    shutdown_failed: AtomicBool,
 }
 
 #[derive(Debug)]
@@ -104,6 +105,7 @@ struct Request {
 pub struct ClipboardService {
     sender: Option<mpsc::SyncSender<Request>>,
     state: Arc<State>,
+    worker: Option<std::thread::JoinHandle<()>>,
 }
 impl fmt::Debug for ClipboardService {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -125,13 +127,14 @@ impl ClipboardService {
         let (sender, receiver) = mpsc::sync_channel(1);
         let state = Arc::new(State::default());
         let worker_state = state.clone();
-        std::thread::Builder::new()
+        let worker = std::thread::Builder::new()
             .name("paintcraft-clipboard".into())
             .spawn(move || run(receiver, worker_state, factory))
             .map_err(|error| format!("Cannot start clipboard worker: {error}"))?;
         Ok(Self {
             sender: Some(sender),
             state,
+            worker: Some(worker),
         })
     }
 
@@ -256,12 +259,16 @@ fn run(receiver: mpsc::Receiver<Request>, state: Arc<State>, mut factory: Factor
         };
         lease.finish();
         let _ = reply.send(result);
-        let _ = catch_unwind(AssertUnwindSafe(wake));
+        if catch_unwind(AssertUnwindSafe(wake)).is_err() {
+            state.shutdown_failed.store(true, Ordering::Release);
+        }
         if state.poisoned.load(Ordering::Acquire) || state.closed.load(Ordering::Acquire) {
             break;
         }
     }
 }
+
+mod shutdown;
 
 #[cfg(test)]
 mod tests;

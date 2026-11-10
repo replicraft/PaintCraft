@@ -31,6 +31,7 @@ struct Request {
 pub struct ReadService {
     sender: Option<mpsc::SyncSender<Request>>,
     state: Arc<State>,
+    worker: Option<std::thread::JoinHandle<()>>,
 }
 impl fmt::Debug for ReadService {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -85,13 +86,14 @@ impl ReadService {
         let (sender, receiver) = mpsc::sync_channel(1);
         let state = Arc::new(State::default());
         let worker = state.clone();
-        std::thread::Builder::new()
+        let handle = std::thread::Builder::new()
             .name("paintcraft-clipboard-read".into())
             .spawn(move || run(receiver, worker, factory))
             .map_err(|e| format!("Cannot start clipboard reader: {e}"))?;
         Ok(Self {
             sender: Some(sender),
             state,
+            worker: Some(handle),
         })
     }
     /// A read starts only on explicit submission. At most one request includes
@@ -170,11 +172,16 @@ fn run(receiver: mpsc::Receiver<Request>, state: Arc<State>, mut factory: Factor
         };
         request.lease.finish();
         let _ = request.reply.send(result);
-        let _ = catch_unwind(AssertUnwindSafe(request.wake));
+        if catch_unwind(AssertUnwindSafe(request.wake)).is_err() {
+            state.shutdown_failed.store(true, Ordering::Release);
+        }
         if state.closed.load(Ordering::Acquire) || state.poisoned.load(Ordering::Acquire) {
             break;
         }
     }
 }
+#[path = "read/shutdown.rs"]
+mod shutdown;
+
 #[cfg(test)]
 mod tests;

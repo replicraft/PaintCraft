@@ -48,6 +48,9 @@ pub struct NativeDialogs {
     sender: mpsc::Sender<Completion>,
     receiver: mpsc::Receiver<Completion>,
     pending: bool,
+    active_kind: Option<Kind>,
+    worker: Option<std::thread::JoinHandle<()>>,
+    failed: bool,
 }
 impl NativeDialogs {
     pub fn new(parent: &(impl HasWindowHandle + HasDisplayHandle)) -> Self {
@@ -57,10 +60,29 @@ impl NativeDialogs {
             sender,
             receiver,
             pending: false,
+            active_kind: None,
+            worker: None,
+            failed: false,
         }
     }
     pub fn pending(&self) -> bool {
         self.pending
+            || self
+                .worker
+                .as_ref()
+                .is_some_and(|worker| !worker.is_finished())
+    }
+    fn ready_for_request(&mut self) -> bool {
+        if self.pending() {
+            return false;
+        }
+        if let Some(worker) = self.worker.take()
+            && worker.join().is_err()
+        {
+            // Preserve shutdown diagnostics without disabling a later request.
+            self.failed = true;
+        }
+        true
     }
     pub fn request(
         &mut self,
@@ -135,7 +157,7 @@ impl NativeDialogs {
         label: impl Fn(&str) -> String,
         wake: impl FnOnce() + Send + 'static,
     ) {
-        if self.pending {
+        if !self.ready_for_request() {
             return;
         }
         if filters.is_empty()
@@ -192,9 +214,10 @@ impl NativeDialogs {
         for filter in filters {
             dialog = dialog.add_filter(label(&filter.name), &filter.extensions);
         }
+        self.active_kind = Some(kind);
         self.pending = true;
         let sender = self.sender.clone();
-        std::thread::spawn(move || {
+        self.worker = Some(std::thread::spawn(move || {
             let file = pollster::block_on(async {
                 if matches!(
                     kind,
@@ -229,11 +252,39 @@ impl NativeDialogs {
             }
             let _ = sender.send(Completion { kind, path });
             wake();
-        });
+        }));
     }
     pub fn poll(&mut self) -> Option<Completion> {
-        let completion = self.receiver.try_recv().ok()?;
+        let completion = match self.receiver.try_recv() {
+            Ok(completion) => completion,
+            Err(_) => {
+                if !self.pending
+                    || !self
+                        .worker
+                        .as_ref()
+                        .is_some_and(|worker| worker.is_finished())
+                {
+                    return None;
+                }
+                if let Some(worker) = self.worker.take() {
+                    self.failed |= worker.join().is_err();
+                }
+                // A normal reply may have raced the first try_recv. Check it
+                // again after actual thread retirement before cancelling owner.
+                match self.receiver.try_recv() {
+                    Ok(completion) => completion,
+                    Err(_) => {
+                        self.failed = true;
+                        Completion {
+                            kind: self.active_kind.take()?,
+                            path: None,
+                        }
+                    }
+                }
+            }
+        };
         self.pending = false;
+        self.active_kind = None;
         Some(completion)
     }
 }
@@ -259,6 +310,9 @@ fn export_filters(suggested: Option<&Path>) -> [(&'static str, &'static [&'stati
     }
     filters
 }
+
+#[path = "dialogs/shutdown.rs"]
+mod shutdown;
 
 #[cfg(test)]
 mod tests {
