@@ -97,6 +97,8 @@ mod rendering;
 mod residency;
 #[path = "app/resize_skew.rs"]
 mod resize_skew;
+#[path = "app/retirement.rs"]
+mod retirement;
 #[path = "app/save_all.rs"]
 mod save_all;
 mod saving;

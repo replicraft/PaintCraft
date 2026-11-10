@@ -11,7 +11,7 @@ use std::sync::{
     mpsc,
 };
 
-trait WriteJob {
+pub(super) trait WriteJob {
     fn poll(&self) -> Option<Result<(), String>>;
 }
 impl WriteJob for Job {
@@ -19,10 +19,16 @@ impl WriteJob for Job {
         self.try_result()
     }
 }
-trait Writer {
+pub(super) trait Writer: Send {
+    fn shutdown(self: Box<Self>) -> Result<(), String> {
+        Ok(())
+    }
     fn submit(&self, image: Image, ctx: &egui::Context) -> Result<Box<dyn WriteJob>, String>;
 }
 impl Writer for ClipboardService {
+    fn shutdown(self: Box<Self>) -> Result<(), String> {
+        ClipboardService::shutdown(*self)
+    }
     fn submit(&self, image: Image, ctx: &egui::Context) -> Result<Box<dyn WriteJob>, String> {
         let ctx = ctx.clone();
         Ok(Box::new(self.submit(image, move || ctx.request_repaint())?))
@@ -55,6 +61,8 @@ pub(super) struct State {
     pending: Option<Pending>,
     // Only acknowledged writes may replace this exact internal capture.
     last_capture: Option<Capture>,
+    threads: retirement::Threads,
+    retiring: bool,
 }
 
 pub(super) fn budget() -> SharedBudget {
@@ -63,8 +71,17 @@ pub(super) fn budget() -> SharedBudget {
 }
 
 impl State {
+    pub(super) fn retire_for_update(&mut self) -> (retirement::Threads, Option<Box<dyn Writer>>) {
+        self.retiring = true;
+        self.pending = None;
+        self.last_capture = None;
+        (self.threads.take(), self.writer.take())
+    }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some()
+    }
+    pub(super) fn retirement_busy(&self) -> bool {
+        self.busy() || self.threads.busy()
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -78,7 +95,7 @@ impl State {
         ctx: &egui::Context,
         parent: &SharedBudget,
     ) -> Result<bool, String> {
-        if self.pending.is_some() {
+        if self.retiring || self.pending.is_some() {
             return Ok(false);
         }
         let spatial = target.is_none() && spatial_workspace::needed(&document);
@@ -102,9 +119,8 @@ impl State {
         let cancelled = Arc::new(AtomicBool::new(false));
         let worker_cancelled = cancelled.clone();
         let wake = ctx.clone();
-        std::thread::Builder::new()
-            .name("paintcraft-copy-capture".into())
-            .spawn(move || {
+        self.threads
+            .spawn("paintcraft-copy-capture", move || {
                 let _parent = executing_parent;
                 let check = || {
                     if worker_cancelled.load(Ordering::Relaxed) {

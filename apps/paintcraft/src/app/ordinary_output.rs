@@ -68,6 +68,8 @@ pub(super) struct State {
     preview: Option<Preview>,
     // The platform runner owns the PNG while the native panel is pending.
     print_hold: Option<Packet>,
+    threads: crate::retirement::Threads,
+    retiring: bool,
 }
 fn cancelled() -> Error {
     Error::new(
@@ -131,6 +133,19 @@ impl State {
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some()
     }
+    pub(super) fn retirement_busy(&self) -> bool {
+        self.busy() || self.threads.busy()
+    }
+
+    pub(super) fn retire_for_update(&mut self) -> Result<crate::retirement::Threads> {
+        if self.pending.is_some() {
+            return Err(cancelled());
+        }
+        self.retiring = true;
+        self.preview = None;
+        self.print_hold = None;
+        Ok(self.threads.take())
+    }
     pub(super) fn start(
         &mut self,
         frozen: Frozen,
@@ -138,6 +153,9 @@ impl State {
         budget: &paintcraft_runtime::SharedBudget,
         ctx: &egui::Context,
     ) -> Result<()> {
+        if self.retiring {
+            return Err(cancelled());
+        }
         self.revision = self.revision.checked_add(1).ok_or_else(limit)?;
         if let Some(pending) = &self.pending {
             pending.cancel.store(true, Ordering::Release);
@@ -162,9 +180,8 @@ impl State {
         let (sender, receiver) = mpsc::channel();
         let (authorize, wait) = mpsc::sync_channel(1);
         let wake = ctx.clone();
-        std::thread::Builder::new()
-            .name("paintcraft-output-prepare".into())
-            .spawn(move || {
+        self.threads
+            .spawn("paintcraft-output-prepare", move || {
                 let owner = Owner {
                     source,
                     _lease: lease,
@@ -353,6 +370,9 @@ impl App {
             self.ordinary_output.preview = None;
         }
         let Some(pending) = self.ordinary_output.pending.take() else {
+            if self.ordinary_output.threads.busy() {
+                ctx.request_repaint_after(Duration::from_millis(25));
+            }
             return;
         };
         let current = pending.revision == self.ordinary_output.revision
@@ -483,3 +503,7 @@ impl App {
         false
     }
 }
+
+#[cfg(test)]
+#[path = "ordinary_output/retirement_tests.rs"]
+mod retirement_tests;

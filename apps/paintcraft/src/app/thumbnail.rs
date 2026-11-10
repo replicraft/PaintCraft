@@ -252,6 +252,20 @@ impl App {
     }
 }
 
+impl Thumbnail {
+    pub(super) fn retire_for_update(&mut self) -> retirement::Shutdown {
+        self.scope = None;
+        self.pending = None;
+        self.image = None;
+        self.output = None;
+        let executor = self.executor.take();
+        Box::new(move || match executor {
+            Some(executor) => executor.shutdown(),
+            None => Ok(()),
+        })
+    }
+}
+
 #[cfg(test)]
 #[path = "thumbnail/tests.rs"]
 mod tests;

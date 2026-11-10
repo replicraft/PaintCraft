@@ -22,7 +22,7 @@ mod decode;
 mod dialog;
 #[path = "paste/placement.rs"]
 mod placement;
-trait ReadJob {
+pub(super) trait ReadJob {
     fn poll(&self) -> Option<Result<EncodedImage, String>>;
 }
 impl ReadJob for Job<EncodedImage> {
@@ -30,12 +30,18 @@ impl ReadJob for Job<EncodedImage> {
         self.try_result()
     }
 }
-trait Reader {
+pub(super) trait Reader: Send {
+    fn shutdown(self: Box<Self>) -> Result<(), String> {
+        Ok(())
+    }
     fn supported(&self) -> bool;
     fn submit(&self, budget: SharedBudget, ctx: &egui::Context)
     -> Result<Box<dyn ReadJob>, String>;
 }
 impl Reader for ReadService {
+    fn shutdown(self: Box<Self>) -> Result<(), String> {
+        ReadService::shutdown(*self)
+    }
     fn supported(&self) -> bool {
         ReadService::supported()
     }
@@ -119,6 +125,8 @@ pub(super) struct State {
     pending: Option<Pending>,
     ready: Option<Ready>,
     raw_budget: SharedBudget,
+    threads: retirement::Threads,
+    retiring: bool,
 }
 impl Default for State {
     fn default() -> Self {
@@ -127,14 +135,29 @@ impl Default for State {
             pending: None,
             ready: None,
             raw_budget: clipboard::budget(),
+            threads: Default::default(),
+            retiring: false,
         }
     }
 }
 impl State {
+    pub(super) fn retire_for_update(&mut self) -> (retirement::Threads, Option<Box<dyn Reader>>) {
+        self.retiring = true;
+        self.pending = None;
+        self.ready = None;
+        (self.threads.take(), self.reader.take())
+    }
     pub(super) fn busy(&self) -> bool {
         self.pending.is_some() || self.ready.is_some()
     }
+    pub(super) fn retirement_busy(&self) -> bool {
+        self.busy() || self.threads.busy()
+    }
+
     pub(super) fn supported(&self) -> bool {
+        if self.retiring {
+            return false;
+        }
         self.reader
             .as_ref()
             .map_or_else(ReadService::supported, |reader| reader.supported())
@@ -255,9 +278,10 @@ impl App {
                     let cancelled = pending.cancelled.clone();
                     let wake = ctx.clone();
                     let frontend = pending.owner.frontend;
-                    let result = std::thread::Builder::new()
-                        .name("paintcraft-paste-decode".into())
-                        .spawn(move || {
+                    let result = self
+                        .paste
+                        .threads
+                        .spawn("paintcraft-paste-decode", move || {
                             let result = decode::source(encoded, frontend, reservation, cancelled)
                                 .map_err(|error| error.to_string());
                             let _ = send.send(result);
@@ -311,3 +335,52 @@ mod tests;
 #[cfg(test)]
 #[path = "paste/dib_tests.rs"]
 mod dib_tests;
+
+#[cfg(test)]
+mod cancelled_retry_retirement_tests {
+    use super::*;
+    use std::time::Duration;
+    const DEADLINE: Duration = Duration::from_secs(5);
+
+    #[test]
+    fn cancelled_paste_can_retry_while_old_callback_remains_retained_for_shutdown() {
+        let (mut app, ctx, reader) = super::tests::fixture();
+        app.paste_requested(&ctx);
+        assert_eq!(reader.calls.load(Ordering::SeqCst), 1);
+        let original_cancelled = app.paste.pending.as_ref().unwrap().cancelled.clone();
+        let observed = original_cancelled.clone();
+        let (started, ready) = mpsc::channel();
+        let (release, blocked) = mpsc::channel();
+        app.paste
+            .threads
+            .spawn("test-cancelled-paste-tail", move || {
+                started.send(()).unwrap();
+                blocked.recv_timeout(DEADLINE).unwrap();
+                assert!(observed.load(Ordering::SeqCst));
+            })
+            .unwrap();
+        ready.recv_timeout(DEADLINE).unwrap();
+        app.cancel_paste(&ctx);
+        assert!(original_cancelled.load(Ordering::SeqCst));
+        assert!(!app.paste.busy());
+        assert!(app.paste.retirement_busy());
+        app.paste_requested(&ctx);
+        assert_eq!(reader.calls.load(Ordering::SeqCst), 2);
+        assert!(app.paste.pending.is_some());
+        assert!(original_cancelled.load(Ordering::SeqCst));
+        app.cancel_paste(&ctx);
+        let (threads, reader) = app.paste.retire_for_update();
+        let (done, ended) = mpsc::channel();
+        let waiter = std::thread::spawn(move || {
+            let captured = threads.shutdown();
+            let read = reader.map_or(Ok(()), |reader| reader.shutdown());
+            done.send((captured, read)).unwrap();
+        });
+        assert!(matches!(ended.try_recv(), Err(mpsc::TryRecvError::Empty)));
+        release.send(()).unwrap();
+        let (captured, read) = ended.recv_timeout(DEADLINE).unwrap();
+        captured.unwrap();
+        read.unwrap();
+        waiter.join().unwrap();
+    }
+}

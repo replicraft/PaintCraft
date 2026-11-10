@@ -9,6 +9,8 @@ pub(crate) struct FontState {
     changed: bool,
     pending: Option<std::sync::mpsc::Receiver<(FontCatalog, text::TextRenderer)>>,
     ready: Option<(FontCatalog, text::TextRenderer)>,
+    threads: crate::retirement::Threads,
+    retiring: bool,
 }
 
 impl Default for FontState {
@@ -19,23 +21,40 @@ impl Default for FontState {
             changed: false,
             pending: None,
             ready: None,
+            threads: Default::default(),
+            retiring: false,
         }
     }
 }
 
 impl FontState {
+    pub(super) fn retire_for_update(&mut self) -> crate::retirement::Threads {
+        self.retiring = true;
+        // A discovery thread may still be returning its renderer/callback. Its
+        // actual owner moves to the drain worker even after this receiver drops.
+        self.pending = None;
+        self.threads.take()
+    }
+
     pub(super) fn loading(&self) -> bool {
         self.pending.is_some() || self.ready.is_some()
+    }
+    pub(super) fn retirement_busy(&self) -> bool {
+        self.loading() || self.threads.busy()
     }
 }
 
 impl App {
     pub(super) fn initialize_fonts(&mut self, ctx: &egui::Context) {
+        if self.fonts.retiring {
+            return;
+        }
         let (sender, receiver) = std::sync::mpsc::channel();
         let wake = ctx.clone();
-        match std::thread::Builder::new()
-            .name("paintcraft-font-catalog".into())
-            .spawn(move || {
+        match self
+            .fonts
+            .threads
+            .spawn("paintcraft-font-catalog", move || {
                 let renderer = text::system();
                 let catalog = FontCatalog {
                     families: text::families(&renderer),
@@ -43,7 +62,7 @@ impl App {
                 let _ = sender.send((catalog, renderer));
                 wake.request_repaint();
             }) {
-            Ok(_) => self.fonts.pending = Some(receiver),
+            Ok(()) => self.fonts.pending = Some(receiver),
             Err(e) => self
                 .editor
                 .set_status(format!("Installed fonts unavailable: {e}")),
@@ -184,3 +203,7 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "text_ui/retirement_tests.rs"]
+mod retirement_tests;

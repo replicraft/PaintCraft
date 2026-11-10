@@ -42,7 +42,7 @@ pub(super) enum Completion {
 }
 #[derive(Clone, Debug)]
 pub(crate) struct Service {
-    executor: Arc<Mutex<Executor<Completion>>>,
+    executor: Arc<Mutex<Option<Executor<Completion>>>>,
     #[cfg(test)]
     completion_gate: Arc<Mutex<Option<tests::CompletionGate>>>,
     context: egui::Context,
@@ -60,6 +60,29 @@ pub(super) struct Pending {
     pub(super) text: Option<text_submission::Attempt>,
     pub(super) filter: Option<Uuid>,
 }
+
+pub(crate) type Retirement = Box<dyn FnOnce() -> Result<()> + Send>;
+
+fn closed() -> Error {
+    Error::new(
+        ErrorCode::InvariantViolation,
+        "editing worker coordinator unavailable",
+    )
+}
+#[derive(Debug)]
+struct ExecutorGuard<'a>(std::sync::MutexGuard<'a, Option<Executor<Completion>>>);
+impl std::ops::Deref for ExecutorGuard<'_> {
+    type Target = Executor<Completion>;
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref().expect("validated live executor")
+    }
+}
+impl std::ops::DerefMut for ExecutorGuard<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.0.as_mut().expect("validated live executor")
+    }
+}
+
 impl Pending {
     pub(super) fn cancel(&self) {
         if let Ok(executor) = self.service.lock() {
@@ -75,7 +98,9 @@ impl Pending {
 }
 impl Drop for Pending {
     fn drop(&mut self) {
-        if let Ok(mut executor) = self.service.executor.lock() {
+        if let Ok(mut executor) = self.service.executor.lock()
+            && let Some(executor) = executor.as_mut()
+        {
             executor.abandon(self.handle);
         }
     }
@@ -117,14 +142,14 @@ impl Service {
             ));
         }
         Ok(Self {
-            executor: Arc::new(Mutex::new(Executor::with_budget(
+            executor: Arc::new(Mutex::new(Some(Executor::with_budget(
                 Limits {
                     workers: 1,
                     pending_jobs: 1,
                     transient_bytes: PREPARATION_CHARGE + crate::spatial_workspace::BYTES,
                 },
                 budget,
-            )?)),
+            )?))),
             context,
             #[cfg(test)]
             completion_gate: Arc::new(Mutex::new(None)),
@@ -144,13 +169,20 @@ impl Service {
         paintcraft_raster::Admission::with_residency(limit, self.residency.clone())
             .with_paint_metadata_budget(self.metadata.clone())
     }
-    fn lock(&self) -> Result<std::sync::MutexGuard<'_, Executor<Completion>>> {
-        self.executor.lock().map_err(|_| {
-            Error::new(
-                ErrorCode::InvariantViolation,
-                "editing worker coordinator unavailable",
-            )
-        })
+    fn lock(&self) -> Result<ExecutorGuard<'_>> {
+        let guard = self.executor.lock().map_err(|_| closed())?;
+        if guard.is_none() {
+            return Err(closed());
+        }
+        Ok(ExecutorGuard(guard))
+    }
+    /// Revoke all cloned producers atomically, then retire work outside the mutex.
+    pub(crate) fn retire_for_update(&self) -> Result<Retirement> {
+        let executor = self.executor.lock().map_err(|_| closed())?.take();
+        Ok(Box::new(move || match executor {
+            Some(executor) => executor.shutdown(),
+            None => Ok(()),
+        }))
     }
     pub(crate) fn reap_abandoned(&self) {
         if let Ok(mut executor) = self.lock() {
@@ -625,3 +657,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
 #[cfg(test)]
 #[path = "background/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "background/update_shutdown_tests.rs"]
+mod update_shutdown_tests;

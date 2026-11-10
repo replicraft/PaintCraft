@@ -322,6 +322,20 @@ mod tests {
     }
 }
 
+impl LayerThumbnails {
+    pub(super) fn retire_for_update(&mut self) -> retirement::Shutdown {
+        self.disabled = true;
+        self.pending = None;
+        self.cache.clear();
+        self.failed.clear();
+        let executor = self.executor.take();
+        Box::new(move || match executor {
+            Some(executor) => executor.shutdown(),
+            None => Ok(()),
+        })
+    }
+}
+
 #[cfg(test)]
 #[path = "layer_thumbnails/noise_tests.rs"]
 mod noise_tests;
