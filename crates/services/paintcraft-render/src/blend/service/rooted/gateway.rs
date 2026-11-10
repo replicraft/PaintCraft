@@ -1,6 +1,8 @@
 //! Only called after complete-key validation on the actual owner(s).
-use super::*;
-use crate::blend::{CPU, Restore, allowed, context};
+use super::{RootFacts, caller};
+use crate::blend::{CPU, Restore, allowed, context, limit, missing};
+use paintcraft_core::types::{Rect, Result};
+use paintcraft_document::Document;
 fn body(
     doc: &Document,
     region: Rect,
@@ -27,7 +29,7 @@ fn body(
         }
     }
 }
-fn render_shared(
+pub(super) fn render_shared(
     doc: &Document,
     region: Rect,
     resolved: &caller::Resolved,
@@ -85,23 +87,4 @@ fn preflight(
             crate::blend::quote::preflight_for_quote(doc, region, retained, q, check)
         }
     }
-}
-pub(super) fn render(
-    doc: &Document,
-    region: Rect,
-    resolved: &caller::Resolved,
-    facts: &RootFacts<'_>,
-    check: &dyn Fn() -> Result<()>,
-) -> Result<Vec<u8>> {
-    render_shared(doc, region, resolved, facts, None, check)
-}
-pub(in crate::blend::service) fn render_seeded(
-    doc: &Document,
-    region: Rect,
-    resolved: &caller::Resolved,
-    facts: &RootFacts<'_>,
-    seed: &crate::blend::seed::Seed<'_>,
-    check: &dyn Fn() -> Result<()>,
-) -> Result<Vec<u8>> {
-    render_shared(doc, region, resolved, facts, Some(seed), check)
 }

@@ -1,13 +1,9 @@
 //! Fresh-output variant; old quote/counter contracts and action order remain.
 use super::{
-    Caller, Programs, blend_programs, caller,
+    Caller, Programs, caller,
     rooted::{self, RootedCallQuote},
 };
-use crate::blend::{
-    limit,
-    rooted::{self as controls, RootFacts},
-    seed,
-};
+use crate::blend::{limit, seed};
 use paintcraft_core::types::{Error, Rect, Result};
 use paintcraft_document::Document;
 use std::mem::size_of;
@@ -110,45 +106,5 @@ pub fn render_seeded_rooted_call_checked(
     programs: &Programs,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
-    let resolved = caller::Resolved::new(programs.caller())?;
-    blend_programs::validate(
-        doc,
-        &resolved.base,
-        resolved.ambient.as_ref(),
-        resolved.noise.is_some(),
-        check,
-        &|n| resolved.spend(n),
-    )?;
-    resolved.spend(64 + 2 * seed::CONTROL + 128)?;
-    validate_controls()?;
-    let witness = controls::control_bytes()
-        .checked_add(seed::CONTROL)
-        .ok_or_else(limit)?;
-    let bytes = resolved
-        .base
-        .bytes_limit()
-        .checked_sub(witness)
-        .ok_or_else(limit)?;
-    let mut charge = resolved.base.scope().account();
-    charge.resize(witness)?;
-    let result = {
-        let facts = RootFacts::capture(doc, check, &|n| resolved.spend(n))?;
-        let proof = seed::Seed::capture(doc, region, check, &|n| resolved.spend(n))?;
-        let base = resolved.base.clone().with_byte_limit(bytes);
-        let noise = resolved
-            .noise
-            .as_ref()
-            .map(|n| n.for_workspace(&base))
-            .transpose()?;
-        let effective = caller::Resolved {
-            base,
-            noise,
-            ambient: resolved.ambient.clone(),
-        };
-        effective.install(|| {
-            rooted::gateway::render_seeded(doc, region, &effective, &facts, &proof, check)
-        })
-    };
-    drop(charge);
-    result
+    rooted::render::run(doc, region, programs, check, true)
 }

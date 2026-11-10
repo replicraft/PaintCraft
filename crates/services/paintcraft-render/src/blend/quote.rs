@@ -1,5 +1,10 @@
 //! Pure same-ROI quote; no counter/owner/allocation is created here.
-use super::*;
+use super::{
+    Context, GENERAL_WORK, Kind, OPAQUE_EXTENSION_WORK, Target, context, control_quote, kind_at,
+    limit, missing,
+};
+use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
+use paintcraft_document::Document;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Quote {
     pub control_bytes: u64,
@@ -73,68 +78,22 @@ pub(super) fn preflight(
     } else {
         programs.retained_bytes
     };
-    let mut spatial_peak = 0u64;
-    let mut total = crate::noise_work::WorkComponents {
+    let total = crate::noise_work::WorkComponents {
         base: q.extra_work.checked_add(compile).ok_or_else(limit)?,
         noise: 0,
     };
-    for layer in doc
-        .layers_in_order()
-        .filter(|l| l.visible && l.opacity != 0)
-    {
-        let Some(area) = region.intersect(&layer.extent()) else {
-            continue;
-        };
-        let local = area
-            .translated(-layer.origin.0, -layer.origin.1)
-            .ok_or_else(limit)?;
-        if crate::spatial::active(layer) {
-            let spatial = crate::noise_work::quote_layer(layer, local, check)?;
-            spatial_peak = spatial_peak.max(spatial.bytes);
-            total = total.checked_add(spatial.work)?;
-        } else {
-            let mask = crate::layer_mask::quote_work(layer, local)?;
-            total = total.checked_add(
-                crate::noise_work::quote_direct(layer, local, check)?.checked_mul(
-                    if crate::layer_mask::active(layer) {
-                        1
-                    } else {
-                        2
-                    },
-                )?,
-            )?;
-            total = total.checked_add(crate::noise_work::WorkComponents {
-                base: mask,
-                noise: 0,
-            })?;
-        }
-    }
-    let render_peak = spatial_peak.checked_add(retained).ok_or_else(limit)?;
-    let prepare_peak = if base.has_prepared_programs() {
-        0
-    } else {
-        programs.preparation_peak_bytes
-    };
-    if render_peak.max(prepare_peak) > base.bytes_limit() {
-        return Err(limit());
-    }
-    if crate::noise_work::current().is_some() {
-        crate::noise_work::current_for(&base)?.check_available(total)?;
-    } else if total.noise != 0 {
-        crate::noise_work::required()?;
-        return Err(missing());
-    } else if base
-        .work_used()
-        .checked_add(total.base)
-        .filter(|n| *n <= base.work_limit())
-        .is_none()
-    {
-        return Err(limit());
-    }
-    Ok(())
+    preflight_layers(
+        doc,
+        region,
+        &base,
+        retained,
+        Some(programs.preparation_peak_bytes),
+        total,
+        check,
+    )
 }
 
-// Private validated-key route only. Public preflight remains byte-exact above.
+// Private validated-key route; both callers retain their original base-capture point.
 pub(super) fn preflight_prepared(
     doc: &Document,
     region: Rect,
@@ -155,11 +114,26 @@ pub(super) fn preflight_for_quote(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     let base = crate::spatial::current().ok_or_else(missing)?;
-    let mut spatial_peak = 0u64;
-    let mut total = crate::noise_work::WorkComponents {
+    let total = crate::noise_work::WorkComponents {
         base: q.extra_work,
         noise: 0,
     };
+    preflight_layers(doc, region, &base, retained, None, total, check)
+}
+
+// One non-generic loop; base was captured at each original caller's own point.
+// The public preparation eligibility test remains after all layer callbacks.
+#[inline(never)]
+fn preflight_layers(
+    doc: &Document,
+    region: Rect,
+    base: &crate::spatial::WorkspaceAdmission,
+    retained: u64,
+    preparation_peak: Option<u64>,
+    mut total: crate::noise_work::WorkComponents,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    let mut spatial_peak = 0u64;
     for layer in doc
         .layers_in_order()
         .filter(|l| l.visible && l.opacity != 0)
@@ -192,11 +166,22 @@ pub(super) fn preflight_for_quote(
         }
     }
     let render_peak = spatial_peak.checked_add(retained).ok_or_else(limit)?;
-    if render_peak > base.bytes_limit() {
+    let peak = match preparation_peak {
+        Some(quoted) => {
+            let prepare_peak = if base.has_prepared_programs() {
+                0
+            } else {
+                quoted
+            };
+            render_peak.max(prepare_peak)
+        }
+        None => render_peak,
+    };
+    if peak > base.bytes_limit() {
         return Err(limit());
     }
     if crate::noise_work::current().is_some() {
-        crate::noise_work::current_for(&base)?.check_available(total)?;
+        crate::noise_work::current_for(base)?.check_available(total)?;
     } else if total.noise != 0 {
         crate::noise_work::required()?;
         return Err(missing());

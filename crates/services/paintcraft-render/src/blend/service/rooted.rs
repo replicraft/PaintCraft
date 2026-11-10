@@ -1,7 +1,11 @@
 //! Source8 rooted route retaining existing service contracts and debit order.
-use super::*;
+use super::{CallQuote, Caller, Programs, caller, capture};
+use crate::blend::limit;
 use crate::blend::rooted::{self as controls, RootFacts};
+use paintcraft_core::types::{Rect, Result};
+use paintcraft_document::Document;
 pub(super) mod gateway;
+pub(super) mod render;
 #[derive(Clone, Copy, Debug)]
 pub struct RootedCallQuote {
     pub call: CallQuote,
@@ -65,40 +69,7 @@ pub fn render_rooted_call_checked(
     programs: &Programs,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
-    let resolved = caller::Resolved::new(programs.caller())?;
-    blend_programs::validate(
-        doc,
-        &resolved.base,
-        resolved.ambient.as_ref(),
-        resolved.noise.is_some(),
-        check,
-        &|n| resolved.spend(n),
-    )?;
-    let witness_bytes = controls::control_bytes();
-    let bytes = resolved
-        .base
-        .bytes_limit()
-        .checked_sub(witness_bytes)
-        .ok_or_else(limit)?;
-    let mut witness_charge = resolved.base.scope().account();
-    witness_charge.resize(witness_bytes)?;
-    let result = {
-        let facts = RootFacts::capture(doc, check, &|n| resolved.spend(n))?;
-        let base = resolved.base.clone().with_byte_limit(bytes);
-        let noise = resolved
-            .noise
-            .as_ref()
-            .map(|n| n.for_workspace(&base))
-            .transpose()?;
-        let effective = caller::Resolved {
-            base,
-            noise,
-            ambient: resolved.ambient.clone(),
-        };
-        effective.install(|| gateway::render(doc, region, &effective, &facts, check))
-    }; // facts and effective owners end before their witness declaration
-    drop(witness_charge);
-    result
+    render::run(doc, region, programs, check, false)
 }
 #[cfg(test)]
 mod tests;

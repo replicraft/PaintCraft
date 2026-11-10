@@ -1,7 +1,11 @@
 use super::*;
-use crate::blend::metadata::quote_unbound_rooted_call_checked;
+use crate::blend::{
+    metadata::quote_unbound_rooted_call_checked,
+    service::{prepare_programs_checked, render_call_checked},
+};
+use crate::spatial::WorkspaceAdmission;
 use paintcraft_core::types::{
-    LayerBlendMode, Rgba,
+    Error, ErrorCode, LayerBlendMode, Rgba,
     filters::{AddNoiseRgbV1, Descriptor},
     ids::deterministic_id,
     resources::{AllocationClass, SharedBudget},
