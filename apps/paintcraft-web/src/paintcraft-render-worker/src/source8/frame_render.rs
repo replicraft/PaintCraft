@@ -58,7 +58,7 @@ impl ClosedSource8 {
         auth.spend(OPERATION)?;
         let quote = service::program_quote_checked(doc, caller, &check, &spend)?;
         auth.spend(OPERATION)?;
-        let call = service::rooted_call_quote_checked(doc, region, caller, &check, &spend)?;
+        let call = service::seeded_rooted_call_quote_checked(doc, region, caller, &check, &spend)?;
         auth.spend(64)?;
         let tables = if quote.new_retained_bytes == 0 {
             0
@@ -101,7 +101,7 @@ impl ClosedSource8 {
         )?;
         let programs = service::prepare_programs_checked(doc, caller, &check, &spend)?;
         auth.spend(OPERATION)?;
-        let pixels = service::render_rooted_call_checked(doc, region, &programs, &check)?;
+        let pixels = service::render_seeded_rooted_call_checked(doc, region, &programs, &check)?;
         // Vec is paired with its output credit before the first fallible finish.
         let image = pending.finish(pixels, auth)?;
         // Reverse locals order retires Programs before F; source remains alive

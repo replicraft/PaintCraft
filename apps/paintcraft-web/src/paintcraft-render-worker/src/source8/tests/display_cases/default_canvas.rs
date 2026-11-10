@@ -117,16 +117,79 @@ fn cancelled_default_preserves_error_and_retry_does_not_renew_work() {
 }
 
 #[test]
-fn general_default_refuses_at_original_limit_and_releases_all_output() {
+fn general_default_fits_original_limit_and_preserves_complete_pixels() {
     let host = Host::new(false);
-    let (wire, _) = scene(1);
-    let error = render(&host, &wire, full_view(), &|| Ok(())).unwrap_err();
-    assert_eq!(error.code, ErrorCode::ResourceLimit);
-    // It must reach the paid display reduction, not fail at source intake.
+    let (wire, pixel) = scene(1);
+    let image = render(&host, &wire, full_view(), &|| Ok(())).unwrap();
+    assert_eq!((image.width(), image.height()), (63, 31));
+    assert_eq!(image.rgba().len(), 63 * 31 * 4);
+    assert!(image.rgba().as_chunks::<4>().0.iter().all(|p| *p == pixel));
     assert!(host.used() >= 137_907_884 && host.used() <= WORK_LIMIT);
     host.retired();
-    assert_eq!(host.o.footprint().live, 0);
     let budget = host.budget.clone();
     drop(host);
+    assert_eq!(budget.usage().reserved, 2 << 20);
+    assert!(image.rgba().as_chunks::<4>().0.iter().all(|p| *p == pixel));
+    drop(image);
     assert_eq!(budget.usage().reserved, 0);
+}
+
+#[test]
+fn empty_normal_background_then_general_default_preserves_fractional_alpha() {
+    use paintcraft_core::types::{LayerBlendMode, Rgba, ids::deterministic_id};
+    use paintcraft_formats::pcnd::count_portable_blend_snapshot_rooted_checked;
+
+    let mut doc = paintcraft_document::new_document(
+        1000,
+        486,
+        Some(Rgba([7, 9, 11, 0])),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    let mut top = doc.layers[&doc.roots[0]].clone();
+    top.id = deterministic_id(&["studio-default-transparent-background"]);
+    top.opacity = 128;
+    top.blend_mode = LayerBlendMode::Multiply;
+    top.raster = paintcraft_raster::RasterLayer::new(1000, 486, Rgba([20, 60, 100, 128]));
+    doc.roots.push(top.id);
+    doc.layers.insert(top.id, top);
+
+    // The source is produced by the actual Main preparation writer, with its
+    // separate original scope funding both counting and exact encoded storage.
+    let main_budget = SharedBudget::new(4 << 20);
+    let main_scope = main_budget
+        .reserve_capacity(4 << 20)
+        .unwrap()
+        .scope(AllocationClass::PaintMetadata);
+    let check = || Ok(());
+    let spend = |_| Ok(());
+    let counted =
+        count_portable_blend_snapshot_rooted_checked(&doc, &main_scope, &check, &spend).unwrap();
+    let source = counted.encode().unwrap();
+    let host = Host::new(false);
+    let image = render(&host, source.as_bytes(), full_view(), &check).unwrap();
+    assert_eq!((image.width(), image.height()), (63, 31));
+    // Filter/mask-free alpha: round(128 * 128 / 255) = 64. The transparent
+    // background contributes neither its hidden RGB nor an alpha sample.
+    assert!(
+        image
+            .rgba()
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|p| *p == [20, 60, 100, 64])
+    );
+    assert!(host.used() <= WORK_LIMIT);
+    drop(image);
+    host.retired();
+    assert_eq!(host.o.footprint().live, 0);
+    let worker_budget = host.budget.clone();
+    drop(host);
+    assert_eq!(worker_budget.usage().reserved, 0);
+    drop(source);
+    drop(counted);
+    assert_eq!(main_scope.footprint().live, 0);
+    drop(main_scope);
+    assert_eq!(main_budget.usage().reserved, 0);
 }
