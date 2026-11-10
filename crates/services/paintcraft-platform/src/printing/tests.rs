@@ -99,3 +99,75 @@ fn malformed_oversized_png_and_invalid_title_do_not_start_a_worker() {
     assert!(!service.pending());
     assert!(service.poll().is_none());
 }
+
+#[test]
+fn receiving_a_print_result_does_not_retire_a_blocked_wake_callback() {
+    let mut service = PrintService::with_runner(Arc::new(|_, _| Ok(PrintOutcome::Printed)));
+    let (entered, wait_entered) = mpsc::channel();
+    let (release, wait_release) = mpsc::channel();
+    service
+        .request(PNG.to_vec(), "captured".into(), move || {
+            entered.send(()).unwrap();
+            wait_release.recv().unwrap();
+        })
+        .unwrap();
+    wait_entered.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert_eq!(completion(&mut service), Ok(PrintOutcome::Printed));
+    assert!(!service.pending(), "the result was consumed");
+    assert!(service.request(PNG.to_vec(), "next".into(), || {}).is_err());
+
+    let (closing, wait_closing) = mpsc::channel();
+    let (finished, wait_finished) = mpsc::channel();
+    let shutdown = std::thread::spawn(move || {
+        closing.send(()).unwrap();
+        finished.send(service.shutdown()).unwrap();
+    });
+    wait_closing.recv_timeout(Duration::from_secs(5)).unwrap();
+    let premature = wait_finished.recv_timeout(Duration::from_millis(25));
+    release.send(()).unwrap();
+    shutdown.join().unwrap();
+    assert!(
+        premature.is_err(),
+        "shutdown returned before its wake callback"
+    );
+    assert_eq!(
+        wait_finished.recv_timeout(Duration::from_secs(5)).unwrap(),
+        Ok(())
+    );
+}
+
+#[test]
+fn print_retirement_reports_wake_panics_and_accepts_idle_services() {
+    assert_eq!(PrintService::default().shutdown(), Ok(()));
+    let mut service = PrintService::with_runner(Arc::new(|_, _| Ok(PrintOutcome::Printed)));
+    service
+        .request(PNG.to_vec(), "captured".into(), || panic!("wake failure"))
+        .unwrap();
+    assert_eq!(completion(&mut service), Ok(PrintOutcome::Printed));
+    assert!(service.shutdown().unwrap_err().contains("retirement"));
+}
+
+#[test]
+fn print_wake_cannot_join_itself() {
+    let owner = Arc::new(Mutex::new(None::<PrintService>));
+    let captured = owner.clone();
+    let (release, wait_release) = mpsc::channel();
+    let (finished, wait_finished) = mpsc::channel();
+    let mut service = PrintService::with_runner(Arc::new(|_, _| Ok(PrintOutcome::Printed)));
+    service
+        .request(PNG.to_vec(), "captured".into(), move || {
+            wait_release.recv().unwrap();
+            let service = captured.lock().unwrap().take().unwrap();
+            finished.send(service.shutdown()).unwrap();
+        })
+        .unwrap();
+    *owner.lock().unwrap() = Some(service);
+    release.send(()).unwrap();
+    assert!(
+        wait_finished
+            .recv_timeout(Duration::from_secs(5))
+            .unwrap()
+            .unwrap_err()
+            .contains("own worker")
+    );
+}

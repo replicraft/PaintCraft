@@ -15,6 +15,8 @@ pub struct PrintService {
     receiver: mpsc::Receiver<Result<PrintOutcome>>,
     runner: Arc<Runner>,
     pending: bool,
+    worker: Option<std::thread::JoinHandle<()>>,
+    worker_failed: bool,
 }
 impl std::fmt::Debug for PrintService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -36,6 +38,8 @@ impl PrintService {
             receiver,
             runner,
             pending: false,
+            worker: None,
+            worker_failed: false,
         }
     }
     pub fn available() -> bool {
@@ -55,13 +59,27 @@ impl PrintService {
         if self.pending {
             return Err("A native print dialog is already active".into());
         }
+        if self.worker_failed {
+            return Err("The previous printing worker did not finish safely".into());
+        }
+        if let Some(worker) = &self.worker
+            && !worker.is_finished()
+        {
+            return Err("The previous printing worker is still finishing".into());
+        }
+        if let Some(worker) = self.worker.take()
+            && worker.join().is_err()
+        {
+            self.worker_failed = true;
+            return Err("The previous printing worker failed".into());
+        }
         validate_png(&png)?;
         if title.len() > 4096 || title.contains('\0') {
             return Err("Print title exceeds its limit or contains a null byte".into());
         }
         let (sender, runner) = (self.sender.clone(), self.runner.clone());
         self.pending = true;
-        if let Err(error) = std::thread::Builder::new()
+        match std::thread::Builder::new()
             .name("paintcraft-print".into())
             .spawn(move || {
                 let result =
@@ -69,10 +87,12 @@ impl PrintService {
                         .unwrap_or_else(|_| Err("Native printing worker failed".into()));
                 let _ = sender.send(result);
                 wake();
-            })
-        {
-            self.pending = false;
-            return Err(format!("Cannot start native printing: {error}"));
+            }) {
+            Ok(worker) => self.worker = Some(worker),
+            Err(error) => {
+                self.pending = false;
+                return Err(format!("Cannot start native printing: {error}"));
+            }
         }
         Ok(())
     }
@@ -80,6 +100,30 @@ impl PrintService {
         let result = self.receiver.try_recv().ok()?;
         self.pending = false;
         Some(result)
+    }
+
+    /// Wait for the native operation and its wake callback to finish.
+    ///
+    /// This consumes the service without publishing queued results. A print panel
+    /// may wait for user input, so call this from a shutdown worker rather than
+    /// the UI thread. Ordinary service drop remains nonblocking.
+    ///
+    /// # Errors
+    /// Returns an error if the worker panicked, including during its wake callback.
+    pub fn shutdown(mut self) -> Result<()> {
+        if let Some(worker) = self.worker.take() {
+            if worker.thread().id() == std::thread::current().id() {
+                return Err("Cannot retire printing from its own worker".into());
+            }
+            if worker.join().is_err() {
+                self.worker_failed = true;
+            }
+        }
+        if self.worker_failed {
+            Err("Native printing worker failed during retirement".into())
+        } else {
+            Ok(())
+        }
     }
 }
 fn validate_png(png: &[u8]) -> Result<()> {
