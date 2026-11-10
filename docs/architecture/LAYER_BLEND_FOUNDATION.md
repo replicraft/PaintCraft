@@ -1211,3 +1211,30 @@ Actual Wasm validation of this renderer change is pending. The earlier 887-case
 receipt describes the row-only stage, including its then-current General
 refusal. This new native result does not activate Worker8, Main publication or
 browser blending, and makes no CPU-speed or full-heap claim.
+
+### Counted Main source forecast
+
+The counted snapshot can now return its encoded bytes and a source-demand
+forecast under the same original Main reservation and cumulative work counter.
+The forecast authenticates and inspects those exact bytes, distinguishes stored
+metadata from enabled effects, and includes actual plan/census/probe overlap.
+The shared probe policy has one definition in Formats. These are demand facts,
+not replacement capacity grants or a complete Worker service allocation quote.
+
+Native validation passes 22 counted-source, 41 portable-source and 146 worker
+checks. A separate actual Wasm diagnostic passes 20 cases, including omitted
+default tiles, retained masks and ICC attachment state, disabled Noise, partial
+raw tiles, stripe replay costs, exact/short Main capacity, cancellation identity
+and cumulative retry refusal. Its 501,403-byte module finishes with 2 MiB linear
+memory under the unchanged 16 MiB maximum. Root verified all 2,953 source hashes
+and the generated binary against the successful receipts.
+
+Evidence is retained in
+`docs/validation/layer-blend-candidates/source8-main-forecast-wasm`:
+`build-attempt-2/build-final.json` has SHA-256
+`a0a98c4617e88e720905e485fc1ca81abbcca3460d1ae74b95b8072247eabd76`;
+`node-attempt-1/final.json` has SHA-256
+`0b5a3ed87877ecdf50e6129b2976473ad1ce39b085b5e0dd5953817ef6a0fde9`.
+The initial diagnostic compilation failure remains archived. This standalone
+forecast execution does not qualify production staging, Worker8 transport,
+browser publication, physical memory or latency.
