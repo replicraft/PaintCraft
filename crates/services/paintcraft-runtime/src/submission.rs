@@ -58,6 +58,10 @@ impl<T: Send + 'static> Executor<T> {
             Err(error) => return Err(RejectedSubmission { error, task, wake }),
         };
         let lease = admission::Lease::pair(local, lease);
+        let completion = match self.completion.begin() {
+            Ok(completion) => completion,
+            Err(error) => return Err(RejectedSubmission { error, task, wake }),
+        };
         let cancellation = Cancellation(Arc::new(AtomicBool::new(false)), lease.downgrade());
         let key = self.jobs.insert(Reservation {
             cancellation: cancellation.clone(),
@@ -66,22 +70,29 @@ impl<T: Send + 'static> Executor<T> {
             _lease: lease.clone(),
         });
         let sender = self.sender.clone();
-        self.pool.spawn(move || {
-            let result = catch_unwind(AssertUnwindSafe(|| {
-                cancellation.check()?;
-                let result = task(cancellation.clone());
-                cancellation.check()?;
-                result
-            }))
-            .unwrap_or_else(|_| {
-                Err(Error::new(
-                    ErrorCode::InvariantViolation,
-                    "worker panicked before publication",
-                ))
+        self.pool
+            .as_ref()
+            .expect("live executor pool")
+            .spawn(move || {
+                let result = catch_unwind(AssertUnwindSafe(|| {
+                    cancellation.check()?;
+                    let result = task(cancellation.clone());
+                    cancellation.check()?;
+                    result
+                }))
+                .unwrap_or_else(|_| {
+                    completion.failed();
+                    Err(Error::new(
+                        ErrorCode::InvariantViolation,
+                        "worker panicked before publication",
+                    ))
+                });
+                let _ = sender.send((key, result, lease));
+                if catch_unwind(AssertUnwindSafe(wake)).is_err() {
+                    completion.failed();
+                }
+                drop(completion);
             });
-            let _ = sender.send((key, result, lease));
-            let _ = catch_unwind(AssertUnwindSafe(wake));
-        });
         Ok(JobHandle {
             owner: self.owner,
             key,

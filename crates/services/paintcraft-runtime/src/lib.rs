@@ -3,6 +3,7 @@
 mod admission;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod process;
+mod shutdown;
 mod submission;
 pub use admission::{BudgetUsage, SharedBudget};
 pub use submission::RejectedSubmission;
@@ -67,7 +68,8 @@ pub struct Limits {
 #[derive(Debug)]
 pub struct Executor<T> {
     owner: Uuid,
-    pool: rayon::ThreadPool,
+    pool: Option<rayon::ThreadPool>,
+    completion: Arc<shutdown::Completion>,
     limits: Limits,
     jobs: SlotMap<JobKey, Reservation<T>>,
     local_budget: SharedBudget,
@@ -87,9 +89,12 @@ impl<T: Send + 'static> Executor<T> {
                 "worker, queue and memory limits must be positive",
             ));
         }
+        let completion = Arc::new(shutdown::Completion::new(limits.workers));
+        let exits = completion.clone();
         let pool = rayon::ThreadPoolBuilder::new()
             .num_threads(limits.workers)
             .thread_name(|i| format!("paintcraft-worker-{i}"))
+            .exit_handler(move |_| exits.worker_exited())
             .build()
             .map_err(|e| {
                 Error::new(
@@ -100,7 +105,8 @@ impl<T: Send + 'static> Executor<T> {
         let (sender, receiver) = mpsc::channel();
         Ok(Self {
             owner: Uuid::new_v4(),
-            pool,
+            pool: Some(pool),
+            completion,
             limits,
             jobs: SlotMap::with_key(),
             local_budget: SharedBudget::new(limits.transient_bytes),
