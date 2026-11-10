@@ -58,6 +58,9 @@ jobs:
       - run: python3 -m unittest discover -s scripts/tests -p 'test_install_cli.py'
       - run: python3 -m unittest discover -s scripts/tests -p 'test_verify_*.py'
       - run: cargo fmt --all --check
+      - name: Check the isolated parser dependency lock
+        if: runner.os == 'Linux'
+        run: python3 fuzz/check_lock.py
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Build the actual helper for installed CLI tests
         run: cargo build --locked -p paintcraft-codec-worker
@@ -70,7 +73,6 @@ jobs:
       - name: Check the isolated stable parser harness
         if: runner.os == 'Linux'
         run: |
-          python3 fuzz/check_lock.py
           python3 -m unittest discover -s fuzz -p 'test_*.py'
           cargo fmt --manifest-path fuzz/Cargo.toml --check
           cargo clippy --manifest-path fuzz/Cargo.toml --locked --all-targets --target-dir target -- -D warnings
@@ -93,11 +95,11 @@ jobs:
       - name: Test bounded clipboard transport and lifecycle
         run: cargo test --locked -p paintcraft-platform --features clipboard --lib
       - name: Test actual X11 direct and incremental selection exchanges
-        run: >-
-          xvfb-run --auto-servernum sh -c
-          'PAINTCRAFT_TEST_X11_DISPLAY="$DISPLAY" cargo test --locked
-          -p paintcraft-platform --features clipboard --lib
-          clipboard::read::x11::native_tests::native_x11_ -- --ignored'
+        run: |
+          # DISPLAY must expand inside the isolated server's child shell.
+          # shellcheck disable=SC2016
+          xvfb-run --auto-servernum sh -c \
+            'PAINTCRAFT_TEST_X11_DISPLAY="$DISPLAY" cargo test --locked -p paintcraft-platform --features clipboard --lib clipboard::read::x11::native_tests::native_x11_ -- --ignored'
   web:
     runs-on: ubuntu-latest
     steps:
