@@ -180,12 +180,12 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(archive.with_name(archive.name + ".sha256").read_bytes(),
                              release.checksum_line(archive))
 
-    def test_final_manifest_requires_all_24_assets_and_independently_matches_hashes(self):
-        self.assertEqual(len(release.expected_assets(self.version)), 24)
+    def test_final_manifest_requires_all_26_assets_and_independently_matches_hashes(self):
+        self.assertEqual(len(release.expected_assets(self.version)), 26)
         self.full_set()
         release.verify_assets(self.version, self.output, finalize=True)
         lines = (self.output / "SHA256SUMS.txt").read_bytes().splitlines()
-        self.assertEqual(len(lines), 24)
+        self.assertEqual(len(lines), 26)
         self.assertFalse(list(self.output.glob("*.sha256")))
         for line in lines:
             digest, name = line.decode().split("  ")

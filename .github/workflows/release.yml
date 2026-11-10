@@ -177,6 +177,33 @@ jobs:
       - name: Package Linux installers
         if: runner.os == 'Linux'
         run: python scripts/packaging/package_linux.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/paintcraft --output dist
+      - name: Install Flatpak runtime and SDK
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+      - name: Package exact Linux release as Flatpak
+        if: runner.os == 'Linux'
+        run: python scripts/packaging/package_flatpak.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/paintcraft --cli-binary target/${{ matrix.target }}/release/paintcraft-cli --output dist
+      - name: Inspect Flatpak payload in the actual runtime
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          flatpak install --user --noninteractive -y dist/*.flatpak
+          flatpak run --command=sh io.github.replicraft.PaintCraft -es <<'FLATPAK_CHECK'
+            for program in paintcraft paintcraft-cli paintcraft-codec-worker; do
+              test -x "/app/bin/$program"
+              deps=$(ldd "/app/bin/$program")
+              printf "%s\n" "$deps"
+              if printf "%s\n" "$deps" | grep -q "not found"; then exit 1; fi
+            done
+            test -f /app/share/paintcraft/paintcraft-codec-worker.json
+            /app/bin/paintcraft-cli --version
+          FLATPAK_CHECK
       - name: Inspect Linux desktop integration and native packages
         if: runner.os == 'Linux'
         shell: bash

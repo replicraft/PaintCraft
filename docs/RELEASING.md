@@ -73,15 +73,15 @@ metadata/architecture validation, not native runtime qualification.
 
 ## Downloads
 
-Names start with `paintcraft-<version>-`. For version 0.1.0:
+Names start with `paintcraft-<version>-`. The current packaging contract is:
 
 | Platform | Architectures | Suffixes |
 | --- | --- | --- |
 | Windows | `windows-x64`, `windows-arm64` | `-portable.zip`, `.exe`, `.msi` |
 | macOS | `macos-arm64`, `macos-x64` | `.dmg`, `-update.zip` |
-| Linux | `linux-x64`, `linux-arm64` | `.deb`, `.rpm`, `.AppImage`, `.tar.gz` |
+| Linux | `linux-x64`, `linux-arm64` | `.deb`, `.rpm`, `.AppImage`, `.tar.gz`, `.flatpak` |
 
-The assembled release has 24 downloads plus `SHA256SUMS.txt`. Each portable ZIP
+The assembled release has 26 downloads plus `SHA256SUMS.txt`. Each portable ZIP
 or tar archive includes the application, its license and bundled font notices.
 Fonts and interface assets are embedded in the executable. There are no source trees or build tools
 inside the downloads. The checksums describe the final downloadable bytes.
@@ -358,3 +358,26 @@ expectations were corrected. This passing run qualifies its recorded Mac ARM
 candidate only. At that time the other five targets and the global default
 remained V7. That historical run did not execute remote CI or promote defaults;
 the later 12-job V9/V10 run and reviewed source promotion are described above.
+
+## Flatpak bundles
+
+The release workflow builds a `.flatpak` bundle for each Linux architecture with
+the desktop, headless CLI, and the exact same-build codec helper. These bundles
+have not yet been qualified on Linux or published; existing v0.1.1 assets do not
+include Flatpak. Once available, install using
+`flatpak install --user ./paintcraft-<version>-linux-x64.flatpak` (or `linux-arm64`),
+then launch `flatpak run io.github.replicraft.PaintCraft`. The CLI is available with
+`flatpak run --command=paintcraft-cli io.github.replicraft.PaintCraft --help`.
+The bundle points to Flathub for the Freedesktop 25.08 runtime; PaintCraft itself
+is a release bundle and is not published on Flathub or configured with an app-update remote.
+
+The packaging runner needs `flatpak`, `flatpak-builder`, the matching architecture's
+Freedesktop Platform and SDK 25.08. It stages the existing native release binaries,
+checks they are unchanged after building, and bundles them without stripping.
+CI is configured to install the bundle and check dependencies and the CLI in the actual runtime.
+Portal file dialogs provide document access without granting the application the
+entire home directory. GPU/Wayland/X11 permissions are explicit. Native desktop
+interaction, file-open integration, print services, GPU drivers and tablet input
+still need a real Linux desktop qualification; a payload/CLI check does not prove them.
+Flatpak installations must receive updates through a future app remote or a newer
+release bundle, rather than replacing files inside `/app`.

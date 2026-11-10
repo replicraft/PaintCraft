@@ -175,7 +175,7 @@ def expected_assets(version):
         elif "windows" in target:
             names.update(name + ext for ext in ("-portable.zip", ".exe", ".msi"))
         elif "linux" in target:
-            names.update(name + ext for ext in (".tar.gz", ".deb", ".rpm", ".AppImage"))
+            names.update(name + ext for ext in (".tar.gz", ".deb", ".rpm", ".AppImage", ".flatpak"))
         else:
             names.add(name + ".tar.gz")
     return names
