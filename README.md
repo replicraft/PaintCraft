@@ -4,7 +4,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 
 - Windows 7, 10 and 11 Classic skins.
 - Studio with document tabs, Save All and floating panels.
-- Twelve editable Studio filters, including Curves, Vibrance and Hue/Saturation, with live previews and saved selection masks.
+- Thirteen editable Studio filters, including Curves, Vibrance, Hue/Saturation and Noise, with live previews and saved selection masks.
 - Saved layer masks with desktop editing and browser display, sampling and flattening.
 - Normal, Multiply and Screen layer blending in desktop Studio.
 - Desktop, browser and command-line apps.
