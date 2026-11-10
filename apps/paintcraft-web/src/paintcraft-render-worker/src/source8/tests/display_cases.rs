@@ -9,6 +9,8 @@ use paintcraft_render::{
     spatial::{WorkspaceAdmission, with_workspace},
 };
 use std::cell::{Cell, RefCell};
+#[path = "display_cases/default_canvas.rs"]
+mod default_canvas;
 const C: u64 = 2 << 20;
 struct Host {
     budget: SharedBudget,

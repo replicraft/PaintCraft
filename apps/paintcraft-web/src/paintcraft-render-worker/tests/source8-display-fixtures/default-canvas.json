@@ -1,0 +1,27 @@
+{
+    "source": "Constant no-tile PCND8 scenes independently constructed before Wasm execution. General output remains theoretical while its request exceeds admission.",
+    "cases": [
+        {
+            "name": "normal-hidden-stored-multiply",
+            "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111e807e60300000212121212121212121212121212121212054c6179657201ff000000e807e603143c64ff00000013131313131313131313131313131313054c6179657200ff010000e807e603000000000000004109b8f2b103d31e00f015ef64e390508b4cb70ab34cbd50a8a6c5077b18ef0a",
+            "sha256": "e39221a2883d83bbf999b4797c806ef10280094f892d56637ce622bd38b77427",
+            "pixel": [
+                20,
+                60,
+                100,
+                255
+            ]
+        },
+        {
+            "name": "first-general-then-normal",
+            "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111e807e60300000212121212121212121212121212121212054c6179657201ff010000e807e6031f7ff18000000013131313131313131313131313131313054c6179657201ff000000e807e603cc4d0d8000000084c8000bf5b72cdefdacdc556dc96c745eef0ee26e17cfe5450b31159c1101c7",
+            "sha256": "097166932a39f3a5c83fb0a1f983d05f962b5976713a9b2639c71122d3c7c31a",
+            "pixel": [
+                146,
+                94,
+                89,
+                192
+            ]
+        }
+    ]
+}
