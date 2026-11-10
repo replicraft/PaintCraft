@@ -230,6 +230,7 @@ impl WebApp {
                 | Edit::ResizeCanvas { .. }
                 | Edit::ResizeCanvasAnchored { .. }
                 | Edit::TransformImage { .. }
+                | Edit::StretchSkewImage(_)
         );
         let picked = matches!(action, Edit::PickColor(_));
         let before_size = self.editor.session.document().canvas;

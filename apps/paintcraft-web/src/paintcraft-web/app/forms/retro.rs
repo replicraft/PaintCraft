@@ -84,6 +84,31 @@ impl WebApp {
         result
     }
 }
+impl WebApp {
+    pub(super) fn retro_resize_skew_form(
+        ctx: &egui::Context,
+        draft: &mut paintcraft_classic::resize_skew::Draft,
+    ) -> paintcraft_classic::resize_skew::Response {
+        use paintcraft_classic::resize_skew::Response;
+        let mut response = Response::Pending;
+        let modal = egui::Modal::new(egui::Id::unique("web-retro-resize-skew"))
+            .frame(paintcraft_retro::frame())
+            .show(ctx, |ui| {
+                response = paintcraft_retro::with_style(ui, |ui| {
+                    paintcraft_classic::resize_skew::contents(
+                        ui,
+                        draft,
+                        paintcraft_document::CANVAS_SIDE_MAX,
+                    )
+                });
+            });
+        if modal.should_close() && response == Response::Pending {
+            Response::Cancel
+        } else {
+            response
+        }
+    }
+}
 
 #[cfg(test)]
 #[path = "retro/tests.rs"]

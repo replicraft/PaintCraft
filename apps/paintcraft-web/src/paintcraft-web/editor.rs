@@ -176,7 +176,27 @@ impl Editor {
         self.tools.cancel_text();
     }
 
+    fn validate_stretch_skew_edit(&self, edit: &paintcraft_tools::StretchSkewEdit) -> Result<()> {
+        let ticket = self.session.ticket();
+        if edit.owner != self.session.owner_id()
+            || edit.state_id != ticket.state_id
+            || edit.publication_epoch != ticket.publication_epoch
+            || edit.target != self.target
+            || self.tools.floating_selection().is_some()
+            || self.tools.is_editing_text()
+        {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Resize and skew source or target changed",
+            ));
+        }
+        Ok(())
+    }
     pub fn apply(&mut self, action: Action) -> Result<()> {
+        if let Action::StretchSkewImage(edit) = &action {
+            self.validate_stretch_skew_edit(edit)?;
+        }
+
         if let Action::LayerMask(edit) = &action {
             let operation = self.layer_mask_operation(edit)?;
             // Validation never resolves/discards a private tool draft. The
@@ -272,6 +292,40 @@ impl Editor {
                 }
                 self.tools.apply_picked_color(&pick, color);
                 Ok(())
+            }
+            Action::StretchSkewImage(edit) => {
+                self.validate_stretch_skew_edit(&edit)?;
+                let (width, height, shear, clear) =
+                    (edit.width, edit.height, edit.shear, edit.clear);
+                let selection = self.session.selection();
+                if selection == paintcraft_raster::Selection::Inactive {
+                    let g = paintcraft_core::types::stretch_skew::StretchSkew::new(
+                        self.session.document().canvas_rect(),
+                        (width, height),
+                        shear,
+                    )?;
+                    let b = g.bounds(g.source())?;
+                    if b.width() as u64 * b.height() as u64 > MAX_PIXELS {
+                        return Err(Error::new(
+                            ErrorCode::ResourceLimit,
+                            "Browser canvas limit is 4 megapixels",
+                        ));
+                    }
+                }
+                let ops = commands::stretch_skew_image(
+                    self.session.document(),
+                    selection,
+                    edit.target,
+                    (width, height),
+                    shear,
+                    clear,
+                )?;
+                if ops.is_empty() {
+                    Ok(())
+                } else {
+                    self.tools.cancel_gesture();
+                    self.commit(ops)
+                }
             }
             Action::TransformImage { transform, clear } => {
                 let op = commands::transform_image(

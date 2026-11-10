@@ -3,6 +3,47 @@ use paintcraft_input::PointerButton;
 use paintcraft_tools::{ShapeStyle, Tool};
 
 #[test]
+fn stretch_skew_action_preserves_pixels_and_undo_and_rejects_stale_intent() {
+    let document = paintcraft_document::import_image(
+        2,
+        1,
+        &[17, 34, 51, 0, 200, 100, 50, 128],
+        &"66".repeat(32),
+    )
+    .unwrap();
+    let mut editor = Editor::from_document(document).unwrap();
+    let before = editor.session.snapshot();
+    let ticket = editor.session.ticket();
+    let edit = paintcraft_tools::StretchSkewEdit {
+        owner: editor.session.owner_id(),
+        state_id: ticket.state_id,
+        publication_epoch: ticket.publication_epoch,
+        target: editor.target,
+        width: 4,
+        height: 1,
+        shear: (0, 0),
+        clear: WHITE,
+    };
+    editor
+        .apply(Action::StretchSkewImage(edit.clone()))
+        .unwrap();
+    assert_eq!(editor.session.document().canvas, (4, 1));
+    let raster = &editor.session.document().layers[&editor.target.unwrap()].raster;
+    assert_eq!(raster.get(0, 0), Rgba([17, 34, 51, 0]));
+    assert_eq!(raster.get(1, 0), Rgba([17, 34, 51, 0]));
+    assert_eq!(raster.get(3, 0), Rgba([200, 100, 50, 128]));
+    assert_eq!(editor.session.undo_depth(), 1);
+    editor.apply(Action::Undo).unwrap();
+    assert!(editor.session.document().same_semantics(&before));
+    let undone = editor.session.ticket();
+    assert!(editor.apply(Action::StretchSkewImage(edit)).is_err());
+    assert_eq!(editor.session.ticket(), undone);
+    assert_eq!(editor.session.undo_depth(), 0);
+    editor.apply(Action::Redo).unwrap();
+    assert_eq!(editor.session.document().canvas, (4, 1));
+}
+
+#[test]
 fn preview_release_pixels_match_without_publishing_and_undo_redo_restore() {
     for tool in [
         Tool::Pencil,

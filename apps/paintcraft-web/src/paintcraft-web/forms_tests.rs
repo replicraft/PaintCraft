@@ -431,7 +431,7 @@ fn historical_properties_keep_browser_admission_and_staged_resize() {
 }
 
 #[test]
-fn resize_preview_uses_shared_units_and_cannot_publish_in_any_skin() {
+fn resize_dialog_stages_shared_units_then_applies_and_undoes_in_every_skin_and_language() {
     use eframe::egui::Role;
     use paintcraft_classic::ClassicVariant;
     use paintcraft_ui::i18n::{Language, set_language, translate};
@@ -443,6 +443,7 @@ fn resize_preview_uses_shared_units_and_cannot_publish_in_any_skin() {
             h.run();
             let label = |s| translate(language, s);
             let ticket = h.state().editor.session.ticket();
+            let source = h.state().editor.session.snapshot();
             h.get_by_role_and_label(Role::Button, &label("Resize and skew"))
                 .click();
             h.run();
@@ -462,7 +463,7 @@ fn resize_preview_uses_shared_units_and_cannot_publish_in_any_skin() {
                 .set_value_accesskit(15.0);
             h.run();
             assert!(
-                h.get_by_role_and_label(Role::Button, &label("OK"))
+                !h.get_by_role_and_label(Role::Button, &label("OK"))
                     .accesskit_node()
                     .is_disabled()
             );
@@ -486,6 +487,20 @@ fn resize_preview_uses_shared_units_and_cannot_publish_in_any_skin() {
                     .is_none()
             );
             assert_eq!(h.state().editor.session.ticket(), ticket);
+            h.get_by_role_and_label(Role::Button, &label("Resize and skew"))
+                .click();
+            h.run();
+            h.get_by_role_and_label(Role::SpinButton, &label("Resize horizontal"))
+                .set_value_accesskit(50.0);
+            h.run();
+            h.get_by_role_and_label(Role::Button, &label("OK")).click();
+            h.run();
+            assert_eq!(h.state().editor.session.document().canvas, (500, 243));
+            assert_eq!(h.state().editor.session.undo_depth(), 1);
+            h.state_mut().edit(paintcraft_tools::Action::Undo);
+            h.run();
+            assert!(h.state().editor.session.document().same_semantics(&source));
+            assert_eq!(h.state().editor.session.undo_depth(), 0);
         }
     }
 }

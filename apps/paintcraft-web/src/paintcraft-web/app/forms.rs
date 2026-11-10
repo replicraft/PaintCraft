@@ -18,6 +18,7 @@ pub(super) enum Form {
     Colors(ColorDraft),
     Canvas(CanvasDraft),
     ResizeSkew {
+        target: Option<Uuid>,
         ticket: paintcraft_editor::session::HistoryTicket,
         view: paintcraft_classic::resize_skew::Draft,
     },
@@ -32,12 +33,36 @@ pub(super) struct CanvasDraft {
 
 impl WebApp {
     pub(super) fn begin_resize_skew(&mut self) {
+        if self.paste.is_placing()
+            || self.editor.tools.floating_selection().is_some()
+            || !self.finish_text()
+        {
+            self.message = "Finish pending edits before resizing or skewing.".into();
+            return;
+        }
+        let area = match paintcraft_tools::commands::stretch_skew_source(
+            self.editor.session.document(),
+            &self.editor.session.selection(),
+        ) {
+            Ok(Some(area)) => area,
+            Ok(None) => {
+                self.message = "The selection is empty.".into();
+                return;
+            }
+            Err(error) => {
+                self.message = error.to_string();
+                return;
+            }
+        };
+
         self.editor.tools.cancel_gesture();
         self.form = Some(Form::ResizeSkew {
+            target: self.editor.target,
             ticket: self.editor.session.history_ticket(),
-            view: paintcraft_classic::resize_skew::Draft::new(
-                self.editor.session.document().canvas,
-            ),
+            view: paintcraft_classic::resize_skew::Draft::new((
+                area.width() as u32,
+                area.height() as u32,
+            )),
         });
     }
 
@@ -122,20 +147,44 @@ impl WebApp {
 
     pub(super) fn show_form(&mut self, ctx: &egui::Context) {
         match self.form.take() {
-            Some(Form::ResizeSkew { ticket, mut view }) => {
-                if ticket != self.editor.session.history_ticket() {
+            Some(Form::ResizeSkew {
+                ticket,
+                target,
+                mut view,
+            }) => {
+                if ticket != self.editor.session.history_ticket() || target != self.editor.target {
                     self.message =
                         "Resize and skew preview closed because the document changed.".into();
                     return;
                 }
-                let close = paintcraft_classic::resize_skew::dialog_for_skin(
-                    ctx,
-                    self.variant,
-                    &mut view,
-                    paintcraft_document::CANVAS_SIDE_MAX,
-                );
-                if ctx.current_pass_index() != 0 || !close {
-                    self.form = Some(Form::ResizeSkew { ticket, view });
+                let response = if self.frontend == Frontend::Retro {
+                    Self::retro_resize_skew_form(ctx, &mut view)
+                } else {
+                    paintcraft_classic::resize_skew::dialog_for_skin(
+                        ctx,
+                        self.variant,
+                        &mut view,
+                        paintcraft_document::CANVAS_SIDE_MAX,
+                    )
+                };
+                use paintcraft_classic::resize_skew::Response;
+                if ctx.current_pass_index() != 0 || response == Response::Pending {
+                    self.form = Some(Form::ResizeSkew {
+                        ticket,
+                        target,
+                        view,
+                    });
+                } else if let Response::Apply(p) = response {
+                    self.edit(Edit::StretchSkewImage(paintcraft_tools::StretchSkewEdit {
+                        owner: ticket.owner,
+                        state_id: ticket.base.state_id,
+                        publication_epoch: ticket.base.publication_epoch,
+                        target,
+                        width: p.width,
+                        height: p.height,
+                        shear: p.shear,
+                        clear: self.clear_color(),
+                    }));
                 }
             }
             Some(Form::Colors(draft)) => self.color_form(ctx, draft),
