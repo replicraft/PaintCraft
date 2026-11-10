@@ -1365,6 +1365,26 @@ archived compiler inputs. Browser receipts are under
 `docs/validation/source8-blend-browser/attempt-1/`. This does not relabel the
 frozen service as a new build of the subsequently added pure role/forecast APIs.
 
+The host-control extension now passes 15 groups/40 scenarios in real Node
+worker threads and 11 groups/38 scenarios in headless Chrome against that same
+unchanged artifact. The earlier cases and all 26 pixel goldens remain intact.
+Empty and full-render close resolve while host-control credit is still held;
+the singleton becomes reusable only after that guard releases. Lost CLOSED
+and real browser fetch failures remain quarantined after host credit releases.
+The complete web suite passes 392 tests, including eight host-control groups.
+A separate test-only repair makes the hung-digest deadline expire after the
+digest actually starts, avoiding a wall-clock race before capture.
+
+Executed receipts are under
+`docs/validation/source8-blend-runtime-host-control-effective/node-attempt-1/`
+and `docs/validation/source8-blend-browser-host-control-effective/attempt-1/`.
+Independent audit `docs/validation/source8-host-control-actual-audit/actual-review.json`
+has SHA-256
+`a5257a46abf6699072f4bfe9094c043a012b5ae0b3c270df9469abcf1284c698`.
+These checks use a finite transport fixture for host bytes and explicit Main
+callbacks. They do not qualify the defining Rust future quote, linked Main
+classes, actual Main budgets or texture publication.
+
 These transport checks use explicit Main callback stand-ins. They do not prove
 original Main admission, CPU texture-delta retirement or frontend activation.
 The source-universal workspace and defining service-role forecasts now pass

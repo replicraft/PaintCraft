@@ -101,6 +101,11 @@ also pass 12 groups/37 scenarios in real Node worker threads and eight groups/35
 scenarios in headless Chrome, including all 26 pixel goldens. Original Main
 admission and editor texture publication remain open; transport checks use
 explicit Main callback stand-ins.
+The host-control extension separately passes 15 groups/40 scenarios in Node and
+11 groups/38 scenarios in headless Chrome, retaining those goldens. Close can
+finish while host credit remains held; broker reuse waits for its release and
+unknown joins remain quarantined. All 392 web tests pass. The compiled Rust
+host quote and real Main publication still require qualification.
 The defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check
