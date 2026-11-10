@@ -301,7 +301,8 @@ jobs:
     name: Sign verified release payloads
     needs: [version, assemble]
     if: ${{ !cancelled() && needs.version.result == 'success' && needs.assemble.result == 'success' && ((github.event_name == 'push' && github.ref_type == 'tag') || (github.event_name == 'workflow_dispatch' && inputs.artifacts-run != '' && inputs.publish-tag != '')) }}
-    runs-on: ubuntu-22.04
+    # Minisign is packaged on Noble; native builds keep their Jammy baseline.
+    runs-on: ubuntu-24.04
     environment: release-signing
     steps:
       - uses: actions/checkout@v7
@@ -335,7 +336,7 @@ jobs:
     name: Publish complete GitHub release
     needs: [version, sign]
     if: ${{ !cancelled() && needs.version.result == 'success' && needs.sign.result == 'success' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       actions: read
