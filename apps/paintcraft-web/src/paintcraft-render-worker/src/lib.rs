@@ -5,7 +5,7 @@ mod generic_frame;
 mod programs;
 pub mod protocol;
 mod spatial;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 mod wasm;
 use paintcraft_commands::{Batch, FilterOp, FilterRef, LayerRef, Op};
 use paintcraft_core::types::{
@@ -521,22 +521,24 @@ pub mod source8;
 mod tests;
 
 // Separate Source6 types; old Service/Frame/GenericFrame are unchanged.
+#[cfg(feature = "wasm-entry")]
 pub mod noise_service;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 mod noise_wasm;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 pub use noise_wasm::NoiseRenderWorker;
 
 // Separate Source7 types; all old Service/Frame/Source6 layouts stay untouched.
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 mod appearance_wasm;
+#[cfg(feature = "wasm-entry")]
 pub mod layer_service;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 pub use appearance_wasm::LayerAppearanceRenderWorker;
 
 // SeparateSource8 stagedservice; allSource4–7 bodies andbindings stayexact.
 pub mod blend_service;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 mod blend_wasm;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm-entry"))]
 pub use blend_wasm::LayerBlendRenderWorker;

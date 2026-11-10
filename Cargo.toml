@@ -47,7 +47,7 @@ paintcraft-formats = { path = "crates/services/paintcraft-formats" }
 paintcraft-platform = { path = "crates/services/paintcraft-platform" }
 
 # Main Source8 imports only genuine defining Worker rlib queries; no service construction.
-paintcraft-web-render-worker = { path = "apps/paintcraft-web/src/paintcraft-render-worker" }
+paintcraft-web-render-worker = { path = "apps/paintcraft-web/src/paintcraft-render-worker", default-features = false }
 
 # Reviewed native OS event boundary; core/platform/frontend code retains unsafe forbid.
 paintcraft-tablet-native = { path = "crates/adapters/paintcraft-tablet-native" }

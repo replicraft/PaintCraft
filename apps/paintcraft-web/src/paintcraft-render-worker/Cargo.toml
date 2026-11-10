@@ -10,6 +10,10 @@ publish.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["wasm-entry"]
+wasm-entry = []
+
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-commands.workspace = true
