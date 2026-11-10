@@ -15,7 +15,7 @@ import codec_worker
 import helper_policy
 
 ROOT = Path(__file__).resolve().parents[2]
-TEMPLATE = ROOT / "apps/paintcraft/resources/macos/Info.plist.in"
+TEMPLATE = ROOT / "packaging/macos/Info.plist.in"
 ICON = ROOT / "assets/paintcraft-icon.icns"
 BUNDLE_ID = "io.github.replicraft.PaintCraft"
 LSREGISTER = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
@@ -37,7 +37,7 @@ def populate_bundle(binary, destination, version, launcher):
     (contents / "MacOS/paintcraft-launcher").chmod(0o755)
     shutil.copy2(ICON, contents / "Resources" / ICON.name)
     shutil.copy2(ROOT / "LICENSE", contents / "Resources/LICENSE")
-    shutil.copy2(ROOT / "packaging/FONT_LICENSES.txt", contents / "Resources/FONT_LICENSES.txt")
+    shutil.copy2(ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt", contents / "Resources/FONT_LICENSES.txt")
     info = metadata(version)
     info["CFBundleExecutable"] = "paintcraft-launcher"
     with (contents / "Info.plist").open("wb") as stream:
@@ -187,7 +187,7 @@ def build_disk_image(app, archive):
         "format": "UDZO",
         "files": [str(app)],
         "symlinks": {"Applications": "/Applications"},
-        "background": str(ROOT / "assets/packaging/macos/dmg-background.png"),
+        "background": str(ROOT / "packaging/macos/dmg-background.png"),
         "window_rect": ((200, 200), (640, 270)),
         "default_view": "icon-view",
         "icon_size": 128,

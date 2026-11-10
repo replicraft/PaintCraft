@@ -15,7 +15,7 @@ Run this lightweight offline integrity check from the repository root:
 ```sh
 python3 - <<'PY'
 import hashlib, json, pathlib, tomllib
-base = pathlib.Path('packaging')
+base = pathlib.Path('packaging/desktop/licenses')
 record = json.loads((base / 'HDR_EXR_LICENSES_V1.provenance.json').read_text())
 data = (base / record['aggregate']['file']).read_bytes()
 sha = lambda value: hashlib.sha256(value).hexdigest()

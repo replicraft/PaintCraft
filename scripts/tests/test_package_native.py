@@ -32,7 +32,7 @@ class NativePackageTests(unittest.TestCase):
         self.version = release.workspace_version()
 
     def test_bundled_font_notices_include_every_shared_font_license(self):
-        notices = (release.ROOT / "packaging/FONT_LICENSES.txt").read_text()
+        notices = (release.ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt").read_text()
         for source in (release.ROOT / "assets/fonts").glob("*/LICENSE*"):
             self.assertIn(source.parent.name, notices)
             self.assertIn(source.read_text().rstrip(), notices)
@@ -52,11 +52,11 @@ class NativePackageTests(unittest.TestCase):
             self.assertTrue(any(value.startswith("CodecManifest=") for value in command))
             self.assertTrue(any(value.startswith("CodecNotice=") for value in command))
             self.assertTrue(any(value.startswith("AvifCodecNotice=") for value in command))
-            self.assertEqual(command[-1], str(release.ROOT / "packaging/windows.wxs"))
+            self.assertEqual(command[-1], str(release.ROOT / "packaging/windows/windows.wxs"))
             self.assertTrue((self.output / f"paintcraft-{self.version}-windows-{architecture}.msi.sha256").is_file())
 
     def test_msi_registers_quoted_pcnd_open_command_and_default_apps_capability(self):
-        tree = ET.parse(release.ROOT / "packaging/windows.wxs")
+        tree = ET.parse(release.ROOT / "packaging/windows/windows.wxs")
         ns = {"w": "http://wixtoolset.org/schemas/v4/wxs"}
         package = tree.find("w:Package", ns)
         self.assertEqual(package.get("Scope"), "perMachine")

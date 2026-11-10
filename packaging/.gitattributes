@@ -1,2 +1,4 @@
 # Preserve the exact upstream license bytes and their intentional whitespace.
-HDR_EXR_LICENSES_V1.txt -text -whitespace
+desktop/licenses/*.txt -text -whitespace
+# Original font-license headings contain literal seven-character equals lines.
+ThirdPartyLicenses.txt -text -whitespace conflict-marker-size=32

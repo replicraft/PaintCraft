@@ -13,7 +13,6 @@ on:
       - 'packaging/**'
       - 'assets/paintcraft-icon*'
       - 'apps/paintcraft/build.rs'
-      - 'apps/paintcraft/resources/macos/**'
       - 'apps/paintcraft/Cargo.toml'
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -183,8 +182,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          desktop-file-validate packaging/paintcraft.desktop
-          appstreamcli validate --no-net packaging/paintcraft.metainfo.xml
+          desktop-file-validate packaging/linux/paintcraft.desktop
+          appstreamcli validate --no-net packaging/linux/paintcraft.metainfo.xml
           dpkg-deb --info dist/*.deb
           dpkg-deb --contents dist/*.deb
           rpm -qip dist/*.rpm

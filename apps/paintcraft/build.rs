@@ -12,12 +12,12 @@ fn main() {
             .compile()
             .expect("compile Windows icon and version resources");
     }
-    println!("cargo:rerun-if-changed=resources/macos/Info.plist.in");
+    println!("cargo:rerun-if-changed=../../packaging/macos/Info.plist.in");
     if env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("macos") {
         return;
     }
     let version = env::var("CARGO_PKG_VERSION").expect("Cargo supplies package version");
-    let template = fs::read_to_string("resources/macos/Info.plist.in")
+    let template = fs::read_to_string("../../packaging/macos/Info.plist.in")
         .expect("read macOS application metadata template");
     let plist = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo supplies build output"))
         .join("paintcraft-info.plist");

@@ -244,7 +244,7 @@ def copy(binary, directory, version, target=None, *, resource_directory=None):
         notice = resources / name
         if notice.is_symlink():
             raise ValueError("Refusing symlink codec notice destination")
-        shutil.copy2(release.ROOT / "packaging" / name, notice)
+        shutil.copy2(release.ROOT / "packaging/desktop/licenses" / name, notice)
     shutil.copy2(helper, destination)
     destination.chmod(0o755)
     write_manifest(directory, version, target, resource_directory=resource_directory)
@@ -270,7 +270,7 @@ def verify_installed_manifest(directory, version, target, *, resource_directory=
         raise ValueError("Codec helper manifest does not match packaged executable")
     for name in notices(expected["profile"]):
         notice = resources / name
-        if not notice.is_file() or notice.is_symlink() or notice.read_bytes() != (release.ROOT / "packaging" / name).read_bytes():
+        if not notice.is_file() or notice.is_symlink() or notice.read_bytes() != (release.ROOT / "packaging/desktop/licenses" / name).read_bytes():
             raise ValueError("Codec dependency notice is missing or changed")
 
 

@@ -60,7 +60,7 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(exported["UTTypeIconFile"], icon.name)
         self.assertEqual((contents / "Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").read_bytes(), self.binary.read_bytes())
         self.assertEqual((contents / "Resources/FONT_LICENSES.txt").read_bytes(),
-                         (PACK.ROOT / "packaging/FONT_LICENSES.txt").read_bytes())
+                         (PACK.ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt").read_bytes())
         # Windows chmod/stat do not implement Unix execute bits. Real DMG/ZIP
         # permissions are also checked on each native macOS release runner.
         if os.name != "nt":
@@ -105,7 +105,7 @@ class BundleTests(unittest.TestCase):
         self.assertFalse((code / codec_worker.MANIFEST).exists())
         for name in codec_worker.notices(codec_worker.NATIVE_PROFILE):
             self.assertFalse((code / name).exists())
-            self.assertEqual((resources / name).read_bytes(), (PACK.ROOT / "packaging" / name).read_bytes())
+            self.assertEqual((resources / name).read_bytes(), (PACK.ROOT / "packaging/desktop/licenses" / name).read_bytes())
         codec_worker.verify_manifest(code, self.version, "aarch64-apple-darwin", resource_directory=resources)
         manifest = resources / codec_worker.MANIFEST
         original = manifest.read_bytes()

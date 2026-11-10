@@ -36,9 +36,9 @@ class VendorVerification(unittest.TestCase):
                 shutil.copyfile(vendor.ROOT / (jxl + suffix), self.root / (jxl + suffix))
             if jxl == "vendor/jxl-0.8.0-paintcraft1":
                 shutil.copyfile(vendor.ROOT / (jxl + ".README.md"), self.root / (jxl + ".README.md"))
-        (self.root / "packaging").mkdir()
-        shutil.copyfile(vendor.ROOT / "packaging/JPEGXR_LICENSE.txt",
-                        self.root / "packaging/JPEGXR_LICENSE.txt")
+        (self.root / "packaging/desktop/licenses").mkdir(parents=True)
+        shutil.copyfile(vendor.ROOT / "packaging/desktop/licenses/JPEGXR_LICENSE.txt",
+                        self.root / "packaging/desktop/licenses/JPEGXR_LICENSE.txt")
 
     def test_only_twelve_known_files_are_exempt(self):
         result = vendor.verify(self.root)
@@ -74,7 +74,7 @@ class VendorVerification(unittest.TestCase):
             vendor.verify(self.root)
 
     def test_packaged_license_must_retain_upstream_notice(self):
-        (self.root / "packaging/JPEGXR_LICENSE.txt").write_text("incorrect notice")
+        (self.root / "packaging/desktop/licenses/JPEGXR_LICENSE.txt").write_text("incorrect notice")
         with self.assertRaisesRegex(ValueError, "notice differs"):
             vendor.verify(self.root)
 

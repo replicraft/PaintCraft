@@ -30,8 +30,8 @@ def package(version, target, binary, output):
                         *(["-d", f"FloatCodecNotice={Path(directory) / codec_worker.FLOAT_NOTICE}"] if codec_worker.FLOAT_NOTICE in codec_worker.installed_notices(Path(directory)) else []),
                         "-d", f"Icon={release.ROOT / 'assets/paintcraft-icon.ico'}",
                         "-d", f"License={release.ROOT / 'LICENSE'}", "-o", str(installer),
-                        "-d", f"FontLicenses={release.ROOT / 'packaging/FONT_LICENSES.txt'}",
-                        str(release.ROOT / "packaging/windows.wxs")], check=True)
+                        "-d", f"FontLicenses={release.ROOT / 'packaging/desktop/licenses/FONT_LICENSES.txt'}",
+                        str(release.ROOT / "packaging/windows/windows.wxs")], check=True)
     release.write_checksum(installer)
     print(installer)
 

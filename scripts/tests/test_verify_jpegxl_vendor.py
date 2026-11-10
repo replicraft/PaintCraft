@@ -28,9 +28,9 @@ class JpegXlVerification(unittest.TestCase):
             if name == "vendor/jxl-0.8.0-paintcraft1":
                 shutil.copyfile(vendor.ROOT / (name + ".README.md"), self.root / (name + ".README.md"))
         shutil.copyfile(vendor.ROOT / "vendor/.gitattributes", self.root / "vendor/.gitattributes")
-        (self.root / "packaging").mkdir()
-        shutil.copyfile(vendor.ROOT / "packaging/JPEGXR_LICENSE.txt",
-                        self.root / "packaging/JPEGXR_LICENSE.txt")
+        (self.root / "packaging/desktop/licenses").mkdir(parents=True)
+        shutil.copyfile(vendor.ROOT / "packaging/desktop/licenses/JPEGXR_LICENSE.txt",
+                        self.root / "packaging/desktop/licenses/JPEGXR_LICENSE.txt")
         self.source = self.root / vendor.VENDOR
 
     def test_only_exact_encoder_is_exempt(self):

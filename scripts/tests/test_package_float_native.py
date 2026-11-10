@@ -27,7 +27,7 @@ class FloatNativeTests(unittest.TestCase):
             self.final(target)
             def build(command, **kwargs):
                 notice = next(value.split("=", 1)[1] for value in command if value.startswith("FloatCodecNotice="))
-                self.assertEqual(Path(notice).read_bytes(), (release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE).read_bytes())
+                self.assertEqual(Path(notice).read_bytes(), (release.ROOT / "packaging/desktop/licenses" / codec_worker.FLOAT_NOTICE).read_bytes())
                 Path(command[command.index("-o") + 1]).write_bytes(b"MSI control")
                 return subprocess.CompletedProcess(command, 0)
             with patch.object(windows.subprocess, "run", side_effect=build):
@@ -40,7 +40,7 @@ class FloatNativeTests(unittest.TestCase):
             directory.mkdir()
             helper = codec_worker.copy(self.binary, directory, self.version, target)
             config = linux.configuration(self.version, target, self.binary, self.output, "deb", helper, directory / codec_worker.MANIFEST)
-            notice = str(release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE)
+            notice = str(release.ROOT / "packaging/desktop/licenses" / codec_worker.FLOAT_NOTICE)
             self.assertEqual(config["deb"]["files"][notice], "usr/share/licenses/paintcraft/" + codec_worker.FLOAT_NOTICE)
             self.assertEqual((directory / codec_worker.FLOAT_NOTICE).read_bytes(), Path(notice).read_bytes())
 
@@ -63,4 +63,4 @@ class FloatNativeTests(unittest.TestCase):
             macos.sign_bundle(bundle)
         self.assertNotEqual(codec_worker.read_manifest(resources)["sha256"], before)
         codec_worker.verify_manifest(helper_dir, self.version, target, resource_directory=resources)
-        self.assertEqual((resources / codec_worker.FLOAT_NOTICE).read_bytes(), (release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE).read_bytes())
+        self.assertEqual((resources / codec_worker.FLOAT_NOTICE).read_bytes(), (release.ROOT / "packaging/desktop/licenses" / codec_worker.FLOAT_NOTICE).read_bytes())

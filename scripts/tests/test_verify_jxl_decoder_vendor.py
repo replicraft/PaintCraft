@@ -30,9 +30,9 @@ class JxlDecoderVerification(unittest.TestCase):
         shutil.copyfile(vendor.ROOT / (vendor.VENDOR + ".README.md"),
                         self.root / (vendor.VENDOR + ".README.md"))
         shutil.copyfile(vendor.ROOT / "vendor/.gitattributes", self.root / "vendor/.gitattributes")
-        (self.root / "packaging").mkdir()
-        shutil.copyfile(vendor.ROOT / "packaging/JPEGXR_LICENSE.txt",
-                        self.root / "packaging/JPEGXR_LICENSE.txt")
+        (self.root / "packaging/desktop/licenses").mkdir(parents=True)
+        shutil.copyfile(vendor.ROOT / "packaging/desktop/licenses/JPEGXR_LICENSE.txt",
+                        self.root / "packaging/desktop/licenses/JPEGXR_LICENSE.txt")
         self.source = self.root / vendor.VENDOR
         self.provenance = Path(str(self.source) + ".provenance.json")
 

@@ -28,7 +28,7 @@ class FloatContractTests(unittest.TestCase):
                 self.assertEqual(value["qualified_import_variants"], codec_worker.FLOAT_VARIANTS)
                 self.assertEqual(len(value["qualified_import_variants"]), 7)
                 self.assertEqual({p.name for p in directory.iterdir()}, install.payload_names(target, codec_worker.FLOAT_PROFILE))
-                self.assertEqual((directory / codec_worker.FLOAT_NOTICE).read_bytes(), (release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE).read_bytes())
+                self.assertEqual((directory / codec_worker.FLOAT_NOTICE).read_bytes(), (release.ROOT / "packaging/desktop/licenses" / codec_worker.FLOAT_NOTICE).read_bytes())
 
     def test_missing_changed_private_duplicate_oversized_and_extra_payloads_keep_old_installation(self):
         old, old_sums = self.archive(stem="old", contract="v6")
@@ -55,7 +55,7 @@ class FloatContractTests(unittest.TestCase):
                 self.install(archive, sums)
             self.assertEqual({p.name: p.read_bytes() for p in directory.iterdir()}, before)
         # A legacy profile must not acquire the new notice as an arbitrary extra.
-        self.repack(old, lambda e: e.update({codec_worker.FLOAT_NOTICE: (release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE).read_bytes()}))
+        self.repack(old, lambda e: e.update({codec_worker.FLOAT_NOTICE: (release.ROOT / "packaging/desktop/licenses" / codec_worker.FLOAT_NOTICE).read_bytes()}))
         old_sums.write_bytes(release.checksum_line(old))
         with self.assertRaises(ValueError):
             self.install(old, old_sums)

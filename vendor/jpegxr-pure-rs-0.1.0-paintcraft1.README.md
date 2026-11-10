@@ -18,7 +18,7 @@ The safe output API borrows an empty position-zero Write+Seek sink. It opens no 
 
 ## Source/license preservation
 
-`LICENSE.md` is retained verbatim, including the Microsoft copyright, source/binary redistribution conditions and disclaimer. Its actual notice is also the existing `packaging/JPEGXR_LICENSE.txt`. Upstream Cargo metadata says BSD-3-Clause; this source copy does not substitute that label for the distributed notice or relicense upstream code. PaintCraft patch authorship remains separate from upstream provenance.
+`LICENSE.md` is retained verbatim, including the Microsoft copyright, source/binary redistribution conditions and disclaimer. Its actual notice is also the existing `packaging/desktop/licenses/JPEGXR_LICENSE.txt`. Upstream Cargo metadata says BSD-3-Clause; this source copy does not substitute that label for the distributed notice or relicense upstream code. PaintCraft patch authorship remains separate from upstream provenance.
 
 The root workspace explicitly excludes this versioned third-party package and points its shared dependency at it with original version and default features disabled. There is no Cargo-cache mutation, build-time patching, mutable git dependency, automatic network source fetch, system codec fallback or published fork. Future upstream changes require an explicit new inventory/diff review and qualification.
 

@@ -62,12 +62,12 @@ summary = "Draw, paint and edit images"
 url = "https://github.com/replicraft/PaintCraft"
 assets = [
     { source = "target/release/paintcraft", dest = "/usr/bin/paintcraft", mode = "755" },
-    { source = "packaging/paintcraft.desktop", dest = "/usr/share/applications/paintcraft.desktop", mode = "644" },
+    { source = "packaging/linux/paintcraft.desktop", dest = "/usr/share/applications/paintcraft.desktop", mode = "644" },
     { source = "assets/paintcraft-icon.iconset/icon_256x256.png", dest = "/usr/share/icons/hicolor/256x256/apps/paintcraft.png", mode = "644" },
-    { source = "packaging/paintcraft.metainfo.xml", dest = "/usr/share/metainfo/io.github.replicraft.PaintCraft.metainfo.xml", mode = "644" },
-    { source = "packaging/paintcraft-mime.xml", dest = "/usr/share/mime/packages/paintcraft.xml", mode = "644" },
+    { source = "packaging/linux/paintcraft.metainfo.xml", dest = "/usr/share/metainfo/io.github.replicraft.PaintCraft.metainfo.xml", mode = "644" },
+    { source = "packaging/linux/paintcraft-mime.xml", dest = "/usr/share/mime/packages/paintcraft.xml", mode = "644" },
     { source = "LICENSE", dest = "/usr/share/licenses/paintcraft/LICENSE", mode = "644", doc = true },
-    { source = "packaging/FONT_LICENSES.txt", dest = "/usr/share/licenses/paintcraft/FONT_LICENSES.txt", mode = "644", doc = true },
+    { source = "packaging/desktop/licenses/FONT_LICENSES.txt", dest = "/usr/share/licenses/paintcraft/FONT_LICENSES.txt", mode = "644", doc = true },
 ]
 
 [package.metadata.generate-rpm.requires]

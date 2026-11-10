@@ -103,7 +103,7 @@ def verify(root=ROOT, archive=None):
     require(metadata["license_file"] == "LICENSE.md"
             and digest(license_bytes) == metadata["license_sha256"],
             "JPEG XR distributed license mismatch")
-    require(license_bytes == (root / "packaging/JPEGXR_LICENSE.txt").read_bytes(),
+    require(license_bytes == (root / "packaging/desktop/licenses/JPEGXR_LICENSE.txt").read_bytes(),
             "JPEG XR packaged notice differs from upstream license")
     if archive is not None:
         verify_archive(Path(archive), source, files, metadata, patch)
