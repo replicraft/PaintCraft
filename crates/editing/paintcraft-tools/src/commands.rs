@@ -574,3 +574,6 @@ mod first_layer_tests {
         );
     }
 }
+
+mod stretch_skew;
+pub use stretch_skew::{stretch_skew_image, stretch_skew_source};

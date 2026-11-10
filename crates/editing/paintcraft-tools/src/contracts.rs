@@ -208,6 +208,19 @@ pub struct ColorPick {
     pub return_resource_shape: Option<crate::resource_shape::Reference>,
 }
 
+/// Captured transform intention, not publication authority. Both host queue
+/// admission and execution revalidate the actual owner/base/target.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct StretchSkewEdit {
+    pub owner: Uuid,
+    pub state_id: Uuid,
+    pub publication_epoch: u64,
+    pub target: Option<Uuid>,
+    pub width: u32,
+    pub height: u32,
+    pub shear: (i32, i32),
+    pub clear: Rgba,
+}
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
     /// Captured Studio revision; receiving hosts revalidate at execution.
@@ -232,6 +245,7 @@ pub enum Action {
     EraseSelection {
         color: Rgba,
     },
+    StretchSkewImage(StretchSkewEdit),
     TransformImage {
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
         clear: Rgba,
