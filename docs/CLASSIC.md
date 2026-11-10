@@ -495,17 +495,16 @@ font, size and File popups. Font discovery, rasterization and publication policy
 are unchanged. Search interaction is PaintCraft policy, not native-parity or
 measured-latency evidence; no application windows or screenshot previews ran.
 
-The Image resize icon no longer opens the canvas-bounds dialog: changing bounds
-is not image resampling. Resize and skew is an explicitly disabled preview until
-its own image operation exists; View → Canvas size retains the real undoable
-bounds operation. Crop, Resize and skew, Remove background and Color picker now
-each provide one disabled-hover explanation. The resize explanation points to the
-separate View command for users who want to change canvas bounds.
-All 140 window-free UI tests and strict workspace Clippy pass; see
-[the image-availability record](validation/image-availability-headless-2026-10-22/validation.json).
-Checks cover disabled clicks opening no alternate dialog, one tooltip at scales
-1 and 2, ribbon visibility, and the existing canvas-size persistence/undo path.
-No image transform is claimed and no native windows or screenshot previews ran.
+The Image resize icon opens real [Resize and skew](RESIZE_SKEW.md), separately
+from View → Canvas size. It resamples editable pixels with nearest-neighbor
+stretch and sequential horizontal/vertical skew, preserving layers and stored
+masks for whole-image edits or transforming the active layer's selected pixels.
+Apply is one undoable atomic transaction; Cancel and stale source/target refusal
+leave the staged transform unpublished. Resource limits remain unchanged.
+The earlier 140-test
+[image-availability record](validation/image-availability-headless-2026-10-22/validation.json)
+is retained as historical evidence of the former disabled presentation; it does
+not describe current transform availability or qualify exact native Paint parity.
 
 The Tools group now presents an explicit Magnifier preview rather than using
 fit-to-window as a substitute for the missing tool. It stays disabled and points
@@ -1205,6 +1204,10 @@ All 201 ordinary GUI tests pass (41 opt-in tests ignored), plus strict workspace
 
 ### Resize and skew presentation preview (2026-10-23)
 
+Historical record: the preview-only behavior described below was superseded by
+the real atomic [Resize and skew](RESIZE_SKEW.md) implementation. The original
+counts and captures remain dated evidence, not current availability statements.
+
 The v11 Image control now opens an interactive **UI preview** rather than remaining a disabled ribbon placeholder. Its grouped Percentage/Pixels, horizontal/vertical dimensions, filled aspect-ratio link and skew fields follow [Microsoft's November 2021 dialog redesign reference](https://blogs.windows.com/windows-insider/2021/11/30/paint-app-for-windows-11-update-for-windows-insiders-brings-updated-dialogs-and-more/). This is a historical primary reference, not qualification against the current Paint build. The chain glyph is original SVG artwork through the shared density-aware cache. There are now 99 logical default icon IDs and 41 Classic menu variants; the supplied source sheet is unchanged.
 
 Draft controls work locally: scale survives unit changes, integer pixel readouts stay at least one pixel, the link couples edits to the source proportions, and skew angles can be staged. These are presentation rules, not an adopted image-resampling contract. The footer always says Preview only; OK is disabled with an availability explanation. Close, Cancel and Escape discard the draft. No transform command is sent to the engine, no resize shortcut replaces document Close, and selection-target behavior remains unimplemented. The host rejects a stale source revision.
@@ -1435,9 +1438,11 @@ library tests (8 ignored), 48 web tests, engine/raster/CLI/grammar tests and str
 native/wasm checks. Isolated browser selection and whole-image rotations produce
 PCND files whose rendered pixels match independent full-image oracles. See
 [the semantics, admission and qualification](SELECTION_TRANSFORMS.md). This is an
-immediate integer transform; persistent floating pixels, arbitrary angles, pivot/
-profile fidelity, resampling/skew and full native input qualification remain work.
-Earlier disabled Rotate/Flip descriptions are historical. Feature work continues
+immediate integer transform. At that checkpoint, persistent floating pixels,
+arbitrary angles, pivot/profile fidelity, resampling/skew and full native input
+qualification remained work. Real [resize/skew](RESIZE_SKEW.md) now supersedes
+that transform gap; arbitrary-angle rotation and full fidelity/input qualification
+remain separate. Earlier disabled Rotate/Flip descriptions are historical. Feature work continues
 before UI polish.
 
 ## Functional document Color picker (2026-10-24)
@@ -1466,8 +1471,9 @@ and Rotate/Flip actions. Their palette has twenty named colors and ten custom
 slots. Empty custom slots open the existing color editor. Their light themes use
 distinct Windows 7 warm selection accents and Windows 10 flat blue accents.
 Newer background-removal controls are absent from these historical ribbons.
-Resize/skew remains a preview-only dialog; resampling/skew publication is not
-implemented. Complete native-version behavior qualification remains outstanding.
+Resize/skew now publishes the real guarded atomic transform described in
+[Resize and skew](RESIZE_SKEW.md). Classic's actual Apply/Cancel checks pass in
+all three skins; complete native-version behavior qualification remains outstanding.
 
 All Classic skins now render status metrics after canvas input, including live
 selection dimensions. Fluent translations also cover ribbon captions and tool

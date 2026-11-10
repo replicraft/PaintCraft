@@ -4,6 +4,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 
 - Windows 7, 10 and 11 Classic skins.
 - Studio with document tabs, Save All and floating panels.
+- [Win95-inspired Retro interface with classic tools and colors](docs/RETRO.md).
 - Thirteen editable Studio filters, including Curves, Vibrance, Hue/Saturation and Noise, with live previews and saved selection masks.
 - Saved layer masks with desktop editing and browser display, sampling and flattening.
 - Normal, Multiply and Screen layer blending in desktop Studio.
@@ -20,7 +21,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Native printing on macOS.
 - Light and dark themes in seven languages.
 
-Click **Interface** in the top right to switch between **Classic** and **Studio** and try both. In Classic, choose a Windows 7, 10 or 11 skin in **Settings**.
+Choose **Interface → Classic**, **Studio** or **Retro** to switch between independent document workspaces. In Classic, choose a Windows 7, 10 or 11 skin in **Settings**. In Retro, use the **Interface** control to switch back.
 
 | Classic, Windows 11 | Studio |
 | --- | --- |
@@ -29,6 +30,10 @@ Click **Interface** in the top right to switch between **Classic** and **Studio*
 | Classic, Windows 10 | Classic, Windows 7 |
 | --- | --- |
 | ![PaintCraft Classic, Windows 10](assets/repo/classic-windows-10.png) | ![PaintCraft Classic, Windows 7](assets/repo/classic-windows-7.png) |
+
+| Retro, Win95-inspired |
+| --- |
+| ![PaintCraft Retro, Win95-inspired](assets/repo/retro-win95.png) |
 
 ## Paint with MCP
 
