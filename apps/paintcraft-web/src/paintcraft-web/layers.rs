@@ -6,7 +6,7 @@ use paintcraft_core::types::json::Value;
 
 impl WebApp {
     pub(crate) fn layers(&mut self, ui: &mut egui::Ui) {
-        if !self.workspace.layers {
+        if self.frontend == paintcraft_ui::actions::Frontend::Retro || !self.workspace.layers {
             return;
         }
         let blocked = self.blocked() || self.paste.is_placing();
@@ -37,7 +37,7 @@ impl WebApp {
                     })
                     .collect();
                 let actions = layers::panel(ui, &rows, editor.target, &mut Vec::new());
-                let filter_actions = if !classic {
+                let filter_actions = if studio {
                     ui.separator();
                     let filters: Vec<_> = editor
                         .target

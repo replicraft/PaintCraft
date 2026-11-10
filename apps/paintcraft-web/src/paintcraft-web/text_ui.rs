@@ -188,45 +188,53 @@ impl WebApp {
         {
             return;
         }
+        if self.frontend == paintcraft_ui::actions::Frontend::Retro && !self.retro.text_toolbar {
+            return;
+        }
         if self.controls.tool != Tool::Text && !self.editor.tools.is_editing_text() {
             return;
         }
         let enabled = !self.blocked();
         egui::Panel::top("web-text-options").show(ui, |ui| {
-            ui.add_enabled_ui(enabled, |ui| {
-                if self.variant == paintcraft_classic::ClassicVariant::V11 {
-                    paintcraft_classic::text_options(
-                        ui,
-                        &mut self.text.style,
-                        &self.text.families,
-                        &mut self.text.search,
-                        false,
-                    );
-                }
-                ui.horizontal_wrapped(|ui| {
-                    ui.label(t!(
-                        ui.ctx(),
-                        "Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"
-                    ));
-                    if ui
-                        .add_enabled(
-                            self.editor.tools.is_editing_text() && !self.text.is_composing(),
-                            egui::Button::new(t!(ui.ctx(), "Place text")),
-                        )
-                        .clicked()
-                    {
-                        self.finish_text();
+            let frontend = self.frontend;
+            crate::app::retro::scoped_ui(frontend, ui, |ui| {
+                ui.add_enabled_ui(enabled, |ui| {
+                    if self.frontend == paintcraft_ui::actions::Frontend::Retro {
+                        self.retro_text_options(ui);
+                    } else if self.variant == paintcraft_classic::ClassicVariant::V11 {
+                        paintcraft_classic::text_options(
+                            ui,
+                            &mut self.text.style,
+                            &self.text.families,
+                            &mut self.text.search,
+                            false,
+                        );
                     }
-                    if ui
-                        .add_enabled(
-                            self.editor.tools.is_editing_text(),
-                            egui::Button::new(t!(ui.ctx(), "Cancel text")),
-                        )
-                        .clicked()
-                    {
-                        self.editor.tools.cancel_text();
-                        self.text.reset_composition();
-                    }
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(t!(
+                            ui.ctx(),
+                            "Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"
+                        ));
+                        if ui
+                            .add_enabled(
+                                self.editor.tools.is_editing_text() && !self.text.is_composing(),
+                                egui::Button::new(t!(ui.ctx(), "Place text")),
+                            )
+                            .clicked()
+                        {
+                            self.finish_text();
+                        }
+                        if ui
+                            .add_enabled(
+                                self.editor.tools.is_editing_text(),
+                                egui::Button::new(t!(ui.ctx(), "Cancel text")),
+                            )
+                            .clicked()
+                        {
+                            self.editor.tools.cancel_text();
+                            self.text.reset_composition();
+                        }
+                    });
                 });
             });
         });

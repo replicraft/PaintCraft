@@ -3,6 +3,7 @@ use super::*;
 use paintcraft_classic::{ColorEditor, ColorResponse};
 use paintcraft_core::types::Rgba;
 use uuid::Uuid;
+mod retro;
 
 #[derive(Debug)]
 pub(super) struct ColorDraft {
@@ -86,14 +87,18 @@ impl WebApp {
             self.message = "Dimensions were not applied: the source document changed".into();
             return;
         }
-        let result = canvas_size_dialog_for_skin(
-            ctx,
-            self.variant,
-            &mut draft.view,
-            paintcraft_document::CANVAS_SIDE_MAX,
-            Some(crate::editor::MAX_PIXELS),
-            draft.properties.as_deref(),
-        );
+        let result = if self.frontend == Frontend::Retro {
+            Self::retro_canvas_form(ctx, &mut draft)
+        } else {
+            canvas_size_dialog_for_skin(
+                ctx,
+                self.variant,
+                &mut draft.view,
+                paintcraft_document::CANVAS_SIDE_MAX,
+                Some(crate::editor::MAX_PIXELS),
+                draft.properties.as_deref(),
+            )
+        };
         if ctx.current_pass_index() != 0 || result == CanvasResponse::Pending {
             self.form = Some(Form::Canvas(draft));
         } else if result == CanvasResponse::Apply {
@@ -149,8 +154,11 @@ impl WebApp {
             self.message = "Color was not applied: the source document or color changed".into();
             return;
         }
-        let response =
-            paintcraft_classic::edit_colors_dialog_for_skin(ctx, self.variant, &mut draft.editor);
+        let response = if self.frontend == Frontend::Retro {
+            Self::retro_color_form(ctx, &mut draft.editor)
+        } else {
+            paintcraft_classic::edit_colors_dialog_for_skin(ctx, self.variant, &mut draft.editor)
+        };
         if ctx.current_pass_index() != 0 || response == ColorResponse::Pending {
             self.form = Some(Form::Colors(draft));
         } else if response == ColorResponse::Accept {

@@ -40,35 +40,36 @@ impl WebApp {
         }
         let context = self.context();
         let chrome = egui::Panel::top("classic-chrome").show(ui, |ui| {
-            let actions = if self.frontend == Frontend::Studio {
-                let mut actions = Vec::new();
-                ui.horizontal(|ui| {
-                    ui.strong(t!(ui.ctx(), "PaintCraft Studio"));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if paintcraft_ui::widgets::classic_menu_button(
-                            ui,
-                            "Settings…",
-                            paintcraft_ui::icons::Icon::Settings,
-                            false,
-                            "Settings…",
-                        )
-                        .clicked()
-                        {
-                            actions.push(Action::Settings);
-                        }
-                        actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
+            let actions = match self.frontend {
+                Frontend::Studio => {
+                    let mut actions = Vec::new();
+                    ui.horizontal(|ui| {
+                        ui.strong(t!(ui.ctx(), "PaintCraft Studio"));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if paintcraft_ui::widgets::classic_menu_button(
+                                ui,
+                                "Settings…",
+                                paintcraft_ui::icons::Icon::Settings,
+                                false,
+                                "Settings…",
+                            )
+                            .clicked()
+                            {
+                                actions.push(Action::Settings);
+                            }
+                            actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
+                        });
                     });
-                });
-                actions.extend(paintcraft_studio::toolbar(
-                    ui,
-                    &mut self.controls,
-                    &mut self.studio,
-                    context,
-                ));
-                self.studio.canvas_top = ui.min_rect().bottom();
-                actions
-            } else {
-                paintcraft_classic::chrome_with_text(
+                    actions.extend(paintcraft_studio::toolbar(
+                        ui,
+                        &mut self.controls,
+                        &mut self.studio,
+                        context,
+                    ));
+                    self.studio.canvas_top = ui.min_rect().bottom();
+                    actions
+                }
+                Frontend::Classic => paintcraft_classic::chrome_with_text(
                     ui,
                     self.variant,
                     &mut self.controls,
@@ -80,7 +81,13 @@ impl WebApp {
                         search: &mut self.text.search,
                         loading: false,
                     }),
-                )
+                ),
+                Frontend::Retro => {
+                    let intents =
+                        paintcraft_retro::menu_bar_for_browser(ui, &mut self.retro, context);
+                    self.retro_intents(&ctx, intents);
+                    Vec::new()
+                }
             };
             for action in actions {
                 self.action(&ctx, action);
@@ -89,7 +96,7 @@ impl WebApp {
         self.jxl_panel(ui);
         self.paste_placement_bar(ui);
         let status_rect =
-            (self.frontend == Frontend::Studio || self.preferences.status_bar).then(|| {
+            (self.frontend != Frontend::Retro && self.status_bar_visible()).then(|| {
                 egui::Panel::bottom("classic-status")
                     .frame(paintcraft_classic::status::frame(self.variant, ctx.theme()))
                     .show(ui, |ui| {
@@ -101,6 +108,12 @@ impl WebApp {
                     })
                     .inner
             });
+        if self.frontend == Frontend::Retro && self.retro.status {
+            egui::Panel::bottom("web-retro-status")
+                .frame(paintcraft_retro::frame())
+                .show(ui, |ui| self.retro_status(ui));
+        }
+        self.retro_panels(ui);
         self.text_chrome(ui);
         if self.frontend == Frontend::Classic {
             let mut bounds = chrome.response.rect;
@@ -113,10 +126,12 @@ impl WebApp {
         self.layers(ui);
         self.studio_filter_dialog(&ctx);
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(paintcraft_classic::workspace_color(
-                self.variant,
-                ctx.theme(),
-            )))
+            .frame(egui::Frame::new().fill(match self.frontend {
+                Frontend::Retro => paintcraft_retro::workspace_color(),
+                Frontend::Classic | Frontend::Studio => {
+                    paintcraft_classic::workspace_color(self.variant, ctx.theme())
+                }
+            }))
             .show(ui, |ui| {
                 self.canvas(ui);
             });

@@ -242,7 +242,16 @@ impl WebApp {
                     }
                 }
                 if composition_changed || previous_pair.is_none_or(|p| p != (center, distance)) {
-                    if self.frontend == paintcraft_ui::actions::Frontend::Studio {
+                    if self.frontend == paintcraft_ui::actions::Frontend::Retro {
+                        paintcraft_retro::anchor_at(
+                            ctx,
+                            self.retro_canvas_id(),
+                            self.retro_canvas_scope(),
+                            anchor,
+                            center,
+                            self.zoom,
+                        );
+                    } else if self.frontend == paintcraft_ui::actions::Frontend::Studio {
                         paintcraft_studio::canvas::anchor_at(
                             ctx,
                             self.studio_canvas_id(),

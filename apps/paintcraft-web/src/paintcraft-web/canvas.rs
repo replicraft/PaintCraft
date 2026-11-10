@@ -161,7 +161,9 @@ impl WebApp {
         let extent = self.editor.session.document().canvas;
         let scope = self.studio_canvas_scope();
         let studio_id = self.studio_canvas_id();
-        let studio = self.frontend == paintcraft_ui::actions::Frontend::Studio;
+        let frontend = self.frontend;
+        let retro_id = self.retro_canvas_id();
+        let retro_scope = self.retro_canvas_scope();
         let size = Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom;
         let paint = |ui: &mut egui::Ui, response: egui::Response, painter: egui::Painter| {
             self.canvas.rect = Some(response.rect);
@@ -311,7 +313,9 @@ impl WebApp {
                 }
             }
         };
-        if studio {
+        if frontend == paintcraft_ui::actions::Frontend::Retro {
+            paintcraft_retro::canvas(ui, retro_id, retro_scope, size, paint);
+        } else if frontend == paintcraft_ui::actions::Frontend::Studio {
             paintcraft_studio::canvas::canvas_for_scope(ui, studio_id, scope, size, paint);
         } else if rulers {
             paintcraft_classic::canvas::ruled_canvas_for_scope(
@@ -512,20 +516,7 @@ impl WebApp {
         self.editor.tools.color = self.controls.primary;
         self.editor.tools.secondary = self.controls.secondary;
         self.editor.tools.options = self.controls.options;
-        if self.controls.tool == Tool::ColorPicker
-            && self.frontend != paintcraft_ui::actions::Frontend::Studio
-        {
-            use paintcraft_core::types::picker::{PickerAfter, SampleSize, SampleSource};
-            self.editor.tools.options.picker_source = SampleSource::Image;
-            self.editor.tools.options.picker_size = SampleSize::One;
-            self.editor.tools.options.picker_after = PickerAfter::Previous;
-        }
-        self.editor.tools.options.eraser_color =
-            if self.frontend == paintcraft_ui::actions::Frontend::Studio {
-                paintcraft_core::types::Rgba([0; 4])
-            } else {
-                paintcraft_tools::commands::canvas_color(self.editor.session.document())
-            };
+        self.configure_paint_style_tools();
         let rect = response.rect;
         let zoom = self.zoom;
         let point = |pos: Pos2| {

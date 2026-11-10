@@ -20,8 +20,12 @@ impl WebApp {
                 persist = true;
             }
             ViewAction::StatusBar => {
-                self.preferences.status_bar = !self.preferences.status_bar;
-                persist = true;
+                if self.frontend == Frontend::Retro {
+                    self.retro.status = !self.retro.status;
+                } else {
+                    self.preferences.status_bar = !self.preferences.status_bar;
+                    persist = true;
+                }
             }
             ViewAction::AlwaysShowToolbar | ViewAction::AutoHideToolbar => {
                 self.preferences.auto_hide_toolbar = view == ViewAction::AutoHideToolbar;
@@ -49,7 +53,7 @@ impl WebApp {
     }
 
     pub(super) fn show_thumbnail(&mut self, ctx: &egui::Context) {
-        if !self.workspace.thumbnail {
+        if self.frontend == Frontend::Retro || !self.workspace.thumbnail {
             return;
         }
         let (w, h) = self.editor.session.document().canvas;

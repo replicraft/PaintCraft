@@ -22,6 +22,7 @@ struct Owner {
     document: Arc<Document>,
     ticket: HistoryTicket,
     variant: ClassicVariant,
+    frontend: paintcraft_ui::actions::Frontend,
     target: Option<uuid::Uuid>,
 }
 impl Owner {
@@ -30,6 +31,7 @@ impl Owner {
             document: app.editor.session.snapshot(),
             ticket: app.editor.session.history_ticket(),
             variant: app.variant,
+            frontend: app.frontend,
             target: app.editor.target,
         }
     }
@@ -37,6 +39,7 @@ impl Owner {
         Arc::ptr_eq(&self.document, &app.editor.session.snapshot())
             && self.ticket == app.editor.session.history_ticket()
             && self.variant == app.variant
+            && self.frontend == app.frontend
             && self.target == app.editor.target
             && app.paste_safe()
     }
@@ -99,11 +102,7 @@ impl WebApp {
             return;
         }
         self.paste.intent = intent;
-        let frontend = match self.variant {
-            ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
-            ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
-            ClassicVariant::V11 => paintcraft_formats::registry::Frontend::ClassicV11,
-        };
+        let frontend = self.format_profile();
         let budget = self.clipboard.budget.clone();
         #[cfg(test)]
         let next = self.paste.next_read.take();

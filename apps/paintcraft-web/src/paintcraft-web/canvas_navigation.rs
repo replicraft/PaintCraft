@@ -28,7 +28,9 @@ impl WebApp {
         } else {
             Vec2::ZERO
         };
-        if self.frontend == Frontend::Studio {
+        if self.frontend == Frontend::Retro {
+            paintcraft_retro::pan_by(ui.ctx(), self.retro_canvas_id(), delta);
+        } else if self.frontend == Frontend::Studio {
             paintcraft_studio::canvas::pan_by(
                 ui.ctx(),
                 self.studio_canvas_id(),

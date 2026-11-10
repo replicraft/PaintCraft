@@ -23,22 +23,27 @@ impl WebApp {
         let preferred = values
             .theme
             .unwrap_or_else(|| ctx.system_theme().unwrap_or(egui::Theme::Light));
-        let theme = if self.frontend == Frontend::Classic {
-            variant.effective_theme(preferred)
-        } else {
-            preferred
+        let theme = match self.frontend {
+            Frontend::Classic => variant.effective_theme(preferred),
+            Frontend::Studio | Frontend::Retro => preferred,
         };
         ctx.set_theme(theme);
         let key = (theme, variant, self.frontend);
         if self.applied_style != Some(key) {
             self.applied_style = Some(key);
             paintcraft_ui::theme::apply(ctx, key.0);
-            if self.frontend == Frontend::Studio {
-                paintcraft_studio::apply_style_for_theme(ctx, key.0);
-            } else {
-                paintcraft_classic::apply_style_for_theme(ctx, key.1, key.0);
+            match self.frontend {
+                Frontend::Studio => paintcraft_studio::apply_style_for_theme(ctx, key.0),
+                Frontend::Classic => paintcraft_classic::apply_style_for_theme(ctx, key.1, key.0),
+                Frontend::Retro => (), // Its light visual/font style stays local to Retro widgets.
             }
             ctx.request_repaint();
+        }
+    }
+    pub(super) fn open_about(&mut self, ctx: &egui::Context) {
+        self.open_settings(ctx);
+        if let Some(draft) = &mut self.settings_draft {
+            draft.page = Page::About;
         }
     }
     pub(super) fn open_settings(&mut self, ctx: &egui::Context) {
@@ -70,7 +75,7 @@ impl WebApp {
                     page,
                     width,
                     height,
-                    self.frontend == Frontend::Classic,
+                    self.frontend,
                 )
             });
         if page == Page::Text && draft.page != Page::Text {
@@ -85,7 +90,9 @@ impl WebApp {
             }
             Response::Apply if draft.values.validate().is_ok() => {
                 self.settings = false;
+                draft.values.frontend = self.frontend;
                 self.preferences = draft.values;
+                self.retro.skin = self.preferences.retro_skin;
                 self.controls.options.pen = self.preferences.pen;
                 set_language(ctx, self.preferences.language);
                 ctx.set_theme(
@@ -118,7 +125,7 @@ fn content(
     page: Page,
     width: f32,
     height: f32,
-    classic: bool,
+    frontend: Frontend,
 ) {
     ui.allocate_ui_with_layout(
         egui::vec2(width, height), egui::Layout::top_down(egui::Align::Min),
@@ -129,9 +136,9 @@ fn content(
                 .id_salt(("settings-page", page))
                 .max_height(height)
                 .auto_shrink([false, false])
-                .show(ui, |ui| match page {
-                    Page::Appearance | Page::Interface => appearance(ui, &mut draft.values, classic),
-                    Page::Canvas => canvas(ui, &mut draft.values),
+                .show(ui, |ui| retro::scoped_ui(frontend,ui,|ui| match page {
+                    Page::Appearance | Page::Interface => appearance(ui, &mut draft.values, frontend),
+                    Page::Canvas => canvas(ui, &mut draft.values, frontend),
                     Page::Pen => card(ui, "Pen and tablet", |ui| {
                         paintcraft_ui::pen_settings::show(ui, &mut draft.values.pen);
                     }),
@@ -143,7 +150,7 @@ fn content(
                             "Preferences are stored in this browser when storage is available. Document pixels are not stored."
                         ));
                     }),
-                });
+                }));
         },
     );
 }
@@ -174,12 +181,21 @@ fn text(ui: &mut egui::Ui, draft: &mut Draft, fonts: &[String]) {
     });
 }
 
-fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
+fn appearance(ui: &mut egui::Ui, values: &mut Preferences, frontend: Frontend) {
+    let classic = frontend == Frontend::Classic;
     card(ui, "App language", |ui| {
         picker(ui, &mut values.language);
     });
     card(ui, "App theme", |ui| {
         ui.weak(t!(ui.ctx(), "Changes take effect when you select Apply."));
+        if frontend == Frontend::Retro {
+            ui.label(t!(
+                ui.ctx(),
+                "Retro uses a light palette. Your other interface themes are preserved."
+            ));
+            ui.add_enabled(false, egui::RadioButton::new(true, t!(ui.ctx(), "Light")));
+            return;
+        }
         if classic && values.variant == ClassicVariant::V7 {
             ui.label(t!(
                 ui.ctx(),
@@ -199,14 +215,22 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
             }
         });
     });
-    card(ui, "Classic skin", |ui| {
-        ui.horizontal_wrapped(|ui| {
-            ui.spacing_mut().item_spacing = egui::vec2(28.0, 12.0);
-            for variant in ClassicVariant::ALL {
-                ui.radio_value(&mut values.variant, variant, variant.name());
+    if frontend == Frontend::Retro {
+        card(ui, "Retro skin", |ui| {
+            for skin in paintcraft_retro::Skin::ALL {
+                ui.radio_value(&mut values.retro_skin, skin, t!(ui.ctx(), skin.name()));
             }
         });
-    });
+    } else {
+        card(ui, "Classic skin", |ui| {
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing = egui::vec2(28.0, 12.0);
+                for variant in ClassicVariant::ALL {
+                    ui.radio_value(&mut values.variant, variant, variant.name());
+                }
+            });
+        });
+    }
     if classic {
         card(ui, "Canvas controls", |ui| {
             ui.checkbox(
@@ -216,29 +240,37 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
         });
     }
 }
-fn canvas(ui: &mut egui::Ui, values: &mut Preferences) {
-    card(ui, "New Classic canvas", |ui| {
-        ui.weak(t!(
-            ui.ctx(),
-            "These defaults apply to new documents, leaving the current image unchanged."
-        ));
-        paintcraft_classic::canvas_size::dimension_fields(
-            ui,
-            &mut values.canvas.configured,
-            paintcraft_document::CANVAS_SIDE_MAX,
-            ["Default width", "Default height"],
-        );
-        let text = t!(
-            ui.ctx(),
-            "Image limit: { $maximum } pixels",
-            &[("maximum", crate::editor::MAX_PIXELS.to_string())]
-        );
-        if values.validate().is_err() {
-            ui.colored_label(ui.visuals().error_fg_color, text);
+fn canvas(ui: &mut egui::Ui, values: &mut Preferences, frontend: Frontend) {
+    card(
+        ui,
+        if frontend == Frontend::Retro {
+            "New Retro canvas"
         } else {
-            ui.weak(text);
-        }
-    });
+            "New Classic canvas"
+        },
+        |ui| {
+            ui.weak(t!(
+                ui.ctx(),
+                "These defaults apply to new documents, leaving the current image unchanged."
+            ));
+            paintcraft_classic::canvas_size::dimension_fields(
+                ui,
+                &mut values.canvas.configured,
+                paintcraft_document::CANVAS_SIDE_MAX,
+                ["Default width", "Default height"],
+            );
+            let text = t!(
+                ui.ctx(),
+                "Image limit: { $maximum } pixels",
+                &[("maximum", crate::editor::MAX_PIXELS.to_string())]
+            );
+            if values.validate().is_err() {
+                ui.colored_label(ui.visuals().error_fg_color, text);
+            } else {
+                ui.weak(text);
+            }
+        },
+    );
     card(ui, "Canvas size on startup", |ui| {
         ui.radio_value(
             &mut values.canvas.remember_last,

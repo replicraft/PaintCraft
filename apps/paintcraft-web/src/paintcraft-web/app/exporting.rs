@@ -41,7 +41,8 @@ impl WebApp {
                 self.message = t!(ctx, "The document changed; choose the image again.");
                 return;
             }
-            egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| {
+            let frontend = self.frontend;
+            egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| retro::scoped_ui(frontend,ui,|ui| {
                 ui.set_width(380.0);
                 ui.heading(t!(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
                 egui::ComboBox::from_label(t!(ui.ctx(), "File type")).selected_text(format.name()).show_ui(ui, |ui| {
@@ -98,7 +99,7 @@ impl WebApp {
                     }
                     if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.export_confirm = None; }
                 });
-            });
+            }));
         }
         if self.export_confirm.is_none() {
             self.pcx_preview.clear();
