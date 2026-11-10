@@ -53,6 +53,29 @@ pub(super) fn deny(request: Request<'_>) -> Option<Decision> {
         ..
     } = request;
     let denied = |reason| Some(Decision::Denied(reason));
+    // A distinct profile must not fall through Classic's baseline/legacy imports.
+    if frontend == Frontend::RetroWin95 {
+        return match (family, operation) {
+            (
+                Family::Pcnd,
+                Operation::Open
+                | Operation::OpenProject
+                | Operation::SavePreserving
+                | Operation::SaveAsCopy,
+            )
+            | (
+                Family::Png | Family::Bmp,
+                Operation::Open
+                | Operation::OpenRaster
+                | Operation::ImportConvert
+                | Operation::SavePreserving
+                | Operation::SaveAsCopy
+                | Operation::ExportFlat,
+            ) => None,
+            (Family::Pcnd | Family::Png | Family::Bmp, _) => denied(Reason::UnsupportedOperation),
+            _ => denied(Reason::UnsupportedFrontendFormat),
+        };
+    }
     if family == Family::Heif && operation.is_write() {
         return denied(Reason::UnsupportedOperation);
     }

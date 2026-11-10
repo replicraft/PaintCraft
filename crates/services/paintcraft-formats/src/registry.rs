@@ -20,6 +20,8 @@ pub enum Frontend {
     ClassicV10,
     ClassicV11,
     Studio,
+    /// Initial Win95-inspired profile: PCND projects and BMP/PNG raster exchange.
+    RetroWin95,
 }
 impl Frontend {
     pub fn id(self) -> &'static str {
@@ -28,6 +30,7 @@ impl Frontend {
             Self::ClassicV10 => "classic-v10",
             Self::ClassicV11 => "classic-v11",
             Self::Studio => "studio",
+            Self::RetroWin95 => "retro-win95",
         }
     }
 }

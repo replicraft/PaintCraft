@@ -27,3 +27,24 @@ These are requirements, not implemented features. Capture reference evidence for
 each skin, verify readable layouts and palettes at supported display scales, and
 record any deliberate compatibility differences. Classic and Studio work remains
 the current implementation priority.
+
+## Initial format profile and CLI
+
+The explicit `retro-win95` format policy is available to CLI commands that accept
+`--frontend`, while the Retro graphical frontend remains planned. Its initial
+inventory is editable PCND projects and BMP/PNG raster exchange. PNG is a modern
+PaintCraft convenience, not a claim about original Windows 95 Paint support.
+Classic and Studio inventories and the CLI's default Studio profile are unchanged.
+
+```sh
+cargo run -p paintcraft-cli -- capabilities --frontend retro-win95
+cargo run -p paintcraft-cli -- import picture.png --frontend retro-win95 -o picture.pcnd
+cargo run -p paintcraft-cli -- render picture.pcnd --frontend retro-win95 -o picture.bmp
+```
+
+Existing conversion-loss and metadata consent still apply where needed. There is
+no extra PNG warning. Foreign projects, JPEG/GIF/TIFF, historical PCX/MSP and other
+advanced formats are refused by this initial profile even when another interface
+supports their codecs. New/apply native-project commands retain their existing
+engine contract; this profile does not add a new graphical interface or historical
+rasterization, brush or original-application compatibility claim.

@@ -33,7 +33,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             };
             let mut frontend_rows = Vec::new();
             if let Some(frontend) = a.frontend {
-                use paintcraft_formats::registry::{self, Frontend, Operation, Platform};
+                use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform};
                 let frontend: Frontend = frontend.into();
                 for (operation, suffix, wire) in [
                     (Operation::Open, "read", "read"),
@@ -50,6 +50,16 @@ pub fn run(a: Options, json: bool) -> Reply {
                                 .unwrap_or("unavailable"),
                         ));
                     }
+                }
+                if frontend == Frontend::RetroWin95 {
+                    frontend_rows.push(row(
+                        "pcnd.project.write",
+                        "frontend/retro-win95",
+                        "fresh-write",
+                        registry::capability(Family::Pcnd, Operation::SaveAsCopy, Platform::Native)
+                            .backend
+                            .unwrap_or("unavailable"),
+                    ));
                 }
             }
             // A qualified variant does not turn on the generic family reader.

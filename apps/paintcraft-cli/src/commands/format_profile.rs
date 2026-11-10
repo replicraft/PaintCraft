@@ -9,6 +9,9 @@ pub enum Profile {
     ClassicV11,
     #[default]
     Studio,
+    /// Win95-inspired policy: PCND, BMP, and PNG (a modern convenience).
+    #[value(name = "retro-win95")]
+    RetroWin95,
 }
 impl From<Profile> for Frontend {
     fn from(value: Profile) -> Self {
@@ -17,6 +20,7 @@ impl From<Profile> for Frontend {
             Profile::ClassicV10 => Self::ClassicV10,
             Profile::ClassicV11 => Self::ClassicV11,
             Profile::Studio => Self::Studio,
+            Profile::RetroWin95 => Self::RetroWin95,
         }
     }
 }
