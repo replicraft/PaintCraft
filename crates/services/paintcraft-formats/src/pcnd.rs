@@ -286,6 +286,12 @@ mod compact_tests;
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod source_metadata_history_tests;
+
+pub use binary::admitted::{
+    BlendCountedControlBytes, CountedBlendSnapshot, CountedBlendSnapshotBytes,
+    blend_counted_snapshot_control_bytes, count_portable_blend_snapshot_rooted_checked,
+};
+
 #[cfg(test)]
 mod source_metadata_tests;
 #[cfg(test)]
