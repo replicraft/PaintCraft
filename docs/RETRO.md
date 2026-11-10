@@ -14,9 +14,12 @@ Edition-specific tool behavior and format support need their own documented
 capability choices and fixtures; a visual skin alone does not establish parity.
 Keep the recognizable layout and interactions of each reference application.
 
-The selected Retro UI font is [W95FA by MadeByArne](https://www.dafont.com/w95fa.font).
-It is not bundled yet. Font choices for individual skins should follow their
-references, so this default does not require the Deluxe Paint skin to use it.
+The selected Retro UI font is [W95FA](https://www.dafont.com/w95fa.font).
+The shared regular OpenType asset, original notices and provenance are in
+[`assets/fonts/w95fa`](../assets/fonts/w95fa/README.md). It is registered as a
+separate Retro font family with language fallbacks; frontend implementation
+remains pending. Font choices for individual skins should follow their references,
+so this default does not require the Deluxe Paint skin to use it.
 
 ## Delivery scope
 

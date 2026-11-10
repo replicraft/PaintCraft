@@ -3,3 +3,5 @@ crates/services/paintcraft-formats/tests/jxr-fixtures/JXRLib-LICENSE.md -text
 apps/paintcraft-codec-worker/vendor/dav1d/COPYING -text
 crates/adapters/paintcraft-update/LICENSE -text
 crates/adapters/paintcraft-update/NOTICE -text
+assets/fonts/w95fa/OFL.txt -text -whitespace
+assets/fonts/w95fa/readme.txt -text

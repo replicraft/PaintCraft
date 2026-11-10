@@ -1,5 +1,8 @@
 //! Bundled interface typography, independent of the host's installed fonts.
 
+mod retro;
+pub use retro::retro_family;
+
 pub static SELAWIK_REGULAR: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawk.ttf");
 pub static SELAWIK_BOLD: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawkb.ttf");
 #[cfg(not(target_arch = "wasm32"))]
@@ -83,6 +86,7 @@ fn definitions(locale: &str) -> egui::FontDefinitions {
         fallback.push("Noto Sans Devanagari".into());
         fallback.extend(cjk.map(str::to_owned));
     }
+    retro::register(&mut fonts);
     fonts
 }
 

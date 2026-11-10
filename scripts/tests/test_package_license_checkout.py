@@ -16,6 +16,8 @@ NOTICES = {
         "packaging/desktop/licenses/DAV1D_LICENSE.txt",
     "crates/adapters/paintcraft-update/LICENSE": "packaging/ThirdPartyLicenses.txt",
     "crates/adapters/paintcraft-update/NOTICE": "packaging/ThirdPartyLicenses.txt",
+    "assets/fonts/w95fa/OFL.txt": "packaging/ThirdPartyLicenses.txt",
+    "assets/fonts/w95fa/readme.txt": "packaging/ThirdPartyLicenses.txt",
 }
 
 
