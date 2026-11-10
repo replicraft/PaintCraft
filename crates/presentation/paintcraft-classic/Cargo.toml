@@ -16,3 +16,6 @@ egui.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+egui_kittest.workspace = true

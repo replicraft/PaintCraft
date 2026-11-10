@@ -1,11 +1,12 @@
 //! Historical two-group layout; the host retains the preview draft.
-use super::{Draft, numeric_info, size_field};
+use super::{Draft, Response, numeric_info, size_field};
 use egui::{Color32, Ui, Vec2};
 use paintcraft_ui::t;
-pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
+pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> Response {
     let width = (ctx.content_rect().width() - 40.0).clamp(240.0, 300.0);
     let body_height = (ctx.content_rect().height() - 130.0).clamp(48.0, 360.0);
     let mut close = false;
+    let mut apply = None;
     let modal = egui::Modal::new(egui::Id::unique("historical-resize-skew-preview"))
         .frame(
             egui::Frame::window(&ctx.style_of(ctx.theme()))
@@ -24,9 +25,14 @@ pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool
             ui.spacing_mut().item_spacing = Vec2::new(6.0, 6.0);
             ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
             for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
-                ui.style_mut()
+                let mut font = ui
+                    .style()
                     .text_styles
-                    .insert(style, egui::FontId::proportional(12.0));
+                    .get(&style)
+                    .cloned()
+                    .unwrap_or_else(|| egui::FontId::proportional(12.0));
+                font.size = 12.0;
+                ui.style_mut().text_styles.insert(style, font);
             }
             let widgets = &mut ui.visuals_mut().widgets;
             for state in [
@@ -89,29 +95,33 @@ pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool
                         }
                     });
                 });
-            ui.label(t!(ui.ctx(), "Preview only")).on_hover_text(t!(
-                ui.ctx(),
-                "Resize and skew changes cannot be applied yet.",
-            ));
             ui.separator();
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 close |= ui
                     .add_sized([80.0, 24.0], egui::Button::new(t!(ui.ctx(), "Cancel")))
                     .clicked();
-                ui.add_enabled(
-                    false,
-                    egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(80.0, 24.0)),
-                )
-                .on_disabled_hover_text(t!(
-                    ui.ctx(),
-                    "Applying resize and skew is not available yet.",
-                ));
+                let parameters = draft.parameters(maximum);
+                if ui
+                    .add_enabled(
+                        parameters.is_some(),
+                        egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(80.0, 24.0)),
+                    )
+                    .clicked()
+                {
+                    apply = parameters;
+                }
             });
         });
-    close || modal.should_close()
+    if let Some(p) = apply {
+        Response::Apply(p)
+    } else if close || modal.should_close() {
+        Response::Cancel
+    } else {
+        Response::Pending
+    }
 }
 
-fn group(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
+pub(super) fn group(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
     egui::Frame::group(ui.style())
         .corner_radius(0)
         .inner_margin(8)
@@ -122,7 +132,7 @@ fn group(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
         });
 }
 
-fn row(ui: &mut Ui, label: &str, body: impl FnOnce(&mut Ui, f32)) {
+pub(super) fn row(ui: &mut Ui, label: &str, body: impl FnOnce(&mut Ui, f32)) {
     ui.horizontal(|ui| {
         ui.add_sized([90.0, 24.0], egui::Label::new(t!(ui.ctx(), label)));
         let width = ui.available_width().max(60.0);

@@ -1,9 +1,23 @@
-//! Interactive presentation preview; no image transform is published here.
+//! Captured stretch/skew parameters; only the host can publish the typed command.
 use egui::{Align, Color32, FontId, TextStyle, Ui, Vec2};
 use paintcraft_ui::icons::Icon;
 use paintcraft_ui::t;
+mod form;
 mod legacy;
+pub use form::contents;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Parameters {
+    pub width: u32,
+    pub height: u32,
+    pub shear: (i32, i32),
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Response {
+    Pending,
+    Cancel,
+    Apply(Parameters),
+}
 #[derive(Clone, Debug, PartialEq)]
 pub struct Draft {
     source: [u32; 2],
@@ -22,6 +36,36 @@ impl Draft {
             scale: [1.0; 2],
             skew: [0; 2],
         }
+    }
+
+    pub fn parameters(&self, maximum: u32) -> Option<Parameters> {
+        let size = self.source.map(f64::from);
+        let width = (size[0] * self.scale[0]).round();
+        let height = (size[1] * self.scale[1]).round();
+        if !width.is_finite()
+            || !height.is_finite()
+            || width < 1.0
+            || height < 1.0
+            || width > f64::from(maximum)
+            || height > f64::from(maximum)
+        {
+            return None;
+        }
+        let coefficient =
+            |degrees: i16| (f64::from(degrees).to_radians().tan() * 65536.0).round() as i32;
+        let p = Parameters {
+            width: width as u32,
+            height: height as u32,
+            shear: (coefficient(self.skew[0]), coefficient(self.skew[1])),
+        };
+        let g = paintcraft_core::types::stretch_skew::StretchSkew::new(
+            paintcraft_core::types::Rect::from_origin_size(0, 0, self.source[0], self.source[1])?,
+            (p.width, p.height),
+            p.shear,
+        )
+        .ok()?;
+        let b = g.bounds(g.source()).ok()?;
+        (b.width() <= i64::from(maximum) && b.height() <= i64::from(maximum)).then_some(p)
     }
 
     fn edit_size(&mut self, axis: usize, value: f64, maximum: u32) {
@@ -55,7 +99,7 @@ pub fn dialog_for_skin(
     variant: crate::ClassicVariant,
     draft: &mut Draft,
     maximum: u32,
-) -> bool {
+) -> Response {
     if variant == crate::ClassicVariant::V11 {
         dialog(ctx, draft, maximum)
     } else {
@@ -63,11 +107,12 @@ pub fn dialog_for_skin(
     }
 }
 
-/// Returns true only for dismissal. OK stays disabled until transforms exist.
-pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
+/// Return an explicit Apply intent; rendering the dialog never changes a document.
+pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> Response {
     let width = (ctx.content_rect().width() - 56.0).clamp(240.0, 400.0);
     let height = (ctx.content_rect().height() - 72.0).clamp(180.0, 540.0);
     let mut close = false;
+    let mut apply = None;
     let modal = egui::Modal::new(egui::Id::unique("resize-skew-preview"))
         .frame(
             egui::Frame::window(&ctx.style_of(ctx.theme()))
@@ -160,27 +205,31 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     });
                 });
             ui.add_space(12.0);
-            ui.label(t!(ui.ctx(), "Preview only")).on_hover_text(t!(
-                ui.ctx(),
-                "Resize and skew changes cannot be applied yet.",
-            ));
             ui.separator();
             ui.horizontal(|ui| {
                 let button = (width - ui.spacing().item_spacing.x) * 0.5;
-                ui.add_enabled(
-                    false,
-                    egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(button, 40.0)),
-                )
-                .on_disabled_hover_text(t!(
-                    ui.ctx(),
-                    "Applying resize and skew is not available yet.",
-                ));
+                let parameters = draft.parameters(maximum);
+                if ui
+                    .add_enabled(
+                        parameters.is_some(),
+                        egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(button, 40.0)),
+                    )
+                    .clicked()
+                {
+                    apply = parameters;
+                }
                 close |= ui
                     .add_sized([button, 40.0], egui::Button::new(t!(ui.ctx(), "Cancel")))
                     .clicked();
             });
         });
-    close || modal.should_close()
+    if let Some(p) = apply {
+        Response::Apply(p)
+    } else if close || modal.should_close() {
+        Response::Cancel
+    } else {
+        Response::Pending
+    }
 }
 
 fn resize_fields(ui: &mut Ui, draft: &mut Draft, maximum: u32) {
@@ -300,3 +349,6 @@ fn size_field(
         draft.edit_size(axis, value, maximum);
     }
 }
+
+#[cfg(test)]
+mod tests;
