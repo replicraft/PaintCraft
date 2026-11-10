@@ -31,8 +31,10 @@ impl App {
             if self.pending_import.is_some() && self.confirm != Some(Confirm::ImportLosses) {
                 self.pending_import = None;
             }
-            self.editor
-                .set_floating_commit_on_release(self.experience() == Experience::Classic);
+            self.editor.set_floating_commit_on_release(matches!(
+                self.experience(),
+                Experience::Classic | Experience::Retro
+            ));
             if self.document_count() == 0 {
                 self.selection_outline.clear();
                 self.selection_bounds.borrow_mut().clear();
@@ -106,12 +108,17 @@ impl App {
                 self.document_tab_bar(ui, first_pass);
             });
         }
-        let classic_status =
-            if self.experience() == Experience::Studio || self.settings.classic_status_bar {
-                self.status_bar(ui)
-            } else {
-                None
-            };
+        let classic_status = if self.experience() == Experience::Studio
+            || (self.experience() == Experience::Classic && self.settings.classic_status_bar)
+            || (self.experience() == Experience::Retro && self.retro.status)
+        {
+            self.status_bar(ui)
+        } else {
+            None
+        };
+        if self.experience() == Experience::Retro {
+            self.retro_panels(ui);
+        }
         if self.experience() == Experience::Classic && self.classic.layers {
             egui::Panel::right("layers")
                 .default_size(220.0)
@@ -154,6 +161,8 @@ impl App {
                 egui::Frame::new()
                     .fill(if self.experience() == Experience::Classic {
                         paintcraft_classic::workspace_color(self.variant(), ctx.theme())
+                    } else if self.experience() == Experience::Retro {
+                        paintcraft_retro::workspace_color()
                     } else {
                         paintcraft_ui::theme::workspace(ctx.theme())
                     })

@@ -36,7 +36,7 @@ impl App {
         self.canvas_viewport = Some(viewport);
         if first_pass && self.initial_fit {
             self.initial_fit = false;
-            if self.experience() == Experience::Classic {
+            if matches!(self.experience(), Experience::Classic | Experience::Retro) {
                 self.dispatch_view_action(ui.ctx(), paintcraft_ui::actions::ViewAction::FitWindow);
             }
         }
@@ -63,6 +63,15 @@ impl App {
                 id,
                 canvas_size,
                 left_clearance,
+                |ui, response, painter| {
+                    self.paint_canvas(ui, response, painter, first_pass, controls)
+                },
+            ),
+            Experience::Retro => paintcraft_retro::canvas(
+                ui,
+                id,
+                self.retro_pan_scope(ui.ctx()),
+                canvas_size,
                 |ui, response, painter| {
                     self.paint_canvas(ui, response, painter, first_pass, controls)
                 },
@@ -108,6 +117,7 @@ impl App {
             .and_then(|p| view.to_doc((p.x, p.y)));
 
         self.validate_studio_pan(ui, viewport);
+        self.validate_retro_pan(ui, viewport);
         if first_pass {
             let navigation_only = self.filter_navigation_ready();
             #[cfg(target_os = "windows")]
@@ -141,7 +151,8 @@ impl App {
                 if self.canvas_text_event(ui.ctx(), &event) {
                     continue;
                 }
-                if self.studio_pan_event(ui, &painter, viewport, &event)
+                if self.retro_pan_event(ui, &painter, viewport, &event)
+                    || self.studio_pan_event(ui, &painter, viewport, &event)
                     || self.studio_zoom_event(ui, &painter, rect, viewport, &event)
                 {
                     continue;
@@ -181,11 +192,13 @@ impl App {
                                 paintcraft_input::PointerButton::Primary
                             }
                             egui::PointerButton::Secondary
-                                if self.experience() == Experience::Studio
-                                    || matches!(
-                                        self.editor.tool,
-                                        Tool::ColorPicker | Tool::Magnifier
-                                    ) =>
+                                if matches!(
+                                    self.experience(),
+                                    Experience::Studio | Experience::Retro
+                                ) || matches!(
+                                    self.editor.tool,
+                                    Tool::ColorPicker | Tool::Magnifier
+                                ) =>
                             {
                                 paintcraft_input::PointerButton::Secondary
                             }
@@ -211,7 +224,9 @@ impl App {
                             // Classic restores the solid canvas ground; Studio removes
                             // pixels. Capture this policy with the rest of the gesture.
                             self.editor.options.eraser_color = match self.experience() {
-                                Experience::Classic => self.editor.canvas_color(),
+                                Experience::Classic | Experience::Retro => {
+                                    self.editor.canvas_color()
+                                }
                                 Experience::Studio => Rgba::TRANSPARENT,
                             };
                             let source = self.editor.options.picker_source;
@@ -219,7 +234,10 @@ impl App {
                                 use paintcraft_core::types::picker::{
                                     PickerAfter, SampleSize, SampleSource,
                                 };
-                                if self.experience() == Experience::Classic {
+                                if matches!(
+                                    self.experience(),
+                                    Experience::Classic | Experience::Retro
+                                ) {
                                     self.editor.options.picker_source = SampleSource::Image;
                                     self.editor.options.picker_size = SampleSize::One;
                                     self.editor.options.picker_after = PickerAfter::Previous;
@@ -262,11 +280,13 @@ impl App {
                                 paintcraft_input::PointerButton::Primary
                             }
                             egui::PointerButton::Secondary
-                                if self.experience() == Experience::Studio
-                                    || matches!(
-                                        self.editor.tool,
-                                        Tool::ColorPicker | Tool::Magnifier
-                                    ) =>
+                                if matches!(
+                                    self.experience(),
+                                    Experience::Studio | Experience::Retro
+                                ) || matches!(
+                                    self.editor.tool,
+                                    Tool::ColorPicker | Tool::Magnifier
+                                ) =>
                             {
                                 paintcraft_input::PointerButton::Secondary
                             }

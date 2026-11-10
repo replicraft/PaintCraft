@@ -130,7 +130,11 @@ impl App {
                 return;
             }
             ViewAction::StatusBar => {
-                self.settings.classic_status_bar = !self.settings.classic_status_bar;
+                if self.experience() == Experience::Retro {
+                    self.retro.status = !self.retro.status;
+                } else {
+                    self.settings.classic_status_bar = !self.settings.classic_status_bar;
+                }
                 self.persist_settings();
                 ctx.request_repaint();
                 return;

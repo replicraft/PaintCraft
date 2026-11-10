@@ -20,6 +20,7 @@ impl App {
             frontend: match self.experience() {
                 Experience::Classic => Frontend::Classic,
                 Experience::Studio => Frontend::Studio,
+                Experience::Retro => Frontend::Retro,
             },
             document_open: self.document_count() > 0,
             can_undo: self.editor.undo_depth() > 0
@@ -64,7 +65,11 @@ impl App {
             },
             can_fit_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             can_crop_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
-            status_bar: self.settings.classic_status_bar,
+            status_bar: if self.experience() == Experience::Retro {
+                self.retro.status
+            } else {
+                self.settings.classic_status_bar
+            },
             rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,
             can_exit: true,
@@ -87,6 +92,10 @@ impl App {
 
     pub(super) fn toolbar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        if self.experience() == Experience::Retro {
+            self.retro_toolbar(ui);
+            return;
+        }
         if self.experience() == Experience::Studio {
             ui.horizontal(|ui| {
                 ui.strong(t!(ui.ctx(), "PaintCraft Studio"));
@@ -141,6 +150,7 @@ impl App {
                             loading: fonts_loading,
                         }),
                     ),
+                    Experience::Retro => unreachable!("Retro has separate chrome"),
                     Experience::Studio => paintcraft_studio::toolbar(
                         ui,
                         &mut controls,
@@ -224,7 +234,7 @@ impl App {
             }
             match action {
                 Chrome::New => {
-                    if self.experience() == Experience::Classic
+                    if matches!(self.experience(), Experience::Classic | Experience::Retro)
                         && (self.editor.is_dirty() || self.has_document_drafts())
                     {
                         self.confirm = Some(Confirm::DiscardForNew);
@@ -267,6 +277,7 @@ impl App {
                 Chrome::ChooseFrontend(frontend) => self.choose_experience(match frontend {
                     paintcraft_ui::actions::Frontend::Classic => Experience::Classic,
                     paintcraft_ui::actions::Frontend::Studio => Experience::Studio,
+                    paintcraft_ui::actions::Frontend::Retro => Experience::Retro,
                 }),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
@@ -293,7 +304,7 @@ impl App {
                 }
                 Chrome::ClearCanvas => {
                     let color = match self.experience() {
-                        Experience::Classic => self.editor.canvas_color(),
+                        Experience::Classic | Experience::Retro => self.editor.canvas_color(),
                         Experience::Studio => Rgba::TRANSPARENT,
                     };
                     self.request(ctx, code::CLEAR_CANVAS, Action::ClearCanvas { color });
@@ -308,11 +319,12 @@ impl App {
                 Chrome::ResizeSkew => self.begin_resize_skew(),
                 Chrome::Crop => self.request(ctx, code::CROP, Action::CropToSelection),
                 Chrome::EraseSelection => {
-                    let color = if self.experience() == Experience::Classic {
-                        self.editor.canvas_color()
-                    } else {
-                        Rgba::TRANSPARENT
-                    };
+                    let color =
+                        if matches!(self.experience(), Experience::Classic | Experience::Retro) {
+                            self.editor.canvas_color()
+                        } else {
+                            Rgba::TRANSPARENT
+                        };
                     self.request(
                         ctx,
                         action.activation_code(),
@@ -320,11 +332,12 @@ impl App {
                     );
                 }
                 Chrome::TransformImage(transform) => {
-                    let clear = if self.experience() == Experience::Classic {
-                        self.editor.canvas_color()
-                    } else {
-                        Rgba::TRANSPARENT
-                    };
+                    let clear =
+                        if matches!(self.experience(), Experience::Classic | Experience::Retro) {
+                            self.editor.canvas_color()
+                        } else {
+                            Rgba::TRANSPARENT
+                        };
                     self.request(
                         ctx,
                         action.activation_code(),

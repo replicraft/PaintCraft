@@ -6,6 +6,33 @@ use paintcraft_ui::t;
 impl App {
     pub(super) fn status_bar(&mut self, ui: &mut egui::Ui) -> Option<egui::Rect> {
         let ctx = ui.ctx().clone();
+        if self.experience() == Experience::Retro {
+            let message = self.status_message();
+            let recovery = self.checkpoint_tooltip();
+            let status = paintcraft_retro::Status {
+                message: &message,
+                recovery: recovery.as_deref(),
+                canvas: (self.document_count() > 0).then_some(self.editor.document().canvas),
+                pointer: self.hover_doc,
+                selection: self.selected_dimensions(),
+                zoom: self.zoom,
+                blocked: self.action_context().blocked,
+            };
+            let intents = egui::Panel::bottom("status")
+                .frame(paintcraft_retro::frame())
+                .show(ui, |ui| paintcraft_retro::status(ui, status))
+                .inner;
+            let actions = intents
+                .into_iter()
+                .filter_map(|intent| match intent {
+                    paintcraft_retro::Intent::Action(action) => Some(action),
+                    _ => None,
+                })
+                .collect();
+            self.dispatch_chrome(&ctx, actions);
+            return None;
+        }
+
         let frame = if self.experience() == Experience::Classic {
             paintcraft_classic::status::frame(self.variant(), ctx.theme())
         } else {

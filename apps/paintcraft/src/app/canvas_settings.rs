@@ -109,14 +109,18 @@ impl App {
             CanvasDraft::Properties { name, .. } => Some(name.as_str()),
             _ => None,
         };
-        let response = paintcraft_classic::canvas_size::canvas_size_dialog_for_skin(
-            ctx,
-            self.variant(),
-            &mut view,
-            settings::SIZE_MAX,
-            None,
-            properties,
-        );
+        let response = if self.experience() == Experience::Retro {
+            retro::forms::canvas(ctx, &mut view, properties)
+        } else {
+            paintcraft_classic::canvas_size::canvas_size_dialog_for_skin(
+                ctx,
+                self.variant(),
+                &mut view,
+                settings::SIZE_MAX,
+                None,
+                properties,
+            )
+        };
         if ctx.current_pass_index() != 0 {
             return;
         }

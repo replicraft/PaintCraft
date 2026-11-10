@@ -25,7 +25,7 @@ pub(super) struct DeferredFile {
 impl App {
     pub(super) fn remember_published_canvas_size(&mut self) {
         if let Some(size) = self.editor.take_canvas_size_edit()
-            && self.experience() == Experience::Classic
+            && matches!(self.experience(), Experience::Classic | Experience::Retro)
         {
             self.remember_canvas_size(size);
         }
