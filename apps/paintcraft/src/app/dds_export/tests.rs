@@ -194,8 +194,13 @@ fn actual_english_and_japanese_export_preserves_document_and_full_mips() {
                 .encoded()
                 .bytes()
                 .to_vec();
-            h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-                .click();
+            h.get(
+                egui_kittest::kittest::By::new()
+                    .role(egui::Role::Button)
+                    .label(&translate(language, "Export now"))
+                    .predicate(|node| !node.is_disabled()),
+            )
+            .click();
             h.run();
             assert_eq!(fs::read(&target).unwrap(), exact);
             let info = dds::inspect_top_mip_checked(&exact, 35, &|| Ok(())).unwrap();

@@ -211,6 +211,7 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
         for frontend in [
             crate::actions::Frontend::Classic,
             crate::actions::Frontend::Studio,
+            crate::actions::Frontend::Retro,
         ] {
             let action = Action::ChooseFrontend(frontend);
             if crate::actions::menu_item(ui, action, context) {

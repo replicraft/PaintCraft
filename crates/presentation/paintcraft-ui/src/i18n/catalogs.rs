@@ -8,6 +8,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/en/common.ftl"),
             include_str!("../../locales/en/classic.ftl"),
             include_str!("../../locales/en/studio.ftl"),
+            include_str!("../../locales/en/retro.ftl"),
             include_str!("../../locales/en/settings.ftl"),
         ],
         Language::Japanese => &[
@@ -15,6 +16,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/ja/common.ftl"),
             include_str!("../../locales/ja/classic.ftl"),
             include_str!("../../locales/ja/studio.ftl"),
+            include_str!("../../locales/ja/retro.ftl"),
             include_str!("../../locales/ja/settings.ftl"),
         ],
         Language::German => &[
@@ -22,6 +24,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/de/common.ftl"),
             include_str!("../../locales/de/classic.ftl"),
             include_str!("../../locales/de/studio.ftl"),
+            include_str!("../../locales/de/retro.ftl"),
             include_str!("../../locales/de/settings.ftl"),
         ],
         Language::Spanish => &[
@@ -29,6 +32,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/es/common.ftl"),
             include_str!("../../locales/es/classic.ftl"),
             include_str!("../../locales/es/studio.ftl"),
+            include_str!("../../locales/es/retro.ftl"),
             include_str!("../../locales/es/settings.ftl"),
         ],
         Language::PortugueseBrazil => &[
@@ -36,6 +40,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/pt-BR/common.ftl"),
             include_str!("../../locales/pt-BR/classic.ftl"),
             include_str!("../../locales/pt-BR/studio.ftl"),
+            include_str!("../../locales/pt-BR/retro.ftl"),
             include_str!("../../locales/pt-BR/settings.ftl"),
         ],
         Language::Hindi => &[
@@ -43,6 +48,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/hi/common.ftl"),
             include_str!("../../locales/hi/classic.ftl"),
             include_str!("../../locales/hi/studio.ftl"),
+            include_str!("../../locales/hi/retro.ftl"),
             include_str!("../../locales/hi/settings.ftl"),
         ],
         Language::ChineseSimplified => &[
@@ -50,6 +56,7 @@ pub(crate) fn sources(language: Language) -> &'static [&'static str] {
             include_str!("../../locales/zh-CN/common.ftl"),
             include_str!("../../locales/zh-CN/classic.ftl"),
             include_str!("../../locales/zh-CN/studio.ftl"),
+            include_str!("../../locales/zh-CN/retro.ftl"),
             include_str!("../../locales/zh-CN/settings.ftl"),
         ],
     }

@@ -38,6 +38,9 @@ impl ImageExport {
     ];
     /// Presentation inventory only. The host must still perform format admission.
     pub fn available(self, frontend: super::Frontend) -> bool {
+        if frontend == super::Frontend::Retro {
+            return matches!(self, Self::Png | Self::Bmp);
+        }
         frontend == super::Frontend::Studio
             || !matches!(
                 self,

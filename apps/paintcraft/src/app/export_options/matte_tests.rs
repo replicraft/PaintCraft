@@ -47,7 +47,13 @@ fn jpeg_matte_control_and_loss_review_keep_the_captured_color_and_current_projec
         );
         assert!(losses.iter().any(|v| v == "lossy-jpeg"));
         assert!(losses.iter().any(|v| v == "alpha-discarded"));
-        h.get_by_label(&tr("Export now")).click();
+        h.get(
+            egui_kittest::kittest::By::new()
+                .role(egui::Role::Button)
+                .label(&tr("Export now"))
+                .predicate(|node| !node.is_disabled()),
+        )
+        .click();
         h.run();
         let bytes = std::fs::read(&path).unwrap();
         let decoded = paintcraft_formats::image::decode(&bytes).unwrap();

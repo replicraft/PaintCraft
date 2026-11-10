@@ -47,8 +47,13 @@ fn prepared(h: &mut Harness<App>) {
     h.run();
 }
 fn click(h: &mut Harness<App>, lang: Language, label: &str) {
-    h.get_by_role_and_label(egui::Role::Button, &translate(lang, label))
-        .click();
+    h.get(
+        egui_kittest::kittest::By::new()
+            .role(egui::Role::Button)
+            .label(&translate(lang, label))
+            .predicate(|node| !node.is_disabled()),
+    )
+    .click();
     h.run();
 }
 fn root() -> PathBuf {

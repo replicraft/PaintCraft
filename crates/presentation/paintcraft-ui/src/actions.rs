@@ -4,6 +4,7 @@ use egui::{Key, KeyboardShortcut, Modifiers};
 use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
 use paintcraft_tools::Tool;
 mod export;
+mod retro;
 pub use export::ImageExport;
 mod layers;
 mod view;
@@ -63,9 +64,11 @@ pub enum Action {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
 pub enum Frontend {
-    Classic,
-    Studio,
+    Classic = 0,
+    Studio = 1,
+    Retro = 2,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -195,6 +198,7 @@ impl Action {
                 match frontend {
                     Frontend::Classic => "Classic",
                     Frontend::Studio => "Studio",
+                    Frontend::Retro => "Retro",
                 },
                 None,
             ),
@@ -306,6 +310,9 @@ impl Action {
     }
 
     pub fn available(self, frontend: Frontend) -> bool {
+        if frontend == Frontend::Retro {
+            return retro::available(self);
+        }
         match self {
             Self::SaveAll
             | Self::FlattenImage
@@ -476,7 +483,9 @@ impl Action {
             Self::EraseSelection => 1023,
             Self::TransformImage(t) => 1030 + t as u64,
             Self::Settings => 1015,
-            Self::ChooseFrontend(frontend) => 1016 + frontend as u64,
+            Self::ChooseFrontend(Frontend::Classic) => 1016,
+            Self::ChooseFrontend(Frontend::Studio) => 1017,
+            Self::ChooseFrontend(Frontend::Retro) => 5000,
             Self::CanvasDefaults => 1012,
             Self::EditColors => 1013,
             Self::EditSecondaryColors => 1014,

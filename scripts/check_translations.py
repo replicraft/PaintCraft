@@ -7,7 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES = ROOT / 'crates/presentation/paintcraft-ui/locales'
 LANGUAGES = ('en', 'de', 'es', 'hi', 'ja', 'pt-BR', 'zh-CN')
-DOMAINS = ('app', 'common', 'classic', 'studio', 'settings')
+DOMAINS = ('app', 'common', 'classic', 'studio', 'retro', 'settings')
 
 
 def catalog(locale, failures):

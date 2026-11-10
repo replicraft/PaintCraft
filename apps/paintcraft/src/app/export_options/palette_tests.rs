@@ -75,7 +75,13 @@ fn actual_palette_controls_preview_refusal_and_export_keep_the_original_document
         assert_eq!(*pcx_encoding, Encoding::Indexed256);
         assert!(losses.iter().any(|loss| loss == "palette-quantized"));
         assert!(!path.exists());
-        h.get_by_label(&tr("Export now")).click();
+        h.get(
+            egui_kittest::kittest::By::new()
+                .role(egui::Role::Button)
+                .label(&tr("Export now"))
+                .predicate(|node| !node.is_disabled()),
+        )
+        .click();
         h.run();
         assert!(
             path.exists(),
