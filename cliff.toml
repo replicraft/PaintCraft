@@ -16,8 +16,8 @@ conventional_commits = true
 filter_unconventional = false
 tag_pattern = '^v[0-9]+\.[0-9]+\.[0-9]+(?:[-+].*)?$'
 sort_commits = "oldest"
-# Omit documentation-only changes even when their subject uses another prefix.
-exclude_paths = ["docs/**", "**/*.md", "assets/repo/**"]
+# scripts/packaging/changelog.py removes documentation-only entries AFTER tag
+# discovery. Path filters here would erase documentation-only release anchors.
 # Include descriptive history as well as Conventional Commits. Explicit historical
 # exceptions cover subjects whose intent cannot be inferred from their first verb.
 commit_parsers = [

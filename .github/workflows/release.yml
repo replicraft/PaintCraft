@@ -69,12 +69,19 @@ jobs:
       - run: python -m unittest discover -s scripts/tests -p 'test_sign_release.py'
       - run: python -m unittest discover -s scripts/tests -p 'test_qualify_cli_helper.py'
       - run: python scripts/check_file_lengths.py
-      - name: Generate complete changelog
+      - name: Install pinned changelog generator
         if: inputs.artifacts-run == ''
         uses: orhun/git-cliff-action@v4
         with:
           version: v2.14.2
-          args: --output CHANGELOG.md
+          args: --offline --no-exec --output ${{ runner.temp }}/paintcraft-changelog-bootstrap.md
+      - name: Generate complete changelog without losing release boundaries
+        if: inputs.artifacts-run == ''
+        env:
+          PAINTCRAFT_GIT_CLIFF: ${{ runner.temp }}/git-cliff/bin/git-cliff
+        run: |
+          python -m unittest discover -s scripts/tests -p 'test_changelog.py'
+          python scripts/packaging/changelog.py --git-cliff "$PAINTCRAFT_GIT_CLIFF" --tag "v${{ steps.version.outputs.version }}"
       - uses: actions/upload-artifact@v7
         if: inputs.artifacts-run == ''
         with:

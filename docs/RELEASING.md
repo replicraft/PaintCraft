@@ -147,19 +147,32 @@ set and publishes it with a summary and a full changelog link. This supports rem
 target without repeating successful builds; it cannot reuse binaries for a
 different source commit.
 
-Like EarthCraft, release validation fetches the complete Git history and uses
-git-cliff 2.14.2 with `cliff.toml` to generate a grouped `CHANGELOG.md`.
-Download it from the separate `release-changelog-<version>` workflow artifact.
-The authored installation notes remain in `docs/releases/v<version>.md`.
-`cliff.toml` excludes documentation commits and classifies descriptive commits as well as Conventional Commits, with
-explicit exceptions for historical subjects whose intent is ambiguous. Keep the
-root `CHANGELOG.md` updated with `git-cliff --output CHANGELOG.md` when preparing
-release notes. Check that every non-documentation release commit appears once and none fall under
-"Other changes" before publishing. Note-only corrections after a tag can update
-the GitHub release body without rebuilding the application downloads.
+Release validation fetches the complete Git history and uses pinned git-cliff
+2.14.2 with `cliff.toml` through `scripts/packaging/changelog.py` to generate a
+grouped `CHANGELOG.md`. Download it from the separate
+`release-changelog-<version>` workflow artifact. The authored installation notes
+remain in `docs/releases/v<version>.md`.
+
+The wrapper preserves release-tag boundaries before omitting documentation-only
+changes, including those with non-documentation commit subjects. Mixed source
+and documentation changes and empty commits stay eligible for the configured
+commit groups. Do not add path exclusions directly to `cliff.toml`: they remove
+documentation-only tag anchors before git-cliff can assign commits to releases.
+
+Use Python 3.11 or newer and git-cliff 2.14.2 on your PATH, then regenerate locally:
+
+```sh
+python3 scripts/packaging/changelog.py --tag v0.2.0
+```
+
+Use `--git-cliff /path/to/git-cliff` if the pinned binary is not on your PATH.
+Omit `--tag` for an Unreleased section. Check that each release keeps its own
+changes, every eligible non-documentation commit appears once, and none fall
+under "Other changes" before publishing. Note-only corrections after a tag can
+update the GitHub release body without rebuilding the application downloads.
 
 The `assemble` job refuses a missing architecture, extra/stale asset, empty file,
-symlink or mismatched per-asset checksum. Only after all 24 checks succeed does
+symlink or mismatched per-asset checksum. Only after all payload checks succeed does
 it write the sorted, LF-delimited `SHA256SUMS.txt` and remove intermediate checksum
 sidecars. It runs `sha256sum --check` independently before uploading the final set.
 
