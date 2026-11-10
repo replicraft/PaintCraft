@@ -127,6 +127,11 @@ mod frame_render;
 #[path = "display_owner.rs"]
 mod display_owner;
 
+// Defining display control stays private to this owning subtree.
+pub(super) const fn display_outer_control_bytes() -> u64 {
+    display_owner::OUTER_CONTROL
+}
+
 #[path = "owner/service.rs"]
 mod service;
 

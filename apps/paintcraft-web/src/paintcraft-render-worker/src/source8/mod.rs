@@ -25,6 +25,10 @@ pub use inputs::{
 };
 pub use inspection::{Source8Inspection, inspect_portable_source8_checked};
 pub use read_controls::{Source8ReaderControlBytes, source8_reader_control_bytes};
+mod role_demand;
+pub use role_demand::{
+    Source8RoleDemand, Source8RoleQueryCost, source8_role_demand_checked, source8_role_query_cost,
+};
 fn extent() -> Error {
     Error::new(ErrorCode::ResourceLimit, "Source8 read ownership extent")
 }

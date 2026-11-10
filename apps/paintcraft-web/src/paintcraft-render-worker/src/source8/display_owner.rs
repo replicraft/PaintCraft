@@ -8,7 +8,7 @@ use std::mem::size_of;
 mod geometry;
 #[path = "display_owner/storage.rs"]
 mod storage;
-const OUTER_CONTROL: u64 = 4096;
+pub(super) const OUTER_CONTROL: u64 = 4096;
 fn invalid() -> Error {
     Error::new(
         ErrorCode::ResourceLimit,
