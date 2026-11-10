@@ -400,8 +400,16 @@ then launch `flatpak run io.github.replicraft.PaintCraft`. The CLI is available 
 The bundle points to Flathub for the Freedesktop 25.08 runtime; PaintCraft itself
 is a release bundle and is not published on Flathub or configured with an app-update remote.
 
-The packaging runner needs `flatpak`, `flatpak-builder`, the matching architecture's
-Freedesktop Platform and SDK 25.08. It stages the existing native release binaries,
+The packaging runner needs `flatpak`, the matching architecture's Freedesktop
+Platform and SDK 25.08, and Flathub's `org.flatpak.Builder`. The workflow records the
+installed Builder commit and version and selects it with `--builder flathub`.
+Its temporary payload directory is explicitly exposed to the Builder sandbox.
+Headless runners invoke packaging under `dbus-run-session` so Builder can reach
+the host Flatpak service without relying on a desktop session.
+Local builds can instead use a host `flatpak-builder` 1.4 or newer; Ubuntu 22.04's
+original builder expects an obsolete AppStream tool absent from SDK 25.08.
+See the [supported builder options](https://docs.flatpak.org/en/latest/first-build.html).
+Packaging stages the existing native release binaries,
 checks they are unchanged after building, and bundles them without stripping.
 CI is configured to install the bundle and check dependencies and the CLI in the actual runtime.
 Portal file dialogs provide document access without granting the application the

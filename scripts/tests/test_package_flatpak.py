@@ -2,6 +2,7 @@
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import struct
 import sys
 import tempfile
@@ -25,6 +26,37 @@ def elf(path, target):
 
 
 class FlatpakTests(unittest.TestCase):
+    def test_flathub_builder_can_access_staging_and_export_preserves_exact_payload(self):
+        for target, arch in flatpak.ARCHES.items():
+            with self.subTest(arch=arch), tempfile.TemporaryDirectory(prefix="paintcraft flatpak ") as directory:
+                root = Path(directory)
+                binary = elf(root / "paintcraft", target)
+                cli = elf(root / "paintcraft-cli", target)
+                elf(root / "paintcraft-codec-worker", target)
+                calls = []
+
+                def run(command, **kwargs):
+                    calls.append(command)
+                    if command[:2] == ["flatpak", "run"]:
+                        staged = Path(command[-1]).parent
+                        self.assertEqual(command[:3], ["flatpak", "run", "--user"])
+                        self.assertIn("--filesystem=" + str(staged), command)
+                        self.assertIn("org.flatpak.Builder", command)
+                        self.assertNotIn("--command=flatpak-builder", command)
+                        self.assertIn("--arch=" + arch, command)
+                        self.assertEqual(kwargs["cwd"], staged)
+                        self.assertTrue(kwargs["check"])
+                        shutil.copytree(staged / "payload", Path(command[-2]) / "files")
+                    elif command[1] == "build-bundle":
+                        Path(command[-3]).write_bytes(b"Flatpak fixture")
+
+                with patch.object(flatpak.subprocess, "run", side_effect=run):
+                    flatpak.package(release.workspace_version(), target, binary, cli,
+                                    root / "output", builder="flathub")
+                self.assertEqual([command[1] for command in calls], ["run", "build-export", "build-bundle"])
+                archive = next((root / "output").glob("*.flatpak"))
+                self.assertIn(release.digest(archive), Path(str(archive) + ".sha256").read_text())
+
     def test_manifest_has_exact_runtime_and_portal_permissions_without_host_filesystem_access(self):
         config = flatpak.manifest()
         self.assertEqual(config["app-id"], flatpak.APP_ID)

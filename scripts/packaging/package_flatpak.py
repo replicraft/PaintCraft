@@ -83,7 +83,20 @@ def verify_payload(build, hashes):
         raise ValueError("Flatpak codec helper manifest does not match its installed executable")
 
 
-def package(version, target, binary, cli, output):
+def builder_command(root, target, builder):
+    if builder == "flathub":
+        # Builder has a private /tmp; expose only this invocation's staged payload.
+        command = ["flatpak", "run", "--user", "--filesystem=" + str(root), "org.flatpak.Builder"]
+    elif builder == "host":
+        command = ["flatpak-builder"]
+    else:
+        raise ValueError("Unknown Flatpak builder")
+    return command + ["--user", "--force-clean", "--disable-rofiles-fuse",
+                      "--arch=" + ARCHES[target], str(root / "build"),
+                      str(root / f"{APP_ID}.json")]
+
+
+def package(version, target, binary, cli, output, *, builder="host"):
     if target not in ARCHES:
         raise ValueError("Flatpak requires a supported Linux release target")
     output = output.resolve()
@@ -97,8 +110,7 @@ def package(version, target, binary, cli, output):
         config = root / f"{APP_ID}.json"
         config.write_text(json.dumps(manifest(), indent=4) + "\n", encoding="utf-8")
         build = root / "build"
-        subprocess.run(["flatpak-builder", "--user", "--force-clean", "--disable-rofiles-fuse",
-                        "--arch=" + ARCHES[target], str(build), str(config)], cwd=root, check=True)
+        subprocess.run(builder_command(root, target, builder), cwd=root, check=True)
         verify_payload(build, hashes)
         repo = root / "repo"
         subprocess.run(["flatpak", "build-export", "--arch=" + ARCHES[target],
@@ -116,9 +128,11 @@ def main():
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--cli-binary", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--builder", choices=("host", "flathub"), default="host",
+                        help="Use a modern host builder or Flathub's org.flatpak.Builder")
     args = parser.parse_args()
     try:
-        package(args.version, args.target, args.binary, args.cli_binary, args.output)
+        package(args.version, args.target, args.binary, args.cli_binary, args.output, builder=args.builder)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"Flatpak packaging failed: {error}\n")
 
