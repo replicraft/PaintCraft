@@ -28,3 +28,6 @@ new-retro-canvas = 新しいレトロのキャンバス
 export = エクスポート
 help = ヘルプ
 opaque-background = 不透明な背景
+
+finish-pending-edits-before-resizing-or-skewing = サイズ変更または傾斜の前に、編集中の操作を完了してください。
+the-selection-is-empty = 選択範囲が空です。

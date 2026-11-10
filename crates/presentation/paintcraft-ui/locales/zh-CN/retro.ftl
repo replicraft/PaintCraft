@@ -28,3 +28,6 @@ new-retro-canvas = 新建复古画布
 export = 导出
 help = 帮助
 opaque-background = 不透明背景
+
+finish-pending-edits-before-resizing-or-skewing = 调整大小或倾斜前，请先完成待处理的编辑。
+the-selection-is-empty = 选区为空。

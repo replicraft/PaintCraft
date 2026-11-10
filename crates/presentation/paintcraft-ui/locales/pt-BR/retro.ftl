@@ -28,3 +28,6 @@ new-retro-canvas = Nova tela retrô
 export = Exportar
 help = Ajuda
 opaque-background = Fundo opaco
+
+finish-pending-edits-before-resizing-or-skewing = Conclua as edições pendentes antes de redimensionar ou inclinar a imagem.
+the-selection-is-empty = A seleção está vazia.

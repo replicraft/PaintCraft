@@ -28,3 +28,6 @@ new-retro-canvas = Neue Retro-Leinwand
 export = Exportieren
 help = Hilfe
 opaque-background = Undurchsichtiger Hintergrund
+
+finish-pending-edits-before-resizing-or-skewing = Schließe ausstehende Bearbeitungen ab, bevor du die Größe änderst oder das Bild neigst.
+the-selection-is-empty = Die Auswahl ist leer.

@@ -28,3 +28,6 @@ new-retro-canvas = नया रेट्रो कैनवास
 export = निर्यात
 help = सहायता
 opaque-background = अपारदर्शी पृष्ठभूमि
+
+finish-pending-edits-before-resizing-or-skewing = आकार बदलने या तिरछा करने से पहले लंबित संपादन पूरे करें।
+the-selection-is-empty = चयन खाली है।

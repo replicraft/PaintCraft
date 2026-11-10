@@ -28,3 +28,6 @@ new-retro-canvas = New Retro canvas
 export = Export
 help = Help
 opaque-background = Opaque background
+
+finish-pending-edits-before-resizing-or-skewing = Finish pending edits before resizing or skewing.
+the-selection-is-empty = The selection is empty.
