@@ -1299,7 +1299,38 @@ hash, partial observed excerpt and separately identified repeat remain under
 the original full log is unavailable. Successful final receipts use fresh,
 exclusively created evidence paths.
 
-Production staging, the Worker8 dispatcher, complete Main phase admission and
-actual browser patch/ACK/publication still require implementation and execution.
-This finite diagnostic does not qualify those routes, full heap/RSS, latency or
-the complete roadmap.
+This finite diagnostic does not activate the production service or qualify
+browser publication, full heap/RSS, latency or the complete roadmap.
+
+### Staged Worker8 service: native qualification
+
+The new Rust service consumes the opaque owned-source bridge. Its zero-argument
+Wasm class exposes a fixed 512-byte control window; source storage is allocated
+only after the original E reservation and work admission. Real read/adoption
+validates the staged hash, private document/state, canvas and stored Noise facts.
+Each accepted OPEN and strictly newer VIEW has an explicit original operation;
+patches and ACKs retain that view's counter. One outstanding image owns its
+original O factory until validated ACK, cancellation or close. Consuming close
+retires source, images and original factories before its typed completion.
+
+Current native execution passes all 175 worker checks, including 17 new service
+groups, 12 owned-bridge groups and 26 complete pixel scenes. Native/Wasm Clippy,
+strict rustdoc, formatting and source lengths pass. The final 55-source binding
+is `docs/validation/layer-blend-candidates/source8-blend-service/root-native/source-ready-for-wasm.json`,
+SHA-256 `a28d1009eeef9f35d25439b8cbb5fd068486244dc7e247e2a8fa126b6690d532`.
+Compiler diagnostics for the sibling facade visibility and a two-source fixture
+that initially funded only one retained carrier remain separate from successful
+qualification. The fixture correction uses twice the defining carrier quote;
+production capacities, original caller and mismatch assertions are unchanged.
+
+The declared caller ceiling is the complete 64 MiB envelope; W still has its
+exact original reservation. A Noise sidecar consumes W capacity and its paired
+declaration is an explicit additional conservative envelope overlap. H uses
+defining service/stage/view types and factory quotes, with finite bootstrap
+exclusions recorded before implementation. Fixture grants are not production
+Main workspace forecasts.
+
+The generated Wasm class still needs actual ABI and service execution. Matching
+JS transport, source-universal Main workspace forecasts, original Main admission
+and texture-delta retirement are separate unfinished gates. No frontend route
+is activated by this native checkpoint.
