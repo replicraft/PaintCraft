@@ -62,6 +62,8 @@ pub struct DetectInput {
     pub exe: Option<PathBuf>,
     /// `$APPIMAGE`.
     pub appimage: Option<OsString>,
+    /// `$APPDIR`, bound to the canonical running executable before in-place updates.
+    pub appdir: Option<OsString>,
     /// `%ProgramFiles%` and `%ProgramW6432%` (Windows only; both may be the same).
     pub program_files: Vec<PathBuf>,
     pub debug_build: bool,
@@ -90,6 +92,7 @@ impl DetectInput {
                 .ok()
                 .map(|path| std::fs::canonicalize(&path).unwrap_or(path)),
             appimage: std::env::var_os("APPIMAGE"),
+            appdir: std::env::var_os("APPDIR"),
             program_files: ["ProgramFiles", "ProgramW6432"]
                 .iter()
                 .filter_map(|name| std::env::var_os(name).map(PathBuf::from))
@@ -156,9 +159,7 @@ fn detect_install(input: &DetectInput) -> InstallKind {
     let kind = match input.os {
         Os::Macos => macos_bundle(exe).map(|bundle| InstallKind::MacosBundle { bundle }),
         Os::Windows => windows_kind(exe, &input.program_files),
-        Os::Linux => {
-            appimage(input.appimage.as_deref()).map(|path| InstallKind::LinuxAppImage { path })
-        }
+        Os::Linux => appimage(input, exe).map(|path| InstallKind::LinuxAppImage { path }),
         Os::Other => return InstallKind::Manual(ManualReason::UnsupportedPlatform),
     };
     let kind = kind.unwrap_or(InstallKind::Manual(ManualReason::Packaged));
@@ -221,9 +222,62 @@ fn windows_kind(exe: &Path, program_files: &[PathBuf]) -> Option<InstallKind> {
     })
 }
 
-/// `$APPIMAGE` as the AppImage runtime sets it: an absolute path to an existing regular file.
-fn appimage(value: Option<&std::ffi::OsStr>) -> Option<PathBuf> {
-    let path = PathBuf::from(value.filter(|v| !v.is_empty())?);
-    let meta = std::fs::symlink_metadata(&path).ok()?;
-    (path.is_absolute() && meta.is_file()).then_some(path)
+/// Require the Type2 runtime and its actual mounted PaintCraft executable.
+/// Inherited AppImage variables from an unrelated application never select an install.
+fn appimage(input: &DetectInput, exe: &Path) -> Option<PathBuf> {
+    let image = PathBuf::from(
+        input
+            .appimage
+            .as_deref()
+            .filter(|value| !value.is_empty())?,
+    );
+    if !image.is_absolute() || !std::fs::symlink_metadata(&image).ok()?.is_file() {
+        return None;
+    }
+    let appdir = PathBuf::from(input.appdir.as_deref().filter(|value| !value.is_empty())?);
+    if !appdir.is_absolute() {
+        return None;
+    }
+    let appdir = std::fs::canonicalize(appdir).ok()?;
+    if !appdir.is_dir() {
+        return None;
+    }
+    let expected = std::fs::canonicalize(appdir.join("usr/bin/paintcraft")).ok()?;
+    let actual = std::fs::canonicalize(exe).ok()?;
+    if expected != actual || !expected.starts_with(&appdir) {
+        return None;
+    }
+    if !elf_header(&actual, input.arch, ElfKind::Program) {
+        return None;
+    }
+    let image = std::fs::canonicalize(image).ok()?;
+    elf_header(&image, input.arch, ElfKind::Type2Runtime).then_some(image)
+}
+#[derive(Clone, Copy)]
+enum ElfKind {
+    Program,
+    Type2Runtime,
+}
+fn elf_header(path: &Path, arch: Arch, kind: ElfKind) -> bool {
+    use std::io::Read;
+    let machine = match arch {
+        Arch::X64 => 62,
+        Arch::Arm64 => 183,
+        Arch::Other => return false,
+    };
+    let Ok(mut file) = std::fs::File::open(path) else {
+        return false;
+    };
+    if !file.metadata().is_ok_and(|meta| meta.is_file()) {
+        return false;
+    }
+    let mut header = [0u8; 64];
+    if file.read_exact(&mut header).is_err() {
+        return false;
+    }
+    header[..7] == [0x7f, b'E', b'L', b'F', 2, 1, 1]
+        && matches!(header[7], 0 | 3)
+        && matches!(u16::from_le_bytes([header[16], header[17]]), 2 | 3)
+        && u16::from_le_bytes([header[18], header[19]]) == machine
+        && (!matches!(kind, ElfKind::Type2Runtime) || header[8..11] == [b'A', b'I', 2])
 }

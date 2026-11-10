@@ -60,7 +60,7 @@ fn no_source_file_reads_the_environment_except_detection() {
         // platform.rs: $APPIMAGE and the Program Files folders; helper.rs: %SystemRoot% to find
         // powershell.exe. The helper's PAINTCRAFT_UPDATE_* variables are only ever set on the child.
         let allowed = match name.as_str() {
-            "platform.rs" => 2,
+            "platform.rs" => 3,
             "helper.rs" => 1,
             "install_lock.rs" => 3,
             _ => 0,

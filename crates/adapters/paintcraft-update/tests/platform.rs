@@ -11,6 +11,7 @@ fn input(os: Os, arch: Arch, exe: &str) -> DetectInput {
         arch,
         exe: Some(PathBuf::from(exe)),
         appimage: None,
+        appdir: None,
         program_files: Vec::new(),
         debug_build: false,
     }
@@ -117,15 +118,25 @@ fn windows_elsewhere_is_portable() {
 #[test]
 fn appimage_needs_an_existing_absolute_file() {
     let dir = support::tempdir();
-    let image = support::write(dir.path().join("PaintCraft.AppImage"), b"x");
-    let mut i = input(
-        Os::Linux,
-        Arch::X64,
-        "/tmp/.mount_PaintCraftAb/usr/bin/paintcraft",
-    );
+    let mut header = [0u8; 64];
+    header[..7].copy_from_slice(&[0x7f, b'E', b'L', b'F', 2, 1, 1]);
+    header[16..18].copy_from_slice(&2u16.to_le_bytes());
+    header[18..20].copy_from_slice(&62u16.to_le_bytes());
+    let mount = dir.path().join("mounted");
+    std::fs::create_dir_all(mount.join("usr/bin")).unwrap();
+    let exe = support::write(mount.join("usr/bin/paintcraft"), &header);
+    header[8..11].copy_from_slice(&[b'A', b'I', 2]);
+    let image = support::write(dir.path().join("PaintCraft.AppImage"), &header);
+    let mut i = input(Os::Linux, Arch::X64, exe.to_str().unwrap());
+    i.appdir = Some(mount.into_os_string());
     i.appimage = Some(image.clone().into_os_string());
     let p = Platform::from_input(&i);
-    assert_eq!(p.install, InstallKind::LinuxAppImage { path: image });
+    assert_eq!(
+        p.install,
+        InstallKind::LinuxAppImage {
+            path: image.canonicalize().unwrap()
+        }
+    );
     assert_eq!(
         p.asset_name(&version("0.1.1")).unwrap(),
         "paintcraft-0.1.1-linux-x64.AppImage"
