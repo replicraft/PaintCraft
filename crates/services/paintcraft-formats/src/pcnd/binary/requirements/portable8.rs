@@ -4,6 +4,10 @@ use crate::export::prepared_capabilities::{Registration, RegistryContract, resol
 use paintcraft_core::types::{Rect, Rgba, filters::Descriptor, resources::BudgetAccount};
 use paintcraft_document::LayerBlendMode;
 use std::cell::Cell;
+mod materializer_controls;
+pub use materializer_controls::{
+    PortableSource8MaterializerControlBytes, portable_source8_materializer_control_bytes,
+};
 mod census;
 mod cursor;
 mod wire;

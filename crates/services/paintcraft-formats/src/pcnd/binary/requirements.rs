@@ -387,6 +387,9 @@ pub use portable8::{
     PortableSource8Facts, PortableSource8Limits, PortableSource8Plan,
     portable_source8_control_bytes,
 };
+pub use portable8::{
+    PortableSource8MaterializerControlBytes, portable_source8_materializer_control_bytes,
+};
 
 pub use portable8::{PortableRetainedSourceLayout8, RetainedSourceLayoutSummary8};
 

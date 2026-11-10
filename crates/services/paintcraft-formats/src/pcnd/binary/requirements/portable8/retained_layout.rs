@@ -124,7 +124,7 @@ impl std::fmt::Debug for PortableRetainedSourceLayout8<'_, '_> {
 fn mul(a: u64, b: u64) -> Result<u64> {
     a.checked_mul(b).ok_or_else(bound)
 }
-fn control_bytes() -> Result<u64> {
+pub(super) fn control_bytes() -> Result<u64> {
     let bytes = [
         size_of::<PortableRetainedSourceLayout8<'static, 'static>>(),
         size_of::<RetainedSourceLayoutSummary8>(),

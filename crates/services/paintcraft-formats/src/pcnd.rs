@@ -348,4 +348,8 @@ pub use binary::requirements::{PortableRetainedSourceLayout8, RetainedSourceLayo
 
 pub use binary::requirements::PortablePixelMaterializer8;
 
+pub use binary::requirements::{
+    PortableSource8MaterializerControlBytes, portable_source8_materializer_control_bytes,
+};
+
 pub use binary::requirements::{DocumentIntentions8, IntentionReceipt8, LayerIntentions8};
