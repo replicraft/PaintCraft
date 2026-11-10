@@ -35,7 +35,7 @@ struct Entry {
     width: u16,
     height: u16,
     encoding: Encoding,
-    /// Required for CUR, forbidden for ICO. Zero-based [x,y] inside this entry.
+    /// Required for CUR, forbidden for ICO. Zero-based `[x,y]` inside this entry.
     hotspot: Option<[u16; 2]>,
 }
 #[derive(Debug, Deserialize, JsonSchema)]

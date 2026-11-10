@@ -153,7 +153,7 @@ impl WeakResourceLease {
 }
 
 impl BudgetLease {
-    /// Complete fresh Arc<Charge> allocation upper, excluding leased payload.
+    /// Complete fresh `Arc<Charge>` allocation upper, excluding leased payload.
     /// Pure defining-type fact; no allocation, reservation or authority is created.
     pub fn control_allocation_quote() -> Result<u64> {
         let align = std::mem::align_of::<Charge>().max(std::mem::align_of::<usize>());

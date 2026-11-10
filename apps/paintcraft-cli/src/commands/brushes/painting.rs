@@ -7,7 +7,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Stroke {
-    /// Integer [x,y] pairs, capped at 65,536, in point_scale units per pixel.
+    /// Integer `[x,y]` pairs, capped at 65,536, in point_scale units per pixel.
     pub points: Vec<[i64; 2]>,
     pub color: String,
     #[serde(default = "one")]

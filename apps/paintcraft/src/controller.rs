@@ -4,7 +4,7 @@
 //! Editing gestures collect locally and queue one transaction on release. Nothing
 //! is published during a gesture; cancellation changes nothing and a stroke is one
 //! undo step. Color-picker gestures queue a read-only sample and update session
-//! slots without a document transaction. Actions enter through the [`Outbox`].
+//! slots without a document transaction. Actions enter through the [`Outbox`](paintcraft_ui::outbox::Outbox).
 
 #[path = "controller/background.rs"]
 pub(crate) mod background;

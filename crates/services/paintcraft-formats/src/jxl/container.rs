@@ -3,8 +3,8 @@
 //!
 //! Reference: libjxl v0.12.0 lib/jxl/decode.cc (ftyp and partial codestream
 //! stages), and jxl 0.8.0 api/box_parser.rs (level and brob wrapper rules).
-//! https://github.com/libjxl/libjxl/blob/v0.12.0/lib/jxl/decode.cc
-//! https://github.com/libjxl/jxl-rs/blob/9a08ca643fd2d01f803dd0be6a5bebc9cc11e597/jxl/src/api/box_parser.rs
+//! <https://github.com/libjxl/libjxl/blob/v0.12.0/lib/jxl/decode.cc>
+//! <https://github.com/libjxl/jxl-rs/blob/9a08ca643fd2d01f803dd0be6a5bebc9cc11e597/jxl/src/api/box_parser.rs>
 use super::*;
 const BOXES_MAX: usize = 4096;
 

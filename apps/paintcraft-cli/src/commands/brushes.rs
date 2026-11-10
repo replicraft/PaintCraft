@@ -44,7 +44,7 @@ struct Paint {
     /// Explicit renderer policy; this does not emulate Photoshop dynamics.
     #[arg(long,value_parser=["native-grid-v1"])]
     policy: String,
-    /// JSON array of integer [x,y] pairs; positions use point-scale units per pixel.
+    /// JSON array of integer `[x,y]` pairs; positions use point-scale units per pixel.
     #[arg(long)]
     points: PathBuf,
     #[arg(long)]

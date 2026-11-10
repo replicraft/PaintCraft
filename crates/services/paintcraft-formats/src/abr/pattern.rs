@@ -1,5 +1,5 @@
 //! Exact pattern channels plus a separately labelled converted preview.
-//! https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
+//! <https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/>
 mod preview;
 #[cfg(test)]
 mod tests;

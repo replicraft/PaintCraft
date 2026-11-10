@@ -152,7 +152,7 @@ impl FilterStack {
         self.digest
     }
     /// Owned allocation only. The stack's inline cached digest/Vec is already
-    /// included by size_of::<Layer>() / size_of::<SavedLayer>().
+    /// included by `size_of::<Layer>()` / `size_of::<SavedLayer>()`.
     pub fn mask_storage_usage(&self) -> impl Iterator<Item = (usize, u64)> + '_ {
         self.iter()
             .filter_map(|f| f.mask())
