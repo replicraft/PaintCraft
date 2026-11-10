@@ -1343,8 +1343,10 @@ flag; successful build attempt 2 and Node attempt 1 retain separate receipts
 under `docs/validation/layer-blend-candidates/source8-blend-service-wasm/`.
 The earlier 888-case diagnostic and its 16 MiB memory maximum are unchanged.
 
-Matching JS transport separately passes all 376 web Node tests, including 13
-new lifecycle groups using a service double. The genuine Rust/JS connection now
+Matching JS transport separately passes all 384 web Node tests, including 13
+new lifecycle groups using a service double and eight Main-facade contract
+groups. The latter do not qualify matching Rust owner lifetimes. The genuine
+Rust/JS connection now
 also passes 12 groups with 37 scenarios over real Node worker threads: all 26
 RGBA scenes, failed OPEN cleanup, cancellation, held-patch ACK ordering, pending
 close, and quarantine when genuine READY/CLOSED replies are withheld. The actual
@@ -1354,10 +1356,21 @@ verified all 104 effective input hashes and the 26 golden scene hashes after
 execution. Receipts are under
 `docs/validation/source8-blend-runtime-wasm-effective/node-attempt-1/`.
 
+Headless Chrome 157.0.8103.39 also passes eight groups with 35 scenarios against
+that same frozen service artifact. This executes the unchanged production
+browser Worker entry, default singleton controller, actual Wasm fetch, WebCrypto
+and transferable buffers, including all 26 full-RGBA scenes. Independent audit
+verified 36 source/artifact input hashes, 359 served byte records and all 2,982
+archived compiler inputs. Browser receipts are under
+`docs/validation/source8-blend-browser/attempt-1/`. This does not relabel the
+frozen service as a new build of the subsequently added pure role/forecast APIs.
+
 These transport checks use explicit Main callback stand-ins. They do not prove
-original Main admission, CPU texture-delta retirement, browser Worker bootstrap
-or frontend activation. The source-universal workspace forecast separately
-passes 11 focused native groups and the complete 276-renderer/175-worker run;
-native/Wasm Clippy and strict documentation checks pass. Its same-target facts
-still need the actual Main Wasm consumer. None of these checkpoints proves
-physical heap/RSS or latency, and no frontend route is activated by them.
+original Main admission, CPU texture-delta retirement or frontend activation.
+The source-universal workspace and defining service-role forecasts now pass
+the complete 276-renderer/182-worker run, including 11 workspace and seven role
+groups; native/Wasm Clippy and strict documentation checks pass. The separate
+format check retains all 12 structural fixtures, including the intentionally
+undecodable census-only compressed stub. Same-target demand facts still need
+the actual Main Wasm consumer. None of these checkpoints proves physical
+heap/RSS or latency, and no frontend route is activated by them.
