@@ -26,7 +26,8 @@ function Verify-Installed {
     $script:HelperFiles = @($helper, $manifestPath,
         (Join-Path $directory 'JPEGXR_LICENSE.txt'),
         (Join-Path $directory 'DAV1D_LICENSE.txt'),
-        (Join-Path $directory 'HDR_EXR_LICENSES_V1.txt'))
+        (Join-Path $directory 'HDR_EXR_LICENSES_V1.txt'),
+        (Join-Path $directory 'ThirdPartyLicenses.txt'))
     if ((Get-FileHash $helper -Algorithm SHA256).Hash -ne (Get-FileHash $CodecWorker -Algorithm SHA256).Hash) {
         throw 'Installed decoder helper differs from the release helper'
     }

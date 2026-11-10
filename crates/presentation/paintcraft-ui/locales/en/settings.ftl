@@ -98,3 +98,4 @@ pen-tilt = Pen tilt
 pen-twist = Pen twist
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = Tilt and twist affect calligraphy and marker tips when the pen reports those axes.
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = Applies to plain round strokes, pen erasers and enabled textured brushes. Sampled tips keep their existing behavior.
+third-party-licenses = Third-party licenses

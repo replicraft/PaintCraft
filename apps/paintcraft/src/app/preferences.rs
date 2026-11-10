@@ -84,6 +84,18 @@ fn content(
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::About => card(ui, "About", |ui| {
                         paintcraft_classic::settings::about(ui);
+                        egui::CollapsingHeader::new(t!(ui.ctx(), "Third-party licenses"))
+                            .id_salt("third-party-licenses")
+                            .show(ui, |ui| {
+                                egui::ScrollArea::vertical()
+                                    .id_salt("third-party-license-text")
+                                    .max_height(240.0)
+                                    .show(ui, |ui| {
+                                        ui.add(egui::Label::new(include_str!(
+                                            "../../../../packaging/ThirdPartyLicenses.txt"
+                                        )).selectable(true).wrap());
+                                    });
+                            });
                     }),
                     Page::Interface => card(ui, "Canvas navigation", |ui| {
                         ui.checkbox(&mut draft.values.studio_auto_scroll, t!(ui.ctx(), "Auto-scroll"));

@@ -24,6 +24,7 @@
           <File Id="CodecManifest" Source="$(var.CodecManifest)" Name="paintcraft-codec-worker.json" />
           <File Id="License" Source="$(var.License)" Name="LICENSE.txt" />
           <File Id="FontLicenses" Source="$(var.FontLicenses)" Name="FONT_LICENSES.txt" />
+          <File Id="ThirdPartyLicenses" Source="$(var.ThirdPartyLicenses)" Name="ThirdPartyLicenses.txt" />
         </Component>
         <Component Id="PcndAssociation" Guid="*" Bitness="always64">
           <RegistryValue Root="HKLM" Key="Software\Classes\PaintCraft.Document" Type="string"

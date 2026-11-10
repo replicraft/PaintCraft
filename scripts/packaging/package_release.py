@@ -149,6 +149,7 @@ def package(version, target, binary, output):
         codec_worker.copy(binary, payload, version, target)
         shutil.copy2(ROOT / "LICENSE", payload / "LICENSE")
         shutil.copy2(ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt", payload / "FONT_LICENSES.txt")
+        shutil.copy2(ROOT / "packaging/ThirdPartyLicenses.txt", payload / "ThirdPartyLicenses.txt")
         if "windows" in target:
             with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as stream:
                 for entry in sorted(payload.iterdir()):

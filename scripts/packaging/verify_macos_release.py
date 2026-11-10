@@ -51,6 +51,8 @@ def verify(version, target, image, update):
         extracted = root / "extracted"
         subprocess.run(["/usr/bin/ditto", "-x", "-k", str(update.resolve()), str(extracted)], check=True)
         app = extracted / "PaintCraft.app"
+        if (app / "Contents/Resources/ThirdPartyLicenses.txt").read_bytes() != (release.ROOT / "packaging/ThirdPartyLicenses.txt").read_bytes():
+            raise ValueError("Updater bundle has missing or changed third-party notices")
         subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(app)], check=True)
         for binary in (app / "Contents/MacOS/paintcraft-launcher",
                        app / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft",

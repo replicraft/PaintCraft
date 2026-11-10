@@ -98,3 +98,4 @@ pen-tilt = Inclinação da caneta
 pen-twist = Rotação da caneta
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = A inclinação e a rotação afetam as pontas de caligrafia e marcador quando a caneta fornece esses dados.
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = Aplica-se aos traços redondos simples, às borrachas da caneta e aos pincéis com textura ativados. As pontas amostradas mantêm o comportamento atual.
+third-party-licenses = Licenças de terceiros

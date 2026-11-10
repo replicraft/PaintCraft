@@ -31,6 +31,7 @@ def package(version, target, binary, output):
                         "-d", f"Icon={release.ROOT / 'assets/paintcraft-icon.ico'}",
                         "-d", f"License={release.ROOT / 'LICENSE'}", "-o", str(installer),
                         "-d", f"FontLicenses={release.ROOT / 'packaging/desktop/licenses/FONT_LICENSES.txt'}",
+                        "-d", f"ThirdPartyLicenses={release.ROOT / 'packaging/ThirdPartyLicenses.txt'}",
                         str(release.ROOT / "packaging/windows/windows.wxs")], check=True)
     release.write_checksum(installer)
     print(installer)

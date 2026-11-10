@@ -98,3 +98,4 @@ pen-tilt = ペンの傾き
 pen-twist = ペンの回転
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = ペンが対応する情報を提供する場合、傾きと回転はカリグラフィーとマーカーの筆先に反映されます。
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = 標準の丸いストローク、ペンの消しゴム、有効なテクスチャ付きブラシに適用されます。取り込んだ筆先の動作は変わりません。
+third-party-licenses = サードパーティのライセンス

@@ -98,3 +98,4 @@ pen-tilt = पेन का झुकाव
 pen-twist = पेन का घुमाव
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = यदि पेन इन अक्षों की जानकारी देता है, तो झुकाव और घुमाव कैलीग्राफ़ी और मार्कर की नोक पर लागू होते हैं।
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = यह साधारण गोल स्ट्रोक, पेन के इरेज़र और सक्षम बनावट वाले ब्रश पर लागू होता है। सैंपल की गई नोक का मौजूदा व्यवहार बना रहता है।
+third-party-licenses = तृतीय-पक्ष लाइसेंस

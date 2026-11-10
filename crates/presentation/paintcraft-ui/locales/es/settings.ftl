@@ -98,3 +98,4 @@ pen-tilt = Inclinación del lápiz
 pen-twist = Giro del lápiz
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = La inclinación y el giro afectan a las puntas de caligrafía y marcador cuando el lápiz proporciona esos datos.
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = Se aplica a los trazos redondos sencillos, los borradores del lápiz y los pinceles con textura activados. Las puntas muestreadas conservan su comportamiento actual.
+third-party-licenses = Licencias de terceros

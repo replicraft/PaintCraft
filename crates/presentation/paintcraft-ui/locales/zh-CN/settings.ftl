@@ -98,3 +98,4 @@ pen-tilt = 笔倾斜
 pen-twist = 笔旋转
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = 当笔提供相应轴数据时，倾斜和旋转会影响书法和马克笔笔尖。
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = 适用于普通圆形笔画、笔的橡皮擦和已启用的纹理画笔。采样笔尖保持现有行为。
+third-party-licenses = 第三方许可

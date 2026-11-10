@@ -26,6 +26,9 @@ def verify(binary, directory):
     # Reuse the exact schema/profile/variants/build-record/hash and notice
     # validator used by producers and the private-prefix installer.
     codec_worker.verify_installed_manifest(directory, version, target)
+    notices = directory / "ThirdPartyLicenses.txt"
+    if notices.is_symlink() or notices.read_bytes() != (release.ROOT / "packaging/ThirdPartyLicenses.txt").read_bytes():
+        raise ValueError("Installed third-party notices differ from the release notices")
 
 
 def main():

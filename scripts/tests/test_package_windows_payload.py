@@ -33,6 +33,7 @@ class WindowsPayloadTests(unittest.TestCase):
             helper.write_bytes(helper.read_bytes().replace(codec_worker.BUILD_PREFIX, codec_worker.AVIF_SDR_BUILD_PREFIX)
                                .replace(codec_worker.BUILD_SUFFIX, codec_worker.AVIF_SDR_BUILD_SUFFIX))
         shutil.copy2(self.binary, self.installed / "paintcraft.exe")
+        shutil.copy2(release.ROOT / "packaging/ThirdPartyLicenses.txt", self.installed / "ThirdPartyLicenses.txt")
         codec_worker.copy(self.binary, self.installed, self.version, target)
         return json.loads((self.installed / codec_worker.MANIFEST).read_text())
 
@@ -64,7 +65,7 @@ class WindowsPayloadTests(unittest.TestCase):
             verifier.verify(self.binary, self.installed)
 
     def test_changed_binary_helper_and_missing_changed_notice_fail(self):
-        for name in ("paintcraft.exe", "paintcraft-codec-worker.exe", *codec_worker.NOTICES):
+        for name in ("paintcraft.exe", "paintcraft-codec-worker.exe", "ThirdPartyLicenses.txt", *codec_worker.NOTICES):
             for missing in (False, True):
                 with self.subTest(name=name, missing=missing):
                     self.prepare("x86_64-pc-windows-msvc")

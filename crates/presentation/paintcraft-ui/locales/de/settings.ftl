@@ -98,3 +98,4 @@ pen-tilt = Stiftneigung
 pen-twist = Stiftdrehung
 tilt-and-twist-affect-calligraphy-and-marker-tips-when-the-pen-reports-those-axes = Neigung und Drehung wirken bei Kalligrafie- und Markerspitzen, wenn der Stift diese Achsen meldet.
 applies-to-plain-round-strokes-pen-erasers-and-enabled-textured-brushes-sampled-tips-keep-their-existing-behavior = Gilt für einfache runde Striche, Stiftradierer und aktivierte strukturierte Pinsel. Gespeicherte Pinselspitzen behalten ihr bisheriges Verhalten.
+third-party-licenses = Lizenzen von Drittanbietern

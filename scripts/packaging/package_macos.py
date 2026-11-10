@@ -37,6 +37,7 @@ def populate_bundle(binary, destination, version, launcher):
     (contents / "MacOS/paintcraft-launcher").chmod(0o755)
     shutil.copy2(ICON, contents / "Resources" / ICON.name)
     shutil.copy2(ROOT / "LICENSE", contents / "Resources/LICENSE")
+    shutil.copy2(ROOT / "packaging/ThirdPartyLicenses.txt", contents / "Resources/ThirdPartyLicenses.txt")
     shutil.copy2(ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt", contents / "Resources/FONT_LICENSES.txt")
     info = metadata(version)
     info["CFBundleExecutable"] = "paintcraft-launcher"
