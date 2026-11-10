@@ -1,4 +1,5 @@
-"""Immutable release checkout and final tag provenance, without executing Git."""
+"""Immutable release provenance with isolated local remotes and malformed-ref fixtures."""
+from contextlib import chdir
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,45 @@ REF = "refs/tags/" + TAG
 
 
 class ReleaseSourceTests(unittest.TestCase):
+    def test_real_local_remote_rejects_moved_and_deleted_release_tags(self):
+        for annotated in (False, True):
+            with self.subTest(annotated=annotated), tempfile.TemporaryDirectory(
+                prefix="paintcraft-release-provenance-"
+            ) as temporary:
+                root = Path(temporary)
+                remote = root / "remote.git"
+                checkout = root / "checkout"
+                hooks = root / "empty-hooks"
+                hooks.mkdir()
+
+                def git(*arguments):
+                    return subprocess.check_output(
+                        ["git", "-c", "user.name=Release test", "-c", "user.email=release@example.invalid",
+                         "-c", f"core.hooksPath={hooks}", *arguments],
+                        stderr=subprocess.PIPE, text=True,
+                    ).strip()
+
+                with chdir(root):
+                    git("init", "--bare", str(remote))
+                    git("init", str(checkout))
+                with chdir(checkout):
+                    git("remote", "add", "origin", str(remote))
+                    git("commit", "--allow-empty", "-m", "First release source")
+                    original = source.current_commit()
+                    flags = ["-a", "-m", "Release"] if annotated else []
+                    git("tag", *flags, TAG)
+                    git("push", "origin", REF)
+                    self.assertEqual(source.verify(TAG, original), original)
+                    git("commit", "--allow-empty", "-m", "Different source")
+                    git("tag", "--force", *flags, TAG)
+                    git("push", "--force", "origin", REF)
+                    git("checkout", "--detach", original)
+                    with self.assertRaisesRegex(ValueError, "tag moved"):
+                        source.verify(TAG, original)
+                    git("push", "origin", ":" + REF)
+                    with self.assertRaises(ValueError):
+                        source.verify(TAG, original)
+
     def test_lightweight_and_annotated_tags_select_the_actual_commit(self):
         self.assertEqual(source.remote_commit(f"{COMMIT}\t{REF}\n", TAG), COMMIT)
         self.assertEqual(source.remote_commit(f"{OBJECT}\t{REF}\n{COMMIT}\t{REF}^{{}}\n", TAG), COMMIT)
