@@ -1,0 +1,4 @@
+PaintCraft signed updater
+Derived from Relay relay-update (Apache License 2.0), PixelSoftwareStudios/Relay.
+Adapted for PaintCraft release names, nested macOS bundles and codec-helper payloads.
+The original license is included in LICENSE.
