@@ -469,3 +469,7 @@ mod tests {
         assert!(Language::parse("xx").is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "i18n/update_tests.rs"]
+mod update_tests;
