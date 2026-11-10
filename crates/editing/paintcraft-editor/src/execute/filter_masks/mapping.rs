@@ -114,6 +114,9 @@ pub(super) fn coverage(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<A8Mask> {
     match mapping {
+        Mapping::StretchSkew(g, extent) => {
+            mask.stretch_skew_checked(g, extent, &stage.adm.coverage_budget(), limits, check)
+        }
         Mapping::Empty => A8Mask::from_bands(
             Rect::from_origin_size(0, 0, 1, 1).unwrap(),
             &[],

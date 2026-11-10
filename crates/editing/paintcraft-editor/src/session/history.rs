@@ -136,6 +136,8 @@ pub(super) fn label(batch: &Batch) -> Label {
         Op::CanvasResize { .. } | Op::LayerExpand { .. } => Label::ResizeCanvas,
         Op::CanvasClear { .. } => Label::ClearCanvas,
         Op::CanvasCrop { .. } => Label::CropCanvas,
+        Op::CanvasStretchSkew { .. } => Label::TransformCanvas,
+        Op::StretchSkewSelection { .. } => Label::TransformSelection,
         Op::CanvasTransform { .. } => Label::TransformCanvas,
         Op::TransformSelection { .. } => Label::TransformSelection,
         Op::MoveSelection { .. } => Label::MoveSelection,

@@ -290,6 +290,8 @@ fn kind(op: &Op) -> Kind {
         Op::FloodFill { .. } => Kind::ReadWrite,
         Op::CanvasCrop { .. }
         | Op::CanvasTransform { .. }
+        | Op::CanvasStretchSkew { .. }
+        | Op::StretchSkewSelection { .. }
         | Op::TransformSelection { .. }
         | Op::MoveSelection { .. } => Kind::Transform,
         Op::LayerSetBlendMode { .. }
