@@ -5,6 +5,8 @@ pub use super::{
     preflight_duplicate_counts,
 };
 use crate::export::layer_blend_appearance::{self as metadata8, Requirements8};
+mod probe_work;
+pub use probe_work::{Source8ProbeWorkFacts, source8_probe_supplemental_work_quote};
 #[cfg(test)]
 mod tests;
 mod wire;
