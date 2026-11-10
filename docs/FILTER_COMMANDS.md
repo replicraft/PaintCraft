@@ -1,13 +1,14 @@
 # Editable filters
 
 The engine, CLI and MCP support an ordered filter stack on each raster layer.
-The eight algorithms are Invert, Brightness/Contrast, Black & White, Threshold,
-Posterize, Solarize, Box Blur and complete Levels. All preserve editable source pixels; the seven
-point profiles preserve alpha, while Box Blur evaluates a premultiplied
-neighborhood and can change alpha. They participate in one-step Undo/Redo and remain editable after
-saving and reopening a PCND project. Desktop and browser Studio expose stack
-editing and per-filter selection-derived masks. Mask painting/linking and the
-remaining algorithm catalog are separate work.
+The thirteen algorithms are Invert, Brightness/Contrast, Black & White,
+Threshold, Posterize, Solarize, Box Blur, Levels, Exposure, Curves, Vibrance,
+Hue/Saturation and Add Noise. All preserve editable source pixels. The twelve
+point profiles preserve alpha; Box Blur evaluates a premultiplied neighborhood
+and can change alpha. They participate in one-step Undo/Redo and remain editable
+after saving and reopening a PCND project. Desktop and browser Studio expose
+stack editing and per-filter selection-derived masks. Mask painting/linking and
+additional algorithms remain separate work.
 
 ## Studio
 
