@@ -1,0 +1,5 @@
+# Preserve upstream license bytes used by packaging and provenance checks.
+crates/services/paintcraft-formats/tests/jxr-fixtures/JXRLib-LICENSE.md -text
+apps/paintcraft-codec-worker/vendor/dav1d/COPYING -text
+crates/adapters/paintcraft-update/LICENSE -text
+crates/adapters/paintcraft-update/NOTICE -text
