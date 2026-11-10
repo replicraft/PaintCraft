@@ -655,6 +655,8 @@
 - ignore paint fixture build outputs (d2f8da5)
 - include Win95 in desktop captures (2153264)
 - derive future installer fixture versions (3169aab)
+- prepare v0.2.0 (b5d7d31)
+- cover functional resize and export dialogs (80d1aad)
 
 
 ### Performance
