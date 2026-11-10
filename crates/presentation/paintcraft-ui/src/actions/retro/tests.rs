@@ -112,7 +112,6 @@ fn retro_is_closed_to_supported_tools_formats_and_paint_actions() {
         Action::Open,
         Action::Save,
         Action::SaveAs,
-        Action::Print,
         Action::CanvasSize,
         Action::ResizeSkew,
         Action::ImageProperties,
@@ -120,8 +119,21 @@ fn retro_is_closed_to_supported_tools_formats_and_paint_actions() {
         Action::EditSecondaryColors,
         Action::View(ViewAction::StatusBar),
     ] {
-        assert!(action.enabled(ctx));
+        assert!(action.enabled(ctx), "{action:?}");
     }
+    assert!(Action::Print.available(Frontend::Retro));
+    assert_eq!(
+        Action::Print.enabled(ctx),
+        cfg!(any(target_os = "macos", target_arch = "wasm32"))
+    );
+    assert!(!Action::Print.enabled(Context {
+        document_open: false,
+        ..ctx
+    }));
+    assert!(!Action::Print.enabled(Context {
+        blocked: true,
+        ..ctx
+    }));
     for action in [
         Action::SaveAll,
         Action::FlattenImage,
