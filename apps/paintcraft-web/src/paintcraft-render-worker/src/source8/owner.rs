@@ -124,6 +124,9 @@ pub(super) fn close_checked(
 #[path = "frame_render.rs"]
 mod frame_render;
 
+#[path = "display_owner.rs"]
+mod display_owner;
+
 #[cfg(test)]
 #[path = "tests/payload_cases.rs"]
 pub(super) mod payload_cases;

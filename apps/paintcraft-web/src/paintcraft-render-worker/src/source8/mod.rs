@@ -39,5 +39,8 @@ pub use frame_image::Source8RgbaImage;
 pub use frame_inputs::{Source8FrameCaps, Source8FrameRealms, Source8FrameScopes};
 pub use frame_public::render_portable_source8_checked;
 
+mod display_public;
+pub use display_public::{Source8DisplayPatch, render_portable_source8_display_checked};
+
 #[cfg(test)]
 mod tests;

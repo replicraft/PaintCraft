@@ -1,0 +1,367 @@
+{
+  "status": "INDEPENDENT_DISPLAY_FULL_RGBA_BEFORE_RUST",
+  "cases": [
+    {
+      "name": "identity-full",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111050300000212121212121212121212121212121212054c6179657201ff00000005030000000000000100003cff0000ff00ffff00006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff0013131313131313131313131313131313054c6179657200ff0100000503ffffffff0000008e083ee0da3c6d1fbb39b55fc5e3299dd21e72db7670279c587026baecebb003",
+      "sha256": "59191ad3885a41da19dbddc138fb4e34d9c2e69fca0853ce23a3ffba059f3d23",
+      "visible": [
+        0,
+        0,
+        5,
+        3
+      ],
+      "level": 0,
+      "patch": [
+        0,
+        0,
+        5,
+        3
+      ],
+      "rgba_hex": "ff0000ff00000000006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff",
+      "rgba_sha256": "8472aec235bee37f908042a2f17bff8eb6ba52ae5e91a2b3d42b3de58d091eb9",
+      "samples_per_cell": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "aligned-expanded-view",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111050300000212121212121212121212121212121212054c6179657201ff00000005030000000000000100003cff0000ff00ffff00006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff0013131313131313131313131313131313054c6179657200ff0100000503ffffffff0000008e083ee0da3c6d1fbb39b55fc5e3299dd21e72db7670279c587026baecebb003",
+      "sha256": "59191ad3885a41da19dbddc138fb4e34d9c2e69fca0853ce23a3ffba059f3d23",
+      "visible": [
+        1,
+        1,
+        5,
+        3
+      ],
+      "level": 1,
+      "patch": [
+        0,
+        0,
+        3,
+        2
+      ],
+      "rgba_hex": "aa0055bf355079ffffff00403c4650ff64006440050a0fff",
+      "rgba_sha256": "4ed699d2676942140b3e921c81cc7d9e4a41f5351fd3a9deb4b5d65251e3a0da",
+      "samples_per_cell": [
+        4,
+        4,
+        2,
+        2,
+        2,
+        1
+      ]
+    },
+    {
+      "name": "nonzero-cell-patch",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111050300000212121212121212121212121212121212054c6179657201ff00000005030000000000000100003cff0000ff00ffff00006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff0013131313131313131313131313131313054c6179657200ff0100000503ffffffff0000008e083ee0da3c6d1fbb39b55fc5e3299dd21e72db7670279c587026baecebb003",
+      "sha256": "59191ad3885a41da19dbddc138fb4e34d9c2e69fca0853ce23a3ffba059f3d23",
+      "visible": [
+        1,
+        1,
+        5,
+        3
+      ],
+      "level": 1,
+      "patch": [
+        1,
+        0,
+        3,
+        1
+      ],
+      "rgba_hex": "355079ffffff0040",
+      "rgba_sha256": "d9a2513e7bb975dd7d9f63ceecba9408049cfb9a2ab57be027eb81a0b36b4ac4",
+      "samples_per_cell": [
+        4,
+        2
+      ]
+    },
+    {
+      "name": "partial-corner",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111050300000212121212121212121212121212121212054c6179657201ff00000005030000000000000100003cff0000ff00ffff00006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff0013131313131313131313131313131313054c6179657200ff0100000503ffffffff0000008e083ee0da3c6d1fbb39b55fc5e3299dd21e72db7670279c587026baecebb003",
+      "sha256": "59191ad3885a41da19dbddc138fb4e34d9c2e69fca0853ce23a3ffba059f3d23",
+      "visible": [
+        1,
+        1,
+        5,
+        3
+      ],
+      "level": 1,
+      "patch": [
+        2,
+        1,
+        3,
+        2
+      ],
+      "rgba_hex": "050a0fff",
+      "rgba_sha256": "7a89bacfe2d004c5082f7d1ad56d31db0891482ebd695da09334434d6415b436",
+      "samples_per_cell": [
+        1
+      ]
+    },
+    {
+      "name": "identity-cropped",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111050300000212121212121212121212121212121212054c6179657201ff00000005030000000000000100003cff0000ff00ffff00006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff0013131313131313131313131313131313054c6179657200ff0100000503ffffffff0000008e083ee0da3c6d1fbb39b55fc5e3299dd21e72db7670279c587026baecebb003",
+      "sha256": "59191ad3885a41da19dbddc138fb4e34d9c2e69fca0853ce23a3ffba059f3d23",
+      "visible": [
+        1,
+        1,
+        4,
+        3
+      ],
+      "level": 0,
+      "patch": [
+        1,
+        0,
+        3,
+        2
+      ],
+      "rgba_hex": "c8c8c8ff0a141eff6400648000000000",
+      "rgba_sha256": "7e3aaed0b92231a8ee3cc51ae6d083042cbd964a148218a51e47c0a14ccb0e00",
+      "samples_per_cell": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "level2partial-grid",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111050300000212121212121212121212121212121212054c6179657201ff00000005030000000000000100003cff0000ff00ffff00006400ff0000ffffffff00800000ffffff0000ffc8c8c8ff0a141eff0000000046505aff323c46ff6400648000000000050a0fff0013131313131313131313131313131313054c6179657200ff0100000503ffffffff0000008e083ee0da3c6d1fbb39b55fc5e3299dd21e72db7670279c587026baecebb003",
+      "sha256": "59191ad3885a41da19dbddc138fb4e34d9c2e69fca0853ce23a3ffba059f3d23",
+      "visible": [
+        0,
+        0,
+        5,
+        3
+      ],
+      "level": 2,
+      "patch": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "rgba_hex": "5e3064ca595c0a80",
+      "rgba_sha256": "2c50d6f086f5949e2513fda23d88c7b06aa6e65da17591b2fe83e6b2f998d7be",
+      "samples_per_cell": [
+        12,
+        3
+      ]
+    },
+    {
+      "name": "cross-native64",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111410100000212121212121212121212121212121212054c6179657201ff000000410100000000000001000084020000ffff0102feff0204fdff0306fcff0408fbff050afaff060cf9ff070ef8ff0810f7ff0912f6ff0a14f5ff0b16f4ff0c18f3ff0d1af2ff0e1cf1ff0f1ef0ff1020efff1122eeff1224edff1326ecff1428ebff152aeaff162ce9ff172ee8ff1830e7ff1932e6ff1a34e5ff1b36e4ff1c38e3ff1d3ae2ff1e3ce1ff1f3ee0ff2040dfff2142deff2244ddff2346dcff2448dbff254adaff264cd9ff274ed8ff2850d7ff2952d6ff2a54d5ff2b56d4ff2c58d3ff2d5ad2ff2e5cd1ff2f5ed0ff3060cfff3162ceff3264cdff3366ccff3468cbff356acaff366cc9ff376ec8ff3870c7ff3972c6ff3a74c5ff3b76c4ff3c78c3ff3d7ac2ff3e7cc1ff3f7ec0ff4080bfff0013131313131313131313131313131313054c6179657200ff0100004101ffffffff0000001ec6fe5eacc1f845790db99b952fc56350d8c629feaa746823953feb428b2880",
+      "sha256": "798b05003e7a8a8a43b7e1f7f21829bf530e210a7b8f0ac973059981c13ba4cc",
+      "visible": [
+        1,
+        0,
+        65,
+        1
+      ],
+      "level": 1,
+      "patch": [
+        31,
+        0,
+        33,
+        1
+      ],
+      "rgba_hex": "3f7dc1ff4080bfff",
+      "rgba_sha256": "c2c92eb84ccd997d5ca4443be1084d670779cba1147539199c03afe64d9702bf",
+      "samples_per_cell": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "composite-before-reduce",
+      "hex": "50434e44080d0a1a01001010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201000000000000010000081f7ff18000ff00ff0013131313131313131313131313131313054c6179657201ff010000020100000000000001000008cc4d0d8014c864ff007914d88cf0be9d984928a262abfe381bdfae61350b3599a0eb8615777dcedffd",
+      "sha256": "c48a67ea5c447dc3967954d30da193124391e178f05d736eab18d99345b6dbda",
+      "visible": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "level": 1,
+      "patch": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rgba_hex": "259526e0",
+      "rgba_sha256": "2d20cb3e3affea2e5d029a3c4ff6457832a0680d5997c44752c117b09adbd5e5",
+      "samples_per_cell": [
+        2
+      ]
+    }
+  ],
+  "native_5x3": [
+    [
+      255,
+      0,
+      0,
+      255
+    ],
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      100,
+      0,
+      255
+    ],
+    [
+      0,
+      0,
+      255,
+      255
+    ],
+    [
+      255,
+      255,
+      0,
+      128
+    ],
+    [
+      0,
+      0,
+      255,
+      255
+    ],
+    [
+      255,
+      0,
+      0,
+      255
+    ],
+    [
+      200,
+      200,
+      200,
+      255
+    ],
+    [
+      10,
+      20,
+      30,
+      255
+    ],
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      70,
+      80,
+      90,
+      255
+    ],
+    [
+      50,
+      60,
+      70,
+      255
+    ],
+    [
+      100,
+      0,
+      100,
+      128
+    ],
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      5,
+      10,
+      15,
+      255
+    ]
+  ],
+  "two_layer_native": [
+    [
+      86,
+      81,
+      89,
+      192
+    ],
+    [
+      0,
+      200,
+      0,
+      255
+    ]
+  ],
+  "correct_composite_then_reduce": [
+    37,
+    149,
+    38,
+    224
+  ],
+  "wrong_per_layer_reduce_then_composite": [
+    20,
+    153,
+    44,
+    239
+  ],
+  "negative_specs": [
+    {
+      "kind": "level21",
+      "level": 21
+    },
+    {
+      "kind": "patch-outside",
+      "patch": [
+        0,
+        0,
+        4,
+        2
+      ]
+    },
+    {
+      "kind": "patch-empty",
+      "patch": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "kind": "visible-outside",
+      "visible": [
+        -1,
+        0,
+        5,
+        3
+      ]
+    }
+  ],
+  "pre_freeze_draft_note": "Uniformtopdraftcancommutewithreduction; selectedNONUNIFORMtopalpha/colors providesconstructivedifference. No productexecution/calibration.",
+  "no_product_import_execution": true
+}

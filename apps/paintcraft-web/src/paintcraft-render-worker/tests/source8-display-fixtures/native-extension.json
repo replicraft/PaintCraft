@@ -1,0 +1,61 @@
+{
+  "status": "PRE_TEST_RUST_EXTENSION_FROM_ALREADY_FROZEN_NATIVE_GOLDENS_NO_RUNTIME",
+  "source_parents": {
+    "apps/paintcraft-web/src/paintcraft-render-worker/tests/source8-closed-frame-fixtures/full-frame.json": "0f4c1539e714cd7504225de428839e659650cf7ae020ee54d9325aa4f42fdb69",
+    "apps/paintcraft-web/src/paintcraft-render-worker/tests/source8-closed-frame-fixtures/branches.json": "0b43f00d9ace45e513dd8e017d8c99fa2cae49deaf7041609708b91d4516f502"
+  },
+  "cases": [
+    {
+      "name": "spatial-65-clamp-radius1-display",
+      "hex": "50434e44080d0a1a17010b626f782d626c75722d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111410100000212121212121212121212121212121212054c6179657201ff000000410100000000012828282828282828282828282828282801000101000001000084020014c8ff0314c8ff0614c8ff0914c8ff0c14c8ff0f14c8ff1214c8ff1514c8ff1814c8ff1b14c8ff1e14c8ff2114c8ff2414c8ff2714c8ff2a14c8ff2d14c8ff3014c8ff3314c8ff3614c8ff3914c8ff3c14c8ff3f14c8ff4214c8ff4514c8ff4814c8ff4b14c8ff4e14c8ff5114c8ff5414c8ff5714c8ff5a14c8ff5d14c8ff6014c8ff6314c8ff6614c8ff6914c8ff6c14c8ff6f14c8ff7214c8ff7514c8ff7814c8ff7b14c8ff7e14c8ff8114c8ff8414c8ff8714c8ff8a14c8ff8d14c8ff9014c8ff9314c8ff9614c8ff9914c8ff9c14c8ff9f14c8ffa214c8ffa514c8ffa814c8ffab14c8ffae14c8ffb114c8ffb414c8ffb714c8ffba14c8ffbd14c8ffc014c8ff0013131313131313131313131313131313054c6179657200ff0100004101ffffffff00000031786679495f0a50d2e6b0aeb55723f6762bf3a4f35c4581e95da984a4ba095e",
+      "sha256": "cc98fb50171bb7f0da2c81e27272d3492faf86cab1dd2f30f853062094d4c053",
+      "visible": [
+        0,
+        0,
+        65,
+        1
+      ],
+      "level": 1,
+      "patch": [
+        31,
+        0,
+        33,
+        1
+      ],
+      "rgba_hex": "bc14c8ffbf14c8ff",
+      "rgba_sha256": "afaec9ae0d1790de327329998771bd1fd4e9a0c154b93586e7d90a462154f8b7",
+      "samples_per_cell": [
+        2,
+        1
+      ],
+      "mode": "Base",
+      "original_native_oracle": "cc303f3f3baa3a1b6ad46fd287592f4436b761e9f38f3debae44162a90bb4974"
+    },
+    {
+      "name": "coordinate-noise-display",
+      "hex": "50434e44080d0a1a1c01106164642d6e6f6973652d7267622d763109706172616d732d76311010101010101010101010101010101011111111111111111111111111111111020100000212121212121212121212121212121212054c6179657201ff0000000201000000ff0128282828282828282828282828282828010006000a0000000000000013131313131313131313131313131313054c6179657200ff0100000201ffffffff0000003fd93c8be2797380fded883448653023a72f7456ca3d0d6448782d8137313fb1",
+      "sha256": "bbad0b1e76e510e948dfd34bc1d4d56f2e5c107034af0ed7afe849435f403c14",
+      "visible": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "level": 1,
+      "patch": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rgba_hex": "010304ff",
+      "rgba_sha256": "6d7c0e79a530172ab49587acbf5377d81dfdb8da90cbac00b606912886936367",
+      "samples_per_cell": [
+        2
+      ],
+      "mode": "Noise",
+      "original_native_oracle": "d845c27efbd2bf1245aa2da018a63314253d5996d78c45db3fb56fc305dce042"
+    }
+  ],
+  "reduction": "Sameindependentintegeralphaweightedsum; originalnativeRGBAoraclespredateddisplayRust, no productexecutioncalibration"
+}
