@@ -226,7 +226,9 @@ impl App {
             if let Some(saving) = &mut self.saving {
                 saving.cancel_restore();
             }
-            if self.any_pending_edits() || self.any_deferred_files() {
+            if self.refuse_close_with_inactive_changes(&ctx) {
+                // Retained dirty documents must be resolved in their own interface.
+            } else if self.any_pending_edits() || self.any_deferred_files() {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.close_after_edits = true;
                 self.editor

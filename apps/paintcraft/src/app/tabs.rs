@@ -1,5 +1,6 @@
 //! Document state is parked without cloning its editor or replacing its I/O owner.
 use super::*;
+use paintcraft_ui::t;
 use saving::sessions::SessionState;
 #[path = "tabs/chrome.rs"]
 mod chrome;
@@ -251,6 +252,11 @@ impl App {
                     .as_ref()
                     .is_some_and(|s| s.editor.recovery_handle().is_some())
             })
+            || self
+                .parked_workspaces
+                .values()
+                .flat_map(|workspace| workspace.states())
+                .any(|state| state.editor.recovery_handle().is_some())
     }
 
     pub(super) fn recovery_offer_busy(&self, found: &Found) -> bool {
@@ -259,6 +265,11 @@ impl App {
                 .tabs
                 .iter()
                 .any(|t| t.state.as_ref().is_some_and(|s| s.session.recovery_busy()))
+            || self
+                .parked_workspaces
+                .values()
+                .flat_map(|workspace| workspace.states())
+                .any(|state| state.session.recovery_busy())
     }
 
     pub(super) fn other_document_destination(&self, path: &Path) -> bool {
@@ -273,6 +284,17 @@ impl App {
                             .is_some_and(|p| same_destination(p, path))
                 })
             })
+            || self
+                .parked_workspaces
+                .values()
+                .flat_map(|workspace| workspace.states())
+                .any(|state| {
+                    !state.editor.is_dirty()
+                        && state
+                            .bound
+                            .as_deref()
+                            .is_some_and(|p| same_destination(p, path))
+                })
     }
 
     pub(crate) fn destination_written(
@@ -308,6 +330,23 @@ impl App {
                 state.editor.invalidate_saved_state();
                 state.last_autosave = f64::NEG_INFINITY;
                 state.editor.set_status("Another open document replaced this file. This version remains unsaved; use Save As to keep it separately.");
+            }
+        }
+        for workspace in self.parked_workspaces.values_mut() {
+            for (id, state) in workspace.states_with_ids_mut() {
+                if adopted == Some(id) {
+                    continue;
+                }
+                if state
+                    .bound
+                    .as_deref()
+                    .is_some_and(|p| same_destination(p, path))
+                    && !state.editor.document().same_semantics(snapshot)
+                {
+                    state.editor.invalidate_saved_state();
+                    state.last_autosave = f64::NEG_INFINITY;
+                    state.editor.set_status("Another open document replaced this file. This version remains unsaved; use Save As to keep it separately.");
+                }
             }
         }
     }
@@ -469,16 +508,60 @@ pub(super) struct WorkspaceDocuments {
     next_tab_number: u64,
 }
 impl WorkspaceDocuments {
+    #[cfg(test)]
     pub(super) fn new(size: (u32, u32), recovery: bool) -> Self {
-        Self {
-            active: DocumentState::new(
-                Editor::new_document(size.0, size.1).expect("validated default size"),
-                recovery,
-            ),
+        Self::try_new(size, recovery).expect("validated default size")
+    }
+    pub(super) fn try_new(
+        size: (u32, u32),
+        recovery: bool,
+    ) -> paintcraft_core::types::Result<Self> {
+        Ok(Self {
+            active: DocumentState::new(Editor::new_document(size.0, size.1)?, recovery),
             tabs: vec![Tab::initial()],
             active_tab: 0,
             next_tab_number: 1,
-        }
+        })
+    }
+    fn states(&self) -> impl Iterator<Item = &DocumentState> {
+        (!self.tabs.is_empty())
+            .then_some(&self.active)
+            .into_iter()
+            .chain(self.tabs.iter().filter_map(|tab| tab.state.as_ref()))
+    }
+    fn states_with_ids_mut(&mut self) -> impl Iterator<Item = (Uuid, &mut DocumentState)> {
+        let active_id = (!self.tabs.is_empty()).then(|| self.tabs[self.active_tab].id);
+        active_id
+            .map(|id| (id, &mut self.active))
+            .into_iter()
+            .chain(
+                self.tabs
+                    .iter_mut()
+                    .filter_map(|tab| tab.state.as_mut().map(|state| (tab.id, state))),
+            )
+    }
+    fn has_unsaved_content(&self) -> bool {
+        self.states().any(|state| {
+            state.editor.is_dirty()
+                || state.editor.has_pending_edits()
+                || state.editor.gesture_in_progress()
+                || state.editor.is_editing_text()
+                || state.editor.failed_text_retained()
+                || !state.deferred_files.is_empty()
+                || state.pending_save.is_some()
+                || state.name_edit.as_ref().is_some_and(|(id, name, _)| {
+                    state
+                        .editor
+                        .layer_properties(*id)
+                        .is_some_and(|p| p.0 != *name)
+                })
+                || state.opacity_edit.is_some_and(|(id, opacity)| {
+                    state
+                        .editor
+                        .layer_properties(id)
+                        .is_some_and(|p| p.1 != opacity)
+                })
+        })
     }
     pub(super) fn update_restart_idle(&self) -> bool {
         let idle = |state: &DocumentState| {
@@ -531,7 +614,7 @@ impl App {
         for state in self.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
             sources.extend(&state.auxiliary_sources);
         }
-        if let Some(workspace) = &self.other_workspace {
+        for workspace in self.parked_workspaces.values() {
             sources.extend(&workspace.active.auxiliary_sources);
             for state in workspace.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
                 sources.extend(&state.auxiliary_sources);
@@ -551,7 +634,7 @@ impl App {
         for state in self.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
             add(state, &mut sources);
         }
-        if let Some(workspace) = &self.other_workspace {
+        for workspace in self.parked_workspaces.values() {
             add(&workspace.active, &mut sources);
             for state in workspace.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
                 add(state, &mut sources);
@@ -560,3 +643,28 @@ impl App {
         sources
     }
 }
+
+impl App {
+    pub(super) fn refuse_close_with_inactive_changes(&mut self, ctx: &egui::Context) -> bool {
+        if !self
+            .parked_workspaces
+            .values()
+            .any(|workspace| workspace.has_unsaved_content())
+        {
+            return false;
+        }
+        self.allow_close = false;
+        self.closing_workspace = false;
+        self.close_after_edits = false;
+        self.close_after_saves = false;
+        self.editor.set_status(t!(ctx,
+            "Switch to the other interface and save or discard its changed documents before closing."));
+        ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        ctx.request_repaint();
+        true
+    }
+}
+
+#[cfg(test)]
+#[path = "tabs/workspace_tests.rs"]
+mod workspace_tests;

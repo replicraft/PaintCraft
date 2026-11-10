@@ -92,7 +92,11 @@ fn parked_modified_workspace_is_not_covered_by_active_only_dirty_check() {
     let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
     parked.active.editor.request(1, Action::AddLayer);
     parked.active.editor.run_pending();
-    app.other_workspace = Some(Box::new(parked));
+    let inactive_experience = match app.experience() {
+        Experience::Classic => Experience::Studio,
+        Experience::Studio => Experience::Classic,
+    };
+    app.park_workspace_for_test(inactive_experience, Box::new(parked));
     assert!(!app.any_dirty_documents());
     assert!(!app.update_parked_idle());
 }

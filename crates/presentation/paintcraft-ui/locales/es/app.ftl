@@ -229,3 +229,4 @@ image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-t
 finish-pending-edits-before-saving = Finaliza las ediciones pendientes antes de guardar
 finish-pending-edits-before-changing-the-document = Finaliza las ediciones pendientes antes de cambiar el documento
 format-cannot-place-text-detail = No se puede colocar el texto: { $detail }
+switch-to-the-other-interface-and-save-or-discard-its-changed-documents-before-closing = Cambia a la otra interfaz y guarda o descarta los cambios de sus documentos antes de cerrar.

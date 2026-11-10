@@ -49,9 +49,9 @@ impl App {
             || self.msp_export.is_some()
     }
     fn update_parked_idle(&self) -> bool {
-        self.other_workspace
-            .as_ref()
-            .is_none_or(|workspace| workspace.update_restart_idle())
+        self.parked_workspaces
+            .values()
+            .all(|workspace| workspace.update_restart_idle())
     }
     fn update_text_failed(&self) -> bool {
         self.editor.failed_text_retained()

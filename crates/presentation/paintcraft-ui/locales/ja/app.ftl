@@ -229,3 +229,4 @@ image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-t
 finish-pending-edits-before-saving = 保存する前に保留中の編集を完了してください
 finish-pending-edits-before-changing-the-document = ドキュメントを変更する前に保留中の編集を完了してください
 format-cannot-place-text-detail = テキストを配置できません: { $detail }
+switch-to-the-other-interface-and-save-or-discard-its-changed-documents-before-closing = 閉じる前にもう一方のインターフェースに切り替え、変更されたドキュメントを保存するか変更を破棄してください。

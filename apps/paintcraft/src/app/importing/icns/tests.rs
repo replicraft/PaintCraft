@@ -138,8 +138,12 @@ fn pending_and_installed_icns_same_file_sources_remain_protected_across_rename_a
             2 => {
                 let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
                 parked.swap(app);
-                app.other_workspace = Some(Box::new(parked));
                 app.settings.experience = Experience::Classic;
+                let inactive_experience = match app.experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }
             _ => {}
         }

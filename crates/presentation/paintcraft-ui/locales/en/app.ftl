@@ -229,3 +229,4 @@ image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-t
 finish-pending-edits-before-saving = Finish pending edits before saving
 finish-pending-edits-before-changing-the-document = Finish pending edits before changing the document
 format-cannot-place-text-detail = Cannot place text: { $detail }
+switch-to-the-other-interface-and-save-or-discard-its-changed-documents-before-closing = Switch to the other interface and save or discard its changed documents before closing.

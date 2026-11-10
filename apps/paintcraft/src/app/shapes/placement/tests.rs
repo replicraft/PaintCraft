@@ -233,8 +233,12 @@ fn placed_shape_sources_follow_saved_documents_other_tabs_and_separate_workspace
             2 => {
                 let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
                 parked.swap(app);
-                app.other_workspace = Some(Box::new(parked));
                 app.settings.experience = Experience::Classic;
+                let inactive_experience = match app.experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }
             _ => {}
         }
@@ -372,8 +376,12 @@ fn adopted_drag_source_survives_library_replacement_rename_tabs_and_workspace() 
             2 => {
                 let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
                 parked.swap(app);
-                app.other_workspace = Some(Box::new(parked));
                 app.settings.experience = Experience::Classic;
+                let inactive_experience = match app.experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                app.park_workspace_for_test(inactive_experience, Box::new(parked));
                 assert!(app.editor.resource_shape_name().is_none());
             }
             _ => {}

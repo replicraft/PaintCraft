@@ -158,8 +158,12 @@ fn fixture_real_installed_jxl() {
             2 => {
                 let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
                 parked.swap(&mut app);
-                app.other_workspace = Some(Box::new(parked));
                 app.settings.experience = Experience::Classic;
+                let inactive_experience = match app.experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }
             _ => {}
         }
@@ -203,8 +207,12 @@ fn fixture_real_installed_jxl() {
             6 => {
                 let mut parked = tabs::WorkspaceDocuments::new((4, 4), false);
                 parked.swap(&mut app);
-                app.other_workspace = Some(Box::new(parked));
                 app.settings.experience = Experience::Classic;
+                let inactive_experience = match app.experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }
             _ => {
                 app.pending_import = None;

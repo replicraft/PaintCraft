@@ -229,3 +229,4 @@ image-processing-is-paused-for-this-tab-download-your-project-then-reload-this-t
 finish-pending-edits-before-saving = 请先完成待处理的编辑再保存
 finish-pending-edits-before-changing-the-document = 请先完成待处理的编辑再更改文档
 format-cannot-place-text-detail = 无法放置文本：{ $detail }
+switch-to-the-other-interface-and-save-or-discard-its-changed-documents-before-closing = 关闭前，请切换到另一个界面，保存或放弃其文档的更改。

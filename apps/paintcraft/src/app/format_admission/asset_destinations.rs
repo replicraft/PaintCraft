@@ -316,7 +316,11 @@ fn flat_export_protects_document_sources_in_other_tabs_and_parked_workspaces() {
                 2 => {
                     let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
                     parked.swap(&mut app);
-                    app.other_workspace = Some(Box::new(parked));
+                    let inactive_experience = match app.experience() {
+                        Experience::Classic => Experience::Studio,
+                        Experience::Studio => Experience::Classic,
+                    };
+                    app.park_workspace_for_test(inactive_experience, Box::new(parked));
                 }
                 _ => {}
             }
@@ -344,8 +348,12 @@ fn resource_source_paths_remain_protected_while_studio_documents_are_parked() {
     app.install_shape(shape.clone()).unwrap();
     let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
     parked.swap(&mut app);
-    app.other_workspace = Some(Box::new(parked));
     app.settings.experience = Experience::Classic;
+    let inactive_experience = match app.experience() {
+        Experience::Classic => Experience::Studio,
+        Experience::Studio => Experience::Classic,
+    };
+    app.park_workspace_for_test(inactive_experience, Box::new(parked));
     let ctx = egui::Context::default();
     for (index, (source, bytes)) in [(&palette, ASE), (&shape, CSH)].into_iter().enumerate() {
         let project = root.join(format!("alias-{index}.pcnd"));

@@ -193,6 +193,38 @@ impl App {
 mod tests {
     use super::*;
     #[test]
+    fn save_publication_skips_a_workspace_emptied_by_discarding_its_tabs() {
+        struct OwnedFile(std::path::PathBuf);
+        impl Drop for OwnedFile {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_file(&self.0);
+            }
+        }
+        let output = OwnedFile(std::env::temp_dir().join(format!(
+            "paintcraft-empty-workspace-{}.pcnd",
+            Uuid::new_v4()
+        )));
+        let ctx = egui::Context::default();
+        let mut app = App::new(None);
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        app.start_interface_switch(Experience::Studio, true, &ctx);
+        assert_eq!(app.experience(), Experience::Studio);
+        app.adopt_experience(Experience::Classic);
+        assert_eq!(app.document_count(), 0);
+        app.adopt_experience(Experience::Studio);
+        app.editor.request(2, Action::AddLayer);
+        app.editor.run_pending();
+        app.do_save(&ctx, output.0.clone());
+        app.editor.run_pending();
+        app.finish_save();
+        assert!(output.0.is_file(), "{}", app.editor.status());
+        assert!(!app.editor.is_dirty());
+        app.request_workspace_close(&ctx);
+        assert!(app.closing_workspace);
+    }
+
+    #[test]
     fn save_gate_saves_each_changed_document_then_restores_its_own_workspace() {
         for native in [false, true] {
             let ctx = egui::Context::default();
@@ -278,7 +310,7 @@ mod tests {
         assert!(app.switching.is_none());
         assert!(app.editor.is_dirty());
         assert!(app.editor.document().same_semantics(&source));
-        assert!(app.other_workspace.is_none());
+        assert!(app.parked_workspaces.is_empty());
     }
 }
 

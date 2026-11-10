@@ -136,6 +136,8 @@ mod updates;
 mod view;
 #[path = "app/window.rs"]
 mod window;
+#[path = "app/workspaces.rs"]
+mod workspaces;
 #[path = "app/zoom_tool.rs"]
 mod zoom_tool;
 // The PaintCraft desktop UI. Shared widgets live in `paintcraft-ui`;
@@ -281,7 +283,7 @@ pub struct App {
     studio: paintcraft_studio::Workspace,
     filter_editing: Option<filter_editing::State>,
     layer_mask_editing: Option<layer_mask_editing::State>,
-    other_workspace: Option<Box<tabs::WorkspaceDocuments>>,
+    parked_workspaces: workspaces::Parked<Experience, Box<tabs::WorkspaceDocuments>>,
     switching: Option<switching::Switch>,
     gpu: Option<Arc<GpuRenderer>>,
     gpu_completion: Option<paintcraft_render::gpu::CompletionDriver>,
@@ -441,7 +443,7 @@ impl App {
             studio: Default::default(),
             filter_editing: None,
             layer_mask_editing: None,
-            other_workspace: None,
+            parked_workspaces: Default::default(),
             switching: None,
             gpu: None,
             gpu_completion: None,

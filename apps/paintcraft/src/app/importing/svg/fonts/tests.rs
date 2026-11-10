@@ -238,8 +238,12 @@ fn svg_and_font_input_guards_follow_saved_documents_other_tabs_and_parked_worksp
             2 => {
                 let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
                 parked.swap(app);
-                app.other_workspace = Some(Box::new(parked));
                 app.settings.experience = Experience::Classic;
+                let inactive_experience = match app.experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }
             _ => {}
         }

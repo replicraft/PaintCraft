@@ -118,7 +118,7 @@ impl App {
                 retire(&mut state.editor);
             }
         }
-        if let Some(workspace) = &mut self.other_workspace {
+        for workspace in self.parked_workspaces.values_mut() {
             retire(&mut workspace.active.editor);
             for tab in &mut workspace.tabs {
                 if let Some(state) = &mut tab.state {

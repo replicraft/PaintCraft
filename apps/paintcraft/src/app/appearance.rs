@@ -85,14 +85,50 @@ impl App {
             Experience::Classic => self.settings.canvas.new_size(),
             Experience::Studio => STUDIO_SIZE,
         };
-        let mut parked = self.other_workspace.take().unwrap_or_else(|| {
-            Box::new(tabs::WorkspaceDocuments::new(
-                size,
-                self.recovery_dir.is_some(),
-            ))
-        });
+        let previous = self.experience();
+        if previous == experience {
+            return;
+        }
+        if self
+            .parked_workspaces
+            .prepare(previous, experience)
+            .is_err()
+        {
+            self.editor
+                .set_status("Could not switch interfaces. Your current workspace is unchanged.");
+            return;
+        }
+        let destination = self.parked_workspaces.take(experience);
+        let existed = destination.is_some();
+        let mut parked = match destination {
+            Some(workspace) => workspace,
+            None => match tabs::WorkspaceDocuments::try_new(size, self.recovery_dir.is_some()) {
+                Ok(workspace) => Box::new(workspace),
+                Err(error) => {
+                    self.editor.set_status(error.to_string());
+                    return;
+                }
+            },
+        };
         parked.swap(self);
-        self.other_workspace = Some(parked);
+        if let Err(mut outgoing) = self
+            .parked_workspaces
+            .insert_reserved(experience, previous, parked)
+        {
+            // Admission already succeeded; refuse any broken ownership invariant
+            // by restoring the exact active state rather than losing a document.
+            outgoing.swap(self);
+            if existed {
+                assert!(
+                    self.parked_workspaces
+                        .insert_reserved(previous, experience, outgoing)
+                        .is_ok()
+                );
+            }
+            self.editor
+                .set_status("Could not switch interfaces. Your current workspace is unchanged.");
+            return;
+        }
         self.settings.experience = experience;
         self.picking = (experience == Experience::Classic
             && self.settings.classic_variant.is_none())

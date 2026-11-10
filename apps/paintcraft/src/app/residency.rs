@@ -72,7 +72,7 @@ impl App {
                         .filter_map(|tab| tab.state.as_ref())
                         .map(|state| &state.editor),
                 )
-                .chain(self.other_workspace.iter().flat_map(|workspace| {
+                .chain(self.parked_workspaces.values().flat_map(|workspace| {
                     std::iter::once(&workspace.active.editor).chain(
                         workspace
                             .tabs
@@ -140,7 +140,7 @@ impl App {
             }
             pending |= editor.has_pending_maintenance();
         };
-        if let Some(workspace) = &mut self.other_workspace {
+        for workspace in self.parked_workspaces.values_mut() {
             for tab in &mut workspace.tabs {
                 if let Some(state) = &mut tab.state {
                     visit(&mut state.editor);
@@ -283,14 +283,18 @@ mod tests {
         paint(&mut workspace.active.editor, 2);
         let ticket = workspace.active.editor.render_key();
         let active = app.active_tab_id();
-        app.other_workspace = Some(Box::new(workspace));
+        let inactive_experience = match app.experience() {
+            Experience::Classic => Experience::Studio,
+            Experience::Studio => Experience::Classic,
+        };
+        app.park_workspace_for_test(inactive_experience, Box::new(workspace));
         app.initialize_editing(ctx.clone());
         app.poll_residency_usage(&ctx, pressure());
         pump(&mut app, &ctx, |_| old.resident_bytes() == 0);
         assert_eq!(app.active_tab_id(), active);
         assert_eq!(
-            app.other_workspace
-                .as_ref()
+            app.parked_workspaces
+                .get(Experience::Studio)
                 .unwrap()
                 .active
                 .editor

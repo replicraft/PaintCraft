@@ -492,8 +492,13 @@ fn cancelled_or_stale(language: Language, root: &Path) {
             _ => {
                 let mut parked = tabs::WorkspaceDocuments::new((4, 4), false);
                 parked.swap(h.state_mut());
-                h.state_mut().other_workspace = Some(Box::new(parked));
                 h.state_mut().settings.experience = Experience::Classic;
+                let inactive_experience = match h.state().experience() {
+                    Experience::Classic => Experience::Studio,
+                    Experience::Studio => Experience::Classic,
+                };
+                h.state_mut()
+                    .park_workspace_for_test(inactive_experience, Box::new(parked));
             }
         }
         let after_change = Before::capture(h.state());
@@ -521,7 +526,13 @@ fn cancelled_or_stale(language: Language, root: &Path) {
             pixels(parked.editor.document(), 3, 2, &EXPECTED8);
         }
         if case == 7 {
-            let parked = &h.state().other_workspace.as_ref().unwrap().active.editor;
+            let parked = &h
+                .state()
+                .parked_workspaces
+                .get(Experience::Studio)
+                .unwrap()
+                .active
+                .editor;
             assert!(Arc::ptr_eq(&old.doc, &parked.document_snapshot()));
             assert_eq!(parked.history_view().ticket, old.ticket);
         }

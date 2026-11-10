@@ -125,6 +125,9 @@ impl App {
     }
 
     pub(crate) fn request_workspace_close(&mut self, ctx: &egui::Context) {
+        if self.refuse_close_with_inactive_changes(ctx) {
+            return;
+        }
         if self.any_pending_edits() || self.any_deferred_files() {
             self.close_after_edits = true;
             ctx.request_repaint();
