@@ -1344,7 +1344,20 @@ under `docs/validation/layer-blend-candidates/source8-blend-service-wasm/`.
 The earlier 888-case diagnostic and its 16 MiB memory maximum are unchanged.
 
 Matching JS transport separately passes all 376 web Node tests, including 13
-new lifecycle groups. These use a service double, so they do not qualify the
-genuine Rust/JS connection. Source-universal Main workspace forecasts, original
-Main admission and texture-delta retirement remain unfinished gates. No frontend
-route is activated by these checkpoints; neither proves heap/RSS or latency.
+new lifecycle groups using a service double. The genuine Rust/JS connection now
+also passes 12 groups with 37 scenarios over real Node worker threads: all 26
+RGBA scenes, failed OPEN cleanup, cancellation, held-patch ACK ordering, pending
+close, and quarantine when genuine READY/CLOSED replies are withheld. The actual
+generated API namespace and live production dispatcher/channel/session remain
+unchanged; only browser hosting and byte loading are adapted for Node. Root
+verified all 104 effective input hashes and the 26 golden scene hashes after
+execution. Receipts are under
+`docs/validation/source8-blend-runtime-wasm-effective/node-attempt-1/`.
+
+These transport checks use explicit Main callback stand-ins. They do not prove
+original Main admission, CPU texture-delta retirement, browser Worker bootstrap
+or frontend activation. The source-universal workspace forecast separately
+passes 11 focused native groups and the complete 276-renderer/175-worker run;
+native/Wasm Clippy and strict documentation checks pass. Its same-target facts
+still need the actual Main Wasm consumer. None of these checkpoints proves
+physical heap/RSS or latency, and no frontend route is activated by them.
