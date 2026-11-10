@@ -451,8 +451,24 @@ test('hung digest expires logically and quarantines instead of pretending reclam
 		`../src/lib/codec-worker.js?hung-digest=${Date.now()}`
 	);
 	const original = crypto.subtle.digest;
-	crypto.subtle.digest = () => new Promise(() => {});
+	const clock = performance;
+	const originalNow = Object.getOwnPropertyDescriptor(clock, 'now');
+	let now = 100;
+	let digestCalls = 0;
+	let workerCalls = 0;
 	try {
+		// Wall-clock preemption must not expire the request BEFORE capture.
+		Object.defineProperty(clock, 'now', {
+			configurable: true,
+			value: () => now,
+		});
+		crypto.subtle.digest = () => {
+			assert.equal(now, 100);
+			digestCalls++;
+			// Expire only once an actual unjoinable digest has started.
+			now = 111;
+			return new Promise(() => {});
+		};
 		await assert.rejects(
 			decodeInWorker({
 				source: new Uint8Array([1]),
@@ -462,13 +478,21 @@ test('hung digest expires logically and quarantines instead of pretending reclam
 				currentOwner: () => owner,
 				applicationVersion: manifest.version,
 				deadlineMs: 10,
+				createWorker() {
+					workerCalls++;
+					throw new Error('digest never settled');
+				},
 			}),
 			{ code: 'ResourceLimit' },
 		);
+		assert.equal(digestCalls, 1);
+		assert.equal(workerCalls, 0);
 		assert.ok(codecWorkerBudget().quarantined);
 		assert.ok(codecWorkerBudget().reservedBytes > 0);
 	} finally {
 		crypto.subtle.digest = original;
+		if (originalNow) Object.defineProperty(clock, 'now', originalNow);
+		else delete clock.now;
 	}
 });
 
