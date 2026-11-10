@@ -706,6 +706,8 @@ impl eframe::App for WebApp {
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.show(ui);
+        #[cfg(target_arch = "wasm32")]
+        self.refresh_source8_current_stamp();
         if self.noise_picker_pending() || self.noise_flatten_pending() {
             ui.ctx().request_repaint();
         }

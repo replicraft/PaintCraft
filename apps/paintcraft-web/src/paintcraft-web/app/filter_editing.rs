@@ -6,6 +6,8 @@ use paintcraft_studio::filters::{self, Action as Intent, ParameterResponse, Para
 use paintcraft_tools::FilterEdit;
 use uuid::Uuid;
 mod appearance;
+#[cfg(any(target_arch = "wasm32", test))]
+mod appearance8;
 #[cfg(target_arch = "wasm32")]
 mod bridge;
 #[cfg(any(target_arch = "wasm32", test))]
@@ -38,6 +40,8 @@ mod tests;
 
 #[derive(Default)]
 pub(super) struct Display {
+    #[cfg(target_arch = "wasm32")]
+    blend8: appearance8::display::Display8,
     renderer: Renderer,
     transient: Option<ordinary::Transient>,
     copy_action: Option<flat_action::Job>,
@@ -423,6 +427,10 @@ impl WebApp {
             )
     }
     pub(crate) fn worker_filter_canvas(&mut self, ctx: &egui::Context) -> bool {
+        #[cfg(target_arch = "wasm32")]
+        if let Some(owned) = self.source8_canvas(ctx) {
+            return owned;
+        }
         if self.filter_display.copy_action.is_some() || self.filter_display.picker_wanted.is_some()
         {
             self.pump_filter_editing(ctx);
