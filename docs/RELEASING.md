@@ -88,6 +88,8 @@ inside the downloads. The checksums describe the final downloadable bytes.
 
 ## Update signatures
 
+See [desktop updates](UPDATES.md) for the About controls, first-install requirement, supported installations, recovery behavior and current validation limits.
+
 Release publishing uses the GitHub environment `release-signing`. It requires
 `UPDATE_SIGNING_KEY` (the Minisign secret key contents) and
 `UPDATE_SIGNING_PASSWORD` (its password). The matching public key is committed at
@@ -187,9 +189,9 @@ ad-hoc signed and checked with `codesign --verify --deep --strict`; DMGs are che
 with `hdiutil verify`. These are not Developer ID signed or notarized. The release
 verifier also mounts each DMG read-only, compares every app file against the
 extracted ZIP and verifies both executable architectures and ZIP permissions.
-No application is launched during these checks. The updater archive is ready
-for a future updater consumer; this packaging work does not add
-an in-app update service.
+No application is launched during these packaging checks. The signed desktop
+updater consumes this complete archive; its installation and restart qualification
+is separate from DMG/ZIP inspection. See [desktop updates](UPDATES.md).
 
 Linux packages build on Ubuntu 22.04 for glibc 2.35 or newer, with X11/Wayland
 and Vulkan/OpenGL driver support. DEB and RPM include desktop, icon, AppStream,
