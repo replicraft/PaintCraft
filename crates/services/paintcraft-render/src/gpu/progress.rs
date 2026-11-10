@@ -33,6 +33,8 @@ impl Drop for Slot {
 struct Status {
     pending: usize,
     closed: bool,
+    retired: bool,
+    failed: bool,
     polls: u64,
 }
 pub(super) struct State {
@@ -40,7 +42,7 @@ pub(super) struct State {
     status: Mutex<Status>,
     changed: Condvar,
 }
-struct Owner(Arc<State>);
+struct Owner(Arc<State>, Mutex<Option<std::thread::JoinHandle<()>>>);
 impl Drop for Owner {
     fn drop(&mut self) {
         self.0
@@ -78,18 +80,21 @@ impl CompletionDriver {
         });
         let worker_state = state.clone();
         let device = gpu.device.clone();
-        std::thread::Builder::new()
+        let worker = std::thread::Builder::new()
             .name("paintcraft-gpu-completion".into())
             .spawn(move || {
                 let _slot = slot;
-                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let failed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                     observe(&device, &worker_state)
-                }));
-                worker_state
+                }))
+                .is_err();
+                let mut status = worker_state
                     .status
                     .lock()
-                    .unwrap_or_else(|p| p.into_inner())
-                    .closed = true;
+                    .unwrap_or_else(|p| p.into_inner());
+                status.closed = true;
+                status.failed |= failed;
+                drop(status);
                 worker_state.changed.notify_all();
             })
             .map_err(|error| {
@@ -98,7 +103,7 @@ impl CompletionDriver {
                     format!("cannot start GPU completion observer: {error}"),
                 )
             })?;
-        Ok(Self(Arc::new(Owner(state))))
+        Ok(Self(Arc::new(Owner(state, Mutex::new(Some(worker))))))
     }
     pub fn progress(&self) -> CompletionProgress {
         let state = self.0.0.status.lock().unwrap_or_else(|p| p.into_inner());
@@ -168,6 +173,9 @@ fn observe(device: &wgpu::Device, state: &State) {
         }
     }
 }
+
+#[path = "progress/shutdown.rs"]
+mod shutdown;
 
 #[cfg(test)]
 mod limits {

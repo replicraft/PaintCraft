@@ -207,3 +207,27 @@ fn pending_callbacks_do_not_keep_observer_or_queue_context_alive() {
     drop(gpu);
     eventually(|| weak.upgrade().is_none() && budget.usage().reserved == 0);
 }
+
+#[test]
+fn explicit_shutdown_retires_aliases_without_closing_the_gpu_device() {
+    let Some((device, queue)) = device() else {
+        return;
+    };
+    let gpu = GpuRenderer::new(device, queue).unwrap();
+    let driver = CompletionDriver::new(&gpu).unwrap();
+    let alias = driver.clone();
+    let weak = driver.weak();
+    driver.shutdown().unwrap();
+    assert!(alias.progress().closed);
+    alias.shutdown().unwrap();
+    assert!(
+        weak.upgrade().is_none(),
+        "observer ownership must have retired"
+    );
+    let submitted = submit(
+        &gpu.queue,
+        &gpu.submission_identity,
+        gpu.device.create_command_encoder(&Default::default()),
+    );
+    submitted.wait(&gpu.device, &gpu.epoch()).unwrap();
+}
