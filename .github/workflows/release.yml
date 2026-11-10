@@ -42,14 +42,18 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version.outputs.version }}
+      source-sha: ${{ steps.source.outputs.source-sha }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ inputs.publish-tag || github.ref }}
+          ref: ${{ inputs.publish-tag || github.sha }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+      - name: Resolve immutable release source
+        id: source
+        run: python scripts/packaging/verify_release_tag.py resolve
       - id: version
         env:
           RELEASE_TAG: ${{ inputs.publish-tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
@@ -113,6 +117,8 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: '13.0'
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.source-sha }}
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: '1.99.0'
@@ -257,7 +263,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.publish-tag || github.ref }}
+          ref: ${{ needs.version.outputs.source-sha }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
@@ -290,7 +296,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.publish-tag || github.ref }}
+          ref: ${{ needs.version.outputs.source-sha }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
@@ -326,7 +332,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.publish-tag || github.ref }}
+          ref: ${{ needs.version.outputs.source-sha }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
@@ -345,12 +351,14 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ inputs.publish-tag || github.ref_name }}
           RELEASE_VERSION: ${{ needs.version.outputs.version }}
+          RELEASE_SOURCE_SHA: ${{ needs.version.outputs.source-sha }}
         run: |
           set -euo pipefail
           cd dist
           sha256sum --check SHA256SUMS.txt
           cd ..
           python scripts/packaging/package_release.py notes --version "$RELEASE_VERSION" --output release-body.md
+          python scripts/packaging/verify_release_tag.py verify --tag "$RELEASE_TAG" --source-sha "$RELEASE_SOURCE_SHA"
           if gh release view "$RELEASE_TAG" --json isDraft > release.json; then
             if ! jq -e '.isDraft == true' release.json > /dev/null; then
               echo '::error::Release already published; use a new version tag.'
@@ -365,4 +373,5 @@ jobs:
           diff -u expected.txt uploaded.txt
           prerelease=false
           if [[ "$RELEASE_VERSION" == *-* ]]; then prerelease=true; fi
+          python scripts/packaging/verify_release_tag.py verify --tag "$RELEASE_TAG" --source-sha "$RELEASE_SOURCE_SHA"
           gh release edit "$RELEASE_TAG" --draft=false --prerelease="$prerelease" --notes-file release-body.md
