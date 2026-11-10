@@ -20,6 +20,7 @@ mod layer_appearance;
 mod layer_blends;
 pub use layer_appearance::LAYER_APPEARANCE_BATCH_SCHEMA;
 pub use layer_blends::LAYER_BLEND_BATCH_SCHEMA;
+pub const STRETCH_SKEW_BATCH_SCHEMA: &str = "paintcraft.batch/stretch-skew-v1";
 mod catalog;
 pub use catalog::CATALOG_BATCH_SCHEMA;
 mod mask;
@@ -74,6 +75,18 @@ pub enum Op {
     TransformSelection {
         layer: LayerRef,
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
+        clear: Rgba,
+    },
+    CanvasStretchSkew {
+        width: u32,
+        height: u32,
+        shear: (i32, i32),
+    },
+    StretchSkewSelection {
+        layer: LayerRef,
+        width: u32,
+        height: u32,
+        shear: (i32, i32),
         clear: Rgba,
     },
     CanvasTransform {
@@ -249,7 +262,12 @@ impl Batch {
         let version = operations
             .into_iter()
             .map(|(name, kind)| {
-                if name == "layer.set_blend_mode" {
+                if matches!(
+                    name,
+                    "canvas.stretch_skew" | "raster.stretch_skew_selection"
+                ) {
+                    9
+                } else if name == "layer.set_blend_mode" {
                     8
                 } else if name.starts_with("layer.mask.") {
                     7
@@ -292,6 +310,7 @@ impl Batch {
             .max()
             .unwrap_or(2);
         match version {
+            9 => STRETCH_SKEW_BATCH_SCHEMA,
             8 => LAYER_BLEND_BATCH_SCHEMA,
             7 => LAYER_APPEARANCE_BATCH_SCHEMA,
             6 => CATALOG_BATCH_SCHEMA,
@@ -324,7 +343,9 @@ impl Batch {
         check()?;
         let appearance =
             v.get("schema").and_then(Value::as_str) == Some(LAYER_APPEARANCE_BATCH_SCHEMA);
-        let blends = v.get("schema").and_then(Value::as_str) == Some(LAYER_BLEND_BATCH_SCHEMA);
+        let stretch = v.get("schema").and_then(Value::as_str) == Some(STRETCH_SKEW_BATCH_SCHEMA);
+        let blends =
+            stretch || v.get("schema").and_then(Value::as_str) == Some(LAYER_BLEND_BATCH_SCHEMA);
         let catalog = v.get("schema").and_then(Value::as_str) == Some(CATALOG_BATCH_SCHEMA);
         let required: &[&str] = if appearance || blends {
             &[
@@ -358,6 +379,7 @@ impl Batch {
             Some(CATALOG_BATCH_SCHEMA) => 6,
             Some(LAYER_APPEARANCE_BATCH_SCHEMA) => 7,
             Some(LAYER_BLEND_BATCH_SCHEMA) => 8,
+            Some(STRETCH_SKEW_BATCH_SCHEMA) => 9,
             _ => {
                 return Err(bad(
                     "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3, paintcraft.batch/v4 or paintcraft.batch/v5",

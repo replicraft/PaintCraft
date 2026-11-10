@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v5", "file-command-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "layer-appearance", "batch-layer-appearance", "result-layer-appearance", "file-command-layer-appearance", "inspect-v5", "mcp-inspect-v5", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
+    #[arg(value_parser = ["batch-stretch-skew", "batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v5", "file-command-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "layer-appearance", "batch-layer-appearance", "result-layer-appearance", "file-command-layer-appearance", "inspect-v5", "mcp-inspect-v5", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
     schema: String,
 }
 
@@ -35,6 +35,9 @@ pub fn run(a: Options, _json: bool) -> Reply {
                 return Ok((shapes::schema()?, String::new()));
             }
             let text = match a.schema.as_str() {
+                "batch-stretch-skew" => {
+                    include_str!("../../schemas/stretch-skew-v1/batch.schema.json")
+                }
                 "batch" => BATCH_SCHEMA,
                 "batch-v2" => BATCH_V2_SCHEMA,
                 "batch-v3" => BATCH_V3_SCHEMA,

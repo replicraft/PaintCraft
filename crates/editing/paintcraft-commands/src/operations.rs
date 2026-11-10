@@ -10,6 +10,49 @@ pub(super) fn op(
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if matches!(
+        name,
+        "canvas.stretch_skew" | "raster.stretch_skew_selection"
+    ) {
+        if version < 9 {
+            return Err(bad(
+                "stretch and skew requires paintcraft.batch/stretch-skew-v1",
+            ));
+        }
+        let selected = name == "raster.stretch_skew_selection";
+        let required: &[&str] = if selected {
+            &["op", "width", "height", "shear", "layer_ref", "clear"]
+        } else {
+            &["op", "width", "height", "shear"]
+        };
+        let o = obj(v, required, &[])?;
+        let width = int_in(&o["width"], 1, SIZE_MAX, "width")? as u32;
+        let height = int_in(&o["height"], 1, SIZE_MAX, "height")? as u32;
+        let a = o["shear"]
+            .as_array()
+            .filter(|a| a.len() == 2)
+            .ok_or_else(|| bad("shear needs two Q16 integers"))?;
+        let max = i64::from(paintcraft_core::types::stretch_skew::SHEAR_MAX);
+        let shear = (
+            int_in(&a[0], -max, max, "horizontal shear")? as i32,
+            int_in(&a[1], -max, max, "vertical shear")? as i32,
+        );
+        return Ok(if selected {
+            Op::StretchSkewSelection {
+                layer: layer_ref(&o["layer_ref"])?,
+                width,
+                height,
+                shear,
+                clear: color(&o["clear"])?,
+            }
+        } else {
+            Op::CanvasStretchSkew {
+                width,
+                height,
+                shear,
+            }
+        });
+    }
     if name == "layer.set_blend_mode" {
         if version < 8 {
             return Err(bad(
