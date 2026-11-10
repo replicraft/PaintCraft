@@ -541,3 +541,5 @@ other-png-color-declarations-will-not-be-retained-or-used-for-color-management =
 bake-editable-filters-into-this-exported-copy = 将可编辑滤镜合并到此导出副本
 the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-filter-settings-including-disabled-filters-save-a-paintcraft-project-to-keep-them = 导出副本会保留渲染外观，但不会保留可编辑的滤镜设置，包括已禁用的滤镜。请保存 PaintCraft 项目以保留这些设置。
 editable-filters-are-baked-into-this-exported-copy = 可编辑滤镜已合并到此导出副本中。
+
+could-not-switch-interfaces-your-current-workspace-is-unchanged = 无法切换界面。您当前的工作区未发生更改。

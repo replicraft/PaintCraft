@@ -48,7 +48,7 @@ pub struct WebApp {
     pub(crate) studio: paintcraft_studio::Workspace,
     filter_editing: Option<filter_editing::State>,
     filter_display: filter_editing::Display,
-    parked: Option<Box<interfaces::Parked>>,
+    parked: interfaces::Workspaces,
     fullscreen: crate::fullscreen::State,
     pub(crate) printer: crate::printing::State,
     pub(crate) controls: Controls,
@@ -112,7 +112,7 @@ impl WebApp {
             studio: Default::default(),
             filter_editing: None,
             filter_display: Default::default(),
-            parked: None,
+            parked: Default::default(),
             fullscreen: Default::default(),
             printer: Default::default(),
             controls: Controls {
@@ -522,11 +522,7 @@ impl WebApp {
 
     fn replace(&mut self, ctx: &egui::Context, action: Action) {
         if let Action::ChooseFrontend(frontend) = action {
-            if self.confirm_replace == Some(action) && self.unsaved() {
-                self.new_document();
-            }
-            self.switch_frontend(ctx, frontend);
-            self.confirm_replace = None;
+            self.replace_frontend(ctx, frontend);
         } else if matches!(action, Action::Open | Action::ImportImage) {
             if self.files.busy {
                 return;
@@ -742,9 +738,9 @@ impl WebApp {
                     if ui.button(t!(ui.ctx(), "Download project")).clicked() {
                         self.download(ctx,false);
                     }
-                    if ui.button(t!(ui.ctx(), "Discard and continue")).clicked()
-                        && let Some(action) = self.confirm_replace.take()
-                    { self.replace(ctx,action); }
+                    if ui.button(t!(ui.ctx(), "Discard and continue")).clicked() {
+                        self.discard_and_replace(ctx);
+                    }
                     if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
                 });
             });

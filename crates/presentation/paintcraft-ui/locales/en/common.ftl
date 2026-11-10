@@ -541,3 +541,5 @@ other-png-color-declarations-will-not-be-retained-or-used-for-color-management =
 bake-editable-filters-into-this-exported-copy = Bake editable filters into this exported copy
 the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-filter-settings-including-disabled-filters-save-a-paintcraft-project-to-keep-them = The exported copy keeps the rendered appearance but does not retain editable filter settings, including disabled filters. Save a PaintCraft project to keep them.
 editable-filters-are-baked-into-this-exported-copy = Editable filters are baked into this exported copy.
+
+could-not-switch-interfaces-your-current-workspace-is-unchanged = Could not switch interfaces. Your current workspace is unchanged.

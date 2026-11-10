@@ -1,5 +1,8 @@
 //! Each interface owns its document, history, canvas view and tool state.
 use super::*;
+use paintcraft_ui::t;
+mod owners;
+pub(super) type Workspaces = owners::Owners<Frontend, Box<Parked>>;
 
 #[derive(Debug)]
 pub(super) struct Parked {
@@ -79,14 +82,70 @@ impl WebApp {
             self.canvas.invalidate();
         }
     }
-    pub(super) fn switch_frontend(&mut self, ctx: &egui::Context, frontend: Frontend) {
-        if frontend == self.frontend {
+    pub(super) fn discard_and_replace(&mut self, ctx: &egui::Context) {
+        let Some(action) = self.confirm_replace else {
             return;
+        };
+        // Interface transfer needs the explicit discard identity through commit.
+        // Other actions retain their original take-before-open/new semantics.
+        if !matches!(action, Action::ChooseFrontend(_)) {
+            self.confirm_replace = None;
         }
-        let revoke_composition = self.text.is_composing() || self.text.composition_was_revoked();
-        self.text.reset_composition();
-        let mut other = if let Some(parked) = self.parked.take() {
-            parked
+        self.replace(ctx, action);
+    }
+    pub(super) fn replace_frontend(&mut self, ctx: &egui::Context, frontend: Frontend) {
+        let discard =
+            self.confirm_replace == Some(Action::ChooseFrontend(frontend)) && self.unsaved();
+        let switched = if discard {
+            self.switch_frontend_checked(ctx, frontend, true)
+        } else {
+            self.switch_frontend(ctx, frontend)
+        };
+        if switched {
+            self.confirm_replace = None;
+        }
+    }
+    pub(super) fn switch_frontend(&mut self, ctx: &egui::Context, frontend: Frontend) -> bool {
+        self.switch_frontend_checked(ctx, frontend, false)
+    }
+    pub(super) fn switch_frontend_checked(
+        &mut self,
+        ctx: &egui::Context,
+        frontend: Frontend,
+        discard: bool,
+    ) -> bool {
+        if frontend == self.frontend {
+            return true;
+        }
+        let old = self.frontend;
+        let mut transfer = match self.parked.prepare(old, frontend) {
+            Ok(transfer) => transfer,
+            Err(_) => {
+                self.message = t!(
+                    ctx,
+                    "Could not switch interfaces. Your current workspace is unchanged."
+                );
+                return false;
+            }
+        };
+        let outgoing_size = if old == Frontend::Studio {
+            (800, 600)
+        } else {
+            self.preferences.canvas.new_size()
+        };
+        let clean_outgoing = if discard {
+            match Editor::new(outgoing_size.0, outgoing_size.1) {
+                Ok(editor) => Some(editor),
+                Err(error) => {
+                    self.message = error.to_string();
+                    return false;
+                }
+            }
+        } else {
+            None
+        };
+        let incoming = if transfer.has_destination() {
+            None
         } else {
             let size = if frontend == Frontend::Studio {
                 (800, 600)
@@ -97,10 +156,10 @@ impl WebApp {
                 Ok(editor) => editor,
                 Err(error) => {
                     self.message = error.to_string();
-                    return;
+                    return false;
                 }
             };
-            Box::new(Parked {
+            Some(Box::new(Parked {
                 editor,
                 canvas: Canvas::default(),
                 controls: Controls {
@@ -118,14 +177,26 @@ impl WebApp {
                 ),
                 name: "Untitled".into(),
                 zoom: 1.0,
-            })
+            }))
         };
+        // All fallible construction and owner-table reservation completed.
+        let mut other = transfer
+            .take_destination()
+            .or(incoming)
+            .expect("prepared destination");
+        let revoke_composition = self.text.is_composing() || self.text.composition_was_revoked();
+        self.text.reset_composition();
         // Contacts belong to the live input stream, never a parked document.
         // Carry only their retired tails into the incoming interface.
         let mut touch = std::mem::take(&mut self.canvas.touch);
         touch.retire_owner(ctx);
         self.editor.cancel_floating();
         self.editor.tools.cancel_gesture();
+        if let Some(editor) = clean_outgoing {
+            self.editor = editor;
+            self.canvas = Canvas::default();
+            self.name = "Untitled".into();
+        }
         std::mem::swap(&mut self.editor, &mut other.editor);
         std::mem::swap(&mut self.canvas, &mut other.canvas);
         self.canvas.touch = touch;
@@ -137,7 +208,7 @@ impl WebApp {
         std::mem::swap(&mut self.workspace, &mut other.workspace);
         std::mem::swap(&mut self.name, &mut other.name);
         std::mem::swap(&mut self.zoom, &mut other.zoom);
-        self.parked = Some(other);
+        transfer.finish(other);
         self.frontend = frontend;
         self.paste = Default::default();
         self.editor.tools.cancel_gesture();
@@ -148,7 +219,15 @@ impl WebApp {
             paintcraft_classic::apply_style_for_theme(ctx, self.variant, ctx.theme());
         }
         self.update_title();
+        if discard
+            && old == Frontend::Classic
+            && self.preferences.canvas.last != Some(outgoing_size)
+        {
+            self.preferences.canvas.last = Some(outgoing_size);
+            self.persist_preferences();
+        }
         ctx.request_repaint();
+        true
     }
 }
 
@@ -239,7 +318,7 @@ mod touch_tests {
         assert!(
             !h.state()
                 .parked
-                .as_ref()
+                .get(Frontend::Classic)
                 .unwrap()
                 .editor
                 .tools
@@ -295,3 +374,7 @@ mod touch_tests {
 #[cfg(test)]
 #[path = "interfaces/ime_tests.rs"]
 mod ime_tests;
+
+#[cfg(test)]
+#[path = "interfaces/keyed_tests.rs"]
+mod keyed_tests;
