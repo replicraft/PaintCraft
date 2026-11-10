@@ -1165,3 +1165,14 @@ These bounds cover record storage only. Main must still authenticate the same
 encoded snapshot and combine simultaneous plan, scan, retained census and
 probe scratch before declaring Worker roles. No new grant, counter or complete
 source forecast is introduced by this query.
+
+The worker also exposes compiled fixed reader controls through
+`source8_reader_control_bytes`: the existing Entry C account, assembly C
+controls and paired K carrier allocations. This allows Main to use defining
+target sizes rather than infer private layouts or observe live usage. The
+query creates no factory or work counter and grants no capacity. Source-sized
+scratch, decoder controls and phase overlap remain additional requirements.
+Native tests pin target literals and exercise actual Entry and closed-source
+construction at exact and one-byte-short C/K capacities. All 145 worker checks,
+native/Wasm Clippy, rustdoc and formatting pass. This is not a new Wasm runtime
+execution or a connected browser service.

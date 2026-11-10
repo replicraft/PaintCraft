@@ -16,11 +16,13 @@ mod metadata;
 mod owner;
 mod owner_ledger;
 mod probe_ledger;
+mod read_controls;
 pub use inputs::{
     Source8InspectionMode, Source8InspectionRequest, Source8ReadCaps, Source8ReadRealms,
     Source8ReadScopes,
 };
 pub use inspection::{Source8Inspection, inspect_portable_source8_checked};
+pub use read_controls::{Source8ReaderControlBytes, source8_reader_control_bytes};
 fn extent() -> Error {
     Error::new(ErrorCode::ResourceLimit, "Source8 read ownership extent")
 }
