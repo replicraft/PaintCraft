@@ -1115,3 +1115,33 @@ The connected Worker8 service, Main transport and texture publication remain
 separate gates. Browser blend adoption remains disabled. These prerequisites
 do not establish latency, physical-memory limits or completion of the browser
 blending roadmap.
+
+### Native-row reduction and materializer controls
+
+The positive-level reducer now validates at most 64 native pixels as one row,
+preflights every destination count, then updates exact alpha-weighted sums.
+Malformed geometry or any sample overflow leaves the whole destination unchanged.
+Its bounded controls remain inside the original C reservation. Row and group
+work replaces repeated scalar validation; cancellation remains checked between
+rows on the same cumulative counter.
+
+Formats exposes separate pure defining quotes for coverage, document-stream,
+pixel-wrapper and retained-layout controls. These facts grant no memory or
+execution authority, and existing constructors retain their admission behavior.
+The future service must still combine simultaneous phases and retained payloads.
+
+Native regression, native/Wasm Clippy and formatting pass. Actual Node Wasm
+execution passes 887 cases, including the previous assertions with reviewed row
+accounting changes, ten materializer controls and five default-canvas controls.
+All 4,394 recorded source hashes match. The module is 4,189,060 bytes, below the
+unchanged 4 MiB bound; memory starts at 2 MiB, ends at 4 MiB and retains its
+16 MiB maximum. Build and runtime receipts are under
+`docs/validation/layer-blend-candidates/source8-display-rows-wasm-effective`,
+with the root closeout in `root-qualified-887.json`.
+
+A 1000 by 486 Normal-layer case now completes at 210,136,654 work units under
+the unchanged 268,435,456 ceiling. A visible General blend still refuses on
+that same bounded job, including paid retry behavior. This is progress toward
+default-canvas support, not completion. The connected Worker8 service and Main
+publication remain open. Kernel timings are mixed, including regressions; see
+[the measurement decision](../benchmarks/display-native-rows-2026-11-10/DECISION.md).
