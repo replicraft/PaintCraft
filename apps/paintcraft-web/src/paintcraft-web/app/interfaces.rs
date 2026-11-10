@@ -223,6 +223,7 @@ impl WebApp {
         }
         self.applied_style = None;
         self.preferences.frontend = frontend;
+        self.refresh_appearance(ctx);
         self.persist_preferences();
         self.update_title();
         if discard

@@ -25,7 +25,8 @@ impl WebApp {
             .unwrap_or_else(|| ctx.system_theme().unwrap_or(egui::Theme::Light));
         let theme = match self.frontend {
             Frontend::Classic => variant.effective_theme(preferred),
-            Frontend::Studio | Frontend::Retro => preferred,
+            Frontend::Studio => preferred,
+            Frontend::Retro => egui::Theme::Light,
         };
         ctx.set_theme(theme);
         let key = (theme, variant, self.frontend);
@@ -35,7 +36,7 @@ impl WebApp {
             match self.frontend {
                 Frontend::Studio => paintcraft_studio::apply_style_for_theme(ctx, key.0),
                 Frontend::Classic => paintcraft_classic::apply_style_for_theme(ctx, key.1, key.0),
-                Frontend::Retro => (), // Its light visual/font style stays local to Retro widgets.
+                Frontend::Retro => (), // Local Retro typography; effective context remains Light.
             }
             ctx.request_repaint();
         }

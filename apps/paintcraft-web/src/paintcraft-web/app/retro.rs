@@ -98,6 +98,8 @@ impl WebApp {
         }
         if self.retro.toolbox {
             let intents = egui::Panel::left("web-retro-tools")
+                .resizable(false)
+                .exact_size(58.0)
                 .frame(paintcraft_retro::frame())
                 .show(ui, |ui| {
                     paintcraft_retro::toolbox(ui, &mut self.controls, &mut self.retro, context)

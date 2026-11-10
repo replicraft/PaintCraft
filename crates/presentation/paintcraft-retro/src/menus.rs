@@ -33,6 +33,12 @@ fn menu_bar_inner(
     let mut intents = Vec::new();
     with_style(ui, |ui| {
         ui.add_enabled_ui(!context.blocked, |ui| {
+            let compact = ui.available_width() < 520.0;
+            if compact {
+                ui.horizontal(|ui| {
+                    navigation(ui, workspace, context, &mut intents, false);
+                });
+            }
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button(t!(ui.ctx(), "File"), |ui| {
                     for action in [
@@ -122,19 +128,33 @@ fn menu_bar_inner(
                         ui.close();
                     }
                 });
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button(t!(ui.ctx(), "Settings…")).clicked() {
-                        intents.push(Intent::Action(Action::Settings));
-                    }
-                    intents.extend(
-                        paintcraft_ui::chrome::interface_changer(ui, context)
-                            .into_iter()
-                            .map(Intent::Action),
-                    );
-                    ui.weak(t!(ui.ctx(), workspace.skin.name()));
-                });
+                if !compact {
+                    navigation(ui, workspace, context, &mut intents, true);
+                }
             });
         });
     });
     intents
+}
+
+fn navigation(
+    ui: &mut egui::Ui,
+    workspace: &Workspace,
+    context: Context,
+    intents: &mut Vec<Intent>,
+    caption: bool,
+) {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        if ui.button(t!(ui.ctx(), "Settings…")).clicked() {
+            intents.push(Intent::Action(Action::Settings));
+        }
+        intents.extend(
+            paintcraft_ui::chrome::interface_changer(ui, context)
+                .into_iter()
+                .map(Intent::Action),
+        );
+        if caption {
+            ui.weak(t!(ui.ctx(), workspace.skin.name()));
+        }
+    });
 }

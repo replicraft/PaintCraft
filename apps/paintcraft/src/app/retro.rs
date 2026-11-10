@@ -48,7 +48,7 @@ impl App {
         if self.retro.toolbox {
             egui::Panel::left("retro-toolbox")
                 .resizable(false)
-                .default_size(58.0)
+                .exact_size(58.0)
                 .frame(paintcraft_retro::frame())
                 .show(ui, |ui| {
                     let mut controls = self.retro_controls();

@@ -373,3 +373,146 @@ fn real_palette_hover_has_one_named_tooltip_and_keeps_accessible_color_actions()
         assert!(h.state().intents.is_empty());
     }
 }
+
+#[test]
+fn compact_tool_and_palette_geometry_keep_selected_accessibility_and_real_colors() {
+    let mut tools = Harness::builder()
+        .with_size(Vec2::new(58.0, 420.0))
+        .build_ui_state(
+            |ui, state: &mut State| {
+                initialize(ui, state);
+                toolbox(
+                    ui,
+                    &mut state.controls,
+                    &mut state.workspace,
+                    context(false),
+                );
+            },
+            State::default(),
+        );
+    tools.run();
+    let first = tools
+        .get_by_role_and_label(egui::Role::Button, "Free-form")
+        .rect();
+    let second = tools
+        .get_by_role_and_label(egui::Role::Button, "Select")
+        .rect();
+    assert!((first.width() - 25.0).abs() < 1.0 && (second.min.x - first.min.x - 25.0).abs() < 1.0);
+    let pencil = tools.get_by_role_and_label(egui::Role::Button, "Pencil");
+    assert_eq!(
+        pencil.accesskit_node().toggled(),
+        Some(egui::accesskit::Toggled::True)
+    );
+    let rect = pencil.rect();
+    assert!(tools.output().shapes.iter().any(|s| matches!(&s.shape,egui::Shape::Rect(r) if r.rect==rect && r.fill==egui::Color32::from_gray(192))));
+    let mut colors = Harness::builder()
+        .with_size(Vec2::new(320.0, 100.0))
+        .build_ui_state(
+            |ui, state: &mut State| {
+                initialize(ui, state);
+                palette(
+                    ui,
+                    &mut state.controls,
+                    &mut state.workspace,
+                    context(false),
+                );
+            },
+            State::default(),
+        );
+    colors.run();
+    let black = colors
+        .get_by_role_and_label(egui::Role::ColorWell, "Palette color #000000")
+        .rect();
+    let gray = colors
+        .get_by_role_and_label(egui::Role::ColorWell, "Palette color #808080")
+        .rect();
+    let brown = colors
+        .get_by_role_and_label(egui::Role::ColorWell, "Palette color #804000")
+        .rect();
+    let white = colors
+        .get_by_role_and_label(egui::Role::ColorWell, "Palette color #FFFFFF")
+        .rect();
+    assert!((black.width() - 16.0).abs() < 1.0);
+    assert!((gray.min.x - black.min.x - 17.0).abs() < 1.0);
+    assert!((brown.max.x - black.min.x - 237.0).abs() < 1.0);
+    assert!(
+        (white.min.x - black.min.x).abs() < 1.0 && (white.min.y - black.min.y - 17.0).abs() < 1.0
+    );
+    assert!(colors.ctx.content_rect().contains_rect(white));
+    let current = colors.get_by_role_and_label(egui::Role::ColorWell, "Color 1");
+    assert_eq!(
+        current.accesskit_node().toggled(),
+        Some(egui::accesskit::Toggled::True)
+    );
+    let rect = current.rect();
+    assert!(colors.output().shapes.iter().any(|s|matches!(&s.shape,egui::Shape::Rect(r) if r.rect==rect && r.fill==egui::Color32::from_gray(192))));
+    assert!(colors.output().shapes.iter().any(|s|matches!(&s.shape,egui::Shape::Rect(r) if r.rect==rect.shrink(4.0) && r.fill==egui::Color32::BLACK)));
+}
+
+#[test]
+fn short_tool_strip_scrolls_to_the_real_lower_tool_choices() {
+    let mut h = Harness::builder()
+        .with_size(Vec2::new(58.0, 120.0))
+        .with_max_steps(12)
+        .build_ui_state(
+            |ui, state: &mut State| {
+                initialize(ui, state);
+                state.intents.extend(toolbox(
+                    ui,
+                    &mut state.controls,
+                    &mut state.workspace,
+                    context(false),
+                ));
+            },
+            State::default(),
+        );
+    h.run();
+    h.get_by_role_and_label(egui::Role::Button, "Free-form")
+        .hover();
+    h.run();
+    h.input_mut().events.push(egui::Event::MouseWheel {
+        unit: egui::MouseWheelUnit::Point,
+        delta: Vec2::new(0.0, -240.0),
+        modifiers: egui::Modifiers::NONE,
+        source: egui::MouseWheelSource::Unknown,
+        phase: egui::TouchPhase::Move,
+    });
+    h.run();
+    let last = ToolChoice::RoundedRectangle;
+    let button = h.get_by_role_and_label(egui::Role::Button, last.label());
+    assert!(h.ctx.content_rect().contains_rect(button.rect()));
+    button.click();
+    h.run();
+    assert!(h.state().intents.contains(&Intent::ChooseTool(last)));
+}
+
+#[test]
+fn brush_square_option_keeps_its_full_label_on_one_compact_row() {
+    let mut state = State::default();
+    ToolChoice::Brush.apply_to(&mut state.controls);
+    let mut h = Harness::builder()
+        .with_size(Vec2::new(58.0, 420.0))
+        .build_ui_state(
+            |ui, state: &mut State| {
+                initialize(ui, state);
+                toolbox(
+                    ui,
+                    &mut state.controls,
+                    &mut state.workspace,
+                    context(false),
+                );
+            },
+            state,
+        );
+    h.run();
+    let square = h.get_by_role_and_label(egui::Role::RadioButton, "Square");
+    let round = h.get_by_role_and_label(egui::Role::RadioButton, "Round");
+    assert!(square.rect().height() <= 20.0, "{:?}", square.rect());
+    assert!(square.rect().width() <= 50.0, "{:?}", square.rect());
+    assert!((square.rect().height() - round.rect().height()).abs() < 1.0);
+    square.click();
+    h.run();
+    assert_eq!(h.state().controls.tool, Tool::Brush);
+    assert!(!h.state().controls.options.round);
+    assert!(h.state().intents.is_empty());
+}

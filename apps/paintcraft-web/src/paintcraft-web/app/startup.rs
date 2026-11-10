@@ -10,7 +10,9 @@ impl WebApp {
         preferences: crate::preferences::Preferences,
         warning: Option<String>,
     ) -> Self {
-        if let Some(theme) = preferences.theme {
+        if preferences.frontend == Frontend::Retro {
+            ctx.set_theme(egui::Theme::Light);
+        } else if let Some(theme) = preferences.theme {
             ctx.set_theme(theme);
         }
         let (width, height) = Self::initial_size(preferences.frontend, &preferences);

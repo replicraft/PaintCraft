@@ -226,3 +226,34 @@ fn retro_actual_open_path_refuses_foreign_source_without_owner_or_output_changes
     let layer = &app.editor.document().layers[&app.editor.document().roots[0]];
     assert_eq!(layer.raster.get(0, 0), Rgba([2, 3, 4, 255]));
 }
+
+#[test]
+fn native_retro_panel_uses_two_compact_tool_columns_and_named_options() {
+    let mut value = app();
+    value.choose_experience(Experience::Retro);
+    let mut h = Harness::builder()
+        .with_size(egui::vec2(1000.0, 700.0))
+        .build_ui_state(
+            |ui, app: &mut App| {
+                app.apply_style(ui.ctx());
+                app.retro_panels(ui);
+                egui::CentralPanel::default().show(ui, |ui| {
+                    ui.label("Canvas");
+                });
+            },
+            value,
+        );
+    h.run();
+    let first = h
+        .get_by_role_and_label(egui::Role::Button, "Free-form")
+        .rect();
+    let second = h.get_by_role_and_label(egui::Role::Button, "Select").rect();
+    assert!((second.min.x - first.min.x - 25.0).abs() < 1.0);
+    assert!(second.max.x <= 70.0, "{second:?}");
+    h.get_by_role_and_label(egui::Role::Button, "Fill").click();
+    h.run();
+    assert!(
+        h.query_by_role_and_label(egui::Role::SpinButton, "Tolerance")
+            .is_some()
+    );
+}

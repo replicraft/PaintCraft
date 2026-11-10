@@ -39,7 +39,13 @@ impl WebApp {
             ui.disable();
         }
         let context = self.context();
-        let chrome = egui::Panel::top("classic-chrome").show(ui, |ui| {
+        let bar = egui::Panel::top("classic-chrome");
+        let bar = if self.frontend == Frontend::Retro {
+            bar.frame(paintcraft_retro::frame())
+        } else {
+            bar
+        };
+        let chrome = bar.show(ui, |ui| {
             let actions = match self.frontend {
                 Frontend::Studio => {
                     let mut actions = Vec::new();

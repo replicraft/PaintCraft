@@ -183,3 +183,85 @@ fn retro_startup_new_document_and_missing_owner_respect_remember_last() {
         assert_eq!(from_studio.editor.session.history_ticket(), studio);
     }
 }
+
+#[test]
+fn retro_effective_light_theme_restores_the_unchanged_preferred_theme() {
+    let ctx = egui::Context::default();
+    let prefs = crate::preferences::Preferences {
+        frontend: Frontend::Retro,
+        theme: Some(egui::Theme::Dark),
+        ..Default::default()
+    };
+    let mut app = WebApp::from_preferences(&ctx, prefs, None);
+    assert_eq!(ctx.theme(), egui::Theme::Light);
+    assert!(app.switch_frontend(&ctx, Frontend::Studio));
+    assert_eq!(ctx.theme(), egui::Theme::Dark);
+    assert!(app.switch_frontend(&ctx, Frontend::Retro));
+    assert_eq!(ctx.theme(), egui::Theme::Light);
+    assert!(app.switch_frontend(&ctx, Frontend::Classic));
+    assert_eq!(ctx.theme(), egui::Theme::Dark);
+    assert_eq!(app.preferences.theme, Some(egui::Theme::Dark));
+}
+
+#[test]
+fn actual_retro_host_keeps_narrow_tools_and_reachable_mobile_navigation() {
+    use egui_kittest::{Harness, kittest::Queryable};
+    for width in [1440.0, 320.0] {
+        let mut h = Harness::builder()
+            .with_size(egui::vec2(width, 700.0))
+            .build_eframe(|cc| {
+                WebApp::from_preferences(
+                    &cc.egui_ctx,
+                    crate::preferences::Preferences {
+                        frontend: Frontend::Retro,
+                        theme: Some(egui::Theme::Dark),
+                        ..Default::default()
+                    },
+                    None,
+                )
+            });
+        h.run();
+        assert_eq!(h.ctx.theme(), egui::Theme::Light);
+        let first = h
+            .get_by_role_and_label(egui::Role::Button, "Free-form")
+            .rect();
+        let second = h.get_by_role_and_label(egui::Role::Button, "Select").rect();
+        assert!((second.min.x - first.min.x - 25.0).abs() < 1.0);
+        assert!(second.max.x <= 64.0, "{second:?}");
+        let settings = h
+            .get_by_role_and_label(egui::Role::Button, "Settings…")
+            .rect();
+        let changer = h
+            .get_by_role_and_label(egui::Role::Button, "Interface")
+            .rect();
+        assert!(
+            h.ctx.content_rect().contains_rect(settings)
+                && h.ctx.content_rect().contains_rect(changer)
+        );
+        let file = h.get_by_label("File").rect();
+        if width < 520.0 {
+            assert!(settings.max.y <= file.min.y + 2.0);
+        } else {
+            assert!((settings.center().y - file.center().y).abs() < 2.0);
+        }
+        let white = h
+            .get_by_role_and_label(egui::Role::ColorWell, "Palette color #FFFFFF")
+            .rect();
+        assert!(h.ctx.content_rect().contains_rect(white));
+        h.get_by_role_and_label(egui::Role::Button, "Settings…")
+            .click();
+        h.run();
+        assert!(h.state().settings);
+        assert_eq!(h.ctx.theme(), egui::Theme::Light);
+        h.get_by_label("Cancel").click();
+        h.run();
+        h.get_by_role_and_label(egui::Role::Button, "Interface")
+            .click();
+        h.run();
+        h.get_by_label("Studio").click();
+        h.run();
+        assert_eq!(h.state().frontend, Frontend::Studio);
+        assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+        assert_eq!(h.state().preferences.theme, Some(egui::Theme::Dark));
+    }
+}

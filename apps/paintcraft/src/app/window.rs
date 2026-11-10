@@ -97,7 +97,13 @@ impl App {
             }
         }
         self.apply_style(&ctx);
-        egui::Panel::top("toolbar").show(ui, |ui| {
+        let toolbar = egui::Panel::top("toolbar");
+        let toolbar = if self.experience() == Experience::Retro {
+            toolbar.frame(paintcraft_retro::frame())
+        } else {
+            toolbar
+        };
+        toolbar.show(ui, |ui| {
             ui.add_enabled_ui(!self.filter_navigation_ready(), |ui| self.toolbar(ui));
         });
         if self.experience() == Experience::Studio || self.document_count() > 1 {

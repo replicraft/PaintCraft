@@ -84,13 +84,19 @@ pub fn palette(
         return intents;
     }
     with_style(ui, |ui| {
+        ui.spacing_mut().interact_size = Vec2::splat(16.0);
         ui.add_enabled_ui(context.document_open && !context.blocked, |ui| {
             ui.horizontal(|ui| {
                 current_colors(ui, controls, workspace, &mut intents);
                 egui::ScrollArea::horizontal()
                     .id_salt("retro-palette-scroll")
+                    .min_scrolled_height(36.0)
+                    .max_height(50.0)
                     .show(ui, |ui| {
                         egui::Grid::new("retro-palette")
+                            .min_col_width(16.0)
+                            .max_col_width(16.0)
+                            .min_row_height(16.0)
                             .spacing(Vec2::splat(1.0))
                             .show(ui, |ui| {
                                 for (index, [r, g, b]) in PALETTE.into_iter().enumerate() {
@@ -158,10 +164,8 @@ fn current_colors(
         (false, Vec2::new(1.0, 1.0), controls.primary, "Color 1"),
     ] {
         let well = egui::Rect::from_min_size(rect.min + offset, Vec2::splat(22.0));
-        let response = ui.put(
-            well,
-            egui::Button::new("").selected(workspace.edit_secondary == secondary),
-        );
+        let response = ui.put(well, egui::Button::new("").fill(Color32::from_gray(192)));
+        bevel(ui, well.shrink(0.5), workspace.edit_secondary == secondary);
         let rgba = color.0;
         ui.painter().rect_filled(
             well.shrink(4.0),
