@@ -9,3 +9,6 @@
 /dist/
 __pycache__/
 .pnpm-store/
+
+/crates/adapters/paint-lib/tests/fixtures/**/bin/
+/crates/adapters/paint-lib/tests/fixtures/**/obj/
