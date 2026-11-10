@@ -393,6 +393,8 @@
 - apply captured resize and skew edits (853bd80)
 - apply captured resize and skew edits (10e736c)
 - translate resize and skew refusal messages (7ed36ac)
+- quote logical resource-factory controls (f8cef8c)
+- compose accounted Source8 display patches (dc5ca5d)
 
 
 ### Fixes
@@ -498,6 +500,7 @@
 - fit controls and navigation into compact layouts (3ad7c16)
 - keep dialogs inside narrow viewports (800c77a)
 - preserve changelog release boundaries (b0b8517)
+- align parser lock with workspace version (5755241)
 
 
 ### Maintenance
@@ -658,6 +661,7 @@
 - prepare v0.2.0 (b5d7d31)
 - cover functional resize and export dialogs (80d1aad)
 - respect platform print capabilities in Retro (8826605)
+- check parser dependency lock before compiling (8a0b144)
 
 
 ### Performance
