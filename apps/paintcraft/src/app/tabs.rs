@@ -480,6 +480,35 @@ impl WorkspaceDocuments {
             next_tab_number: 1,
         }
     }
+    pub(super) fn update_restart_idle(&self) -> bool {
+        let idle = |state: &DocumentState| {
+            !state.session.recovery_busy()
+                && !state.editor.is_dirty()
+                && !state.editor.has_pending_edits()
+                && !state.editor.has_pending_maintenance()
+                && !state.editor.gesture_in_progress()
+                && !state.editor.is_editing_text()
+                && state.deferred_files.is_empty()
+                && state.pending_save.is_none()
+                && !state.name_edit.as_ref().is_some_and(|(id, name, _)| {
+                    state
+                        .editor
+                        .layer_properties(*id)
+                        .is_some_and(|p| p.0 != *name)
+                })
+                && !state.opacity_edit.is_some_and(|(id, opacity)| {
+                    state
+                        .editor
+                        .layer_properties(id)
+                        .is_some_and(|p| p.1 != opacity)
+                })
+        };
+        idle(&self.active)
+            && self
+                .tabs
+                .iter()
+                .all(|tab| tab.state.as_ref().is_none_or(idle))
+    }
     pub(super) fn swap(&mut self, app: &mut App) {
         self.active.swap(app);
         app.editor.text_renderer_connect(app.text_renderer.clone());

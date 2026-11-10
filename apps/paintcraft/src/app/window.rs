@@ -19,6 +19,15 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            self.updates.poll(&ctx);
+        }
+        if self.update_restart.is_some() {
+            self.update_restart_ui(ui);
+            #[cfg(target_os = "macos")]
+            self.publish_tablet_view(&ctx);
+            return;
+        }
+        if first_pass {
             if self.pending_import.is_some() && self.confirm != Some(Confirm::ImportLosses) {
                 self.pending_import = None;
             }

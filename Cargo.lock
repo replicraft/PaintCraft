@@ -3632,6 +3632,7 @@ dependencies = [
  "paintcraft-tablet-native",
  "paintcraft-tools",
  "paintcraft-ui",
+ "paintcraft-update",
  "pollster 0.4.0",
  "same-file",
  "sha2 0.11.1",

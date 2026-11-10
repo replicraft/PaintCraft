@@ -29,6 +29,7 @@ paintcraft-runtime = { workspace = true, features = ["native-io"] }
 paintcraft-render = { workspace = true, features = ["gpu"] }
 paintcraft-tools = { workspace = true, features = ["text"] }
 paintcraft-ui.workspace = true
+paintcraft-update.workspace = true
 
 eframe.workspace = true
 sha2.workspace = true

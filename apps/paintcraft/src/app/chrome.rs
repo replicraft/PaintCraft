@@ -71,7 +71,8 @@ impl App {
             desktop_download: false,
             auto_hide_toolbar: self.settings.classic_toolbar_auto_hide,
             thumbnail: self.classic.thumbnail,
-            blocked: self.save_all.is_some()
+            blocked: self.update_restart.is_some()
+                || self.save_all.is_some()
                 || self.picking.is_some()
                 || self.switching.is_some()
                 || self.closing_workspace

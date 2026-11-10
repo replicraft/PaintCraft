@@ -128,6 +128,10 @@ mod text;
 mod text_ui;
 #[path = "app/thumbnail.rs"]
 mod thumbnail;
+#[path = "app/update_restart.rs"]
+mod update_restart;
+#[path = "app/updates.rs"]
+mod updates;
 #[path = "app/view.rs"]
 mod view;
 #[path = "app/window.rs"]
@@ -377,6 +381,8 @@ pub struct App {
     last_autosave: f64,
     allow_close: bool,
     settings_dir: Option<PathBuf>,
+    updates: updates::State,
+    update_restart: Option<update_restart::State>,
     recent: recent::History,
     settings: Settings,
     /// The variant highlighted in the first-visit picker.
@@ -390,6 +396,8 @@ pub struct App {
     /// Edit buffers for the selected layer's name and opacity, committed on release.
     name_edit: Option<(Uuid, String, paintcraft_ui::composition::Field)>,
     opacity_edit: Option<(Uuid, u8)>,
+    // Last: original installation lease outlives every App field and background owner.
+    installation_lock: Option<paintcraft_update::InstallLock>,
 }
 
 fn token(ctx: &egui::Context, code: u64) -> u64 {
@@ -528,6 +536,9 @@ impl App {
             last_autosave: 0.0,
             allow_close: false,
             settings_dir: None,
+            updates: updates::State::default(),
+            installation_lock: None,
+            update_restart: None,
             recent: Default::default(),
             settings: Settings::default(),
             picking: None,

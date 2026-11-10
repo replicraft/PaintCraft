@@ -195,6 +195,16 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
 }
 
 impl Settings {
+    /// Read the saved UI language without migrating, renaming or rewriting settings.
+    /// Missing, unreadable or invalid settings use the default startup language.
+    #[must_use]
+    pub fn language_hint(dir: &Path) -> Language {
+        fs::read(file(dir))
+            .ok()
+            .and_then(|bytes| parse(&bytes).ok())
+            .map_or_else(Language::default, |settings| settings.language)
+    }
+
     pub fn load(dir: &Path) -> (Settings, Loaded) {
         let path = file(dir);
         let bytes = match fs::read(&path) {
@@ -479,3 +489,7 @@ mod tests {
         fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[cfg(test)]
+#[path = "settings/language_hint_tests.rs"]
+mod language_hint_tests;

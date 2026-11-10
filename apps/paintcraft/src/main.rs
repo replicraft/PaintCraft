@@ -6,13 +6,56 @@
 
 use paintcraft::App;
 mod startup;
+struct StartupInstallation(Option<paintcraft_update::InstallLock>);
+impl Drop for StartupInstallation {
+    fn drop(&mut self) {
+        // App construction may already own threads before the lease is moved
+        // into App. Preserve the original FD through startup unwinding too.
+        if let Some(lock) = self.0.take() {
+            std::mem::forget(lock);
+        }
+    }
+}
 
 fn main() -> eframe::Result {
+    // Reading a locale hint is side-effect-free even for malformed preferences.
+    let settings_dir = paintcraft::settings::default_dir();
+    let startup_language = paintcraft::settings::Settings::language_hint(&settings_dir);
+    // Acquire before any document construction or background/editor service startup.
+    let platform = paintcraft_update::Platform::detect();
+    let mut installation = StartupInstallation(
+        match paintcraft_update::InstallLock::acquire(&platform) {
+            Ok(lock) => lock,
+            Err(error) => {
+                use paintcraft_ui::i18n::translate;
+                let language = startup_language;
+                let title = translate(language, "PaintCraft is updating");
+                let message = match &error {
+                    paintcraft_update::Error::InstallationBusy => translate(
+                        language,
+                        "Another PaintCraft editor is using this installation. Close other editors and try again.",
+                    ),
+                    _ => paintcraft_ui::i18n::format_message(
+                        language,
+                        "PaintCraft could not obtain its installation lock: { $detail }",
+                        &[("detail", error.to_string())],
+                    ),
+                };
+                paintcraft_platform::dialogs::show_error(
+                    &title,
+                    &message,
+                    &translate(language, "OK"),
+                );
+                return Err(eframe::Error::AppCreation(Box::new(error)));
+            }
+        },
+    );
     let _ = paintcraft_platform::spill::remove_abandoned(
         &std::env::temp_dir().join("paintcraft-history"),
     );
     let path = std::env::args_os().nth(1).map(std::path::PathBuf::from);
-    let mut app = App::new_with_settings(path, paintcraft::settings::default_dir());
+    let mut app =
+        App::new_with_settings(path, settings_dir).with_installation_lock(installation.0.take());
     let language = app.language();
     // Smoke runs: close after N frames, e.g. PAINTCRAFT_EXIT_AFTER_FRAMES=30.
     if let Some(n) = std::env::var("PAINTCRAFT_EXIT_AFTER_FRAMES")

@@ -19,6 +19,16 @@ impl App {
         {
             return;
         }
+        self.start_save_all_batch(ctx);
+    }
+    pub(super) fn start_save_all_for_update(&mut self, ctx: &egui::Context) -> bool {
+        if self.save_all.is_some() || !self.editor.shape_file_ready() {
+            return false;
+        }
+        self.start_save_all_batch(ctx);
+        true
+    }
+    fn start_save_all_batch(&mut self, ctx: &egui::Context) {
         self.resolve_tab_input(ctx);
         self.save_all = Some(Batch {
             remaining: self.tabs.iter().map(|tab| tab.id).rev().collect(),
@@ -31,6 +41,7 @@ impl App {
     }
 
     fn stop_save_all(&mut self, ctx: &egui::Context, origin: Uuid, detail: Option<String>) {
+        self.cancel_update_restart_after_save_failure();
         self.swap_tab_state(origin);
         self.reset_tab_presentation();
         self.editor.set_status(detail.map_or_else(

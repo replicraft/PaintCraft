@@ -27,23 +27,29 @@ impl App {
     pub(super) fn settings_dialog(&mut self, ctx: &egui::Context, mut draft: SettingsDraft) {
         let classic = self.experience() == Experience::Classic;
         let mut page = draft.page;
+        let mut update_action = crate::updates::Action::None;
         let response = paintcraft_classic::settings::show(
             ctx,
             classic,
             &mut page,
             |ui, page, width, height| {
-                content(
+                update_action = content(
                     ui,
                     &mut draft,
                     &self.fonts.families,
                     page,
-                    width,
-                    height,
+                    [width, height],
                     classic,
+                    &mut self.updates,
                 );
             },
         );
         draft.page = page;
+        if update_action == crate::updates::Action::Restart {
+            self.confirm = Some(Confirm::Settings(draft));
+            self.begin_update_restart(ctx);
+            return;
+        }
         match response {
             Response::Cancel => {
                 self.confirm = None;
@@ -69,10 +75,12 @@ fn content(
     draft: &mut SettingsDraft,
     fonts: &[String],
     page: Page,
-    width: f32,
-    height: f32,
+    size: [f32; 2],
     classic: bool,
-) {
+    updates: &mut crate::updates::State,
+) -> crate::updates::Action {
+    let [width, height] = size;
+    let mut update_action = crate::updates::Action::None;
     ui.allocate_ui_with_layout(egui::vec2(width, height), egui::Layout::top_down(egui::Align::Min), |ui| {
         ui.set_width(width);
         if classic {
@@ -84,6 +92,7 @@ fn content(
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::About => card(ui, "About", |ui| {
                         paintcraft_classic::settings::about(ui);
+                        update_action=updates.show(ui);
                         egui::CollapsingHeader::new(t!(ui.ctx(), "Third-party licenses"))
                             .id_salt("third-party-licenses")
                             .show(ui, |ui| {
@@ -118,6 +127,7 @@ fn content(
                 }
             });
     });
+    update_action
 }
 
 fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
