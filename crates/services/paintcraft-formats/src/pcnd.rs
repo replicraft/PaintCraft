@@ -288,8 +288,9 @@ mod compact_tests;
 mod source_metadata_history_tests;
 
 pub use binary::admitted::{
-    BlendCountedControlBytes, CountedBlendSnapshot, CountedBlendSnapshotBytes,
-    blend_counted_snapshot_control_bytes, count_portable_blend_snapshot_rooted_checked,
+    BlendCountedControlBytes, BlendPlanRecordUpperBounds, CountedBlendSnapshot,
+    CountedBlendSnapshotBytes, blend_counted_snapshot_control_bytes,
+    count_portable_blend_snapshot_rooted_checked,
 };
 
 #[cfg(test)]

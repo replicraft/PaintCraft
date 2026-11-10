@@ -1145,3 +1145,23 @@ that same bounded job, including paid retry behavior. This is progress toward
 default-canvas support, not completion. The connected Worker8 service and Main
 publication remain open. Kernel timings are mixed, including regressions; see
 [the measurement decision](../benchmarks/display-native-rows-2026-11-10/DECISION.md).
+
+The tracked worker suite now includes default-canvas regression cases for the
+complete Normal output, the partial corner followed by a full render on one
+job, original cancellation identity, paid retry refusal and General refusal.
+All 142 worker checks pass. These native tests extend the earlier 887-case
+Wasm evidence; they do not imply a new Wasm execution or browser adoption.
+
+`CountedBlendSnapshot::plan_record_upper_bounds_checked` provides a paid
+bootstrap for subsequent plan sizing. It retains the original immutable
+document, scope and callbacks, walks roots with charged lookups, and sums
+constant-time resident tile counts. The writer emits at most one record per
+resident tile; hidden layers and repeated shared storage still count as
+separate serialized occurrences. All-default resident tiles can be omitted,
+so this is an upper bound rather than the authenticated wire count. Temporary
+query controls use the original scope and retire before return.
+
+These bounds cover record storage only. Main must still authenticate the same
+encoded snapshot and combine simultaneous plan, scan, retained census and
+probe scratch before declaring Worker roles. No new grant, counter or complete
+source forecast is introduced by this query.

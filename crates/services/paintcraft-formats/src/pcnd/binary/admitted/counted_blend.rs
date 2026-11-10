@@ -8,7 +8,9 @@ use paintcraft_core::types::{
 use paintcraft_document::Document;
 mod counting;
 mod fixed;
+mod plan_bounds;
 pub use fixed::CountedBlendSnapshotBytes;
+pub use plan_bounds::BlendPlanRecordUpperBounds;
 const SOURCE_MAX: u64 = 64 << 20;
 /// Target-sized scalar controls, never a source quote or admission token.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -385,6 +385,7 @@ mod rooted_blocks;
 
 mod counted_blend;
 pub use counted_blend::{
-    BlendCountedControlBytes, CountedBlendSnapshot, CountedBlendSnapshotBytes,
-    blend_counted_snapshot_control_bytes, count_portable_blend_snapshot_rooted_checked,
+    BlendCountedControlBytes, BlendPlanRecordUpperBounds, CountedBlendSnapshot,
+    CountedBlendSnapshotBytes, blend_counted_snapshot_control_bytes,
+    count_portable_blend_snapshot_rooted_checked,
 };
