@@ -1330,7 +1330,21 @@ defining service/stage/view types and factory quotes, with finite bootstrap
 exclusions recorded before implementation. Fixture grants are not production
 Main workspace forecasts.
 
-The generated Wasm class still needs actual ABI and service execution. Matching
-JS transport, source-universal Main workspace forecasts, original Main admission
-and texture-delta retirement are separate unfinished gates. No frontend route
-is activated by this native checkpoint.
+The genuine generated full-product Wasm class now passes 42 cases: 26 complete
+RGBA scenes and 16 public service controls. Actual ten-product compiler output
+matches 164 package identities and 184 target/feature rows. The module has exactly
+71 declared exports and two typed imports, is 2,527,577 bytes under the 4 MiB file
+limit, and uses one nonshared memory initially 2 MiB with a 256 MiB maximum.
+Execution ends at 2 MiB with zero live service instances. Its SHA-256 is
+`9173a87620834dba94c4bb276d21a7c159fa9bcb58912080c8a4acdcb8d96b82`.
+Build attempt 1 retained a harness filename failure after successful compilation
+and bindgen. An additive harness correction supplies the official output-name
+flag; successful build attempt 2 and Node attempt 1 retain separate receipts
+under `docs/validation/layer-blend-candidates/source8-blend-service-wasm/`.
+The earlier 888-case diagnostic and its 16 MiB memory maximum are unchanged.
+
+Matching JS transport separately passes all 376 web Node tests, including 13
+new lifecycle groups. These use a service double, so they do not qualify the
+genuine Rust/JS connection. Source-universal Main workspace forecasts, original
+Main admission and texture-delta retirement remain unfinished gates. No frontend
+route is activated by these checkpoints; neither proves heap/RSS or latency.
