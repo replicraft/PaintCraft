@@ -3,6 +3,7 @@ use super::*;
 use paintcraft_ui::t;
 mod owners;
 pub(super) type Workspaces = owners::Owners<Frontend, Box<Parked>>;
+const INITIAL_STATUS: &str = "Ready - Save downloads a project copy; work stays in this tab";
 
 #[derive(Debug)]
 pub(super) struct Parked {
@@ -13,6 +14,7 @@ pub(super) struct Parked {
     text: crate::text_ui::TextUi,
     name: String,
     zoom: f32,
+    message: String,
 }
 
 impl WebApp {
@@ -177,6 +179,7 @@ impl WebApp {
                 ),
                 name: "Untitled".into(),
                 zoom: 1.0,
+                message: INITIAL_STATUS.into(),
             }))
         };
         // All fallible construction and owner-table reservation completed.
@@ -196,6 +199,7 @@ impl WebApp {
             self.editor = editor;
             self.canvas = Canvas::default();
             self.name = "Untitled".into();
+            self.message = INITIAL_STATUS.into();
         }
         std::mem::swap(&mut self.editor, &mut other.editor);
         std::mem::swap(&mut self.canvas, &mut other.canvas);
@@ -208,6 +212,7 @@ impl WebApp {
         std::mem::swap(&mut self.workspace, &mut other.workspace);
         std::mem::swap(&mut self.name, &mut other.name);
         std::mem::swap(&mut self.zoom, &mut other.zoom);
+        std::mem::swap(&mut self.message, &mut other.message);
         transfer.finish(other);
         self.frontend = frontend;
         self.paste = Default::default();

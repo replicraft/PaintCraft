@@ -200,3 +200,74 @@ fn failed_discard_preparation_restores_the_existing_target_and_dirty_source() {
         studio
     );
 }
+
+#[test]
+fn status_and_error_text_follow_the_exact_workspace_on_ordinary_roundtrip() {
+    let ctx = egui::Context::default();
+    let mut app = WebApp::new(&ctx);
+    let classic = app.editor.session.history_ticket();
+    app.message = "Open failed: Classic source stayed intact".into();
+    app.switch_frontend(&ctx, Frontend::Studio);
+    let studio = app.editor.session.history_ticket();
+    assert_eq!(app.message, INITIAL_STATUS);
+    app.message = "Export failed: Studio destination is unavailable".into();
+    app.switch_frontend(&ctx, Frontend::Classic);
+    assert_eq!(app.editor.session.history_ticket(), classic);
+    assert_eq!(app.message, "Open failed: Classic source stayed intact");
+    app.switch_frontend(&ctx, Frontend::Studio);
+    assert_eq!(app.editor.session.history_ticket(), studio);
+    assert_eq!(
+        app.message,
+        "Export failed: Studio destination is unavailable"
+    );
+}
+
+#[test]
+fn actual_unsaved_status_never_leaks_and_discard_resets_only_the_outgoing_status() {
+    let ctx = egui::Context::default();
+    let mut app = WebApp::new(&ctx);
+    app.edit(Edit::ClearCanvas {
+        color: paintcraft_core::types::Rgba([51, 52, 53, 255]),
+    });
+    assert_eq!(app.message, "Unsaved changes - kept only in this tab");
+    // Internal ordinary transfer intentionally parks the dirty owner; public
+    // admission is separately exercised by the real discard-modal regression.
+    app.switch_frontend(&ctx, Frontend::Studio);
+    assert!(!app.unsaved());
+    assert_eq!(app.message, INITIAL_STATUS);
+    let studio = app.editor.session.history_ticket();
+    app.message = "Print failed: no printer selected".into();
+    app.switch_frontend(&ctx, Frontend::Classic);
+    assert!(app.unsaved());
+    assert_eq!(app.message, "Unsaved changes - kept only in this tab");
+    app.action(&ctx, Action::ChooseFrontend(Frontend::Studio));
+    app.discard_and_replace(&ctx);
+    assert_eq!(app.editor.session.history_ticket(), studio);
+    assert_eq!(app.message, "Print failed: no printer selected");
+    app.switch_frontend(&ctx, Frontend::Classic);
+    assert!(!app.unsaved());
+    assert_eq!(app.message, INITIAL_STATUS);
+    assert_eq!(app.editor.session.undo_depth(), 0);
+}
+
+#[test]
+fn refused_discard_restores_target_status_without_a_blanket_ready_reset() {
+    let ctx = egui::Context::default();
+    let mut app = WebApp::new(&ctx);
+    app.switch_frontend(&ctx, Frontend::Studio);
+    let studio = app.editor.session.history_ticket();
+    app.message = "Studio error must remain available".into();
+    app.switch_frontend(&ctx, Frontend::Classic);
+    app.edit(Edit::ClearCanvas {
+        color: paintcraft_core::types::Rgba([61, 62, 63, 255]),
+    });
+    app.preferences.canvas.remember_last = false;
+    app.preferences.canvas.configured = (4096, 4096);
+    app.confirm_replace = Some(Action::ChooseFrontend(Frontend::Studio));
+    app.discard_and_replace(&ctx);
+    assert_eq!(app.frontend, Frontend::Classic);
+    assert!(app.unsaved());
+    let target = app.parked.get(Frontend::Studio).unwrap();
+    assert_eq!(target.editor.session.history_ticket(), studio);
+    assert_eq!(target.message, "Studio error must remain available");
+}
