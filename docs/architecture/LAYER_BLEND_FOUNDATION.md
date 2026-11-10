@@ -1212,15 +1212,14 @@ unchanged 4,194,304-byte file limit by 15,293 bytes. Compilation and source chec
 passed, but numeric execution did not run. The failed artifact is retained.
 Shared row and spatial preparation now removes the duplicated seed traversal;
 258 renderer and 146 worker checks, native/Wasm Clippy and strict rustdoc pass.
-The next compiled module is 4,202,543 bytes: 7,054 bytes smaller, but still 8,239
-bytes over the same limit. Numeric execution remains gated. This is a measured
+The next compiled module was 4,202,543 bytes: 7,054 bytes smaller, but still 8,239
+bytes over the same limit. Numeric execution remained gated at that stage. This is a measured
 code-size reduction, with no CPU-speed or physical-memory claim. The failed
 artifacts and intervening source-manifest bookkeeping failure remain archived.
 
-The earlier 887-case
-receipt describes the row-only stage, including its then-current General
-refusal. This new native result does not activate Worker8, Main publication or
-browser blending, and makes no CPU-speed or full-heap claim.
+The earlier 887-case receipt describes the row-only stage, including its
+then-current General refusal. These prerequisites do not activate Worker8,
+Main publication or browser blending, and make no CPU-speed or full-heap claim.
 
 ### Counted Main source forecast
 
@@ -1248,3 +1247,59 @@ Evidence is retained in
 The initial diagnostic compilation failure remains archived. This standalone
 forecast execution does not qualify production staging, Worker8 transport,
 browser publication, physical memory or latency.
+
+### Shared context entry and executed Wasm checkpoint
+
+Shared rooted installation and preflight traversal now retain the original
+capture, validation, debit and callback order. Workspace and Noise context
+entry use private non-generic helpers, avoiding repeated setup bodies for each
+callback type. The original depth limit, restoration guards and owner lifetimes
+remain intact, including rejected work dropping before its input admission and
+nested Noise calls retaining their original input through restoration.
+
+The current source passes 265 default renderer checks, 146 worker checks and
+354 required-GPU renderer checks, including 62 integration cases on Apple M1 Pro
+Metal. Native/default and GPU Clippy, strict rustdoc, Wasm Clippy, formatting and
+source-length checks pass. The sandbox could not enumerate a GPU; its failed
+attempt remains separate from the successful offscreen run outside the sandbox.
+
+Actual ten-product Wasm build 4 produces a 4,175,543-byte module, 18,761 bytes
+under the unchanged 4,194,304-byte limit. It is 27,000 bytes smaller than build 3.
+All 4,861 source hashes and source-archive members match; the original 133 exports,
+three imports and 2 MiB initial/16 MiB maximum linear memory remain unchanged.
+This is code-size evidence, not a CPU-speed or physical-stack bound.
+
+Node attempt 2 passes all 888 cases and finishes at 4 MiB linear memory. It
+retains the earlier 887 cases and adds the independent fractional-alpha Studio
+source. Full default-canvas results use the same original 268,435,456-unit job:
+
+| Case | Actual work | Raw checks |
+|---|---:|---:|
+| Normal default | 214,773,326 | 20,270 |
+| General default | 254,850,830 | 35,822 |
+| Studio transparent base with fractional-alpha Multiply | 251,000,590 | 28,302 |
+
+The first Node attempt caught an incorrect new off-canvas work prediction.
+The seeded quote pays its 4,288-unit setup before the old geometry refusal,
+without capturing the seed or adding callbacks. An additive runner/oracle fixes
+only that expectation; the original runner, oracle, compiled module and build
+receipt remain byte-exact. All 4,861 original source rows and 19 amendment rows
+match before and after execution.
+
+Evidence is under
+`docs/validation/layer-blend-candidates/source8-transparent-seed-wasm-effective`.
+The immutable `build-attempt-4/build-final.json` SHA-256 is
+`ad65eb503e60a6cac819276302bbca04bf755541c0891a02298127fdac6f3091`;
+`node-attempt-2/final.json` is
+`82d0f810063d5742539cbe21af79720c86eaf6b46af6fd2705f3caca823a1b10`.
+Native context-test development also records an evidence gap: one original
+failure log was accidentally overwritten by a repeated failed run. Its original
+hash, partial observed excerpt and separately identified repeat remain under
+`docs/validation/source8-shared-context-entry/root-native/verification-command-error`;
+the original full log is unavailable. Successful final receipts use fresh,
+exclusively created evidence paths.
+
+Production staging, the Worker8 dispatcher, complete Main phase admission and
+actual browser patch/ACK/publication still require implementation and execution.
+This finite diagnostic does not qualify those routes, full heap/RSS, latency or
+the complete roadmap.

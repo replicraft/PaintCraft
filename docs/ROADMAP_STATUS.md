@@ -89,6 +89,17 @@ strict native/Wasm compilation and formatting pass. Actual Wasm also matches
 all 22 pixel goldens and passes 16 public frame controls plus an off-canvas
 refusal. Browser candidate/frame ownership remains required before
 publication. These checks do not establish browser mask editing or blend adoption.
+The latest finite Source8 diagnostic passes 888 actual Wasm cases, including
+complete default Normal/General output and fractional-alpha Studio output under
+the original work ceiling. Shared context/preflight code brings the module to
+4,175,543 bytes under the unchanged 4 MiB file limit; final linear memory is
+4 MiB under its 16 MiB maximum. Current native validation passes 265 default
+renderer, 146 worker and 354 required-Metal renderer checks. The genuine Worker8
+service, complete Main admission and browser patch/ACK/publication remain open.
+The [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md) records exact
+receipts, the single corrected off-canvas work expectation and a disclosed
+development failure-log gap. This does not activate browser blending or qualify
+physical memory, latency or the full roadmap.
 Next is completing browser mask actions and browser blend adoption, then Color
 Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
