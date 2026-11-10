@@ -758,9 +758,17 @@
       "milestone": "M4",
       "title": "RetroPaint and historical formats",
       "depends_on": ["T16"],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Historical Paint and Deluxe Paint II Enhanced 2.0 skins; era-specific fixtures and explicit additional capabilities without changed default muscle memory. See docs/RETRO.md.",
+      "status": "partial",
+      "evidence": [
+        "docs/RETRO.md",
+        "docs/RESIZE_SKEW.md",
+        "crates/presentation/paintcraft-retro/src/lib.rs",
+        "crates/presentation/paintcraft-ui/src/actions/retro.rs",
+        "apps/paintcraft/src/app/retro.rs",
+        "apps/paintcraft-web/src/paintcraft-web/app/retro.rs",
+        "assets/repo/retro-win95.png"
+      ],
+      "remaining_or_scope": "First Win95-inspired desktop/web skin implemented with independent workspaces, sixteen tool choices, W95FA typography, PCND/BMP/PNG profile and real undoable resize/skew. Release qualification remains separate. Other historical Paint skins and Deluxe Paint II Enhanced 2.0 still require their own reference fixtures, behavior and format policies; this first skin does not complete historical compatibility. See docs/RETRO.md.",
       "acceptance": "Era-specific fixtures and explicit additional capabilities without changed default muscle memory."
     },
     {
