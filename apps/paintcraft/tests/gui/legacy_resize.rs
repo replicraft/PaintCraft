@@ -10,7 +10,7 @@ fn open(h: &mut Harness<App>, language: Language) {
 }
 
 #[test]
-fn historical_resize_preview_preserves_units_aspect_and_document() {
+fn historical_resize_stages_units_and_cancels_then_applies_once_and_undoes() {
     for variant in [ClassicVariant::V7, ClassicVariant::V10] {
         for language in Language::ALL {
             for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
@@ -58,7 +58,7 @@ fn historical_resize_preview_preserves_units_aspect_and_document() {
                 h.run();
                 assert_eq!(value(&h, "Skew vertical"), -20.0);
                 assert!(
-                    h.get_by_role_and_label(Role::Button, &label("OK"))
+                    !h.get_by_role_and_label(Role::Button, &label("OK"))
                         .accesskit_node()
                         .is_disabled()
                 );
@@ -84,6 +84,32 @@ fn historical_resize_preview_preserves_units_aspect_and_document() {
                 h.run();
                 assert!(h.state().editor().document().same_semantics(&snapshot));
                 assert_eq!(h.state().editor().history_view().ticket, ticket);
+
+                // Cancel/Escape discard the draft. A subsequent valid Apply is real,
+                // exactly once even when the harness requests a second layout pass.
+                open(&mut h, language);
+                h.get_by_role_and_label(Role::SpinButton, &name)
+                    .set_value_accesskit(50.0);
+                h.run();
+                assert_eq!(value(&h, "Resize vertical"), 50.0);
+                assert!(h.state().editor().document().same_semantics(&snapshot));
+                assert_eq!(h.state().editor().history_view().ticket, ticket);
+                let before = publications(&h);
+                h.get_by_role_and_label(Role::Button, &label("OK")).click();
+                h.run();
+                assert!(
+                    h.query_by_role_and_label(Role::Button, &label("Cancel"))
+                        .is_none()
+                );
+                assert_eq!(h.state().editor().document().canvas, (500, 243));
+                assert_eq!(publications(&h), before + 1);
+                assert_ne!(h.state().editor().history_view().ticket, ticket);
+                h.get_by_role_and_label(Role::Button, &label("Undo"))
+                    .click();
+                h.run();
+                assert!(h.state().editor().document().same_semantics(&snapshot));
+                assert_eq!(h.state().editor().document().canvas, (1000, 486));
+                assert_eq!(publications(&h), before + 2);
                 drop(h);
                 std::fs::remove_dir_all(dir).unwrap();
             }

@@ -83,7 +83,13 @@ fn historical_save_as_choices_export_real_formats_only_after_confirmation() {
                     .click();
                 h.run();
                 assert_eq!(std::fs::read(&out).unwrap(), b"existing picture");
-                h.get_by_label(&translate(language, "Export now")).click();
+                h.get(
+                    egui_kittest::kittest::By::new()
+                        .role(eframe::egui::Role::Button)
+                        .label(&translate(language, "Export now"))
+                        .predicate(|node| !node.is_disabled()),
+                )
+                .click();
                 h.run();
                 let bytes = std::fs::read(&out).unwrap();
                 assert_eq!(

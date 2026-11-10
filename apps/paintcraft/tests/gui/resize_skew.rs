@@ -27,7 +27,7 @@ fn choose_unit(h: &mut Harness<App>, label: &str) {
 }
 
 #[test]
-fn resize_skew_preview_stages_units_link_and_angles_without_publishing() {
+fn resize_skew_dialog_stages_parameters_then_applies_one_undoable_edit() {
     for (size, ppp, appearance) in [
         (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
         (Vec2::new(480.0, 360.0), 2.0, Appearance::Dark),
@@ -60,7 +60,7 @@ fn resize_skew_preview_stages_units_link_and_angles_without_publishing() {
         assert_eq!(value(&h, "Resize horizontal"), 100.0);
         assert_eq!(value(&h, "Resize vertical"), 100.0);
         assert!(
-            h.get_by_role_and_label(Role::Button, "OK")
+            !h.get_by_role_and_label(Role::Button, "OK")
                 .accesskit_node()
                 .is_disabled()
         );
@@ -105,9 +105,6 @@ fn resize_skew_preview_stages_units_link_and_angles_without_publishing() {
         assert_eq!(value(&h, "Skew vertical"), -20.0);
         let footer = h.get_by_role_and_label(Role::Button, "Cancel").rect();
         assert!(footer.min.y >= 0.0 && footer.max.y <= size.y);
-        h.get_by_role_and_label(Role::Button, "OK").click();
-        h.run();
-        assert!(h.query_by_role_and_label(Role::Button, "Cancel").is_some());
         h.key_combination_modifiers(Modifiers::COMMAND, &[Key::Z]);
         h.run();
         assert!(h.state().editor().document().same_semantics(&snapshot));
@@ -118,13 +115,37 @@ fn resize_skew_preview_stages_units_link_and_angles_without_publishing() {
         assert!(h.state().editor().document().same_semantics(&snapshot));
         assert_eq!(h.state().editor().history_view().ticket, ticket);
         assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+
+        let depth = h.state().editor().undo_depth();
+        let published = publications(&h);
+        h.get_by_role_and_label(Role::Button, "Resize and skew")
+            .scroll_to_me();
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Resize and skew")
+            .click();
+        h.run();
+        set(&mut h, "Resize horizontal", 50.0);
+        assert_eq!(value(&h, "Resize vertical"), 50.0);
+        assert_eq!(value(&h, "Skew horizontal"), 0.0);
+        assert_eq!(value(&h, "Skew vertical"), 0.0);
+        h.get_by_role_and_label(Role::Button, "OK").click();
+        h.run();
+        assert!(h.query_by_role_and_label(Role::Button, "Cancel").is_none());
+        assert_eq!(h.state().editor().document().canvas, (500, 243));
+        assert_eq!(h.state().editor().undo_depth(), depth + 1);
+        assert_eq!(publications(&h), published + 1);
+        h.key_combination_modifiers(Modifiers::COMMAND, &[Key::Z]);
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().undo_depth(), depth);
+        assert_eq!(publications(&h), published + 2);
         drop(h);
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
 
 #[test]
-fn resize_skew_preview_close_escape_and_reopening_keep_document_and_preferences() {
+fn resize_skew_dialog_close_escape_and_reopening_keep_document_and_preferences() {
     let dir = scratch("resize-skew-close");
     Settings {
         classic_variant: Some(ClassicVariant::V11),
@@ -158,14 +179,22 @@ fn resize_skew_preview_close_escape_and_reopening_keep_document_and_preferences(
             .click();
         h.run();
         assert_eq!(value(&h, "Resize horizontal"), 100.0);
+        assert_eq!(value(&h, "Skew vertical"), 0.0);
         let header = h
             .get_by_role_and_label(Role::Button, "Close resize and skew")
             .rect();
         let footer = h.get_by_role_and_label(Role::Button, "Cancel").rect();
         assert_eq!(header.size(), Vec2::splat(40.0));
         assert!(header.min.y >= 0.0 && footer.max.y <= 260.0);
-        let notice = h.get_by_role_and_label(Role::Label, "Preview only").rect();
-        assert!(notice.min.y >= 0.0 && notice.max.y < footer.min.y);
+        assert!(
+            h.query_by_role_and_label(Role::Label, "Preview only")
+                .is_none()
+        );
+        assert!(
+            !h.get_by_role_and_label(Role::Button, "OK")
+                .accesskit_node()
+                .is_disabled()
+        );
         set(&mut h, "Skew vertical", 30.0);
         assert_eq!(
             h.get_by_role_and_label(Role::Button, "Close resize and skew")
