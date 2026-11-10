@@ -32,10 +32,10 @@ class NativePackageTests(unittest.TestCase):
         self.version = release.workspace_version()
 
     def test_bundled_font_notices_include_every_shared_font_license(self):
-        notices = (release.ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt").read_text()
+        notices = (release.ROOT / "packaging/desktop/licenses/FONT_LICENSES.txt").read_text(encoding="utf-8")
         for source in (release.ROOT / "assets/fonts").glob("*/LICENSE*"):
             self.assertIn(source.parent.name, notices)
-            self.assertIn(source.read_text().rstrip(), notices)
+            self.assertIn(source.read_text(encoding="utf-8").rstrip(), notices)
 
     def test_same_wix_template_uses_correct_arch_and_stable_version_for_both_targets(self):
         for target, architecture in windows.ARCHITECTURES.items():
@@ -91,8 +91,8 @@ class NativePackageTests(unittest.TestCase):
                         self.assertIn("libX11*.so.*", config["appimage"]["libs"])
                         self.assertEqual(len(config["binaries"]), 3)
                         launcher = Path(config["binaries"][0]["path"])
-                        self.assertIn('"$@"', launcher.read_text())
-                        desktop = Path(config["deb"]["desktopTemplate"]).read_text()
+                        self.assertIn('"$@"', launcher.read_text(encoding="utf-8"))
+                        desktop = Path(config["deb"]["desktopTemplate"]).read_text(encoding="utf-8")
                         self.assertIn(f"Exec={linux.APP_ID}.sh %f", desktop)
                         self.assertIn(f"Icon={linux.APP_ID}", desktop)
                     Path(config["outDir"], "generated." + extension).write_bytes(b"package command fixture")

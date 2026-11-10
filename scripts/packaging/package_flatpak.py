@@ -55,15 +55,15 @@ def stage(version, target, binary, cli, payload):
         shutil.copy2(resources / name, licenses / name)
     desktop = payload / f"share/applications/{APP_ID}.desktop"
     desktop.parent.mkdir(parents=True)
-    desktop.write_text((release.ROOT / "packaging/linux/paintcraft.desktop").read_text()
+    desktop.write_text((release.ROOT / "packaging/linux/paintcraft.desktop").read_text(encoding="utf-8")
                        .replace("Icon=paintcraft", f"Icon={APP_ID}"), encoding="utf-8")
     metadata = payload / f"share/metainfo/{APP_ID}.metainfo.xml"
     metadata.parent.mkdir(parents=True)
-    metadata.write_text((release.ROOT / "packaging/linux/paintcraft.metainfo.xml").read_text()
+    metadata.write_text((release.ROOT / "packaging/linux/paintcraft.metainfo.xml").read_text(encoding="utf-8")
                         .replace("paintcraft.desktop", APP_ID + ".desktop"), encoding="utf-8")
     mime = payload / f"share/mime/packages/{APP_ID}.xml"
     mime.parent.mkdir(parents=True)
-    mime.write_text((release.ROOT / "packaging/linux/paintcraft-mime.xml").read_text()
+    mime.write_text((release.ROOT / "packaging/linux/paintcraft-mime.xml").read_text(encoding="utf-8")
                     .replace('icon name="paintcraft"', f'icon name="{APP_ID}"'), encoding="utf-8")
     icon = payload / f"share/icons/hicolor/256x256/apps/{APP_ID}.png"
     icon.parent.mkdir(parents=True)

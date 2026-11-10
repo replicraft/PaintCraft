@@ -18,7 +18,7 @@ import package_release as release
 
 class PolicyTests(unittest.TestCase):
     def test_all_six_qualified_targets_and_default_enable_integer_jxl_and_jxr_writer(self):
-        manifest = tomllib.loads((release.ROOT / "apps/paintcraft-codec-worker/Cargo.toml").read_text())
+        manifest = tomllib.loads((release.ROOT / "apps/paintcraft-codec-worker/Cargo.toml").read_text(encoding="utf-8"))
         self.assertEqual(manifest["features"]["default"], ["jxr-codecs", "jxl-integer-codec"])
         self.assertEqual(set(policy.ROLLOUT), set(release.TARGETS))
         for target in release.TARGETS:
@@ -36,7 +36,7 @@ class PolicyTests(unittest.TestCase):
                 with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output)}), \
                      patch.object(sys, "argv", ["helper_policy.py", "--target", target, "--github-output"]):
                     policy.main()
-                values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+                values = dict(line.split("=", 1) for line in output.read_text(encoding="utf-8").splitlines())
                 feature, profile = policy.selection(target)
                 self.assertEqual(values, {"feature": feature, "profile": profile,
                                           "selector": policy.selector(target)})

@@ -92,7 +92,7 @@ class BundleTests(unittest.TestCase):
             raise OSError("simulated signing failure")
         with self.assertRaises(OSError):
             PACK.publish_bundle(self.destination, fail, replace=True)
-        self.assertEqual(sentinel.read_text(), "original")
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "original")
         self.assertEqual(list(self.root.glob(".paintcraft-package-*")), [])
 
     def test_helper_code_and_data_are_separate_and_mixed_layout_is_refused(self):
@@ -232,7 +232,7 @@ class NativeLauncherTests(unittest.TestCase):
             def wait_for(count):
                 deadline = time.monotonic() + 10
                 while time.monotonic() < deadline:
-                    rows = [json.loads(line) for line in log.read_text().splitlines()] if log.exists() else []
+                    rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()] if log.exists() else []
                     if len(rows) >= count:
                         return rows
                     time.sleep(0.02)

@@ -34,11 +34,11 @@ class DesktopNoticeTests(unittest.TestCase):
         updater = release.ROOT / "crates/adapters/paintcraft-update"
         self.assertIn((updater / "LICENSE").read_bytes(), data)
         self.assertIn((updater / "NOTICE").read_bytes(), data)
-        preferences = (release.ROOT / "apps/paintcraft/src/app/preferences.rs").read_text()
+        preferences = (release.ROOT / "apps/paintcraft/src/app/preferences.rs").read_text(encoding="utf-8")
         self.assertIn('../../../../packaging/ThirdPartyLicenses.txt', preferences)
         self.assertIn('"Third-party licenses"', preferences)
         for lang in ("en", "de", "es", "hi", "ja", "pt-BR", "zh-CN"):
-            text = (release.ROOT / f"crates/presentation/paintcraft-ui/locales/{lang}/settings.ftl").read_text()
+            text = (release.ROOT / f"crates/presentation/paintcraft-ui/locales/{lang}/settings.ftl").read_text(encoding="utf-8")
             self.assertEqual(text.count("third-party-licenses ="), 1)
 
     def test_desktop_archives_include_exact_aggregate_and_cli_remains_separate(self):

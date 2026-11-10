@@ -162,7 +162,7 @@ class CandidateTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "identity refused"):
                 qualification.qualify(target, output)
         self.assertEqual(executions, [])
-        receipt = json.loads((output / "receipt.json").read_text())
+        receipt = json.loads((output / "receipt.json").read_text(encoding="utf-8"))
         self.assertEqual(receipt["status"], "failed")
         self.assertFalse(receipt["native_runtime_qualified"])
         self.assertTrue(receipt["shipping_policy_unchanged"])
@@ -270,7 +270,7 @@ class ProcessTests(unittest.TestCase):
 
     def test_success_failure_timeout_and_log_limits_keep_raw_receipts(self):
         runner = Runner(self.root / "logs", limit=128, total_limit=256)
-        self.assertIn("success", self.run_code(runner, "ok", "print('success')").read_text())
+        self.assertIn("success", self.run_code(runner, "ok", "print('success')").read_text(encoding="utf-8"))
         with self.assertRaises(RuntimeError):
             self.run_code(runner, "failed", "print('real failure');raise SystemExit(7)")
         self.assertEqual(runner.steps[-1]["exit"], 7)
@@ -282,7 +282,7 @@ class ProcessTests(unittest.TestCase):
         self.assertTrue(runner.steps[-1]["output_limit"])
         self.assertLessEqual(sum(path.stat().st_size for path in runner.output.glob("*.stdout")), 256)
         self.assertTrue((runner.output / "processes.json").is_file())
-        self.assertIn("real failure", (runner.output / "01-failed.stdout").read_text())
+        self.assertIn("real failure", (runner.output / "01-failed.stdout").read_text(encoding="utf-8"))
 
     @unittest.skipIf(os.name == "nt", "POSIX process group; Windows taskkill tested separately")
     def test_timeout_retires_descendant_pipe_not_only_parent(self):
@@ -304,8 +304,8 @@ class ProcessTests(unittest.TestCase):
 
 class WorkflowTests(unittest.TestCase):
     def test_native_matrix_and_read_only_candidate_route_are_exact(self):
-        workflow = (release.ROOT / ".github/workflows/native-codec-qualification.yml").read_text()
-        shipping = (release.ROOT / ".github/workflows/release.yml").read_text()
+        workflow = (release.ROOT / ".github/workflows/native-codec-qualification.yml").read_text(encoding="utf-8")
+        shipping = (release.ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
         pairs = re.findall(r'- os: (\S+)\n\s+target: (\S+)', workflow)
         self.assertEqual(pairs, re.findall(r'- os: (\S+)\n\s+target: (\S+)', shipping))
         self.assertIn("contents: read", workflow)

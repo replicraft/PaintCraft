@@ -117,7 +117,7 @@ class ReleaseSourceTests(unittest.TestCase):
                 source.git_output(["ls-remote"])
 
     def test_workflow_pins_all_five_checkouts_and_checks_before_publish_side_effects(self):
-        workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/release.yml").read_text()
+        workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/release.yml").read_text(encoding="utf-8")
         self.assertEqual(workflow.count("uses: actions/checkout@v7"), 5)
         self.assertEqual(workflow.count("ref: ${{ inputs.publish-tag || github.sha }}"), 1)
         self.assertEqual(workflow.count("ref: ${{ needs.version.outputs.source-sha }}"), 4)

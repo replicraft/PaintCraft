@@ -35,7 +35,7 @@ class WindowsPayloadTests(unittest.TestCase):
         shutil.copy2(self.binary, self.installed / "paintcraft.exe")
         shutil.copy2(release.ROOT / "packaging/ThirdPartyLicenses.txt", self.installed / "ThirdPartyLicenses.txt")
         codec_worker.copy(self.binary, self.installed, self.version, target)
-        return json.loads((self.installed / codec_worker.MANIFEST).read_text())
+        return json.loads((self.installed / codec_worker.MANIFEST).read_text(encoding="utf-8"))
 
     def test_actual_schema2_producer_output_passes_both_windows_architectures(self):
         for target in ("x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc"):

@@ -187,7 +187,7 @@ class CodecWorkerTests(unittest.TestCase):
                         codec_worker.verify_build_record(self.helper, self.version)
 
     def test_cli_and_desktop_workflow_share_one_helper_cargo_build(self):
-        workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
+        workflow = (release.ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
         self.assertIn("-p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target", workflow)
         self.assertIn("--features paintcraft-codec-worker/${{ steps.helper-policy.outputs.feature }}", workflow)
         self.assertIn("meson==1.12.1 ninja==1.13.2", workflow)

@@ -25,7 +25,7 @@ class JxrContractTests(unittest.TestCase):
         return helper
 
     def test_public_record_matches_actual_rust_contract_source_exactly(self):
-        source = (release.ROOT / "crates/services/paintcraft-formats/src/codec_worker/jxr_encode/qualified.rs").read_text()
+        source = (release.ROOT / "crates/services/paintcraft-formats/src/codec_worker/jxr_encode/qualified.rs").read_text(encoding="utf-8")
         body = source.split("concat!(", 1)[1].split(").as_bytes()", 1)[0]
         body = body.replace('env!("CARGO_PKG_VERSION")', json.dumps(self.version))
         expected = "".join(ast.literal_eval(literal) for literal in re.findall(r'"(?:[^"\\]|\\.)*"', body)).encode()

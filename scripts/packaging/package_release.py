@@ -30,7 +30,7 @@ VERSION = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
 
 
 def workspace_version():
-    version = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
+    version = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))["workspace"]["package"]["version"]
     match = VERSION.fullmatch(version)
     if not match or any(int(n) > limit for n, limit in zip(match.groups(), (255, 255, 65535))):
         raise ValueError(f"Version must be semver within MSI limits: {version}")

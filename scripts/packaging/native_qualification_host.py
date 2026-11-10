@@ -48,7 +48,7 @@ def validate(target, rustc, *, system, machine, translated=False, native_windows
 
 
 def identify(target, runner, root, env):
-    rust = runner.run("rustc", ["rustc", "--version", "--verbose"], cwd=root, env=env, timeout=30).read_text()
+    rust = runner.run("rustc", ["rustc", "--version", "--verbose"], cwd=root, env=env, timeout=30).read_text(encoding="utf-8")
     system = platform.system()
     observed = {"system": system, "machine": platform.machine(), "translated": False,
                 "native_windows": None, "rustc_verbose": rust}
@@ -58,7 +58,7 @@ def identify(target, runner, root, env):
                                 cwd=root, env=env, timeout=10, allow_failure=True)
             result = runner.steps[-1]
             if result["exit"] == 0:
-                value = stdout.read_text().strip()
+                value = stdout.read_text(encoding="utf-8").strip()
                 if value not in ("0", "1"):
                     raise ValueError("Unexpected native translation probe response")
                 observed["translated"] = value == "1"

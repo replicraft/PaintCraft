@@ -28,7 +28,7 @@ def desktop_files(notices=codec_worker.NOTICES):
 
 
 def configuration(version, target, binary, output, format_name, helper, worker_manifest):
-    config = json.loads((release.ROOT / "packaging/desktop/cargo-packager.json").read_text())
+    config = json.loads((release.ROOT / "packaging/desktop/cargo-packager.json").read_text(encoding="utf-8"))
     config.update(version=version, targetTriple=target, outDir=str(output.resolve()),
                   binaries=[{"path": str(binary.resolve()), "main": True}, {"path": str(helper), "main": False}], formats=[format_name])
     config["icons"] = [str(release.ROOT / "assets/paintcraft-icon.iconset/icon_256x256.png")]
@@ -56,11 +56,11 @@ def native_package(version, target, binary, archive, temporary, format_name):
         config["binaries"] = [{"path": str(launcher), "main": True},
                               {"path": str(binary.resolve()), "main": False}, {"path": str(helper), "main": False}]
         desktop = temporary / f"{APP_ID}.desktop"
-        desktop.write_text((release.ROOT / "packaging/linux/paintcraft.desktop").read_text()
+        desktop.write_text((release.ROOT / "packaging/linux/paintcraft.desktop").read_text(encoding="utf-8")
                            .replace("Exec=paintcraft", f"Exec={launcher.name}")
                            .replace("Icon=paintcraft", f"Icon={APP_ID}"), encoding="utf-8")
         metadata = temporary / f"{APP_ID}.metainfo.xml"
-        metadata.write_text((release.ROOT / "packaging/linux/paintcraft.metainfo.xml").read_text()
+        metadata.write_text((release.ROOT / "packaging/linux/paintcraft.metainfo.xml").read_text(encoding="utf-8")
                             .replace("paintcraft.desktop", desktop.name), encoding="utf-8")
         files = desktop_files(codec_worker.installed_notices(helper.parent))
         files[str(worker_manifest)] = "usr/share/paintcraft/" + codec_worker.MANIFEST
@@ -81,7 +81,7 @@ def native_package(version, target, binary, archive, temporary, format_name):
 
 
 def rpm(version, target, binary, archive, temporary):
-    manifest = tomllib.loads((release.ROOT / "apps/paintcraft/Cargo.toml").read_text())
+    manifest = tomllib.loads((release.ROOT / "apps/paintcraft/Cargo.toml").read_text(encoding="utf-8"))
     assets = manifest["package"]["metadata"]["generate-rpm"]["assets"]
     assets[0]["source"] = str(binary.resolve())
     helper = codec_worker.copy(binary, temporary, version, target)

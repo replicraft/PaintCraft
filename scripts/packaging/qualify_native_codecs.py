@@ -156,7 +156,7 @@ def one_test(path, name):
 
 def listing(runner, name, binary, cwd, env):
     path = runner.run(name, [binary, "--list"], cwd=cwd, env=env, timeout=60)
-    return [line.removesuffix(": test") for line in path.read_text().splitlines() if line.endswith(": test")]
+    return [line.removesuffix(": test") for line in path.read_text(encoding="utf-8").splitlines() if line.endswith(": test")]
 
 
 def run_tests(runner, label, argv, cwd, env, *, expected=None):
@@ -208,8 +208,8 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
             "sha256": digest(path), "bytes": path.stat().st_size, "target": target}
         save()
     try:
-        commit = runner.run("source", ["git", "rev-parse", "HEAD"], cwd=release.ROOT, env=env, timeout=30).read_text().strip()
-        status = runner.run("source-status", ["git", "status", "--porcelain"], cwd=release.ROOT, env=env, timeout=30).read_text()
+        commit = runner.run("source", ["git", "rev-parse", "HEAD"], cwd=release.ROOT, env=env, timeout=30).read_text(encoding="utf-8").strip()
+        status = runner.run("source-status", ["git", "status", "--porcelain"], cwd=release.ROOT, env=env, timeout=30).read_text(encoding="utf-8")
         receipt.update(source_commit=commit, source_dirty=status, lock_sha256=digest(release.ROOT / "Cargo.lock"),
                        toolchain_file_sha256=digest(release.ROOT / "rust-toolchain.toml"))
         if status:
@@ -249,7 +249,7 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
         receipt["helper"] = {"path": str(helper), "sha256": digest(helper), "profile": profile}
         save()
         cli_json = runner.run("build-cli", cli_tests.build_command(target), cwd=release.ROOT, env=env, timeout=3600)
-        cli_test, cli = cli_tests.built_artifacts(cli_json.read_text())
+        cli_test, cli = cli_tests.built_artifacts(cli_json.read_text(encoding="utf-8"))
         remember(cli_test)
         remember(cli)
         if cli.parent != helper.parent:
@@ -376,8 +376,8 @@ def qualify(target, output, oracle=None, target_directory=None, candidate="v8"):
             verify_copied_file(Path(path), identity["bytes"], identity["sha256"])
         if policy != helper_policy.ROLLOUT:
             raise ValueError("Qualification must not alter shipping policy")
-        final = runner.run("source-final", ["git", "rev-parse", "HEAD"], cwd=release.ROOT, env=env, timeout=30).read_text().strip()
-        final_status = runner.run("source-final-status", ["git", "status", "--porcelain"], cwd=release.ROOT, env=env, timeout=30).read_text()
+        final = runner.run("source-final", ["git", "rev-parse", "HEAD"], cwd=release.ROOT, env=env, timeout=30).read_text(encoding="utf-8").strip()
+        final_status = runner.run("source-final-status", ["git", "status", "--porcelain"], cwd=release.ROOT, env=env, timeout=30).read_text(encoding="utf-8")
         if final != commit or final_status:
             raise ValueError("Source changed during qualification")
         receipt.update(status="passed", native_runtime_qualified=True)

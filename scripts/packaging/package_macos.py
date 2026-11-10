@@ -24,7 +24,7 @@ LSREGISTER = "/System/Library/Frameworks/CoreServices.framework/Frameworks/Launc
 def metadata(version):
     """Use the same versioned metadata that build.rs embeds into the executable."""
     numeric = version.split("-")[0].split("+")[0]
-    return plistlib.loads(TEMPLATE.read_text().replace("@VERSION@", numeric).encode())
+    return plistlib.loads(TEMPLATE.read_text(encoding="utf-8").replace("@VERSION@", numeric).encode())
 
 
 def populate_bundle(binary, destination, version, launcher):
@@ -123,7 +123,7 @@ def built_binary(debug, target=None):
     if executable is None:
         raise ValueError("Cargo did not report a PaintCraft executable")
     binary = Path(executable)
-    version = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
+    version = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))["workspace"]["package"]["version"]
     helper_policy.verify(binary, version, target)
     return binary
 
@@ -222,7 +222,7 @@ def main(argv=None):
         install = Path.home() / "Applications/PaintCraft.app"
         if args.install:
             check_destination(install, args.replace)
-        version = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
+        version = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))["workspace"]["package"]["version"]
         binary = args.binary.absolute() if args.binary else built_binary(args.debug, args.target)
         if not binary.is_file():
             raise ValueError(f"Executable does not exist: {binary}")

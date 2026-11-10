@@ -39,7 +39,7 @@ class IntegerJxlContractTests(unittest.TestCase):
 
     def test_records_match_both_actual_rust_contracts(self):
         path = release.ROOT / "crates/services/paintcraft-formats/src/codec_worker/jxl_integer/contracts.rs"
-        source = path.read_text()
+        source = path.read_text(encoding="utf-8")
         for prefix, suffix, profile, variants, schema, module in PROFILES:
             body = source.split("pub mod " + module + " {", 1)[1]
             body = body.split("concat!(", 1)[1].split(").as_bytes()", 1)[0]
