@@ -100,7 +100,7 @@ fn adopted_source_survives_library_replacement_rename_other_tabs_and_parked_work
             app.settings.experience = Experience::Classic;
             let inactive_experience = match app.experience() {
                 Experience::Classic => Experience::Studio,
-                Experience::Studio => Experience::Classic,
+                Experience::Studio | Experience::Retro => Experience::Classic,
             };
             app.park_workspace_for_test(inactive_experience, Box::new(parked));
             assert!(app.editor.sampled_brush_name().is_none());

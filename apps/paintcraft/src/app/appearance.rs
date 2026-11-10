@@ -16,7 +16,7 @@ impl App {
         }
         if self.editor.path().is_none() && !self.editor.is_dirty() && self.document_count() == 1 {
             let size = match settings.experience {
-                Experience::Classic => settings.canvas.new_size(),
+                Experience::Classic | Experience::Retro => settings.canvas.new_size(),
                 Experience::Studio => STUDIO_SIZE,
             };
             if self.editor.document().canvas != size {
@@ -35,6 +35,7 @@ impl App {
             && settings.classic_variant.is_none())
         .then_some(ClassicVariant::DEFAULT);
         settings.studio_layout.restore_visibility(&mut self.studio);
+        self.retro.skin = settings.retro_skin;
         self.settings = settings;
         self.editor.options.pen = self.settings.pen;
         let opened = self.recent.entries.clone();
@@ -82,7 +83,7 @@ impl App {
 
     pub(super) fn adopt_experience(&mut self, experience: Experience) {
         let size = match experience {
-            Experience::Classic => self.settings.canvas.new_size(),
+            Experience::Classic | Experience::Retro => self.settings.canvas.new_size(),
             Experience::Studio => STUDIO_SIZE,
         };
         let previous = self.experience();
@@ -170,7 +171,9 @@ impl App {
         let language = self.settings.language;
         set_language(ctx, language);
         let preferred = appearance.resolve(ctx.system_theme());
-        let theme = if experience == Experience::Classic {
+        let theme = if experience == Experience::Retro {
+            egui::Theme::Light
+        } else if experience == Experience::Classic {
             v.effective_theme(preferred)
         } else {
             preferred
@@ -189,9 +192,12 @@ impl App {
         match experience {
             Experience::Classic => paintcraft_classic::apply_style_for_theme(ctx, v, theme),
             Experience::Studio => paintcraft_studio::apply_style_for_theme(ctx, theme),
+            Experience::Retro => {}
         }
         ctx.send_viewport_cmd(egui::ViewportCommand::SetTheme(
-            if experience == Experience::Classic && v == ClassicVariant::V7 {
+            if experience == Experience::Retro
+                || (experience == Experience::Classic && v == ClassicVariant::V7)
+            {
                 egui::viewport::SystemTheme::Light
             } else {
                 match appearance {

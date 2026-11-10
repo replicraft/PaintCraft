@@ -495,7 +495,7 @@ fn cancelled_or_stale(language: Language, root: &Path) {
                 h.state_mut().settings.experience = Experience::Classic;
                 let inactive_experience = match h.state().experience() {
                     Experience::Classic => Experience::Studio,
-                    Experience::Studio => Experience::Classic,
+                    Experience::Studio | Experience::Retro => Experience::Classic,
                 };
                 h.state_mut()
                     .park_workspace_for_test(inactive_experience, Box::new(parked));

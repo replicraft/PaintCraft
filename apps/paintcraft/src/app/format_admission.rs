@@ -110,6 +110,7 @@ impl App {
     pub(super) fn format_frontend(&self) -> Frontend {
         match (self.experience(), self.variant()) {
             (Experience::Studio, _) => Frontend::Studio,
+            (Experience::Retro, _) => Frontend::RetroWin95,
             (_, ClassicVariant::V7) => Frontend::ClassicV7,
             (_, ClassicVariant::V10) => Frontend::ClassicV10,
             (_, ClassicVariant::V11) => Frontend::ClassicV11,

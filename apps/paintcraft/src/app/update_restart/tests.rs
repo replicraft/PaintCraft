@@ -94,7 +94,7 @@ fn parked_modified_workspace_is_not_covered_by_active_only_dirty_check() {
     parked.active.editor.run_pending();
     let inactive_experience = match app.experience() {
         Experience::Classic => Experience::Studio,
-        Experience::Studio => Experience::Classic,
+        Experience::Studio | Experience::Retro => Experience::Classic,
     };
     app.park_workspace_for_test(inactive_experience, Box::new(parked));
     assert!(!app.any_dirty_documents());

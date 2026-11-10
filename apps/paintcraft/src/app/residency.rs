@@ -285,7 +285,7 @@ mod tests {
         let active = app.active_tab_id();
         let inactive_experience = match app.experience() {
             Experience::Classic => Experience::Studio,
-            Experience::Studio => Experience::Classic,
+            Experience::Studio | Experience::Retro => Experience::Classic,
         };
         app.park_workspace_for_test(inactive_experience, Box::new(workspace));
         app.initialize_editing(ctx.clone());

@@ -141,7 +141,7 @@ fn pending_and_installed_icns_same_file_sources_remain_protected_across_rename_a
                 app.settings.experience = Experience::Classic;
                 let inactive_experience = match app.experience() {
                     Experience::Classic => Experience::Studio,
-                    Experience::Studio => Experience::Classic,
+                    Experience::Studio | Experience::Retro => Experience::Classic,
                 };
                 app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }

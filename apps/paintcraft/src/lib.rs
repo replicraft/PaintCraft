@@ -99,6 +99,8 @@ mod residency;
 mod resize_skew;
 #[path = "app/retirement.rs"]
 mod retirement;
+#[path = "app/retro.rs"]
+mod retro;
 #[path = "app/save_all.rs"]
 mod save_all;
 mod saving;
@@ -281,6 +283,9 @@ pub struct App {
     chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_ui::chrome::Action>,
     classic: paintcraft_classic::Workspace,
     studio: paintcraft_studio::Workspace,
+    retro: paintcraft_retro::Workspace,
+    retro_pan: paintcraft_tools::navigation::PanGesture<egui::Id>,
+    retro_space: bool,
     filter_editing: Option<filter_editing::State>,
     layer_mask_editing: Option<layer_mask_editing::State>,
     parked_workspaces: workspaces::Parked<Experience, Box<tabs::WorkspaceDocuments>>,
@@ -441,6 +446,9 @@ impl App {
             chrome_outbox: Default::default(),
             classic: Default::default(),
             studio: Default::default(),
+            retro: Default::default(),
+            retro_pan: Default::default(),
+            retro_space: false,
             filter_editing: None,
             layer_mask_editing: None,
             parked_workspaces: Default::default(),

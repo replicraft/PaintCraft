@@ -265,10 +265,10 @@ impl App {
             session: self.editor.session_owner_id().as_u128(),
             state: state.as_u128(),
             publication,
-            interface: if self.experience() == Experience::Studio {
-                0
-            } else {
-                self.variant() as u8 + 1
+            interface: match self.experience() {
+                Experience::Studio => 0,
+                Experience::Classic => self.variant() as u8 + 1,
+                Experience::Retro => 4,
             },
         }
     }
@@ -438,11 +438,12 @@ impl App {
                         receiver.controller_owned = sample.phase != Phase::Up;
                         continue;
                     }
-                    self.editor.options.eraser_color = if self.experience() == Experience::Classic {
-                        self.editor.canvas_color()
-                    } else {
-                        Rgba::TRANSPARENT
-                    };
+                    self.editor.options.eraser_color =
+                        if matches!(self.experience(), Experience::Classic | Experience::Retro) {
+                            self.editor.canvas_color()
+                        } else {
+                            Rgba::TRANSPARENT
+                        };
                     match self.editor.pen_sample(*sample, &self.worker_budget) {
                         Ok(true) => {
                             receiver.controller_owned = sample.phase != Phase::Up;

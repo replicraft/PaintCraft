@@ -318,7 +318,7 @@ fn flat_export_protects_document_sources_in_other_tabs_and_parked_workspaces() {
                     parked.swap(&mut app);
                     let inactive_experience = match app.experience() {
                         Experience::Classic => Experience::Studio,
-                        Experience::Studio => Experience::Classic,
+                        Experience::Studio | Experience::Retro => Experience::Classic,
                     };
                     app.park_workspace_for_test(inactive_experience, Box::new(parked));
                 }
@@ -351,7 +351,7 @@ fn resource_source_paths_remain_protected_while_studio_documents_are_parked() {
     app.settings.experience = Experience::Classic;
     let inactive_experience = match app.experience() {
         Experience::Classic => Experience::Studio,
-        Experience::Studio => Experience::Classic,
+        Experience::Studio | Experience::Retro => Experience::Classic,
     };
     app.park_workspace_for_test(inactive_experience, Box::new(parked));
     let ctx = egui::Context::default();

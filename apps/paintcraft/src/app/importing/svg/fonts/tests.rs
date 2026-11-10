@@ -241,7 +241,7 @@ fn svg_and_font_input_guards_follow_saved_documents_other_tabs_and_parked_worksp
                 app.settings.experience = Experience::Classic;
                 let inactive_experience = match app.experience() {
                     Experience::Classic => Experience::Studio,
-                    Experience::Studio => Experience::Classic,
+                    Experience::Studio | Experience::Retro => Experience::Classic,
                 };
                 app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }

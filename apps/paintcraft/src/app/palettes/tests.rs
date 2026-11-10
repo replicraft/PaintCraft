@@ -171,7 +171,7 @@ fn palette_export_protects_sources_in_current_other_tab_and_parked_workspaces() 
                 parked.swap(&mut app);
                 let inactive_experience = match app.experience() {
                     Experience::Classic => Experience::Studio,
-                    Experience::Studio => Experience::Classic,
+                    Experience::Studio | Experience::Retro => Experience::Classic,
                 };
                 app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }

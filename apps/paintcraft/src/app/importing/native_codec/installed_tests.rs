@@ -161,7 +161,7 @@ fn fixture_real_installed_jxl() {
                 app.settings.experience = Experience::Classic;
                 let inactive_experience = match app.experience() {
                     Experience::Classic => Experience::Studio,
-                    Experience::Studio => Experience::Classic,
+                    Experience::Studio | Experience::Retro => Experience::Classic,
                 };
                 app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }
@@ -210,7 +210,7 @@ fn fixture_real_installed_jxl() {
                 app.settings.experience = Experience::Classic;
                 let inactive_experience = match app.experience() {
                     Experience::Classic => Experience::Studio,
-                    Experience::Studio => Experience::Classic,
+                    Experience::Studio | Experience::Retro => Experience::Classic,
                 };
                 app.park_workspace_for_test(inactive_experience, Box::new(parked));
             }

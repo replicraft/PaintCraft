@@ -510,7 +510,9 @@ impl App {
     }
 
     pub(super) fn open_selected(&mut self, path: PathBuf) {
-        if self.experience() == Experience::Classic && self.editor.is_dirty() {
+        if matches!(self.experience(), Experience::Classic | Experience::Retro)
+            && self.editor.is_dirty()
+        {
             self.confirm = Some(Confirm::DiscardForOpen(path));
         } else if let Err(e) = self.open_path(&path) {
             self.editor.set_status(format!("Cannot open: {e}"));
@@ -644,7 +646,7 @@ impl App {
     }
 
     pub(super) fn new_document(&mut self) {
-        let size = if self.experience() == Experience::Classic {
+        let size = if matches!(self.experience(), Experience::Classic | Experience::Retro) {
             self.settings.canvas.new_size()
         } else {
             STUDIO_SIZE
@@ -653,7 +655,7 @@ impl App {
             match self.install(e) {
                 Ok(()) => {
                     self.bound = None;
-                    if self.experience() == Experience::Classic {
+                    if matches!(self.experience(), Experience::Classic | Experience::Retro) {
                         self.remember_canvas_size(size);
                     }
                 }

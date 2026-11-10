@@ -17,7 +17,7 @@ impl App {
             egui::Id::unique("switch-interface-save"),
             Prompt {
                 title: "Save before switching interfaces",
-                message: "Classic and Studio have separate document workspaces. Save changed documents, or discard them and switch.",
+                message: "Each interface has a separate workspace. Save or discard changes before switching.",
                 accept: "Save and switch",
                 discard: Some("Discard and switch"),
             },

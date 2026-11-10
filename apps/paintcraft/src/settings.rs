@@ -26,11 +26,13 @@ pub enum Experience {
     #[default]
     Classic,
     Studio,
+    Retro,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Settings {
     pub experience: Experience,
+    pub retro_skin: paintcraft_retro::Skin,
     pub appearance: Appearance,
     pub language: Language,
     pub text: paintcraft_classic::TextOptions,
@@ -52,6 +54,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             experience: Experience::default(),
+            retro_skin: Default::default(),
             appearance: Appearance::default(),
             language: Default::default(),
             text: Default::default(),
@@ -127,6 +130,7 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
         (Some("paintcraft.settings/v1"), _) => Experience::Classic,
         (_, Some("classic")) => Experience::Classic,
         (_, Some("studio")) => Experience::Studio,
+        (_, Some("retro")) => Experience::Retro,
         _ => return Err("unknown interface experience".into()),
     };
     let canvas = if version == Some("paintcraft.settings/v3") {
@@ -147,6 +151,13 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
             .ok_or("unknown language")?,
     };
     Ok(Settings {
+        retro_skin: match v.get("retro_skin") {
+            None => Default::default(),
+            Some(Value::Str(id)) => {
+                paintcraft_retro::Skin::parse(id).ok_or("unknown Retro skin")?
+            }
+            Some(_) => return Err("invalid Retro skin".into()),
+        },
         studio_layout: studio::parse(v.get("studio_layout"))?,
         studio_auto_scroll: match v.get("studio_auto_scroll") {
             None => true,
@@ -247,6 +258,7 @@ impl Settings {
             ("custom_colors", colors::value(&self.custom_colors)),
             ("appearance", Value::str(self.appearance.id())),
             ("language", Value::str(self.language.id())),
+            ("retro_skin", Value::str(self.retro_skin.id())),
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("classic_rulers", Value::Bool(self.classic_rulers)),
             (
@@ -267,6 +279,7 @@ impl Settings {
                 Value::str(match self.experience {
                     Experience::Classic => "classic",
                     Experience::Studio => "studio",
+                    Experience::Retro => "retro",
                 }),
             ),
             (
