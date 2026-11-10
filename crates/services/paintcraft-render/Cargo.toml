@@ -60,3 +60,7 @@ harness = false
 [[bench]]
 name = "layer_blend_region"
 harness = false
+
+[[bench]]
+name = "display_native_rows"
+harness = false

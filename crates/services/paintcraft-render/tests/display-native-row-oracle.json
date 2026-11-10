@@ -1,0 +1,183 @@
+{
+  "status": "INDEPENDENT_ROW_RGBA_AND_COUNTS_BEFORE_RUST",
+  "cases": [
+    {
+      "name": "alpha-weighted-pairs",
+      "pixels_hex": "ff0000ff00ff00000000ff8064c800ff",
+      "step": 2,
+      "offset": 0,
+      "counts": [
+        2,
+        2
+      ],
+      "rgba_hex": "ff000080438555c0"
+    },
+    {
+      "name": "nonzero-offset",
+      "pixels_hex": "0a141e40c86400c00000ffff",
+      "step": 2,
+      "offset": 1,
+      "counts": [
+        1,
+        2
+      ],
+      "rgba_hex": "0a141e40562b91e0"
+    },
+    {
+      "name": "transparent-hidden-rgb",
+      "pixels_hex": "141e280064c81e00",
+      "step": 64,
+      "offset": 0,
+      "counts": [
+        2
+      ],
+      "rgba_hex": "00000000"
+    },
+    {
+      "name": "sixty-four-independent-cells",
+      "pixels_hex": "0000ff000103fe400206fd800309fcff040cfb00050ffa400612f9800715f8ff0818f700091bf6400a1ef5800b21f4ff0c24f3000d27f2400e2af1800f2df0ff1030ef001133ee401236ed801339ecff143ceb00153fea401642e9801745e8ff1848e700194be6401a4ee5801b51e4ff1c54e3001d57e2401e5ae1801f5de0ff2060df002163de402266dd802369dcff246cdb00256fda402672d9802775d8ff2878d700297bd6402a7ed5802b81d4ff2c84d3002d87d2402e8ad1802f8dd0ff3090cf003193ce403296cd803399ccff349ccb00359fca4036a2c98037a5c8ff38a8c70039abc6403aaec5803bb1c4ff3cb4c3003db7c2403ebac1803fbdc0ff",
+      "step": 1,
+      "offset": 0,
+      "counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rgba_hex": "000000000103fe400206fd800309fcff00000000050ffa400612f9800715f8ff00000000091bf6400a1ef5800b21f4ff000000000d27f2400e2af1800f2df0ff000000001133ee401236ed801339ecff00000000153fea401642e9801745e8ff00000000194be6401a4ee5801b51e4ff000000001d57e2401e5ae1801f5de0ff000000002163de402266dd802369dcff00000000256fda402672d9802775d8ff00000000297bd6402a7ed5802b81d4ff000000002d87d2402e8ad1802f8dd0ff000000003193ce403296cd803399ccff00000000359fca4036a2c98037a5c8ff0000000039abc6403aaec5803bb1c4ff000000003db7c2403ebac1803fbdc0ff"
+    },
+    {
+      "name": "boundary-one-then-sixty-three",
+      "pixels_hex": "0000ff000103fe400206fd800309fcff040cfb00050ffa400612f9800715f8ff0818f700091bf6400a1ef5800b21f4ff0c24f3000d27f2400e2af1800f2df0ff1030ef001133ee401236ed801339ecff143ceb00153fea401642e9801745e8ff1848e700194be6401a4ee5801b51e4ff1c54e3001d57e2401e5ae1801f5de0ff2060df002163de402266dd802369dcff246cdb00256fda402672d9802775d8ff2878d700297bd6402a7ed5802b81d4ff2c84d3002d87d2402e8ad1802f8dd0ff3090cf003193ce403296cd803399ccff349ccb00359fca4036a2c98037a5c8ff38a8c70039abc6403aaec5803bb1c4ff3cb4c3003db7c2403ebac1803fbdc0ff",
+      "step": 64,
+      "offset": 63,
+      "counts": [
+        1,
+        63
+      ],
+      "rgba_hex": "000000002061df72"
+    },
+    {
+      "name": "one-partial-large-cell",
+      "pixels_hex": "0000ff000103fe400206fd800309fcff040cfb00050ffa400612f9800715f8ff0818f700091bf6400a1ef5800b21f4ff0c24f3000d27f2400e2af1800f2df0ff1030ef001133ee401236ed801339ecff143ceb00153fea401642e9801745e8ff1848e700194be6401a4ee5801b51e4ff1c54e3001d57e2401e5ae1801f5de0ff2060df002163de402266dd802369dcff246cdb00256fda402672d9802775d8ff2878d700297bd6402a7ed5802b81d4ff2c84d3002d87d2402e8ad1802f8dd0ff3090cf003193ce403296cd803399ccff349ccb00359fca4036a2c98037a5c8ff38a8c70039abc6403aaec5803bb1c4ff3cb4c3003db7c2403ebac1803fbdc0ff",
+      "step": 128,
+      "offset": 64,
+      "counts": [
+        64
+      ],
+      "rgba_hex": "2061df70"
+    },
+    {
+      "name": "largest-step-boundary",
+      "pixels_hex": "0000ff000103fe400206fd800309fcff040cfb00050ffa400612f9800715f8ff0818f700091bf6400a1ef5800b21f4ff0c24f3000d27f2400e2af1800f2df0ff1030ef001133ee401236ed801339ecff143ceb00153fea401642e9801745e8ff1848e700194be6401a4ee5801b51e4ff1c54e3001d57e2401e5ae1801f5de0ff2060df002163de402266dd802369dcff246cdb00256fda402672d9802775d8ff2878d700297bd6402a7ed5802b81d4ff2c84d3002d87d2402e8ad1802f8dd0ff3090cf003193ce403296cd803399ccff349ccb00359fca4036a2c98037a5c8ff38a8c70039abc6403aaec5803bb1c4ff3cb4c3003db7c2403ebac1803fbdc0ff",
+      "step": 1048576,
+      "offset": 1048575,
+      "counts": [
+        1,
+        63
+      ],
+      "rgba_hex": "000000002061df72"
+    }
+  ],
+  "sequence": {
+    "name": "global64-boundary-step4",
+    "dest_count": 17,
+    "calls": [
+      {
+        "pixels_hex": "3fbdc0ff",
+        "step": 4,
+        "offset": 3,
+        "start": 0,
+        "count": 1
+      },
+      {
+        "pixels_hex": "40c0bf0041c3be4042c6bd8043c9bcff44ccbb0045cfba4046d2b98047d5b8ff48d8b70049dbb6404adeb5804be1b4ff4ce4b3004de7b2404eeab1804fedb0ff50f0af0051f3ae4052f6ad8053f9acff54fcab0055ffaa405602a9805705a8ff5808a700590ba6405a0ea5805b11a4ff5c14a3005d17a2405e1aa1805f1da0ff60209f0061239e4062269d8063299cff642c9b00652f9a4066329980673598ff68389700693b96406a3e95806b4194ff6c4493006d4792406e4a91806f4d90ff70508f0071538e4072568d8073598cff745c8b00755f8a4076628980776588ff78688700796b86407a6e85807b7184ff7c7483007d7782407e7a81807f7d80ff",
+        "step": 4,
+        "offset": 0,
+        "start": 1,
+        "count": 16
+      }
+    ],
+    "counts": [
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "rgba_hex": "3fbdc0ff42c7bd7046d3b9704adfb5704eebb17052f7ad705628a9705a0fa5705e1ba17062279d70663399706a3f95706e4b917072578d70766389707a6f85707e7b8170"
+  },
+  "max_samples": 67108864
+}

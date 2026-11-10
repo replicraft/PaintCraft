@@ -41,6 +41,9 @@ impl DisplayAccumulator {
     }
 }
 
+#[path = "accumulator/native_row.rs"]
+mod native_row;
+
 #[cfg(test)]
 mod tests {
     use super::*;
