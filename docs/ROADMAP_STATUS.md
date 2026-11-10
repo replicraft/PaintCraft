@@ -93,9 +93,19 @@ The latest finite Source8 diagnostic passes 888 actual Wasm cases, including
 complete default Normal/General output and fractional-alpha Studio output under
 the original work ceiling. Shared context/preflight code brings the module to
 4,175,543 bytes under the unchanged 4 MiB file limit; final linear memory is
-4 MiB under its 16 MiB maximum. Current native validation passes 265 default
-renderer, 146 worker and 354 required-Metal renderer checks. The genuine Worker8
-service, complete Main admission and browser patch/ACK/publication remain open.
+4 MiB under its 16 MiB maximum. The separate genuine Worker8 service now passes
+42 actual Wasm cases, including 26 full-RGBA scenes. Its 2,527,577-byte module
+has a 2 MiB initial memory and 256 MiB maximum; these are separate from the
+888-case diagnostic's limits. The unchanged service artifact and production JS
+also pass 12 groups/37 scenarios in real Node worker threads and eight groups/35
+scenarios in headless Chrome, including all 26 pixel goldens. Original Main
+admission and editor texture publication remain open; transport checks use
+explicit Main callback stand-ins.
+The defining workspace/role forecasts pass 276 renderer and 182 worker checks,
+plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
+documentation, formatting and source-length checks pass. The earlier 354-check
+required-Metal execution remains a separate rendering checkpoint, not a GPU
+execution claim for these new metadata queries.
 The [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md) records exact
 receipts, the single corrected off-canvas work expectation and a disclosed
 development failure-log gap. This does not activate browser blending or qualify
