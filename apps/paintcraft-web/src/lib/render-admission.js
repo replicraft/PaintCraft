@@ -27,6 +27,8 @@ export function createRenderAdmission() {
 				workerClosed: false,
 				mainGranted: false,
 				mainBytes: 0,
+				hostGranted: false,
+				hostBytes: 0,
 			};
 			current = owner;
 			function retire() {
@@ -34,7 +36,8 @@ export function createRenderAdmission() {
 					current === owner &&
 					owner.workerClosed &&
 					!owner.quarantined &&
-					owner.mainBytes === 0
+					owner.mainBytes === 0 &&
+					owner.hostBytes === 0
 				)
 					current = null;
 			}
@@ -56,6 +59,30 @@ export function createRenderAdmission() {
 							'Render control quote changed after preparation',
 						);
 					owner.bytes = next;
+				},
+				// Trusted Main reserves its compiled future/control declaration once,
+				// before preparation. It does not mint a Rust scope or job allowance.
+				reserveHostControl(bytes) {
+					active();
+					extent(bytes);
+					if (
+						owner.mainGranted ||
+						owner.hostGranted ||
+						bytes > owner.bytes
+					)
+						throw fail('Render host control preparation allowance');
+					owner.hostGranted = true;
+					owner.hostBytes = bytes;
+					let released = false;
+					return Object.freeze({
+						byteLength: bytes,
+						release() {
+							if (released) return;
+							released = true;
+							owner.hostBytes = 0;
+							retire();
+						},
+					});
 				},
 				// This is a slice of existing serialization credit, not extra bytes.
 				// Fixed-context Source7 preparation obtains one guard per OPEN.

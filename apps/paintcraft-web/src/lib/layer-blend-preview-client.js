@@ -21,6 +21,14 @@ const createWorker = () =>
 export function beginLayerBlendPreview8() {
 	return createLayerBlendController8(renderAdmission, createWorker).begin();
 }
+// Only trusted Main calls this with its own defining compiled storage quote.
+// Rust checks the returned native guard's exact bytes before creating its F.
+export function beginLayerBlendPreview8WithHostControl(controlBytes) {
+	return createLayerBlendController8(
+		renderAdmission,
+		createWorker,
+	).beginWithHostControl(controlBytes);
+}
 // Embedders supply their EXISTING realm broker; this constructs no extra pool.
 export function createLayerBlendController8(
 	broker,
@@ -33,14 +41,31 @@ export function createLayerBlendController8(
 		typeof factory !== 'function'
 	)
 		fail8('InputSchema', 'Source8 existing broker/Worker factory');
-	return Object.freeze({ begin: () => begin(broker, factory, timeoutMs) });
+	return Object.freeze({
+		begin: () => begin(broker, factory, timeoutMs),
+		beginWithHostControl(controlBytes) {
+			if (
+				!Number.isSafeInteger(controlBytes) ||
+				controlBytes <= 0 ||
+				!Number.isSafeInteger(RESERVATION8 + CONTROL_JS8 + controlBytes)
+			)
+				fail8(
+					'InputSchema',
+					'Source8 compiled Main host control quote',
+				);
+			return begin(broker, factory, timeoutMs, controlBytes);
+		},
+	});
 }
-function begin(broker, factory, timeoutMs) {
+function begin(broker, factory, timeoutMs, controlBytes = 0) {
+	let hostControl = null;
 	const lease = broker.acquire(RESERVATION8);
 	// Known bounded JS metadata credit precedes even Worker/READY/profile setup.
 	try {
-		lease.resize(RESERVATION8 + CONTROL_JS8);
+		lease.resize(RESERVATION8 + CONTROL_JS8 + controlBytes);
+		if (controlBytes) hostControl = lease.reserveHostControl(controlBytes);
 	} catch (error) {
+		hostControl?.release();
 		lease.release();
 		throw error;
 	}
@@ -53,6 +78,7 @@ function begin(broker, factory, timeoutMs) {
 			lease.quarantine();
 			worker.terminate();
 		} else lease.release(); // actual factory returned no Worker
+		hostControl?.release(); // no application F exists before begin returns
 		throw error;
 	}
 	let facts = null,
@@ -78,7 +104,9 @@ function begin(broker, factory, timeoutMs) {
 		facts = reply.runtimeFacts;
 		profile = await profile8(facts);
 		// No growth after the one original Main grant, per singleton broker contract.
-		lease.resize(RESERVATION8 + hBytes8(facts) + CONTROL_JS8);
+		lease.resize(
+			RESERVATION8 + hBytes8(facts) + CONTROL_JS8 + controlBytes,
+		);
 		return Object.freeze({ ready: reply, profileSha256: profile });
 	})();
 	ready.catch((error) => channel.abort(error));
@@ -119,7 +147,7 @@ function begin(broker, factory, timeoutMs) {
 		})();
 		return closeTask;
 	}
-	return Object.freeze({
+	const controller = Object.freeze({
 		ready,
 		close,
 		reserveMain(bytes) {
@@ -182,4 +210,8 @@ function begin(broker, factory, timeoutMs) {
 			return opening;
 		},
 	});
+	// close joins Worker/S without awaiting the host guard that owns its F.
+	return hostControl
+		? Object.freeze({ controller, hostControl })
+		: controller;
 }
