@@ -32,3 +32,8 @@ fn stale() -> paintcraft_core::types::Error {
         "Source8 Main source or view changed",
     )
 }
+
+// Scheduling fence only. The actual singleton remains the admission authority.
+fn handoff_pending(retired_frame: Option<u64>, ctx: &eframe::egui::Context) -> bool {
+    retired_frame.is_some_and(|frame| ctx.cumulative_frame_nr() <= frame)
+}

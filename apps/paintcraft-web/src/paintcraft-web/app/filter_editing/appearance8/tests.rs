@@ -349,3 +349,37 @@ fn wider_original_preparation_ceiling_tightens_without_replacing_counter_or_meta
     assert_eq!(released.get(), 1);
     assert_eq!(metadata.usage().reserved, 0);
 }
+
+#[test]
+fn joined_handoff_blocks_every_actual_egui_pass_until_a_later_frame() {
+    let ctx = eframe::egui::Context::default();
+    ctx.options_mut(|o| o.max_passes = 2.try_into().unwrap());
+    let mut retired = None;
+    let mut passes = Vec::new();
+    let mut output = ctx.run_ui(Default::default(), |ui| {
+        let frame = ui.ctx().cumulative_frame_nr();
+        let pass = ui.ctx().cumulative_pass_nr();
+        if retired.is_none() {
+            retired = Some(frame);
+            ui.ctx()
+                .request_discard("actual handoff multipass regression");
+        }
+        passes.push((frame, pass, super::handoff_pending(retired, ui.ctx())));
+    });
+    output.textures_delta.clear();
+    assert_eq!(passes.len(), 2);
+    assert_eq!(passes[0].0, passes[1].0);
+    assert!(passes[1].1 > passes[0].1);
+    assert!(passes.iter().all(|(_, _, blocked)| *blocked));
+    let mut next = None;
+    let mut output = ctx.run_ui(Default::default(), |ui| {
+        next = Some((
+            ui.ctx().cumulative_frame_nr(),
+            super::handoff_pending(retired, ui.ctx()),
+        ));
+    });
+    output.textures_delta.clear();
+    let (frame, blocked) = next.unwrap();
+    assert!(frame > retired.unwrap());
+    assert!(!blocked); // Only scheduling eligibility; actual broker may still deny.
+}

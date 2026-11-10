@@ -29,6 +29,7 @@ pub(in crate::app::filter_editing) struct Display8 {
     error: Option<(Option<View>, Error)>,
     blocked: bool,
     host: Option<Host8>,
+    retired_frame: Option<u64>,
 }
 impl Default for Display8 {
     fn default() -> Self {
@@ -63,6 +64,7 @@ impl Display8 {
             error: None,
             blocked: false,
             host: None,
+            retired_frame: None,
         }
     }
     fn active(&self) -> bool {
@@ -127,7 +129,17 @@ impl Display8 {
             app.message = format!("Source8 preview unavailable: {error}");
         }
     }
+    fn joined_handoff(&mut self, ctx: &Context) {
+        self.retired_frame = Some(ctx.cumulative_frame_nr());
+        drop(self.host.take());
+        ctx.request_repaint();
+    }
     fn poll(&mut self, app: &mut WebApp, ctx: &Context) -> bool {
+        if super::handoff_pending(self.retired_frame, ctx) {
+            ctx.request_repaint();
+            return false;
+        }
+        self.retired_frame = None;
         if let Some(slot) = &self.closing {
             let result = slot.borrow_mut().take();
             let Some(result) = result else {
@@ -135,13 +147,21 @@ impl Display8 {
                 return false;
             };
             self.closing = None;
-            drop(self.host.take());
             self.identity = None;
             self.normal = false;
             self.accepted = None;
-            if let Err(error) = result {
-                self.blocked = true;
-                self.error = Some((None, error));
+            match result {
+                Ok(()) => {
+                    self.error = None;
+                    self.joined_handoff(ctx);
+                    return false;
+                }
+                Err(error) => {
+                    self.blocked = true;
+                    self.error = Some((None, error));
+                    // No actual join: retain the host guard/quarantine.
+                    return false;
+                }
             }
         }
         if let Some(slot) = &self.opening {
@@ -152,20 +172,22 @@ impl Display8 {
                 self.stamp = None;
                 match result {
                     Ok(Opened8::Normal(identity)) => {
-                        drop(self.host.take());
                         self.identity = Some(identity);
                         self.normal = true;
+                        self.joined_handoff(ctx);
+                        return false;
                     }
                     Ok(Opened8::Blend(client)) => {
                         self.client = Some(client);
                         self.normal = false;
                     }
                     Err(failure) => {
-                        if failure.joined {
-                            drop(self.host.take());
-                        }
                         self.blocked = !failure.joined;
                         self.error = Some((None, failure.error));
+                        if failure.joined {
+                            self.joined_handoff(ctx);
+                            return false;
+                        }
                     }
                 }
             }
