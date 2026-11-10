@@ -19,10 +19,11 @@ pub(super) struct Parked {
 
 impl WebApp {
     pub(super) fn clear_color(&self) -> paintcraft_core::types::Rgba {
-        if self.frontend == Frontend::Studio {
-            paintcraft_core::types::Rgba::TRANSPARENT
-        } else {
-            paintcraft_tools::commands::canvas_color(self.editor.session.document())
+        match self.frontend {
+            Frontend::Studio => paintcraft_core::types::Rgba::TRANSPARENT,
+            Frontend::Classic | Frontend::Retro => {
+                paintcraft_tools::commands::canvas_color(self.editor.session.document())
+            }
         }
     }
     /// Retained navigation geometry belongs to one document session. Zoom is
@@ -130,11 +131,7 @@ impl WebApp {
                 return false;
             }
         };
-        let outgoing_size = if old == Frontend::Studio {
-            (800, 600)
-        } else {
-            self.preferences.canvas.new_size()
-        };
+        let outgoing_size = Self::initial_size(old, &self.preferences);
         let clean_outgoing = if discard {
             match Editor::new(outgoing_size.0, outgoing_size.1) {
                 Ok(editor) => Some(editor),
@@ -149,11 +146,7 @@ impl WebApp {
         let incoming = if transfer.has_destination() {
             None
         } else {
-            let size = if frontend == Frontend::Studio {
-                (800, 600)
-            } else {
-                self.preferences.canvas.new_size()
-            };
+            let size = Self::initial_size(frontend, &self.preferences);
             let editor = match Editor::new(size.0, size.1) {
                 Ok(editor) => editor,
                 Err(error) => {
@@ -166,7 +159,10 @@ impl WebApp {
                 canvas: Canvas::default(),
                 controls: Controls {
                     tool: Tool::Brush,
-                    options: ToolOptions::default(),
+                    options: ToolOptions {
+                        pen: self.preferences.pen,
+                        ..Default::default()
+                    },
                     primary: paintcraft_core::types::Rgba([0, 0, 0, 255]),
                     secondary: WHITE,
                 },
@@ -218,11 +214,16 @@ impl WebApp {
         self.paste = Default::default();
         self.editor.tools.cancel_gesture();
         paintcraft_ui::theme::apply(ctx, ctx.theme());
-        if frontend == Frontend::Studio {
-            paintcraft_studio::apply_style_for_theme(ctx, ctx.theme());
-        } else {
-            paintcraft_classic::apply_style_for_theme(ctx, self.variant, ctx.theme());
+        match frontend {
+            Frontend::Studio => paintcraft_studio::apply_style_for_theme(ctx, ctx.theme()),
+            Frontend::Classic => {
+                paintcraft_classic::apply_style_for_theme(ctx, self.variant, ctx.theme())
+            }
+            Frontend::Retro => (), // Retro style is scoped to its own UI, never preferred themes.
         }
+        self.applied_style = None;
+        self.preferences.frontend = frontend;
+        self.persist_preferences();
         self.update_title();
         if discard
             && old == Frontend::Classic
@@ -383,3 +384,7 @@ mod ime_tests;
 #[cfg(test)]
 #[path = "interfaces/keyed_tests.rs"]
 mod keyed_tests;
+
+#[cfg(test)]
+#[path = "interfaces/retro_tests.rs"]
+mod retro_tests;

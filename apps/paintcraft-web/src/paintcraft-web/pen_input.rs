@@ -215,10 +215,10 @@ impl WebApp {
             session: self.editor.session.owner_id().as_u128(),
             state: ticket.state_id.as_u128(),
             publication: ticket.publication_epoch,
-            interface: if self.frontend == paintcraft_ui::actions::Frontend::Studio {
-                0
-            } else {
-                self.variant as u8 + 1
+            interface: match self.frontend {
+                paintcraft_ui::actions::Frontend::Studio => 0,
+                paintcraft_ui::actions::Frontend::Classic => self.variant as u8 + 1,
+                paintcraft_ui::actions::Frontend::Retro => 4,
             },
         }
     }
@@ -406,3 +406,7 @@ impl WebApp {
         self.pen.pending = Some((capture, batch));
     }
 }
+
+#[cfg(test)]
+#[path = "pen_input/retro_tests.rs"]
+mod retro_tests;

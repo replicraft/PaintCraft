@@ -14,6 +14,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 paintcraft-classic.workspace = true
 paintcraft-studio.workspace = true
+paintcraft-retro.workspace = true
 paintcraft-core.workspace = true
 paintcraft-raster.workspace = true
 paintcraft-commands.workspace = true

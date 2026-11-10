@@ -5,7 +5,7 @@ use paintcraft_core::types::{
     Rgba,
     json::{self, Value},
 };
-use paintcraft_ui::i18n::Language;
+use paintcraft_ui::{actions::Frontend, i18n::Language};
 #[cfg(test)]
 #[path = "preferences/pen_tests.rs"]
 mod pen_tests;
@@ -16,6 +16,8 @@ const BYTES_MAX: usize = 64 * 1024;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Preferences {
+    pub frontend: Frontend,
+    pub retro_skin: paintcraft_retro::Skin,
     pub rulers: bool,
     pub status_bar: bool,
     pub auto_hide_toolbar: bool,
@@ -32,6 +34,8 @@ pub(crate) struct Preferences {
 impl Default for Preferences {
     fn default() -> Self {
         Self {
+            frontend: Frontend::Classic,
+            retro_skin: paintcraft_retro::Skin::Win95,
             rulers: false,
             status_bar: true,
             auto_hide_toolbar: false,
@@ -57,6 +61,22 @@ impl Preferences {
         if value.get("schema").and_then(Value::as_str) != Some("paintcraft.web.preferences/v1") {
             return Err("unknown preferences schema".into());
         }
+        let frontend = match value.get("frontend") {
+            None => Frontend::Classic,
+            Some(v) => match v.as_str() {
+                Some("classic") => Frontend::Classic,
+                Some("studio") => Frontend::Studio,
+                Some("retro") => Frontend::Retro,
+                _ => return Err("unknown interface".into()),
+            },
+        };
+        let retro_skin = match value.get("retro_skin") {
+            None => paintcraft_retro::Skin::Win95,
+            Some(v) => v
+                .as_str()
+                .and_then(paintcraft_retro::Skin::parse)
+                .ok_or("unknown Retro skin")?,
+        };
         let canvas =
             CanvasDefaults::parse(value.get("canvas").ok_or("missing canvas preferences")?)?;
         for size in std::iter::once(canvas.configured).chain(canvas.last) {
@@ -117,6 +137,8 @@ impl Preferences {
             _ => Err(format!("invalid {key} preference")),
         };
         Ok(Self {
+            frontend,
+            retro_skin,
             rulers: flag("rulers", false)?,
             status_bar: flag("status_bar", true)?,
             auto_hide_toolbar: flag("auto_hide_toolbar", false)?,
@@ -140,6 +162,15 @@ impl Preferences {
     fn bytes(&self) -> Result<Vec<u8>, String> {
         let value = Value::object([
             ("schema", Value::str("paintcraft.web.preferences/v1")),
+            (
+                "frontend",
+                Value::str(match self.frontend {
+                    Frontend::Classic => "classic",
+                    Frontend::Studio => "studio",
+                    Frontend::Retro => "retro",
+                }),
+            ),
+            ("retro_skin", Value::str(self.retro_skin.id())),
             ("canvas", self.canvas.value()),
             ("rulers", Value::Bool(self.rulers)),
             ("status_bar", Value::Bool(self.status_bar)),
@@ -375,3 +406,7 @@ mod language_tests {
         assert!(Preferences::parse(&json::canonical(&value)).is_err());
     }
 }
+
+#[cfg(test)]
+#[path = "preferences/retro_tests.rs"]
+mod retro_tests;

@@ -28,8 +28,10 @@ mod palettes;
 #[path = "pen_input/tests.rs"]
 mod pen_input_tests;
 mod presentation;
+pub(crate) mod retro;
 mod settings;
 mod shapes;
+mod startup;
 mod view;
 mod welcome;
 use crate::{
@@ -37,15 +39,17 @@ use crate::{
     editor::{Editor, WHITE},
 };
 use eframe::egui;
-use paintcraft_classic::{ClassicVariant, Controls, Workspace};
+use paintcraft_classic::{ClassicVariant, Workspace};
 use paintcraft_tools::{Action as Edit, Tool, ToolOptions};
 use paintcraft_ui::actions::{Action, Context, Frontend, ImageExport, ViewAction};
+use paintcraft_ui::chrome::Controls;
 use paintcraft_ui::i18n::{set_language, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
     pub(crate) frontend: Frontend,
     pub(crate) studio: paintcraft_studio::Workspace,
+    pub(crate) retro: paintcraft_retro::Workspace,
     filter_editing: Option<filter_editing::State>,
     filter_display: filter_editing::Display,
     parked: interfaces::Workspaces,
@@ -98,93 +102,14 @@ pub struct WebApp {
 }
 
 impl WebApp {
-    pub fn new(ctx: &egui::Context) -> Self {
-        let (preferences, warning) = crate::preferences::Preferences::load();
-        if let Some(theme) = preferences.theme {
-            ctx.set_theme(theme);
-        }
-        let (width, height) = preferences.canvas.new_size();
-        set_language(ctx, preferences.language);
-        paintcraft_ui::fonts::install_for_locale(ctx, preferences.language.id());
-        paintcraft_ui::theme::apply(ctx, ctx.theme());
-        Self {
-            frontend: Frontend::Classic,
-            studio: Default::default(),
-            filter_editing: None,
-            filter_display: Default::default(),
-            parked: Default::default(),
-            fullscreen: Default::default(),
-            printer: Default::default(),
-            controls: Controls {
-                tool: Tool::Brush,
-                options: ToolOptions {
-                    pen: preferences.pen,
-                    ..Default::default()
-                },
-                primary: paintcraft_core::types::Rgba([0, 0, 0, 255]),
-                secondary: WHITE,
-            },
-            editor: Editor::new(width, height).expect("validated startup canvas is admitted"),
-            canvas: Canvas::default(),
-            pen: crate::pen_input::State::new(ctx),
-            workspace: Workspace {
-                custom_colors: preferences.custom_colors,
-                ..Workspace::default()
-            },
-            variant: preferences.variant,
-            name: "Untitled".into(),
-            zoom: 1.0,
-            settings: false,
-            welcome: welcome::State::load(),
-            applied_style: None,
-            settings_draft: None,
-            text: crate::text_ui::TextUi::with_style(paintcraft_classic::TextOptions {
-                family: preferences.default_font.clone(),
-                ..Default::default()
-            }),
-            preferences,
-            export_confirm: None,
-            export_frozen: None,
-            export_omit_source_metadata: false,
-            export_bake_filters: false,
-            dds: Default::default(),
-            dds_settings: Default::default(),
-            msp: Default::default(),
-            msp_version: Default::default(),
-            icon_export: None,
-            icns_export: None,
-            palettes: Default::default(),
-            shapes: Default::default(),
-            brushes: Default::default(),
-            export_quality: 90,
-            export_jpeg_matte: [255; 3],
-            export_pcx_encoding: Default::default(),
-            pcx_preview: Default::default(),
-            confirm_replace: None,
-            files: crate::files::Files::default(),
-            pending_import: None,
-            pending_pages: None,
-            pending_icns: None,
-            pending_svg: None,
-            import_owner: None,
-            jxl: Default::default(),
-            tiff: Default::default(),
-            form: None,
-            clipboard: Default::default(),
-            paste: Default::default(),
-            message: warning.unwrap_or_else(|| {
-                "Ready - Save downloads a project copy; work stays in this tab".into()
-            }),
-        }
-    }
-
     pub(crate) fn format_profile(&self) -> paintcraft_formats::registry::Frontend {
         use paintcraft_formats::registry::Frontend as Profile;
         match (self.frontend, self.variant) {
             (Frontend::Studio, _) => Profile::Studio,
-            (_, ClassicVariant::V7) => Profile::ClassicV7,
-            (_, ClassicVariant::V10) => Profile::ClassicV10,
-            (_, ClassicVariant::V11) => Profile::ClassicV11,
+            (Frontend::Retro, _) => Profile::RetroWin95,
+            (Frontend::Classic, ClassicVariant::V7) => Profile::ClassicV7,
+            (Frontend::Classic, ClassicVariant::V10) => Profile::ClassicV10,
+            (Frontend::Classic, ClassicVariant::V11) => Profile::ClassicV11,
         }
     }
     pub(crate) fn enabled_export_formats(&self) -> Vec<paintcraft_ui::actions::ImageExport> {
@@ -273,7 +198,7 @@ impl WebApp {
             },
             can_fit_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             can_crop_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
-            status_bar: self.frontend == Frontend::Studio || self.preferences.status_bar,
+            status_bar: self.status_bar_visible(),
             rulers: self.rulers_visible(),
             fullscreen: self.fullscreen.active(),
             can_exit: false,
@@ -500,11 +425,7 @@ impl WebApp {
     }
 
     fn new_document(&mut self) {
-        let (width, height) = if self.frontend == Frontend::Studio {
-            (800, 600)
-        } else {
-            self.preferences.canvas.new_size()
-        };
+        let (width, height) = Self::initial_size(self.frontend, &self.preferences);
         match Editor::new(width, height) {
             Ok(editor) => {
                 self.editor = editor;
@@ -731,7 +652,8 @@ impl WebApp {
             return;
         }
         if self.confirm_replace.is_some() {
-            egui::Modal::new(egui::Id::unique("web-new-unsaved")).show(ctx, |ui| {
+            let frontend = self.frontend;
+            egui::Modal::new(egui::Id::unique("web-new-unsaved")).show(ctx, |ui| retro::scoped_ui(frontend,ui,|ui| {
                 ui.heading(t!(ui.ctx(), "Discard unsaved changes?"));
                 ui.label(t!(ui.ctx(), "Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready."));
                 ui.horizontal_wrapped(|ui| {
@@ -743,7 +665,7 @@ impl WebApp {
                     }
                     if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
                 });
-            });
+            }));
         }
         if self.jxl_dialog(ctx) {
             return;
