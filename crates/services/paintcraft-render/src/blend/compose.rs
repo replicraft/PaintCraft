@@ -1,11 +1,16 @@
 //! New-mode rows/spatial output only; old Normal body remains in lib/kernels.
-use super::*;
-pub(crate) fn row(
+use super::{Kind, dense, limit, pixel_precharged, reserve_pixels};
+use paintcraft_core::types::{Rect, Result, Rgba};
+use paintcraft_document::Layer;
+use paintcraft_raster::RowSpan;
+// Preserve one runtime-selected preparation body rather than clone it per mode.
+#[inline(never)]
+pub(super) fn row_shared(
     layer: &Layer,
     y: i64,
     x: i64,
     row: &mut [u8],
-    kind: Kind,
+    kind: Option<Kind>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     let local_y = y - layer.origin.1;
@@ -24,16 +29,28 @@ pub(crate) fn row(
                 RowSpan::Pixels(source) => {
                     for (out, input) in dst.chunks_mut(256).zip(source.chunks(256)) {
                         check()?;
-                        dense(kind, out, input, layer.opacity)?;
+                        match kind {
+                            Some(kind) => dense(kind, out, input, layer.opacity)?,
+                            None => seed_dense(out, input, layer.opacity),
+                        }
                     }
                 }
                 RowSpan::Uniform { color, .. } => {
                     let source = color.with_opacity(layer.opacity);
                     for out in dst.chunks_mut(256) {
                         check()?;
-                        reserve_pixels(kind, (out.len() / 4) as u64)?;
-                        for pixel in out.as_chunks_mut::<4>().0 {
-                            *pixel = pixel_precharged(kind, source, Rgba(*pixel))?.0;
+                        match kind {
+                            Some(kind) => {
+                                reserve_pixels(kind, (out.len() / 4) as u64)?;
+                                for pixel in out.as_chunks_mut::<4>().0 {
+                                    *pixel = pixel_precharged(kind, source, Rgba(*pixel))?.0;
+                                }
+                            }
+                            None => out.as_chunks_mut::<4>().0.fill(if source.a() == 0 {
+                                [0; 4]
+                            } else {
+                                source.0
+                            }),
                         }
                     }
                 }
@@ -57,24 +74,31 @@ pub(crate) fn row(
                 input,
                 check,
             )?;
-            dense(kind, out, input, layer.opacity)?;
+            match kind {
+                Some(kind) => dense(kind, out, input, layer.opacity)?,
+                None => seed_dense(out, input, layer.opacity),
+            }
         }
         local_x += n as i64;
     }
     Ok(())
 }
-pub(crate) fn spatial(
+// Preserve one runtime-selected preparation body rather than clone it per mode.
+#[inline(never)]
+pub(super) fn spatial_shared(
     layer: &Layer,
     area: Rect,
     region: Rect,
     out: &mut [u8],
-    kind: Kind,
+    kind: Option<Kind>,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     let local = area
         .translated(-layer.origin.0, -layer.origin.1)
         .ok_or_else(limit)?;
-    reserve_pixels(kind, u64::try_from(area.area()).map_err(|_| limit())?)?;
+    if let Some(kind) = kind {
+        reserve_pixels(kind, u64::try_from(area.area()).map_err(|_| limit())?)?;
+    }
     let width = region.width() as usize;
     crate::spatial::visit(layer, local, check, |tile, pixels| {
         for (i, source) in pixels.iter().enumerate() {
@@ -84,11 +108,55 @@ pub(crate) fn spatial(
             let x = tile.x0 + layer.origin.0 + (i % tile.width() as usize) as i64;
             let y = tile.y0 + layer.origin.1 + (i / tile.width() as usize) as i64;
             let index = ((y - region.y0) as usize * width + (x - region.x0) as usize) * 4;
-            let destination = Rgba(out[index..index + 4].try_into().unwrap());
-            out[index..index + 4].copy_from_slice(
-                &pixel_precharged(kind, source.with_opacity(layer.opacity), destination)?.0,
-            );
+            match kind {
+                Some(kind) => {
+                    let destination = Rgba(out[index..index + 4].try_into().unwrap());
+                    out[index..index + 4].copy_from_slice(
+                        &pixel_precharged(kind, source.with_opacity(layer.opacity), destination)?.0,
+                    );
+                }
+                None => out[index..index + 4].copy_from_slice(&seed_pixel(*source, layer.opacity)),
+            }
         }
         Ok(())
     })
 }
+
+// Plain RGBA return: no General kernel/Result carrier on the fresh seed path.
+pub(super) fn seed_pixel(source: Rgba, opacity: u8) -> [u8; 4] {
+    let source = source.with_opacity(opacity);
+    if source.a() == 0 { [0; 4] } else { source.0 }
+}
+fn seed_dense(out: &mut [u8], source: &[u8], opacity: u8) {
+    for (d, s) in out
+        .as_chunks_mut::<4>()
+        .0
+        .iter_mut()
+        .zip(source.as_chunks::<4>().0)
+    {
+        *d = seed_pixel(Rgba(*s), opacity);
+    }
+}
+pub(crate) fn row(
+    layer: &Layer,
+    y: i64,
+    x: i64,
+    row: &mut [u8],
+    kind: Kind,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    row_shared(layer, y, x, row, Some(kind), check)
+}
+pub(crate) fn spatial(
+    layer: &Layer,
+    area: Rect,
+    region: Rect,
+    out: &mut [u8],
+    kind: Kind,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    spatial_shared(layer, area, region, out, Some(kind), check)
+}
+#[cfg(test)]
+#[path = "compose/factoring_tests.rs"]
+mod factoring_tests;
