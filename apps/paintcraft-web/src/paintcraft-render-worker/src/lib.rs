@@ -533,3 +533,10 @@ mod appearance_wasm;
 pub mod layer_service;
 #[cfg(target_arch = "wasm32")]
 pub use appearance_wasm::LayerAppearanceRenderWorker;
+
+// SeparateSource8 stagedservice; allSource4–7 bodies andbindings stayexact.
+pub mod blend_service;
+#[cfg(target_arch = "wasm32")]
+mod blend_wasm;
+#[cfg(target_arch = "wasm32")]
+pub use blend_wasm::LayerBlendRenderWorker;
