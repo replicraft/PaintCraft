@@ -1,5 +1,6 @@
 """Release signing contracts; real encrypted-key test uses only a throwaway key."""
 import hashlib
+import base64
 import os
 from pathlib import Path
 import shutil
@@ -36,6 +37,27 @@ class SigningTests(unittest.TestCase):
     def signature(self, path):
         path.write_text("untrusted comment: fixture\nAA==\ntrusted comment: " +
                         signing.trusted_comment(self.version, path.name.removesuffix(signing.SUFFIX)) + "\nAA==\n")
+
+    def test_known_fixture_key_refuses_release_signing_even_with_a_different_key_id(self):
+        fixture = (release.ROOT / "crates/adapters/paintcraft-update/tests/fixtures/TEST-ONLY-update-key.pub").read_bytes()
+        encoded = fixture.splitlines()[1]
+        altered = bytearray(base64.b64decode(encoded))
+        altered[2:10] = b"other-id"
+        for key in (encoded, base64.b64encode(altered)):
+            self.public.write_bytes(b"untrusted comment: changed label\n" + key + b"\n")
+            with patch.object(signing, "command") as command:
+                with self.assertRaisesRegex(ValueError, "test-only"):
+                    signing.sign(self.version, self.assets, self.public, environment={})
+                command.assert_not_called()
+            names = signing.finalized(self.version, self.assets, False)
+            for name in names:
+                self.signature(self.assets / (name + signing.SUFFIX))
+            with patch.object(signing, "command") as command:
+                with self.assertRaisesRegex(ValueError, "test-only"):
+                    signing.verify(self.version, self.assets, self.public)
+                command.assert_not_called()
+            for name in names:
+                (self.assets / (name + signing.SUFFIX)).unlink()
 
     def test_complete_finalized_set_rejects_extra_missing_symlink_and_changed_checksum(self):
         self.assertEqual(len(signing.finalized(self.version, self.assets, False)), 2)

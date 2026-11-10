@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Sign every finalized release file with minisign; verify without signing secrets."""
 import argparse
+import base64
 import os
 from pathlib import Path
 import subprocess
@@ -10,6 +11,10 @@ import package_release as release
 
 SUFFIX = ".minisig"
 MAX_TEXT = 8192
+# Public fixture material; its signing seed is intentionally available to everyone.
+TEST_PUBLIC_POINT = base64.b64decode(
+    "RWRSTFlURVNUMf86CRpsc46VFmw8nSYDEfNvykX9oUNwp3hPBfNlKH/O"
+)[-32:]
 
 
 def regular(path):
@@ -23,6 +28,18 @@ def read_small(path):
         data = stream.read(MAX_TEXT + 1)
     if len(data) > MAX_TEXT:
         raise ValueError("Signing text exceeds its fixed limit")
+    return data
+
+
+def read_public_key(path):
+    data = read_small(path)
+    for line in data.splitlines():
+        try:
+            decoded = base64.b64decode(line.strip(), validate=True)
+        except ValueError:
+            continue
+        if len(decoded) == 42 and decoded[-32:] == TEST_PUBLIC_POINT:
+            raise ValueError("The public test-only signing key cannot authenticate releases")
     return data
 
 
@@ -73,7 +90,7 @@ def verify_one(version, asset, signature, public_key, minisign):
 
 def verify(version, assets, public_key, minisign="minisign"):
     names = finalized(version, assets, signed=True)
-    public_before = read_small(public_key)
+    public_before = read_public_key(public_key)
     for name in names:
         verify_one(version, assets / name, assets / (name + SUFFIX), public_key, minisign)
     finalized(version, assets, signed=True)
@@ -84,7 +101,7 @@ def verify(version, assets, public_key, minisign="minisign"):
 
 def sign(version, assets, public_key, minisign="minisign", environment=None):
     names = finalized(version, assets, signed=False)
-    public_bytes = read_small(public_key)
+    public_bytes = read_public_key(public_key)
     before = {name: release.digest(assets / name) for name in names}
     env = os.environ if environment is None else environment
     secret = env.get("UPDATE_SIGNING_KEY", "")
