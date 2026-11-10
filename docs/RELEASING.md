@@ -86,6 +86,33 @@ or tar archive includes the application, its license and bundled font notices.
 Fonts and interface assets are embedded in the executable. There are no source trees or build tools
 inside the downloads. The checksums describe the final downloadable bytes.
 
+## Update signatures
+
+Release publishing uses the GitHub environment `release-signing`. It requires
+`UPDATE_SIGNING_KEY` (the Minisign secret key contents) and
+`UPDATE_SIGNING_PASSWORD` (its password). The matching public key is committed at
+`packaging/paintcraft-update-key.pub`. Private keys stay outside the repository.
+
+After the complete release passes its checksum checks, the protected signing job
+creates a detached `.minisig` sidecar for each download and `SHA256SUMS.txt`.
+Each signature binds the exact version and filename in its trusted comment:
+`paintcraft-update <version> <filename>`. Publishing verifies all signatures again
+using only the public key. Missing secrets, a mismatched key, or invalid signatures
+stop publication. Build-only runs do not access signing secrets or publish releases.
+
+To independently verify a complete downloaded release with Minisign installed:
+
+```sh
+python3 scripts/packaging/sign_release.py --version <version> --assets dist \
+    --public-key packaging/paintcraft-update-key.pub --verify-only
+```
+
+For an environment restricted to release tags, artifact-reuse dispatches must run
+on that same tag (`gh workflow run release.yml --ref v<version> ...`). Merely
+passing a `publish-tag` input while dispatching from `main` does not satisfy an
+environment's tag restriction. Detached update signatures are separate from
+Windows Authenticode and macOS Developer ID signing/notarization.
+
 ## Build and publish
 
 1. Set `[workspace.package].version` in the root `Cargo.toml`, update the lockfile

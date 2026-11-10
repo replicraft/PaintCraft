@@ -34,6 +34,7 @@ jobs:
       - name: Test actual native codec helper and independent sample fixtures
         run: cargo test --locked -p paintcraft-codec-worker --tests
       - run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
+      - run: python -m unittest discover -s scripts/tests -p 'test_sign_release.py'
       - run: python -m unittest discover -s scripts/tests -p 'test_install_cli.py'
   test:
     strategy:
@@ -53,6 +54,7 @@ jobs:
       - run: python3 scripts/check_file_lengths.py
       - run: python3 scripts/check_translations.py
       - run: python3 -m unittest discover -s scripts/tests -p 'test_package_*.py'
+      - run: python3 -m unittest discover -s scripts/tests -p 'test_sign_release.py'
       - run: python3 -m unittest discover -s scripts/tests -p 'test_install_cli.py'
       - run: python3 -m unittest discover -s scripts/tests -p 'test_verify_*.py'
       - run: cargo fmt --all --check
