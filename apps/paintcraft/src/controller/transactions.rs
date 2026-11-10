@@ -16,24 +16,7 @@ impl Editor {
         done: &str,
         target_alias: Option<&'static str>,
     ) -> Option<paintcraft_editor::session::Receipt> {
-        let t = self.session.ticket();
-        let batch = Value::object([
-            ("schema", Value::str("paintcraft.batch/v2")),
-            ("atomic", Value::Bool(true)),
-            ("policy", Value::str(POLICY)),
-            (
-                "base",
-                Value::object([
-                    ("state_id", Value::str(t.state_id.to_string())),
-                    (
-                        "publication_epoch",
-                        Value::str(t.publication_epoch.to_string()),
-                    ),
-                ]),
-            ),
-            ("operations", Value::Array(operations)),
-        ]);
-        let batch = match Batch::from_value(&batch) {
+        let batch = match super::strokes::captured_batch(self.session.ticket(), operations) {
             Ok(batch) => batch,
             Err(error) => {
                 self.fail_text_attempt(self.text_submission.executing);

@@ -6,6 +6,48 @@ use super::*;
 mod tests;
 
 impl Editor {
+    pub(super) fn validate_stretch_skew_edit(
+        &self,
+        edit: &paintcraft_tools::StretchSkewEdit,
+    ) -> Result<()> {
+        let ticket = self.session.ticket();
+        if edit.owner != self.session.owner_id()
+            || edit.state_id != ticket.state_id
+            || edit.publication_epoch != ticket.publication_epoch
+            || edit.target != self.target
+            || self.has_image_paste()
+            || self.has_floating_selection()
+            || !self.text_save_ready()
+        {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                "Resize and skew source or target changed",
+            ));
+        }
+        Ok(())
+    }
+    pub(super) fn stretch_skew_image(&mut self, edit: paintcraft_tools::StretchSkewEdit) {
+        if let Err(error) = self.validate_stretch_skew_edit(&edit) {
+            self.status = error.to_string();
+            return;
+        }
+        match paintcraft_tools::commands::stretch_skew_image(
+            self.document(),
+            self.selection(),
+            edit.target,
+            (edit.width, edit.height),
+            edit.shear,
+            edit.clear,
+        ) {
+            Ok(ops) if !ops.is_empty() => {
+                self.cancel_gesture();
+                self.draw(ops, "Resize and skew");
+            }
+            Ok(_) => {}
+            Err(error) => self.status = error.to_string(),
+        }
+    }
+
     pub(super) fn transform_image(
         &mut self,
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
@@ -77,3 +119,7 @@ impl Editor {
 #[cfg(test)]
 #[path = "canvas/anchor_tests.rs"]
 mod anchor_tests;
+
+#[cfg(test)]
+#[path = "canvas/stretch_skew_tests.rs"]
+mod stretch_skew_tests;
