@@ -1207,7 +1207,17 @@ All 256 renderer and 146 worker checks, native/Wasm Clippy, strict rustdoc and
 formatting pass. Evidence is under
 `docs/validation/source8-transparent-seed/root-native`.
 
-Actual Wasm validation of this renderer change is pending. The earlier 887-case
+The first actual Wasm build produced a 4,209,597-byte module, exceeding the
+unchanged 4,194,304-byte file limit by 15,293 bytes. Compilation and source checks
+passed, but numeric execution did not run. The failed artifact is retained.
+Shared row and spatial preparation now removes the duplicated seed traversal;
+258 renderer and 146 worker checks, native/Wasm Clippy and strict rustdoc pass.
+The next compiled module is 4,202,543 bytes: 7,054 bytes smaller, but still 8,239
+bytes over the same limit. Numeric execution remains gated. This is a measured
+code-size reduction, with no CPU-speed or physical-memory claim. The failed
+artifacts and intervening source-manifest bookkeeping failure remain archived.
+
+The earlier 887-case
 receipt describes the row-only stage, including its then-current General
 refusal. This new native result does not activate Worker8, Main publication or
 browser blending, and makes no CPU-speed or full-heap claim.
