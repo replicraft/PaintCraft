@@ -21,7 +21,8 @@ def manifest():
         "app-id": APP_ID, "runtime": "org.freedesktop.Platform", "runtime-version": RUNTIME,
         "sdk": "org.freedesktop.Sdk", "command": "paintcraft", "branch": "stable",
         # File selection is provided by rfd's portal backend. Do not grant host/home access.
-        "finish-args": ["--share=ipc", "--socket=wayland", "--socket=fallback-x11", "--device=dri"],
+        # About checks GitHub releases over HTTPS; installation remains package-managed.
+        "finish-args": ["--share=network", "--share=ipc", "--socket=wayland", "--socket=fallback-x11", "--device=dri"],
         # The codec helper's embedded contract and manifest cover its exact bytes.
         "build-options": {"strip": False, "no-debuginfo": True},
         "modules": [{"name": "paintcraft-release", "buildsystem": "simple",

@@ -25,13 +25,13 @@ def elf(path, target):
 
 
 class FlatpakTests(unittest.TestCase):
-    def test_manifest_has_exact_runtime_and_portal_permissions_without_blanket_access(self):
+    def test_manifest_has_exact_runtime_and_portal_permissions_without_host_filesystem_access(self):
         config = flatpak.manifest()
         self.assertEqual(config["app-id"], flatpak.APP_ID)
         self.assertEqual(config["runtime-version"], "25.08")
         self.assertEqual(config["command"], "paintcraft")
         self.assertEqual(config["finish-args"],
-                         ["--share=ipc", "--socket=wayland", "--socket=fallback-x11", "--device=dri"])
+                         ["--share=network", "--share=ipc", "--socket=wayland", "--socket=fallback-x11", "--device=dri"])
         self.assertEqual(config["build-options"], {"strip": False, "no-debuginfo": True})
         self.assertEqual(config["modules"][0]["sources"],
                          [{"type": "dir", "path": "payload", "dest": "payload"}])

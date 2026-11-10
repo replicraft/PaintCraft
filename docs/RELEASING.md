@@ -405,7 +405,10 @@ Freedesktop Platform and SDK 25.08. It stages the existing native release binari
 checks they are unchanged after building, and bundles them without stripping.
 CI is configured to install the bundle and check dependencies and the CLI in the actual runtime.
 Portal file dialogs provide document access without granting the application the
-entire home directory. GPU/Wayland/X11 permissions are explicit. Native desktop
+entire home directory. GPU/Wayland/X11 permissions are explicit. Network access
+permits user-requested HTTPS release checks, as required by the
+[Flatpak network permission](https://docs.flatpak.org/en/latest/sandbox-permissions.html).
+Native desktop
 interaction, file-open integration, print services, GPU drivers and tablet input
 still need a real Linux desktop qualification; a payload/CLI check does not prove them.
 Flatpak installations must receive updates through a future app remote or a newer
