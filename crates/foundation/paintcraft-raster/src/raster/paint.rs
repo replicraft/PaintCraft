@@ -1,9 +1,11 @@
 //! Ordered paint descriptors with operation-wide tile admission.
 use super::*;
 use std::collections::hash_map::Entry;
+mod affine;
 mod index;
 mod lineage;
 mod mapped;
+pub use affine::StretchSkewMapping;
 mod paste;
 mod patch;
 pub use paste::RgbaPastePlan;

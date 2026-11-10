@@ -399,7 +399,7 @@ impl<'a> PaintReader<'a> {
                 coordinates,
             });
             if let Data::Mapped(mapping) = &current.data {
-                conditional |= mapping.patch.is_some();
+                conditional |= mapping.patch.is_some() || mapping.affine.is_some();
                 if !conditional {
                     coordinates = coordinates.then(mapping.sampling.coordinates())?;
                 }

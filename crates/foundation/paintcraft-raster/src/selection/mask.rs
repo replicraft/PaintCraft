@@ -15,6 +15,7 @@ mod polygon;
 mod rows;
 /// Scoped immutable selection capture transport, separate from persistence.
 pub mod snapshot;
+mod stretch_skew;
 mod transform;
 mod views;
 

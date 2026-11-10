@@ -10,6 +10,7 @@ mod capture;
 mod invert;
 mod mapping;
 mod query;
+mod stretch_skew;
 mod views;
 
 // Core owns the numeric wire shape; Raster supplies immutable admitted storage.

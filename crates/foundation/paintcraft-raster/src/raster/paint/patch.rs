@@ -269,6 +269,7 @@ impl MappedPlan {
         let mut mapping = mapped::Mapping {
             sampling,
             patch: Some(patch),
+            affine: None,
             tiles: HashMap::new(),
             charge: admission.paint_metadata_account(),
         };
@@ -387,6 +388,7 @@ impl MappedPlan {
                 transform: None,
             },
             patch: None,
+            affine: None,
             tiles: HashMap::new(),
             charge: admission.paint_metadata_account(),
         };

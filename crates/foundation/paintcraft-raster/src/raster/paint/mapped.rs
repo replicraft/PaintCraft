@@ -8,16 +8,23 @@ const READS_MAX: u64 = 16_777_216;
 pub(super) struct Mapping {
     pub(super) sampling: sampling::Sampling,
     pub(super) patch: Option<super::patch::Patch>,
+    pub(super) affine: Option<super::affine::Affine>,
     pub(super) tiles: HashMap<TileCoord, ()>,
     pub(super) charge: BudgetAccount,
 }
 impl Mapping {
     pub(super) fn bounds(&self) -> Rect {
+        if let Some(a) = &self.affine {
+            return a.bounds;
+        }
         self.patch
             .as_ref()
             .map_or_else(|| self.sampling.bounds(), |p| p.bounds)
     }
     pub(super) fn sample(&self, x: i64, y: i64) -> Result<super::patch::Sample> {
+        if let Some(a) = &self.affine {
+            return a.sample(x, y);
+        }
         if let Some(patch) = &self.patch {
             return patch.sample(x, y);
         }
@@ -104,6 +111,7 @@ impl MappedPlan {
         let mut mapping = Mapping {
             sampling,
             patch: None,
+            affine: None,
             tiles: HashMap::new(),
             charge: admission.paint_metadata_account(),
         };
@@ -191,7 +199,9 @@ impl MappedPlan {
                 for y in region.y0..region.y1 {
                     check()?;
                     for x in region.x0..region.x1 {
-                        let sample = if let Some(patch) = &self.mapping.patch {
+                        let sample = if let Some(a) = &self.mapping.affine {
+                            a.sample(x, y)?
+                        } else if let Some(patch) = &self.mapping.patch {
                             patch.sample(x, y)?
                         } else {
                             let (x, y) = coordinates.pixel(x, y)?;
