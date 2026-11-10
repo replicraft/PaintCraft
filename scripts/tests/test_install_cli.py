@@ -302,7 +302,11 @@ class InstallTests(unittest.TestCase):
     def test_checkout_version_check_stays_strict_but_installed_versions_are_independent(self):
         archive, sums = self.archive()
         destination = self.install(archive, sums)
-        future = "0.2.0"
+        version = release.VERSION.fullmatch(self.version)
+        self.assertIsNotNone(version)
+        major, minor, patch_version = map(int, version.groups())
+        future = f"{major}.{minor}.{patch_version + 1}"
+        self.assertNotEqual(future, self.version)
         helper = destination / codec_worker.filename(self.target)
         helper.write_bytes(helper.read_bytes().replace(self.version.encode(), future.encode()))
         metadata = codec_worker.installed_metadata(destination, future, self.target)
