@@ -117,6 +117,7 @@ pub fn quote_unbound_call_checked(
 mod rooted;
 pub use rooted::{UnboundRootedCallForecast, quote_unbound_rooted_call_checked};
 mod frame_workspace;
+pub use frame_workspace::unbound_rooted_frame_workspace_control_bytes;
 pub use frame_workspace::{
     UnboundRootedFrameWorkspace, quote_unbound_rooted_frame_workspace_checked,
 };

@@ -15,6 +15,12 @@ const FORMATION: u64 = 81920;
 const CHECK: u64 = 1024;
 const EDGE: u32 = 64;
 
+/// Fixed caller-owned query controls, discovered before admitting the query.
+/// Pure defining declaration: no allocation, callback, counter or grant.
+pub const fn unbound_rooted_frame_workspace_control_bytes() -> u64 {
+    CONTROLS
+}
+
 /// Logical demand facts, not scopes, grants, cached authority or heap usage.
 /// Worker-owned read/F/O/H declarations remain separate. In particular the
 /// accumulator is original C storage and native RGBA is original O storage.
