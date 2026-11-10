@@ -17,6 +17,8 @@ mod owner;
 mod owner_ledger;
 mod probe_ledger;
 mod read_controls;
+mod service_bridge;
+pub(crate) mod service_endpoint;
 pub use inputs::{
     Source8InspectionMode, Source8InspectionRequest, Source8ReadCaps, Source8ReadRealms,
     Source8ReadScopes,

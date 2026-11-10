@@ -127,6 +127,9 @@ mod frame_render;
 #[path = "display_owner.rs"]
 mod display_owner;
 
+#[path = "owner/service.rs"]
+mod service;
+
 #[cfg(test)]
 #[path = "tests/payload_cases.rs"]
 pub(super) mod payload_cases;

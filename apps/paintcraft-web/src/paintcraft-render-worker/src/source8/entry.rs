@@ -100,6 +100,9 @@ impl<'r> Entry8<'r> {
     }
 }
 
+#[path = "service_extract.rs"]
+mod service_extract;
+
 #[path = "frame_entry.rs"]
 mod frame_entry;
 
