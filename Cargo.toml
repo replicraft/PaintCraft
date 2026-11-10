@@ -71,6 +71,7 @@ quick-xml = { version = "0.41.0", default-features = false }
 paintcraft-ui = { path = "crates/presentation/paintcraft-ui" }
 paintcraft-classic = { path = "crates/presentation/paintcraft-classic" }
 paintcraft-studio = { path = "crates/presentation/paintcraft-studio" }
+paintcraft-retro = { path = "crates/presentation/paintcraft-retro" }
 
 # Shared typed error implementations; preserve PaintCraft error codes and wire contracts.
 thiserror = "2.0.21"

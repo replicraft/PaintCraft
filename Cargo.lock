@@ -3627,6 +3627,7 @@ dependencies = [
  "paintcraft-platform",
  "paintcraft-raster",
  "paintcraft-render",
+ "paintcraft-retro",
  "paintcraft-runtime",
  "paintcraft-studio",
  "paintcraft-tablet-native",
@@ -3890,6 +3891,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-retro"
+version = "0.1.1"
+dependencies = [
+ "egui",
+ "egui_kittest",
+ "paintcraft-core",
+ "paintcraft-tools",
+ "paintcraft-ui",
+]
+
+[[package]]
 name = "paintcraft-runtime"
 version = "0.1.1"
 dependencies = [
@@ -3991,6 +4003,7 @@ dependencies = [
  "paintcraft-input",
  "paintcraft-raster",
  "paintcraft-render",
+ "paintcraft-retro",
  "paintcraft-studio",
  "paintcraft-tools",
  "paintcraft-ui",
