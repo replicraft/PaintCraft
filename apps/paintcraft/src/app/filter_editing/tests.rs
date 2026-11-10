@@ -613,3 +613,6 @@ mod hsl_tests;
 
 #[path = "blend_tests.rs"]
 mod blend_tests;
+
+#[path = "noise_tests.rs"]
+mod noise_tests;
