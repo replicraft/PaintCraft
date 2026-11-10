@@ -56,15 +56,30 @@ pub(super) fn demand(
     let ty = add(native.y1 as u64, 63)? / 64 - native.y0 as u64 / 64;
     let tiles = mul(tx, ty)?;
     let accumulator_bytes = if d.level == 0 { 0 } else { mul(cells, 40)? };
-    // Positive samples include complete internal and outward Result movements.
-    let per_native = if d.level == 0 { 8 } else { 768 };
+    // Row helper preflights every cell once, then writes without per-pixel Results.
+    let per_native = if d.level == 0 { 8 } else { 256 };
+    let row_work = if d.level == 0 {
+        0
+    } else {
+        // DisplayRequest bounds region.area<=u64::MAX/65536. Each canonical
+        // column/group contains at least one native pixel, so rows,groups<=N.
+        // Hence1024*rows+128*groups<=1152*N<u64::MAX, including wasm32.
+        let rows = native.height() as u64 * tx;
+        let groups = native.height() as u64
+            * if view.step() <= 64 {
+                p.width() as u64
+            } else {
+                tx
+            };
+        rows * 1024 + groups * 128
+    };
     let resolves = if d.level == 0 {
         mul(256, mul(native.height() as u64, tx)?)?
     } else {
         mul(cells, 512)?
     };
     let work = add(
-        add(mul(native_pixels, per_native)?, resolves)?,
+        add(add(mul(native_pixels, per_native)?, resolves)?, row_work)?,
         add(add(accumulator_bytes, mul(cells, 4)?)?, mul(tiles, 4096)?)?,
     )?;
     let native_peak = mul(

@@ -47,7 +47,8 @@ fn bootstrap() -> Result<()> {
         3072
     } else {
         2928
-    } + 4 * size_of::<OriginalControl8<'static>>();
+    } + 4 * size_of::<OriginalControl8<'static>>()
+        + 512; // separately bounded row-helper controls inside original C4096
     if !layout_supported()
         || named > owner_ledger::ENTRY_BYTES as usize
         || outer_named > OUTER_CONTROL as usize
@@ -181,25 +182,22 @@ impl ClosedSource8 {
                     }
                 } else {
                     let sums = &mut scratch.as_mut().ok_or_else(invalid)?.values;
-                    let mut i = 0usize;
-                    while i < input.len() / 4 {
-                        if i.is_multiple_of(64) {
-                            auth.step(0)?;
-                        }
-                        let sx =
-                            (x + (i % width) as i64 - demand.native.x0) / i64::from(demand.step);
-                        let sy =
-                            (y + (i / width) as i64 - demand.native.y0) / i64::from(demand.step);
-                        let index = sy as usize * demand.size[0] as usize + sx as usize;
-                        let offset = i * 4;
-                        let rgba = Rgba([
-                            input[offset],
-                            input[offset + 1],
-                            input[offset + 2],
-                            input[offset + 3],
-                        ]);
-                        sums[index].add(rgba)?;
-                        i += 1;
+                    let mut row = 0usize;
+                    while row < tile.height() as usize {
+                        auth.step(0)?;
+                        let sx = (x - demand.native.x0) / i64::from(demand.step);
+                        let sy = (y - demand.native.y0 + row as i64) / i64::from(demand.step);
+                        let offset = ((x - demand.native.x0) % i64::from(demand.step)) as usize;
+                        let count = (offset + width - 1) / demand.step as usize + 1;
+                        let target = sy as usize * demand.size[0] as usize + sx as usize;
+                        let source = row * width * 4;
+                        DisplayAccumulator::add_native_row(
+                            &mut sums[target..target + count],
+                            &input[source..source + width * 4],
+                            demand.step,
+                            offset as u32,
+                        )?;
+                        row += 1;
                     }
                 }
                 drop(image);

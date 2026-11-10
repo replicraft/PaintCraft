@@ -392,9 +392,9 @@ fn first_display_callback_error_preserves_exact_prefix_and_retires_outer_storage
         assert_eq!(
             host.used() - before,
             if cfg!(target_pointer_width = "64") {
-                43364
+                39908
             } else {
-                43356
+                39900
             }
         );
         assert_eq!(host.c.footprint().live, source_c());
