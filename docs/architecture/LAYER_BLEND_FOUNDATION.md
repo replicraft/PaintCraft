@@ -1055,3 +1055,63 @@ the separate amendment remain preserved; production code and limits did not chan
 Browser publication and complete D1/physical-memory qualification remain open.
 Inherited prepared bookkeeping and arbitrary diagnostic heap remain outside this
 finite functional gate. This is correctness validation, not a performance claim.
+
+### Display patch prerequisite
+
+The Rust-only Source8 display entry now composes canonical native regions before
+reducing them to display cells. One whole visible rectangle defines the global
+power-of-two grid; an output patch selects at most 64 by 64 cells without moving
+that grid. Partial canvas-edge cells use only actual canvas samples. Layer
+composition happens before alpha-weighted encoded-RGB reduction.
+
+The same captured caller and original reservations fund every native region in
+one display operation. Positive-level accumulator storage belongs to original C;
+original O covers both the retained output patch and the simultaneous native
+region. Output ownership survives source retirement. Cancellation preserves its
+diagnostic identity and paid work prefix; invalid geometry does not replace the
+loaded source or renew its counter.
+
+Current native validation passes 139 worker checks, including ten independent
+complete display pixel oracles, exact/one-byte-short accumulator capacity, source
+retirement and cancellation. Native and Wasm Clippy, formatting and the source
+length guard pass. The first compilation exposed a missing test import; later
+tests exposed a target-specific mutex-size assumption in the fixture. The test
+now uses the existing defining decoder-control quote, rather than observed usage.
+Original failures and the final source map remain under
+`docs/validation/source8-display-current-audit`.
+
+Pure Core budget/reservation/scope control quotes and the renderer's work-counter
+quote now provide defining logical allocation sizes for the upcoming Worker8
+factory constructor. They grant no capacity and leave existing constructors
+unchanged. Core's 109 native tests and two renderer controls pass, including
+unchanged reservation capacity and shared cumulative work. These quotes exclude
+allocator overhead, physical RSS and separate lazy OS mutex allocations.
+
+Actual Node Wasm execution now passes 872 cases: the preserved 838 assertions,
+31 display cases and three public resource-quote controls. Ten complete display
+pixel oracles and the original caller, cancellation, refusal and output-lifetime
+controls pass. The public C blocker checks Entry/read admission; the exact
+accumulator-capacity test remains native evidence. The genuine ten-package build
+preserves all 164 dependency identities and 184 target/feature rows, with only
+the reviewed local version mappings. Its module is 4,176,026 bytes under the
+unchanged 4 MiB bound. Memory starts at 2 MiB, has a 16 MiB maximum and ends at
+4 MiB. Sources stayed unchanged.
+
+Build and runtime receipts are retained under
+`docs/validation/layer-blend-candidates/source8-display-wasm-effective` in
+`build-attempt-2/build-final.json` and `node-attempt-1/final.json`. Before Cargo,
+the first attempt found one absent historical generated declaration; its exact
+11,499 bytes were recovered from the authenticated prior source archive. Driver
+import spelling and six numeric ABI type declarations were corrected in a
+separate reviewed amendment. Original drafts and failures remain preserved.
+
+This bounded primitive is not full default-canvas zoom readiness. Its current
+positive-level sample term alone charges 373,248,000 work units for 1000 by 486
+native samples, exceeding the unchanged 268,435,456 Base ceiling. Patching cannot
+renew that counter. A more efficient accounted reducer and default-size tests
+are required before adoption.
+
+The connected Worker8 service, Main transport and texture publication remain
+separate gates. Browser blend adoption remains disabled. These prerequisites
+do not establish latency, physical-memory limits or completion of the browser
+blending roadmap.
