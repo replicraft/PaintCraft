@@ -4,7 +4,7 @@ use js_sys::{Array, Function, Object, Promise, Reflect};
 use paintcraft_core::types::{Error, ErrorCode, Result, policy::hex};
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
-#[wasm_bindgen::prelude::wasm_bindgen(module = "/src/lib/layer-blend-preview-client.js")]
+#[wasm_bindgen::prelude::wasm_bindgen(module = "/src/lib/layer-blend-preview-bridge.js")]
 extern "C" {
     #[wasm_bindgen::prelude::wasm_bindgen(catch,js_name=beginLayerBlendPreview8WithHostControl)]
     pub fn begin_host(bytes: f64) -> std::result::Result<JsValue, JsValue>;
