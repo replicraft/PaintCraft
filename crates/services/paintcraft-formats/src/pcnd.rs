@@ -287,6 +287,7 @@ mod compact_tests;
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod source_metadata_history_tests;
 
+pub use binary::admitted::BlendSourceDemand;
 pub use binary::admitted::{
     BlendCountedControlBytes, BlendPlanRecordUpperBounds, CountedBlendSnapshot,
     CountedBlendSnapshotBytes, blend_counted_snapshot_control_bytes,

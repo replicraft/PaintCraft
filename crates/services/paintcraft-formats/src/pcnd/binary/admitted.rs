@@ -384,6 +384,7 @@ mod tests;
 mod rooted_blocks;
 
 mod counted_blend;
+pub use counted_blend::BlendSourceDemand;
 pub use counted_blend::{
     BlendCountedControlBytes, BlendPlanRecordUpperBounds, CountedBlendSnapshot,
     CountedBlendSnapshotBytes, blend_counted_snapshot_control_bytes,
