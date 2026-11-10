@@ -159,6 +159,12 @@ fn export_readme_screenshots() {
             ClassicVariant::V11,
             "studio",
         ),
+        (
+            Experience::Retro,
+            paintcraft_ui::i18n::Language::English,
+            ClassicVariant::V11,
+            "retro-win95",
+        ),
     ] {
         Settings {
             experience,
