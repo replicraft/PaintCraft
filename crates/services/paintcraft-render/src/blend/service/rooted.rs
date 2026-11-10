@@ -1,7 +1,7 @@
-//! Separate Source8 rooted route. Existing service/gateway bodies stay exact.
+//! Source8 rooted route retaining existing service contracts and debit order.
 use super::*;
 use crate::blend::rooted::{self as controls, RootFacts};
-mod gateway;
+pub(super) mod gateway;
 #[derive(Clone, Copy, Debug)]
 pub struct RootedCallQuote {
     pub call: CallQuote,

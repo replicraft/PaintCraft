@@ -143,6 +143,17 @@ pub(super) fn preflight_prepared(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     let q = quote(doc, region, c)?;
+    preflight_for_quote(doc, region, retained, q, check)
+}
+// Mechanical shared tail: old prepared preflight and seeded adjusted quote use
+// the same actual stage/point/own-mask/minimum validation and action order.
+pub(super) fn preflight_for_quote(
+    doc: &Document,
+    region: Rect,
+    retained: u64,
+    q: Quote,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
     let base = crate::spatial::current().ok_or_else(missing)?;
     let mut spatial_peak = 0u64;
     let mut total = crate::noise_work::WorkComponents {
@@ -198,4 +209,23 @@ pub(super) fn preflight_prepared(
         return Err(limit());
     }
     Ok(())
+}
+
+// Called only by the new fresh-output gateway with its private matching proof.
+pub(super) fn seeded_quote(
+    doc: &Document,
+    region: Rect,
+    c: Context,
+    seed: &super::seed::Seed<'_>,
+) -> Result<Quote> {
+    seed.require_matches(doc, region)?;
+    let mut q = quote(doc, region, c)?;
+    let n = seed.samples()?;
+    q.general_samples = q.general_samples.checked_sub(n).ok_or_else(limit)?;
+    q.extra_work = q
+        .opaque_samples
+        .checked_mul(OPAQUE_EXTENSION_WORK)
+        .and_then(|n| n.checked_add(q.general_samples.checked_mul(GENERAL_WORK)?))
+        .ok_or_else(limit)?;
+    Ok(q)
 }
