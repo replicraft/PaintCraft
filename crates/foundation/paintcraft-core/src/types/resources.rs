@@ -9,6 +9,7 @@ pub fn default_coverage_budget() -> SharedBudget {
     static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
     DEFAULT.get_or_init(|| SharedBudget::new(256 << 20)).clone()
 }
+mod factory_controls;
 mod watch;
 pub use watch::{BudgetPressure, BudgetWatch};
 mod reservation;

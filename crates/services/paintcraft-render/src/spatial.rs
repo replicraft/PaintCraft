@@ -5,6 +5,7 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba, resources::Bu
 use paintcraft_document::Layer;
 
 mod context;
+mod factory_controls;
 mod owner_union;
 mod plan;
 mod rooted;
