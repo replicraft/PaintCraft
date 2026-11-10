@@ -71,17 +71,16 @@ impl App {
         }
         let response = if self.experience() == Experience::Retro {
             let mut response = paintcraft_classic::resize_skew::Response::Pending;
-            let modal = egui::Modal::new(egui::Id::unique("native-retro-resize-skew"))
-                .frame(paintcraft_retro::frame())
-                .show(ctx, |ui| {
-                    response = paintcraft_retro::with_style(ui, |ui| {
-                        paintcraft_classic::resize_skew::contents(
-                            ui,
-                            &mut draft.view,
-                            settings::SIZE_MAX,
-                        )
-                    });
+            let modal = retro::forms::modal(ctx, "native-retro-resize-skew").show(ctx, |ui| {
+                retro::forms::bound_content(ui);
+                response = paintcraft_retro::with_style(ui, |ui| {
+                    paintcraft_classic::resize_skew::contents(
+                        ui,
+                        &mut draft.view,
+                        settings::SIZE_MAX,
+                    )
                 });
+            });
             if modal.should_close()
                 && response == paintcraft_classic::resize_skew::Response::Pending
             {
