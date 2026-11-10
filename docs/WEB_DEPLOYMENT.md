@@ -30,6 +30,24 @@ and [20-minute build timeout](https://developers.cloudflare.com/pages/platform/l
 Cold installation of Rust and the binding tool adds time. GitHub Actions caches
 the binding tool and uploads a downloadable site artifact for direct deployment.
 
+## Connected production site
+
+The public site is [paint.replicraft.dev](https://paint.replicraft.dev), served by
+Cloudflare Pages project `paintcraft`. The existing Pages Git integration builds
+and deploys updates pushed to `main`; the separate GitHub Actions web job checks
+the build and uploads an artifact. It does not publish that artifact itself.
+A desktop release tag is not required to update the website.
+
+After a push, check the commit's **Cloudflare Pages** status and its deployment
+preview. Confirm the custom domain uses the same hashed application entry script.
+A successful local build alone does not confirm a public deployment. Do not upload
+an older local `dist` over a newer Git-connected deployment.
+
+The download page resolves actual assets from the latest published GitHub release.
+Keep its desktop and CLI links tied to uploaded artifacts; add Flatpak links only
+when the corresponding package is published. Updating the browser app does not
+change the latest desktop release or require changing its version.
+
 ## Local builds and direct upload
 
 Use Node.js 24 and pnpm 12.10.1 (pinned in `package.json`). From the repository root:
