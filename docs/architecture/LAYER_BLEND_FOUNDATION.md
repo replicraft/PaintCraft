@@ -1176,3 +1176,38 @@ Native tests pin target literals and exercise actual Entry and closed-source
 construction at exact and one-byte-short C/K capacities. All 145 worker checks,
 native/Wasm Clippy, rustdoc and formatting pass. This is not a new Wasm runtime
 execution or a connected browser service.
+
+### Fresh transparent backdrop composition
+
+The closed Source8 frame now uses a separate fresh-output renderer. A private
+proof identifies the first contributing General layer in the requested region.
+It can skip earlier Normal layers only when they have no resident tiles,
+filters or mask and their default alpha is zero. The proof binds the immutable
+document address and exact region; cached or caller-populated buffers cannot
+enter this path.
+
+After the existing filter, filter-mask, own-mask and opacity evaluation, this
+first source can directly seed fresh transparent output. Zero-alpha sources
+write zero RGBA, preserving the existing hidden-RGB policy. Later roots use the
+original ordered compositor and each intermediate rounding boundary. General
+kernel work is removed only for samples that use this copy. The containing
+Source8 Normal copy work remains funded, and the General fee stays 256.
+
+Proof work is paid before its root walk; control movement is paid before the
+additional 2048-byte original W account. Public legacy/rooted and cached routes
+retain their action and debit order through shared private helpers. No original
+counter, factory or work ceiling is replaced.
+
+Native default-canvas tests now pass complete Normal and General pixels under
+the original 268,435,456 work limit. A real counted-writer round trip with an
+empty Normal background and fractional-alpha Multiply layer also passes; its
+prior ResourceLimit failure is preserved. Complete output and partial corners,
+cancellation identity, cumulative retry refusal and output ownership pass.
+All 256 renderer and 146 worker checks, native/Wasm Clippy, strict rustdoc and
+formatting pass. Evidence is under
+`docs/validation/source8-transparent-seed/root-native`.
+
+Actual Wasm validation of this renderer change is pending. The earlier 887-case
+receipt describes the row-only stage, including its then-current General
+refusal. This new native result does not activate Worker8, Main publication or
+browser blending, and makes no CPU-speed or full-heap claim.

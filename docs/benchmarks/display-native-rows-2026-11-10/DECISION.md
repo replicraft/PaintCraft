@@ -30,6 +30,15 @@ latency, GPU timings or physical-memory measurements. Logical work reductions
 describe the admission policy and must not be presented as measured speed gains.
 Further CPU optimization needs a measured improvement on representative renders.
 
+A subsequent source-action audit retains the 256-unit per-native-pixel work
+declaration. Five u64 accumulator read/modify/writes alone account for 80 bytes
+of movement, plus four RGBA input bytes. Conservatively counting indexing,
+casts, arithmetic and branches gives 216 units, or at most 246 when successful
+development overflow checks are included. A 64- or 128-unit fee is not justified
+by this implementation. Group preflight, row setup, callback work and control
+storage remain separate. These are logical accounting bounds, not measured CPU
+instructions or a new timing result.
+
 The tracked reproduction target is
 `cargo bench -p paintcraft-render --bench display_native_rows`.
 Set `PAINTCRAFT_ROW_BENCH_ORDER=forward` or `reverse` and use a separate
