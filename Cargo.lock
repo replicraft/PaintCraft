@@ -4008,6 +4008,7 @@ dependencies = [
  "paintcraft-studio",
  "paintcraft-tools",
  "paintcraft-ui",
+ "paintcraft-web-render-worker",
  "rfd",
  "sha2 0.11.1",
  "uuid",

@@ -22,6 +22,7 @@ paintcraft-document.workspace = true
 paintcraft-editor.workspace = true
 paintcraft-render.workspace = true
 paintcraft-formats.workspace = true
+paintcraft-web-render-worker.workspace = true
 sha2.workspace = true
 paintcraft-input.workspace = true
 uuid.workspace = true
