@@ -28,6 +28,11 @@ pub struct BudgetScope {
     reservation: Option<BudgetReservation>,
 }
 impl BudgetScope {
+    /// Whether both handles retain the exact same original account factory.
+    /// This does not infer ancestry or manufacture capacity from a shared budget.
+    pub fn same_factory(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.state, &other.state)
+    }
     pub fn account(&self) -> BudgetAccount {
         BudgetAccount {
             budget: self.budget.clone(),

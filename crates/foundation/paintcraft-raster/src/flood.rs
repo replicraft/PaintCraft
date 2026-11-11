@@ -9,6 +9,7 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
 use crate::raster::RasterLayer;
 use crate::shape::Span;
+use paintcraft_core::types::resources::{BudgetAccount, BudgetScope};
 mod scratch;
 
 /// Provisional bitmap/frontier/output capacity bound, not allocator/RSS accounting.
@@ -108,9 +109,75 @@ pub fn region_from_source_masked_checked(
     scratch_bytes: usize,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<Span>> {
+    classify(
+        read,
+        allowed,
+        seed,
+        clip,
+        tolerance,
+        check,
+        (scratch_bytes, None),
+    )
+    .map(|spans| spans.values)
+}
+
+/// Classifier output retaining its original metadata declaration through use.
+#[derive(Debug)]
+pub struct AdmittedSpans {
+    values: Vec<Span>,
+    _charge: Option<BudgetAccount>,
+    _scope: Option<BudgetScope>,
+}
+impl AdmittedSpans {
+    /// Borrow spans without separating their storage from its admission.
+    pub fn as_slice(&self) -> &[Span] {
+        &self.values
+    }
+}
+
+/// Classify using one original caller account for bitmap, frontier and output.
+/// The independent per-call scratch ceiling still applies.
+///
+/// # Errors
+/// Propagates source/cancellation errors and original metadata admission denials.
+pub fn region_from_source_masked_admitted_checked(
+    read: impl Fn(i64, i64) -> Result<Rgba>,
+    allowed: impl Fn(i64, i64) -> Result<bool>,
+    seed: (i64, i64),
+    clip: &Rect,
+    tolerance: u8,
+    scratch: (usize, BudgetScope),
+    check: &dyn Fn() -> Result<()>,
+) -> Result<AdmittedSpans> {
+    let (scratch_bytes, scope) = scratch;
+    classify(
+        read,
+        allowed,
+        seed,
+        clip,
+        tolerance,
+        check,
+        (scratch_bytes, Some(scope)),
+    )
+}
+
+fn classify(
+    read: impl Fn(i64, i64) -> Result<Rgba>,
+    allowed: impl Fn(i64, i64) -> Result<bool>,
+    seed: (i64, i64),
+    clip: &Rect,
+    tolerance: u8,
+    check: &dyn Fn() -> Result<()>,
+    policy: (usize, Option<BudgetScope>),
+) -> Result<AdmittedSpans> {
+    let (scratch_bytes, scope) = policy;
     check()?;
     if !clip.contains(seed.0, seed.1) || !allowed(seed.0, seed.1)? {
-        return Ok(Vec::new());
+        return Ok(AdmittedSpans {
+            values: Vec::new(),
+            _charge: scope.as_ref().map(BudgetScope::account),
+            _scope: scope,
+        });
     }
     // Public rectangles can span more than i64::MAX; reject area before narrowing.
     let width = i128::from(clip.x1) - i128::from(clip.x0);
@@ -126,7 +193,7 @@ pub fn region_from_source_masked_checked(
         .map_err(|_| Error::new(ErrorCode::ResourceLimit, "flood width overflows"))?;
     let pixels = usize::try_from(area)
         .map_err(|_| Error::new(ErrorCode::ResourceLimit, "flood area overflows"))?;
-    let mut scratch = scratch::Scratch::new(scratch_bytes);
+    let mut scratch = scratch::Scratch::new(scratch_bytes, scope);
     let mut seen = scratch.bitmap(pixels.div_ceil(64), check)?;
     let mut work = scratch::Work::new(check);
     let idx = |x: i64, y: i64| (y - clip.y0) as usize * w + (x - clip.x0) as usize;
@@ -183,7 +250,9 @@ pub fn region_from_source_masked_checked(
         }
     }
     check()?;
-    Ok(out)
+    drop(stack);
+    drop(seen);
+    scratch.finish(out)
 }
 
 #[cfg(test)]

@@ -18,7 +18,9 @@ mod metadata;
 mod projection;
 mod writes;
 pub use lineage::{PaintOverlay, PaintReader, PaintSnapshot};
+mod prepared;
 mod simulation;
+pub use prepared::PreparedPaint;
 pub use projection::PaintProjection;
 pub use simulation::{SimulatedLayer, TileFootprint, TilePlanner};
 
@@ -241,7 +243,7 @@ impl PaintPlan {
         if self.writes.is_empty() {
             return Ok(());
         }
-        let (mut prepared, needed) = {
+        let (prepared, needed) = {
             let mut target = index::RasterTarget::new(layer, admission);
             let prepared = self.index_checked(
                 admission.paint_metadata_limit,
@@ -251,8 +253,18 @@ impl PaintPlan {
             )?;
             (prepared, target.needed)
         };
+        self.replay_index_checked(layer, admission, &prepared, needed, check)
+    }
+    fn replay_index_checked(
+        &self,
+        layer: &mut RasterLayer,
+        admission: &mut Admission,
+        prepared: &index::Index,
+        needed: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
         admission.with_tile_plan(needed, |admission| {
-            let tiles = &mut prepared.tiles;
+            let tiles = &prepared.tiles;
             let missing = tiles
                 .keys()
                 .filter(|coord| !layer.tiles.contains_key(coord))
@@ -266,7 +278,7 @@ impl PaintPlan {
             }
             let bounds = layer.bounds();
             let edge = i64::from(TILE_EDGE);
-            for (coord, writes) in std::mem::take(tiles) {
+            for (&coord, writes) in tiles {
                 check()?;
                 let tile_area = Rect {
                     x0: coord.tx * edge,
@@ -276,7 +288,7 @@ impl PaintPlan {
                 };
                 let revision = super::regions::next_revision();
                 layer.with_tile_mut(coord, admission, |tile| {
-                    for index in writes {
+                    for &index in writes {
                         check()?;
                         let write = self.writes[index];
                         let Some(area) = write

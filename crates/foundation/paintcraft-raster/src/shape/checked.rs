@@ -1,6 +1,7 @@
 //! Bounded constant-colour stroke union; rows are independent, not ordered dabs.
 use super::stroke_budget::Budget;
 use super::*;
+use paintcraft_core::types::resources::BudgetScope;
 use std::{cmp::Reverse, collections::BinaryHeap, mem::size_of};
 /// Provisional capacity allowance, excluding allocator/hash-control overhead.
 pub const DEFAULT_STROKE_SCRATCH_BYTES: usize = 64 << 20;
@@ -19,7 +20,33 @@ impl CheckedSpanSet {
             budget: Budget::new(bytes),
         }
     }
+    /// Retain the exact caller metadata factory for union rows and merge heap.
+    /// The independent numeric scratch bound is unchanged.
+    pub fn with_metadata_scope(bytes: usize, scope: BudgetScope) -> Self {
+        Self {
+            rows: HashMap::new(),
+            budget: Budget::admitted(bytes, scope),
+        }
+    }
     pub fn add_stamp(
+        &mut self,
+        cx: i64,
+        cy: i64,
+        n: i64,
+        round: bool,
+        clip: &Rect,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
+        let result = self.add_stamp_inner(cx, cy, n, round, clip, check);
+        if result.is_err() && self.budget.admitted_account() {
+            // A rejected actual-capacity growth must not leave a reusable owner
+            // holding a larger allocation under its predicted declaration.
+            drop(std::mem::take(&mut self.rows));
+            self.budget.clear()?;
+        }
+        result
+    }
+    fn add_stamp_inner(
         &mut self,
         cx: i64,
         cy: i64,
@@ -88,9 +115,20 @@ impl CheckedSpanSet {
         mut emit: impl FnMut(Span) -> Result<()>,
     ) -> Result<()> {
         check()?;
-        let Self { rows, mut budget } = self;
-        let mut heap: BinaryHeap<Head> = BinaryHeap::new();
-        for (y, mut runs) in rows {
+        // The frame owns all remaining rows and the heap BEFORE the account.
+        // Callback errors must not release admission while those values survive.
+        struct Visit {
+            rows: std::collections::hash_map::IntoIter<i64, Vec<Run>>,
+            heap: BinaryHeap<Head>,
+            budget: Budget,
+        }
+        let Self { rows, budget } = self;
+        let mut frame = Visit {
+            rows: rows.into_iter(),
+            heap: BinaryHeap::new(),
+            budget,
+        };
+        while let Some((y, mut runs)) = frame.rows.next() {
             check()?;
             for chunk in runs.chunks_mut(CHUNK) {
                 check()?;
@@ -107,23 +145,29 @@ impl CheckedSpanSet {
             if ordered {
                 visit_runs(y, runs.iter().copied(), check, &mut emit)?;
             } else {
-                budget.heap(&mut heap, runs.len().div_ceil(CHUNK), check)?;
+                frame
+                    .budget
+                    .heap(&mut frame.heap, runs.len().div_ceil(CHUNK), check)?;
                 for start in (0..runs.len()).step_by(CHUNK) {
                     check()?;
                     let (a, b) = runs[start];
-                    heap.push(Reverse((a, b, start + 1, (start + CHUNK).min(runs.len()))));
+                    frame
+                        .heap
+                        .push(Reverse((a, b, start + 1, (start + CHUNK).min(runs.len()))));
                 }
                 let merged = std::iter::from_fn(|| {
-                    let Reverse((a, b, next, end)) = heap.pop()?;
+                    let Reverse((a, b, next, end)) = frame.heap.pop()?;
                     if next < end {
                         let (a, b) = runs[next];
-                        heap.push(Reverse((a, b, next + 1, end)));
+                        frame.heap.push(Reverse((a, b, next + 1, end)));
                     }
                     Some((a, b))
                 });
                 visit_runs(y, merged, check, &mut emit)?;
             }
-            budget.used -= runs.capacity() * size_of::<Run>();
+            let bytes = runs.capacity() * size_of::<Run>();
+            drop(runs);
+            frame.budget.release(bytes)?;
         }
         check()
     }

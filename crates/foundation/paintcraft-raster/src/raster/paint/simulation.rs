@@ -203,6 +203,77 @@ impl SimulatedLayer {
         check()?;
         Ok(!index.tiles.is_empty())
     }
+    /// Keep the actual admitted ordered index instead of rebuilding it at replay.
+    ///
+    /// # Errors
+    /// Propagates original metadata/cumulative-pixel policy or cancellation errors.
+    pub fn prepare_checked(
+        &mut self,
+        plan: &PaintPlan,
+        operation: usize,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<PreparedPaint> {
+        self.prepare_reusing_checked(plan, operation, None, check)
+    }
+    /// Reuse an exact original-factory immutable program before any new index allocation.
+    /// Every operation still simulates its own private/shared/COW version transitions.
+    ///
+    /// # Errors
+    /// Propagates original metadata/cumulative policy and cancellation failures.
+    pub fn prepare_reusing_checked(
+        &mut self,
+        plan: &PaintPlan,
+        operation: usize,
+        previous: Option<&PreparedPaint>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<PreparedPaint> {
+        let scope = self.trace.admission.paint_metadata_scope();
+        if let Some(previous) = previous
+            && previous.reusable_checked(
+                plan,
+                self.bounds,
+                self.default,
+                (self.trace.admission.paint_metadata_limit, &scope),
+                (self.tiles.is_empty(), |coord| {
+                    self.tiles.contains_key(&coord)
+                }),
+                check,
+            )?
+        {
+            for coord in previous.coordinates() {
+                check()?;
+                index::Target::admit_tile(
+                    &mut Target {
+                        layer: self,
+                        operation,
+                    },
+                    coord,
+                )?;
+            }
+            check()?;
+            return Ok(previous.clone());
+        }
+        let trace = self.trace.clone();
+        let index = plan.index_checked(
+            trace.admission.paint_metadata_limit,
+            trace.admission.paint_metadata_account(),
+            &mut Target {
+                layer: self,
+                operation,
+            },
+            check,
+        )?;
+        check()?;
+        let prepared = PreparedPaint::new(
+            plan.clone(),
+            index,
+            self.bounds,
+            self.default,
+            (trace.admission.paint_metadata_limit, scope),
+        )?;
+        check()?;
+        Ok(prepared)
+    }
 }
 struct Target<'a> {
     layer: &'a mut SimulatedLayer,

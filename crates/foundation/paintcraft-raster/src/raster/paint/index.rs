@@ -2,9 +2,11 @@
 use super::*;
 use paintcraft_core::types::resources::BudgetAccount;
 
+#[derive(Debug)]
 pub(super) struct Index {
     pub tiles: HashMap<TileCoord, Vec<usize>>,
     pub bytes: usize,
+    pub first_write: Option<usize>,
     pub charge: BudgetAccount,
 }
 
@@ -67,6 +69,7 @@ impl PaintPlan {
             metadata::Metadata::new(self.descriptor_bytes(), self.metadata_limit.min(limit))?;
         // Reverse local drop order frees storage before notifying charge release.
         let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
+        let mut first_write = None;
         for (index, &write) in self.writes.iter().enumerate() {
             append_write_checked(
                 index,
@@ -77,11 +80,15 @@ impl PaintPlan {
                 target,
                 check,
             )?;
+            if first_write.is_none() && !tiles.is_empty() {
+                first_write = Some(index);
+            }
         }
         check()?;
         Ok(Index {
             tiles,
             bytes: metadata.used,
+            first_write,
             charge,
         })
     }

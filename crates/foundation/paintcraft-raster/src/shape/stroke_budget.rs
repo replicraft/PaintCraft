@@ -1,13 +1,52 @@
 use super::*;
+use paintcraft_core::types::resources::{BudgetAccount, BudgetScope};
 use std::{collections::BinaryHeap, hash::Hash, mem::size_of};
 #[derive(Debug)]
 pub(super) struct Budget {
     pub used: usize,
     limit: usize,
+    charge: Option<BudgetAccount>,
+    _scope: Option<BudgetScope>,
 }
 impl Budget {
     pub fn new(limit: usize) -> Self {
-        Self { used: 0, limit }
+        Self {
+            used: 0,
+            limit,
+            charge: None,
+            _scope: None,
+        }
+    }
+    pub fn admitted(limit: usize, scope: BudgetScope) -> Self {
+        Self {
+            used: 0,
+            limit,
+            charge: Some(scope.account()),
+            _scope: Some(scope),
+        }
+    }
+    fn prepare(&mut self, bytes: usize) -> Result<()> {
+        let required = self.used.checked_add(bytes).ok_or_else(Self::error)?;
+        if required > self.limit {
+            return Err(Self::error());
+        }
+        if let Some(charge) = &mut self.charge {
+            charge.resize(u64::try_from(required).map_err(|_| Self::error())?)?;
+        }
+        Ok(())
+    }
+    pub fn release(&mut self, bytes: usize) -> Result<()> {
+        self.used = self.used.checked_sub(bytes).ok_or_else(Self::error)?;
+        if let Some(charge) = &mut self.charge {
+            charge.resize(u64::try_from(self.used).map_err(|_| Self::error())?)?;
+        }
+        Ok(())
+    }
+    pub fn admitted_account(&self) -> bool {
+        self.charge.is_some()
+    }
+    pub fn clear(&mut self) -> Result<()> {
+        self.release(self.used)
     }
     fn error() -> Error {
         Error::new(
@@ -19,6 +58,7 @@ impl Budget {
         if bytes > self.limit.saturating_sub(self.used) {
             return Err(Self::error());
         }
+        self.prepare(bytes)?;
         self.used += bytes;
         Ok(())
     }
@@ -34,6 +74,7 @@ impl Budget {
         }
         let old = values.capacity();
         let extra = old.max(4).min(available);
+        self.prepare(extra.checked_mul(width).ok_or_else(Self::error)?)?;
         values.try_reserve_exact(extra).map_err(|_| {
             Error::new(
                 ErrorCode::ResourceLimit,
@@ -60,6 +101,7 @@ impl Budget {
             return Err(Self::error());
         }
         let old = map.capacity();
+        self.prepare(width)?;
         map.try_reserve(1).map_err(|_| {
             Error::new(
                 ErrorCode::ResourceLimit,
@@ -88,6 +130,7 @@ impl Budget {
         if bytes > self.limit.saturating_sub(self.used) {
             return Err(Self::error());
         }
+        self.prepare(bytes)?;
         heap.try_reserve_exact(needed - heap.len()).map_err(|_| {
             Error::new(
                 ErrorCode::ResourceLimit,
