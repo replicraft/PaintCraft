@@ -1428,8 +1428,25 @@ audits are `source8-worker-entry-qualification-peer/actual-attempt-1/review.json
 (`a2b872228e538108746dc46a95fd7c1a713d6e07759ee8d10d3eb5633e6536de`)
 and `source8-main-wasm-peer/final-attempt-2-actual-audit/review.json`
 (`eabeb4947672ee46caf44b2f96b3f6f1f0ddab54f02e05aa17fe4f65287057af`).
+The unchanged normal website build now passes its separate source and asset
+acceptance, with all 3,921 source entries unchanged and Main byte-identical to
+the qualified artifact. Its production Worker declares 19 initial pages rather
+than the earlier explicit 32-page test configuration. Source-derived comparison
+permits only that minimum and the three allocator `__heap_end` constants derived
+from it; all other code, sections and official SDK files remain exact.
+
+All 42 cases also pass against this actual production Worker, including the
+original pixel, work, control and profile assertions. Runtime memory is
+1,245,184 bytes immediately after initialization, 1,310,720 after the allocating
+application-version query, and 1,966,080 after the cases, within the unchanged
+256 MiB maximum. The original structural rejection, misplaced post-query
+initial-memory assertion and missing test companion failure remain preserved.
+The successful runtime receipt is
+`docs/validation/source8-normal-worker-policy/heap-end-amendment/runtime-memory-phase-amendment/node-attempt-2/final.json`.
+These are Worker execution results, not Main browser publication results.
+
 Real Main source/work/credit lifetimes, texture publication and cooperative
 handoffs still require production browser execution with the actual served
-artifacts; the normal Worker script does not explicitly set initial memory.
+artifacts.
 These build gates do not
 qualify physical GC, GPU memory, RSS, latency or the full roadmap.
