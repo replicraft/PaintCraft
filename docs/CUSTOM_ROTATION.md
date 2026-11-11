@@ -1,8 +1,9 @@
 # Custom rotation
 
 The engine supports arbitrary clockwise rotations of the whole document or a
-captured selection. The frontend controls and CLI discovery are a separate
-integration step; the engine checkpoint below does not claim they are available.
+captured selection. Classic 11 and Studio have staged angle controls, and CLI/MCP
+use the same command path. Native and browser-host tests pass; execution of the
+new production website remains a separate pending checkpoint.
 
 Whole-document rotation uses one common canvas pivot for every layer, including
 hidden and off-canvas layers. It translates the exact rotated minimum to the
@@ -47,6 +48,20 @@ paint and exact Undo/Redo. The initial test fixture's unsorted selection runs an
 the one-entry offline lockfile correction remain recorded under
 `docs/validation/rotation-engine-root`.
 
+The consumer checkpoint passes 1,688 desktop, browser-host, shared UI and Tools
+library tests, with 40 existing or explicitly gated tests ignored. The real CLI
+file test and Tools command test pass, and all 32 real stdio MCP tests pass.
+Strict native all-target and Main/both-Worker Wasm checks, 410 web Node tests,
+Biome and Rust formatting pass. Actual angle-widget events stage values, Cancel,
+reopen and Apply in both native Classic 11 and Studio without an intermediate
+publication. Hidden RGB, alpha, exact Undo/Redo, stale selection/owner/epoch,
+pending-modal retirement and the original browser four-megapixel bound are tested.
+The local receipts are
+`docs/validation/rotation-engine-root/engine-final.json`
+(SHA-256 `84d63b8deb8fc8137476912556d838218ba8690d51383b6eb0f49c9008cbd7ea`)
+and `docs/validation/rotation-engine-root/consumer-final.json`
+(SHA-256 `ffb2ccff5716992f989044bc69426a906866bd198465ebd849eb86f763ebce53`).
+
 This is a provisional correctness baseline. It does not claim historical Paint
 resampling equivalence, measured performance, all-resource admission or physical
-memory bounds. Frontend, CLI and fresh browser qualification remain required.
+memory bounds. Fresh production browser qualification remains required.
