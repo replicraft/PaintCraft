@@ -131,8 +131,15 @@ The checked-in `test:main-blend-browser` regression separately passes five real
 Main browser groups locally, alongside all 394 Node tests. It covers exact pixels,
 canonical project saving, Undo, idle reuse, consuming source handoff and failed
 OPEN recovery. CI now runs it against the production bundle and retains its
-evidence; the new Linux CI execution is pending. This finite smoke does not
+evidence; all five groups also pass in the Linux CI production build. This finite smoke does not
 replace the nine-case qualification or qualify hardware graphics and memory.
+Six real browser mask-action groups now pass locally on a fixed Normal scene:
+selection-backed creation, no-op, inversion, disabling, removal and Undo/Redo,
+plus actual masked Invert preview/Cancel/Apply. Independent saved-file and full
+RGBA checks preserve mask, raw source and history identity; screenshot pixels
+also verify Apply's reused preview texture. All 398 Node tests pass. The new
+mask CI check is pending. This does not qualify NonNormal mask editing, filter-mask
+controls, mask painting or physical resource limits.
 The initial defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check
@@ -144,7 +151,7 @@ development failure-log gap. Committed Studio blend display now has the finite
 browser evidence above; private blend editing and derived/foreign consumers
 still need their own integration and acceptance. This does not qualify physical
 memory, latency or the full roadmap.
-Next is browser mask-action acceptance and the remaining private/derived blend
+Next is NonNormal mask-action integration, filter-mask browser acceptance and the remaining private/derived blend
 consumers, then Color Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
 independent native and actual Wasm scalar/row checks; document persistence and
