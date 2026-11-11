@@ -41,7 +41,9 @@ pub struct Layer {
     pub raster: RasterLayer,
     /// Ordered non-destructive intentions, independent of the raw source.
     pub filters: FilterStack,
-    /// Immutable source-local coverage, applied after filters and before opacity.
+    /// Ordered style intentions evaluated after complete filters, before own mask.
+    pub styles: StyleStack,
+    /// Immutable source-local coverage, applied after filters/styles and before opacity.
     pub mask: Option<LayerMask>,
 }
 
@@ -110,10 +112,26 @@ impl Document {
                             && layer.origin == (0, 0)
                             && (layer.raster.width(), layer.raster.height()) == self.canvas
                             && layer.filters.is_empty()
+                            && layer.styles.is_empty()
                             && layer.mask.is_none()
                     }))
             }
             _ => true,
+        }
+    }
+    /// Stored style intent, including disabled/zero-opacity entries. This is an
+    /// O(layer count) query, not an unpaid per-frame eligibility predicate.
+    pub fn has_styles(&self) -> bool {
+        self.layers.values().any(|layer| !layer.styles.is_empty())
+    }
+    pub fn require_no_styles(&self) -> Result<()> {
+        if self.has_styles() {
+            Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Layer styles require a qualified appearance or persistence route",
+            ))
+        } else {
+            Ok(())
         }
     }
     pub fn canvas_rect(&self) -> Rect {
@@ -219,6 +237,7 @@ pub fn new_document(
                 opacity: 255,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: StyleStack::empty(),
                 mask: None,
                 raster: RasterLayer::new(width, height, color),
             },
@@ -303,6 +322,7 @@ fn imported_document(
         opacity: 255,
         blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
         filters: Default::default(),
+        styles: StyleStack::empty(),
         mask: None,
         raster,
     };

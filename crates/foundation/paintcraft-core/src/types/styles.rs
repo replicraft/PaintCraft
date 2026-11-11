@@ -1,5 +1,6 @@
 //! Pure style policies. These are not numerical filter Descriptors.
 use super::{Error, ErrorCode, Result};
+mod value;
 
 /// The style blends against its own post-filter RGB, never the lower layers.
 /// This separate type/domain grants none of LayerBlendMode's authorities.
@@ -69,6 +70,24 @@ impl ColorOverlayRgbV1 {
     }
 }
 
+/// Closed style namespace. Adding a variant requires a new qualified profile.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum StyleDescriptor {
+    ColorOverlayRgbV1(ColorOverlayRgbV1),
+}
+impl StyleDescriptor {
+    pub const fn profile_id(self) -> &'static str {
+        match self {
+            Self::ColorOverlayRgbV1(_) => ColorOverlayRgbV1::PROFILE,
+        }
+    }
+    pub const fn semantic_parameter_bytes(self) -> [u8; 5] {
+        match self {
+            Self::ColorOverlayRgbV1(policy) => policy.semantic_bytes(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -99,3 +118,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "styles/value_tests.rs"]
+mod value_tests;

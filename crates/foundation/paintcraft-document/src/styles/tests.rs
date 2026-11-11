@@ -1,7 +1,7 @@
 use super::*;
 use paintcraft_core::types::{
     json::{self, Value},
-    styles::EffectBlendMode,
+    styles::{ColorOverlayRgbV1, EffectBlendMode},
 };
 use std::cell::Cell;
 

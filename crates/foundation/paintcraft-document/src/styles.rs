@@ -1,6 +1,6 @@
-//! Immutable style vocabulary only; no Layer field or evaluation authority.
+//! Immutable bounded style intentions owned by each document layer.
 //! These policies remain separate from numerical filter descriptors/catalogs.
-use paintcraft_core::types::{Error, ErrorCode, Result, styles::ColorOverlayRgbV1};
+use paintcraft_core::types::{Error, ErrorCode, Result};
 use sha2::{Digest, Sha256};
 use std::mem::size_of;
 use uuid::Uuid;
@@ -8,23 +8,7 @@ use uuid::Uuid;
 pub const STYLES_MAX: usize = 256;
 const DOMAIN: &[u8] = b"paintcraft.layer-style-stack/v1\0";
 
-/// Closed style namespace. Adding a variant requires a new qualified profile.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum StyleDescriptor {
-    ColorOverlayRgbV1(ColorOverlayRgbV1),
-}
-impl StyleDescriptor {
-    pub const fn profile_id(self) -> &'static str {
-        match self {
-            Self::ColorOverlayRgbV1(_) => ColorOverlayRgbV1::PROFILE,
-        }
-    }
-    pub const fn semantic_parameter_bytes(self) -> [u8; 5] {
-        match self {
-            Self::ColorOverlayRgbV1(policy) => policy.semantic_bytes(),
-        }
-    }
-}
+pub use paintcraft_core::types::styles::StyleDescriptor;
 
 /// Stable nonnil identity, scoped to one eventual layer's style stack.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -75,10 +59,20 @@ pub struct StyleStack {
 }
 impl Default for StyleStack {
     fn default() -> Self {
-        Self::new(Vec::new()).expect("an empty style stack is valid")
+        Self::empty()
     }
 }
 impl StyleStack {
+    /// Canonical empty intent: no allocation, validation walk or hash work.
+    pub const fn empty() -> Self {
+        Self {
+            instances: Vec::new(),
+            digest: [
+                162, 0, 47, 212, 197, 207, 109, 89, 140, 30, 51, 226, 47, 192, 63, 63, 144, 208,
+                119, 87, 205, 2, 231, 89, 140, 227, 194, 153, 206, 199, 245, 132,
+            ],
+        }
+    }
     pub fn new(instances: Vec<StyleInstance>) -> Result<Self> {
         Self::new_checked(instances, &|| Ok(()))
     }
@@ -119,6 +113,29 @@ impl StyleStack {
         }
         let digest = hash(&instances, check)?;
         Ok(Self { instances, digest })
+    }
+    /// Fallible copy of trusted immutable intent; preserve the cached digest.
+    /// Caller admits vector payload and copy/control work before this method.
+    pub fn try_clone_checked(&self, check: &dyn Fn() -> Result<()>) -> Result<Self> {
+        check()?;
+        if self.is_empty() {
+            return Ok(Self::empty());
+        }
+        let mut instances = Vec::new();
+        instances
+            .try_reserve_exact(self.len())
+            .map_err(|_| limit("Cannot copy layer styles"))?;
+        if instances.capacity() != self.len() {
+            return Err(limit("Style copy capacity differs"));
+        }
+        for instance in &self.instances {
+            check()?;
+            instances.push(*instance);
+        }
+        Ok(Self {
+            instances,
+            digest: self.digest,
+        })
     }
     pub fn iter(&self) -> impl ExactSizeIterator<Item = &StyleInstance> + DoubleEndedIterator {
         self.instances.iter()
@@ -176,3 +193,7 @@ fn hash(instances: &[StyleInstance], check: &dyn Fn() -> Result<()>) -> Result<[
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "styles/product_tests.rs"]
+mod product_tests;
