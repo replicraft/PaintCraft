@@ -147,6 +147,17 @@ fn wait_preview(h: &mut Harness<App>, language: Language) {
     h.get_by_label(&translate(language, "Export preview"));
     assert!(!h.state().jxr_export.as_ref().unwrap().reviewed);
 }
+fn export_button<'tree>(
+    h: &'tree Harness<'_, App>,
+    label: &'tree str,
+) -> egui_kittest::Node<'tree> {
+    let mut buttons = h
+        .query_all_by_role_and_label(egui::Role::Button, label)
+        .filter(|node| !node.accesskit_node().is_disabled());
+    let button = buttons.next().expect("active export confirmation button");
+    assert!(buttons.next().is_none(), "exactly one active export button");
+    button
+}
 fn wait_review(h: &mut Harness<App>, language: Language) {
     let until = Instant::now() + Duration::from_secs(15);
     loop {
@@ -164,7 +175,7 @@ fn wait_review(h: &mut Harness<App>, language: Language) {
     }
     h.run();
     assert!(h.state().worker_budget.usage().reserved > 0);
-    h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"));
+    export_button(h, &translate(language, "Export now"));
 }
 fn choose(h: &mut Harness<App>, language: Language, path: &Path) {
     h.state_mut().path_text = path.with_extension("pcnd").to_string_lossy().into_owned();
@@ -366,3 +377,6 @@ mod preview_refusals;
 
 #[path = "bake_installed.rs"]
 mod bake;
+
+#[path = "generation_installed.rs"]
+mod generation_installed;

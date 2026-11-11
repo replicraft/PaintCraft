@@ -86,8 +86,7 @@ fn fixture_installed_opaque_metadata_omission_preserves_project_and_matches_c_go
         before.unchanged(h.state());
         assert_eq!(fs::read(&source).unwrap(), original);
         assert_eq!(fs::read(&target).unwrap(), b"existing destination");
-        h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-            .click();
+        export_button(&h, &translate(language, "Export now")).click();
         h.run();
         retire(h.state());
         before.unchanged(h.state());

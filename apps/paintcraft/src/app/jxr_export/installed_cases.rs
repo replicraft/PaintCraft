@@ -72,8 +72,7 @@ pub(super) fn export_review_and_guards(oracle: Oracle) {
             }
             match case {
                 0 => {
-                    h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-                        .click();
+                    export_button(&h, &translate(language, "Export now")).click();
                     h.run();
                     assert!(h.state().jxr_export.is_none());
                     match oracle {
@@ -130,8 +129,7 @@ pub(super) fn export_review_and_guards(oracle: Oracle) {
                     let mut changed = original_manifest.clone();
                     changed.push(b' ');
                     fs::write(&manifest, changed).unwrap();
-                    h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-                        .click();
+                    export_button(&h, &translate(language, "Export now")).click();
                     h.run();
                     fs::write(&manifest, &original_manifest).unwrap();
                     assert!(h.state().jxr_export.is_none());
@@ -188,8 +186,7 @@ fn fixture_real_fresh_long_output_import_and_source_guard() {
         let mut h = harness(app);
         let before = Before::capture(h.state());
         choose(&mut h, language, &target);
-        h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-            .click();
+        export_button(&h, &translate(language, "Export now")).click();
         h.run();
         retire(h.state());
         before.unchanged(h.state());

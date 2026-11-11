@@ -154,8 +154,7 @@ fn fixture_installed_filter_bake_matches_c_golden_and_revoked_intent_cannot_publ
         println!("{language:?}: second begin for positive publication");
         begin(&mut h, language);
         before.unchanged(h.state());
-        h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-            .click();
+        export_button(&h, &translate(language, "Export now")).click();
         h.run();
         retire(h.state());
         portable::verify_output(&target, 4, 3);

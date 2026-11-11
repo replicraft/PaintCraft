@@ -179,8 +179,7 @@ fn fresh_import(width: u32, height: u32, language: Language) {
     let mut h = harness(app);
     let before = Before::capture(h.state());
     choose(&mut h, language, &destination);
-    h.get_by_role_and_label(egui::Role::Button, &translate(language, "Export now"))
-        .click();
+    export_button(&h, &translate(language, "Export now")).click();
     h.run();
     retire(h.state());
     before.unchanged(h.state());
