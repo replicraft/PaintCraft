@@ -102,6 +102,54 @@ impl Service {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct JxrObservationPending(Pending);
+impl JxrObservationPending {
+    pub(crate) fn poll(
+        &self,
+    ) -> Option<Result<paintcraft_formats::codec_worker::native::jxr_installation::Observation>>
+    {
+        self.0.poll().map(|result| {
+            result.and_then(|completion| match completion {
+                Completion::JxrObservation(value) => Ok(value),
+                _ => Err(Error::new(
+                    ErrorCode::InvariantViolation,
+                    "Unexpected JXR observation result",
+                )),
+            })
+        })
+    }
+}
+impl Service {
+    pub(crate) fn try_submit_jxr_observation(&self) -> Result<Option<JxrObservationPending>> {
+        let submitted = self.submit_with_workspace(
+            |cancel| {
+                paintcraft_formats::codec_worker::native::jxr_installation::observe(&|| {
+                    cancel.check()
+                })
+                .map(Completion::JxrObservation)
+            },
+            "Inspect JPEG XR installation".into(),
+            "",
+            None,
+            false,
+        );
+        match submitted {
+            Ok(pending) => Ok(Some(JxrObservationPending(pending))),
+            Err(error) if error.code == ErrorCode::ResourceLimit => {
+                let mut executor = self.lock()?;
+                executor.reap_abandoned();
+                if executor.request_fits(PREPARATION_CHARGE) && executor.pending() > 0 {
+                    Ok(None)
+                } else {
+                    Err(error)
+                }
+            }
+            Err(error) => Err(error),
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "jxr_export/tests.rs"]
 mod tests;

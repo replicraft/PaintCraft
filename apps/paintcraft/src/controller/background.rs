@@ -10,7 +10,7 @@ mod import;
 pub(crate) use import::ImportPending;
 #[path = "background/jxr_export.rs"]
 mod jxr_export;
-pub(crate) use jxr_export::{JxrExportPending, PreparedJxrExport};
+pub(crate) use jxr_export::{JxrExportPending, JxrObservationPending, PreparedJxrExport};
 
 #[path = "background/msp_export.rs"]
 mod msp_export;
@@ -33,6 +33,7 @@ pub(super) enum Completion {
     TiffImport(TiffCompletion),
     CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
     JxrExport(Box<PreparedJxrExport>),
+    JxrObservation(paintcraft_formats::codec_worker::native::jxr_installation::Observation),
     DdsExport(Box<crate::dds_export::worker::Prepared>),
     MspExport(Box<crate::msp_export::worker::Prepared>),
     Pick(Box<picker::Picked>),
@@ -571,6 +572,7 @@ impl Editor {
                 Completion::TiffImport(_)
                 | Completion::CodecImport(_)
                 | Completion::JxrExport(_)
+                | Completion::JxrObservation(_)
                 | Completion::DdsExport(_)
                 | Completion::MspExport(_),
             ) => Err(Error::new(

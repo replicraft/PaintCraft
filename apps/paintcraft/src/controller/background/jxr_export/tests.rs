@@ -115,3 +115,47 @@ fn live_and_canceled_executor_contention_retries_only_after_actual_retirement() 
     service.reap_abandoned();
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn installation_refresh_uses_existing_executor_capacity_and_releases_before_encode_admission() {
+    let budget = SharedBudget::new(PREPARATION_CHARGE);
+    let service = Service::with_budget(egui::Context::default(), budget.clone()).unwrap();
+    let held = budget.reserve(PREPARATION_CHARGE).unwrap();
+    assert_eq!(
+        service.try_submit_jxr_observation().unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(budget.usage().reserved, PREPARATION_CHARGE);
+    drop(held);
+    // This actual ordinary observation may be Available or typed unavailable;
+    // a missing helper is not treated as passing actual installed qualification.
+    let pending = service.try_submit_jxr_observation().unwrap().unwrap();
+    assert_eq!(budget.usage().reserved, PREPARATION_CHARGE);
+    let until = Instant::now() + Duration::from_secs(5);
+    loop {
+        if pending.poll().is_some() {
+            break;
+        }
+        assert!(Instant::now() < until);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    drop(pending);
+    service.reap_abandoned();
+    assert_eq!(budget.usage().reserved, 0);
+    let pending = service
+        .try_submit_jxr_export(1, |_| unexpected())
+        .unwrap()
+        .unwrap();
+    let until = Instant::now() + Duration::from_secs(5);
+    loop {
+        if let Some(value) = pending.poll() {
+            assert_eq!(value.unwrap_err().message, "admitted control task");
+            break;
+        }
+        assert!(Instant::now() < until);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    drop(pending);
+    service.reap_abandoned();
+    assert_eq!(budget.usage().reserved, 0);
+}

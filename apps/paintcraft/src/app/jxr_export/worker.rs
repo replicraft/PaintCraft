@@ -19,6 +19,32 @@ pub(super) fn quote(layout: encode::Layout) -> Result<u64> {
         .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "JPEG XR export quote overflow"))?;
     Ok(encode_quote.max(wire::native::jxr_preview_reservation_bytes(layout)?))
 }
+pub(super) fn prepare_with_generation(
+    source: Arc<paintcraft_document::Document>,
+    owner: wire::Owner,
+    cancel: Cancellation,
+    policy: export::CopyPolicies,
+    generation: SharedGeneration,
+    ticket: installation::Ticket,
+) -> Result<controller::background::PreparedJxrExport> {
+    generation::reobserve(&generation, ticket, &|| cancel.check())?;
+    let check_cancel = cancel.clone();
+    let prepared = prepare_inner(
+        source,
+        owner,
+        cancel,
+        policy,
+        Some(ticket.observation().identity()?),
+    )?;
+    // Same retained original ResourceLease: no second executor reservation.
+    generation::reobserve(&generation, ticket, &|| check_cancel.check())?;
+    generation::require(&generation, ticket)?;
+    if prepared.encoded.installation() != ticket.observation().identity()? {
+        return Err(stale());
+    }
+    Ok(prepared)
+}
+
 #[cfg(test)]
 pub(super) fn prepare(
     source: Arc<paintcraft_document::Document>,
@@ -36,11 +62,21 @@ pub(super) fn prepare(
         },
     )
 }
+#[cfg(test)]
 pub(super) fn prepare_with_policies(
     source: Arc<paintcraft_document::Document>,
     owner: wire::Owner,
     cancel: Cancellation,
     policy: export::CopyPolicies,
+) -> Result<controller::background::PreparedJxrExport> {
+    prepare_inner(source, owner, cancel, policy, None)
+}
+fn prepare_inner(
+    source: Arc<paintcraft_document::Document>,
+    owner: wire::Owner,
+    cancel: Cancellation,
+    policy: export::CopyPolicies,
+    expected: Option<installation::Identity>,
 ) -> Result<controller::background::PreparedJxrExport> {
     let lease = cancel
         .resource_lease()
@@ -72,12 +108,12 @@ pub(super) fn prepare_with_policies(
         owner,
         deadline: Duration::from_secs(10),
     }
-    .prepare(
+    .prepare_with_installation(
         Arc::new(rgb),
         lease,
         &check,
         &|| Ok(owner),
-        |actual, profile| {
+        (expected, |actual, profile| {
             if actual != layout || profile != encode::PROFILE {
                 return Err(Error::new(
                     ErrorCode::InvariantViolation,
@@ -85,7 +121,7 @@ pub(super) fn prepare_with_policies(
                 ));
             }
             check()
-        },
+        }),
         |launch, check| {
             process::run_parent_lease(
                 launch.executable,

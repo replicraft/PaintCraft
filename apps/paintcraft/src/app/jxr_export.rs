@@ -6,10 +6,14 @@ use paintcraft_formats::{
     registry::{self, Family, Operation, Platform, Request},
 };
 use paintcraft_ui::t;
+#[path = "jxr_export/generation.rs"]
+mod generation;
 #[path = "jxr_export/worker.rs"]
 mod worker;
 use crate::export_sources::Sources;
 use export::metadata_policy::{Intent, Policy, Target};
+pub(super) use generation::SharedGeneration;
+use paintcraft_formats::codec_worker::native::jxr_installation as installation;
 
 type Prepared = controller::background::PreparedJxrExport;
 #[derive(Debug)]
@@ -32,6 +36,12 @@ pub(super) struct State {
     bake_filters: bool,
     filter_bake: export::filter_bake::Policy,
     capture: Option<Capture>,
+    ticket: Option<installation::Ticket>,
+    refresh: Option<(
+        installation::Request,
+        controller::background::JxrObservationPending,
+    )>,
+    adopted: bool,
     pending: Option<controller::background::JxrExportPending>,
     prepared: Option<Prepared>,
     texture: Option<egui::TextureHandle>,
@@ -89,6 +99,9 @@ impl State {
     }
     fn retire_preparation(&mut self) {
         self.pending = None;
+        self.refresh = None;
+        self.ticket = None;
+        self.adopted = false;
         self.prepared = None;
         self.texture = None;
         self.shown = None;
@@ -173,6 +186,9 @@ impl App {
                 bake_filters: false,
                 filter_bake: Default::default(),
                 capture: None,
+                ticket: None,
+                refresh: None,
+                adopted: false,
                 pending: None,
                 prepared: None,
                 texture: None,
@@ -251,6 +267,14 @@ impl App {
         let Some(capture) = state.capture.as_ref() else {
             return Ok(());
         };
+        let Some(ticket) = state.ticket else {
+            return generation::start_refresh(
+                &self.jxr_generation,
+                self.editing.as_ref().ok_or_else(stale)?,
+                state,
+            );
+        };
+        generation::require(&self.jxr_generation, ticket)?;
         let source = capture.source.clone();
         let layout =
             encode::Layout::new(source.canvas.0, source.canvas.1, encode::ENCODED_BYTES_MAX)?;
@@ -284,7 +308,10 @@ impl App {
         let service = self.editing.as_ref().ok_or_else(stale)?;
         service.reap_abandoned();
         let spatial = spatial_workspace::needed(&source);
-        let task = move |cancel| worker::prepare_with_policies(source, owner, cancel, policies);
+        let generation = self.jxr_generation.clone();
+        let task = move |cancel| {
+            worker::prepare_with_generation(source, owner, cancel, policies, generation, ticket)
+        };
         state.pending = if spatial {
             service.try_submit_jxr_export_with_workspace(quote, task, true)
         } else {
@@ -303,6 +330,10 @@ impl App {
             self.export_jxr_error(stale());
             return;
         }
+        if let Err(error) = generation::poll_refresh(&self.jxr_generation, &mut state) {
+            self.export_jxr_error(error);
+            return;
+        }
         if let Err(error) = self.prepare_jxr_state(&mut state) {
             self.export_jxr_error(error);
             return;
@@ -310,14 +341,29 @@ impl App {
         if let Some(result) = state.pending.as_ref().and_then(|pending| pending.poll()) {
             state.pending = None;
             match result {
-                Ok(prepared) => state.prepared = Some(prepared),
+                Ok(prepared) => {
+                    let validation = state.ticket.ok_or_else(stale).and_then(|ticket| {
+                        generation::require(&self.jxr_generation, ticket)?;
+                        if prepared.encoded.installation() != ticket.observation().identity()? {
+                            return Err(stale());
+                        }
+                        Ok(())
+                    });
+                    if let Err(error) = validation {
+                        self.export_jxr_error(error);
+                        return;
+                    }
+                    state.prepared = Some(prepared);
+                    state.adopted = true;
+                }
                 Err(error) => {
                     self.export_jxr_error(error);
                     return;
                 }
             }
         }
-        if let Some(prepared) = &mut state.prepared
+        if state.adopted
+            && let Some(prepared) = &mut state.prepared
             && let Some(image) = prepared.preview.take()
         {
             state.texture =
@@ -557,6 +603,11 @@ impl App {
             }
             let capture = state.capture.as_ref().ok_or_else(stale)?;
             let prepared = state.prepared.as_ref().ok_or_else(stale)?;
+            if !state.adopted || state.refresh.is_some() {
+                return Err(stale());
+            }
+            let ticket = state.ticket.ok_or_else(stale)?;
+            generation::require(&self.jxr_generation, ticket)?;
             let (path, expected) = state.destination.as_ref().ok_or_else(stale)?;
             let check = || {
                 if matches!(state.filter_bake, export::filter_bake::Policy::Bake(_))
@@ -593,6 +644,8 @@ impl App {
                     })
                 },
                 |_| {
+                    // Same existing staging/publication boundary: no postcommit check.
+                    generation::reobserve(&self.jxr_generation, ticket, &check)?;
                     prepared
                         .encoded
                         .check_current(&check, &|| Ok(self.editor.native_import_owner()))
