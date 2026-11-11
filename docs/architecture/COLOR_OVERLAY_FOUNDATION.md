@@ -1,8 +1,8 @@
 # Color Overlay numerical foundation
 
 Color Overlay has a typed numerical policy, ordered document intentions, typed
-commands and history preservation. Rendering, project persistence and frontend
-integration are in progress. Existing worker profiles provide no style transport;
+commands, atomic editing, history preservation and native project persistence.
+Rendering and frontend integration are in progress. Existing worker profiles provide no style transport;
 the numerical policy remains separate from the filter catalog.
 
 ## Exact policy
@@ -103,14 +103,55 @@ Existing command profiles remain closed. History preserves ordered intentions
 through cold compression, spill, Undo and Redo while retaining source pixels.
 The current Core, Document, Commands and History library suites pass 110, 58, 45
 and 66 tests respectively; all-target strict lint and strict documentation checks
-also pass. These model checks do not qualify the pending editor, project or
-rendering consumers. Receipts are under
+also pass. These model checks do not qualify rendering or frontend consumers.
+Receipts are under
 `docs/validation/color-overlay-product-model/root-leaf-validation/`.
 
-Integration still needs atomic editor adoption, conditional project
-persistence, priced rendering, cache invalidation and frontend
+Atomic editor transactions now preserve scoped aliases, exact NoOps, cancellation,
+stale-request rejection and single-step Undo/Redo. Styled source copies retain
+their admission through staging, including owned paste previews. Clear Canvas
+removes stored styles even when the unprocessed background already matches its
+requested color. The complete Editor/Tools suites pass 382 tests without ignored
+cases; their new style integration group contains six tests. The resource-control
+layout and cancellation-phase expectations were updated from the added fields
+and callback trace, retaining the original limits.
+
+Native PCND persistence selects version 9 only for nonempty style intentions,
+including disabled and zero-opacity entries. It retains the complete version 8
+grammar and requires `layer-styles.v1`. After each layer's own mask and before
+its tile records, it stores a big-endian 16-bit style count and ordered 23-byte
+records: UUID, enabled flag, closed style tag and five semantic parameter bytes.
+Unknown tags, modes, nil/duplicate IDs and excessive counts refuse. Empty stacks
+preserve the previous minimum versions and exact legacy specimens. Save preflight
+includes all forced version 9 framing and style bytes. Retained vector payload
+must fit its wire contribution, so the aggregate metadata bound also dominates
+stored style payloads on supported target layouts.
+
+The full Formats suite passes 1,056 tests with 28 existing ignored cases, including
+three independently authored PCND9 specimens and exact/one-byte-over save limits.
+Native all-target strict lint, formatting and source-length checks pass. Receipts
+are under `docs/validation/color-overlay-product-model/root-expanded-checkpoint-1/`
+and `docs/validation/color-overlay-product-engine/codec/root-full-formats-attempt-2/`.
+This is native library qualification, not actual Wasm project decoding or app UI
+acceptance. Existing layered foreign writers refuse styles; an approved appearance
+copy still needs its compound export integration.
+
+Browser host adoption and tool-preview guards explicitly refuse stored styles;
+the old Source7/8 routes do not gain style support. The paid Source8 root walk
+rejects nonempty intentions before source encoding, including disabled and
+zero-opacity entries. Its single-layer shortcut requires an empty style stack.
+The containing empty `Layer` now measures 408 bytes natively and 344 in Wasm.
+Source8 named assembly controls are 2,976/2,524 bytes within the unchanged
+4,096-byte slot; fresh map payload and work use the larger target stride. The
+64 MiB metadata and 268,435,456 work ceilings are unchanged. Native Main and
+Worker suites pass, as do native all-target and Main/both-Worker Wasm strict
+lint. These are host/compilation checks; actual rebuilt Wasm service execution
+and browser artifact qualification remain separate. Layout and strict-check
+receipts are under `docs/validation/color-overlay-root-web/`.
+
+Integration still needs priced rendering, cache invalidation and frontend
 adoption. The intended first stage is complete filters, enabled Color Overlays
 in order, own mask, layer opacity, then layer blending; exterior style families
-need separate stage rules. Existing project and worker profiles grant no style
+need separate stage rules. Existing worker profiles grant no style
 support. The current integration evidence is recorded in
 [LAYER_BLEND_FOUNDATION.md](LAYER_BLEND_FOUNDATION.md#additional-portable-foundations).
