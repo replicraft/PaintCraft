@@ -1,5 +1,6 @@
 //! Captured own-mask intent uses the existing atomic browser transaction.
-//! No A8 field is copied or inverted in the UI, and no new pool is introduced.
+//! Normal/Multiply/Screen own masks use the same transaction; Studio display
+//! owns Source7/8 selection. No A8 field is copied or inverted in the UI.
 use super::*;
 use paintcraft_commands::{LayerMaskOp, LayerRef};
 use paintcraft_tools::LayerMaskEdit;
@@ -16,7 +17,6 @@ impl Editor {
     pub(crate) fn layer_mask_available(&self) -> bool {
         self.target
             .is_some_and(|id| self.session.document().layer(&id).is_some())
-            && self.session.document().require_normal_blends().is_ok()
             && !self.layer_mask_private_input()
     }
     fn layer_mask_private_input(&self) -> bool {
@@ -28,12 +28,6 @@ impl Editor {
             || self.pen_base.is_some()
     }
     pub(crate) fn layer_mask_operation(&self, edit: &LayerMaskEdit) -> Result<Value> {
-        if self.session.document().require_normal_blends().is_err() {
-            return Err(Error::new(
-                ErrorCode::CapabilityUnsupported,
-                "Layer masks with layer blends are not available in the browser yet",
-            ));
-        }
         let ticket = self.session.ticket();
         if !edit.matches_base(
             self.session.owner_id(),

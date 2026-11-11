@@ -437,3 +437,78 @@ fn actual_studio_pcnd8_install_reaches_paid_counted_snapshot_with_default_main_m
     drop(factory);
     assert_eq!(releases.get(), 1);
 }
+
+#[test]
+fn committed_own_mask_invalidates_real_current_stamp_and_undo_does_not_aba() {
+    use paintcraft_commands::{LayerMaskOp, LayerRef};
+    use paintcraft_core::types::json::Value;
+    for mode in [LayerBlendMode::Multiply, LayerBlendMode::Screen] {
+        let ctx = eframe::egui::Context::default();
+        let mut app = crate::app::WebApp::new(&ctx);
+        app.frontend = paintcraft_ui::actions::Frontend::Studio;
+        let mut document = paintcraft_document::new_document(
+            2,
+            1,
+            Some(paintcraft_core::types::Rgba([20, 60, 100, 128])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        let target = document.roots[0];
+        document.layers.get_mut(&target).unwrap().blend_mode = mode;
+        app.editor = crate::editor::Editor::from_source8_document(document).unwrap();
+        app.editor
+            .commit(vec![Value::object([
+                ("op", Value::str("selection.set_rect")),
+                (
+                    "rect",
+                    Value::object([
+                        ("x", Value::Int(1)),
+                        ("y", Value::Int(0)),
+                        ("width", Value::Int(1)),
+                        ("height", Value::Int(1)),
+                    ]),
+                ),
+            ])])
+            .unwrap();
+        let original = capture::Key8::capture(&app).unwrap().identity;
+        assert!(capture::CurrentStamp8::read(&app).matches(&original));
+        let edit = app.editor.layer_mask_capture(LayerMaskOp::FromSelection {
+            layer: LayerRef::Id(target),
+            enabled: true,
+        });
+        app.apply_own_layer_mask(&ctx, edit);
+        // The defining post-UI stamp, not an async borrowed App or a fake callback,
+        // rejects the old immutable source even while that source is retained.
+        assert!(!capture::CurrentStamp8::read(&app).matches(&original));
+        assert!(!original.current(&app));
+        assert!(original.document.layers[&target].mask.is_none());
+        let selected = capture::Key8::capture(&app).unwrap().identity;
+        assert_eq!(selected.owner, original.owner);
+        assert_ne!(selected.ticket, original.ticket);
+        assert!(!Arc::ptr_eq(&selected.document, &original.document));
+        assert!(capture::CurrentStamp8::read(&app).matches(&selected));
+        let repeat = app.editor.layer_mask_capture(LayerMaskOp::FromSelection {
+            layer: LayerRef::Id(target),
+            enabled: true,
+        });
+        app.apply_own_layer_mask(&ctx, repeat);
+        assert!(capture::CurrentStamp8::read(&app).matches(&selected));
+        app.editor.apply(paintcraft_tools::Action::Undo).unwrap();
+        assert_eq!(
+            app.editor.session.document().state_id,
+            original.document.state_id
+        );
+        assert!(!capture::CurrentStamp8::read(&app).matches(&original));
+        app.editor.apply(paintcraft_tools::Action::Redo).unwrap();
+        assert_eq!(
+            app.editor.session.document().state_id,
+            selected.document.state_id
+        );
+        assert!(!capture::CurrentStamp8::read(&app).matches(&selected));
+        assert!(
+            capture::CurrentStamp8::read(&app)
+                .matches(&capture::Key8::capture(&app).unwrap().identity)
+        );
+    }
+}

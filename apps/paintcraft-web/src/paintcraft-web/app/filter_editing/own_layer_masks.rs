@@ -1,4 +1,5 @@
-//! Own-mask actions publish on Main, then reopen ordinary Source7 snapshots.
+//! Own-mask actions publish on Main; normal redisplay selects Source7/Key7,
+//! stored blends stay on the committed Source8 lane after old-source retirement.
 //! They never enter the numeric filter-preview operation protocol.
 use super::*;
 use paintcraft_core::types::ErrorCode;

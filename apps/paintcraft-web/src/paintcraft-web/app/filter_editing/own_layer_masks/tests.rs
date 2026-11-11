@@ -129,3 +129,71 @@ fn own_mask_statuses_and_errors_are_localized_in_every_configured_language() {
         }
     }
 }
+
+#[test]
+fn all_modes_publish_mask_clear_legacy_cache_and_preserve_legacy_normal_guard() {
+    use paintcraft_core::types::LayerBlendMode;
+    for mode in [
+        LayerBlendMode::Normal,
+        LayerBlendMode::Multiply,
+        LayerBlendMode::Screen,
+    ] {
+        let (ctx, mut app) = setup();
+        let mut document = (*app.editor.session.snapshot()).clone();
+        document
+            .layers
+            .get_mut(&document.roots[0])
+            .unwrap()
+            .blend_mode = mode;
+        app.editor = Editor::from_source8_document(document).unwrap();
+        app.editor
+            .commit(vec![Value::object([
+                ("op", Value::str("selection.set_rect")),
+                (
+                    "rect",
+                    Value::object([
+                        ("x", Value::Int(1)),
+                        ("y", Value::Int(0)),
+                        ("width", Value::Int(2)),
+                        ("height", Value::Int(1)),
+                    ]),
+                ),
+            ])])
+            .unwrap();
+        // Only legacy cache invalidation is native here; the actual Source8
+        // callback/retirement lifecycle remains a required browser gate.
+        let source = app.filter_capture();
+        app.filter_display.source = Some(source.clone());
+        app.filter_display.committed = Some(source);
+        let before = app.editor.session.snapshot();
+        let ticket = app.editor.session.ticket();
+        app.apply_own_layer_mask(&ctx, capture(&app));
+        let masked = app.editor.session.snapshot();
+        assert!(!Arc::ptr_eq(&before, &masked));
+        assert_ne!(app.editor.session.ticket(), ticket);
+        assert_eq!(masked.layers[&masked.roots[0]].blend_mode, mode);
+        assert!(masked.layers[&masked.roots[0]].mask.is_some());
+        assert!(app.filter_display.source.is_none());
+        assert!(app.filter_display.committed.is_none());
+        assert!(app.canvas.filter_footprint.is_none());
+        if mode == LayerBlendMode::Normal {
+            let key = channel::SourceKey::new(app.filter_capture(), None, None).unwrap();
+            assert!(matches!(key, channel::SourceKey::Appearance(_)));
+            assert_eq!(snapshot::encode(&masked, &|| Ok(())).unwrap()[4], 7);
+        } else {
+            assert_eq!(
+                snapshot::encode(&masked, &|| Ok(())).unwrap_err().code,
+                ErrorCode::CapabilityUnsupported
+            );
+            assert_eq!(
+                paintcraft_formats::pcnd::write_compact(&masked).unwrap()[4],
+                8
+            );
+        }
+        let ticket = app.editor.session.ticket();
+        app.apply_own_layer_mask(&ctx, capture(&app));
+        assert!(Arc::ptr_eq(&masked, &app.editor.session.snapshot()));
+        assert_eq!(app.editor.session.ticket(), ticket);
+        assert_eq!(app.message, t!(&ctx, "Layer mask unchanged"));
+    }
+}
