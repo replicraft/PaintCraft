@@ -10,8 +10,14 @@ pub(super) fn op(
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if matches!(name, "canvas.rotate" | "raster.rotate_selection") {
+        if version != 11 {
+            return Err(bad("rotation requires paintcraft.batch/rotation-v1"));
+        }
+        return super::rotation::parse(v);
+    }
     if name.starts_with("layer.style.") {
-        if version != 10 {
+        if !matches!(version, 10 | 11) {
             return Err(bad("layer styles require paintcraft.batch/layer-styles-v1"));
         }
         return super::styles::parse(v);
