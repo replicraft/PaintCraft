@@ -177,6 +177,27 @@ Normal, Multiply and Screen; this browser fixture covers Multiply. Screenshots
 are retained for review, without an automatic semitransparent canvas-pixel check.
 Optional `BLEND_MASK_COORDINATES` supports bounded layout calibration.
 
+### Filter-mask regressions
+
+```sh
+CODEC_EVIDENCE_DIR=../../docs/validation/filter-mask-local pnpm run test:studio-filter-mask-source7-browser
+CODEC_EVIDENCE_DIR=../../docs/validation/filter-mask-local pnpm run test:studio-filter-mask-source8-browser
+```
+
+Each five-group check uses the actual filter-row menu to capture a selection,
+repeat a no-op, disable/re-enable and remove the filter mask, then Undo/Redo.
+Independent PCND7/8 readers check source state, filter IDs, raw layers and every
+RGBA byte. The Normal scene also keeps a separate layer mask unchanged; the
+Multiply scene checks joined Source8 Worker handoffs. These checks cover the
+immediate metadata edits. They do not qualify private numeric filter dialogs on
+blended documents, mask painting or physical resource bounds.
+
+Both run in CI and retain screenshots, traces and downloaded copies. Their menu
+defaults are calibrated for the same English viewport. Optional bounded
+`FILTER_MASK_COORDINATES` or `SOURCE8_FILTER_MASK_COORDINATES` overrides support
+layout investigation; explicit zero menu placeholders are rejected. The earlier
+`studio-filter-mask-browser.mjs` export/reopen check remains separate.
+
 A 2026-10-23 local review built the optimized bundle and exercised startup,
 settings and dark-to-light switching in isolated headless Brave. The screenshots,
 commands and scope limits are recorded in [the validation evidence](../../docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json).

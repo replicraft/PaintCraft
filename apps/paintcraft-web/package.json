@@ -19,7 +19,9 @@
 		"test:codec-worker-browser": "node scripts/codec-worker-browser.mjs",
 		"test:main-blend-browser": "node scripts/main-blend-browser.mjs",
 		"test:studio-layer-mask-browser": "node scripts/studio-layer-mask-browser.mjs",
-		"test:studio-blend-mask-browser": "node scripts/studio-blend-mask-browser.mjs"
+		"test:studio-blend-mask-browser": "node scripts/studio-blend-mask-browser.mjs",
+		"test:studio-filter-mask-source7-browser": "node scripts/studio-filter-mask-source7-browser.mjs",
+		"test:studio-filter-mask-source8-browser": "node scripts/studio-filter-mask-source8-browser.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.6.2",

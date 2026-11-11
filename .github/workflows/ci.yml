@@ -147,6 +147,24 @@ jobs:
         working-directory: apps/paintcraft-web
         env:
           CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/studio-blend-mask-ci
+      - name: Check Studio filter masks on Normal layers
+        run: pnpm run test:studio-filter-mask-source7-browser
+        working-directory: apps/paintcraft-web
+        env:
+          CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/studio-filter-mask-source7-ci
+      - name: Check Studio filter masks through Source8
+        run: pnpm run test:studio-filter-mask-source8-browser
+        working-directory: apps/paintcraft-web
+        env:
+          CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/studio-filter-mask-source8-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-filter-mask-browser-evidence
+          path: |
+            docs/validation/studio-filter-mask-source7-ci/
+            docs/validation/studio-filter-mask-source8-ci/
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
         with:
