@@ -138,6 +138,17 @@ jobs:
         working-directory: apps/paintcraft-web
         env:
           CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/main-blend-ci
+      - name: Check Studio layer mask controls and filter publication
+        run: pnpm run test:studio-layer-mask-browser
+        working-directory: apps/paintcraft-web
+        env:
+          CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/studio-layer-mask-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-layer-mask-browser-evidence
+          path: docs/validation/studio-layer-mask-ci/
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
         with:

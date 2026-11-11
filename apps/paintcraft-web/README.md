@@ -138,6 +138,28 @@ It uses an English 1360 × 1000 page at device scale 1. An explicit
 `MAIN_BLEND_COORDINATES` provides bounded JSON coordinate overrides when inspecting
 a changed layout. Neither override is required for the checked-in layout.
 
+### Studio layer-mask regression
+
+With the same production build and Chrome installation, run:
+
+```sh
+CODEC_EVIDENCE_DIR=../../docs/validation/studio-layer-mask-local pnpm run test:studio-layer-mask-browser
+```
+
+Six groups exercise the actual Normal-layer mask controls: rectangular selection,
+mask creation, repeated no-op, inversion, disabling, removal and Undo/Redo. A real
+Invert filter preview is cancelled and then applied while the mask is present.
+The test independently checks saved project semantics, all eight fixture pixels,
+Source7 frame/source hashes, and the displayed texture reused by Apply. Saved
+copies remain dirty after actual edits. CI uploads screenshots, project copies
+and traces on failure as well as success.
+
+This covers one finite 4 × 2 default-only Normal scene. It does not qualify mask
+painting, filter-mask controls, NonNormal mask editing, all project formats or
+physical resource bounds. Optional `LAYER_MASK_COORDINATES` supplies bounded JSON
+coordinate overrides for layout investigation; the checked-in defaults use the
+same English viewport as the blend regression.
+
 A 2026-10-23 local review built the optimized bundle and exercised startup,
 settings and dark-to-light switching in isolated headless Brave. The screenshots,
 commands and scope limits are recorded in [the validation evidence](../../docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json).
