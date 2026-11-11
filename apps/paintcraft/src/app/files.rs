@@ -268,6 +268,9 @@ impl App {
     }
 
     pub(super) fn install(&mut self, editor: Editor) -> paintcraft_core::types::Result<()> {
+        if self.experience() != Experience::Studio {
+            editor.document().require_no_styles()?;
+        }
         // Native rendering adopts typed PCND8 under the existing job workspace.
         // Browser/foreign/clipboard appearance boundaries remain independently closed.
         if self.experience() == Experience::Studio || self.tabs.is_empty() {

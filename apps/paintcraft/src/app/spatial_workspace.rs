@@ -22,7 +22,8 @@ pub(crate) fn needed(doc: &Document) -> bool {
     doc.layers.values().any(needed_layer)
 }
 pub(crate) fn needed_layer(layer: &paintcraft_document::Layer) -> bool {
-    layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal
+    !layer.styles.is_empty()
+        || layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal
         || layer.mask.as_ref().is_some_and(|mask| mask.enabled())
         || layer
             .filters

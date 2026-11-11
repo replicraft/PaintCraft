@@ -28,11 +28,19 @@ impl JobPolicy {
     ) -> Self {
         if stored(doc) || prospective.is_some_and(|d| matches!(d, Descriptor::AddNoiseRgbV1(_))) {
             Self::Noise
-        } else if required {
+        } else if required || doc.has_styles() {
             Self::Legacy
         } else {
             Self::None
         }
+    }
+    pub(crate) fn capture_with_style(
+        doc: &Document,
+        prospective: Option<&Descriptor>,
+        required: bool,
+        prospective_style: bool,
+    ) -> Self {
+        Self::capture(doc, prospective, required || prospective_style)
     }
     pub(crate) fn run<T>(self, work: impl FnOnce() -> Result<T>) -> Result<T> {
         match self {

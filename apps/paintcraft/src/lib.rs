@@ -115,6 +115,8 @@ mod spatial_workspace;
 mod status;
 #[path = "app/studio_canvas.rs"]
 mod studio_canvas;
+#[path = "app/style_editing.rs"]
+mod style_editing;
 #[path = "app/switching.rs"]
 mod switching;
 #[cfg(target_os = "macos")]
@@ -217,6 +219,7 @@ enum Confirm {
     Brushes,
     LayerProperties(layers::PropertiesDraft),
     FilterParameters,
+    StyleParameters,
     LayerMask,
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -235,7 +238,7 @@ enum Confirm {
         jpeg_matte: Option<paintcraft_formats::image::JpegMatte>,
         pcx_encoding: paintcraft_ui::pcx_export::Encoding,
         source: controller::PreviewStamp,
-        frozen: export_options::Frozen,
+        frozen: Box<export_options::Frozen>,
         metadata_policy: export::metadata_policy::Policy,
         exists: bool,
     },
@@ -287,6 +290,7 @@ pub struct App {
     retro_pan: paintcraft_tools::navigation::PanGesture<egui::Id>,
     retro_space: bool,
     filter_editing: Option<filter_editing::State>,
+    style_editing: Option<style_editing::State>,
     layer_mask_editing: Option<layer_mask_editing::State>,
     parked_workspaces: workspaces::Parked<Experience, Box<tabs::WorkspaceDocuments>>,
     switching: Option<switching::Switch>,
@@ -450,6 +454,7 @@ impl App {
             retro_pan: Default::default(),
             retro_space: false,
             filter_editing: None,
+            style_editing: None,
             layer_mask_editing: None,
             parked_workspaces: Default::default(),
             switching: None,

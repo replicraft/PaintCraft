@@ -207,6 +207,7 @@ fn box_msp_host_worker_uses_the_same_explicit_workspace_and_parent_charge() {
     let version = Version::RowRleV2;
     let target = export::metadata_policy::Target::new(Family::Msp, Operation::ExportFlat);
     let policies = export::CopyPolicies {
+        appearance_bake: export::appearance_bake::Policy::Refuse,
         source_metadata: Default::default(),
         filter_bake: export::filter_bake::Policy::capture(
             &source,

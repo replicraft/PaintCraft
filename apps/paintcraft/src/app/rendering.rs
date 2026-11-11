@@ -131,6 +131,7 @@ impl App {
             matches!(
                 p.as_ref(),
                 Preview::Filter(_)
+                    | Preview::Style(_)
                     | Preview::SampledStroke(_)
                     | Preview::PenStroke(_)
                     | Preview::ResourceShape(_)
@@ -244,10 +245,11 @@ impl App {
             let selection = self.editor.selection();
             let spatial =
                 spatial_workspace::needed(&doc) || preparation.requires_spatial_workspace();
-            let job_policy = spatial_workspace::JobPolicy::capture(
+            let job_policy = spatial_workspace::JobPolicy::capture_with_style(
                 &doc,
                 preparation.prospective_filter_descriptor(),
                 spatial,
+                preparation.prospective_style(),
             );
             let tiles = doc
                 .layers
@@ -289,13 +291,12 @@ impl App {
                         let batch = preparation.build(|| cancel.check())?;
                         let is_preview = image.is_some() || batch.is_some();
                         let staged;
-                        let doc = if let Some(image) = image {
+                        let doc = if let Some(image) = image.as_ref() {
                             cpu.clear_geometry();
-                            staged = image;
-                            &staged
+                            image.document()
                         } else if let Some(batch) = batch {
-                            staged = cpu.stage(&doc, selection, &batch, &|| cancel.check())?.doc;
-                            &staged
+                            staged = cpu.stage(&doc, selection, &batch, &|| cancel.check())?;
+                            &staged.doc
                         } else {
                             cpu.clear_geometry();
                             doc.as_ref()
@@ -392,7 +393,8 @@ impl App {
         }
         let mut preparation = self.editor.capture_preview(self.rendered_preview.clone());
         let spatial = spatial_workspace::needed(self.editor.document())
-            || preparation.requires_spatial_workspace();
+            || preparation.requires_spatial_workspace()
+            || preparation.prospective_style();
         let pixels = spatial_workspace::with_job(spatial, || {
             spatial_workspace::refuse_noise(self.editor.document())?;
             if preparation
@@ -411,9 +413,13 @@ impl App {
             }
             if let Some(image) = preparation.build_paste(&|| Ok(()))? {
                 self.cpu_renderer.clear_geometry();
-                return self
-                    .cpu_renderer
-                    .render_display(&image, key.3, key.4, true, || Ok(()));
+                return self.cpu_renderer.render_display(
+                    image.document(),
+                    key.3,
+                    key.4,
+                    true,
+                    || Ok(()),
+                );
             }
             match preparation.build(|| Ok(()))? {
                 Some(batch) => self

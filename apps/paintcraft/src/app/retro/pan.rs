@@ -18,7 +18,7 @@ impl App {
     pub(crate) fn validate_retro_pan(&mut self, ui: &egui::Ui, viewport: Rect) -> Option<egui::Id> {
         let enabled = self.experience() == Experience::Retro
             && ui.is_enabled()
-            && (!self.action_context().blocked || self.filter_navigation_ready())
+            && (!self.action_context().blocked || self.parameter_navigation_ready())
             && !egui::Popup::is_any_open(ui.ctx())
             && ui.input(|input| input.focused);
         let scope = egui::Id::unique((

@@ -154,7 +154,7 @@ fn background_export_preserves_bake_refusal_then_plans_and_writes_exact_png() {
         format,
         &losses,
         Settings::default(),
-        frozen,
+        *frozen,
         metadata_policy,
     );
     drain(&mut a);

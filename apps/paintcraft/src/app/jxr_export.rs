@@ -276,6 +276,7 @@ impl App {
             &|| Ok(()),
         )?;
         let policies = export::CopyPolicies {
+            appearance_bake: export::appearance_bake::Policy::Refuse,
             source_metadata: policy,
             filter_bake: state.filter_bake,
         };

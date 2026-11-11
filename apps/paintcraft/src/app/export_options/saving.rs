@@ -94,6 +94,7 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
+        options.appearance_bake = frozen.appearance_bake;
         if spatial_workspace::JobPolicy::capture(&frozen.document, None, false)
             == spatial_workspace::JobPolicy::Noise
             && !matches!(format, ImageFormat::Dds | ImageFormat::Msp)
@@ -122,7 +123,7 @@ impl App {
                     jpeg_matte: settings.jpeg_matte,
                     pcx_encoding: settings.pcx_encoding,
                     source: self.editor.preview_stamp(),
-                    frozen,
+                    frozen: Box::new(frozen),
                     metadata_policy: policy,
                 })
             }
@@ -205,6 +206,7 @@ impl App {
         let mut options = settings.options(format);
         options.source_metadata = policy;
         options.filter_bake = frozen.filter_bake;
+        options.appearance_bake = frozen.appearance_bake;
         if spatial_workspace::JobPolicy::capture(&frozen.document, None, false)
             == spatial_workspace::JobPolicy::Noise
             && !matches!(format, ImageFormat::Dds | ImageFormat::Msp)

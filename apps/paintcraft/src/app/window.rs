@@ -46,7 +46,8 @@ impl App {
             }
             self.poll_edits(&ctx);
             self.pump_filter_edit(&ctx);
-            if self.filter_navigation_ready() {
+            self.pump_style_edit(&ctx);
+            if self.parameter_navigation_ready() {
                 self.handle_canvas_wheel(ui);
             }
             self.poll_jxr_export(&ctx);
@@ -92,7 +93,7 @@ impl App {
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
         {
             ctx.request_repaint_after(Duration::from_millis(50));
-            if !self.filter_navigation_ready() {
+            if !self.parameter_navigation_ready() {
                 ui.disable();
             }
         }
@@ -104,7 +105,7 @@ impl App {
             toolbar
         };
         toolbar.show(ui, |ui| {
-            ui.add_enabled_ui(!self.filter_navigation_ready(), |ui| self.toolbar(ui));
+            ui.add_enabled_ui(!self.parameter_navigation_ready(), |ui| self.toolbar(ui));
         });
         if self.experience() == Experience::Studio || self.document_count() > 1 {
             egui::Panel::top("documents").show(ui, |ui| {
@@ -186,7 +187,7 @@ impl App {
                 if self.document_count() > 0 {
                     self.canvas(
                         ui,
-                        (accept_input || (first_pass && self.filter_navigation_ready()))
+                        (accept_input || (first_pass && self.parameter_navigation_ready()))
                             && self.tab_closing.is_none(),
                     );
                 } else {

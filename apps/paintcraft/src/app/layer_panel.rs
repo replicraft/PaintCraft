@@ -99,6 +99,7 @@ impl App {
                 self.layer_controls(ui);
                 self.studio_layer_mask_panel(ui);
                 self.studio_filter_panel(ui);
+                self.studio_style_panel(ui);
             }
         });
     }

@@ -157,6 +157,7 @@ impl App {
 
     pub(super) fn resolve_tab_input(&mut self, ctx: &egui::Context) {
         self.cancel_filter_edit();
+        self.cancel_style_edit();
         self.editor.cancel_next_text_pointer();
         self.editor.cancel_gesture();
         self.editor.commit_text();

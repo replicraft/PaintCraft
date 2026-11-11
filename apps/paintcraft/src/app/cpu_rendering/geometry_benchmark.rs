@@ -206,6 +206,7 @@ pub(crate) fn fixture_for_base(base: &str) -> Editor {
                 opacity: 173,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: Default::default(),
                 raster,
             },
         );

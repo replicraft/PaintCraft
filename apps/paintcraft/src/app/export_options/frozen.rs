@@ -4,6 +4,9 @@ use super::*;
 pub(crate) struct Frozen {
     pub document: std::sync::Arc<paintcraft_document::Document>,
     pub filter_bake: export::filter_bake::Policy,
+    pub appearance_bake: export::appearance_bake::Policy,
+    pub appearance_counts: [u64; 5],
+    pub has_styles: bool,
     pub has_filters: bool,
     owner: Uuid,
     source: controller::PreviewStamp,
@@ -25,13 +28,30 @@ impl PartialEq for Frozen {
             && self.source == other.source
             && self.frontend == other.frontend
             && self.filter_bake == other.filter_bake
+            && self.appearance_bake == other.appearance_bake
     }
 }
 impl Frozen {
     pub(crate) fn capture(app: &App) -> paintcraft_core::types::Result<Self> {
+        let document = app.editor.export_snapshot()?;
+        let appearance_counts = if document.has_styles() {
+            let i = export::appearance_bake::inspect(&document, &|| Ok(()))?;
+            [
+                i.style_count(),
+                i.filter_count(),
+                i.filter_mask_count(),
+                i.layer_mask_count(),
+                i.non_normal_layer_count(),
+            ]
+        } else {
+            [0; 5]
+        };
         Ok(Self {
-            document: app.editor.export_snapshot()?,
+            document,
+            appearance_counts,
             filter_bake: Default::default(),
+            appearance_bake: Default::default(),
+            has_styles: app.editor.document().has_styles(),
             has_filters: app
                 .editor
                 .document()

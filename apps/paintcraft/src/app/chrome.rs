@@ -363,8 +363,9 @@ impl App {
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
-        let enabled =
-            self.document_count() > 0 && !self.closing_workspace && !self.filter_navigation_ready();
+        let enabled = self.document_count() > 0
+            && !self.closing_workspace
+            && !self.parameter_navigation_ready();
         let state_id = egui::Id::unique(("document-controls", self.active_tab_id()));
         let actions = paintcraft_studio::floating_controls(
             ctx,
@@ -376,7 +377,7 @@ impl App {
         self.apply_chrome(ctx, controls, actions);
         let mut open = self.studio.layers;
         paintcraft_studio::layers_window(ctx, &mut open, self.studio.canvas_top, |ui| {
-            if self.closing_workspace || self.filter_navigation_ready() {
+            if self.closing_workspace || self.parameter_navigation_ready() {
                 ui.disable();
             }
             self.layer_panel(ui)
@@ -392,6 +393,10 @@ impl App {
         }
         if self.confirm == Some(Confirm::FilterParameters) {
             self.studio_filter_dialog(ui.ctx());
+            return;
+        }
+        if self.confirm == Some(Confirm::StyleParameters) {
+            self.studio_style_dialog(ui.ctx());
             return;
         }
         if self.confirm == Some(Confirm::Brushes) {
@@ -471,7 +476,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::LayerMask | Confirm::FilterParameters | Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::MspExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::LayerMask | Confirm::FilterParameters | Confirm::StyleParameters | Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::MspExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -561,6 +566,7 @@ impl App {
                 match confirm {
                     Confirm::LayerMask
                     | Confirm::FilterParameters
+                    | Confirm::StyleParameters
                     | Confirm::PasteLayer
                     | Confirm::ImportLosses
                     | Confirm::RecentFiles
@@ -620,7 +626,7 @@ impl App {
                                     pcx_encoding,
                                     source_metadata: Default::default(),
                                 },
-                                frozen,
+                                *frozen,
                                 metadata_policy,
                             )
                         } else {

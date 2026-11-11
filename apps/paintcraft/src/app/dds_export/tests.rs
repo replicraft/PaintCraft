@@ -680,6 +680,7 @@ fn box_dds_host_worker_has_workspace_and_retains_the_extra_parent_charge() {
     let settings = Settings::default();
     let target = export::metadata_policy::Target::new(Family::Dds, Operation::ExportFlat);
     let policies = export::CopyPolicies {
+        appearance_bake: export::appearance_bake::Policy::Refuse,
         source_metadata: Default::default(),
         filter_bake: export::filter_bake::Policy::capture(
             &source,

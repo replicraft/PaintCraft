@@ -175,6 +175,7 @@ impl State {
         );
         let work_intent = intent.clone();
         let filter_bake = frozen.filter_bake;
+        let appearance_bake = frozen.appearance_bake;
         let cancel = Arc::new(AtomicBool::new(false));
         let flag = cancel.clone();
         let (sender, receiver) = mpsc::channel();
@@ -204,6 +205,7 @@ impl State {
                             )?;
                             check()?;
                             Output::Flat(export::FlatExport {
+                                disclosure: None,
                                 bytes,
                                 losses: vec![],
                             })
@@ -240,6 +242,7 @@ impl State {
                             let mut options = settings.options(*format);
                             options.source_metadata = *policy;
                             options.filter_bake = filter_bake;
+                            options.appearance_bake = appearance_bake;
                             let all;
                             let losses = match &work_intent {
                                 Intent::Save { losses, .. } => losses.as_slice(),
@@ -438,7 +441,7 @@ impl App {
                                 jpeg_matte: settings.jpeg_matte,
                                 pcx_encoding: settings.pcx_encoding,
                                 source: self.editor.preview_stamp(),
-                                frozen: pending.frozen.clone(),
+                                frozen: Box::new(pending.frozen.clone()),
                                 metadata_policy: *policy,
                             });
                         }

@@ -66,6 +66,7 @@ pub(crate) struct Draft {
     frozen: Frozen,
     omit_source_metadata: bool,
     bake_filters: bool,
+    bake_appearance: bool,
     format: Choice,
     jpeg_quality: u8,
     jpeg_matte: [u8; 3],
@@ -88,7 +89,8 @@ impl App {
             .into_iter()
             .filter(|format| {
                 let path = PathBuf::from("picture").with_extension(format.extension());
-                format.available(self.action_context().frontend)
+                (!self.editor.document().has_styles() || *format == ImageExport::Png)
+                    && format.available(self.action_context().frontend)
                     && ImageFormat::from_extension(&path)
                         .is_some_and(|codec| self.admit_export_format(&path, codec).is_ok())
             })
@@ -100,7 +102,9 @@ impl App {
             .into_iter()
             .map(Choice::Flat)
             .collect();
-        if crate::jxr_export::admit(self.format_frontend(), Path::new("picture.jxr")).is_ok() {
+        if !self.editor.document().has_styles()
+            && crate::jxr_export::admit(self.format_frontend(), Path::new("picture.jxr")).is_ok()
+        {
             choices.push(Choice::Jxr);
         }
         choices
@@ -139,6 +143,7 @@ impl App {
             frozen,
             omit_source_metadata: false,
             bake_filters: false,
+            bake_appearance: false,
             format: Choice::Flat(format),
             jpeg_quality: 90,
             jpeg_matte: [255; 3],
@@ -255,7 +260,14 @@ impl App {
                 );
                 preview_ready &= draft.omit_source_metadata;
             }
-            if !separate_review && draft.frozen.has_filters {
+            if draft.frozen.has_styles {
+                for (label, count) in ["Layer styles", "Filters", "Filter masks", "Layer mask", "Layer blend mode"].into_iter().zip(draft.frozen.appearance_counts) {
+                    if count != 0 { ui.label(format!("{}: {count}", t!(ctx, label))); }
+                }
+                ui.checkbox(&mut draft.bake_appearance, t!(ctx, "Bake editable layer appearance into this PNG copy"));
+                ui.label(t!(ctx, "This PNG copy keeps rendered pixels but loses editable styles, filters, filter masks, layer masks and layer blend settings. Save a PaintCraft project to keep them."));
+                preview_ready &= draft.bake_appearance && draft.format == Choice::Flat(ImageExport::Png);
+            } else if !separate_review && draft.frozen.has_filters {
                 paintcraft_ui::filter_bake_export::controls(ui, &mut draft.bake_filters);
                 preview_ready &= draft.bake_filters;
             }
@@ -352,22 +364,41 @@ impl App {
                         .expect("registered flat family");
                 let target =
                     Target::new(family, paintcraft_formats::registry::Operation::ExportFlat);
-                draft.frozen.filter_bake = match export::filter_bake::Policy::capture(
-                    &draft.frozen.document,
-                    target,
-                    if draft.bake_filters {
-                        export::filter_bake::Intent::Bake
-                    } else {
-                        export::filter_bake::Intent::Refuse
-                    },
-                    &|| Ok(()),
-                ) {
-                    Ok(policy) => policy,
-                    Err(error) => {
-                        self.editor.set_status(format!("Cannot export: {error}"));
-                        return;
-                    }
-                };
+                if draft.frozen.has_styles {
+                    draft.frozen.appearance_bake = match export::appearance_bake::Policy::capture(
+                        &draft.frozen.document,
+                        target,
+                        if draft.bake_appearance {
+                            export::appearance_bake::Intent::Bake
+                        } else {
+                            export::appearance_bake::Intent::Refuse
+                        },
+                        &|| Ok(()),
+                    ) {
+                        Ok(policy) => policy,
+                        Err(error) => {
+                            self.editor.set_status(format!("Cannot export: {error}"));
+                            return;
+                        }
+                    };
+                } else {
+                    draft.frozen.filter_bake = match export::filter_bake::Policy::capture(
+                        &draft.frozen.document,
+                        target,
+                        if draft.bake_filters {
+                            export::filter_bake::Intent::Bake
+                        } else {
+                            export::filter_bake::Intent::Refuse
+                        },
+                        &|| Ok(()),
+                    ) {
+                        Ok(policy) => policy,
+                        Err(error) => {
+                            self.editor.set_status(format!("Cannot export: {error}"));
+                            return;
+                        }
+                    };
+                }
                 if self.dialogs.is_some() {
                     let suggested = self
                         .bound
@@ -602,3 +633,7 @@ mod advanced_metadata_tests;
 #[cfg(test)]
 #[path = "export_options/filter_bake_tests.rs"]
 mod filter_bake_tests;
+
+#[cfg(test)]
+#[path = "export_options/appearance_tests.rs"]
+mod appearance_tests;

@@ -97,6 +97,7 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
             opacity: 128,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: Default::default(),
             raster: RasterLayer::new(160, 160, Rgba([255, 0, 0, 128])),
         },
     );
@@ -113,6 +114,7 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
             opacity: 0,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: Default::default(),
             raster: RasterLayer::new(160, 160, Rgba([17, 33, 55, 0])),
         },
     );

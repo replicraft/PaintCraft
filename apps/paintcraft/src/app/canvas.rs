@@ -119,7 +119,7 @@ impl App {
         self.validate_studio_pan(ui, viewport);
         self.validate_retro_pan(ui, viewport);
         if first_pass {
-            let navigation_only = self.filter_navigation_ready();
+            let navigation_only = self.parameter_navigation_ready();
             #[cfg(target_os = "windows")]
             self.framework_force_validate(ui, view);
             let events = ui.input(|i| i.events.clone());
@@ -466,6 +466,7 @@ impl App {
             !matches!(
                 preview,
                 Preview::Filter(_)
+                    | Preview::Style(_)
                     | Preview::ResourceShape(_)
                     | Preview::SampledStroke(_)
                     | Preview::PenStroke(_)
@@ -479,6 +480,7 @@ impl App {
         match overlay.cloned() {
             Some(
                 Preview::Filter(_)
+                | Preview::Style(_)
                 | Preview::ResourceShape(_)
                 | Preview::SampledStroke(_)
                 | Preview::PenStroke(_)

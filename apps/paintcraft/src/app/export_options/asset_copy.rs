@@ -67,6 +67,7 @@ impl<C: Clone + PartialEq> AssetCopy<C> {
             &|| Ok(()),
         )?;
         let policy = export::CopyPolicies {
+            appearance_bake: export::appearance_bake::Policy::Refuse,
             source_metadata: policy,
             filter_bake,
         };
