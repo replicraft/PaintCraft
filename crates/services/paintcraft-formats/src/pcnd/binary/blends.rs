@@ -6,13 +6,13 @@ pub(super) fn write<W: Write>(
     mode: LayerBlendMode,
     out: &mut Output<W>,
 ) -> Result<()> {
-    if version == 8 {
+    if version >= 8 {
         out.bytes(&[mode as u8])?;
     }
     Ok(())
 }
 pub(super) fn read(version: u8, input: &mut Input<'_>) -> Result<LayerBlendMode> {
-    if version != 8 {
+    if version < 8 {
         return Ok(LayerBlendMode::Normal);
     }
     match input.byte()? {

@@ -11,6 +11,7 @@ use uuid::Uuid;
 pub const MAGIC: &[u8; 8] = b"PCND\x01\r\n\x1a";
 pub const SUPPORTED_FEATURES: [&str; 3] = ["raster.rgba8", "canvas.finite", "layers.flat"];
 pub const SOURCE_METADATA_FEATURE: &str = "source-metadata.v1";
+pub const LAYER_STYLES_FEATURE: &str = "layer-styles.v1";
 pub const LAYER_BLEND_MODES_FEATURE: &str = "layer-blend-modes.v1";
 pub const LAYER_RASTER_MASKS_FEATURE: &str = "layer-masks.v1";
 pub const LAYER_MASKS_FEATURE: &str = "layer-filter-masks.v1";
@@ -107,20 +108,23 @@ impl Header {
                 | (6, "paintcraft.document/v6")
                 | (7, "paintcraft.document/v7")
                 | (8, "paintcraft.document/v8")
+                | (9, "paintcraft.document/v9")
         ) {
             return Err(unsupported("unknown native document version"));
         }
         if self.required_features.iter().any(|feature| {
             !SUPPORTED_FEATURES.contains(&feature.as_str())
-                && !(matches!(self.container_version, 2..=8) && feature == SOURCE_METADATA_FEATURE)
-                && !(matches!(self.container_version, 3..=8) && feature == LAYER_FILTERS_FEATURE)
-                && !(matches!(self.container_version, 4..=8) && feature == LAYER_MASKS_FEATURE)
-                && !(matches!(self.container_version, 5..=8)
+                && !(matches!(self.container_version, 2..=9) && feature == SOURCE_METADATA_FEATURE)
+                && !(matches!(self.container_version, 3..=9) && feature == LAYER_FILTERS_FEATURE)
+                && !(matches!(self.container_version, 4..=9) && feature == LAYER_MASKS_FEATURE)
+                && !(matches!(self.container_version, 5..=9)
                     && feature == LAYER_SPATIAL_FILTERS_FEATURE)
-                && !(matches!(self.container_version, 6..=8) && feature == LAYER_CATALOG_FEATURE)
-                && !(matches!(self.container_version, 7 | 8)
+                && !(matches!(self.container_version, 6..=9) && feature == LAYER_CATALOG_FEATURE)
+                && !(matches!(self.container_version, 7..=9)
                     && feature == LAYER_RASTER_MASKS_FEATURE)
-                && !(self.container_version == 8 && feature == LAYER_BLEND_MODES_FEATURE)
+                && !(matches!(self.container_version, 8 | 9)
+                    && feature == LAYER_BLEND_MODES_FEATURE)
+                && !(self.container_version == 9 && feature == LAYER_STYLES_FEATURE)
         }) {
             return Err(unsupported("unknown native document required feature"));
         }
@@ -152,7 +156,7 @@ impl Header {
                 "PCND5 header omits required grammar capability",
             ));
         }
-        if matches!(self.container_version, 7 | 8)
+        if matches!(self.container_version, 7..=9)
             && SUPPORTED_FEATURES
                 .iter()
                 .copied()
@@ -173,13 +177,23 @@ impl Header {
                 "PCND7 header omits required grammar capability",
             ));
         }
-        if self.container_version == 8
+        if matches!(self.container_version, 8 | 9)
             && !self
                 .required_features
                 .iter()
                 .any(|f| f == LAYER_BLEND_MODES_FEATURE)
         {
             return Err(unsupported("PCND8 header omits layer blend capability"));
+        }
+        if self.container_version == 9
+            && !self
+                .required_features
+                .iter()
+                .any(|f| f == LAYER_STYLES_FEATURE)
+        {
+            return Err(unsupported(
+                "PCND9 header omits required layer style capability",
+            ));
         }
         Ok(())
     }
@@ -355,3 +369,6 @@ pub use binary::requirements::{
 };
 
 pub use binary::requirements::{DocumentIntentions8, IntentionReceipt8, LayerIntentions8};
+
+#[cfg(test)]
+mod style_tests;

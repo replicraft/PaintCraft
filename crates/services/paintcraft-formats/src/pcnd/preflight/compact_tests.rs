@@ -42,6 +42,7 @@ fn specimen(profile_bytes: usize, color: Option<Rgba>) -> (Document, SharedBudge
             opacity: 255,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             mask: None,
             raster,
         },

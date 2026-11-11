@@ -62,7 +62,7 @@ fn independent_target_controls_and_defining_source_layouts() {
     );
     assert_eq!(control_bytes().unwrap(), expected(1040, 936));
     assert_eq!(size_of::<Document>() as u64, expected(144, 104));
-    assert_eq!(size_of::<Layer>() as u64, expected(352, 304));
+    assert_eq!(size_of::<Layer>() as u64, expected(408, 344));
     assert_eq!(size_of::<FilterInstance>() as u64, expected(184, 176));
     assert_eq!(
         size_of::<PortableSource8Plan<'static>>() as u64,
@@ -200,7 +200,9 @@ fn retained_requests_separate_shadow_domains_and_inline_document() {
             .unwrap();
         let recipe = plan.retained_source_layout_checked().unwrap();
         let s = recipe.summary();
-        assert_eq!(s.m_struct(), m_struct, "{name}");
+        // Every listed scene has one root and a fresh four-bucket table.
+        // Only the containing Layer stride changed:56 native/40 Wasm.
+        assert_eq!(s.m_struct(), m_struct + expected(4 * 56, 4 * 40), "{name}");
         assert_eq!(s.m_tile(), tile);
         assert_eq!(s.m_cov(), cov);
         assert_eq!(s.m_icc(), icc);

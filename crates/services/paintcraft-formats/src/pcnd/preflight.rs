@@ -46,8 +46,9 @@ fn metadata_bound(
         return Ok(None);
     }
     super::coverage::validate_counts(doc, check)?;
+    let styled = doc.has_styles();
     let blends = doc.has_non_normal_blends();
-    let layer_masks = doc.has_layer_masks() || blends;
+    let layer_masks = doc.has_layer_masks() || blends || styled;
     let live_filters = layer_masks || doc.layers.values().any(|layer| !layer.filters.is_empty());
     let catalog_only = layer_masks || binary::has_catalog(doc);
     let masked = catalog_only
@@ -102,7 +103,7 @@ fn metadata_bound(
             + integer_bytes(layer.name.len() as u64)
             + layer.name.len() as u64
             + 2
-            + u64::from(blends)
+            + u64::from(blends || styled)
             + x
             + y
             + integer_bytes(u64::from(layer.raster.width()))
@@ -135,6 +136,13 @@ fn metadata_bound(
                 return Ok(None);
             };
             bytes = total;
+        }
+        if styled {
+            bytes = bytes
+                .checked_add(binary::style_metadata_bytes(&layer.styles)?)
+                .ok_or_else(|| {
+                    Error::new(ErrorCode::ResourceLimit, "PCND9 style metadata overflow")
+                })?;
         }
         if !inspect_coordinates {
             let record = 1
@@ -263,3 +271,7 @@ mod compact_tests;
 
 #[cfg(test)]
 mod coarse_tests;
+
+#[cfg(test)]
+#[path = "preflight/style_tests.rs"]
+mod style_tests;

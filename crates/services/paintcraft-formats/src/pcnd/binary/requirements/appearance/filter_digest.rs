@@ -91,6 +91,15 @@ pub(in crate::pcnd) fn validate_flat_shape_checked(
             .layers
             .get(&Uuid::from_bytes(index.id))
             .ok_or_else(invalid)?;
+        // This defining validator belongs to the existing Source7/8 appearance
+        // profile. The rooted lookup/check has already been paid by the caller;
+        // even disabled/opacity0 style intent requires a future transport.
+        if !layer.styles.is_empty() {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Layer styles require a style-aware appearance transport",
+            ));
+        }
         if layer.id.as_bytes() != &index.id
             || layer.origin.0.unsigned_abs() > COORD_ABS_MAX as u64
             || layer.origin.1.unsigned_abs() > COORD_ABS_MAX as u64

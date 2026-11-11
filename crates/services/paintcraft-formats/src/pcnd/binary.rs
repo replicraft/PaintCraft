@@ -4,8 +4,11 @@ use super::*;
 pub(super) mod admitted;
 use std::io::Write;
 mod blends;
+mod header;
+use header::header;
 pub(super) mod catalog;
 mod filters;
+mod styles;
 pub use blends::layer_blend_identity_checked;
 mod masks;
 pub(super) mod requirements;
@@ -78,7 +81,8 @@ fn write_encoded(
     let mut magic = *MAGIC;
     let blends = doc.has_non_normal_blends();
     let layer_masks = doc.has_layer_masks();
-    let extended = layer_masks || blends;
+    let styled = doc.has_styles();
+    let extended = layer_masks || blends || styled;
     let live_filters = extended || doc.layers.values().any(|layer| !layer.filters.is_empty());
     let masked = doc
         .layers
@@ -93,7 +97,9 @@ fn write_encoded(
     } else {
         None
     };
-    if blends {
+    if styled {
+        magic[4] = 9;
+    } else if blends {
         magic[4] = 8;
     } else if layer_masks {
         magic[4] = 7;
@@ -180,6 +186,9 @@ fn write_encoded(
         if extended {
             masks::write_layer(layer.mask.as_ref(), &mut output, &mask_check)?;
         }
+        if styled {
+            styles::write(&layer.styles, &mut output, check)?;
+        }
         // A terminator avoids a counting pass over decoded tiles. Each record is
         // bounded independently, allowing the sink to apply backpressure.
         for (bx, by, _, _, data) in layer.raster.blocks_iter() {
@@ -244,9 +253,9 @@ fn probe_verified(verified: &requirements::CheckedContainer<'_>) -> Result<Heade
     let bytes = verified.bytes();
     let body = verified.body();
     let mut result = header(bytes[4]);
-    if matches!(bytes[4], 3..=8) {
+    if matches!(bytes[4], 3..=9) {
         let mut input = Input::new(body);
-        if matches!(bytes[4], 7 | 8) {
+        if matches!(bytes[4], 7..=9) {
             catalog::Manifest::read_v7(&mut input, false, &|| Ok(()))?;
         } else if bytes[4] == 6 {
             catalog::Manifest::read(&mut input, false, &|| Ok(()))?;
@@ -270,49 +279,6 @@ fn probe_verified(verified: &requirements::CheckedContainer<'_>) -> Result<Heade
         }
     }
     Ok(result)
-}
-fn header(version: u8) -> Header {
-    let known = matches!(version, 1..=8);
-    Header {
-        container_version: i64::from(version),
-        document_schema: if known {
-            if version == 1 {
-                "paintcraft.document/v1"
-            } else if version == 2 {
-                "paintcraft.document/v2"
-            } else if version == 3 {
-                "paintcraft.document/v3"
-            } else if version == 4 {
-                "paintcraft.document/v4"
-            } else if version == 5 {
-                "paintcraft.document/v5"
-            } else if version == 6 {
-                "paintcraft.document/v6"
-            } else if version == 7 {
-                "paintcraft.document/v7"
-            } else {
-                "paintcraft.document/v8"
-            }
-        } else {
-            "unknown"
-        }
-        .into(),
-        required_features: if known {
-            SUPPORTED_FEATURES
-                .iter()
-                .map(|feature| (*feature).into())
-                .chain((version == 2).then_some(SOURCE_METADATA_FEATURE.to_owned()))
-                .chain((version >= 3).then_some(LAYER_FILTERS_FEATURE.to_owned()))
-                .chain((version >= 4).then_some(LAYER_MASKS_FEATURE.to_owned()))
-                .chain((version == 5).then_some(LAYER_SPATIAL_FILTERS_FEATURE.to_owned()))
-                .chain((version >= 6).then_some(LAYER_CATALOG_FEATURE.to_owned()))
-                .chain((version >= 7).then_some(LAYER_RASTER_MASKS_FEATURE.to_owned()))
-                .chain((version == 8).then_some(LAYER_BLEND_MODES_FEATURE.to_owned()))
-                .collect()
-        } else {
-            Vec::new()
-        },
-    }
 }
 
 pub(super) fn read(
@@ -392,11 +358,13 @@ fn read_verified_admitted(
 ) -> Result<Document> {
     let bytes = verified.bytes();
     let body = verified.body();
-    if !matches!(verified.version(), 1..=8) {
+    if !matches!(verified.version(), 1..=9) {
         return Err(unsupported("unknown native document version"));
     }
-    if matches!(bytes[4], 4..=8) && coverage.is_none() {
-        return Err(unsupported(if bytes[4] == 8 {
+    if matches!(bytes[4], 4..=9) && coverage.is_none() {
+        return Err(unsupported(if bytes[4] == 9 {
+            "PCND9 requires explicit shared coverage admission"
+        } else if bytes[4] == 8 {
             "PCND8 requires explicit shared coverage admission"
         } else if bytes[4] == 7 {
             "PCND7 requires explicit shared coverage admission"
@@ -408,7 +376,7 @@ fn read_verified_admitted(
     }
     let mut coverage = coverage.map(super::coverage::CoverageReader::new);
     let mut input = Input::new(body);
-    let mut manifest = if matches!(bytes[4], 7 | 8) {
+    let mut manifest = if matches!(bytes[4], 7..=9) {
         Some(catalog::Manifest::read_v7(&mut input, true, check)?)
     } else if bytes[4] == 6 {
         Some(catalog::Manifest::read(&mut input, true, check)?)
@@ -429,7 +397,7 @@ fn read_verified_admitted(
         1 => Some(input.string(4096)?),
         _ => return Err(codec("invalid title flag")),
     };
-    let has_source = if matches!(bytes[4], 3..=8) {
+    let has_source = if matches!(bytes[4], 3..=9) {
         match input.byte()? {
             0 => false,
             1 => true,
@@ -468,6 +436,7 @@ fn read_verified_admitted(
     let mut records = Vec::new();
     let mut seen = HashSet::new();
     let mut tiles = 0u64;
+    let mut any_styles = false;
     let mut any_layer_masks = false;
     let mut any_blends = false;
     let mut any_filters = false;
@@ -496,7 +465,7 @@ fn read_verified_admitted(
         let width = input.dimension()?;
         let height = input.dimension()?;
         let default = Rgba(input.take(4)?.try_into().unwrap());
-        let layer_filters = if matches!(bytes[4], 3..=8) {
+        let layer_filters = if matches!(bytes[4], 3..=9) {
             let available = (DOCUMENT_MAX as usize)
                 .checked_sub(metadata + start - input.remaining())
                 .ok_or_else(|| {
@@ -529,7 +498,7 @@ fn read_verified_admitted(
         } else {
             paintcraft_document::FilterStack::default()
         };
-        let layer_mask = if matches!(bytes[4], 7 | 8) {
+        let layer_mask = if matches!(bytes[4], 7..=9) {
             let available = (DOCUMENT_MAX as usize)
                 .checked_sub(metadata + start - input.remaining())
                 .ok_or_else(|| {
@@ -547,6 +516,15 @@ fn read_verified_admitted(
         } else {
             None
         };
+        let layer_styles = if bytes[4] == 9 {
+            let available = (DOCUMENT_MAX as usize)
+                .checked_sub(metadata + start - input.remaining())
+                .ok_or_else(|| codec("PCND9 aggregate metadata allowance"))?;
+            styles::read(&mut input, available, check)?
+        } else {
+            paintcraft_document::StyleStack::empty()
+        };
+        any_styles |= !layer_styles.is_empty();
         any_layer_masks |= layer_mask.is_some();
         any_spatial |= layer_filters.iter().any(|filter| {
             matches!(
@@ -630,6 +608,7 @@ fn read_verified_admitted(
                 opacity,
                 blend_mode,
                 filters: layer_filters,
+                styles: layer_styles,
                 mask: layer_mask,
                 raster: RasterLayer::new(width, height, default),
             },
@@ -638,6 +617,9 @@ fn read_verified_admitted(
     }
     if input.remaining() != 0 {
         return Err(codec("trailing compact PCND data"));
+    }
+    if bytes[4] == 9 && !any_styles {
+        return Err(codec("PCND9 requires a stored layer style"));
     }
     if bytes[4] == 8 && !any_blends {
         return Err(codec("PCND8 requires a stored nonNormal layer blend"));
@@ -746,7 +728,7 @@ pub(super) fn catalog_manifest(
         header(bytes[4]).require_supported()?;
         return Ok(Vec::new());
     }
-    if matches!(bytes[4], 7 | 8) {
+    if matches!(bytes[4], 7..=9) {
         catalog::Manifest::read_v7(&mut Input::new(body), false, check)?.requirements(check)
     } else {
         catalog::Manifest::read(&mut Input::new(body), false, check)?.requirements(check)
@@ -773,4 +755,8 @@ pub(super) fn catalog_metadata_bytes_v7(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<u64> {
     Ok(catalog::Manifest::capture_v7(doc, check)?.wire_bytes())
+}
+
+pub(super) fn style_metadata_bytes(stack: &paintcraft_document::StyleStack) -> Result<u64> {
+    styles::metadata_bytes(stack)
 }
