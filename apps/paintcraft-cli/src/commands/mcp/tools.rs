@@ -331,6 +331,14 @@ impl PaintingServer {
         CallToolResult::success(vec![ContentBlock::text(BATCH_V5_SCHEMA)])
     }
     #[tool(
+        description = "Get the explicit rotation-v1 atomic batch schema for source-bound nearest-neighbor custom rotation of the canvas or selected pixels. Coefficients are stored Q30 integers; positive sine rotates clockwise. Discovery grants no resource, bake or blend-edit authority."
+    )]
+    async fn get_rotation_schema(&self) -> CallToolResult {
+        CallToolResult::success(vec![ContentBlock::text(include_str!(
+            "../../../schemas/rotation-v1/batch.schema.json"
+        ))])
+    }
+    #[tool(
         description = "Discover the immutable filter catalog and its resolved schemas, including complete editable Levels. Choose manifest (default), batch, result, file-command, inspect, or mcp-inspect. Discovery grants no rendering or export consent."
     )]
     async fn get_catalog_schema(&self, Parameters(p): Parameters<CatalogSchema>) -> CallToolResult {

@@ -18,7 +18,12 @@ fn painting_history_atomicity_preview_and_guarded_files() {
     let mut c = Client::at(std::path::Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
     let tools = c.request("tools/list", json!({}));
     let tools = tools["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 36);
+    assert_eq!(tools.len(), 37);
+    assert!(
+        tools
+            .iter()
+            .any(|tool| tool["name"] == "get_rotation_schema")
+    );
     assert!(
         tools
             .iter()
@@ -275,3 +280,6 @@ mod noise;
 
 #[path = "mcp/layer_masks.rs"]
 mod layer_masks;
+
+#[path = "mcp/rotation.rs"]
+mod rotation;

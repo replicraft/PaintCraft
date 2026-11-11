@@ -228,6 +228,7 @@ impl State {
         }
         let parsed = if schema == paintcraft_commands::LAYER_APPEARANCE_BATCH_SCHEMA
             || schema == paintcraft_commands::LAYER_STYLES_BATCH_SCHEMA
+            || schema == paintcraft_commands::ROTATION_BATCH_SCHEMA
         {
             let value = paintcraft_core::types::json::parse(&bytes)
                 .map_err(|_| invalid("invalid operations"))?;

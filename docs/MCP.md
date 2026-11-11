@@ -40,11 +40,22 @@ lowest grammar required by the actual operation list:
 
 | Operations | Required batch |
 |---|---|
+| `canvas.rotate`, `raster.rotate_selection` | `paintcraft.batch/rotation-v1` |
 | Complete Levels Add/Update, with all five required integer parameters | `paintcraft.batch/catalog-v1` |
 | Box Blur Add/Update, `{"kind":"box-blur-v1","radius":2}`; integer radius 0–32 | v5 |
 | Black & White/Threshold/Posterize/Solarize Add/Update | v4 |
 | `filter.mask.set`, `.from_selection`, `.set_enabled`, `.remove` | v3 |
 | Original two-kind Add/Update; scalar enable/reorder/remove/duplicate | v2 |
+
+Call `get_rotation_schema` for the separate closed custom-rotation grammar.
+Submit its operations through `apply_operations`; the server supplies the current
+base ticket and exact requirement inventories. For example,
+`{"op":"canvas.rotate","coefficients":[759250125,759250125]}` rotates the whole
+document clockwise by the stored Q30 approximation of 45 degrees. Selected
+rotation additionally captures `layer_ref` and `clear`. Existing resource limits
+and mixed-blend restrictions continue to apply. Real stdio tests verify every
+saved pixel, one-step Undo/Redo and atomic refusal of malformed coefficients.
+See [custom rotation](CUSTOM_ROTATION.md).
 
 The Levels extension has separate discovery: call `get_catalog_schema`
 with `{}` for the immutable bundle manifest, or `{"kind":"batch"}` for its
