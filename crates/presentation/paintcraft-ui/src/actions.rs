@@ -40,6 +40,7 @@ pub enum Action {
     ChooseFrontend(Frontend),
     CanvasSize,
     ResizeSkew,
+    RotateCustom,
     ImageProperties,
     ClearCanvas,
     FlattenImage,
@@ -96,6 +97,8 @@ pub struct Context {
     pub can_erase_selection: bool,
     /// Whole-image or selected-pixel transform is implemented for this selection kind.
     pub can_transform_image: bool,
+    /// True only when the host has a real captured custom-rotation consumer.
+    pub can_rotate_custom: bool,
     pub status_bar: bool,
     pub rulers: bool,
     pub fullscreen: bool,
@@ -209,6 +212,7 @@ impl Action {
             ),
             Self::CanvasSize => ("Canvas size…", None),
             Self::ResizeSkew => ("Resize and skew", None),
+            Self::RotateCustom => ("Rotate custom", None),
             Self::ImageProperties => ("Image properties", Some((Key::E, false))),
             Self::ClearCanvas => ("Clear Canvas", None),
             Self::FlattenImage => ("Flatten image", Some((Key::F, true))),
@@ -391,6 +395,9 @@ impl Action {
             Self::EraseSelection => {
                 ctx.document_open && ctx.can_erase_selection && ctx.layer_index.is_some()
             }
+            Self::RotateCustom => {
+                ctx.can_rotate_custom && Self::TransformImage(Transform::RotateRight).enabled(ctx)
+            }
             Self::TransformImage(_) => {
                 ctx.document_open
                     && ctx.can_transform_image
@@ -476,6 +483,7 @@ impl Action {
             Self::Exit => 1019,
             Self::CanvasSize => 1011,
             Self::ResizeSkew => 1020,
+            Self::RotateCustom => 1037,
             Self::ImageProperties => 1021,
             Self::ClearCanvas => 1018,
             Self::FlattenImage => 1035,

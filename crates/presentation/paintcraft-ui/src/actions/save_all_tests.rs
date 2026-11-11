@@ -60,6 +60,7 @@ fn save_all_requires_a_modified_document_and_an_unblocked_studio_workspace() {
         can_crop_selection: false,
         can_erase_selection: false,
         can_transform_image: true,
+        can_rotate_custom: false,
         status_bar: true,
         rulers: false,
         fullscreen: false,

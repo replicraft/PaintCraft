@@ -543,3 +543,13 @@ the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-fil
 editable-filters-are-baked-into-this-exported-copy = Editable filters are baked into this exported copy.
 
 could-not-switch-interfaces-your-current-workspace-is-unchanged = Could not switch interfaces. Your current workspace is unchanged.
+
+# Captured custom-angle rotation
+angle = Angle
+positive-angles-rotate-clockwise = Positive angles rotate clockwise.
+format-output-width-height-pixels = Output: { $width } × { $height } pixels
+choose-an-angle-whose-output-fits-the-canvas-limits = Choose an angle whose output fits the canvas limits.
+pixels-change-only-when-you-apply-this-rotation = Pixels change only when you apply this rotation.
+finish-pending-edits-before-rotating = Finish pending edits before rotating.
+rotation-preview-closed-because-the-source-or-selection-changed = Rotation preview closed because the source or selection changed.
+rotation-source-target-or-selection-changed = Rotation source, target or selection changed

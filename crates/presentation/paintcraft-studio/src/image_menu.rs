@@ -28,6 +28,10 @@ pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action
                 ui.close();
             }
         }
+        if paintcraft_ui::actions::menu_item(ui, Action::RotateCustom, context) {
+            actions.push(Action::RotateCustom);
+            ui.close();
+        }
         ui.separator();
         if paintcraft_ui::actions::menu_item(ui, Action::FlattenImage, context) {
             actions.push(Action::FlattenImage);

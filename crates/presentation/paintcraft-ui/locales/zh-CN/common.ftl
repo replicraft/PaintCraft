@@ -543,3 +543,13 @@ the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-fil
 editable-filters-are-baked-into-this-exported-copy = 可编辑滤镜已合并到此导出副本中。
 
 could-not-switch-interfaces-your-current-workspace-is-unchanged = 无法切换界面。您当前的工作区未发生更改。
+
+# Captured custom-angle rotation
+angle = 角度
+positive-angles-rotate-clockwise = 正角度表示顺时针旋转。
+format-output-width-height-pixels = 输出：{ $width } × { $height } 像素
+choose-an-angle-whose-output-fits-the-canvas-limits = 请选择输出不超出画布限制的角度。
+pixels-change-only-when-you-apply-this-rotation = 仅在应用此旋转时才会更改像素。
+finish-pending-edits-before-rotating = 旋转前请完成待处理的编辑。
+rotation-preview-closed-because-the-source-or-selection-changed = 源图像或选区已更改，旋转预览已关闭。
+rotation-source-target-or-selection-changed = 旋转源、目标或选区已更改

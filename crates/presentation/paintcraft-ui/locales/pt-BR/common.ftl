@@ -543,3 +543,13 @@ the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-fil
 editable-filters-are-baked-into-this-exported-copy = Os filtros editáveis são aplicados permanentemente nesta cópia exportada.
 
 could-not-switch-interfaces-your-current-workspace-is-unchanged = Não foi possível trocar de interface. Seu espaço de trabalho atual permanece inalterado.
+
+# Captured custom-angle rotation
+angle = Ângulo
+positive-angles-rotate-clockwise = Ângulos positivos giram no sentido horário.
+format-output-width-height-pixels = Saída: { $width } × { $height } pixels
+choose-an-angle-whose-output-fits-the-canvas-limits = Escolha um ângulo cujo resultado caiba nos limites da tela.
+pixels-change-only-when-you-apply-this-rotation = Os pixels só mudam quando esta rotação é aplicada.
+finish-pending-edits-before-rotating = Conclua as edições pendentes antes de girar.
+rotation-preview-closed-because-the-source-or-selection-changed = A prévia foi fechada porque a origem ou a seleção mudou.
+rotation-source-target-or-selection-changed = A origem, o destino ou a seleção da rotação mudou

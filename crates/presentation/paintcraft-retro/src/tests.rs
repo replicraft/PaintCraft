@@ -34,6 +34,7 @@ fn context(blocked: bool) -> Context {
         can_crop_selection: true,
         can_erase_selection: true,
         can_transform_image: true,
+        can_rotate_custom: false,
         status_bar: true,
         rulers: false,
         fullscreen: false,

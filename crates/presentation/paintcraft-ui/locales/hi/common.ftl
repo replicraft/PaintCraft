@@ -543,3 +543,13 @@ the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-fil
 editable-filters-are-baked-into-this-exported-copy = इस निर्यात की गई प्रति में संपादन योग्य फ़िल्टर स्थायी रूप से लागू किए जाते हैं।
 
 could-not-switch-interfaces-your-current-workspace-is-unchanged = इंटरफ़ेस बदला नहीं जा सका। आपका मौजूदा कार्यक्षेत्र अपरिवर्तित है।
+
+# Captured custom-angle rotation
+angle = कोण
+positive-angles-rotate-clockwise = धनात्मक कोण घड़ी की दिशा में घुमाते हैं।
+format-output-width-height-pixels = आउटपुट: { $width } × { $height } पिक्सेल
+choose-an-angle-whose-output-fits-the-canvas-limits = ऐसा कोण चुनें जिसका आउटपुट कैनवास की सीमाओं में समाए।
+pixels-change-only-when-you-apply-this-rotation = यह घुमाव लागू करने पर ही पिक्सेल बदलते हैं।
+finish-pending-edits-before-rotating = घुमाने से पहले लंबित संपादन पूरे करें।
+rotation-preview-closed-because-the-source-or-selection-changed = स्रोत या चयन बदलने के कारण घुमाव का पूर्वावलोकन बंद कर दिया गया।
+rotation-source-target-or-selection-changed = घुमाव का स्रोत, लक्ष्य या चयन बदल गया

@@ -23,6 +23,7 @@ fn context(frontend: Frontend) -> Context {
         can_crop_selection: false,
         can_erase_selection: false,
         can_transform_image: true,
+        can_rotate_custom: false,
         status_bar: true,
         rulers: false,
         fullscreen: false,
@@ -101,6 +102,7 @@ fn unsupported_mask_transforms_stay_disabled_without_disabling_inversion() {
             assert!(action.enabled(whole));
             assert!(!action.enabled(Context {
                 can_transform_image: false,
+                can_rotate_custom: false,
                 ..whole
             }));
             let rectangle = Context {
@@ -117,10 +119,12 @@ fn unsupported_mask_transforms_stay_disabled_without_disabling_inversion() {
             }));
             assert!(!action.enabled(Context {
                 can_transform_image: false,
+                can_rotate_custom: false,
                 ..rectangle
             }));
             assert!(Action::InvertSelection.enabled(Context {
                 can_transform_image: false,
+                can_rotate_custom: false,
                 ..rectangle
             }));
         }
@@ -135,6 +139,7 @@ fn mask_erasure_does_not_advertise_unsupported_crop_or_transforms() {
             can_crop_selection: false,
             can_erase_selection: true,
             can_transform_image: false,
+            can_rotate_custom: false,
             layer_index: Some(0),
             ..context(frontend)
         };
@@ -336,4 +341,39 @@ fn ordinary_paste_requires_host_support_and_a_visible_existing_target() {
         Action::from_shortcut_for(Frontend::Classic, Key::V, Modifiers::COMMAND),
         Some(Action::Paste)
     );
+}
+
+#[test]
+fn custom_rotation_is_a_real_explicit_host_capability_with_original_transform_eligibility() {
+    let action = Action::RotateCustom;
+    assert_eq!(action.activation_code(), 1037);
+    for frontend in [Frontend::Classic, Frontend::Studio] {
+        let original = context(frontend);
+        assert!(action.available(frontend));
+        assert!(!action.enabled(original));
+        let enabled = Context {
+            can_rotate_custom: true,
+            ..original
+        };
+        assert!(action.enabled(enabled));
+        assert!(!action.enabled(Context {
+            blocked: true,
+            ..enabled
+        }));
+        assert!(!action.enabled(Context {
+            can_transform_image: false,
+            ..enabled
+        }));
+        assert!(!action.enabled(Context {
+            selection_active: true,
+            ..enabled
+        }));
+        assert!(action.enabled(Context {
+            selection_active: true,
+            can_crop_selection: true,
+            layer_index: Some(0),
+            ..enabled
+        }));
+    }
+    assert!(!action.available(Frontend::Retro));
 }

@@ -42,6 +42,7 @@ impl Action {
             }
             Self::CanvasSize => Icon::CanvasSize,
             Self::ResizeSkew => Icon::Resize,
+            Self::RotateCustom => Icon::RotateCustom,
             Self::ImageProperties => Icon::ImageProperties,
             Self::ClearCanvas => Icon::ClearCanvas,
             Self::FlattenImage => Icon::Layers,

@@ -88,6 +88,7 @@ fn metadata_preserves_identity_and_context_gates_actions() {
         can_crop_selection: false,
         can_erase_selection: false,
         can_transform_image: true,
+        can_rotate_custom: false,
         status_bar: true,
         rulers: false,
         fullscreen: false,

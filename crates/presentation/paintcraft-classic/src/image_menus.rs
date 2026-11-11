@@ -208,7 +208,9 @@ fn menu(
             .auto_shrink([false, true])
             .show(ui, |ui| {
                 for &(name, icon, transform) in entries {
-                    let action = transform.map(super::Action::TransformImage);
+                    let action = transform.map(super::Action::TransformImage).or_else(|| {
+                        (icon == Icon::RotateCustom).then_some(super::Action::RotateCustom)
+                    });
                     let enabled = action.is_some_and(|a| a.enabled(context));
                     let response = ui.add_enabled(
                         enabled,
@@ -227,7 +229,7 @@ fn menu(
                         actions.push(action);
                         ui.close();
                     }
-                    if transform.is_none() {
+                    if action.is_none() {
                         response.on_disabled_hover_text(t!(ui.ctx(), "This image transformation is not available yet."));
                     } else if !enabled {
                         response.on_disabled_hover_text(t!(ui.ctx(), "Select a nonempty canvas area and choose a layer, or deselect to transform the whole image."));

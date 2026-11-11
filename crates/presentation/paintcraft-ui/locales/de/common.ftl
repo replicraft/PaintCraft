@@ -543,3 +543,13 @@ the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-fil
 editable-filters-are-baked-into-this-exported-copy = Bearbeitbare Filter werden in diese exportierte Kopie eingerechnet.
 
 could-not-switch-interfaces-your-current-workspace-is-unchanged = Die Oberfläche konnte nicht gewechselt werden. Ihr aktueller Arbeitsbereich bleibt unverändert.
+
+# Captured custom-angle rotation
+angle = Winkel
+positive-angles-rotate-clockwise = Positive Winkel drehen im Uhrzeigersinn.
+format-output-width-height-pixels = Ausgabe: { $width } × { $height } Pixel
+choose-an-angle-whose-output-fits-the-canvas-limits = Wählen Sie einen Winkel, dessen Ausgabe in die Leinwandgrenzen passt.
+pixels-change-only-when-you-apply-this-rotation = Pixel ändern sich erst beim Anwenden dieser Drehung.
+finish-pending-edits-before-rotating = Schließen Sie ausstehende Bearbeitungen vor dem Drehen ab.
+rotation-preview-closed-because-the-source-or-selection-changed = Die Drehvorschau wurde geschlossen, weil sich die Quelle oder Auswahl geändert hat.
+rotation-source-target-or-selection-changed = Quelle, Ziel oder Auswahl der Drehung geändert

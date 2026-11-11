@@ -21,6 +21,7 @@ pub mod palette;
 pub mod pcx_export;
 pub mod pen_input;
 pub mod pen_settings;
+pub mod rotation;
 pub mod shape_assets;
 pub mod shape_placement;
 pub mod source_metadata_export;

@@ -543,3 +543,13 @@ the-exported-copy-keeps-the-rendered-appearance-but-does-not-retain-editable-fil
 editable-filters-are-baked-into-this-exported-copy = この書き出しコピーでは編集可能なフィルターが統合されます。
 
 could-not-switch-interfaces-your-current-workspace-is-unchanged = インターフェースを切り替えられませんでした。現在の作業スペースは変更されていません。
+
+# Captured custom-angle rotation
+angle = 角度
+positive-angles-rotate-clockwise = 正の角度は時計回りに回転します。
+format-output-width-height-pixels = 出力: { $width } × { $height } ピクセル
+choose-an-angle-whose-output-fits-the-canvas-limits = キャンバスの制限内に収まる角度を選んでください。
+pixels-change-only-when-you-apply-this-rotation = この回転を適用したときだけピクセルが変更されます。
+finish-pending-edits-before-rotating = 回転する前に保留中の編集を完了してください。
+rotation-preview-closed-because-the-source-or-selection-changed = 元の画像または選択範囲が変わったため、回転プレビューを閉じました。
+rotation-source-target-or-selection-changed = 回転元、対象または選択範囲が変わりました

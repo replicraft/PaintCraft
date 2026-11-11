@@ -24,6 +24,7 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         can_crop_selection: false,
         can_erase_selection: false,
         can_transform_image: true,
+        can_rotate_custom: false,
         status_bar: true,
         rulers: false,
         fullscreen: false,
