@@ -201,7 +201,10 @@ policies now explicitly retain refusal authority. Strict Wasm checks pass for Ma
 and both workers, and their host library suites pass 749 tests with
 3 existing ignored cases. These checks do not execute the rebuilt services
 in a browser. Fresh production browser
-qualification and browser style editing remain open, as do comparative performance
-measurements and the other style families. No speed or physical-memory gain is
-claimed. The portable integration evidence is recorded in
+qualification, browser style editing and the other style families remain open.
+The [casewise performance report](../performance/COLOR_OVERLAY.md) records three
+confirmatory sessions: 14 consistent practical benefits and seven mixed cases,
+with every potential regression retained. There is no blanket speed or
+physical-memory qualification; the correct prepared implementation remains a
+provisional baseline. The portable integration evidence is recorded in
 [LAYER_BLEND_FOUNDATION.md](LAYER_BLEND_FOUNDATION.md#additional-portable-foundations).
