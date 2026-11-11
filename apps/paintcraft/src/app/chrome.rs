@@ -48,6 +48,9 @@ impl App {
             layer_visible,
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
+            can_rotate_custom: self.experience() == Experience::Studio
+                || (self.experience() == Experience::Classic
+                    && self.variant() == paintcraft_classic::ClassicVariant::V11),
             can_transform_image: !matches!(
                 self.editor.selection(),
                 Selection::Mask(_) | Selection::Empty
@@ -317,6 +320,7 @@ impl App {
                     self.request(ctx, action.activation_code(), Action::FlattenImage);
                 }
                 Chrome::ResizeSkew => self.begin_resize_skew(),
+                Chrome::RotateCustom => self.begin_rotate_custom(),
                 Chrome::Crop => self.request(ctx, code::CROP, Action::CropToSelection),
                 Chrome::EraseSelection => {
                     let color =
@@ -463,6 +467,10 @@ impl App {
             self.classic_color_dialog(&ctx, draft);
             return;
         }
+        if let Confirm::RotateCustom(draft) = confirm {
+            self.rotate_custom_dialog(&ctx, draft);
+            return;
+        }
         if let Confirm::ResizeSkew(draft) = confirm {
             self.resize_skew_dialog(&ctx, draft);
             return;
@@ -476,7 +484,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::LayerMask | Confirm::FilterParameters | Confirm::StyleParameters | Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::MspExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::LayerMask | Confirm::FilterParameters | Confirm::StyleParameters | Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::JxrExport | Confirm::DdsExport | Confirm::MspExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::RotateCustom(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -584,6 +592,7 @@ impl App {
                     | Confirm::Colors(_)
                     | Confirm::Canvas(_)
                     | Confirm::ResizeSkew(_)
+                    | Confirm::RotateCustom(_)
                     | Confirm::LayerProperties(_) => {
                         unreachable!("properties handled above")
                     }

@@ -1,5 +1,7 @@
 //! Top-left canvas resizing keeps off-canvas data and extends editable layer bounds.
 use super::*;
+#[path = "canvas/rotation.rs"]
+mod rotation;
 
 #[cfg(test)]
 #[path = "canvas/tests.rs"]

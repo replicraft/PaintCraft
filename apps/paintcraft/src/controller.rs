@@ -562,6 +562,7 @@ impl Editor {
             Action::CropToSelection => self.crop_to_selection(),
             Action::EraseSelection { color } => self.erase_selection(color),
             Action::StretchSkewImage(edit) => self.stretch_skew_image(edit),
+            Action::RotateImage(edit) => self.rotate_image(edit),
             Action::TransformImage { transform, clear } => self.transform_image(transform, clear),
             Action::Contour(contour) => self.contour(&contour),
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),

@@ -25,6 +25,12 @@ impl Editor {
         if self.outbox.has_seen(token) {
             return false;
         }
+        if let Action::RotateImage(edit) = &action
+            && let Err(error) = self.validate_rotate_edit(edit)
+        {
+            self.status = error.to_string();
+            return false;
+        }
         if let Action::StretchSkewImage(edit) = &action
             && let Err(error) = self.validate_stretch_skew_edit(edit)
         {

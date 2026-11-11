@@ -101,6 +101,8 @@ mod resize_skew;
 mod retirement;
 #[path = "app/retro.rs"]
 mod retro;
+#[path = "app/rotation.rs"]
+mod rotation;
 #[path = "app/save_all.rs"]
 mod save_all;
 mod saving;
@@ -207,6 +209,7 @@ enum Confirm {
     Colors(colors::ColorDraft),
     Canvas(canvas_settings::CanvasDraft),
     ResizeSkew(resize_skew::Draft),
+    RotateCustom(rotation::Draft),
     RecentFiles,
     ExportOptions(export_options::Draft),
     IconExport,
