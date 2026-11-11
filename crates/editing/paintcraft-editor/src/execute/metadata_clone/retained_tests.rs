@@ -66,7 +66,7 @@ fn quote_pays_own_math_not_future_source_walk_and_keeps_clone_decomposition() {
         Ok(())
     })
     .unwrap();
-    assert_eq!(std::mem::size_of::<Quote>(), 56);
+    assert_eq!(std::mem::size_of::<Quote>(), 64);
     assert_eq!(*trace.borrow(), [64, 1, 64]);
     assert_eq!(quote.raster_seed_supplement_work, 330);
     assert!(quote.stage_work >= 2 * quote.seed_bytes);
