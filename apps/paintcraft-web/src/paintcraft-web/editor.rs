@@ -88,6 +88,7 @@ impl Editor {
     /// Adopt committed Studio intent; actual display still uses the paid Source8 lane.
     /// Other frontend consumers retain the ordinary normal-only constructor.
     pub(crate) fn from_source8_document(doc: Document) -> Result<Self> {
+        doc.require_no_styles()?;
         if u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > MAX_PIXELS {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
@@ -199,6 +200,12 @@ impl Editor {
         Ok(())
     }
     pub fn apply(&mut self, action: Action) -> Result<()> {
+        if matches!(&action, Action::Style(_)) {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Browser layer styles are not qualified",
+            ));
+        }
         if let Action::StretchSkewImage(edit) = &action {
             self.validate_stretch_skew_edit(edit)?;
         }
@@ -484,6 +491,12 @@ impl Editor {
     }
     pub(crate) fn display_preview(&self, preview: Option<Preview>) -> Result<Option<Document>> {
         let operations = match preview {
+            Some(Preview::Style(_)) => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Browser style preview is not qualified",
+                ));
+            }
             Some(Preview::Filter(edit)) => vec![self.filter_operation(&edit)?],
             Some(Preview::MoveSelection {
                 layer,
@@ -563,3 +576,7 @@ pub(crate) mod persistence_tests;
 #[cfg(test)]
 #[path = "editor/layer_mask_closed_tests.rs"]
 mod layer_mask_closed_tests;
+
+#[cfg(test)]
+#[path = "editor/style_closed_tests.rs"]
+mod style_closed_tests;

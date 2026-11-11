@@ -173,6 +173,9 @@ impl Preparation8 {
                 .get(id)
                 .filter(|l| l.id == *id)
                 .ok_or_else(denied)?;
+            if !layer.styles.is_empty() {
+                return Err(denied());
+            }
             blend |= layer.blend_mode != paintcraft_core::types::LayerBlendMode::Normal;
         }
         Ok(Self {

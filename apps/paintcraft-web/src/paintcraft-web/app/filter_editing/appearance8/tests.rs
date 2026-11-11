@@ -589,3 +589,6 @@ fn committed_filter_mask_invalidates_real_current_stamp_and_undo_does_not_aba() 
         );
     }
 }
+
+#[path = "tests/styles.rs"]
+mod styles;

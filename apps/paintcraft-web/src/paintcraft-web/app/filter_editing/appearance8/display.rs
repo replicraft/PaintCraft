@@ -288,7 +288,7 @@ impl Display8 {
                 && doc
                     .layers
                     .get(id)
-                    .is_some_and(|l| l.blend_mode == LayerBlendMode::Normal)
+                    .is_some_and(|l| l.blend_mode == LayerBlendMode::Normal && l.styles.is_empty())
             {
                 return None;
             }
