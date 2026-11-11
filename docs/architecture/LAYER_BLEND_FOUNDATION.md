@@ -1414,6 +1414,20 @@ The failed browser attempt remains under
 `docs/validation/source8-real-main-browser/attempt-5`; browser qualification must
 be repeated against newly built assets before claiming this route works live.
 
+That rebuilt browser retry reaches real Worker OPENED, then fails its first
+patch with an exhausted operation reservation. The frame forecast omitted the
+mandatory fresh key-capture storage when no LUT programs were present. It now
+uses the same capture minimum as actual preparation and takes the maximum of
+separate preparation and render phases, retaining the existing caller and limits.
+Twelve frame-forecast tests and 27 Main lifecycle tests pass. The unchanged actual
+Worker reproduces the failing 2x1 scene at W=2,196 and W=3,407 bytes; the derived
+wasm32 capture minimum W=3,408 produces the exact original RGBA and completes.
+Every other role stays unchanged and each consuming close returns live instances
+to zero. These finite SDK checks are under
+`docs/validation/source8-capture-floor-sdk`; rebuilt Main browser publication is
+still required. This is a source-dependent workspace correction, not a new fixed
+allowance for other scenes or a physical memory claim.
+
 The first genuine Main build exposed four Worker SDK classes and 18 supporting
 globals. That failed artifact remains preserved. A default-enabled
 `wasm-entry` feature now separates the Worker entry points and legacy SDK from

@@ -195,7 +195,8 @@ fn hidden_and_zero_opacity_spatial_layers_do_not_create_a_live_workspace_peak() 
         assert_eq!(q.spatial_workspace_bytes, 0);
         assert_eq!(
             q.workspace_bytes,
-            q.blend_context_bytes + q.rooted_witness_bytes + 2048
+            (q.blend_context_bytes + q.rooted_witness_bytes + 2048)
+                .max(blend_programs::CAPTURE_BYTES)
         );
     }
 }
@@ -374,4 +375,80 @@ fn maximum_stack_is_source_bounded_without_full_canvas_or_coordinate_sampling() 
     );
     assert_eq!(q.native_rgba_bytes, 16384);
     assert_eq!(q.display_accumulator_bytes, 163840);
+}
+
+#[test]
+fn fresh_zero_and_nonzero_program_preparation_fits_forecast_exact_and_refuses_one_byte_short() {
+    use crate::blend::service::{self, Caller};
+    assert_eq!(
+        blend_programs::CAPTURE_BYTES,
+        if usize::BITS == 64 { 3440 } else { 3408 }
+    );
+    for policies in [
+        Vec::new(),
+        vec![(true, Descriptor::LevelsRgbV1(LevelsRgbV1::default()))],
+    ] {
+        let doc = scene(2, 1, &policies);
+        let q = forecast(&doc);
+        let numerical = quote_unbound_programs_checked(&doc, &|| Ok(()), &|_| Ok(()))
+            .unwrap()
+            .numerical;
+        assert_eq!(
+            q.preparation_peak_bytes,
+            numerical
+                .preparation_peak_bytes
+                .max(blend_programs::CAPTURE_BYTES)
+        );
+        assert_eq!(q.workspace_bytes, q.preparation_peak_bytes);
+        assert_eq!(q.noise_sidecar_bytes, 0);
+        if policies.is_empty() {
+            assert_eq!(numerical.preparation_peak_bytes, 0);
+            let old = q.blend_context_bytes + q.rooted_witness_bytes + q.seed_witness_bytes;
+            assert!(old < blend_programs::CAPTURE_BYTES);
+            let budget = SharedBudget::new(old);
+            let scope = budget
+                .reserve_capacity(old)
+                .unwrap()
+                .scope(AllocationClass::SharedBudget);
+            let base = spatial::WorkspaceAdmission::new(scope.clone(), old, 268435456);
+            let error =
+                service::prepare_programs_checked(&doc, Caller::Base(&base), &|| Ok(()), &|n| {
+                    base.reserve_work(n)
+                })
+                .unwrap_err();
+            assert_eq!(error.code, ErrorCode::ResourceLimit);
+            assert_eq!(scope.footprint().live, 0);
+        }
+        for short in [false, true] {
+            let capacity = q.workspace_bytes - u64::from(short);
+            let budget = SharedBudget::new(capacity);
+            let scope = budget
+                .reserve_capacity(capacity)
+                .unwrap()
+                .scope(AllocationClass::SharedBudget);
+            let base = spatial::WorkspaceAdmission::new(scope.clone(), capacity, 268435456);
+            base.reserve_work(17).unwrap();
+            let clone = base.clone();
+            let result =
+                service::prepare_programs_checked(&doc, Caller::Base(&base), &|| Ok(()), &|n| {
+                    base.reserve_work(n)
+                });
+            if short {
+                assert_eq!(result.unwrap_err().code, ErrorCode::ResourceLimit);
+            } else {
+                let programs = result.unwrap();
+                assert!(programs.same_job(Caller::Base(&base)));
+                assert_eq!(programs.retained_bytes(), q.prepared_retained_bytes);
+                assert!(base.work_used() > 17);
+                drop(programs);
+            }
+            assert_eq!(base.work_used(), clone.work_used());
+            assert!(base.work_used() >= 17);
+            assert_eq!(scope.footprint().live, 0);
+            drop(clone);
+            drop(base);
+            drop(scope);
+            assert_eq!(budget.usage().reserved, 0);
+        }
+    }
 }

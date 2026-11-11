@@ -184,10 +184,13 @@ pub fn quote_unbound_rooted_frame_workspace_checked(
         )?,
         seed,
     )?;
-    let workspace = add(
-        sidecar,
-        render.max(program.numerical.preparation_peak_bytes),
-    )?;
+    // Fresh preparation always admits Keys, including the zero-program case.
+    // Its charge ends before the seeded render witnesses/context coexist.
+    let preparation = program
+        .numerical
+        .preparation_peak_bytes
+        .max(blend_programs::CAPTURE_BYTES);
+    let workspace = add(sidecar, render.max(preparation))?;
     let cells = u64::from(doc.canvas.0.min(EDGE))
         .checked_mul(u64::from(doc.canvas.1.min(EDGE)))
         .filter(|n| *n != 0)
@@ -195,7 +198,7 @@ pub fn quote_unbound_rooted_frame_workspace_checked(
     checked()?;
     Ok(UnboundRootedFrameWorkspace {
         prepared_retained_bytes: program.numerical.retained_bytes,
-        preparation_peak_bytes: program.numerical.preparation_peak_bytes,
+        preparation_peak_bytes: preparation,
         spatial_workspace_bytes: spatial,
         blend_context_bytes: context,
         rooted_witness_bytes: rooted,
