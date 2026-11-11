@@ -159,7 +159,9 @@ and Undo/Redo, with exact saved PCND7/8 and full RGBA. The Normal case retains a
 separate own-layer mask unchanged; Source8 joins every old Worker before its
 successor. All 555 native web tests pass, with three existing ignores, and all
 410 Node tests pass. Private numeric dialogs on blended documents remain outside
-this evidence. The two new filter-mask CI checks are pending.
+this evidence. Both filter-mask browser checks and all seven CI jobs pass for
+exact `ec7930ee` ([run 43042758442](https://github.com/replicraft/PaintCraft/actions/runs/43042758442)).
+Later Color Overlay integration is separate local evidence.
 The initial defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check

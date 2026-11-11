@@ -186,7 +186,9 @@ physical semitransparent pixels, numeric hidden credits or physical memory.
 
 All 410 Node tests pass. The two browser scripts have separate calibrated menu
 defaults and run in CI with retained evidence. The old tracked export/reopen
-script remains byte-identical; a candidate filename collision and zero-coordinate
+script remains byte-identical; both new browser checks and all seven jobs pass
+for exact `ec7930ee` in [CI run 43042758442](https://github.com/replicraft/PaintCraft/actions/runs/43042758442).
+This does not qualify the later Color Overlay source changes. A candidate filename collision and zero-coordinate
 placeholder check were corrected before promotion. Native and browser receipts
 are under `docs/validation/browser-filter-mask-activation/`,
 `docs/validation/browser-filter-mask-runtime/`, and
