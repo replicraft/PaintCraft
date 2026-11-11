@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = Schließe die a
 layer-mask-limits-were-exceeded = Die Grenzen der Ebenenmaske wurden überschritten
 layer-has-no-stored-mask = Die Ebene hat keine gespeicherte Maske
 selection-mask-requires-an-active-selection = eine Auswahlmaske erfordert eine aktive Auswahl
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = Ebenenstile
+color-overlay = Farbüberlagerung
+add-color-overlay = Farbüberlagerung hinzufügen
+edit-color-overlay = Farbüberlagerung bearbeiten
+overlay-color = Überlagerungsfarbe
+style-opacity-0-255 = Stildeckkraft (0–255)
+effect-blend-mode = Effekt-Mischmodus
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = Die Farbüberlagerung wirkt auf die ganze Ebene. Danach wird die Ebenenmaske angewendet.
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = Dieser Stil ist deaktiviert. Änderungen werden gespeichert, ohne die Vorschau zu verändern.
+layer-styles-require-the-editing-worker = Ebenenstile erfordern den Bearbeitungsworker
+style-applied = Stil angewendet
+style-applied-changed-nothing = Stil angewendet, ohne Änderungen
+style-not-applied-its-document-changed = Stil nicht angewendet: Das Dokument wurde geändert
+format-style-not-opened-detail = Stil nicht geöffnet: { $detail }
+format-style-not-applied-detail = Stil nicht angewendet: { $detail }
+bake-editable-layer-appearance-into-this-png-copy = Bearbeitbares Ebenenaussehen in diese PNG-Kopie einrechnen
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = Diese PNG-Kopie behält gerenderte Pixel, verliert aber bearbeitbare Stile, Filter, Filtermasken, Ebenenmasken und Ebenen-Mischeinstellungen. Speichern Sie ein PaintCraft-Projekt, um sie zu behalten.
+editable-layer-appearance-is-baked-into-this-png-copy = Das bearbeitbare Ebenenaussehen wird in diese PNG-Kopie eingerechnet.
+filter-masks = Filtermasken

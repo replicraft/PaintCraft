@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = Conclua ou canc
 layer-mask-limits-were-exceeded = Os limites da máscara de camada foram excedidos
 layer-has-no-stored-mask = A camada não tem uma máscara salva
 selection-mask-requires-an-active-selection = a máscara de seleção exige uma seleção ativa
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = Estilos de camada
+color-overlay = Sobreposição de cor
+add-color-overlay = Adicionar sobreposição de cor
+edit-color-overlay = Editar sobreposição de cor
+overlay-color = Cor da sobreposição
+style-opacity-0-255 = Opacidade do estilo (0–255)
+effect-blend-mode = Modo de mesclagem do efeito
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = A sobreposição de cor afeta toda a camada. A máscara da camada é aplicada depois.
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = Este estilo está desativado. As alterações são salvas sem mudar a prévia.
+layer-styles-require-the-editing-worker = Os estilos de camada exigem o processo de edição
+style-applied = Estilo aplicado
+style-applied-changed-nothing = O estilo aplicado não alterou nada
+style-not-applied-its-document-changed = Estilo não aplicado: o documento mudou
+format-style-not-opened-detail = Não foi possível abrir o estilo: { $detail }
+format-style-not-applied-detail = Estilo não aplicado: { $detail }
+bake-editable-layer-appearance-into-this-png-copy = Incorporar a aparência editável das camadas nesta cópia PNG
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = Esta cópia PNG mantém os pixels renderizados, mas perde estilos, filtros, máscaras de filtro, máscaras de camada e configurações de mesclagem editáveis. Salve um projeto PaintCraft para mantê-los.
+editable-layer-appearance-is-baked-into-this-png-copy = A aparência editável das camadas é incorporada nesta cópia PNG.
+filter-masks = Máscaras de filtro

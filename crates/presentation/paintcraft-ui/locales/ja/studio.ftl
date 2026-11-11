@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = レイヤーマ
 layer-mask-limits-were-exceeded = レイヤーマスクの上限を超えました
 layer-has-no-stored-mask = レイヤーに保存済みのマスクがありません
 selection-mask-requires-an-active-selection = 選択マスクには有効な選択範囲が必要です
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = レイヤースタイル
+color-overlay = カラーオーバーレイ
+add-color-overlay = カラーオーバーレイを追加
+edit-color-overlay = カラーオーバーレイを編集
+overlay-color = オーバーレイの色
+style-opacity-0-255 = スタイルの不透明度 (0–255)
+effect-blend-mode = 効果の合成モード
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = カラーオーバーレイはレイヤー全体に適用されます。その後にレイヤーマスクが適用されます。
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = このスタイルは無効です。変更は保存されますが、プレビューは変わりません。
+layer-styles-require-the-editing-worker = レイヤースタイルには編集ワーカーが必要です
+style-applied = スタイルを適用しました
+style-applied-changed-nothing = スタイルを適用しましたが変更はありません
+style-not-applied-its-document-changed = スタイルを適用できません: ドキュメントが変更されました
+format-style-not-opened-detail = スタイルを開けません: { $detail }
+format-style-not-applied-detail = スタイルを適用できません: { $detail }
+bake-editable-layer-appearance-into-this-png-copy = 編集可能なレイヤーの外観をこの PNG コピーに焼き込む
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = この PNG コピーは描画済みの画素を保持しますが、編集可能なスタイル、フィルター、フィルターマスク、レイヤーマスク、レイヤー合成設定は失われます。保持するには PaintCraft プロジェクトを保存してください。
+editable-layer-appearance-is-baked-into-this-png-copy = 編集可能なレイヤーの外観がこの PNG コピーに焼き込まれます。
+filter-masks = フィルターマスク

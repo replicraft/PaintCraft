@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = Finaliza o canc
 layer-mask-limits-were-exceeded = Se han superado los límites de la máscara de capa
 layer-has-no-stored-mask = La capa no tiene una máscara guardada
 selection-mask-requires-an-active-selection = la máscara de selección requiere una selección activa
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = Estilos de capa
+color-overlay = Superposición de color
+add-color-overlay = Añadir superposición de color
+edit-color-overlay = Editar superposición de color
+overlay-color = Color de superposición
+style-opacity-0-255 = Opacidad del estilo (0–255)
+effect-blend-mode = Modo de fusión del efecto
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = La superposición de color afecta a toda la capa. La máscara de capa se aplica después.
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = Este estilo está desactivado. Los cambios se guardan sin cambiar su vista previa.
+layer-styles-require-the-editing-worker = Los estilos de capa requieren el proceso de edición
+style-applied = Estilo aplicado
+style-applied-changed-nothing = El estilo aplicado no cambió nada
+style-not-applied-its-document-changed = Estilo no aplicado: el documento cambió
+format-style-not-opened-detail = No se abrió el estilo: { $detail }
+format-style-not-applied-detail = Estilo no aplicado: { $detail }
+bake-editable-layer-appearance-into-this-png-copy = Integrar la apariencia editable de las capas en esta copia PNG
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = Esta copia PNG conserva los píxeles renderizados, pero pierde los estilos, filtros, máscaras de filtro, máscaras de capa y ajustes de fusión de capa editables. Guarde un proyecto PaintCraft para conservarlos.
+editable-layer-appearance-is-baked-into-this-png-copy = La apariencia editable de las capas se integra en esta copia PNG.
+filter-masks = Máscaras de filtro

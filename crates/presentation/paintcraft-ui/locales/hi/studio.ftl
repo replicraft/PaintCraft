@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = लेयर �
 layer-mask-limits-were-exceeded = लेयर मास्क की सीमाएँ पार हो गईं
 layer-has-no-stored-mask = लेयर में कोई सहेजा गया मास्क नहीं है
 selection-mask-requires-an-active-selection = चयन मास्क के लिए सक्रिय चयन आवश्यक है
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = परत शैलियाँ
+color-overlay = रंग ओवरले
+add-color-overlay = रंग ओवरले जोड़ें
+edit-color-overlay = रंग ओवरले संपादित करें
+overlay-color = ओवरले का रंग
+style-opacity-0-255 = शैली की अपारदर्शिता (0–255)
+effect-blend-mode = प्रभाव मिश्रण मोड
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = रंग ओवरले पूरी परत पर लागू होता है। उसके बाद परत मास्क लागू होता है।
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = यह शैली बंद है। बदलाव सहेजे जाते हैं, लेकिन पूर्वावलोकन नहीं बदलता।
+layer-styles-require-the-editing-worker = परत शैलियों के लिए संपादन वर्कर आवश्यक है
+style-applied = शैली लागू हुई
+style-applied-changed-nothing = शैली लागू हुई, लेकिन कुछ नहीं बदला
+style-not-applied-its-document-changed = शैली लागू नहीं हुई: दस्तावेज़ बदल गया
+format-style-not-opened-detail = शैली नहीं खुली: { $detail }
+format-style-not-applied-detail = शैली लागू नहीं हुई: { $detail }
+bake-editable-layer-appearance-into-this-png-copy = संपादन योग्य परत रूप को इस PNG प्रतिलिपि में समाहित करें
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = यह PNG प्रतिलिपि रेंडर किए गए पिक्सेल रखती है, लेकिन संपादन योग्य शैलियाँ, फ़िल्टर, फ़िल्टर मास्क, परत मास्क और परत मिश्रण सेटिंग खो देती है। इन्हें रखने के लिए PaintCraft प्रोजेक्ट सहेजें।
+editable-layer-appearance-is-baked-into-this-png-copy = संपादन योग्य परत रूप इस PNG प्रतिलिपि में समाहित होता है।
+filter-masks = फ़िल्टर मास्क

@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = 编辑图层蒙
 layer-mask-limits-were-exceeded = 已超出图层蒙版限制
 layer-has-no-stored-mask = 图层没有已保存的蒙版
 selection-mask-requires-an-active-selection = 选区蒙版需要有效选区
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = 图层样式
+color-overlay = 颜色叠加
+add-color-overlay = 添加颜色叠加
+edit-color-overlay = 编辑颜色叠加
+overlay-color = 叠加颜色
+style-opacity-0-255 = 样式不透明度 (0–255)
+effect-blend-mode = 效果混合模式
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = 颜色叠加作用于整个图层，随后应用图层蒙版。
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = 此样式已禁用。更改会保存，但不会改变预览。
+layer-styles-require-the-editing-worker = 图层样式需要编辑工作线程
+style-applied = 已应用样式
+style-applied-changed-nothing = 应用样式后没有变化
+style-not-applied-its-document-changed = 未应用样式：文档已更改
+format-style-not-opened-detail = 无法打开样式：{ $detail }
+format-style-not-applied-detail = 未应用样式：{ $detail }
+bake-editable-layer-appearance-into-this-png-copy = 将可编辑的图层外观烘焙到此 PNG 副本
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = 此 PNG 副本保留渲染后的像素，但会丢失可编辑的样式、滤镜、滤镜蒙版、图层蒙版和图层混合设置。请保存 PaintCraft 项目以保留它们。
+editable-layer-appearance-is-baked-into-this-png-copy = 可编辑的图层外观将烘焙到此 PNG 副本。
+filter-masks = 滤镜蒙版

@@ -203,6 +203,8 @@ pub fn tr_status(ctx: &egui::Context, source: &str) -> String {
         ("Cannot render: ", "Cannot render: { $detail }"),
         ("Cannot place text: ", "Cannot place text: { $detail }"),
         ("Filter not opened: ", "Filter not opened: { $detail }"),
+        ("Style not opened: ", "Style not opened: { $detail }"),
+        ("Style not applied: ", "Style not applied: { $detail }"),
         ("Filter not applied: ", "Filter not applied: { $detail }"),
         (
             "Cannot render viewport: ",

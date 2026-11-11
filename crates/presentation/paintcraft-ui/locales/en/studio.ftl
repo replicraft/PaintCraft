@@ -545,3 +545,24 @@ finish-or-cancel-the-current-action-before-editing-layer-masks = Finish or cance
 layer-mask-limits-were-exceeded = Layer mask limits were exceeded
 layer-has-no-stored-mask = Layer has no stored mask
 selection-mask-requires-an-active-selection = selection mask requires an active selection
+
+# Captured Studio Color Overlay and explicit PNG appearance copy.
+layer-styles = Layer styles
+color-overlay = Color Overlay
+add-color-overlay = Add Color Overlay
+edit-color-overlay = Edit Color Overlay
+overlay-color = Overlay color
+style-opacity-0-255 = Style opacity (0–255)
+effect-blend-mode = Effect blend mode
+color-overlay-affects-the-whole-layer-the-layer-mask-applies-afterward = Color Overlay affects the whole layer. The layer mask applies afterward.
+this-style-is-disabled-changes-are-stored-without-changing-its-preview = This style is disabled. Changes are stored without changing its preview.
+layer-styles-require-the-editing-worker = Layer styles require the editing worker
+style-applied = Style applied
+style-applied-changed-nothing = Style applied changed nothing
+style-not-applied-its-document-changed = Style not applied: its document changed
+format-style-not-opened-detail = Style not opened: { $detail }
+format-style-not-applied-detail = Style not applied: { $detail }
+bake-editable-layer-appearance-into-this-png-copy = Bake editable layer appearance into this PNG copy
+this-png-copy-keeps-rendered-pixels-but-loses-editable-styles-filters-filter-masks-layer-masks-and-layer-blend-settings-save-a-paintcraft-project-to-keep-them = This PNG copy keeps rendered pixels but loses editable styles, filters, filter masks, layer masks and layer blend settings. Save a PaintCraft project to keep them.
+editable-layer-appearance-is-baked-into-this-png-copy = Editable layer appearance is baked into this PNG copy.
+filter-masks = Filter masks
