@@ -2,8 +2,8 @@
 
 The engine supports arbitrary clockwise rotations of the whole document or a
 captured selection. Classic 11 and Studio have staged angle controls, and CLI/MCP
-use the same command path. Native and browser-host tests pass; execution of the
-new production website remains a separate pending checkpoint.
+use the same command path. Native, browser-host and production browser workflows
+have separate executed checks below.
 
 Whole-document rotation uses one common canvas pivot for every layer, including
 hidden and off-canvas layers. It translates the exact rotated minimum to the
@@ -62,6 +62,22 @@ The local receipts are
 and `docs/validation/rotation-engine-root/consumer-final.json`
 (SHA-256 `ffb2ccff5716992f989044bc69426a906866bd198465ebd849eb86f763ebce53`).
 
+At source `3b923bcc`, the normal website build preserves all 4,008 selected inputs.
+Real headless Chrome passes eight Classic 11/Studio groups through the actual
+menus and angle widget: canonical Open/Save, staged Cancel, 90-degree rotation
+and arbitrary 45-degree rotation, with complete independent RGBA and exact archive
+Undo/Redo checks. Eighteen saved documents preserve hidden RGB and alpha. The
+five existing Main rendering/mask suites, fresh 42-case Node Worker matrix,
+35 Chrome Worker scenarios and standard 11 codec checks/four lifecycle groups
+also pass. Original profile, H, work and budget expectations remain unchanged.
+The independent aggregate audit and literal qualified packages are retained with
+`docs/validation/rotation-browser/root-reviewed.json`
+(SHA-256 `70f8071325e442b7d6a8ff462885f5156f9f8c6b601b7e77f0ba184c9b0fe197`).
+The mistyped-coordinate and missing-environment preflight failures remain intact.
+Codec lifecycle checks retain quarantine until page close and do not establish
+immediate physical execution stop.
+
 This is a provisional correctness baseline. It does not claim historical Paint
 resampling equivalence, measured performance, all-resource admission or physical
-memory bounds. Fresh production browser qualification remains required.
+memory bounds. Browser layer-style activation, numeric Main credit balances,
+physical input/printing and the full roadmap remain separately unqualified.

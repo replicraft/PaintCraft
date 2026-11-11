@@ -7,6 +7,13 @@ with its staged-adoption and performance contracts. The performance pack is
 queued work, not a claim of implementation or measured gains; it does not
 replace the canonical 37-task roadmap or transplant new contracts wholesale.
 
+[Custom rotation](CUSTOM_ROTATION.md) now has executed Classic 11/Studio desktop,
+CLI/MCP and production browser workflows. Eight real browser groups check every
+saved pixel, staged Cancel and exact Undo/Redo at the pinned 4,008-input build.
+The original Main, Worker and standard codec regression scopes also pass. T14,
+T15 and T19 remain partial: reference fidelity, additional resampling quality,
+all-resource admission and physical qualification are separate unfinished gates.
+
 [Palette integration](architecture/PALETTE_INTEGRATION.md) is now a requested
 extension of the engine roadmap: editable ordered filters over retained source
 pixels, followed by masks and layer styles. The source review maps the author's
