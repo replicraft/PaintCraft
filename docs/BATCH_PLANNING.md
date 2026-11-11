@@ -163,7 +163,41 @@ The aggregate receipt is
 `docs/validation/t04-t11-joint-admission-root/root-final.json`
 (SHA-256 `c9be9442a7c76550ffb4e3f61dce575d3e372583d40b0687a508a40b70857f3d`).
 Genuine before/after artifacts and policies are retained under that directory.
-Browser runtime requalification for this newer source set remains separate.
+Browser runtime requalification now passes on the fresh normal website build;
+see the [fresh browser checkpoint](#fresh-browser-checkpoint).
 Mapped transforms, fonts, coverage/history bookkeeping, other services/GPU,
 allocator/reallocation controls and physical memory remain unfinished. T04 and
 T11 remain partial; this is not a complete upfront all-resource request plan.
+
+## Fresh browser checkpoint
+
+The normal `pnpm --dir apps/paintcraft-web build` at `ce32aa1f` preserves all
+3,986 selected source inputs before and after compilation. The five existing
+Main browser suites pass, covering blend display, own-layer masks and Source7/
+Source8 filter-mask workflows. The standard codec lifecycle suite and all 410
+web Node tests pass. The actual production render Worker separately passes its
+42 Node cases and 35 headless Chrome scenarios, including all 26 original pixel
+goldens, without changing their work, profile or memory limits.
+
+A new headless Chrome harness uses real File/Open, pointer, keyboard and download
+events on the production page. Four groups pass on an independently constructed
+257 × 3 opaque Normal document. A held Pencil preview is visible, but Save cancels
+it and both downloads retain the exact original archive. Releasing the stroke
+commits the complete middle row once. A rectangular selection restricts the red
+flood to the 129 pixels at the top right, preserving the black barrier and white
+bottom row. All 771 saved pixels are independently decoded and compared. Undo
+and Redo reproduce the exact earlier archives. Browser downloads leave committed
+edits unsaved, as intended; cancelling the held gesture restores the clean state.
+
+The initial Chrome profile-field mismatch, incorrect harness dirty expectation
+and Studio toolbar coordinate calibrations remain preserved as failed attempts.
+The successful attempts keep the original pixel and history assertions. Main's
+public generated API stays exact; two private callback labels were checked
+against the fresh module. The aggregate receipt is
+`docs/validation/post-admission-browser/root-final.json`
+(SHA-256 `535f44fb4fb990e81a3c585ce5e66459cbd869116a0aa7e99f4f0bcb8f275a2b`).
+
+This finite browser checkpoint does not establish numeric Main credit balances,
+all-resource admission, layer-style browser support, immediate physical Worker
+termination, allocator/RSS ceilings, latency or physical input qualification.
+It does not complete T04, T11 or the broader roadmap.
