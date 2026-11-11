@@ -87,8 +87,10 @@ pub fn control_bytes() -> Result<u64> {
     }
     Ok(CONTROL_BYTES)
 }
-/// Pure execution subtotal for the final output, excluding the caller-paid
-/// planning query. Native256-tile cuts are bounded by the canonical64 grid.
+/// Execution bound for ONE source-row-span composition, excluding the caller-paid
+/// planning query. Source256 cuts align with source64, so its local phase covers
+/// every span restart. This is not a whole DisplayCache/LOD decomposition quote:
+/// each actual native leaf re-preflights with the same cumulative original debt.
 /// This fact is not execution authority or an entire-job/grant forecast.
 /// # Errors
 /// For a nonempty stack, returns InputSchema for invalid geometry and
@@ -241,3 +243,7 @@ pub(crate) fn pixels(
 #[cfg(test)]
 #[path = "styles/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "styles/grid_tests.rs"]
+mod grid_tests;

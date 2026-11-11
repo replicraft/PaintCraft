@@ -24,7 +24,10 @@ pub(super) fn row_shared(
         let n = span.pixel_count();
         let (dst, rest) = remaining.split_at_mut(n * 4);
         remaining = rest;
-        if !layer.filters.iter().any(|f| f.enabled()) && !crate::layer_mask::active(layer) {
+        if !layer.filters.iter().any(|f| f.enabled())
+            && !crate::layer_mask::active(layer)
+            && !crate::styles::stored(layer)
+        {
             match span {
                 RowSpan::Pixels(source) => {
                     for (out, input) in dst.chunks_mut(256).zip(source.chunks(256)) {

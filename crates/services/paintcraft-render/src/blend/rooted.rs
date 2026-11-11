@@ -71,6 +71,9 @@ impl<'a> RootFacts<'a> {
                     facts.coordinate |= matches!(filter.descriptor(), Descriptor::AddNoiseRgbV1(_));
                 }
             }
+            // O(1) closed stack fact within the existing paid root lookup;
+            // even disabled intentions retain original-Base traversal admission.
+            facts.direct |= crate::styles::stored(layer);
             facts.mask |= crate::layer_mask::active(layer);
         }
         check()?;
