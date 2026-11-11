@@ -42,6 +42,7 @@ fn policies(doc: &Document, omit: bool) -> export::CopyPolicies {
         paintcraft_formats::registry::Operation::ExportFlat,
     );
     export::CopyPolicies {
+        appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
         source_metadata: metadata_policy::Policy::capture(
             doc,
             target,

@@ -33,6 +33,7 @@ fn main_selects8_for_disabled_default_and_both_distribution_intents() {
             &doc,
             options(Settings::default()),
             paintcraft_formats::export::CopyPolicies {
+                appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
                 source_metadata: Default::default(),
                 filter_bake: bake,
             },

@@ -28,6 +28,7 @@ fn plan(doc: &Document) -> wire::SourcePlan {
         paintcraft_formats::registry::Operation::ExportFlat,
     );
     let policies = export::CopyPolicies {
+        appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
         source_metadata: metadata_policy::Policy::default(),
         filter_bake: filter_bake::Policy::capture(doc, target, filter_bake::Intent::Bake, &|| {
             Ok(())

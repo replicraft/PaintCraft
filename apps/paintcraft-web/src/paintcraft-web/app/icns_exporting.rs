@@ -203,7 +203,7 @@ impl WebApp {
                                 let captured = Policy::capture(document, target, intent)
                                     .map_err(|error| error.to_string())?;
                                 let filter_bake = paintcraft_formats::export::filter_bake::Policy::capture(document,target,if bake_filters {paintcraft_formats::export::filter_bake::Intent::Bake} else {paintcraft_formats::export::filter_bake::Intent::Refuse},&||Ok(())).map_err(|e|e.to_string())?;
-                                let captured = paintcraft_formats::export::CopyPolicies{source_metadata:captured,filter_bake};
+                                let captured = paintcraft_formats::export::CopyPolicies{appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,source_metadata:captured,filter_bake};
                                 let prepared = prepare(document, &config, captured)?;
                                 *policy = Some(captured);
                                 Ok(prepared)

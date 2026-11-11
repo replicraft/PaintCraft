@@ -320,6 +320,7 @@ impl WebApp {
                 &|| Ok(()),
             )?;
             let policies = paintcraft_formats::export::CopyPolicies {
+                appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
                 source_metadata: policy,
                 filter_bake,
             };
