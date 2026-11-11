@@ -38,6 +38,7 @@ mod tests {
     ) -> export::CopyPolicies {
         let target = metadata_policy::Target::new(family, registry::Operation::ExportFlat);
         export::CopyPolicies {
+            appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
             source_metadata: metadata_policy::Policy::default(),
             filter_bake: filter_bake::Policy::capture(
                 doc,

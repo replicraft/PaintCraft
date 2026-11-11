@@ -76,6 +76,7 @@ mod filter_tests {
                 paintcraft_formats::registry::Operation::ExportFlat,
             );
             let policies = export::CopyPolicies {
+                appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
                 source_metadata: metadata_policy::Policy::capture(
                     &doc,
                     target,

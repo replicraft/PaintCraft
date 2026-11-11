@@ -31,6 +31,7 @@ fn source() -> paintcraft_document::Document {
 fn policies(doc: &paintcraft_document::Document, family: Family) -> export::CopyPolicies {
     let target = metadata_policy::Target::new(family, Operation::ExportFlat);
     export::CopyPolicies {
+        appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
         source_metadata: Default::default(),
         filter_bake: filter_bake::Policy::capture(doc, target, filter_bake::Intent::Bake, &|| {
             Ok(())

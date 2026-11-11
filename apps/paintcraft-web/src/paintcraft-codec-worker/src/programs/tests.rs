@@ -29,6 +29,7 @@ fn source(
         .unwrap();
     let target = metadata_policy::Target::new(family, Operation::ExportFlat);
     let policies = CopyPolicies {
+        appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
         source_metadata: metadata_policy::Policy::default(),
         filter_bake: filter_bake::Policy::capture(&doc, target, filter_bake::Intent::Bake, &|| {
             Ok(())

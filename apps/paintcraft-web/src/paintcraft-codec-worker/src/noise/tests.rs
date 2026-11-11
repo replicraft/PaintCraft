@@ -47,6 +47,7 @@ fn actual_dds_noise_entry_routes_both_policies_without_legacy_or_rgba_conversion
             &doc,
             settings,
             export::CopyPolicies {
+                appearance_bake: paintcraft_formats::export::appearance_bake::Policy::Refuse,
                 source_metadata: Default::default(),
                 filter_bake: bake,
             },
