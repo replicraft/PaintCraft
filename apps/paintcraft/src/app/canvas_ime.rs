@@ -1,6 +1,7 @@
 //! Canvas composition is presentation only until an actual result is accepted.
 //! Framework events have no native composition ID. Known revoked results are
-//! refused; a new Preedit is the framework's observable new-start boundary.
+//! refused; new Preedit or a genuinely delivered Enabled facility boundary can
+//! restart the exact current canvas draft. Neither carries a native composition ID.
 use super::*;
 use paintcraft_ui::t;
 use std::ops::Range;
@@ -8,9 +9,20 @@ use std::ops::Range;
 #[derive(Debug, Default)]
 pub(crate) struct State {
     binding: Option<Binding>,
+    enabled: Option<EnabledScope>,
     refuse_unbound: bool,
     pub(super) selected_all: bool,
     pub(super) interrupt: bool,
+}
+// Enabled is facility availability, not an active preedit. Keep only scalar
+// target facts; do not allocate text or suppress ordinary input on Enabled.
+#[derive(Debug, PartialEq, Eq)]
+struct EnabledScope {
+    session: Uuid,
+    document: (Uuid, u64),
+    experience: Experience,
+    target: (u64, Uuid),
+    revision: paintcraft_tools::PreviewRevision,
 }
 #[derive(Debug)]
 struct Binding {
@@ -23,7 +35,46 @@ struct Binding {
     preedit: String,
     selected_all: bool,
 }
+#[derive(Clone, Copy)]
+enum Lifecycle {
+    Enabled,
+    Disabled,
+}
+#[expect(
+    deprecated,
+    reason = "owned loop explicitly delivers pinned egui compatibility DTOs"
+)]
+fn lifecycle(event: &egui::Event) -> Option<Lifecycle> {
+    match event {
+        egui::Event::Ime(egui::ImeEvent::Enabled) => Some(Lifecycle::Enabled),
+        egui::Event::Ime(egui::ImeEvent::Disabled) => Some(Lifecycle::Disabled),
+        _ => None,
+    }
+}
+pub(super) fn is_disabled(event: &egui::Event) -> bool {
+    matches!(lifecycle(event), Some(Lifecycle::Disabled))
+}
 impl App {
+    fn canvas_ime_enabled_scope(&self) -> Option<EnabledScope> {
+        let target = self.editor.canvas_text_target()?;
+        if self.editor.target() != Some(target.1) {
+            return None;
+        }
+        Some(EnabledScope {
+            session: self.editor.session_owner_id(),
+            document: self.editor.render_key(),
+            experience: self.experience(),
+            target,
+            revision: self.editor.canvas_text_revision(),
+        })
+    }
+    fn advance_enabled_canvas_scope(&mut self) {
+        // Only an accepted local text mutation advances the SAME scoped facility;
+        // unrelated revision/owner changes instead revoke it in guard_canvas_ime.
+        if self.canvas_ime.enabled.is_some() {
+            self.canvas_ime.enabled = self.canvas_ime_enabled_scope();
+        }
+    }
     fn canvas_ime_matches(&self, binding: &Binding) -> bool {
         binding.session == self.editor.session_owner_id()
             && binding.document == self.editor.render_key()
@@ -34,7 +85,9 @@ impl App {
             && self.editor.target() == Some(binding.target.1)
     }
     pub(super) fn revoke_canvas_ime(&mut self) {
-        if self.canvas_ime.binding.take().is_some() {
+        let had_binding = self.canvas_ime.binding.take().is_some();
+        let had_enabled = self.canvas_ime.enabled.take().is_some();
+        if had_binding || had_enabled {
             self.canvas_ime.refuse_unbound = true;
             self.canvas_ime.interrupt = true;
         }
@@ -47,6 +100,12 @@ impl App {
             .binding
             .as_ref()
             .is_some_and(|binding| !self.canvas_ime_matches(binding))
+            || self
+                .canvas_ime
+                .enabled
+                .as_ref()
+                .is_some_and(|scope| Some(scope) != self.canvas_ime_enabled_scope().as_ref())
+            || !ctx.input(|input| input.focused)
             || self.action_context().blocked
             || ctx.egui_wants_keyboard_input()
             || egui::Popup::is_any_open(ctx)
@@ -80,11 +139,47 @@ impl App {
     /// Return true only when canvas text owns this event.
     pub(super) fn canvas_text_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
         self.guard_canvas_ime(ctx);
+        if let Some(boundary) = lifecycle(event) {
+            match boundary {
+                Lifecycle::Disabled => {
+                    self.revoke_canvas_ime();
+                    self.canvas_ime.refuse_unbound = true;
+                }
+                Lifecycle::Enabled => {
+                    if !ctx.input(|input| input.focused)
+                        || self.action_context().blocked
+                        || ctx.egui_wants_keyboard_input()
+                        || egui::Popup::is_any_open(ctx)
+                        || self.picking.is_some()
+                        || !self.editor.is_editing_text()
+                    {
+                        self.revoke_canvas_ime();
+                        // A genuinely observed foreign/ineligible facility is a
+                        // known lifetime boundary, even with no canvas binding.
+                        self.canvas_ime.refuse_unbound = true;
+                        return false;
+                    }
+                    let Some(scope) = self.canvas_ime_enabled_scope() else {
+                        self.revoke_canvas_ime();
+                        self.canvas_ime.refuse_unbound = true;
+                        return false;
+                    };
+                    self.canvas_ime.enabled = Some(scope);
+                }
+            }
+            ctx.request_repaint();
+            return true;
+        }
         if matches!(event, egui::Event::WindowFocused(false)) {
             self.revoke_canvas_ime();
             if !matches!(self.editor.tool, Tool::Magnifier | Tool::Pan) {
                 self.editor.commit_text();
             }
+            return false;
+        }
+        if !ctx.input(|input| input.focused) {
+            self.revoke_canvas_ime();
+            self.canvas_ime.refuse_unbound = true;
             return false;
         }
         if matches!(event, egui::Event::PointerButton { pressed: true, .. }) {
@@ -258,7 +353,14 @@ impl App {
         Ok(())
     }
     fn canvas_ime_commit(&mut self, text: &str) -> std::result::Result<(), &'static str> {
-        if self.canvas_ime.binding.is_none() && self.canvas_ime.refuse_unbound {
+        if self.canvas_ime.binding.is_none()
+            && self.canvas_ime.refuse_unbound
+            && self
+                .canvas_ime
+                .enabled
+                .as_ref()
+                .is_none_or(|scope| Some(scope) != self.canvas_ime_enabled_scope().as_ref())
+        {
             return Err(
                 "IME result ignored because the canvas text draft changed; restart composition",
             );
@@ -298,6 +400,7 @@ impl App {
         }
         self.canvas_ime.selected_all = false;
         self.ime_composing = false;
+        self.advance_enabled_canvas_scope();
         Ok(())
     }
     fn canvas_replace(
@@ -316,6 +419,7 @@ impl App {
             .replace_canvas_text_tail(token, delete, text)
             .map_err(|_| "Text could not fit the draft; no text was changed")?;
         self.canvas_ime.selected_all = false;
+        self.advance_enabled_canvas_scope();
         Ok(())
     }
     pub(super) fn canvas_text_preview(&self) -> Option<Arc<Preview>> {

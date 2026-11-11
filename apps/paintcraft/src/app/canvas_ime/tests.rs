@@ -16,6 +16,10 @@ fn commit(text: &str) -> egui::Event {
     egui::Event::Ime(egui::ImeEvent::Commit(text.into()))
 }
 fn event(app: &mut App, ctx: &egui::Context, event: egui::Event) {
+    // This fixture expects accepted focused canvas input. Context starts with
+    // InputState.focused=false until a frame; unfocused rejection calls the
+    // production handler directly instead of using this focused-event helper.
+    ctx.input_mut(|input| input.focused = true);
     assert!(app.canvas_text_event(ctx, &event));
 }
 fn preview_text(app: &App) -> String {
@@ -358,3 +362,6 @@ fn preedit_then_focus_loss_places_only_committed_base_and_modal_never_places() {
     assert_eq!(app.editor.canvas_text_content(), Some("private"));
     assert!(app.canvas_ime.binding.is_none());
 }
+
+#[path = "lifecycle_tests.rs"]
+mod lifecycle_tests;

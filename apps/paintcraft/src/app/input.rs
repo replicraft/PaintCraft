@@ -51,6 +51,11 @@ impl App {
                     // publication authority; canvas binding happens in order.
                     self.ime_composing = !widget_focus || !text.is_empty();
                 }
+                event if crate::canvas_ime::is_disabled(&event) => {
+                    // Receipt-time exclusion only. Ordered canvas delivery owns
+                    // the actual composition/target revocation below this pass.
+                    self.ime_composing = false;
+                }
                 egui::Event::Ime(egui::ImeEvent::Commit(_)) => {
                     self.ime_composing = false;
                 }
