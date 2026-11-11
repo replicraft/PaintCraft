@@ -1,0 +1,56 @@
+{
+	"status": "INDEPENDENT_EXPECTATIONS_BEFORE_HARNESS",
+	"scene": {
+		"document": "b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+		"state": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+		"layer": "b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3",
+		"name": "Rotation subject",
+		"default": [0, 0, 0, 0],
+		"canvas": [2, 2],
+		"source_hex": "50434e44010d0a1ab1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b202020001b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b310526f746174696f6e207375626a65637401ff00000202000000000100001011223300c86432801f7ff180ffffffff00beaef269955f090671c0469a4ce1ffa22076080a203a4c8a638189a904409469",
+		"source_bytes": 140,
+		"source_sha256": "4f8ab9ac2d3102c777afd729a9d3fb49ee7f7ccd215357e92f29d708fec3a80d"
+	},
+	"cases": {
+		"baseline": {
+			"degrees": 0,
+			"coefficients": [1073741824, 0],
+			"canvas": [2, 2],
+			"rgba": [
+				17, 34, 51, 0, 200, 100, 50, 128, 31, 127, 241, 128, 255, 255,
+				255, 255
+			],
+			"rgba_sha256": "d24774299af0abd9d719c5303b625d7cc47bb4ba663a941e7b9af87f4f2856d6"
+		},
+		"clockwise90": {
+			"degrees": 90,
+			"coefficients": [0, 1073741824],
+			"canvas": [2, 2],
+			"rgba": [
+				31, 127, 241, 128, 17, 34, 51, 0, 255, 255, 255, 255, 200, 100,
+				50, 128
+			],
+			"rgba_sha256": "555dd2b19ad141cda276d1ddb5e70f6215b4463a0bce562861c076f9847b9747"
+		},
+		"clockwise45": {
+			"degrees": 45,
+			"coefficients": [759250125, 759250125],
+			"canvas": [3, 3],
+			"rgba": [
+				0, 0, 0, 0, 17, 34, 51, 0, 0, 0, 0, 0, 31, 127, 241, 128, 255,
+				255, 255, 255, 200, 100, 50, 128, 0, 0, 0, 0, 255, 255, 255,
+				255, 0, 0, 0, 0
+			],
+			"rgba_sha256": "4a2fceabf738444176fff01e9e6d3ce79a9ff41a2aed611510e86221bdb24ebe"
+		}
+	},
+	"derivation": "Independent Python Fraction inverse-center mapping of stored Q30 pair. For source[0,2]^2, normalized forward x=c*x-s*y+2*s,y=s*x+c*y; inverse exact determinant, half-open sample membership, floor nearest. 45 coefficient is integer nearest sqrt(2^59), not sampled from product output.",
+	"actions": [
+		"Real File/Open finite specimen separately in Classic11 and Studio",
+		"Open actual Image/Rotate custom, type90intoactualanglewidget; Cancel preserves initial canonical source/dirtyfalse",
+		"Fresh formApply90 actualsavedall4RGBA, Undoexactbaseline/dirtyfalse, Redoexactrotated/dirtytrue",
+		"Undo90 thenfreshformApply45 actualsavedall9RGBA, Undoexactbaseline/Redoexactrotated"
+	],
+	"authority": "No directEditor/scenario/factory or Worker callbacks; real UI plus publicis_dirty only. Producer receipt/hash mandatory external and all selectedsources/outputs authenticated pre/post; no historical3986binding hardcoded.",
+	"layout": "Layout only explicitnonacceptance and zero acceptancegroups. Mandatory bounded external coordinatefile/hash; no guessed run defaults."
+}
