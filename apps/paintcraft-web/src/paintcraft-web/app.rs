@@ -459,7 +459,11 @@ impl WebApp {
     }
 
     pub(crate) fn install(&mut self, loaded: crate::files::Loaded) {
-        match Editor::from_document(loaded.document) {
+        let editor = match self.frontend {
+            Frontend::Studio => Editor::from_source8_document(loaded.document),
+            Frontend::Classic | Frontend::Retro => Editor::from_document(loaded.document),
+        };
+        match editor {
             Ok(mut editor) => {
                 if loaded.converted_copy {
                     editor.session.mark_unsaved();

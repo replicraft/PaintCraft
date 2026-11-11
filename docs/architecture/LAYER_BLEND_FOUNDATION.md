@@ -1401,6 +1401,19 @@ native web checkpoint passes 540 tests with three existing ignored tests; the
 later added handoff test separately executes actual egui multipass scheduling.
 These results do not execute the new Main Wasm lifecycle.
 
+The first real production Studio browser attempt exposed an earlier admission
+blocker: decoded PCND8 documents were still routed through the normal-only
+editor constructor, before any Source8 Worker started. Studio installation now
+uses an explicit committed-appearance constructor with the same session setup
+and canvas limit. The ordinary constructor and Classic/Retro guards stay intact.
+Regression tests cover actual decode/install, both stored modes including hidden
+layers, transparent RGB, dirty state, atomic size refusal, save semantics and
+paid Main snapshot preparation. The full native web suite passes 544 tests with
+three existing ignored tests; strict native/Wasm checks, formatting and docs pass.
+The failed browser attempt remains under
+`docs/validation/source8-real-main-browser/attempt-5`; browser qualification must
+be repeated against newly built assets before claiming this route works live.
+
 The first genuine Main build exposed four Worker SDK classes and 18 supporting
 globals. That failed artifact remains preserved. A default-enabled
 `wasm-entry` feature now separates the Worker entry points and legacy SDK from

@@ -383,3 +383,57 @@ fn joined_handoff_blocks_every_actual_egui_pass_until_a_later_frame() {
     assert!(frame > retired.unwrap());
     assert!(!blocked); // Only scheduling eligibility; actual broker may still deny.
 }
+
+#[test]
+fn actual_studio_pcnd8_install_reaches_paid_counted_snapshot_with_default_main_metadata() {
+    let ctx = eframe::egui::Context::default();
+    let mut app = crate::app::WebApp::new(&ctx);
+    app.frontend = paintcraft_ui::actions::Frontend::Studio;
+    let mut document =
+        paintcraft_document::import_image(2, 1, &[17, 32, 255, 0, 80, 100, 120, 128], "adopted")
+            .unwrap();
+    document
+        .layers
+        .get_mut(&document.roots[0])
+        .unwrap()
+        .blend_mode = LayerBlendMode::Multiply;
+    let wire = paintcraft_formats::pcnd::write(&document).unwrap();
+    assert_eq!(wire[4], 8);
+    let loaded =
+        crate::files::decode_for_profile(&wire, "adopted.pcnd".into(), app.format_profile())
+            .unwrap();
+    app.install(loaded);
+    assert_eq!(app.name, "adopted.pcnd");
+    let original = app.editor.session.snapshot();
+    assert!(original.same_semantics(&document));
+    let ticket = app.editor.session.ticket();
+    let owner = app.editor.session.owner_id();
+    // Same defining unreserved Main Admission as production Display8::default;
+    // observed changes only native notification, not factory/counter authority.
+    let admission = Admission::new(0);
+    assert_eq!(admission.paint_metadata_limit(), factory::MAX as usize);
+    let releases = Rc::new(Cell::new(0));
+    let factory = factory::Factory8::observed(&admission, factory::MAX, releases.clone()).unwrap();
+    let key = capture::Key8::capture(&app).unwrap();
+    assert!(Arc::ptr_eq(&key.identity.document, &original));
+    assert_eq!(key.identity.owner, owner);
+    assert_eq!(key.identity.ticket, ticket);
+    let snapshot = snapshot::Snapshot8::prepare(key, factory.clone(), &|| Ok(())).unwrap();
+    assert!(snapshot.demand.stored_non_normal);
+    assert!(Arc::ptr_eq(&snapshot.identity.document, &original));
+    assert_eq!(
+        snapshot.roles.roles[0],
+        snapshot.bytes().unwrap().len() as u64
+    );
+    assert_eq!(snapshot.roles.compiled_profile, snapshot.identity.profile);
+    assert_eq!(snapshot.roles.roles[8], snapshot.workspace.workspace_bytes);
+    assert_eq!(app.editor.session.ticket(), ticket);
+    assert_eq!(app.editor.session.undo_depth(), 0);
+    assert!(!app.unsaved());
+    assert!(Arc::ptr_eq(&app.editor.session.snapshot(), &original));
+    assert_eq!(releases.get(), 0);
+    drop(snapshot);
+    assert_eq!(releases.get(), 0);
+    drop(factory);
+    assert_eq!(releases.get(), 1);
+}

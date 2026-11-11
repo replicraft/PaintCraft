@@ -82,6 +82,12 @@ impl Editor {
 
     pub fn from_document(doc: Document) -> Result<Self> {
         doc.require_normal_blends()?;
+        Self::from_source8_document(doc)
+    }
+
+    /// Adopt committed Studio intent; actual display still uses the paid Source8 lane.
+    /// Other frontend consumers retain the ordinary normal-only constructor.
+    pub(crate) fn from_source8_document(doc: Document) -> Result<Self> {
         if u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > MAX_PIXELS {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
