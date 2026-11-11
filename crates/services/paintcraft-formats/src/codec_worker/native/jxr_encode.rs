@@ -48,6 +48,10 @@ impl PreparedJxrEncode {
     pub fn sha256(&self) -> [u8; 32] {
         self.sha256
     }
+    /// Descriptive verified identity, not execution authority.
+    pub fn installation(&self) -> super::jxr_installation::Identity {
+        super::jxr_installation::identity(&self.helper)
+    }
     pub fn helper_sha256(&self) -> [u8; 32] {
         self.helper.sha256()
     }
@@ -102,6 +106,39 @@ impl JxrEncodeJob {
         admit: impl FnOnce(wire::Layout, &'static str) -> Result<()>,
         launch: impl FnOnce(JxrEncodeLaunch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     ) -> Result<PreparedJxrEncode> {
+        self.prepare_inner(rgb, lease, host_check, current_owner, (None, admit), launch)
+    }
+    /// Bind queued host intent to the exact verified installation BEFORE helper
+    /// launch. The identity is descriptive; discovery and all old checks still run.
+    /// # Errors
+    /// Returns the original prepare errors or ConflictStaleBase on replacement.
+    pub fn prepare_with_installation(
+        self,
+        rgb: Arc<Vec<u8>>,
+        lease: ResourceLease,
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+        admission: (
+            Option<super::jxr_installation::Identity>,
+            impl FnOnce(wire::Layout, &'static str) -> Result<()>,
+        ),
+        launch: impl FnOnce(JxrEncodeLaunch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    ) -> Result<PreparedJxrEncode> {
+        self.prepare_inner(rgb, lease, host_check, current_owner, admission, launch)
+    }
+    fn prepare_inner(
+        self,
+        rgb: Arc<Vec<u8>>,
+        lease: ResourceLease,
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+        admission: (
+            Option<super::jxr_installation::Identity>,
+            impl FnOnce(wire::Layout, &'static str) -> Result<()>,
+        ),
+        launch: impl FnOnce(JxrEncodeLaunch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    ) -> Result<PreparedJxrEncode> {
+        let (expected, admit) = admission;
         if self.deadline.is_zero() || self.deadline > Duration::from_secs(120) {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -124,6 +161,12 @@ impl JxrEncodeJob {
         // The capability is obtained here from one exact installed qualified helper;
         // callers cannot inject a generic VerifiedHelper or an executable path.
         let helper = installed(&check)?;
+        if expected.is_some_and(|id| id != super::jxr_installation::identity(&helper)) {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Queued JPEG XR installation replaced",
+            ));
+        }
         let executable = helper.checked_executable(&check)?;
         let remaining = self
             .deadline

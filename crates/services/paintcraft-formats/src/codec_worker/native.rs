@@ -8,6 +8,7 @@ mod jxl_integer;
 mod jxr_encode;
 mod jxr_preview;
 pub use jxr_preview::{JXR_PREVIEW_SIDE, jxr_preview_reservation_bytes};
+pub mod jxr_installation;
 mod launch;
 mod writer_contracts;
 mod writer_import;
