@@ -48,13 +48,17 @@ impl Batch {
     /// run the same strict public parser. Untrusted callers use from_value.
     pub fn from_generated_value(mut value: Value) -> Result<Self> {
         let schema = value.get("schema").and_then(Value::as_str);
-        let blends =
-            schema == Some(LAYER_BLEND_BATCH_SCHEMA) || schema == Some(STRETCH_SKEW_BATCH_SCHEMA);
+        let styles = schema == Some(LAYER_STYLES_BATCH_SCHEMA);
+        let blends = styles
+            || schema == Some(LAYER_BLEND_BATCH_SCHEMA)
+            || schema == Some(STRETCH_SKEW_BATCH_SCHEMA);
         let appearance = blends || schema == Some(LAYER_APPEARANCE_BATCH_SCHEMA);
         if appearance || schema == Some(CATALOG_BATCH_SCHEMA) {
             let requirements = required(&value)?;
             let layers = if appearance {
-                Some(if blends {
+                Some(if styles {
+                    styles::required(&value)?
+                } else if blends {
                     layer_blends::required(&value)?
                 } else {
                     layer_appearance::required(&value)?

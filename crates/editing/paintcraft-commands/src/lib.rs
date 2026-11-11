@@ -12,6 +12,8 @@ use uuid::Uuid;
 use paintcraft_core::types::ids::parse_uuid;
 use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
+mod styles;
+pub use styles::{LAYER_STYLES_BATCH_SCHEMA, StyleOp, StyleRef};
 mod filters;
 pub use filters::{FilterOp, FilterRef, MaskOp};
 mod layer_masks;
@@ -57,6 +59,7 @@ pub enum ShapeKind {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     Filter(FilterOp),
+    Style(StyleOp),
     LayerMask(LayerMaskOp),
     /// v2: removal half of Cut; hosts must acknowledge their clipboard write first.
     /// Clear only canvas/layer/selection coverage and preserve the selection.
@@ -262,7 +265,9 @@ impl Batch {
         let version = operations
             .into_iter()
             .map(|(name, kind)| {
-                if matches!(
+                if name.starts_with("layer.style.") {
+                    10
+                } else if matches!(
                     name,
                     "canvas.stretch_skew" | "raster.stretch_skew_selection"
                 ) {
@@ -310,6 +315,7 @@ impl Batch {
             .max()
             .unwrap_or(2);
         match version {
+            10 => LAYER_STYLES_BATCH_SCHEMA,
             9 => STRETCH_SKEW_BATCH_SCHEMA,
             8 => LAYER_BLEND_BATCH_SCHEMA,
             7 => LAYER_APPEARANCE_BATCH_SCHEMA,
@@ -343,7 +349,9 @@ impl Batch {
         check()?;
         let appearance =
             v.get("schema").and_then(Value::as_str) == Some(LAYER_APPEARANCE_BATCH_SCHEMA);
-        let stretch = v.get("schema").and_then(Value::as_str) == Some(STRETCH_SKEW_BATCH_SCHEMA);
+        let styles = v.get("schema").and_then(Value::as_str) == Some(LAYER_STYLES_BATCH_SCHEMA);
+        let stretch =
+            styles || v.get("schema").and_then(Value::as_str) == Some(STRETCH_SKEW_BATCH_SCHEMA);
         let blends =
             stretch || v.get("schema").and_then(Value::as_str) == Some(LAYER_BLEND_BATCH_SCHEMA);
         let catalog = v.get("schema").and_then(Value::as_str) == Some(CATALOG_BATCH_SCHEMA);
@@ -380,6 +388,7 @@ impl Batch {
             Some(LAYER_APPEARANCE_BATCH_SCHEMA) => 7,
             Some(LAYER_BLEND_BATCH_SCHEMA) => 8,
             Some(STRETCH_SKEW_BATCH_SCHEMA) => 9,
+            Some(LAYER_STYLES_BATCH_SCHEMA) => 10,
             _ => {
                 return Err(bad(
                     "schema must be paintcraft.batch/v1, paintcraft.batch/v2, paintcraft.batch/v3, paintcraft.batch/v4 or paintcraft.batch/v5",
@@ -409,7 +418,9 @@ impl Batch {
         if catalog || appearance || blends {
             catalog::validate(v)?;
         }
-        if blends {
+        if styles {
+            styles::validate(v)?;
+        } else if blends {
             layer_blends::validate(v)?;
         } else if appearance {
             layer_appearance::validate(v)?;

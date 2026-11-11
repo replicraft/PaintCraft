@@ -10,6 +10,12 @@ pub(super) fn op(
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if name.starts_with("layer.style.") {
+        if version != 10 {
+            return Err(bad("layer styles require paintcraft.batch/layer-styles-v1"));
+        }
+        return super::styles::parse(v);
+    }
     if matches!(
         name,
         "canvas.stretch_skew" | "raster.stretch_skew_selection"
