@@ -65,6 +65,7 @@ impl Editor {
             preview,
             ticket: self.session.ticket(),
             owner: self.session.owner_id(),
+            target: self.target,
             canvas: self.document().canvas_rect(),
             empty: self.document().layers.is_empty(),
             fonts: self.text_renderer.clone(),
@@ -107,6 +108,7 @@ pub(crate) struct PreviewPreparation {
     preview: Option<Arc<Preview>>,
     ticket: paintcraft_editor::session::Ticket,
     owner: Uuid,
+    target: Option<Uuid>,
     canvas: paintcraft_core::types::Rect,
     empty: bool,
     fonts: Option<crate::text::Shared>,
@@ -129,6 +131,9 @@ impl PreviewPreparation {
             _ => None,
         }
     }
+    pub(crate) fn prospective_style(&self) -> bool {
+        matches!(self.preview.as_deref(), Some(Preview::Style(_)))
+    }
     pub(crate) fn requires_spatial_workspace(&self) -> bool {
         match self.preview.as_deref() {
             Some(Preview::Filter(edit)) => match &edit.operation {
@@ -148,7 +153,7 @@ impl PreviewPreparation {
     pub(crate) fn build_paste(
         &mut self,
         check: &dyn Fn() -> Result<()>,
-    ) -> Result<Option<Document>> {
+    ) -> Result<Option<paintcraft_editor::session::AdmittedPastePreview>> {
         self.paste
             .take()
             .map(|paste| paste.build(check))
@@ -168,6 +173,22 @@ impl PreviewPreparation {
     pub(crate) fn build(self, check: impl Fn() -> Result<()>) -> Result<Option<Batch>> {
         check()?;
         let operations = match self.preview.as_deref() {
+            Some(Preview::Style(edit)) => {
+                if edit.owner != self.owner
+                    || edit.state_id != self.ticket.state_id
+                    || edit.publication_epoch != self.ticket.publication_epoch
+                    || edit
+                        .operation
+                        .stable_uuid_refs()
+                        .is_none_or(|(layer, _)| Some(layer) != self.target)
+                {
+                    return Err(paintcraft_core::types::Error::new(
+                        paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                        "Style preview source changed",
+                    ));
+                }
+                vec![edit.operation.to_value()?]
+            }
             Some(Preview::Filter(edit)) => {
                 if edit.owner != self.owner
                     || edit.state_id != self.ticket.state_id

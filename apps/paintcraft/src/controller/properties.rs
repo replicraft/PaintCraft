@@ -53,7 +53,7 @@ impl Editor {
         Ok(capture)
     }
     fn properties_input_blocked(&self) -> bool {
-        self.filter_edit_open
+        self.parameter_edit_open()
             || self.has_image_paste()
             || self.has_floating_selection()
             || self.gesture_in_progress()

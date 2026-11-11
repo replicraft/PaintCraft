@@ -49,6 +49,17 @@ impl Editor {
             self.status = error.to_string();
             return false;
         }
+        if let Action::Style(edit) = &action
+            && let Err(error) = self.validate_style_edit(edit)
+        {
+            self.status = error.to_string();
+            return false;
+        }
+        if self.style_editing.open
+            && !matches!(&action, Action::Style(edit) if self.style_request_allowed(token, edit))
+        {
+            return false;
+        }
         if self.filter_edit_open
             && !matches!(&action, Action::Filter(edit) if self.filter_request_allowed(token, edit))
         {

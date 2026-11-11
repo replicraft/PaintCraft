@@ -34,7 +34,7 @@ impl Editor {
             .operation
             .stable_uuid_ref()
             .is_some_and(|id| self.target == Some(id) && self.document().layer(&id).is_some())
-            || self.filter_edit_open
+            || self.parameter_edit_open()
             || self.has_image_paste()
             || self.has_floating_selection()
             || self.gesture_in_progress()

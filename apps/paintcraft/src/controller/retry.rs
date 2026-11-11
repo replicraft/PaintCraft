@@ -65,6 +65,7 @@ pub(super) struct Deferred {
 pub(super) struct Waiting {
     pub(super) text: Option<text_submission::Attempt>,
     pub(super) filter: Option<Uuid>,
+    pub(super) style: Option<Uuid>,
     pub(super) native_activation: Option<native_publication::Scope>,
     pub(super) deferred: Deferred,
     pub(super) done: String,
@@ -199,10 +200,12 @@ impl Editor {
         if waiting.deferred.base != self.session.history_ticket()
             || self.check_text_attempt(waiting.text).is_err()
             || self.check_filter_attempt(waiting.filter).is_err()
+            || self.check_style_attempt(waiting.style).is_err()
         {
-            let (text, filter) = (waiting.text, waiting.filter);
+            let (text, filter, style) = (waiting.text, waiting.filter, waiting.style);
             self.fail_text_attempt(text);
             self.finish_filter_attempt(filter, false);
+            self.finish_style_attempt(style, false);
             self.waiting_edit = None;
             self.publication_preview = None;
             self.preview_queue_revision.advance();
@@ -246,11 +249,13 @@ impl Editor {
         };
         let text = waiting.text;
         let filter = waiting.filter;
+        let style = waiting.style;
         let preparation = match self.session.preparation() {
             Ok(preparation) => preparation,
             Err(error) => {
                 self.fail_text_attempt(text);
                 self.finish_filter_attempt(filter, false);
+                self.finish_style_attempt(style, false);
                 self.waiting_edit = None;
                 self.publication_preview = None;
                 self.preview_queue_revision.advance();
@@ -285,6 +290,7 @@ impl Editor {
                 pending.native_activation = waiting.native_activation.clone();
                 pending.text = text;
                 pending.filter = filter;
+                pending.style = style;
                 self.waiting_edit = None;
                 self.pending_edit = Some(pending);
                 self.status = "Retrying edit after memory capacity became available…".into();
@@ -293,6 +299,7 @@ impl Editor {
             Err(error) => {
                 self.fail_text_attempt(text);
                 self.finish_filter_attempt(filter, false);
+                self.finish_style_attempt(style, false);
                 self.waiting_edit = None;
                 self.publication_preview = None;
                 self.preview_queue_revision.advance();

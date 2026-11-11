@@ -15,6 +15,8 @@ mod dispatch;
 mod files;
 mod filter_editing;
 mod filter_submission;
+mod style_editing;
+pub(crate) use style_editing::Feedback as StyleFeedback;
 mod layer_masks;
 mod properties;
 pub(crate) use filter_submission::Feedback as FilterFeedback;
@@ -103,6 +105,7 @@ pub struct Editor {
     filter_preview: Option<paintcraft_tools::FilterEdit>,
     filter_edit_open: bool,
     filter_submission: filter_submission::Tracker,
+    style_editing: style_editing::State,
     pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
     image_paste: Option<image_paste::Placing>,
@@ -185,6 +188,7 @@ impl Editor {
             filter_preview: None,
             filter_edit_open: false,
             filter_submission: Default::default(),
+            style_editing: Default::default(),
             image_paste: None,
             floating_commit_on_release: true,
             text_renderer: None,
@@ -401,7 +405,7 @@ impl Editor {
 
     /// Choose the editing target explicitly; it must be an existing layer.
     pub fn set_target(&mut self, id: Uuid) -> bool {
-        if self.filter_edit_open || self.has_image_paste() {
+        if self.parameter_edit_open() || self.has_image_paste() {
             return false;
         }
         let ok = self.document().layers.contains_key(&id);
@@ -443,7 +447,7 @@ impl Editor {
         self.tools.is_editing_text()
     }
     pub fn select_tool(&mut self, tool: Tool) {
-        if self.filter_edit_open {
+        if self.parameter_edit_open() {
             return;
         }
         if tool != self.tool {
@@ -544,6 +548,7 @@ impl Editor {
     fn execute(&mut self, action: Action) {
         match action {
             Action::Filter(edit) => self.execute_filter(edit),
+            Action::Style(edit) => self.execute_style(edit),
             Action::LayerMask(edit) => self.execute_layer_mask(edit),
             Action::MoveSelection {
                 layer,

@@ -17,6 +17,8 @@ fn preview(editor: &Editor) -> Document {
         .unwrap()
         .build(&|| Ok(()))
         .unwrap()
+        .document()
+        .clone()
 }
 #[test]
 fn repeated_drags_and_nudges_are_private_and_place_exact_preview_in_one_undo_step() {

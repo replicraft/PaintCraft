@@ -25,6 +25,7 @@ fn metadata_denial_does_not_enter_decoded_history_pressure_retry() {
     editor.waiting_edit = Some(Waiting {
         text: None,
         filter: None,
+        style: None,
         native_activation: None,
         deferred: *deferred,
         done: String::new(),

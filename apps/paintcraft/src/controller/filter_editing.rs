@@ -72,7 +72,11 @@ impl Editor {
         self.filter_submission.executing = None;
     }
     pub(crate) fn begin_filter_edit(&mut self) -> Result<()> {
-        if self.has_image_paste() || self.has_floating_selection() || self.is_constructing_shape() {
+        if self.style_editing.open
+            || self.has_image_paste()
+            || self.has_floating_selection()
+            || self.is_constructing_shape()
+        {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
                 "Finish the current placement before editing filters",

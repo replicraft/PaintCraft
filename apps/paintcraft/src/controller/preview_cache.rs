@@ -19,7 +19,8 @@ pub(super) struct Cache(Mutex<Option<(Stamp, Option<Weak<Preview>>)>>);
 
 impl Editor {
     fn collect_preview(&self) -> Option<Preview> {
-        self.filter_preview_current()
+        self.style_preview_current()
+            .or_else(|| self.filter_preview_current())
             .or_else(|| self.paint_preview())
             .or_else(|| self.queued_move_preview())
             .or_else(|| {

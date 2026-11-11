@@ -34,6 +34,10 @@ impl Activations {
         self.0
             .retain(|queued| queued.action != Action::Filter(edit.clone()));
     }
+    pub(in crate::controller) fn revoke_style(&mut self, edit: &paintcraft_tools::StyleEdit) {
+        self.0
+            .retain(|queued| queued.action != Action::Style(edit.clone()));
+    }
     pub(in crate::controller) fn revoke_text(&mut self, token: u64) {
         self.0
             .retain(|queued| queued.text.is_none_or(|attempt| attempt.token != token));
@@ -88,6 +92,9 @@ impl Editor {
             self.fail_text_attempt(queued.text);
             if let Action::Filter(edit) = &queued.action {
                 self.fail_queued_filter(edit);
+            }
+            if let Action::Style(edit) = &queued.action {
+                self.fail_queued_style(edit);
             }
             self.status = error.to_string();
             return;

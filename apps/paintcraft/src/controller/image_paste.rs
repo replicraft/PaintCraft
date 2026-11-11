@@ -23,8 +23,11 @@ pub(crate) struct Captured {
     canvas: (u32, u32),
 }
 impl Captured {
-    pub(crate) fn build(self, check: &dyn Fn() -> Result<()>) -> Result<Document> {
-        let mut doc = self.source?.preview_paste_image_onto(
+    pub(crate) fn build(
+        self,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<paintcraft_editor::session::AdmittedPastePreview> {
+        let mut doc = self.source?.preview_paste_image_onto_admitted(
             &self.draft,
             self.target,
             BlendMode::SourceOver,
@@ -33,7 +36,7 @@ impl Captured {
             check,
         )?;
         // Growth is staged with placement. Keep the current canvas while dragging.
-        doc.canvas = self.canvas;
+        doc.set_canvas(self.canvas)?;
         Ok(doc)
     }
 }

@@ -50,6 +50,7 @@ fn deferred_layer_properties_retry_keeps_original_batch_label_and_source() {
     editor.waiting_edit = Some(Waiting {
         text: None,
         filter: None,
+        style: None,
         native_activation: None,
         deferred: *deferred,
         done: "Layer properties changed".into(),
