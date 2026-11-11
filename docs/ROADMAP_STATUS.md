@@ -98,32 +98,54 @@ the original work ceiling. Shared context/preflight code brings the module to
 has a 2 MiB initial memory and 256 MiB maximum; these are separate from the
 888-case diagnostic's limits. The unchanged service artifact and production JS
 also pass 12 groups/37 scenarios in real Node worker threads and eight groups/35
-scenarios in headless Chrome, including all 26 pixel goldens. Original Main
-admission and editor texture publication remain open; transport checks use
-explicit Main callback stand-ins.
+scenarios in headless Chrome, including all 26 pixel goldens. Those transport checkpoints do
+not establish original Main admission or texture publication: they use explicit
+Main callback stand-ins.
 The host-control extension separately passes 15 groups/40 scenarios in Node and
 11 groups/38 scenarios in headless Chrome, retaining those goldens. Close can
 finish while host credit remains held; broker reuse waits for its release and
-unknown joins remain quarantined. All 392 web tests pass. The compiled Rust
-host quote and real Main publication still require qualification.
+unknown joins remain quarantined. All 392 web tests pass. The defining Rust
+host quote and real Main publication have separate later qualification below.
 The Main adapter now passes 26 focused native tests and strict checks. A genuine
 corrected Main build preserves the old API plus two opaque classes and excludes
 Worker SDK exports; its module is 22,189,454 bytes under the unchanged 25 MiB
 limit. The default-feature Worker separately passes 182 native and 42 Wasm checks
 under its qualified memory profile, with checked output files byte-identical to
-the previous qualified artifact. Real
-Main browser lifetime, publication and handoff acceptance remain open.
-The defining workspace/role forecasts pass 276 renderer and 182 worker checks,
+the previous qualified artifact. The later normal production Worker declares
+19 initial pages under the same 256 MiB maximum and passes all 42 cases.
+
+The current production Main is 22,190,142 bytes. All nine real browser cases
+pass with genuine Rust callbacks: source opening and exact pixels, independent
+Save/Undo preservation, idle ownership, Source8 handoffs, the paid Normal probe
+and actual Source7 fallback, positive-LOD clipped views, layout changes, and
+consuming failed-source cleanup followed by a changed-source retry. Screenshot
+pixels confirm a fresh LOD texture and its padded horizontal footprint. This
+qualifies the finite committed Studio display cases; vertical physical placement
+is not independently discriminated, and failed middle-button attempts remain
+unqualified. The separate Studio zoom-centering fix passes all 32 Studio and
+545 native web tests, with three existing web ignores, plus that nine-case
+production replay. Hidden S/C balances, physical memory, GC, latency and full D1
+remain outside this evidence. Detailed source/artifact receipts are in the
+[blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md).
+The checked-in `test:main-blend-browser` regression separately passes five real
+Main browser groups locally, alongside all 394 Node tests. It covers exact pixels,
+canonical project saving, Undo, idle reuse, consuming source handoff and failed
+OPEN recovery. CI now runs it against the production bundle and retains its
+evidence; the new Linux CI execution is pending. This finite smoke does not
+replace the nine-case qualification or qualify hardware graphics and memory.
+The initial defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check
 required-Metal execution remains a separate rendering checkpoint, not a GPU
 execution claim for these new metadata queries.
 The [blend checkpoint](architecture/LAYER_BLEND_FOUNDATION.md) records exact
 receipts, the single corrected off-canvas work expectation and a disclosed
-development failure-log gap. This does not activate browser blending or qualify
-physical memory, latency or the full roadmap.
-Next is completing browser mask actions and browser blend adoption, then Color
-Overlay as the first live style. Its
+development failure-log gap. Committed Studio blend display now has the finite
+browser evidence above; private blend editing and derived/foreign consumers
+still need their own integration and acceptance. This does not qualify physical
+memory, latency or the full roadmap.
+Next is browser mask-action acceptance and the remaining private/derived blend
+consumers, then Color Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
 independent native and actual Wasm scalar/row checks; document persistence and
 rendering integration remain open. The remaining author's 132-entry
