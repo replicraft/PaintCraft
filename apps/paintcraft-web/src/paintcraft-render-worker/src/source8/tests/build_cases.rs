@@ -118,7 +118,7 @@ fn frozen_adoption_registry_and_cleanup_math_match_literal_target_policy() {
     assert_eq!(work::stack(1, 61).unwrap(), 3760);
     assert_eq!(
         work::retire(1, 0, 0).unwrap(),
-        if native { 424 } else { 340 }
+        if native { 480 } else { 380 }
     );
     assert_eq!(
         work::adoption(1, 4, &work::AdoptionFacts::default()).unwrap(),
@@ -132,7 +132,9 @@ fn frozen_adoption_registry_and_cleanup_math_match_literal_target_policy() {
 #[test]
 fn fresh_map_allocation_follows_paid_math_and_original_metadata_guard() {
     let native = cfg!(target_pointer_width = "64");
-    let exact = if native { 1636 } else { 1444 };
+    // Four fresh buckets now contain the larger Layer stride. The fixed
+    //144-action prefix and original2000-byte metadata guard are unchanged.
+    let exact = if native { 1636 + 4 * 56 } else { 1444 + 4 * 40 };
     for (ceiling, paid, success) in [(exact - 1, 144, false), (exact, exact, true)] {
         let host = Host::new(1 << 20);
         let mut guard = host.m.account();

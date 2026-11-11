@@ -2,7 +2,7 @@
 use super::{assembly_ledger as work, entry::EntryAuth8, owner::RetainedFactories8};
 use paintcraft_core::types::{Result, resources::BudgetAccount};
 use paintcraft_document::{
-    Document, FilterInstance, FilterMask, FilterStack, Layer, LayerMask, SourceMetadata,
+    Document, FilterInstance, FilterMask, FilterStack, Layer, LayerMask, SourceMetadata, StyleStack,
 };
 use paintcraft_formats::pcnd::{IntentionReceipt8, PortableHeaderView, PortableLayerHeader};
 use paintcraft_raster::{RasterLayer, raster::metadata_clone::fresh_map_layout};
@@ -59,16 +59,25 @@ pub(super) fn controls() -> Result<u64> {
     {
         return Err(work::limit());
     }
-    let bytes = if usize::BITS == 64 {
+    let bytes: usize = if usize::BITS == 64 {
         2696
     } else if usize::BITS == 32 {
         2308
     } else {
         return Err(work::limit());
     };
+    // The containing Layer adds its empty stack, plus four separately named
+    // empty-stack formation/move controls. The original4096 slot is unchanged.
+    let old_layer = if usize::BITS == 64 { 352 } else { 304 };
+    let bytes = bytes
+        .checked_add(size_of::<Layer>())
+        .and_then(|n| n.checked_sub(old_layer))
+        .and_then(|n| n.checked_add(4 * size_of::<StyleStack>()))
+        .ok_or_else(work::limit)?;
     // Defining fields are independently checked, never enlarged from runtime demand.
     if size_of::<Document>() != if usize::BITS == 64 { 144 } else { 104 }
-        || size_of::<Layer>() != if usize::BITS == 64 { 352 } else { 304 }
+        || size_of::<Layer>() != if usize::BITS == 64 { 408 } else { 344 }
+        || size_of::<StyleStack>() != if usize::BITS == 64 { 56 } else { 44 }
         || size_of::<FilterInstance>() != if usize::BITS == 64 { 184 } else { 176 }
         || size_of::<FilterMask>() != if usize::BITS == 64 { 152 } else { 144 }
         || size_of::<FilterStack>() != if usize::BITS == 64 { 56 } else { 44 }
@@ -270,6 +279,7 @@ pub(super) fn layer(
         blend_mode: header.blend_mode,
         raster,
         filters,
+        styles: paintcraft_document::StyleStack::empty(),
         mask,
     })
 }
