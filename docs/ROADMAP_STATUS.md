@@ -149,7 +149,17 @@ Five actual Multiply browser groups verify canonical PCND8, full RGBA and joined
 Worker handoffs, alongside fresh passes of the five Main and six Normal-mask
 groups. All 402 Node tests pass. The production Worker is byte-identical to its
 qualified artifact; existing constructor, legacy, private filter and derived
-consumer guards remain intact. The new blended-mask CI check is pending.
+consumer guards remain intact. The blended-mask CI check now passes. The first
+CI attempt failed while apt resolved Ubuntu servers, before browser execution;
+CI now verifies and uses the hosted image's preinstalled Chrome.
+Filter-mask actions already used the atomic captured-edit path; no additional
+production guard was removed. Five Normal and five Multiply browser groups now
+verify real filter-row selection capture, no-op, disabling/re-enabling, removal
+and Undo/Redo, with exact saved PCND7/8 and full RGBA. The Normal case retains a
+separate own-layer mask unchanged; Source8 joins every old Worker before its
+successor. All 555 native web tests pass, with three existing ignores, and all
+410 Node tests pass. Private numeric dialogs on blended documents remain outside
+this evidence. The two new filter-mask CI checks are pending.
 The initial defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check
@@ -161,8 +171,9 @@ development failure-log gap. Committed Studio blend display now has the finite
 browser evidence above; private blend editing and derived/foreign consumers
 still need their own integration and acceptance. This does not qualify physical
 memory, latency or the full roadmap.
-Next is filter-mask browser acceptance and the remaining private/derived blend
-consumers, then Color Overlay as the first live style. Its
+Remaining work includes private numeric and derived blend consumers. Color
+Overlay's shared model/commands, persistence/rendering and native Studio UI are
+being implemented in parallel as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
 independent native and actual Wasm scalar/row checks; document persistence and
 rendering integration remain open. The remaining author's 132-entry

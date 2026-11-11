@@ -153,3 +153,41 @@ Evidence is under `docs/validation/browser-mask-runtime/`,
 `docs/validation/browser-blend-mask-runtime/blend-mask-VK4kTo/final.json`.
 The initial missed toolbar drag, inclusive-endpoint calibration, incorrect fresh
 Apply-frame expectation and incorrect two-row button offset remain preserved.
+
+## Actual filter-mask metadata actions
+
+Filter-mask metadata actions already commit through captured `FilterEdit` and
+the existing transaction. This checkpoint adds acceptance and regression tests,
+not a new Normal-guard bypass. Explicit layer/filter UUID references remain the
+authority; changing the active layer alone does not reinterpret the operation.
+Private numeric dialog creation is distinct from successful rendering: the old
+snapshot encoder still rejects nonNormal sources before a legacy Worker read.
+
+The native web suite passes 555 tests with three existing ignores. Five new
+groups cover Normal/Multiply/Screen masks, pixels, PCND4/8 persistence, no-op,
+history, stale/private input, admission refusal and Source8 stamp/Undo ABA. The
+first test draft accessed a private floating-source field; its failed compile
+is retained. The corrected assertion uses existing `display_selection`, which
+also requires the retained source to remain current. Visibility is unchanged.
+
+Five real Source7 browser groups use a fixed opaque 4 × 2 Invert scene. The
+filter mask applies Invert only to x1, while the existing own mask still covers
+x1 and x2. Thus x1 is inverted and x2 remains original; disabling/removing the
+filter mask inverts both. Saved PCND7, all RGBA, raw source, own mask and filter
+identity agree with independent literal fixtures through Undo/Redo and no-op.
+
+Five separate real Source8 groups use a semitransparent two-pixel Multiply scene
+with a stored Invert filter. A right-pixel filter mask leaves the left composite
+unfiltered and the right filtered; disabling/removing it filters both. Exact
+PCND8, full RGBA, ACK/copy, same-source stability and every adjacent consuming
+Worker handoff are checked with the application's original callbacks. This
+does not enable or qualify private numeric blend previews, mask painting,
+physical semitransparent pixels, numeric hidden credits or physical memory.
+
+All 410 Node tests pass. The two browser scripts have separate calibrated menu
+defaults and run in CI with retained evidence. The old tracked export/reopen
+script remains byte-identical; a candidate filename collision and zero-coordinate
+placeholder check were corrected before promotion. Native and browser receipts
+are under `docs/validation/browser-filter-mask-activation/`,
+`docs/validation/browser-filter-mask-runtime/`, and
+`docs/validation/browser-filter-mask-source8-runtime/`.
