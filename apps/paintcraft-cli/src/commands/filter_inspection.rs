@@ -33,7 +33,9 @@ pub(super) fn expanded(doc: &Document) -> bool {
     })
 }
 pub(super) fn cli_schema(doc: &Document) -> &'static str {
-    if doc.has_layer_masks() {
+    if doc.has_styles() {
+        "paintcraft.inspect/layer-styles-v1"
+    } else if doc.has_layer_masks() {
         "paintcraft.inspect/v5"
     } else if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
         "paintcraft.inspect/catalog-v1"
@@ -48,7 +50,9 @@ pub(super) fn cli_schema(doc: &Document) -> &'static str {
     }
 }
 pub(super) fn mcp_schema(doc: &Document, masked: bool) -> Option<&'static str> {
-    if doc.has_layer_masks() {
+    if doc.has_styles() {
+        Some("paintcraft.mcp-inspect/layer-styles-v1")
+    } else if doc.has_layer_masks() {
         Some("paintcraft.mcp-inspect/v5")
     } else if !paintcraft_editor::session::catalog_document_requirements(doc).is_empty() {
         Some("paintcraft.mcp-inspect/catalog-v1")
@@ -65,7 +69,11 @@ pub(super) fn mcp_schema(doc: &Document, masked: bool) -> Option<&'static str> {
 
 /// Old inspection profiles cannot truthfully disclose stored composition intent.
 pub(super) fn require_supported(doc: &Document) -> paintcraft_core::types::Result<()> {
-    doc.require_normal_blends()
+    if doc.has_styles() {
+        Ok(())
+    } else {
+        doc.require_normal_blends()
+    }
 }
 pub(super) fn require_source(bytes: &[u8]) -> paintcraft_core::types::Result<()> {
     if bytes.len() >= 8 && &bytes[..8] == b"PCND\x08\r\n\x1a" {

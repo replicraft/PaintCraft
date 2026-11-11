@@ -30,21 +30,31 @@ pub fn envelope(engine: Option<Value>, file: Option<Value>, outcome: &str, exit_
     Value::object([
         (
             "schema",
-            Value::str(if engine_schema == Some("paintcraft.result/v6") {
-                "paintcraft.file-command/v6"
-            } else if engine_schema == Some("paintcraft.result/v5") {
-                "paintcraft.file-command/v5"
-            } else if engine_schema == Some("paintcraft.result/catalog-v1") {
-                "paintcraft.file-command/catalog-v1"
-            } else if engine_schema == Some("paintcraft.result/v4") {
-                "paintcraft.file-command/v4"
-            } else if engine_schema == Some("paintcraft.result/v3") {
-                "paintcraft.file-command/v3"
-            } else if engine_schema == Some("paintcraft.result/v2") {
-                "paintcraft.file-command/v2"
-            } else {
-                "paintcraft.file-command/v1"
-            }),
+            Value::str(
+                if matches!(
+                    engine_schema,
+                    Some(
+                        "paintcraft.result/layer-styles-v1"
+                            | "paintcraft.export-disclosure/layer-styles-v1"
+                    )
+                ) {
+                    "paintcraft.file-command/layer-styles-v1"
+                } else if engine_schema == Some("paintcraft.result/v6") {
+                    "paintcraft.file-command/v6"
+                } else if engine_schema == Some("paintcraft.result/v5") {
+                    "paintcraft.file-command/v5"
+                } else if engine_schema == Some("paintcraft.result/catalog-v1") {
+                    "paintcraft.file-command/catalog-v1"
+                } else if engine_schema == Some("paintcraft.result/v4") {
+                    "paintcraft.file-command/v4"
+                } else if engine_schema == Some("paintcraft.result/v3") {
+                    "paintcraft.file-command/v3"
+                } else if engine_schema == Some("paintcraft.result/v2") {
+                    "paintcraft.file-command/v2"
+                } else {
+                    "paintcraft.file-command/v1"
+                },
+            ),
         ),
         ("engine", engine.unwrap_or(Value::Null)),
         ("file", file.unwrap_or(Value::Null)),

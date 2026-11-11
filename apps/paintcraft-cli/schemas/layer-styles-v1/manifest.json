@@ -1,0 +1,13 @@
+{
+  "schema": "paintcraft.schema-bundle/layer-styles-v1",
+  "batch_schema": "paintcraft.batch/layer-styles-v1",
+  "scope": "Native CLI/MCP ordered Color Overlay; PCND9; compound PNG consent. Browser and GPU style rendering remain unsupported.",
+  "files": {
+    "batch.schema.json": "bd04fd9a24bab3229e4fa7f0a4ae494830f9e30a6ec10f0d337d30abc9f71449",
+    "export-disclosure.schema.json": "e0d4e4df8a2394412a279243f89eeda63503ccb1cf701c941e28f2ab1a99c8ea",
+    "file-command.schema.json": "a3dbe942b4df46347d7bd1deb0521576b63d1b333a26c289fc79b5e0d0e00fba",
+    "inspect.schema.json": "75351ecf7e3529649104386343fba463c8654f1a1622574fd378ed5afbc3fc63",
+    "mcp-inspect.schema.json": "a85351db6bdb7e676cdb6d57a25c7b6c692f76cdf2d3739b6394623262894b3e",
+    "result.schema.json": "c1e78940f6cd52d02fdf5e96dbe3c0760b5f0f7bf28a334839c16d985c1e9806"
+  }
+}

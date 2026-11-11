@@ -8,6 +8,7 @@ pub struct Options {
 }
 
 fn layer_info(doc: &Document) -> Value {
+    let styled = doc.has_styles();
     Value::Array(
         doc.layers_in_order()
             .map(|layer| {
@@ -41,6 +42,16 @@ fn layer_info(doc: &Document) -> Value {
                 }
                 if let Some(mask) = &layer.mask {
                     fields.insert("mask".into(), super::layer_mask_inspection::value(mask));
+                }
+                if styled {
+                    fields.insert(
+                        "blend_mode".into(),
+                        Value::str(super::style_inspection::blend(layer.blend_mode)),
+                    );
+                    fields.insert(
+                        "styles".into(),
+                        super::style_inspection::stack(&layer.styles),
+                    );
                 }
                 Value::Object(fields)
             })
@@ -89,14 +100,16 @@ fn catalog_assessment(
     bytes: &[u8],
 ) -> Result<Value> {
     let mut result = assessment(sha, header, mode, reasons);
-    if matches!(header.container_version, 6 | 7) {
+    if matches!(header.container_version, 6 | 7 | 9) {
         let requirements = pcnd::catalog_manifest(bytes)?;
         let Value::Object(ref mut fields) = result else {
             unreachable!("assessment object");
         };
         fields.insert(
             "schema".into(),
-            Value::str(if header.container_version == 7 {
+            Value::str(if header.container_version == 9 {
+                "paintcraft.open-assessment/layer-styles-v1"
+            } else if header.container_version == 7 {
                 "paintcraft.open-assessment/layer-appearance-v1"
             } else {
                 "paintcraft.open-assessment/catalog-v1"
@@ -107,7 +120,9 @@ fn catalog_assessment(
         if mode == "editable" && header.require_supported().is_ok() {
             fields.insert(
                 "profile".into(),
-                Value::str(if header.container_version == 7 {
+                Value::str(if header.container_version == 9 {
+                    "paintcraft.native/binary9-document9-layer-styles1"
+                } else if header.container_version == 7 {
                     "paintcraft.native/binary7-document7-layer-masks1"
                 } else {
                     "paintcraft.native/binary6-document6-filter-catalog1"
@@ -186,7 +201,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             ]);
             let features = paintcraft_editor::session::masked_document_features(&doc);
             let requirements = paintcraft_editor::session::catalog_document_requirements(&doc);
-            if !requirements.is_empty() || doc.has_layer_masks() {
+            if !requirements.is_empty() || doc.has_layer_masks() || doc.has_styles() {
                 let Value::Object(ref mut fields) = value else {
                     unreachable!("inspection object");
                 };

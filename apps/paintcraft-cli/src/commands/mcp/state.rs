@@ -128,8 +128,10 @@ impl State {
         let session = self.session()?;
         let doc = session.document();
         super::super::filter_inspection::require_supported(doc)?;
+        let styled = doc.has_styles();
         let layers = doc.layers_in_order().map(|layer| {
             let mut value = json!({"id":layer.id.to_string(),"name":layer.name,"visible":layer.visible,"opacity":layer.opacity});
+            if styled {value["styles"]=core_json(&super::super::style_inspection::stack(&layer.styles))?;value["blend_mode"]=json!(super::super::style_inspection::blend(layer.blend_mode));}
             if !layer.filters.is_empty() {value["filters"] = core_json(&paintcraft_document::filters::inspection(&layer.filters))?;}
             if let Some(mask) = &layer.mask {value["mask"] = core_json(&super::super::layer_mask_inspection::value(mask))?;}
             Ok(value)
@@ -149,7 +151,7 @@ impl State {
             value["document_features"] = json!(features);
         }
         let requirements = paintcraft_editor::session::catalog_document_requirements(doc);
-        if !requirements.is_empty() || doc.has_layer_masks() {
+        if !requirements.is_empty() || doc.has_layer_masks() || doc.has_styles() {
             value["required_filters"] = json!(requirements);
         }
         Ok(value)
@@ -168,9 +170,15 @@ impl State {
         Ok(json!({"id":id}))
     }
     pub fn apply(&mut self, operations: Vec<Json>) -> Result<CallToolResult> {
-        if operations
-            .iter()
-            .any(|o| o.get("op").and_then(Json::as_str) == Some("layer.set_blend_mode"))
+        let styles = operations.iter().any(|o| {
+            o.get("op")
+                .and_then(Json::as_str)
+                .is_some_and(|n| n.starts_with("layer.style."))
+        });
+        if !styles
+            && operations
+                .iter()
+                .any(|o| o.get("op").and_then(Json::as_str) == Some("layer.set_blend_mode"))
         {
             return Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
@@ -218,7 +226,9 @@ impl State {
         if bytes.len() as u64 > OPERATIONS_MAX {
             return Err(invalid("batch exceeds size limit"));
         }
-        let parsed = if schema == paintcraft_commands::LAYER_APPEARANCE_BATCH_SCHEMA {
+        let parsed = if schema == paintcraft_commands::LAYER_APPEARANCE_BATCH_SCHEMA
+            || schema == paintcraft_commands::LAYER_STYLES_BATCH_SCHEMA
+        {
             let value = paintcraft_core::types::json::parse(&bytes)
                 .map_err(|_| invalid("invalid operations"))?;
             paintcraft_commands::Batch::from_generated_value(value)?

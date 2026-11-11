@@ -1,6 +1,7 @@
 //! The CLI commands. Each returns what to print and how to exit; nothing here
 //! calls `process::exit`.
 
+mod appearance_options;
 mod export_metadata;
 mod filter_inspection;
 mod import_source;
@@ -8,6 +9,7 @@ mod layer_appearance_schemas;
 mod layer_mask_inspection;
 mod persistence;
 mod render_workspace;
+mod style_inspection;
 pub(crate) use render_workspace::command as with_render_workspace;
 mod source_metadata;
 mod tiff_page;

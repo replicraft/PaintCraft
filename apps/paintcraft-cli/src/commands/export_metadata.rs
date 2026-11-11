@@ -61,6 +61,7 @@ pub(super) fn capture_copy_policies(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<export::CopyPolicies> {
     Ok(export::CopyPolicies {
+        appearance_bake: export::appearance_bake::Policy::Refuse,
         source_metadata: metadata_policy::Policy::capture(doc, target, metadata)?,
         filter_bake: export::filter_bake::Policy::capture(doc, target, filters, check)?,
     })
@@ -74,6 +75,7 @@ impl Options {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<export::CopyPolicies> {
         Ok(export::CopyPolicies {
+            appearance_bake: export::appearance_bake::Policy::Refuse,
             source_metadata: self.capture(doc, format)?,
             filter_bake: export::filter_bake::Policy::capture(
                 doc,
@@ -105,6 +107,7 @@ impl CopyFormat {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<export::CopyPolicies> {
         Ok(export::CopyPolicies {
+            appearance_bake: export::appearance_bake::Policy::Refuse,
             source_metadata: self.capture(doc, metadata)?,
             filter_bake: export::filter_bake::Policy::capture(doc, self.target(), filters, check)?,
         })

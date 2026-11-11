@@ -396,7 +396,7 @@ impl PaintingServer {
             .await
     }
     #[tool(
-        description = "Export a flattened image selected by filename extension. Retained source metadata requires source_metadata=omit; allow_losses acknowledges other losses. Does not clear project dirty state."
+        description = "Export a flattened image selected by filename extension. Retained source metadata requires source_metadata=omit; styled PNG copies require appearance_copy=bake plus every allow_losses acknowledgment. Does not clear project dirty state."
     )]
     async fn export_image(
         &self,
@@ -411,6 +411,11 @@ impl PaintingServer {
             s.protect_copy_sources(&path)?;
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
+            if p.appearance_copy == super::super::appearance_options::AppearanceCopy::Bake
+                && format != ImageFormat::Png
+            {
+                return Err(invalid("appearance_copy=bake requires PNG output"));
+            }
             let metadata_intent: export::metadata_policy::Intent =
                 p.source_metadata.unwrap_or_default().into();
             let filter_intent = super::super::export_metadata::user_filter_intent(&p.allow_losses);
@@ -548,15 +553,30 @@ impl PaintingServer {
                 }
                 Ok(())
             };
-            options.filter_bake = export::filter_bake::Policy::capture(
-                doc,
-                export::metadata_policy::Target::new(
-                    family,
-                    paintcraft_formats::registry::Operation::ExportFlat,
-                ),
-                filter_intent,
-                &check,
-            )?;
+            if doc.has_styles() {
+                options.appearance_bake = export::appearance_bake::Policy::capture(
+                    doc,
+                    export::metadata_policy::Target::new(
+                        family,
+                        paintcraft_formats::registry::Operation::ExportFlat,
+                    ),
+                    p.appearance_copy.into(),
+                    &check,
+                )?;
+            } else {
+                options.filter_bake = export::filter_bake::Policy::capture(
+                    doc,
+                    export::metadata_policy::Target::new(
+                        family,
+                        paintcraft_formats::registry::Operation::ExportFlat,
+                    ),
+                    filter_intent,
+                    &check,
+                )?;
+                if p.appearance_copy == super::super::appearance_options::AppearanceCopy::Bake {
+                    return Err(invalid("appearance_copy=bake requires stored layer styles"));
+                }
+            }
             let flat = export::export_flat_options_with_check(
                 doc,
                 options,
@@ -586,7 +606,21 @@ impl PaintingServer {
                 &check,
             )?;
             let (receipt, ok, _) = super::super::finish_output(&path, &ctx, outcome);
-            let content = vec![ContentBlock::text(core_json(&receipt)?.to_string())];
+            let reported = if let Some(disclosure) = flat.disclosure {
+                crate::report::envelope(
+                    Some(disclosure),
+                    Some(receipt),
+                    if ok { "success" } else { "file-incomplete" },
+                    if ok {
+                        0
+                    } else {
+                        paintcraft_core::types::ErrorCode::StorageFailed.exit_code()
+                    },
+                )
+            } else {
+                receipt
+            };
+            let content = vec![ContentBlock::text(core_json(&reported)?.to_string())];
             Ok(if ok {
                 CallToolResult::success(content)
             } else {
@@ -622,6 +656,7 @@ impl PaintingServer {
             + Self::shapes_router()
             + Self::brush_router()
             + Self::layer_mask_router()
+            + Self::style_router()
     }
 }
 

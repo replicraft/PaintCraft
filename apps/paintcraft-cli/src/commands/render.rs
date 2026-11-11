@@ -18,6 +18,9 @@ pub struct Options {
     /// Explicitly omit retained source metadata from this foreign copy.
     #[arg(long, default_value = "refuse")]
     source_metadata: export::metadata_policy::Intent,
+    /// Explicitly bake the complete styled appearance into a PNG copy.
+    #[arg(long, value_enum, default_value = "refuse")]
+    appearance_copy: super::appearance_options::AppearanceCopy,
     /// PCX only: exact indexed colors or explicitly quantize to 256 colors.
     #[arg(long, value_enum)]
     pcx_encoding: Option<super::pcx_options::Encoding>,
@@ -75,6 +78,14 @@ pub fn run(a: Options, json: bool) -> Reply {
             let input = &a.input;
             let dest = a.output.output.as_path();
             let format = output_format(a.format.as_deref(), dest)?;
+            if a.appearance_copy == super::appearance_options::AppearanceCopy::Bake
+                && format != ImageFormat::Png
+            {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "--appearance-copy bake requires PNG output",
+                ));
+            }
             if a.jpeg_matte.is_some() && format != ImageFormat::Jpeg {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
@@ -138,15 +149,33 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ),
                 a.source_metadata,
             )?;
-            options.filter_bake = export::filter_bake::Policy::capture(
-                &doc,
-                export::metadata_policy::Target::new(
-                    family,
-                    paintcraft_formats::registry::Operation::ExportFlat,
-                ),
-                a.losses.filter_bake_intent(),
-                &|| Ok(()),
-            )?;
+            if doc.has_styles() {
+                options.appearance_bake = export::appearance_bake::Policy::capture(
+                    &doc,
+                    export::metadata_policy::Target::new(
+                        family,
+                        paintcraft_formats::registry::Operation::ExportFlat,
+                    ),
+                    a.appearance_copy.into(),
+                    &|| Ok(()),
+                )?;
+            } else {
+                options.filter_bake = export::filter_bake::Policy::capture(
+                    &doc,
+                    export::metadata_policy::Target::new(
+                        family,
+                        paintcraft_formats::registry::Operation::ExportFlat,
+                    ),
+                    a.losses.filter_bake_intent(),
+                    &|| Ok(()),
+                )?;
+                if a.appearance_copy == super::appearance_options::AppearanceCopy::Bake {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        "--appearance-copy bake requires stored layer styles",
+                    ));
+                }
+            }
             captured_source.check(dest)?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = super::render_workspace::run_captured(
@@ -189,7 +218,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             let outcome = captured_source.save(dest, a.output.overwrite, &flat.bytes);
             let (receipt, ok, summary) = finish_output(dest, &ctx, outcome);
             Ok(Written {
-                engine: None,
+                engine: flat.disclosure,
                 receipt,
                 ok,
                 summary,
@@ -237,6 +266,7 @@ fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
         a.source_metadata,
     )?;
     let policies = export::CopyPolicies {
+        appearance_bake: export::appearance_bake::Policy::Refuse,
         source_metadata: policy,
         filter_bake: export::filter_bake::Policy::capture(
             &doc,
@@ -340,6 +370,7 @@ fn explicit_msp(a: &Options, version: msp_options::Version) -> Result<Written> {
         a.source_metadata,
     )?;
     let policies = export::CopyPolicies {
+        appearance_bake: export::appearance_bake::Policy::Refuse,
         source_metadata: policy,
         filter_bake: export::filter_bake::Policy::capture(
             &doc,

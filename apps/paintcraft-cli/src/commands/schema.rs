@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch-stretch-skew", "batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v5", "file-command-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "layer-appearance", "batch-layer-appearance", "result-layer-appearance", "file-command-layer-appearance", "inspect-v5", "mcp-inspect-v5", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
+    #[arg(value_parser = ["layer-styles", "batch-layer-styles", "result-layer-styles", "file-command-layer-styles", "inspect-layer-styles", "mcp-inspect-layer-styles", "export-disclosure-layer-styles", "batch-stretch-skew", "batch", "batch-v2", "batch-v3", "batch-v4", "batch-v5", "result-v5", "file-command-v5", "result-v4", "file-command-v4", "inspect-v4", "mcp-inspect-v4", "result-v2", "result-v3", "file-command-v2", "file-command-v3", "inspect-v2", "inspect-v3", "mcp-inspect-v2", "mcp-inspect-v3", "palette-inspection", "shape-inspection", "brush-inspection", "source-inspection", "layer-appearance", "batch-layer-appearance", "result-layer-appearance", "file-command-layer-appearance", "inspect-v5", "mcp-inspect-v5", "catalog", "batch-catalog", "result-catalog", "file-command-catalog", "inspect-catalog", "mcp-inspect-catalog"])]
     schema: String,
 }
 
@@ -11,6 +11,13 @@ pub fn run(a: Options, _json: bool) -> Reply {
     bare(
         true,
         (|| {
+            if let Some(text) = super::style_inspection::schema(&a.schema) {
+                return Ok((
+                    paintcraft_core::types::json::parse(text.as_bytes())
+                        .expect("embedded style schema"),
+                    String::new(),
+                ));
+            }
             if let Some(text) = super::layer_appearance_schemas::schema(&a.schema) {
                 return Ok((
                     paintcraft_core::types::json::parse(text.as_bytes())

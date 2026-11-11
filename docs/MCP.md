@@ -29,8 +29,11 @@ are Invert, Brightness/Contrast, Black & White, Threshold, Posterize, Solarize,
 Box Blur and complete five-parameter Levels.
 They retain parameters, instance identity, source pixels and saved coverage
 through Undo/Redo and PCND save/reopen. MCP owns its headless document; it does
-not control an open Desktop or browser Studio. Layer masks, styles and the rest
-of the pinned 132-entry catalog remain separate work.
+not control an open Desktop or browser Studio. Dedicated own-layer-mask controls have separate discovery.
+[Color Overlay style commands](LAYER_STYLE_COMMANDS.md) use the additive
+`get_layer_style_schema` tool and the explicit layer-styles-v1 profile; they do
+not expand `get_batch_schema` or the numerical filter namespace. Other catalog
+entries remain separate work.
 
 `get_batch_schema` returns closed `paintcraft.batch/v5`. The server selects the
 lowest grammar required by the actual operation list:

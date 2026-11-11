@@ -483,6 +483,30 @@ pub fn run(a: Options, json: bool) -> Reply {
                 row("batch.v5.edit", POLICY, "edit", "paintcraft-editor"),
                 row("flat.render", POLICY, "render", "paintcraft-render"),
                 row(
+                    "layer.styles.color-overlay.edit",
+                    "paintcraft.batch/layer-styles-v1",
+                    "edit",
+                    "paintcraft-editor",
+                ),
+                row(
+                    "pcnd.layer-styles.read",
+                    "paintcraft.native/binary9-document9-layer-styles1",
+                    "read",
+                    "paintcraft-formats",
+                ),
+                row(
+                    "pcnd.layer-styles.write",
+                    "paintcraft.native/binary9-document9-layer-styles1",
+                    "fresh-write",
+                    "paintcraft-formats",
+                ),
+                row(
+                    "png.styled-appearance.copy",
+                    "paintcraft.export-disclosure/layer-styles-v1",
+                    "fresh-write",
+                    "paintcraft-formats",
+                ),
+                row(
                     "image.rgba8.paste-layer",
                     POLICY,
                     "paste-image",

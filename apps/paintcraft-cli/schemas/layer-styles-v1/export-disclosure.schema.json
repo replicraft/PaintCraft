@@ -1,0 +1,103 @@
+{
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "paintcraft.export-disclosure/layer-styles-v1"
+    },
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_state_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "family": {
+          "const": "png"
+        },
+        "operation": {
+          "enum": [
+            "export-flat",
+            "save-as-copy"
+          ]
+        }
+      },
+      "required": [
+        "family",
+        "operation"
+      ],
+      "additionalProperties": false
+    },
+    "inventory_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "styles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "filters": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "filter_masks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layer_masks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "non_normal_layers": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "styles",
+        "filters",
+        "filter_masks",
+        "layer_masks",
+        "non_normal_layers"
+      ],
+      "additionalProperties": false
+    },
+    "styles_baked": {
+      "const": true
+    },
+    "filters_baked": {
+      "type": "boolean"
+    },
+    "filter_masks_baked": {
+      "type": "boolean"
+    },
+    "layer_masks_baked": {
+      "type": "boolean"
+    },
+    "layer_blends_baked": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "document_id",
+    "source_state_id",
+    "target",
+    "inventory_sha256",
+    "counts",
+    "styles_baked",
+    "filters_baked",
+    "filter_masks_baked",
+    "layer_masks_baked",
+    "layer_blends_baked"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "paintcraft.export-disclosure/layer-styles-v1"
+}

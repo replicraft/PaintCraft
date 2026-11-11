@@ -15,6 +15,7 @@ mod params;
 mod shapes;
 mod source_inspection;
 mod state;
+mod styles;
 mod tools;
 
 use rmcp::ServiceExt;

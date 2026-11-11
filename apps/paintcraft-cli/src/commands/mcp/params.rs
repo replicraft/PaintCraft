@@ -89,6 +89,9 @@ impl From<SourceMetadata> for paintcraft_formats::export::metadata_policy::Inten
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Export {
+    /// Explicit compound styled PNG copy intent. Loss strings alone grant no bake authority.
+    #[serde(default)]
+    pub appearance_copy: super::super::appearance_options::AppearanceCopy,
     /// Explicitly "omit" retained source metadata from this copy, or "refuse" (default).
     pub source_metadata: Option<SourceMetadata>,
     /// JPEG only: six RGB hexadecimal digits for the alpha backdrop; default white.
