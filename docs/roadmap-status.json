@@ -906,8 +906,15 @@
       "title": "Capability discovery and admission checks",
       "depends_on": ["T01", "T06"],
       "status": "partial",
-      "evidence": ["apps/paintcraft-cli/src/commands/capabilities.rs"],
-      "remaining_or_scope": "Truthful CLI manifest exists; shared generation-aware GUI/worker capability service remains.",
+      "evidence": [
+        "apps/paintcraft-cli/src/commands/capabilities.rs",
+        "crates/services/paintcraft-platform/src/codec_helper/encoder_set.rs",
+        "crates/services/paintcraft-formats/src/codec_worker/native/jxr_installation.rs",
+        "apps/paintcraft/src/app/jxr_export/generation.rs",
+        "apps/paintcraft/src/app/jxr_export/worker.rs",
+        "docs/JXR_CAPABILITY_GENERATION.md"
+      ],
+      "remaining_or_scope": "Scoped native Studio JPEG XR generations now share verified installation observations with explicit CLI discovery. Queued encoding, preview adoption and staged publication recheck the original ticket and full helper/manifest identity. Focused tests, strict native lint/rustdoc and eight actual copied-installation tests pass, including GUI/CLI record equality, observed ABA, physical manifest removal during staging and prelaunch mismatch refusal. Full native checkpoint passes 2,643 tests before narrow final test/display followups. This is local native evidence, not release qualification or universal unobserved-ABA detection. Other format/backend discovery, permission/grant revocation, plugin/registry changes and full CAP-01..10 coverage remain open.",
       "acceptance": "CAP-01..10; disabled/unqualified native writers not enabled; capability generation or grant changes invalidate old work; document preservation survives UI capability changes."
     },
     {
