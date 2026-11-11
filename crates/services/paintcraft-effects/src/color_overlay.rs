@@ -57,3 +57,9 @@ pub fn evaluate_row(
 mod oracles;
 #[cfg(test)]
 mod tests;
+
+/// Additive bounded prepared arithmetic and explicit consuming-caller work facts.
+pub mod prepared;
+#[cfg(test)]
+#[path = "color_overlay/prepared_tests.rs"]
+mod prepared_tests;

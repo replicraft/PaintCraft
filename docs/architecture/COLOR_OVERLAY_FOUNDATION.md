@@ -59,6 +59,37 @@ Its configured effect-blend dispatcher is absent from the pinned tree, so the
 integer contract above is independently specified and does not claim upstream
 floating-point or configured-mode parity.
 
+## Prepared arithmetic for the active integration
+
+An additive prepared implementation stores three exact affine coefficient pairs
+in 24 bytes. It preserves the scalar contract and accepts private in-place tuple
+or byte rows of at most 64 pixels. Length refusal precedes callbacks and writes;
+nonempty rows check cancellation before transformation and after it. Callers must
+discard a canceled private output. The original scalar and row APIs are unchanged.
+
+Pure row quotations report 4,096 formation/query work units plus 256 per pixel
+and a 1,024-byte inline control envelope. These are conservative logical source
+actions, not CPU instructions, measured memory or execution authority. A consumer
+must pay in its original realm before formation and writes, retain its account,
+and finish query Results before forming coefficients. Supported target layouts
+are checked explicitly. Rendering adoption and its full pipeline admission remain
+pending; this helper alone grants no stored-style support.
+
+All 89 Effects library tests and native all-target/Wasm strict lint pass. Actual
+Wasm execution matches all 6,912 independent scalar vectors and exercises 6,912
+row calls across both private views, plus 66 cancellation cases and six oversized
+row refusals. Empty rows, canaries, unchanged source and alpha-zero inputs pass.
+The Wasm named control layout is 484 bytes within the declared envelope. The
+original scalar/row conformance also passes in that same module. The second fresh
+attempt corrects the diagnostic's interpretation of a raw Wasm signed `i64`
+sentinel as an unsigned Rust return; its first failure remains preserved. Sources
+match before/after build and execution. Receipts are under
+`docs/validation/color-overlay-prepared/wasm/` and
+`docs/validation/color-overlay-product-engine/effects-kernel/root-final-native/`.
+There is no comparative speed, physical-memory or browser support claim.
+
+## Document vocabulary and remaining integration
+
 The standalone document vocabulary now includes `StyleInstance` and an ordered
 `StyleStack`, capped at 256 unique nonnil stable UUIDs. It preserves enabled state
 and strict Color Overlay semantic bytes, validates order and identity, and reports
