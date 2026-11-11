@@ -173,13 +173,16 @@ development failure-log gap. Committed Studio blend display now has the finite
 browser evidence above; private blend editing and derived/foreign consumers
 still need their own integration and acceptance. This does not qualify physical
 memory, latency or the full roadmap.
-Remaining work includes private numeric and derived blend consumers. Color
-Overlay's shared model/commands, persistence/rendering and native Studio UI are
-being implemented in parallel as the first live style. Its
-[numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
-independent native and actual Wasm scalar/row checks; document persistence and
-rendering integration remain open. The remaining author's 132-entry
-inventory and broader styles are open, not implied by these profiles.
+Remaining work includes private numeric and derived browser blend consumers.
+Color Overlay is now the first stored layer style: ordered document intentions,
+typed commands, history, PCND9, CPU composition, native Studio controls and
+CLI/MCP editing are integrated and locally tested. Explicit styled PNG copies
+require separate compound consent. The [style checkpoint](architecture/COLOR_OVERLAY_FOUNDATION.md)
+records native suites, required Metal preview fallback, finite actual Wasm codec
+checks and the preserved failures. Fresh production browser qualification,
+browser style editing and comparative performance measurements remain open;
+existing browser routes still refuse stored styles. Remaining catalog entries
+and broader style families are not implied by this slice.
 The following counts describe historical initial checkpoints.
 The initial 95 renderer tests passed on
 required offscreen Metal, including 32 GPU controls. [Typed editing and CLI/MCP inspection](FILTER_COMMANDS.md) are also implemented,
