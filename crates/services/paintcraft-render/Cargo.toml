@@ -64,3 +64,7 @@ harness = false
 [[bench]]
 name = "display_native_rows"
 harness = false
+
+[[bench]]
+name = "color_overlay_product"
+harness = false

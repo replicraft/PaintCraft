@@ -1,0 +1,290 @@
+{
+	"hash": "FNV1a64 is a workload check, not authentication; pack SHA256 binds source bytes",
+	"kernel": [
+		{
+			"mode": 0,
+			"pixels": 0,
+			"opacity": 0,
+			"source_fnv64": "cbf29ce484222325",
+			"output_fnv64": "cbf29ce484222325",
+			"callbacks": 2
+		},
+		{
+			"mode": 0,
+			"pixels": 1,
+			"opacity": 255,
+			"source_fnv64": "ffe5a189b13ad888",
+			"output_fnv64": "989f7567780e1c11",
+			"callbacks": 3
+		},
+		{
+			"mode": 0,
+			"pixels": 63,
+			"opacity": 1,
+			"source_fnv64": "1c38db5db04a60dd",
+			"output_fnv64": "421772a38b14cde1",
+			"callbacks": 3
+		},
+		{
+			"mode": 0,
+			"pixels": 64,
+			"opacity": 127,
+			"source_fnv64": "b2d72ef8f04cbe03",
+			"output_fnv64": "e977dc5ed8b39e34",
+			"callbacks": 3
+		},
+		{
+			"mode": 0,
+			"pixels": 65,
+			"opacity": 128,
+			"source_fnv64": "16d2fa441bf2e5d8",
+			"output_fnv64": "a494a6f085102a20",
+			"callbacks": 6
+		},
+		{
+			"mode": 0,
+			"pixels": 4096,
+			"opacity": 254,
+			"source_fnv64": "334f84562fefa0c3",
+			"output_fnv64": "c4a838923a9fd72b",
+			"callbacks": 192
+		},
+		{
+			"mode": 0,
+			"pixels": 486000,
+			"opacity": 128,
+			"source_fnv64": "be258c4745de1195",
+			"output_fnv64": "f10ecb0f59768235",
+			"callbacks": 22782
+		},
+		{
+			"mode": 1,
+			"pixels": 0,
+			"opacity": 0,
+			"source_fnv64": "cbf29ce484222325",
+			"output_fnv64": "cbf29ce484222325",
+			"callbacks": 2
+		},
+		{
+			"mode": 1,
+			"pixels": 1,
+			"opacity": 255,
+			"source_fnv64": "ffe5a189b13ad888",
+			"output_fnv64": "852e5e87b923e082",
+			"callbacks": 3
+		},
+		{
+			"mode": 1,
+			"pixels": 63,
+			"opacity": 1,
+			"source_fnv64": "1c38db5db04a60dd",
+			"output_fnv64": "987a4afc7c01842a",
+			"callbacks": 3
+		},
+		{
+			"mode": 1,
+			"pixels": 64,
+			"opacity": 127,
+			"source_fnv64": "b2d72ef8f04cbe03",
+			"output_fnv64": "2151eae7abe2d31a",
+			"callbacks": 3
+		},
+		{
+			"mode": 1,
+			"pixels": 65,
+			"opacity": 128,
+			"source_fnv64": "16d2fa441bf2e5d8",
+			"output_fnv64": "759214faaa512510",
+			"callbacks": 6
+		},
+		{
+			"mode": 1,
+			"pixels": 4096,
+			"opacity": 254,
+			"source_fnv64": "334f84562fefa0c3",
+			"output_fnv64": "12a7cf10ed51e8f7",
+			"callbacks": 192
+		},
+		{
+			"mode": 1,
+			"pixels": 486000,
+			"opacity": 128,
+			"source_fnv64": "be258c4745de1195",
+			"output_fnv64": "b7fe6addfabd15bf",
+			"callbacks": 22782
+		},
+		{
+			"mode": 2,
+			"pixels": 0,
+			"opacity": 0,
+			"source_fnv64": "cbf29ce484222325",
+			"output_fnv64": "cbf29ce484222325",
+			"callbacks": 2
+		},
+		{
+			"mode": 2,
+			"pixels": 1,
+			"opacity": 255,
+			"source_fnv64": "ffe5a189b13ad888",
+			"output_fnv64": "7ba4c6691b6b58ff",
+			"callbacks": 3
+		},
+		{
+			"mode": 2,
+			"pixels": 63,
+			"opacity": 1,
+			"source_fnv64": "1c38db5db04a60dd",
+			"output_fnv64": "e8735473975439ab",
+			"callbacks": 3
+		},
+		{
+			"mode": 2,
+			"pixels": 64,
+			"opacity": 127,
+			"source_fnv64": "b2d72ef8f04cbe03",
+			"output_fnv64": "3047c34868d10232",
+			"callbacks": 3
+		},
+		{
+			"mode": 2,
+			"pixels": 65,
+			"opacity": 128,
+			"source_fnv64": "16d2fa441bf2e5d8",
+			"output_fnv64": "a1bf52b225b0e1a2",
+			"callbacks": 6
+		},
+		{
+			"mode": 2,
+			"pixels": 4096,
+			"opacity": 254,
+			"source_fnv64": "334f84562fefa0c3",
+			"output_fnv64": "adf05c4d4b57a58f",
+			"callbacks": 192
+		},
+		{
+			"mode": 2,
+			"pixels": 486000,
+			"opacity": 128,
+			"source_fnv64": "be258c4745de1195",
+			"output_fnv64": "684f8f082a2c39fb",
+			"callbacks": 22782
+		}
+	],
+	"renderer": [
+		{
+			"mode": 0,
+			"width": 1000,
+			"height": 486,
+			"full_pipeline": false,
+			"output_fnv64": "00eac633f81939a5"
+		},
+		{
+			"mode": 0,
+			"width": 257,
+			"height": 129,
+			"full_pipeline": true,
+			"output_fnv64": "904acd32810c3329"
+		},
+		{
+			"mode": 1,
+			"width": 1000,
+			"height": 486,
+			"full_pipeline": false,
+			"output_fnv64": "c50555bd7f1af3a5"
+		},
+		{
+			"mode": 1,
+			"width": 257,
+			"height": 129,
+			"full_pipeline": true,
+			"output_fnv64": "3efe3f0c7884a39e"
+		},
+		{
+			"mode": 2,
+			"width": 1000,
+			"height": 486,
+			"full_pipeline": false,
+			"output_fnv64": "be9f0b739ab2ddc5"
+		},
+		{
+			"mode": 2,
+			"width": 257,
+			"height": 129,
+			"full_pipeline": true,
+			"output_fnv64": "7b322c3ee57ca69f"
+		}
+	],
+	"cli": [
+		{
+			"name": "default-mode0",
+			"file": "default-mode0.pcnd",
+			"bytes": 144,
+			"sha256": "8c25cd3d3f05b0086427703cace1727e8f30d598d9dc2b27ad421328f42f534b",
+			"width": 1000,
+			"height": 486,
+			"pixel": [
+				120,
+				60,
+				100,
+				127
+			],
+			"losses": [
+				"styles-baked"
+			]
+		},
+		{
+			"name": "default-mode1",
+			"file": "default-mode1.pcnd",
+			"bytes": 144,
+			"sha256": "078f152264beda1080263ceabbae87fe4ea345857df5b802aba9ea3219f7601c",
+			"width": 1000,
+			"height": 486,
+			"pixel": [
+				19,
+				46,
+				100,
+				127
+			],
+			"losses": [
+				"styles-baked"
+			]
+		},
+		{
+			"name": "default-mode2",
+			"file": "default-mode2.pcnd",
+			"bytes": 144,
+			"sha256": "022b72fcbdd091134e81bfe187c9fa972d4fa0f8821063570adfffe53c83892b",
+			"width": 1000,
+			"height": 486,
+			"pixel": [
+				122,
+				94,
+				200,
+				127
+			],
+			"losses": [
+				"styles-baked"
+			]
+		},
+		{
+			"name": "compound-startup-boundary",
+			"file": "compound.pcnd",
+			"bytes": 258,
+			"sha256": "aea8ca12ab777eca5e5daab382d68ad2e88be63cc209ce4816d88d13d02a4a64",
+			"width": 1,
+			"height": 1,
+			"pixel": [
+				39,
+				111,
+				193,
+				144
+			],
+			"losses": [
+				"flatten",
+				"styles-baked",
+				"filters-baked",
+				"layer-appearance-baked"
+			]
+		}
+	]
+}
