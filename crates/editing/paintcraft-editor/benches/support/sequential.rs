@@ -261,6 +261,8 @@ impl Stage<'_> {
             | Op::SelectionInvert
             | Op::CanvasCrop { .. }
             | Op::CanvasTransform { .. }
+            | Op::CanvasRotate { .. }
+            | Op::RotateSelection { .. }
             | Op::CanvasStretchSkew { .. }
             | Op::StretchSkewSelection { .. }
             | Op::TransformSelection { .. }

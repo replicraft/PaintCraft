@@ -114,6 +114,9 @@ pub(super) fn coverage(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<A8Mask> {
     match mapping {
+        Mapping::Rotation(g, extent) => {
+            mask.rotated_checked(g, extent, &stage.adm.coverage_budget(), limits, check)
+        }
         Mapping::StretchSkew(g, extent) => {
             mask.stretch_skew_checked(g, extent, &stage.adm.coverage_budget(), limits, check)
         }

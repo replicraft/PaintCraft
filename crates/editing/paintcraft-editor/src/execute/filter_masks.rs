@@ -31,6 +31,7 @@ struct Fields {
 pub(super) enum Mapping {
     Empty,
     StretchSkew(paintcraft_core::types::stretch_skew::StretchSkew, Rect),
+    Rotation(paintcraft_core::types::rotation::Rotation, Rect),
     Crop(Rect),
     Orthogonal((u32, u32), OrthogonalTransform),
     Rebase { offset: (i64, i64) },

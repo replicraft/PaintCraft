@@ -294,6 +294,8 @@ fn kind(op: &Op) -> Kind {
         Op::FloodFill { .. } => Kind::ReadWrite,
         Op::CanvasCrop { .. }
         | Op::CanvasTransform { .. }
+        | Op::CanvasRotate { .. }
+        | Op::RotateSelection { .. }
         | Op::CanvasStretchSkew { .. }
         | Op::StretchSkewSelection { .. }
         | Op::TransformSelection { .. }

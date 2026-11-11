@@ -1,5 +1,4 @@
-//! Staged execution of a batch against a private copy of the document.
-//! Nothing here publishes; the session installs the result atomically.
+//! Staged execution against a private copy; only the session publishes the result atomically.
 
 mod canvas;
 mod contour;
@@ -20,6 +19,7 @@ pub mod metadata_clone;
 mod paint;
 mod path;
 mod planning;
+mod rotation;
 mod selection;
 mod selection_move;
 mod selection_transform;
@@ -74,7 +74,6 @@ pub struct Staged {
 pub fn execute(base: &Document, selection: Selection, batch: &Batch) -> Result<Staged> {
     execute_with_budget(base, selection, batch, STAGED_PIXELS_MAX)
 }
-
 /// As [`execute`], with an explicit staged-pixel budget (used to inject exhaustion in tests).
 pub fn execute_with_budget(
     base: &Document,
@@ -85,8 +84,7 @@ pub fn execute_with_budget(
     execute_with_admission(base, selection, batch, Admission::new(staged_pixels))
 }
 
-/// Execute under an explicit staged-pixel and decoded-residency allocation realm.
-/// Failed private staging leaves the source document unchanged.
+/// Execute under explicit staged-pixel/decoded-residency realms; failed staging preserves the source.
 pub fn execute_with_admission(
     base: &Document,
     selection: Selection,
@@ -96,8 +94,7 @@ pub fn execute_with_admission(
     execute_with_admission_checked(base, selection, batch, admission, &|| Ok(()))
 }
 
-/// Execute privately with cancellation between operations, flood classification
-/// and planned painting.
+/// Execute privately with cancellation between operations, flood classification and planned painting.
 pub fn execute_with_admission_checked(
     base: &Document,
     selection: Selection,
@@ -108,8 +105,7 @@ pub fn execute_with_admission_checked(
     execute_with_geometry_cache(base, selection, batch, admission, None, check)
 }
 
-/// Optional disposable smooth-path geometry reuse for growing previews. Cached
-/// sample unions contain no document pixels and cannot change the command result.
+/// Optional disposable smooth-path geometry reuse; cached pixel-free sample unions cannot change the result.
 pub fn execute_with_geometry_cache(
     base: &Document,
     selection: Selection,
@@ -132,7 +128,7 @@ pub fn execute_with_geometry_cache(
         aliases: HashMap::new(),
         filter_aliases: HashMap::new(),
         style_aliases: HashMap::new(),
-        style_edit: batch.version == 10,
+        style_edit: matches!(batch.version, 10 | 11),
         planning: Some(planning::Compiler::new(&admission, batch, check)?),
         operation: 0,
         _style_charge: style_charge,
@@ -159,9 +155,8 @@ pub fn execute_with_geometry_cache(
     }
     check()?;
     let (paints, footprint) = s.planning.take().expect("compiler stage").finish();
-    // Logical source captures and simulated versions have dropped. Only original
-    // compiled descriptors and their already-admitted replay indices survive;
-    // reserve the complete new decoded peak before any replay writes.
+    // Source captures/simulated versions have dropped; only original admitted descriptors/indices survive.
+    // Reserve the complete new decoded peak before replay writes.
     s.adm
         .reserve_tiles(footprint.peak)
         .map_err(|e| e.at(footprint.peak_operation))?;
@@ -186,6 +181,8 @@ pub fn execute_with_geometry_cache(
             match op {
                 Op::CanvasCrop { rect } => s.crop_layout(*rect)?,
                 Op::CanvasTransform { transform } => s.transform_layout(*transform)?,
+                Op::CanvasRotate { coefficients } => s.rotate_canvas(*coefficients)?,
+                Op::RotateSelection { layer, .. } => s.selection_geometry_layout(layer)?,
                 Op::CanvasStretchSkew {
                     width,
                     height,
@@ -277,7 +274,6 @@ struct Stage<'a> {
     operation: usize,
     _style_charge: Option<paintcraft_core::types::resources::BudgetAccount>,
 }
-
 impl Stage<'_> {
     /// A brush stroke along `points`: charge the budgets, then stamp, merge and paint.
     fn stroke(
@@ -340,6 +336,12 @@ impl Stage<'_> {
             }
             Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
             Op::CanvasTransform { transform } => self.transform_canvas(*transform)?,
+            Op::CanvasRotate { coefficients } => self.rotate_canvas(*coefficients)?,
+            Op::RotateSelection {
+                layer,
+                coefficients,
+                clear,
+            } => self.rotate_selected(layer, *coefficients, *clear)?,
             Op::CanvasStretchSkew {
                 width,
                 height,
