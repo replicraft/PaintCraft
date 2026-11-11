@@ -36,15 +36,14 @@ let browser;
 let server;
 try {
 	fs.mkdirSync(path.join(directory, 'src/lib'), { recursive: true });
-	for (const name of [
-		'codec-worker.js',
-		'codec-worker-runtime.js',
-		'codec-worker-protocol.js',
-	])
+	for (const name of fs
+		.readdirSync(path.join(app, 'src/lib'))
+		.filter((name) => name.endsWith('.js'))) {
 		fs.copyFileSync(
 			path.join(app, 'src/lib', name),
 			path.join(directory, 'src/lib', name),
 		);
+	}
 	fs.copyFileSync(
 		path.join(app, 'package.json'),
 		path.join(directory, 'package.json'),
