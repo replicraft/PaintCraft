@@ -1385,12 +1385,51 @@ These checks use a finite transport fixture for host bytes and explicit Main
 callbacks. They do not qualify the defining Rust future quote, linked Main
 classes, actual Main budgets or texture publication.
 
-These transport checks use explicit Main callback stand-ins. They do not prove
-original Main admission, CPU texture-delta retirement or frontend activation.
 The source-universal workspace and defining service-role forecasts now pass
 the complete 276-renderer/182-worker run, including 11 workspace and seven role
 groups; native/Wasm Clippy and strict documentation checks pass. The separate
 format check retains all 12 structural fixtures, including the intentionally
-undecodable census-only compressed stub. Same-target demand facts still need
-the actual Main Wasm consumer. None of these checkpoints proves physical
-heap/RSS or latency, and no frontend route is activated by them.
+undecodable census-only compressed stub. These metadata and transport
+checkpoints do not prove Main runtime publication, physical heap/RSS or latency.
+
+### Main admission and artifact gates
+
+The committed-display adapter now retains original admission and work owners,
+counted source snapshots, accounted application futures and paired CPU output.
+Its 26 focused native tests and strict native/Wasm checks pass. The latest full
+native web checkpoint passes 540 tests with three existing ignored tests; the
+later added handoff test separately executes actual egui multipass scheduling.
+These results do not execute the new Main Wasm lifecycle.
+
+The first genuine Main build exposed four Worker SDK classes and 18 supporting
+globals. That failed artifact remains preserved. A default-enabled
+`wasm-entry` feature now separates the Worker entry points and legacy SDK from
+Main's Rust query dependency. The separate default-feature Worker rebuild uses
+the qualified 2 MiB initial and 256 MiB maximum memory and passes all 42 cases,
+including exact work and pixel results. All five checked output files are
+byte-identical to the earlier Service42 artifact, including its
+`9173a87620834dba94c4bb276d21a7c159fa9bcb58912080c8a4acdcb8d96b82`
+Wasm. Native Worker tests pass all 182 checks. This qualification uses separate
+package builds; Cargo can unify entry features when selecting both packages.
+
+Corrected Main build attempt 2 preserves every earlier public contract and adds
+only the two approved opaque classes. Its actual Worker dependency has no entry
+features, and the Worker SDK exports are absent. The module is 22,189,454 bytes,
+293,447 bytes above baseline and 790,725 below the failed artifact, under the
+unchanged 25 MiB file limit. Its memory declaration remains nonshared, initially
+79 pages, with no declared maximum. Generated consuming methods clear their
+handle before entering Rust; this is a mechanical glue observation rather than
+execution of credit retirement. The copied root bridge preserves the app's
+JavaScript module graph and singleton.
+
+Evidence is under `docs/validation/source8-worker-entry-qualification-effective`
+and `docs/validation/source8-main-wasm-handoff-effective`. Independent actual
+audits are `source8-worker-entry-qualification-peer/actual-attempt-1/review.json`
+(`a2b872228e538108746dc46a95fd7c1a713d6e07759ee8d10d3eb5633e6536de`)
+and `source8-main-wasm-peer/final-attempt-2-actual-audit/review.json`
+(`eabeb4947672ee46caf44b2f96b3f6f1f0ddab54f02e05aa17fe4f65287057af`).
+Real Main source/work/credit lifetimes, texture publication and cooperative
+handoffs still require production browser execution with the actual served
+artifacts; the normal Worker script does not explicitly set initial memory.
+These build gates do not
+qualify physical GC, GPU memory, RSS, latency or the full roadmap.

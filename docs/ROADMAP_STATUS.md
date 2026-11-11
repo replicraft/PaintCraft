@@ -106,6 +106,13 @@ The host-control extension separately passes 15 groups/40 scenarios in Node and
 finish while host credit remains held; broker reuse waits for its release and
 unknown joins remain quarantined. All 392 web tests pass. The compiled Rust
 host quote and real Main publication still require qualification.
+The Main adapter now passes 26 focused native tests and strict checks. A genuine
+corrected Main build preserves the old API plus two opaque classes and excludes
+Worker SDK exports; its module is 22,189,454 bytes under the unchanged 25 MiB
+limit. The default-feature Worker separately passes 182 native and 42 Wasm checks
+under its qualified memory profile, with checked output files byte-identical to
+the previous qualified artifact. Real
+Main browser lifetime, publication and handoff acceptance remain open.
 The defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check
