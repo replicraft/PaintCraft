@@ -520,3 +520,6 @@ mod selection_tests;
 mod filter_mask_tests;
 #[cfg(test)]
 mod filter_tests;
+
+#[cfg(test)]
+mod style_tests;

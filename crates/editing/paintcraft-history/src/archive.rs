@@ -40,6 +40,7 @@ struct SavedLayer {
     opacity: u8,
     blend_mode: paintcraft_core::types::LayerBlendMode,
     filters: paintcraft_document::FilterStack,
+    styles: paintcraft_document::StyleStack,
     mask: Option<paintcraft_document::LayerMask>,
     width: u32,
     height: u32,
@@ -90,7 +91,28 @@ impl Packed {
             return Err(limit("history transfer metadata admission exceeded"));
         }
         *work.budget -= weight;
-        let mut layers = self.layers.clone();
+        let mut layers = Vec::new();
+        layers
+            .try_reserve_exact(self.layers.len())
+            .map_err(|_| limit("cannot copy saved style layers"))?;
+        for layer in &self.layers {
+            let styles = layer.styles.try_clone_checked(check)?;
+            layers.push(SavedLayer {
+                id: layer.id,
+                name: layer.name.clone(),
+                origin: layer.origin,
+                visible: layer.visible,
+                opacity: layer.opacity,
+                blend_mode: layer.blend_mode,
+                filters: layer.filters.clone(),
+                styles,
+                mask: layer.mask.clone(),
+                width: layer.width,
+                height: layer.height,
+                default: layer.default,
+                tiles: layer.tiles.clone(),
+            });
+        }
         for layer in &mut layers {
             for (_, blob) in &mut layer.tiles {
                 check()?;
@@ -160,6 +182,7 @@ impl Packed {
                     size_of::<SavedLayer>()
                         + l.name.len()
                         + l.filters.storage_bytes()
+                        + l.styles.storage_bytes()
                         + l.raster.resident_tiles() * size_of::<(TileCoord, Arc<Blob>)>()
                 })
                 .sum::<usize>();
@@ -210,6 +233,7 @@ impl Packed {
                 opacity: layer.opacity,
                 blend_mode: layer.blend_mode,
                 filters: layer.filters.clone(),
+                styles: layer.styles.try_clone_checked(check)?,
                 mask: layer.mask.clone(),
                 width: layer.raster.width(),
                 height: layer.raster.height(),
@@ -269,6 +293,7 @@ impl Packed {
                     opacity: layer.opacity,
                     blend_mode: layer.blend_mode,
                     filters: layer.filters.clone(),
+                    styles: layer.styles.try_clone_checked(check)?,
                     mask: layer.mask.clone(),
                     raster,
                 },
@@ -311,6 +336,7 @@ impl Packed {
                 .map(|l| {
                     l.name.capacity()
                         + l.filters.storage_bytes()
+                        + l.styles.storage_bytes()
                         + l.tiles.capacity() * size_of::<(TileCoord, Arc<Blob>)>()
                 })
                 .sum::<usize>()
@@ -331,7 +357,12 @@ pub(crate) fn document_metadata(doc: &Document) -> usize {
         + doc
             .layers
             .values()
-            .map(|l| l.name.capacity() + l.filters.storage_bytes() + l.raster.metadata_weight())
+            .map(|l| {
+                l.name.capacity()
+                    + l.filters.storage_bytes()
+                    + l.styles.storage_bytes()
+                    + l.raster.metadata_weight()
+            })
             .sum::<usize>()
 }
 
