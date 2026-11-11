@@ -2,7 +2,7 @@
 
 Color Overlay has a typed numerical policy, ordered document intentions, typed
 commands, atomic editing, history preservation and native project persistence.
-Rendering and frontend integration are in progress. Existing worker profiles provide no style transport;
+CPU rendering and native Studio integration are locally qualified. Existing worker profiles provide no style transport;
 the numerical policy remains separate from the filter catalog.
 
 ## Exact policy
@@ -199,12 +199,46 @@ to pass without weakening the verifier.
 Browser Source7/8 continues to refuse stored styles. Existing browser export
 policies now explicitly retain refusal authority. Strict Wasm checks pass for Main
 and both workers, and their host library suites pass 749 tests with
-3 existing ignored cases. These checks do not execute the rebuilt services
-in a browser. Fresh production browser
-qualification, browser style editing and the other style families remain open.
+3 existing ignored cases. Those host checks are followed by the scoped production requalification below.
+Browser style editing and the other style families remain open.
 The [casewise performance report](../performance/COLOR_OVERLAY.md) records three
 confirmatory sessions: 14 consistent practical benefits and seven mixed cases,
 with every potential regression retained. There is no blanket speed or
 physical-memory qualification; the correct prepared implementation remains a
 provisional baseline. The portable integration evidence is recorded in
 [LAYER_BLEND_FOUNDATION.md](LAYER_BLEND_FOUNDATION.md#additional-portable-foundations).
+
+
+## Production browser regression checkpoint
+
+The normal website build now completes on the 3,980-source Color Overlay
+checkpoint at `5bd4a022`. Its first post-build ABI guard failed on generated
+private closure names. A separately reviewed acceptance child binds the exact
+nine closure renames, static data addresses and unchanged typed interfaces to
+the actual outputs; the original failure remains intact. No rebuild, wildcard
+normalization, cap increase or oracle change supplies that acceptance.
+
+The actual normal Render Worker passes all 42 Node cases and all 35 real
+headless Chrome transport scenarios, including the unchanged 26 full-RGBA
+comparisons. Five production Main browser suites also pass their finite blend,
+layer-mask and filter-mask cases. The web Node suite passes 410 tests. Main is
+22,467,222 bytes, Render Worker is 2,591,706 bytes and Codec Worker is 4,003,027
+bytes, within their original limits. The final source guard passes all 3,980
+inputs. These results qualify existing routes; stored styles still refuse in
+Source7/8 and are not enabled by this regression checkpoint.
+
+The codec harness initially omitted transitive protocol modules from its
+temporary server. An ignored harness amendment copies the complete actual JS
+module set while preserving every test assertion. Its standard run passes 11
+pixel/memory checks and four deadline/cancel/stale/tamper lifecycle cases. The
+optional immediate Worker-stop assertion fails on Chrome 157: termination is
+not a join. Each uncertain lifecycle retains its 370,221,844-byte logical charge
+and refuses another job in that realm. No immediate physical reclamation is
+claimed, and the failure is retained separately from the standard pass.
+
+The aggregate receipt is
+`docs/validation/color-overlay-source8-requalification-plan/root-final-closeout.json`
+(SHA-256 `3d6421847f2ebe57af99f9114b786cca4725e4bab558742631347546dbada353`).
+It pins raw browser evidence, accepted build, original failures and runtime
+receipts. This is finite single-browser regression evidence, not broader device,
+physical-memory, performance or complete-roadmap qualification.

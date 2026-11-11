@@ -179,9 +179,12 @@ typed commands, history, PCND9, CPU composition, native Studio controls and
 CLI/MCP editing are integrated and locally tested. Explicit styled PNG copies
 require separate compound consent. The [style checkpoint](architecture/COLOR_OVERLAY_FOUNDATION.md)
 records native suites, required Metal preview fallback, finite actual Wasm codec
-checks and the preserved failures. Fresh production browser qualification,
-browser style editing remain open; existing browser routes still refuse stored
-styles. The [casewise measurements](performance/COLOR_OVERLAY.md) report 14
+checks and the preserved failures. Fresh normal production regression now passes
+42 Node Worker cases, 35 real Chrome Worker scenarios, five Main browser suites
+and 410 web Node tests on the recorded 3,980-source checkpoint. Codec pixel and
+quarantine checks pass separately; the optional immediate-stop assertion remains
+a preserved failure. Browser style editing remains open, and existing browser
+routes still refuse stored styles. The [casewise measurements](performance/COLOR_OVERLAY.md) report 14
 consistent practical benefits and seven mixed cases on the recorded M1 Pro,
 without an overall-winner or whole-application speedup claim. Remaining catalog entries
 and broader style families are not implied by this slice.
