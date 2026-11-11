@@ -65,6 +65,10 @@ impl VerifiedEncoderHelper {
     pub fn checked_executable(&self, check: &dyn Fn() -> Result<()>) -> Result<&Path> {
         self.verified.checked_executable(check)
     }
+    /// Verified manifest bytes identify the selected host contract, not a grant.
+    pub fn manifest_sha256(&self) -> [u8; 32] {
+        self.verified.manifest_pin.digest
+    }
     pub fn sha256(&self) -> [u8; 32] {
         self.verified.sha256()
     }

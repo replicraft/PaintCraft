@@ -14,7 +14,7 @@ pub use mixed::{
 mod encode;
 mod encoder_set;
 pub use decode::{VerifiedSchema3DecoderHelper, discover_decoder, for_application_decoder};
-pub use encoder_set::{discover_encoder_set, for_application_encoder_set};
+pub use encoder_set::{discover_encoder_set, for_application_encoder_set, observe_encoder_set};
 mod files;
 mod layout;
 pub use encode::{
