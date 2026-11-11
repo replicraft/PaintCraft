@@ -36,4 +36,5 @@ pub mod clipboard;
 
 pub mod filters;
 
+pub mod rotation;
 pub mod stretch_skew;

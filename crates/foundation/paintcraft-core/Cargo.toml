@@ -9,6 +9,7 @@ publish.workspace = true
 
 [dependencies]
 glam.workspace = true
+libm.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
 
