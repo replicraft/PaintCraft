@@ -1448,8 +1448,13 @@ under the viewport center, hiding small images beneath floating tools. The
 private Geometry transform now preserves that relative point, retaining explicit
 anchors and bounds. All 32 Studio tests and 545 native web tests pass, with three
 existing web ignores, along with strict native/Wasm checks, formatting and docs.
-This shared desktop/web change requires a fresh production browser replay; the
-previous Main artifact is historical evidence, not the new build.
+The rebuilt Main `68b0e1d1...` passes all nine production browser cases again,
+with the same byte-exact Worker and a fresh 42-case Worker receipt. Screenshot
+row 537 shows the new LOD average and the correct horizontal padded edge after
+zoom centering; the same vertical, middle-button and physical-memory limits
+remain explicit. Current evidence is
+`docs/validation/source8-real-main-browser/attempt-13/root-reviewed.json`.
+Earlier artifacts and failed input calibrations remain historical evidence.
 
 The first genuine Main build exposed four Worker SDK classes and 18 supporting
 globals. That failed artifact remains preserved. A default-enabled
