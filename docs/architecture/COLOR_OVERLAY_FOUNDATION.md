@@ -1,8 +1,9 @@
 # Color Overlay numerical foundation
 
-Color Overlay now has a pure typed policy and scalar/row implementation. It is
-not yet a stored document style, rendering stage or frontend control. No filter
-catalog entry, worker capability, execution allowance or resource price is added.
+Color Overlay has a typed numerical policy, ordered document intentions, typed
+commands and history preservation. Rendering, project persistence and frontend
+integration are in progress. Existing worker profiles provide no style transport;
+the numerical policy remains separate from the filter catalog.
 
 ## Exact policy
 
@@ -32,7 +33,7 @@ future-stage vectors. Current tests execute the overlay primitive in those stage
 vectors; their later mask/opacity columns are expectations, not executed document
 integration. Actual scalar and partitioned row results match both packed hashes.
 
-Native Core and Effects library suites pass 102 and 85 tests, including six new
+The initial Core and Effects library checkpoint passed 102 and 85 tests, including six new
 groups. Native all-target strict lint, Main/both-Worker Wasm strict lint, formatting
 and source-length checks pass. Separate actual Wasm execution through the real
 generated glue also passes all 6,912 scalar vectors, 216 primitive-stage inputs
@@ -90,15 +91,24 @@ There is no comparative speed, physical-memory or browser support claim.
 
 ## Document vocabulary and remaining integration
 
-The standalone document vocabulary now includes `StyleInstance` and an ordered
-`StyleStack`, capped at 256 unique nonnil stable UUIDs. It preserves enabled state
-and strict Color Overlay semantic bytes, validates order and identity, and reports
-actual retained vector capacity. Independent native fixtures and 19 actual Node
-Wasm cases cover this vocabulary. It is not attached to `Layer` or the filter
-catalog and has no project, history, rendering or frontend activation.
+Each `Layer` now owns an ordered `StyleStack`, capped at 256 unique nonnil stable
+UUIDs scoped to that layer. It preserves enabled state and strict Color Overlay
+semantic bytes, validates order and identity, and reports actual retained vector
+capacity. Empty stacks use a constant cached digest without allocation or hashing.
+Disabled and zero-opacity entries still retain their full semantic intentions.
 
-Integration still needs document/history semantics, conditional project
-persistence, typed commands, priced rendering, cache invalidation and frontend
+The closed `paintcraft.batch/layer-styles-v1` command profile describes Add,
+Update, SetEnabled, Move, Duplicate and Remove with explicit style references.
+Existing command profiles remain closed. History preserves ordered intentions
+through cold compression, spill, Undo and Redo while retaining source pixels.
+The current Core, Document, Commands and History library suites pass 110, 58, 45
+and 66 tests respectively; all-target strict lint and strict documentation checks
+also pass. These model checks do not qualify the pending editor, project or
+rendering consumers. Receipts are under
+`docs/validation/color-overlay-product-model/root-leaf-validation/`.
+
+Integration still needs atomic editor adoption, conditional project
+persistence, priced rendering, cache invalidation and frontend
 adoption. The intended first stage is complete filters, enabled Color Overlays
 in order, own mask, layer opacity, then layer blending; exterior style families
 need separate stage rules. Existing project and worker profiles grant no style
