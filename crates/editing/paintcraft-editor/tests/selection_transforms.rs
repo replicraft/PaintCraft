@@ -68,6 +68,7 @@ fn selected_target_only_clears_and_overwrites_once_with_exact_history_and_off_ca
                     opacity: 123,
                     blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
+                    styles: paintcraft_document::StyleStack::empty(),
                     raster,
                 },
             );
@@ -267,6 +268,7 @@ fn selected_region_outside_offset_layer_rebases_without_turning_new_padding_into
             opacity: 255,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster,
         },
     );

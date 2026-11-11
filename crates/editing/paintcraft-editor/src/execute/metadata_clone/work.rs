@@ -20,10 +20,14 @@ pub(super) fn scan(layout: FreshMapLayout) -> Result<u64> {
     } as u64;
     add(layout.bytes, buckets)
 }
-pub(super) fn target(operation: &FilterOp) -> Result<u64> {
-    let pass = add(mul(515, size_of::<FilterInstance>() as u64)?, 2050)?;
+pub(super) fn target(operation: MetadataOp<'_>) -> Result<u64> {
+    let width = match operation {
+        MetadataOp::Filter(_) => size_of::<FilterInstance>(),
+        MetadataOp::Style(_) => size_of::<StyleInstance>(),
+    } as u64;
+    let pass = add(mul(515, width)?, 2050)?;
     let mut total = mul(2, pass)?;
-    if matches!(operation, FilterOp::Add { .. } | FilterOp::Duplicate { .. }) {
+    if operation.alias().is_some() {
         let alias = fresh_map_layout::<String, Option<(Uuid, Uuid)>>(1)?;
         let per_pass = sum(&[
             2 * (4 + 65),
@@ -39,7 +43,7 @@ pub(super) fn target(operation: &FilterOp) -> Result<u64> {
 }
 pub(super) fn lifecycle(
     doc: &Document,
-    operation: &FilterOp,
+    operation: MetadataOp<'_>,
     filters: u64,
     tiles: u64,
     tile_scans: u64,
@@ -59,7 +63,8 @@ pub(super) fn lifecycle(
     let retire = sum(&[parent, tile_scans, tiles])?;
     let introduced = u64::from(matches!(
         operation,
-        FilterOp::Add { .. } | FilterOp::Duplicate { .. }
+        MetadataOp::Filter(FilterOp::Add { .. } | FilterOp::Duplicate { .. })
+            | MetadataOp::Style(StyleOp::Add { .. } | StyleOp::Duplicate { .. })
     ));
     let seed_aux = sum(&[
         size_of::<Document>() as u64,

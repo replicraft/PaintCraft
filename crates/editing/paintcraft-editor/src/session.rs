@@ -31,6 +31,7 @@ pub use features::masked_document_features;
 mod history;
 mod layer_properties;
 mod paste;
+pub use paste::onto::AdmittedPastePreview;
 mod persistence;
 mod preparation;
 mod residency;
@@ -50,108 +51,13 @@ pub struct Receipt {
     pub history_id: Option<Uuid>,
     pub aliases: BTreeMap<String, Uuid>,
     pub filter_aliases: crate::execute::FilterAliases,
+    pub style_aliases: crate::execute::StyleAliases,
+    pub style_edit: bool,
     pub document_features: Vec<&'static str>,
     pub required_filters: Vec<&'static str>,
 }
 
-impl Receipt {
-    pub fn to_value(&self) -> Value {
-        let Value::Object(mut fields) = Value::object([
-            (
-                "schema",
-                Value::str(
-                    if self.document_features.contains(&"layer-blend-modes.v1") {
-                        "paintcraft.result/v6"
-                    } else if self.document_features.contains(&"layer-masks.v1") {
-                        "paintcraft.result/v5"
-                    } else if !self.required_filters.is_empty() {
-                        "paintcraft.result/catalog-v1"
-                    } else if self.document_features.contains(&"layer-spatial-filters.v1") {
-                        "paintcraft.result/v4"
-                    } else if !self.document_features.is_empty() {
-                        "paintcraft.result/v3"
-                    } else if self.filter_aliases.is_empty() {
-                        "paintcraft.result/v1"
-                    } else {
-                        "paintcraft.result/v2"
-                    },
-                ),
-            ),
-            ("committed", Value::Bool(self.committed)),
-            ("state_id", Value::str(self.state_id.to_string())),
-            (
-                "publication_epoch",
-                Value::str(self.publication_epoch.to_string()),
-            ),
-            (
-                "history_id",
-                self.history_id
-                    .map_or(Value::Null, |h| Value::str(h.to_string())),
-            ),
-            (
-                "aliases",
-                Value::Object(
-                    self.aliases
-                        .iter()
-                        .map(|(k, v)| (k.clone(), Value::str(v.to_string())))
-                        .collect(),
-                ),
-            ),
-            ("warnings", Value::Array(Vec::new())),
-        ]) else {
-            unreachable!("object constructor");
-        };
-        if !self.document_features.is_empty() {
-            fields.insert(
-                "document_features".into(),
-                Value::Array(
-                    self.document_features
-                        .iter()
-                        .copied()
-                        .map(Value::str)
-                        .collect(),
-                ),
-            );
-        }
-        if !self.required_filters.is_empty()
-            || self
-                .document_features
-                .iter()
-                .any(|feature| matches!(*feature, "layer-masks.v1" | "layer-blend-modes.v1"))
-        {
-            fields.insert(
-                "required_filters".into(),
-                Value::Array(
-                    self.required_filters
-                        .iter()
-                        .copied()
-                        .map(Value::str)
-                        .collect(),
-                ),
-            );
-        }
-        if !self.filter_aliases.is_empty() {
-            fields.insert(
-                "filter_aliases".into(),
-                Value::Object(
-                    self.filter_aliases
-                        .iter()
-                        .map(|(alias, (layer, filter))| {
-                            (
-                                alias.clone(),
-                                Value::object([
-                                    ("layer_id", Value::str(layer.to_string())),
-                                    ("filter_id", Value::str(filter.to_string())),
-                                ]),
-                            )
-                        })
-                        .collect(),
-                ),
-            );
-        }
-        Value::Object(fields)
-    }
-}
+mod receipt;
 
 /// The result of undo or redo.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -401,6 +307,8 @@ impl Session {
                 history_id: None,
                 aliases: BTreeMap::new(),
                 filter_aliases: BTreeMap::new(),
+                style_aliases: BTreeMap::new(),
+                style_edit: staged.style_edit,
                 document_features: masked_document_features(&self.doc),
                 required_filters: catalog_document_requirements(&self.doc),
             });
@@ -435,6 +343,8 @@ impl Session {
             history_id: Some(history_id),
             aliases: staged.aliases,
             filter_aliases: staged.filter_aliases,
+            style_aliases: staged.style_aliases,
+            style_edit: staged.style_edit,
             document_features: masked_document_features(&self.doc),
             required_filters: catalog_document_requirements(&self.doc),
         })

@@ -10,10 +10,14 @@ pub(super) fn finish(stage: Stage<'_>) -> Staged {
         })
         .collect();
     let filter_aliases = filters::retained_aliases(&stage.doc, stage.filter_aliases);
+    let style_aliases = styles::retained_aliases(&stage.doc, stage.style_aliases);
     Staged {
         doc: stage.doc,
         selection: stage.selection,
         aliases,
         filter_aliases,
+        style_aliases,
+        style_edit: stage.style_edit,
+        _style_charge: stage._style_charge,
     }
 }

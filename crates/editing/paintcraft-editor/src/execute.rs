@@ -10,6 +10,9 @@ mod filters;
 mod noise_geometry;
 mod staged;
 pub use filters::PublishedAliases as FilterAliases;
+pub mod style_controls;
+mod styles;
+pub use styles::PublishedAliases as StyleAliases;
 mod geometry_helpers;
 mod layers;
 mod mask;
@@ -63,6 +66,9 @@ pub struct Staged {
     /// Layers created by the batch that still exist.
     pub aliases: BTreeMap<String, Uuid>,
     pub filter_aliases: FilterAliases,
+    pub style_aliases: StyleAliases,
+    pub style_edit: bool,
+    pub(crate) _style_charge: Option<paintcraft_core::types::resources::BudgetAccount>,
 }
 
 pub fn execute(base: &Document, selection: Selection, batch: &Batch) -> Result<Staged> {
@@ -113,8 +119,10 @@ pub fn execute_with_geometry_cache(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Staged> {
     check()?;
+    let style_charge = style_controls::admit(base, batch, &admission, check)?;
+    let styled = style_charge.is_some();
     let mut s = Stage {
-        doc: base.clone(),
+        doc: style_controls::clone_document(base, styled, check)?,
         selection: selection.clone(),
         selections: planning::storage::Store::new(&admission),
         selection_geometries: planning::storage::Store::new(&admission),
@@ -123,8 +131,11 @@ pub fn execute_with_geometry_cache(
         mask_replay: 0,
         aliases: HashMap::new(),
         filter_aliases: HashMap::new(),
+        style_aliases: HashMap::new(),
+        style_edit: batch.version == 10,
         planning: Some(planning::Compiler::new(&admission, batch, check)?),
         operation: 0,
+        _style_charge: style_charge,
         adm: admission,
         pencil_pixels: 0,
         pencil_segments: 0,
@@ -153,10 +164,11 @@ pub fn execute_with_geometry_cache(
     s.adm
         .reserve_tiles(footprint.peak)
         .map_err(|e| e.at(footprint.peak_operation))?;
-    s.doc = base.clone();
+    s.doc = style_controls::clone_document(base, styled, check)?;
     s.selection = selection;
     s.aliases.clear();
     s.filter_aliases.clear();
+    s.style_aliases.clear();
     s.geometry = None;
     let (_charge, values) = paints.into_parts();
     let mut paints = values.into_iter().peekable();
@@ -239,6 +251,8 @@ struct Stage<'a> {
     /// Every alias ever declared in this batch; `None` once its layer is deleted.
     aliases: HashMap<String, Option<Uuid>>,
     filter_aliases: filters::Aliases,
+    style_aliases: styles::Aliases,
+    style_edit: bool,
     adm: Admission,
     pencil_pixels: i128,
     pencil_segments: i128,
@@ -251,6 +265,7 @@ struct Stage<'a> {
     geometry: Option<&'a mut paintcraft_raster::smooth::PathCache>,
     planning: Option<planning::Compiler>,
     operation: usize,
+    _style_charge: Option<paintcraft_core::types::resources::BudgetAccount>,
 }
 
 impl Stage<'_> {
@@ -304,6 +319,7 @@ impl Stage<'_> {
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
             Op::Filter(op) => self.edit_filter(index, op)?,
+            Op::Style(op) => self.edit_style(index, op)?,
             Op::LayerMask(op) => self.edit_layer_mask(op)?,
             Op::LayerSetBlendMode { layer, mode } => self.set_layer_blend_mode(layer, *mode)?,
             Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
@@ -389,6 +405,7 @@ impl Stage<'_> {
                     opacity: 255,
                     blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
+                    styles: paintcraft_document::StyleStack::empty(),
                     raster: RasterLayer::new(*width, *height, *default),
                 };
                 self.doc.layers.insert(id, layer);

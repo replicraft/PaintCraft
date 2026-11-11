@@ -297,6 +297,7 @@ fn kind(op: &Op) -> Kind {
         Op::LayerSetBlendMode { .. }
         | Op::LayerMask(_)
         | Op::Filter(_)
+        | Op::Style(_)
         | Op::LayerAdd { .. }
         | Op::LayerDuplicate { .. }
         | Op::LayerDelete { .. }

@@ -22,11 +22,12 @@ pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
     });
     let layer_masks = doc.has_layer_masks();
     let blends = doc.has_non_normal_blends();
-    if !masks && !spatial && !catalog && !layer_masks && !blends {
+    let styles = doc.has_styles();
+    if !masks && !spatial && !catalog && !layer_masks && !blends && !styles {
         return Vec::new();
     }
-    let has_filters =
-        (layer_masks || blends) && doc.layers.values().any(|layer| !layer.filters.is_empty());
+    let has_filters = (layer_masks || blends || styles)
+        && doc.layers.values().any(|layer| !layer.filters.is_empty());
     let mut features = if has_filters || masks || spatial || catalog {
         vec!["layer-point-filters.v1"]
     } else {
@@ -46,6 +47,9 @@ pub fn masked_document_features(doc: &Document) -> Vec<&'static str> {
     }
     if blends {
         features.push("layer-blend-modes.v1");
+    }
+    if styles {
+        features.push("layer-styles.v1");
     }
     if doc.source_metadata.is_some() {
         features.push("source-metadata.v1");

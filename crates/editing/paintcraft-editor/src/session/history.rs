@@ -103,7 +103,7 @@ pub(super) fn label(batch: &Batch) -> Label {
         return Label::Batch;
     }
     match &batch.operations[0] {
-        Op::Filter(_) | Op::LayerMask(_) => Label::Batch,
+        Op::Filter(_) | Op::Style(_) | Op::LayerMask(_) => Label::Batch,
         Op::LayerAdd { .. } => Label::AddLayer,
         Op::LayerDuplicate { .. } => Label::DuplicateLayer,
         Op::LayerDelete { .. } => Label::DeleteLayer,

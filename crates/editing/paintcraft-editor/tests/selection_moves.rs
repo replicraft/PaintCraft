@@ -61,6 +61,7 @@ fn setup() -> (Session, Uuid) {
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             origin: (2, 1),
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster,
         },
     );

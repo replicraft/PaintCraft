@@ -250,7 +250,7 @@ impl Stage<'_> {
                     "Historical sequential baseline predates layer mask operations",
                 ));
             }
-            Op::Filter(_) => {
+            Op::Filter(_) | Op::Style(_) => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
                     "Historical sequential baseline predates filter operations",
@@ -319,6 +319,7 @@ impl Stage<'_> {
                     opacity: 255,
                     blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
+                    styles: paintcraft_document::StyleStack::empty(),
                     raster: RasterLayer::new(*width, *height, *default),
                 };
                 self.doc.layers.insert(id, layer);

@@ -6,6 +6,31 @@ use paintcraft_core::types::{
 };
 use paintcraft_raster::RgbaPastePlan;
 
+/// Owned private paste metadata and its SAME original staging declaration.
+/// Borrow the document through rendering; no account-free Document extraction.
+#[derive(Debug)]
+pub struct AdmittedPastePreview {
+    staged: crate::execute::Staged,
+}
+impl AdmittedPastePreview {
+    pub fn document(&self) -> &paintcraft_document::Document {
+        &self.staged.doc
+    }
+    pub fn set_canvas(&mut self, canvas: (u32, u32)) -> Result<()> {
+        if canvas.0 == 0
+            || canvas.1 == 0
+            || canvas.0 > paintcraft_document::CANVAS_SIDE_MAX
+            || canvas.1 > paintcraft_document::CANVAS_SIDE_MAX
+        {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "Invalid private paste canvas",
+            ));
+        }
+        self.staged.doc.canvas = canvas;
+        Ok(())
+    }
+}
 impl Session {
     /// Paste onto an existing visible layer, ignoring the previous selection's
     /// clipping. Placement and optional canvas growth publish as one Paste entry.
@@ -38,7 +63,7 @@ impl Session {
         let staged = self.stage_paste_onto(draft, target, mode, key, admission, check)?;
         self.commit_staged(staged, &digest, Label::Paste, check)
     }
-    /// Exact private preview, sharing the paste kernel without adding history.
+    /// Legacy bare-document preview is restricted to sources with no style vectors.
     pub fn preview_paste_image_onto(
         &self,
         draft: &PasteDraft,
@@ -48,9 +73,24 @@ impl Session {
         admission: Admission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<paintcraft_document::Document> {
+        self.doc.require_no_styles()?;
         Ok(self
             .stage_paste_onto(draft, target, mode, key, admission, check)?
             .doc)
+    }
+    /// Retain the admitted source styles through private raster preparation/rendering.
+    pub fn preview_paste_image_onto_admitted(
+        &self,
+        draft: &PasteDraft,
+        target: Uuid,
+        mode: BlendMode,
+        key: Option<Rgba>,
+        admission: Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<AdmittedPastePreview> {
+        Ok(AdmittedPastePreview {
+            staged: self.stage_paste_onto(draft, target, mode, key, admission, check)?,
+        })
     }
     fn stage_paste_onto(
         &self,
@@ -114,7 +154,13 @@ impl Session {
         }
         let raster = plan.replay(&mut admission, check)?;
         check()?;
-        let mut doc = (*self.doc).clone();
+        let style_charge =
+            crate::execute::style_controls::admit_document_clone(&self.doc, &admission, check)?;
+        let mut doc = crate::execute::style_controls::clone_document(
+            &self.doc,
+            style_charge.is_some(),
+            check,
+        )?;
         doc.canvas = draft.canvas_size();
         let selection = draft
             .bounds()
@@ -128,6 +174,9 @@ impl Session {
             selection,
             aliases: BTreeMap::from([("pasted".into(), target)]),
             filter_aliases: BTreeMap::new(),
+            style_aliases: BTreeMap::new(),
+            style_edit: false,
+            _style_charge: style_charge,
         })
     }
 }
@@ -145,6 +194,19 @@ impl Preparation {
     ) -> Result<paintcraft_document::Document> {
         self.session
             .preview_paste_image_onto(draft, target, mode, key, admission, check)
+    }
+
+    pub fn preview_paste_image_onto_admitted(
+        &self,
+        draft: &PasteDraft,
+        target: Uuid,
+        mode: BlendMode,
+        key: Option<Rgba>,
+        admission: Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<AdmittedPastePreview> {
+        self.session
+            .preview_paste_image_onto_admitted(draft, target, mode, key, admission, check)
     }
 
     /// Uses the same owner/publication/resource guards as all prepared edits.

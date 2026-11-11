@@ -9,6 +9,8 @@ fn receipt(doc: &Document) -> Receipt {
         history_id: None,
         aliases: BTreeMap::new(),
         filter_aliases: BTreeMap::new(),
+        style_aliases: BTreeMap::new(),
+        style_edit: false,
         document_features: masked_document_features(doc),
         required_filters: catalog_document_requirements(doc),
     }

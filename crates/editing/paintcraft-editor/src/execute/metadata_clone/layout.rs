@@ -13,6 +13,8 @@ pub struct Quote {
     pub raster_seed_supplement_work: u64,
     pub generic_lifecycle_work: u64,
     pub retained_alias_bytes: u64,
+    /// Nested account carved from storage_peak, never a second full grant.
+    pub generic_style_bytes: u64,
 }
 pub const fn quote_control_bytes() -> u64 {
     (size_of::<Quote>() + size_of::<BudgetAccount>()) as u64
@@ -41,12 +43,6 @@ fn alias_leaf_upper() -> Result<u64> {
         .into_iter()
         .try_fold(0u64, |n, (width, align)| add(n, (width + align - 1) as u64))?;
     add(fields, (maximum_alignment - 1) as u64) // final tail padding, any field order
-}
-fn alias(operation: &FilterOp) -> Option<&str> {
-    match operation {
-        FilterOp::Add { alias, .. } | FilterOp::Duplicate { alias, .. } => Some(alias),
-        _ => None,
-    }
 }
 pub(super) fn document_bytes(
     doc: &Document,
@@ -81,7 +77,14 @@ pub(super) fn document_bytes(
         total = add(total, bytes::<FilterInstance>(layer.filters.len())?)?;
         let raster_layout = layer.raster.compact_metadata_clone_quote()?;
         total = add(total, raster_layout.bytes)?;
-        filters = add(filters, layer.filters.len() as u64)?;
+        if !layer.styles.is_empty() {
+            spend(32)?;
+            total = add(total, bytes::<StyleInstance>(layer.styles.len())?)?;
+        }
+        filters = add(
+            filters,
+            add(layer.filters.len() as u64, layer.styles.len() as u64)?,
+        )?;
         let n = layer.raster.resident_tiles() as u64;
         tiles = add(tiles, n)?;
         if n != 0 {
@@ -125,11 +128,32 @@ pub fn quote_checked(
     // Target existence/alias mutation remain the actual generic executor's job.
     let (seed_bytes, raster_seed_supplement_work, filters, tiles, tile_scans) =
         document_bytes(doc, check, spend)?;
-    let generic_lifecycle_work = work::lifecycle(doc, operation, filters, tiles, tile_scans)?;
+    let generic_lifecycle_work = add(
+        work::lifecycle(doc, operation, filters, tiles, tile_scans)?,
+        add(
+            super::super::style_controls::formation_work(),
+            mul(
+                64,
+                add(doc.layers.len() as u64, batch.operations.len() as u64)?,
+            )?,
+        )?,
+    )?;
     // Both passes may construct a256-entry target Vec while old source vectors
     // still live. Clone peak includes seed +planning clone +replay RHS clone.
-    let temporary_filters = mul(bytes::<FilterInstance>(256)?, 2)?;
-    let alias_bytes = if let Some(name) = alias(operation) {
+    let temporary_filters = match operation {
+        MetadataOp::Filter(_) => mul(bytes::<FilterInstance>(256)?, 2)?,
+        MetadataOp::Style(_) => 0, // replacement vectors belong to nested Style account
+    };
+    // Pure query scan/layout arithmetic is funded before its defining helper.
+    let has_styles = doc.layers.values().any(|layer| !layer.styles.is_empty());
+    let style_path = has_styles || matches!(operation, MetadataOp::Style(_));
+    let generic_style_bytes = if style_path {
+        spend(super::super::style_controls::formation_work() + (doc.layers.len() as u64) * 64)?;
+        super::super::style_controls::quote_checked(doc, batch, check)?.bytes
+    } else {
+        0
+    };
+    let alias_bytes = if let Some(name) = operation.alias() {
         if name.len() > 64 {
             return Err(invalid("metadata clone alias length"));
         }
@@ -144,10 +168,19 @@ pub fn quote_checked(
     // Real deterministic ID code allocates base-state text36, layer text36,
     // index text1 and joined filter/UUID/base/digest/index bytes147. These are
     // bounded control temporaries, not an unpriced opaque allowance.
-    let deterministic_text = 36 + 36 + 1 + 147;
+    let deterministic_text = 36
+        + 36
+        + 1
+        + match operation {
+            MetadataOp::Filter(_) => 147,
+            MetadataOp::Style(_) => 152,
+        };
     let storage_peak_bytes = add(
         mul(seed_bytes, 3)?,
-        add(temporary_filters, add(alias_bytes, deterministic_text)?)?,
+        add(
+            generic_style_bytes,
+            add(temporary_filters, add(alias_bytes, deterministic_text)?)?,
+        )?,
     )?;
     let hash_record = 16 + 1 + 2 + 96 + 4 + 6 + 1 + 32;
     let stack_hash = add(
@@ -155,11 +188,26 @@ pub fn quote_checked(
         mul(256, hash_record)?,
     )?;
     let validations = 256 * 255 / 2;
-    let stage_work = add(
+    let mut stage_work = add(
         add(mul(seed_bytes, 2)?, add(temporary_filters, alias_bytes)?)?,
         mul(2, add(validations, add(stack_hash, 2 * (147 + 64))?)?)?,
     )?;
-    let retained_alias_bytes = if let Some(name) = alias(operation) {
+    if style_path {
+        // Extra source vectors in both generic clones/retirements, plus bounded
+        // target validation/hash/descriptor and deterministic-ID control passes.
+        let style_records = doc
+            .layers
+            .values()
+            .try_fold(0u64, |n, l| add(n, l.styles.len() as u64))?;
+        stage_work = add(
+            stage_work,
+            add(
+                mul(style_records, 4 * (size_of::<StyleInstance>() as u64 + 8))?,
+                2 * (256 * 255 / 2 + 256 * (16 + 1 + 2 + 20 + 4 + 5) + 64 + 2 * 256),
+            )?,
+        )?;
+    }
+    let retained_alias_bytes = if let Some(name) = operation.alias() {
         add(alias_leaf_upper()?, name.len() as u64)?
     } else {
         0
@@ -172,6 +220,7 @@ pub fn quote_checked(
         raster_seed_supplement_work,
         generic_lifecycle_work,
         retained_alias_bytes,
+        generic_style_bytes,
     })
 }
 
@@ -207,6 +256,7 @@ pub fn retained_quote_checked(
             .ok_or_else(|| invalid("decoded metadata root missing"))?;
         total = add(total, layer.name.capacity() as u64)?;
         total = add(total, layer.filters.storage_bytes() as u64)?;
+        total = add(total, layer.styles.storage_bytes() as u64)?;
         total = add(
             total,
             layer

@@ -1,8 +1,8 @@
 //! A compact admitted seed feeds the EXISTING generic Stage, never a second filter engine.
 use super::*;
-use paintcraft_commands::FilterOp;
+use paintcraft_commands::{FilterOp, StyleOp};
 use paintcraft_core::types::resources::{BudgetAccount, BudgetScope};
-use paintcraft_document::{FilterInstance, FilterStack};
+use paintcraft_document::{FilterInstance, FilterStack, StyleInstance};
 use paintcraft_raster::raster::metadata_clone::fresh_map_layout;
 use std::mem::size_of;
 mod layout;
@@ -20,18 +20,43 @@ impl StagedMetadata {
     pub fn document(&self) -> &Document {
         &self.staged.doc
     }
+    pub fn style_aliases(&self) -> &StyleAliases {
+        &self.staged.style_aliases
+    }
     pub fn filter_aliases(&self) -> &FilterAliases {
         &self.staged.filter_aliases
     }
 }
-fn operation(batch: &Batch) -> Result<&FilterOp> {
-    let [Op::Filter(operation)] = batch.operations.as_slice() else {
-        return Err(invalid("metadata clone requires one filter operation"));
-    };
-    if matches!(operation, FilterOp::Mask { .. }) {
-        return Err(invalid("metadata clone does not mutate masks"));
+#[derive(Clone, Copy)]
+pub(super) enum MetadataOp<'a> {
+    Filter(&'a FilterOp),
+    Style(&'a StyleOp),
+}
+impl<'a> MetadataOp<'a> {
+    fn stable_uuid_refs(self) -> Option<(Uuid, Option<Uuid>)> {
+        match self {
+            Self::Filter(op) => op.stable_uuid_refs(),
+            Self::Style(op) => op.stable_uuid_refs(),
+        }
     }
-    Ok(operation)
+    fn alias(self) -> Option<&'a str> {
+        match self {
+            Self::Filter(FilterOp::Add { alias, .. } | FilterOp::Duplicate { alias, .. })
+            | Self::Style(StyleOp::Add { alias, .. } | StyleOp::Duplicate { alias, .. }) => {
+                Some(alias)
+            }
+            _ => None,
+        }
+    }
+}
+fn operation(batch: &Batch) -> Result<MetadataOp<'_>> {
+    match batch.operations.as_slice() {
+        [Op::Filter(op)] if !matches!(op, FilterOp::Mask { .. }) => Ok(MetadataOp::Filter(op)),
+        [Op::Style(op)] => Ok(MetadataOp::Style(op)),
+        _ => Err(invalid(
+            "metadata clone requires one nonmask Filter or Style operation",
+        )),
+    }
 }
 pub fn stage_checked(
     base: &Document,
@@ -45,7 +70,12 @@ pub fn stage_checked(
     quote_guard.resize(quote_control_bytes())?;
     let quote = quote_checked(base, batch, check, spend)?;
     let mut account = scope.account();
-    account.resize(quote.storage_peak_bytes)?;
+    account.resize(
+        quote
+            .storage_peak_bytes
+            .checked_sub(quote.generic_style_bytes)
+            .ok_or_else(limit)?,
+    )?;
     spend(quote.generic_lifecycle_work)?;
     let seed = compact_seed(base, &account, check, spend)?;
     // Precharge both generic clones and bounded target validations/hash inputs.
@@ -63,7 +93,10 @@ pub fn stage_checked(
         &checked,
     )?;
     drop(seed);
-    if !staged.aliases.is_empty() || staged.filter_aliases.len() > 1 {
+    if !staged.aliases.is_empty()
+        || staged.filter_aliases.len() > 1
+        || staged.style_aliases.len() > 1
+    {
         return Err(invalid("metadata clone unexpected aliases"));
     }
     // No layer/raster map is mutated by these six non-mask FilterOp variants.
@@ -127,6 +160,11 @@ fn compact_seed(
         let n = instances.len() as u64;
         spend(n * n.saturating_sub(1) / 2 + n * 158 + 32)?;
         let filters = FilterStack::new(instances)?;
+        let n = layer.styles.len() as u64;
+        if n != 0 {
+            spend(n * size_of::<StyleInstance>() as u64 + n * 8 + 64)?;
+        }
+        let styles = layer.styles.try_clone_checked(check)?;
         let name = text(&layer.name, spend)?;
         if layers
             .insert(
@@ -140,6 +178,7 @@ fn compact_seed(
                     blend_mode: layer.blend_mode,
                     raster,
                     filters,
+                    styles,
                     mask: layer.mask.clone(),
                 },
             )

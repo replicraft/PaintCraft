@@ -40,11 +40,11 @@ fn stage(source: &Document, batch: &Batch) -> StagedMetadata {
 }
 #[test]
 fn target_layout_guards_are_literal_and_peak_storage_is_assigned_separately() {
-    assert_eq!(size_of::<Quote>(), 56);
+    assert_eq!(size_of::<Quote>(), 64);
     let guard = if cfg!(target_pointer_width = "64") {
-        96
+        104
     } else {
-        80
+        88
     };
     assert_eq!(
         size_of::<BudgetAccount>(),
@@ -117,7 +117,10 @@ fn target_aux_and_alias_bounds_are_independent_of_actual_vector_len() {
         enabled: false,
     };
     let w = size_of::<FilterInstance>() as u64;
-    assert_eq!(work::target(&plain).unwrap(), 1030 * w + 4100);
+    assert_eq!(
+        work::target(super::super::MetadataOp::Filter(&plain)).unwrap(),
+        1030 * w + 4100
+    );
     let duplicate = FilterOp::Duplicate {
         layer: root,
         filter: FilterRef::Id(Uuid::from_u128(7)),
@@ -128,7 +131,10 @@ fn target_aux_and_alias_bounds_are_independent_of_actual_vector_len() {
         .unwrap()
         .bytes;
     let alias = 2 * (2 * (4 + 65) + size_of::<String>() as u64 + 64 + (a + 4) + 4 + 1) + 257;
-    assert_eq!(work::target(&duplicate).unwrap(), 1030 * w + 4100 + alias);
+    assert_eq!(
+        work::target(super::super::MetadataOp::Filter(&duplicate)).unwrap(),
+        1030 * w + 4100 + alias
+    );
 }
 #[test]
 fn all_six_actual_planning_replay_operations_preserve_source_and_match_semantics() {
@@ -286,7 +292,10 @@ fn planning_and_replay_working_vectors_cancel_at_source_frozen_checks() {
         + 190
         + layer.name.len() as u64
         + source.title.as_ref().map_or(0, |s| s.len()) as u64;
-    for (stop, callbacks_paid) in [(11, 4), (15, 8)] {
+    // EmptyStyle rawcheck adds1; style-query layer/op add2 paid checks.
+    // Retain the actual post-vector planning/replay cuts (old11/15), not
+    // the obsolete ordinals that now land before vector construction.
+    for (stop, callbacks_paid) in [(14, 6), (18, 10)] {
         let budget = SharedBudget::new(q.peak_bytes);
         let scope = budget
             .reserve_capacity(q.peak_bytes)

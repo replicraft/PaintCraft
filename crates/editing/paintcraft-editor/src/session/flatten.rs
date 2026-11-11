@@ -36,6 +36,8 @@ impl Session {
                 history_id: None,
                 aliases: BTreeMap::new(),
                 filter_aliases: BTreeMap::new(),
+                style_aliases: BTreeMap::new(),
+                style_edit: false,
                 document_features: masked_document_features(&self.doc),
                 required_filters: catalog_document_requirements(&self.doc),
             });
@@ -68,7 +70,13 @@ impl Session {
                 "deterministic identifier collision",
             ));
         }
-        let mut doc = (*self.doc).clone();
+        let style_charge =
+            crate::execute::style_controls::admit_document_clone(&self.doc, &admission, check)?;
+        let mut doc = crate::execute::style_controls::clone_document(
+            &self.doc,
+            style_charge.is_some(),
+            check,
+        )?;
         doc.layers.clear();
         doc.roots.clear();
         doc.roots.push(id);
@@ -83,6 +91,7 @@ impl Session {
                 opacity: 255,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster,
             },
         );
@@ -92,6 +101,9 @@ impl Session {
                 selection: self.selection.clone(),
                 aliases: BTreeMap::from([("flattened".into(), id)]),
                 filter_aliases: BTreeMap::new(),
+                style_aliases: BTreeMap::new(),
+                style_edit: false,
+                _style_charge: style_charge,
             },
             &digest,
             Label::FlattenImage,

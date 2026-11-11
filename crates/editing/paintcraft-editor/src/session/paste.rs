@@ -1,6 +1,6 @@
 //! External pixels enter through the same private history/publication boundary.
 use super::*;
-mod onto;
+pub(super) mod onto;
 use crate::clipboard::PasteDraft;
 use paintcraft_core::types::{Rgba, policy::hex};
 use paintcraft_document::{LAYER_COUNT_MAX, Layer};
@@ -78,7 +78,13 @@ impl Session {
             check,
         )?;
         check()?;
-        let mut doc = (*self.doc).clone();
+        let style_charge =
+            crate::execute::style_controls::admit_document_clone(&self.doc, &admission, check)?;
+        let mut doc = crate::execute::style_controls::clone_document(
+            &self.doc,
+            style_charge.is_some(),
+            check,
+        )?;
         doc.roots
             .try_reserve(1)
             .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot grow layer roots"))?;
@@ -102,6 +108,7 @@ impl Session {
                 opacity: 255,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster,
             },
         );
@@ -111,6 +118,9 @@ impl Session {
                 selection,
                 aliases: BTreeMap::from([("pasted".into(), id)]),
                 filter_aliases: BTreeMap::new(),
+                style_aliases: BTreeMap::new(),
+                style_edit: false,
+                _style_charge: style_charge,
             },
             &digest,
             Label::Paste,

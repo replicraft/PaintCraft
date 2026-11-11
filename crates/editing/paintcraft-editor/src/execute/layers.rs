@@ -48,7 +48,7 @@ impl Stage<'_> {
         }
         // Raster clones share immutable tile storage. Future writes use COW;
         // transparent RGB, default pixels and off-canvas tiles are retained.
-        let mut copy = self.doc.layers[&source].clone();
+        let mut copy = style_controls::clone_layer(&self.doc.layers[&source], self.check)?;
         copy.id = id;
         copy.name = name.to_owned();
         self.doc.layers.insert(id, copy);
