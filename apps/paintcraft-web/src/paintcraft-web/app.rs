@@ -184,6 +184,7 @@ impl WebApp {
                 .is_some_and(|l| l.visible),
             zoom: self.zoom,
             pixel_grid: self.canvas.pixel_grid,
+            can_rotate_custom: self.can_rotate_custom(),
             can_transform_image: !matches!(
                 self.editor.session.selection(),
                 paintcraft_raster::Selection::Mask(_) | paintcraft_raster::Selection::Empty
@@ -231,6 +232,7 @@ impl WebApp {
                 | Edit::ResizeCanvasAnchored { .. }
                 | Edit::TransformImage { .. }
                 | Edit::StretchSkewImage(_)
+                | Edit::RotateImage(_)
         );
         let picked = matches!(action, Edit::PickColor(_));
         let before_size = self.editor.session.document().canvas;
@@ -341,6 +343,7 @@ impl WebApp {
                 self.open_settings(ctx);
             }
             Action::ResizeSkew => self.begin_resize_skew(),
+            Action::RotateCustom => self.begin_rotate(),
             Action::CanvasSize | Action::ImageProperties | Action::CanvasDefaults => {
                 self.begin_canvas(action)
             }

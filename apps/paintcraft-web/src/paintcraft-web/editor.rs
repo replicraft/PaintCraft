@@ -5,6 +5,7 @@ mod floating;
 mod layer_masks;
 mod pen;
 mod resource_shape;
+mod rotation;
 mod sampled_brush;
 mod shape_mask;
 mod text;
@@ -205,6 +206,9 @@ impl Editor {
                 ErrorCode::CapabilityUnsupported,
                 "Browser layer styles are not qualified",
             ));
+        }
+        if let Action::RotateImage(edit) = &action {
+            return self.apply_rotate(edit);
         }
         if let Action::StretchSkewImage(edit) = &action {
             self.validate_stretch_skew_edit(edit)?;

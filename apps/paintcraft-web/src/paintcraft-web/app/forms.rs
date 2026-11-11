@@ -4,6 +4,7 @@ use paintcraft_classic::{ColorEditor, ColorResponse};
 use paintcraft_core::types::Rgba;
 use uuid::Uuid;
 mod retro;
+mod rotation;
 
 #[derive(Debug)]
 pub(super) struct ColorDraft {
@@ -17,6 +18,7 @@ pub(super) struct ColorDraft {
 pub(super) enum Form {
     Colors(ColorDraft),
     Canvas(CanvasDraft),
+    Rotate(rotation::Captured),
     ResizeSkew {
         target: Option<Uuid>,
         ticket: paintcraft_editor::session::HistoryTicket,
@@ -187,6 +189,7 @@ impl WebApp {
                     }));
                 }
             }
+            Some(Form::Rotate(draft)) => self.rotation_form(ctx, draft),
             Some(Form::Colors(draft)) => self.color_form(ctx, draft),
             Some(Form::Canvas(draft)) => self.canvas_form(ctx, draft),
             None => {}
