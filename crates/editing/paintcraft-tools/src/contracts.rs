@@ -221,6 +221,18 @@ pub struct StretchSkewEdit {
     pub shear: (i32, i32),
     pub clear: Rgba,
 }
+/// Captured rotation intent; hosts revalidate owner, state, epoch, target AND
+/// exact selection before queueing and execution. Coefficients carry no grant.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RotateEdit {
+    pub owner: Uuid,
+    pub state_id: Uuid,
+    pub publication_epoch: u64,
+    pub target: Option<Uuid>,
+    pub selection: paintcraft_raster::Selection,
+    pub coefficients: (i32, i32),
+    pub clear: Rgba,
+}
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
     /// Captured Studio revision; receiving hosts revalidate at execution.
@@ -247,6 +259,7 @@ pub enum Action {
         color: Rgba,
     },
     StretchSkewImage(StretchSkewEdit),
+    RotateImage(RotateEdit),
     TransformImage {
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
         clear: Rgba,
