@@ -62,8 +62,20 @@ impl CheckedSpanSet {
                     self.budget.table(&mut self.rows, check)?;
                 }
                 let runs = self.rows.entry(y).or_default();
+                let incoming = (x0 as i64, x1 as i64);
+                // Constant-colour geometry is an unordered union. Coalesce only
+                // overlapping/adjacent LAST runs; later sorting still merges all
+                // other runs. Saturating inclusive adjacency is safe at i64 edges.
+                if let Some(last) = runs.last_mut()
+                    && incoming.0 <= last.1.saturating_add(1)
+                    && last.0 <= incoming.1.saturating_add(1)
+                {
+                    last.0 = last.0.min(incoming.0);
+                    last.1 = last.1.max(incoming.1);
+                    continue;
+                }
                 self.budget.vector(runs, check)?;
-                runs.push((x0 as i64, x1 as i64));
+                runs.push(incoming);
             }
         }
         Ok(())
