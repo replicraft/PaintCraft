@@ -171,6 +171,7 @@ pub fn preflight(
             opacity: _,
             blend_mode: _,
             filters: _,
+            styles: _,
             mask: _,
             raster: _,
         } = layer;

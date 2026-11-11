@@ -31,6 +31,7 @@ fn source() -> Document {
                 opacity: 255,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 mask: None,
                 raster: RasterLayer::from_rgba(size.0, size.1, Rgba([0; 4]), rgba, &mut admission)
                     .unwrap(),
