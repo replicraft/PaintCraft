@@ -14,6 +14,7 @@ use winit::{
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     window::{Window, WindowId},
 };
+mod ime;
 mod output;
 #[cfg(test)]
 mod tests;
@@ -320,7 +321,17 @@ impl ApplicationHandler<Wake> for Application {
             return;
         }
         let response = window.input.on_window_event(&window.window, &event);
-        if response.repaint {
+        // Pinned egui-winit drops these facility boundaries. Preserve actual
+        // owned-window receipt order, without inventing native composition IDs.
+        let lifecycle = match ime::append(window.input.egui_input_mut(), &event) {
+            Ok(added) => added,
+            Err(error) => {
+                ime::retire_failed(&mut window.host, window.input.egui_input_mut(), &error);
+                window.window.request_redraw();
+                return;
+            }
+        };
+        if response.repaint || lifecycle {
             window.window.request_redraw();
         }
     }

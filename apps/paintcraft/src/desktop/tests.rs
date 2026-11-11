@@ -36,3 +36,6 @@ fn capture_fallback_keeps_document_and_ordinary_pending_edits() {
     );
     assert_eq!(app.editor.undo_depth(), depth + 1);
 }
+
+#[path = "ime_tests.rs"]
+mod ime_tests;
