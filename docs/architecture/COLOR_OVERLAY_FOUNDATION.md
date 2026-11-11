@@ -132,8 +132,16 @@ three independently authored PCND9 specimens and exact/one-byte-over save limits
 Native all-target strict lint, formatting and source-length checks pass. Receipts
 are under `docs/validation/color-overlay-product-model/root-expanded-checkpoint-1/`
 and `docs/validation/color-overlay-product-engine/codec/root-full-formats-attempt-2/`.
-This is native library qualification, not actual Wasm project decoding or app UI
-acceptance. Existing layered foreign writers refuse styles; an approved appearance
+Separate actual Wasm ordinary-codec execution passes the three literal specimens
+through read/compact-write with exact bytes, plus seven typed malformed-input
+refusals. Original JS input stays unchanged and the diagnostic reader's budget
+reservations retire after every call. All 2,972 source/config/harness bindings
+match before and after build and execution. The 387,837-byte module uses official
+bindgen glue, remains at its initial 2 MiB linear memory and retains its declared
+16 MiB maximum. These finite codec cases do not qualify Worker9, browser style
+editing, full memory accounting or performance. Receipts are under
+`docs/validation/color-overlay-pcnd9-wasm/macro-context-amendment/`.
+Existing layered foreign writers refuse styles; an approved appearance
 copy still needs its compound export integration.
 
 Browser host adoption and tool-preview guards explicitly refuse stored styles;
