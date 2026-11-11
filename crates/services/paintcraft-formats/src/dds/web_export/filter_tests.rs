@@ -40,6 +40,7 @@ fn request(doc: &Document) -> (Header, Vec<u8>, SourcePlan) {
         doc,
         options(),
         export::CopyPolicies {
+            appearance_bake: Default::default(),
             filter_bake: policy,
             ..Default::default()
         },

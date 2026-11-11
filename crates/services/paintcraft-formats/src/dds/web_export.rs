@@ -88,6 +88,7 @@ impl SourcePlan {
             doc,
             options,
             export::CopyPolicies {
+                appearance_bake: Default::default(),
                 source_metadata: policy,
                 ..Default::default()
             },

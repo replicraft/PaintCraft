@@ -39,6 +39,7 @@ fn policies(doc: &Document, codec: Codec) -> export::CopyPolicies {
         Operation::ExportFlat,
     );
     export::CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: metadata_policy::Policy::capture(
             doc,
             target,
@@ -453,6 +454,7 @@ fn catalog_bake_and_source_omission_are_independent_original_snapshot_witnesses(
         let full = policies(&doc, codec);
         assert_eq!(
             capture(export::CopyPolicies {
+                appearance_bake: Default::default(),
                 filter_bake: Default::default(),
                 ..full
             })
@@ -462,6 +464,7 @@ fn catalog_bake_and_source_omission_are_independent_original_snapshot_witnesses(
         );
         assert_eq!(
             capture(export::CopyPolicies {
+                appearance_bake: Default::default(),
                 source_metadata: Default::default(),
                 ..full
             })

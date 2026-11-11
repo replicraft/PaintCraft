@@ -42,6 +42,7 @@ fn policies(codec: Codec, doc: &Document) -> export::CopyPolicies {
     let target =
         metadata_policy::Target::new(family, paintcraft_formats::registry::Operation::ExportFlat);
     export::CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: metadata_policy::Policy::capture(
             doc,
             target,

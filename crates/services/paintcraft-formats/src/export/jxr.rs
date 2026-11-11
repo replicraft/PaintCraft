@@ -64,6 +64,7 @@ pub fn prepare_opaque_rgb_with_metadata_policy(
         render,
         check,
         crate::export::CopyPolicies {
+            appearance_bake: Default::default(),
             source_metadata: policy,
             ..Default::default()
         },

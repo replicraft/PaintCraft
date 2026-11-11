@@ -29,6 +29,7 @@ fn request(doc: &Document) -> (Header, Vec<u8>, SourcePlan) {
     let plan = SourcePlan::capture_with_policies(
         doc,
         export::CopyPolicies {
+            appearance_bake: Default::default(),
             filter_bake: policy,
             ..Default::default()
         },

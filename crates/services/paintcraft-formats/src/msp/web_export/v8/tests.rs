@@ -40,6 +40,7 @@ fn policies(d: &Document) -> export::CopyPolicies {
         crate::registry::Operation::ExportFlat,
     );
     export::CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: export::metadata_policy::Policy::capture(
             d,
             target,

@@ -99,6 +99,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
         let plan = SourcePlan::capture_with_policies_checked(
             &doc,
             export::CopyPolicies {
+                appearance_bake: Default::default(),
                 source_metadata: policy,
                 filter_bake: bake,
             },
@@ -180,6 +181,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             },
             check,
             export::CopyPolicies {
+                appearance_bake: Default::default(),
                 source_metadata: policy,
                 filter_bake: bake,
             },

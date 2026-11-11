@@ -40,6 +40,7 @@ fn plan(doc: &Document, workload: Workload) -> NoiseSourcePlan {
         doc,
         options(),
         export::CopyPolicies {
+            appearance_bake: Default::default(),
             source_metadata: Default::default(),
             filter_bake: bake,
         },
@@ -170,6 +171,7 @@ fn low_component_quotes_and_missing_bake_refuse_without_new_caps() {
                 &d,
                 options(),
                 export::CopyPolicies {
+                    appearance_bake: Default::default(),
                     source_metadata: Default::default(),
                     filter_bake: bake
                 },

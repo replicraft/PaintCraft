@@ -45,6 +45,7 @@ fn document(bytes: &[u8]) -> Document {
 fn policies(doc: &Document, family: Family) -> export::CopyPolicies {
     let target = export::metadata_policy::Target::new(family, Operation::ExportFlat);
     export::CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: export::metadata_policy::Policy::capture(
             doc,
             target,

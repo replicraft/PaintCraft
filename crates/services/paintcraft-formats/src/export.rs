@@ -5,6 +5,7 @@ use paintcraft_document::Document;
 use paintcraft_render::render_flat;
 
 use crate::image::{self, ImageFormat};
+pub mod appearance_bake;
 pub mod dds;
 pub mod filter_bake;
 pub mod jxr;
@@ -34,6 +35,7 @@ pub(crate) mod web_snapshot;
 pub struct CopyPolicies {
     pub source_metadata: metadata_policy::Policy,
     pub filter_bake: filter_bake::Policy,
+    pub appearance_bake: appearance_bake::Policy,
 }
 impl CopyPolicies {
     pub(crate) fn validate(
@@ -42,6 +44,11 @@ impl CopyPolicies {
         expected: metadata_policy::Target,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<(bool, bool)> {
+        // These shared backends are foreign/legacy routes, never compound PNG.
+        doc.require_no_styles()?;
+        if matches!(self.appearance_bake, appearance_bake::Policy::Bake(_)) {
+            self.appearance_bake.validate(doc, expected, check)?;
+        }
         let metadata_omitted = self.source_metadata.validate(doc, expected)?;
         let filters_baked = self.filter_bake.validate(doc, expected, check)?;
         Ok((metadata_omitted, filters_baked))
@@ -61,7 +68,7 @@ pub fn require_metadata_policy(doc: &Document) -> Result<()> {
 }
 
 /// Loss codes a caller may acknowledge.
-pub const KNOWN_LOSSES: [&str; 14] = [
+pub const KNOWN_LOSSES: [&str; 16] = [
     "flatten",
     "hidden-rgb",
     "lossy-jpeg",
@@ -76,10 +83,14 @@ pub const KNOWN_LOSSES: [&str; 14] = [
     dds::LINEAR_QUANTIZATION_LOSS,
     metadata_policy::OMITTED_REASON,
     filter_bake::BAKED_REASON,
+    appearance_bake::BAKED_REASON,
+    appearance_bake::COMPOUND_REASON,
 ];
 
 #[derive(Debug)]
 pub struct FlatExport {
+    /// Only a validated, successfully encoded styled PNG has a disclosure.
+    pub disclosure: Option<paintcraft_core::types::json::Value>,
     pub bytes: Vec<u8>,
     /// Exactly the losses incurred; all were acknowledged.
     pub losses: Vec<String>,
@@ -94,6 +105,7 @@ pub struct FlatOptions {
     /// Only explicit source-metadata intent can construct an omission witness.
     pub source_metadata: metadata_policy::Policy,
     pub filter_bake: filter_bake::Policy,
+    pub appearance_bake: appearance_bake::Policy,
     pub pcx_mode: crate::pcx::Mode,
     /// None retains the default MSP1 route; explicit versions use guarded monochrome preparation.
     pub msp_version: Option<crate::msp::Version>,
@@ -106,6 +118,7 @@ impl FlatOptions {
             jpeg_matte: None,
             source_metadata: metadata_policy::Policy::default(),
             filter_bake: filter_bake::Policy::default(),
+            appearance_bake: appearance_bake::Policy::default(),
             pcx_mode: crate::pcx::Mode::Rgb24,
             msp_version: None,
         }
@@ -183,6 +196,7 @@ pub fn export_flat_options_with_check(
         jpeg_matte,
         source_metadata,
         filter_bake,
+        appearance_bake,
         pcx_mode,
         msp_version,
     } = options;
@@ -195,12 +209,43 @@ pub fn export_flat_options_with_check(
         })?,
         crate::registry::Operation::ExportFlat,
     );
-    let (metadata_omitted, filters_baked) = CopyPolicies {
-        source_metadata,
-        filter_bake,
-    }
-    .validate(doc, target, check)?;
+    // Compound PNG is a separate explicit authority. Legacy filter-copy flags
+    // alone continue to refuse styled sources and masked/blended copies.
+    let styled = doc.has_styles();
+    let (metadata_omitted, filters_baked, compound, appearance_inventory) = if styled {
+        let compound = appearance_bake.validate(doc, target, check)?;
+        let inventory = appearance_bake::inspect(doc, check)?;
+        (
+            source_metadata.validate(doc, target)?,
+            inventory.has_filters(),
+            compound,
+            Some(inventory),
+        )
+    } else {
+        let (metadata, filters) = CopyPolicies {
+            source_metadata,
+            filter_bake,
+            appearance_bake,
+        }
+        .validate(doc, target, check)?;
+        (metadata, filters, false, None)
+    };
     check_loss_codes(allowed)?;
+    let mut appearance_losses = Vec::new();
+    if let Some(inventory) = appearance_inventory {
+        appearance_losses.push(appearance_bake::BAKED_REASON.into());
+        if filters_baked {
+            appearance_losses.push(filter_bake::BAKED_REASON.into());
+        }
+        if inventory.has_filter_masks()
+            || inventory.has_layer_masks()
+            || inventory.has_layer_blends()
+        {
+            appearance_losses.push(appearance_bake::COMPOUND_REASON.into());
+        }
+        // Refuse missing compound acknowledgement before allocating a render.
+        require_losses(format.name(), &appearance_losses, allowed)?;
+    }
     if jpeg_matte.is_some() && format != ImageFormat::Jpeg {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -233,10 +278,15 @@ pub fn export_flat_options_with_check(
             CopyPolicies {
                 source_metadata,
                 filter_bake,
+                appearance_bake,
             },
         )?;
         let (bytes, losses) = prepared.into_parts();
-        return Ok(FlatExport { bytes, losses });
+        return Ok(FlatExport {
+            bytes,
+            losses,
+            disclosure: None,
+        });
     }
     let FlatComposite { rgba, mut losses } = prepare_composite(doc, render, check)?;
     losses.extend(
@@ -262,11 +312,12 @@ pub fn export_flat_options_with_check(
     {
         losses.push("palette-quantized".into());
     }
+    losses.extend(appearance_losses);
     require_losses(format.name(), &losses, allowed)?;
     if metadata_omitted {
         losses.push(metadata_policy::OMITTED_REASON.into());
     }
-    if filters_baked {
+    if filters_baked && !compound {
         losses.push(filter_bake::BAKED_REASON.into());
     }
     let bytes = if let Some(prepared) = prepared {
@@ -290,7 +341,15 @@ pub fn export_flat_options_with_check(
             check,
         )?
     };
-    Ok(FlatExport { bytes, losses })
+    Ok(FlatExport {
+        bytes,
+        losses,
+        disclosure: if compound {
+            appearance_bake.disclosure()
+        } else {
+            None
+        },
+    })
 }
 
 /// One immutable render and the same format-independent losses used by all flat exports.

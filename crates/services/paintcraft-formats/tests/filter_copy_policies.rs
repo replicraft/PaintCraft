@@ -69,6 +69,7 @@ fn target(family: Family) -> metadata_policy::Target {
 fn policies(doc: &Document, family: Family, bake: bool) -> CopyPolicies {
     let target = target(family);
     CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: metadata_policy::Policy::capture(
             doc,
             target,

@@ -44,6 +44,7 @@ fn policies(doc: &Document, codec: Codec) -> export::CopyPolicies {
         Operation::ExportFlat,
     );
     export::CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: metadata_policy::Policy::capture(
             doc,
             target,

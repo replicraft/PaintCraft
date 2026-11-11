@@ -80,6 +80,7 @@ impl SourcePlan {
         Self::capture_with_policies(
             doc,
             export::CopyPolicies {
+                appearance_bake: Default::default(),
                 source_metadata: policy,
                 ..Default::default()
             },

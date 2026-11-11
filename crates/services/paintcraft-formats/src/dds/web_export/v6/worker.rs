@@ -104,6 +104,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
             &doc,
             options,
             export::CopyPolicies {
+                appearance_bake: Default::default(),
                 source_metadata: policy,
                 filter_bake: bake,
             },
@@ -174,6 +175,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
                         render_frame,
                         check,
                         export::CopyPolicies {
+                            appearance_bake: Default::default(),
                             source_metadata: policy,
                             filter_bake: bake,
                         },

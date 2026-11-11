@@ -17,6 +17,7 @@ use uuid::Uuid;
 fn policy(doc: &Document, family: Family) -> CopyPolicies {
     let target = metadata_policy::Target::new(family, Operation::ExportFlat);
     CopyPolicies {
+        appearance_bake: Default::default(),
         source_metadata: metadata_policy::Policy::capture(
             doc,
             target,

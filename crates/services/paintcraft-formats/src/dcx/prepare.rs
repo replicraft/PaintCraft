@@ -40,6 +40,7 @@ impl PreparedDocument {
     }
     pub fn into_export(self) -> export::FlatExport {
         export::FlatExport {
+            disclosure: None,
             bytes: self.bytes,
             losses: self.losses,
         }
@@ -102,6 +103,7 @@ pub fn prepare_document_with_metadata_policy(
         check,
         render,
         crate::export::CopyPolicies {
+            appearance_bake: Default::default(),
             source_metadata: policy,
             ..Default::default()
         },

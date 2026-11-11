@@ -80,6 +80,7 @@ pub fn prepare_document_with_metadata_policy(
         filter,
         check,
         crate::export::CopyPolicies {
+            appearance_bake: Default::default(),
             source_metadata: policy,
             ..Default::default()
         },
