@@ -130,9 +130,8 @@ jobs:
         working-directory: apps/paintcraft-web
       - run: pnpm run build
         working-directory: apps/paintcraft-web
-      - name: Install Chrome for the real Main rendering regression
-        run: pnpm exec playwright-core install --with-deps chrome
-        working-directory: apps/paintcraft-web
+      - name: Check the runner's Chrome installation
+        run: google-chrome --version
       - name: Check real Main blend rendering and lifecycle
         run: pnpm run test:main-blend-browser
         working-directory: apps/paintcraft-web

@@ -122,7 +122,8 @@ CODEC_EVIDENCE_DIR=../../docs/validation/main-blend-local pnpm run test:main-ble
 ```
 
 On Linux, use `install --with-deps chrome` to install its system dependencies.
-CI runs this check against the production bundle and uploads its evidence.
+CI uses the runner's preinstalled Chrome, reports its version, runs this check
+against the production bundle and uploads its evidence.
 The script starts and closes its own loopback server and headless Chrome.
 Each run writes a new evidence directory containing source/artifact hashes,
 Worker traces, downloaded projects, screenshots and individual case results.
