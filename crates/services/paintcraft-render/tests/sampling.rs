@@ -41,6 +41,7 @@ fn layered() -> paintcraft_document::Document {
                 opacity,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster: r,
             },
         );

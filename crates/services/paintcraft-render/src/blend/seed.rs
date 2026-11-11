@@ -45,9 +45,10 @@ impl<'a> Seed<'a> {
             if layer.visible && layer.opacity != 0 && region.intersect(&layer.extent()).is_some() {
                 // O(1) source facts; Normal zero alpha over fresh zero output
                 // writes nothing, including hiddenRGB. Do not skip General or
-                // any stored filter/mask whose work/evaluation must remain.
+                // any stored filter/style/mask whose work/evaluation must remain.
                 if layer.blend_mode == Mode::Normal
                     && layer.filters.is_empty()
+                    && !crate::styles::stored(layer)
                     && layer.mask.is_none()
                     && layer.raster.resident_tiles() == 0
                     && layer.raster.default_pixel().a() == 0

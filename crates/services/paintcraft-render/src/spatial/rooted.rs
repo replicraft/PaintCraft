@@ -24,6 +24,11 @@ pub(crate) fn preflight(
             let local = area
                 .translated(-layer.origin.0, -layer.origin.1)
                 .ok_or_else(|| invalid("Direct source coordinates overflow"))?;
+            // Styles run only after uniform proof, so they are never doubled
+            // with the legacy filter candidate-then-fallback bound below.
+            direct = direct
+                .checked_add(crate::styles::checked_work(layer, local, check)?)
+                .ok_or_else(|| limit("Style request work overflows"))?;
             direct = direct
                 .checked_add(crate::layer_mask::work(layer, local.area() as u64)?)
                 .ok_or_else(|| limit("Layer mask request work overflows"))?;

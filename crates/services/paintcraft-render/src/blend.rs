@@ -80,6 +80,8 @@ fn context(doc: &Document) -> Result<Context> {
                 "CPU blend root identity differs",
             ));
         }
+        // The closed ColorOverlayRgbV1 namespace copies alpha exactly, so
+        // stored RGB intentions cannot invalidate this source opacity proof.
         if opaque_after.is_none()
             && l.visible
             && l.opacity == 255

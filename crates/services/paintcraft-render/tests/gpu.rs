@@ -40,6 +40,7 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
             opacity: 137,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster,
         },
     );
@@ -89,6 +90,7 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
                 opacity,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster,
             },
         );
@@ -242,6 +244,7 @@ fn resident_sources_skip_unchanged_uploads_and_patch_clipped_row_strips() {
             opacity: 173,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster: RasterLayer::new(270, 140, Rgba([31, 63, 127, 0])),
         },
     );
@@ -317,6 +320,7 @@ fn source_cache_limits_stream_oversized_layers_and_evict_without_pixel_changes()
             opacity: 123,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster: RasterLayer::new(64, 64, Rgba([17, 88, 156, 128])),
         },
     );

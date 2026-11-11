@@ -154,6 +154,10 @@ pub(crate) fn preflight(
                         )?)?;
             }
             quote.work = quote.work.checked_add(WorkComponents {
+                base: crate::styles::checked_work(layer, local, check)?,
+                noise: 0,
+            })?;
+            quote.work = quote.work.checked_add(WorkComponents {
                 base: crate::layer_mask::work(layer, local.area() as u64)?,
                 noise: 0,
             })?;

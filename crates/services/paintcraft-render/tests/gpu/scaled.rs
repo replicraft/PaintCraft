@@ -58,6 +58,7 @@ fn fixture() -> Document {
                 opacity: 137 + n as u8 * 31,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster: RasterLayer::from_rgba(
                     79,
                     57,
@@ -161,6 +162,7 @@ fn wide_gpu_resolve_matches_analytic_million_square_composites_without_native_ex
                     opacity,
                     blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                     filters: Default::default(),
+                    styles: paintcraft_document::StyleStack::empty(),
                     raster: RasterLayer::new(width / 2, height / 4, top),
                 },
             );
@@ -280,6 +282,7 @@ fn dense_carries(edge: u32) {
             opacity: 255,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster: RasterLayer::from_rgba(
                 1029,
                 517,

@@ -32,6 +32,7 @@ fn fixture() -> Document {
                 opacity: 173,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster: RasterLayer::from_rgba(
                     512,
                     256,

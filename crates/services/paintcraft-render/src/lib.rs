@@ -17,6 +17,7 @@ mod kernels;
 pub mod layer_mask;
 pub mod noise_work;
 pub mod spatial;
+pub mod styles;
 
 pub mod parallel;
 pub mod prepared;
@@ -221,7 +222,8 @@ pub(crate) fn compose_row(
                 }
             }
             RowSpan::Pixels(src) => {
-                if layer.filters.is_empty() && !layer_mask::active(layer) {
+                if layer.filters.is_empty() && !layer_mask::active(layer) && !styles::stored(layer)
+                {
                     kernels::dense(dst, src, layer.opacity);
                 } else {
                     // Only private bounded scratch is transformed. Source tiles

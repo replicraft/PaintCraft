@@ -1,0 +1,146 @@
+[
+	{
+		"first": 0,
+		"second": 0,
+		"firstResult": [
+			174,
+			83,
+			64,
+			127
+		],
+		"expected": [
+			96,
+			88,
+			132,
+			127
+		]
+	},
+	{
+		"first": 0,
+		"second": 1,
+		"firstResult": [
+			174,
+			83,
+			64,
+			127
+		],
+		"expected": [
+			93,
+			57,
+			57,
+			127
+		]
+	},
+	{
+		"first": 0,
+		"second": 2,
+		"firstResult": [
+			174,
+			83,
+			64,
+			127
+		],
+		"expected": [
+			177,
+			114,
+			139,
+			127
+		]
+	},
+	{
+		"first": 1,
+		"second": 0,
+		"firstResult": [
+			118,
+			73,
+			64,
+			127
+		],
+		"expected": [
+			68,
+			83,
+			132,
+			127
+		]
+	},
+	{
+		"first": 1,
+		"second": 1,
+		"firstResult": [
+			118,
+			73,
+			64,
+			127
+		],
+		"expected": [
+			63,
+			50,
+			57,
+			127
+		]
+	},
+	{
+		"first": 1,
+		"second": 2,
+		"firstResult": [
+			118,
+			73,
+			64,
+			127
+		],
+		"expected": [
+			123,
+			106,
+			139,
+			127
+		]
+	},
+	{
+		"first": 2,
+		"second": 0,
+		"firstResult": [
+			182,
+			137,
+			128,
+			127
+		],
+		"expected": [
+			100,
+			115,
+			164,
+			127
+		]
+	},
+	{
+		"first": 2,
+		"second": 1,
+		"firstResult": [
+			182,
+			137,
+			128,
+			127
+		],
+		"expected": [
+			97,
+			94,
+			115,
+			127
+		]
+	},
+	{
+		"first": 2,
+		"second": 2,
+		"firstResult": [
+			182,
+			137,
+			128,
+			127
+		],
+		"expected": [
+			184,
+			158,
+			178,
+			127
+		]
+	}
+]

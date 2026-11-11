@@ -152,6 +152,7 @@ pub(crate) fn uniform(
             paintcraft_effects::mix_point_coverage(pixel, candidate, coverage)
         };
     }
+    crate::styles::pixel(layer, &mut pixel, admission.as_ref(), check)?;
     Ok(Some(pixel))
 }
 
@@ -190,7 +191,10 @@ pub(crate) fn pixels(
             "Filter row lies outside its source",
         ));
     }
-    if !layer.filters.iter().any(|filter| filter.enabled()) && !crate::layer_mask::active(layer) {
+    if !layer.filters.iter().any(|filter| filter.enabled())
+        && !crate::layer_mask::active(layer)
+        && !crate::styles::stored(layer)
+    {
         return Ok(());
     }
     let admission = crate::spatial::current();
@@ -210,6 +214,7 @@ pub(crate) fn pixels(
                 *pixel = mix(filter, &program, (x0 + x as i64, local.1), Rgba(*pixel))?.0;
             }
         }
+        crate::styles::bytes(layer, chunk, admission.as_ref(), check)?;
         if crate::layer_mask::active(layer) {
             for (x, bytes) in chunk.as_chunks_mut::<4>().0.iter_mut().enumerate() {
                 let mut pixel = Rgba(*bytes);

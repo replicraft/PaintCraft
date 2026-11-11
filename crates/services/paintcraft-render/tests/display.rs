@@ -43,6 +43,7 @@ fn fixture() -> Document {
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 visible: true,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster: RasterLayer::from_rgba(
                     79,
                     57,
@@ -158,6 +159,7 @@ fn layerwise_downsampling_is_not_used_and_levels_and_previews_have_separate_vali
                 opacity: 255,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster: RasterLayer::from_rgba(
                     2,
                     1,
@@ -318,6 +320,7 @@ fn dense_reduction_across_unaligned_recursive_splits_matches_the_full_pixel_orac
                 opacity: 173 + n as u8 * 31,
                 blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
                 filters: Default::default(),
+                styles: paintcraft_document::StyleStack::empty(),
                 raster: RasterLayer::from_rgba(523, 307, Rgba::TRANSPARENT, &bytes, &mut admission)
                     .unwrap(),
             },

@@ -166,6 +166,7 @@ fn partial_multiple_and_noncontributing_layers_use_exact_eligibility() {
             opacity: 137,
             blend_mode: paintcraft_core::types::LayerBlendMode::Normal,
             filters: Default::default(),
+            styles: paintcraft_document::StyleStack::empty(),
             raster: RasterLayer::new(19, 13, Rgba([199, 87, 31, 193])),
         },
     );

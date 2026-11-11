@@ -103,6 +103,9 @@ impl<'a> LayerAppearancePlan<'a> {
         }
         let capacity = pixels(input)?;
         work = work
+            .checked_add(crate::styles::checked_work(layer, output, check)?)
+            .ok_or_else(|| limit("Style output work overflows"))?;
+        work = work
             .checked_add(crate::layer_mask::work(layer, pixels(output)? as u64)?)
             .ok_or_else(|| limit("Layer mask output work overflows"))?;
         work = work
@@ -113,6 +116,13 @@ impl<'a> LayerAppearancePlan<'a> {
             .and_then(|value| value.checked_add(scratch.checked_mul(size_of::<u64>())?))
             .and_then(|value| value.checked_add(count.checked_mul(size_of::<Stage>())?))
             .and_then(|value| u64::try_from(value).ok())
+            .and_then(|value| {
+                value.checked_add(if crate::styles::stored(layer) {
+                    crate::styles::CONTROL_BYTES
+                } else {
+                    0
+                })
+            })
             .ok_or_else(|| limit("Appearance workspace overflows"))?;
         check()?;
         Ok(Self {

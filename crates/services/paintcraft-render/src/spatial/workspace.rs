@@ -161,6 +161,11 @@ impl Workspace {
                 }
             }
         }
+        if crate::styles::stored(plan.layer) {
+            for chunk in self.front[..pixels(plan.output)?].chunks_mut(64) {
+                crate::styles::pixels(plan.layer, chunk, Some(admission), true, check)?;
+            }
+        }
         if crate::layer_mask::active(plan.layer) {
             let width = plan.output.width() as usize;
             for (i, pixel) in self.front[..pixels(plan.output)?].iter_mut().enumerate() {

@@ -27,6 +27,8 @@ pub(crate) fn with_programs<T>(
     check: &dyn Fn() -> Result<()>,
     work: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
+    // A CPU style stage is not a GPU shader/preservation capability.
+    doc.require_no_styles()?;
     if !doc.has_non_normal_blends() {
         return crate::prepared::with_normal_document_programs(doc, check, work);
     }

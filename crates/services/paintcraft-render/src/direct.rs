@@ -4,10 +4,11 @@ use paintcraft_core::types::filters::Descriptor;
 use paintcraft_document::Layer;
 
 pub(crate) fn active(layer: &Layer) -> bool {
-    layer
-        .filters
-        .iter()
-        .any(|f| f.enabled() && priced(f.descriptor()))
+    crate::styles::stored(layer)
+        || layer
+            .filters
+            .iter()
+            .any(|f| f.enabled() && priced(f.descriptor()))
 }
 /// Even zero-amount Noise keeps the coordinate-profile proof and pricing path.
 pub(crate) fn coordinate_dependent(layer: &Layer) -> bool {
