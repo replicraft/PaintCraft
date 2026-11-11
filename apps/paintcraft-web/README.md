@@ -160,6 +160,22 @@ physical resource bounds. Optional `LAYER_MASK_COORDINATES` supplies bounded JSO
 coordinate overrides for layout investigation; the checked-in defaults use the
 same English viewport as the blend regression.
 
+Studio also supports own-mask actions on stored Multiply and Screen layers.
+Captured-document, selected-layer, private-input and admission checks remain in
+force. This enables immediate own-mask edits without enabling private filter
+editing or other derived consumers for blended documents.
+
+```sh
+CODEC_EVIDENCE_DIR=../../docs/validation/studio-blend-mask-local pnpm run test:studio-blend-mask-browser
+```
+
+Five real-browser groups use a fixed two-pixel Multiply scene. They check exact
+PCND8 source and RGBA, consuming Worker handoffs, no-op stability, inversion,
+disabling, removal and Undo/Redo. CI runs this check too. Native tests cover
+Normal, Multiply and Screen; this browser fixture covers Multiply. Screenshots
+are retained for review, without an automatic semitransparent canvas-pixel check.
+Optional `BLEND_MASK_COORDINATES` supports bounded layout calibration.
+
 A 2026-10-23 local review built the optimized bundle and exercised startup,
 settings and dark-to-light switching in isolated headless Brave. The screenshots,
 commands and scope limits are recorded in [the validation evidence](../../docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json).

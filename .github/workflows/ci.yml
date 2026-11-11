@@ -143,6 +143,17 @@ jobs:
         working-directory: apps/paintcraft-web
         env:
           CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/studio-layer-mask-ci
+      - name: Check Studio blended layer mask ownership and rendering
+        run: pnpm run test:studio-blend-mask-browser
+        working-directory: apps/paintcraft-web
+        env:
+          CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/studio-blend-mask-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-blend-mask-browser-evidence
+          path: docs/validation/studio-blend-mask-ci/
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
         with:
