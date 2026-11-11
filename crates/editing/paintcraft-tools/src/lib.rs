@@ -20,6 +20,8 @@ pub mod pen_stroke;
 mod picker;
 mod preview_revision;
 pub use filter_edit::FilterEdit;
+mod style_edit;
+pub use style_edit::StyleEdit;
 mod layer_mask_edit;
 pub use layer_mask_edit::LayerMaskEdit;
 mod selection;

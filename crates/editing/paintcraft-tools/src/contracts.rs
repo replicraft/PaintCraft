@@ -225,6 +225,7 @@ pub struct StretchSkewEdit {
 pub enum Action {
     /// Captured Studio revision; receiving hosts revalidate at execution.
     Filter(crate::FilterEdit),
+    Style(crate::StyleEdit),
     LayerMask(crate::LayerMaskEdit),
     ToolFailure(&'static str),
     SampledStroke(crate::sampled_brush::SampledStroke),
@@ -341,6 +342,7 @@ pub enum Action {
 pub enum Preview {
     /// Private candidate only; never publishes an edit or history record.
     Filter(crate::FilterEdit),
+    Style(crate::StyleEdit),
     SampledStroke(crate::sampled_brush::SampledStroke),
     PenStroke(crate::pen_stroke::PenStroke),
     ResourceShape(crate::resource_shape::Placement),
