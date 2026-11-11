@@ -8,6 +8,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Thirteen editable Studio filters, including Curves, Vibrance, Hue/Saturation and Noise, with live previews and saved selection masks.
 - Saved layer masks with desktop editing and browser display, sampling and flattening.
 - Normal, Multiply and Screen layer blending in desktop Studio.
+- Editable Color Overlay layer styles in desktop Studio.
 - Desktop, browser and command-line apps.
 - **MCP support:** let AI assistants paint, edit layers, preview images and save projects.
 - Nine brushes, pencil, eraser, fill and color picker.

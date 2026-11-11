@@ -73,8 +73,8 @@ and a 1,024-byte inline control envelope. These are conservative logical source
 actions, not CPU instructions, measured memory or execution authority. A consumer
 must pay in its original realm before formation and writes, retain its account,
 and finish query Results before forming coefficients. Supported target layouts
-are checked explicitly. Rendering adoption and its full pipeline admission remain
-pending; this helper alone grants no stored-style support.
+are checked explicitly. The CPU integration below consumes this helper under its original caller
+admission; the helper alone grants no stored-style support.
 
 All 89 Effects library tests and native all-target/Wasm strict lint pass. Actual
 Wasm execution matches all 6,912 independent scalar vectors and exercises 6,912
@@ -141,8 +141,8 @@ bindgen glue, remains at its initial 2 MiB linear memory and retains its declare
 16 MiB maximum. These finite codec cases do not qualify Worker9, browser style
 editing, full memory accounting or performance. Receipts are under
 `docs/validation/color-overlay-pcnd9-wasm/macro-context-amendment/`.
-Existing layered foreign writers refuse styles; an approved appearance
-copy still needs its compound export integration.
+Existing layered foreign writers refuse styles. The explicit PNG appearance
+copy path below supplies separate compound consent.
 
 Browser host adoption and tool-preview guards explicitly refuse stored styles;
 the old Source7/8 routes do not gain style support. The paid Source8 root walk
@@ -157,9 +157,51 @@ lint. These are host/compilation checks; actual rebuilt Wasm service execution
 and browser artifact qualification remain separate. Layout and strict-check
 receipts are under `docs/validation/color-overlay-root-web/`.
 
-Integration still needs priced rendering, cache invalidation and frontend
-adoption. The intended first stage is complete filters, enabled Color Overlays
-in order, own mask, layer opacity, then layer blending; exterior style families
-need separate stage rules. Existing worker profiles grant no style
-support. The current integration evidence is recorded in
+## CPU rendering and native Studio
+
+CPU composition now evaluates complete filters, enabled Color Overlays in order,
+own mask, layer opacity, then layer blending. The stored stack participates in
+appearance identities and disables raw-pixel shortcuts, including style-only
+Multiply/Screen layers. Disabled and zero-opacity intentions remain stored and
+retain the existing direct-path admission rules. Each native leaf uses the same
+original cumulative work counter; a single row-span quotation is not a grant for
+an entire decomposed display request.
+
+The expanded renderer suite passes 378 tests with no ignored cases. Public
+geometry checks use independently frozen complete pixels across three layer
+blend modes, three style states, offset source tiles, cropped regions, partial
+LOD cells and both caches. The original resource limits remain unchanged.
+Receipts are under `docs/validation/color-overlay-composition/`.
+
+Native Studio now exposes ordered Color Overlay controls with private previews,
+Cancel, atomic Apply and Undo/Redo. The complete desktop library suite passes
+880 tests with 30 existing or explicitly gated ignored cases, including all eight
+new style controls/lifecycle tests and both new export-modal cases. A separate
+required-adapter test passes on Apple M1 Pro Metal: full and scaled styled
+previews fall back to admitted CPU composition without publishing their private
+source. Its first sandbox attempt could not enumerate a GPU and is retained as a
+failure; the offscreen run outside that sandbox supplies the actual GPU result.
+Seven-locale modal and formatted-status tests pass. These are headless native
+checks, not a claim of visual review or physical tablet behavior.
+
+Styled PNG copies require a fresh explicit compound appearance witness and the
+applicable loss acknowledgements. Legacy filter-only consent cannot grant this
+operation. Native modal tests verify unchecked defaults, cancellation and source
+preservation. After the compound export changes, the expanded Formats suite
+passes 1,044 tests with 28 existing ignored cases; all 16 documentation tests
+also pass. CLI/MCP commands and disclosure are described in
+[the command guide](../LAYER_STYLE_COMMANDS.md). The complete CLI suite passes
+271 tests with 15 existing ignored cases, including six new file-command and
+real stdio style tests. The installed-helper test initially refused an old
+binary; rebuilding the required codec worker allowed that test and the full suite
+to pass without weakening the verifier.
+
+Browser Source7/8 continues to refuse stored styles. Existing browser export
+policies now explicitly retain refusal authority. Strict Wasm checks pass for Main
+and both workers, and their host library suites pass 749 tests with
+3 existing ignored cases. These checks do not execute the rebuilt services
+in a browser. Fresh production browser
+qualification and browser style editing remain open, as do comparative performance
+measurements and the other style families. No speed or physical-memory gain is
+claimed. The portable integration evidence is recorded in
 [LAYER_BLEND_FOUNDATION.md](LAYER_BLEND_FOUNDATION.md#additional-portable-foundations).

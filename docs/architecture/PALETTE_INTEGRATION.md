@@ -79,8 +79,10 @@ live layer style. Each slice needs its own persistence, history, automation and
 rendering contract.
 The [Color Overlay numerical foundation](COLOR_OVERLAY_FOUNDATION.md) now has
 independent native and actual Wasm scalar/row checks. A separate bounded ordered
-style vocabulary is also tested, including 19 actual Node Wasm cases. It is not
-attached to layers or rendering and is not a fourteenth filter. The prepared CPU
+style vocabulary is also tested, including 19 actual Node Wasm cases. Ordered
+styles now attach to layers, persist in PCND9 and render through the CPU pipeline;
+native Studio controls and CLI/MCP consumers are qualified separately in that
+checkpoint. Color Overlay is not a fourteenth filter. The prepared CPU
 blend service and borrowed cooperative History fork pass a combined 57-case
 actual Node Wasm matrix with that vocabulary; browser mask mutation, owned source
 leases and Worker8/Main execution remain open. Portable Source8 snapshots now pass
