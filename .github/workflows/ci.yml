@@ -130,6 +130,20 @@ jobs:
         working-directory: apps/paintcraft-web
       - run: pnpm run build
         working-directory: apps/paintcraft-web
+      - name: Install Chrome for the real Main rendering regression
+        run: pnpm exec playwright-core install --with-deps chrome
+        working-directory: apps/paintcraft-web
+      - name: Check real Main blend rendering and lifecycle
+        run: pnpm run test:main-blend-browser
+        working-directory: apps/paintcraft-web
+        env:
+          CODEC_EVIDENCE_DIR: ${{ github.workspace }}/docs/validation/main-blend-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main-blend-browser-evidence
+          path: docs/validation/main-blend-ci/
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: paintcraft-web

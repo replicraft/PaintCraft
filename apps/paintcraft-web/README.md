@@ -111,6 +111,33 @@ The ordinary UI test runs without opening a browser or native window. Compiling
 to WebAssembly and testing the shared view on the host do not establish browser
 compatibility; a served bundle still needs live browser review.
 
+### Real Main blend regression
+
+After `pnpm install --frozen-lockfile` and `pnpm run build`, install Chrome if
+needed and run the headless check from this directory:
+
+```sh
+pnpm exec playwright-core install chrome
+CODEC_EVIDENCE_DIR=../../docs/validation/main-blend-local pnpm run test:main-blend-browser
+```
+
+On Linux, use `install --with-deps chrome` to install its system dependencies.
+CI runs this check against the production bundle and uploads its evidence.
+The script starts and closes its own loopback server and headless Chrome.
+Each run writes a new evidence directory containing source/artifact hashes,
+Worker traces, downloaded projects, screenshots and individual case results.
+
+Five groups exercise actual Studio file opening, exact rendered RGBA, canonical
+project saving, Undo, idle reuse, consuming document handoff, and recovery after
+a deliberately corrupted outgoing source byte. They use the real Rust Main
+callbacks and native Worker; they do not replace application admission callbacks.
+This finite regression permits software graphics and does not qualify hardware
+GPU rendering, memory/latency bounds, all blend scenes or cross-browser behavior.
+It uses an English 1360 × 1000 page at device scale 1. An explicit
+`PLAYWRIGHT_MODULE` can select another installed Playwright module; optional
+`MAIN_BLEND_COORDINATES` provides bounded JSON coordinate overrides when inspecting
+a changed layout. Neither override is required for the checked-in layout.
+
 A 2026-10-23 local review built the optimized bundle and exercised startup,
 settings and dark-to-light switching in isolated headless Brave. The screenshots,
 commands and scope limits are recorded in [the validation evidence](../../docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json).

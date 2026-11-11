@@ -16,11 +16,13 @@
 		"format": "biome format --write .",
 		"format:check": "biome format .",
 		"build:codec-worker": "node scripts/build-codec-worker.mjs",
-		"test:codec-worker-browser": "node scripts/codec-worker-browser.mjs"
+		"test:codec-worker-browser": "node scripts/codec-worker-browser.mjs",
+		"test:main-blend-browser": "node scripts/main-blend-browser.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.6.2",
 		"astro": "7.4.2",
+		"playwright-core": "1.64.1",
 		"vite-plugin-wasm": "3.6.0"
 	}
 }
