@@ -310,3 +310,6 @@ fn noise_mask_changes_publish_editor_intent_and_reopened_source_selects_six() {
             .same_semantics(&read_project(&bytes))
     );
 }
+
+#[path = "mask_tests/blended.rs"]
+mod blended;
