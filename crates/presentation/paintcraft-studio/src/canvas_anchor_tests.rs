@@ -314,3 +314,64 @@ fn anchor_retires_already_started_scroll_animation_at_120hz() {
         }
     }
 }
+
+#[test]
+fn implicit_zoom_and_viewport_changes_preserve_panned_image_point_in_real_egui() {
+    fn render(ctx: &Context, viewport: Vec2, zoom: f32, tick: usize) -> (Rect, Rect) {
+        let mut result = (Rect::NOTHING, Rect::NOTHING);
+        let mut output = ctx.run_ui(
+            RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, viewport)),
+                time: Some(tick as f64 / 30.0),
+                ..Default::default()
+            },
+            |ui| {
+                result = canvas_for_scope(
+                    ui,
+                    Id::unique("implicit-zoom"),
+                    Id::unique(("same-document", zoom.to_bits())),
+                    Vec2::new(1000.0, 800.0) * zoom,
+                    |ui, response, _| (response.rect, ui.clip_rect()),
+                );
+            },
+        );
+        output.textures_delta.clear();
+        result
+    }
+    let ctx = Context::default();
+    let old_scope = Id::unique(("same-document", 1.0_f32.to_bits()));
+    let mut pair = (Rect::NOTHING, Rect::NOTHING);
+    for tick in 0..8 {
+        pair = render(&ctx, Vec2::new(400.0, 300.0), 1.0, tick);
+    }
+    pan_by(
+        &ctx,
+        Id::unique("implicit-zoom"),
+        old_scope,
+        Vec2::new(-80.0, 40.0),
+    );
+    for tick in 8..16 {
+        pair = render(&ctx, Vec2::new(400.0, 300.0), 1.0, tick);
+    }
+    let document_point = pair.1.center() - pair.0.min;
+    assert!((document_point - Vec2::new(500.0, 400.0)).length() > 40.0);
+    for (start, viewport, zoom) in [
+        (16, Vec2::new(400.0, 300.0), 0.125),
+        (48, Vec2::new(600.0, 400.0), 0.25),
+        (80, Vec2::new(500.0, 350.0), 1.0),
+    ] {
+        for tick in start..start + 32 {
+            pair = render(&ctx, viewport, zoom, tick);
+            if tick >= start + 4 {
+                let anchored = pair.0.min + document_point * zoom;
+                assert!(
+                    anchored.distance(pair.1.center()) < 1.1,
+                    "tick={tick} zoom={zoom} image={:?} clip={:?} anchor={anchored:?}",
+                    pair.0,
+                    pair.1
+                );
+                assert!(pair.0.intersects(pair.1));
+            }
+        }
+    }
+}

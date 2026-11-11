@@ -1428,6 +1428,29 @@ to zero. These finite SDK checks are under
 still required. This is a source-dependent workspace correction, not a new fixed
 allowance for other scenes or a physical memory claim.
 
+A later production run executes all nine real Main browser cases successfully:
+open/display and independent Save/Undo checks, stable idle source ownership,
+Source8 handoffs, the paid Normal probe and actual Source7 fallback, positive-LOD
+clipped views, narrow/wide layouts, and genuine failed-source cleanup followed
+by a changed-source retry. The page uses the production Rust callbacks and real
+Workers throughout. The artifact is Main `4bf351ae...` with Worker `e197b9f4...`;
+`docs/validation/source8-real-main-browser/attempt-12/root-reviewed.json` records
+the exact receipts and scope. Screenshot pixels independently distinguish the
+correct horizontal padded footprint from a squeezed clipped extent and show the
+fresh downsampled texture. Vertical physical placement is not separately
+quantified, and failed middle-button navigation attempts stay unqualified; the
+successful clipped view uses an actual horizontal wheel gesture. Hidden credit
+balances, physical memory, GC and complete D1 remain outside this finite proof.
+
+The navigation investigation also reproduced a separate shared Studio problem:
+zoom changes kept the image's top-left position instead of the document point
+under the viewport center, hiding small images beneath floating tools. The
+private Geometry transform now preserves that relative point, retaining explicit
+anchors and bounds. All 32 Studio tests and 545 native web tests pass, with three
+existing web ignores, along with strict native/Wasm checks, formatting and docs.
+This shared desktop/web change requires a fresh production browser replay; the
+previous Main artifact is historical evidence, not the new build.
+
 The first genuine Main build exposed four Worker SDK classes and 18 supporting
 globals. That failed artifact remains preserved. A default-enabled
 `wasm-entry` feature now separates the Worker entry points and legacy SDK from

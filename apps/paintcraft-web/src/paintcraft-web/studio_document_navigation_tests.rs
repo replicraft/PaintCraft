@@ -99,3 +99,118 @@ fn imported_studio_document_starts_centered_after_old_pan_and_same_owner_pinch_k
     ));
     assert_eq!(h.state().editor.session.undo_depth(), 0);
 }
+
+#[test]
+fn rapid_actual_size_then_command_wheel_keeps_studio_document_point_visible() {
+    for panned in [false, true] {
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(1360.0, 1000.0))
+            .with_pixels_per_point(1.0)
+            .build_eframe(|cc| {
+                let mut app = WebApp::new(&cc.egui_ctx);
+                app.frontend = Frontend::Studio;
+                app.install(crate::files::Loaded {
+                    raster_preview: false,
+                    converted_copy: false,
+                    document: paintcraft_document::new_document(
+                        513,
+                        257,
+                        Some(paintcraft_core::types::Rgba([255; 4])),
+                        0,
+                        paintcraft_document::POLICY,
+                    )
+                    .unwrap(),
+                    name: "navigation.pcnd".into(),
+                    losses: Vec::new(),
+                });
+                app
+            });
+        for _ in 0..2 {
+            h.step();
+        }
+        let modifiers = Modifiers {
+            mac_cmd: true,
+            command: true,
+            ..Modifiers::NONE
+        };
+        for pressed in [true, false] {
+            h.event(Event::Key {
+                key: egui::Key::Num0,
+                physical_key: None,
+                pressed,
+                repeat: false,
+                modifiers,
+            });
+            h.step();
+        }
+        for _ in 0..2 {
+            h.step();
+        }
+        assert_eq!(h.state().zoom, 1.0);
+        if panned {
+            let start = h.state().canvas.rect.unwrap().center();
+            h.event(Event::PointerMoved(start));
+            h.step();
+            h.event(Event::PointerButton {
+                pos: start,
+                button: PointerButton::Middle,
+                pressed: true,
+                modifiers: Modifiers::NONE,
+            });
+            h.step();
+            let end = start + Vec2::new(80.0, -50.0);
+            h.event(Event::PointerMoved(end));
+            h.step();
+            h.event(Event::PointerButton {
+                pos: end,
+                button: PointerButton::Middle,
+                pressed: false,
+                modifiers: Modifiers::NONE,
+            });
+            h.step();
+            for _ in 0..4 {
+                h.step();
+            }
+        }
+        let source = h.state().editor.session.snapshot();
+        let ticket = h.state().editor.session.ticket();
+        let viewport = h.state().canvas.touch.hit_region().unwrap().0;
+        let point = (viewport.center() - h.state().canvas.rect.unwrap().min) / h.state().zoom;
+        if panned {
+            assert!(
+                (point - Vec2::new(256.5, 128.5)).length() > 30.0,
+                "real middle-button pan required"
+            );
+        }
+        h.event(Event::PointerMoved(egui::pos2(680.0, 500.0)));
+        h.event(Event::MouseWheel {
+            unit: egui::MouseWheelUnit::Point,
+            delta: Vec2::new(0.0, -1280.0),
+            modifiers,
+            source: egui::MouseWheelSource::Unknown,
+            phase: egui::TouchPhase::Move,
+        });
+        h.step();
+        for frame in 0..60 {
+            h.step();
+            if frame >= 4 {
+                let app = h.state();
+                assert_eq!(app.zoom, 0.125);
+                let viewport = app.canvas.touch.hit_region().unwrap().0;
+                let image = app.canvas.rect.unwrap();
+                assert!(
+                    (image.min + point * app.zoom).distance(viewport.center()) < 1.5,
+                    "panned={panned} frame={frame} image={image:?} viewport={viewport:?}"
+                );
+                assert!(image.intersects(viewport));
+                assert_eq!(app.canvas.filter_view.unwrap().level, 3);
+            }
+        }
+        assert!(std::sync::Arc::ptr_eq(
+            &source,
+            &h.state().editor.session.snapshot()
+        ));
+        assert_eq!(h.state().editor.session.ticket(), ticket);
+        assert_eq!(h.state().editor.session.undo_depth(), 0);
+    }
+}

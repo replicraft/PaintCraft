@@ -4,6 +4,7 @@ use egui::Vec2;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct Geometry {
     pub viewport: Vec2,
+    canvas: Vec2,
     pub leading: Vec2,
     pub extent: Vec2,
     pub maximum: Vec2,
@@ -31,6 +32,7 @@ impl Geometry {
         };
         Self {
             viewport,
+            canvas,
             leading,
             extent,
             maximum,
@@ -42,12 +44,13 @@ impl Geometry {
         offset.max(Vec2::ZERO).min(self.maximum)
     }
 
-    /// Keep the same screen-space image point under the viewport center when
-    /// padding or viewport geometry changes. Hosts still own explicit zoom targets.
+    /// Keep the same relative image point under the viewport center when the
+    /// displayed image size or viewport changes. For a fixed document this
+    /// preserves its pixel coordinate across zoom. Explicit anchors still win.
     pub fn preserve_center(self, previous: Self, offset: Vec2) -> Vec2 {
-        self.clamp(
-            offset + self.leading - previous.leading + (previous.viewport - self.viewport) * 0.5,
-        )
+        let point = (offset + previous.viewport * 0.5 - previous.leading)
+            / previous.canvas.max(Vec2::splat(f32::MIN_POSITIVE));
+        self.clamp(self.leading + point * self.canvas - self.viewport * 0.5)
     }
 }
 
@@ -78,5 +81,45 @@ mod tests {
         assert_eq!(old.preserve_center(on, on.initial), Vec2::ZERO);
         let resized = Geometry::new(Vec2::new(600.0, 400.0), size, true);
         assert_eq!(resized.preserve_center(on, on.initial), resized.initial);
+    }
+}
+
+#[cfg(test)]
+mod zoom_tests {
+    use super::*;
+    #[test]
+    fn panned_document_point_survives_zoom_and_combined_viewport_resize() {
+        let old = Geometry::new(Vec2::new(400.0, 300.0), Vec2::new(1000.0, 800.0), true);
+        let panned = Vec2::new(650.0, 300.0);
+        let small = Geometry::new(old.viewport, Vec2::new(125.0, 100.0), true);
+        assert_eq!(small.preserve_center(old, panned), Vec2::new(218.75, 137.5));
+        assert_eq!(small.preserve_center(old, old.initial), small.initial);
+        let resized = Geometry::new(Vec2::new(600.0, 400.0), Vec2::new(250.0, 200.0), true);
+        assert_eq!(
+            resized.preserve_center(old, panned),
+            Vec2::new(337.5, 175.0)
+        );
+        let original = old.preserve_center(small, small.preserve_center(old, panned));
+        assert!((original - panned).length() < 0.001);
+    }
+    #[test]
+    fn overscroll_profiles_keep_reachable_points_and_clamp_unreachable_points() {
+        let size = Vec2::new(1000.0, 800.0);
+        let off = Geometry::new(Vec2::new(400.0, 300.0), size, false);
+        let on = Geometry::new(off.viewport, size, true);
+        assert_eq!(
+            on.preserve_center(off, Vec2::new(350.0, 210.0)),
+            Vec2::new(538.0, 348.0)
+        );
+        let small = Geometry::new(off.viewport, Vec2::new(100.0, 80.0), false);
+        assert_eq!(
+            small.preserve_center(on, Vec2::new(650.0, 300.0)),
+            Vec2::ZERO
+        );
+        assert_eq!(small.maximum, Vec2::ZERO);
+        // Sub-point displayed dimensions remain meaningful, not rounded up to1.
+        let tiny = Geometry::new(on.viewport, Vec2::new(0.125, 0.125), true);
+        let grown = Geometry::new(on.viewport, Vec2::new(1.0, 1.0), true);
+        assert_eq!(grown.preserve_center(tiny, tiny.initial), grown.initial);
     }
 }
