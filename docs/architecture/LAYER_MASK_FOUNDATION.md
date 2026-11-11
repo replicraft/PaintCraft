@@ -89,8 +89,8 @@ Semantic no-ops preserve both the editor ticket and desired display identity.
 
 A committed change invalidates the old display identity and reopens a Normal
 Source7 snapshot. Existing renderer close/ACK handling retains its credits until
-retirement. No mask intent enters Source7's numeric-preview protocol. NonNormal
-documents remain explicitly refused until the Source8 browser lane is available.
+retirement. No mask intent enters Source7's numeric-preview protocol. That initial
+checkpoint refused NonNormal documents; the later activation below supersedes it.
 Statuses and guard messages are translated in all seven configured languages.
 
 Eight targeted native tests and the complete web Rust unit suite pass: 485 passed
@@ -102,6 +102,54 @@ and succeeded after network access was allowed.
 
 Evidence is under
 `docs/validation/layer-blend-candidates/web-own-layer-masks/native-qualification`.
-Actual Main browser UI execution is pending. This uses the existing synchronous
+At that checkpoint, actual Main browser UI execution was pending. This uses the existing synchronous
 Main transaction contract; it does not qualify asynchronous history finalization,
 complete physical memory accounting or latency.
+
+## Actual browser actions and blended-layer activation
+
+The production browser now passes six Normal-layer action groups: a real
+selection drag creates the independent two-pixel mask; repeated creation is a
+no-op; inversion, disabling, removal and Undo/Redo preserve saved coverage and
+raw raster identity. A real Invert preview is cancelled and then applied while
+the mask is present. Saved PCND1/7 semantics and full Source7 RGBA agree with
+independent literal fixtures. Apply deliberately promotes its validated preview
+texture; its covered screenshot pixels and subsequent stored-filter Undo/Redo
+are checked. Downloads remain dirty after edits. These groups also pass Linux CI.
+
+Dedicated own-mask actions now accept Normal, Multiply and Screen documents in
+Studio. Only two Normal-specific eligibility guards were removed. Captured owner,
+state, publication epoch, selected target, private-input and transaction admission
+checks remain. Ordinary browser construction and the old snapshot, private filter
+and derived consumer guards are unchanged. An actual defining CurrentStamp8 test
+rejects the retained old source after a mask change and after Undo/Redo ABA.
+
+All 550 native web tests pass, with three existing ignores, plus strict native
+all-target/Wasm checks and documentation. Independent Normal/Multiply/Screen
+pixels, PCND persistence, no-op, history, stale/private-input and admission
+refusal controls cover this path. The initial new test had an optional-target
+indexing error; its failed build and the corrected test are retained separately.
+
+Five actual browser groups on a two-pixel Multiply scene verify PCND8 semantics,
+all RGBA bytes, repeated no-op and mask/history operations. Actual Source8 OPEN
+bytes match each downloaded project's SHA. Every adjacent source Worker closes
+and terminates before its successor is created, including the selection
+transition. The Main uses its original application callbacks and factories;
+the test does not replace them or inject a grant. Screenshots are retained,
+without automatic semitransparent physical-pixel acceptance. Native Screen
+coverage is separate from this finite Multiply browser scene.
+
+The fresh normal production build passes with 6,804 nonignored repository file
+entries unchanged during the build. Main is 22,189,865 bytes; Worker and Codec
+artifacts are byte-identical to their prior qualified versions. Public Main
+declarations remain exact; generated glue changes only internal closure indices.
+The five Main and six Normal-mask regressions also pass against this Main, and
+all 402 Node tests pass. This does not establish hidden numeric S/C balances,
+physical memory, GC, latency, filter-mask controls or mask painting.
+
+Evidence is under `docs/validation/browser-mask-runtime/`,
+`docs/validation/browser-blend-mask-activation/`,
+`docs/validation/browser-blend-mask-production/attempt-1/`, and
+`docs/validation/browser-blend-mask-runtime/blend-mask-VK4kTo/final.json`.
+The initial missed toolbar drag, inclusive-endpoint calibration, incorrect fresh
+Apply-frame expectation and incorrect two-row button offset remain preserved.

@@ -55,9 +55,10 @@ browser mask editing and appearance-aware foreign export consent remain open.
 Browser Studio now wires captured own-mask selection, invert, enable/disable and
 remove actions through the existing atomic transaction and Source7 reopening.
 The native web suite passes 485 tests with three existing ignored, and 350 Node
-regressions plus strict native/Wasm checks pass. Actual browser UI execution is
-pending. NonNormal mask actions still refuse before session mutation until the
-Source8 browser lane exists.
+regressions plus strict native/Wasm checks pass. Those initial host checks are
+now followed by actual Normal and Multiply browser controls below. Dedicated
+own-mask edits also support stored Multiply/Screen documents through Source8;
+private filter editing and derived blend consumers remain separate work.
 Multiply/Screen now have locally qualified metadata, history, PCND8 persistence
 and scoped CPU/GPU composition, including actual Metal execution. Native
 Classic/Studio open, save and recovery adoption passes the full native library
@@ -114,8 +115,8 @@ under its qualified memory profile, with checked output files byte-identical to
 the previous qualified artifact. The later normal production Worker declares
 19 initial pages under the same 256 MiB maximum and passes all 42 cases.
 
-The current production Main is 22,190,142 bytes. All nine real browser cases
-pass with genuine Rust callbacks: source opening and exact pixels, independent
+An earlier production Main is 22,190,142 bytes. All nine real browser cases
+passed with genuine Rust callbacks: source opening and exact pixels, independent
 Save/Undo preservation, idle ownership, Source8 handoffs, the paid Normal probe
 and actual Source7 fallback, positive-LOD clipped views, layout changes, and
 consuming failed-source cleanup followed by a changed-source retry. Screenshot
@@ -137,9 +138,18 @@ Six real browser mask-action groups now pass locally on a fixed Normal scene:
 selection-backed creation, no-op, inversion, disabling, removal and Undo/Redo,
 plus actual masked Invert preview/Cancel/Apply. Independent saved-file and full
 RGBA checks preserve mask, raw source and history identity; screenshot pixels
-also verify Apply's reused preview texture. All 398 Node tests pass. The new
-mask CI check is pending. This does not qualify NonNormal mask editing, filter-mask
+also verify Apply's reused preview texture. All 398 Node tests passed. The Normal
+mask CI check also passes. This finite Normal scene does not qualify NonNormal mask editing, filter-mask
 controls, mask painting or physical resource limits.
+The current 22,189,865-byte Main enables dedicated own-mask edits on blended
+Studio documents. All 550 native web tests pass, with three existing ignores;
+the Normal/Multiply/Screen matrix checks pixels, history, persistence, private
+input and admission refusal. Strict native/Wasm checks and documentation pass.
+Five actual Multiply browser groups verify canonical PCND8, full RGBA and joined
+Worker handoffs, alongside fresh passes of the five Main and six Normal-mask
+groups. All 402 Node tests pass. The production Worker is byte-identical to its
+qualified artifact; existing constructor, legacy, private filter and derived
+consumer guards remain intact. The new blended-mask CI check is pending.
 The initial defining workspace/role forecasts pass 276 renderer and 182 worker checks,
 plus the existing 12-wire structural format check. Native/Wasm Clippy, strict
 documentation, formatting and source-length checks pass. The earlier 354-check
@@ -151,7 +161,7 @@ development failure-log gap. Committed Studio blend display now has the finite
 browser evidence above; private blend editing and derived/foreign consumers
 still need their own integration and acceptance. This does not qualify physical
 memory, latency or the full roadmap.
-Next is NonNormal mask-action integration, filter-mask browser acceptance and the remaining private/derived blend
+Next is filter-mask browser acceptance and the remaining private/derived blend
 consumers, then Color Overlay as the first live style. Its
 [numerical foundation](architecture/COLOR_OVERLAY_FOUNDATION.md) already passes
 independent native and actual Wasm scalar/row checks; document persistence and

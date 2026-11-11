@@ -1500,8 +1500,10 @@ The successful runtime receipt is
 `docs/validation/source8-normal-worker-policy/heap-end-amendment/runtime-memory-phase-amendment/node-attempt-2/final.json`.
 These are Worker execution results, not Main browser publication results.
 
-Real Main source/work/credit lifetimes, texture publication and cooperative
-handoffs still require production browser execution with the actual served
-artifacts.
+At that build checkpoint, real Main lifetimes, texture publication and
+cooperative handoffs still required production browser execution. Later finite
+Main and own-mask acceptance executes actual callbacks and joined handoffs; see
+the [current browser mask checkpoint](LAYER_MASK_FOUNDATION.md#actual-browser-actions-and-blended-layer-activation).
+Hidden numeric S/C balances remain outside that evidence.
 These build gates do not
 qualify physical GC, GPU memory, RSS, latency or the full roadmap.
