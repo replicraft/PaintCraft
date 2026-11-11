@@ -269,3 +269,51 @@ fn larger_discovered_demand_releases_the_old_reservation_and_retains_the_origina
     assert_eq!(editor.publications(), 1);
     assert_eq!(metadata.usage().reserved, 0);
 }
+
+#[test]
+fn actual_flood_wait_retires_compiler_scratch_before_fifo_retry_and_save_barrier() {
+    let (mut editor, tiles, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve(16 << 10).unwrap();
+    let before = editor.document_snapshot();
+    let layer = editor.target().unwrap();
+    editor.request(
+        0,
+        Action::Fill {
+            layer,
+            at: (0, 0),
+            color: Rgba([20, 60, 100, 255]),
+            tolerance: 0,
+        },
+    );
+    editor.run_pending();
+    let boundary = editor.queue_file_barrier();
+    editor.request(
+        1,
+        Action::ClearCanvas {
+            color: Rgba([255, 0, 0, 255]),
+        },
+    );
+    wait(&mut editor);
+    assert!(editor.allocation_wait().is_none());
+    assert_eq!(metadata.usage().reserved, 16 << 10);
+    assert_eq!(tiles.usage().reserved, 0);
+    assert!(Arc::ptr_eq(&before, &editor.document_snapshot()));
+    assert!(!editor.file_barrier_ready(boundary));
+    drop(blocker);
+    until(|| {
+        editor.run_pending();
+        editor.file_barrier_ready(boundary)
+    });
+    assert_eq!(editor.publications(), 1);
+    assert_eq!(editor.undo_depth(), 1);
+    assert_eq!(metadata.usage().reserved, 0);
+    let doc = editor.document_snapshot();
+    let raster = &doc.layers[&layer].raster;
+    for x in [0, 128, 256] {
+        assert_eq!(raster.get(x, 0), Rgba([20, 60, 100, 255]));
+    }
+    editor.release_file_barrier(boundary);
+    finish(&mut editor);
+    assert_eq!(editor.publications(), 2);
+    assert_eq!(metadata.usage().reserved, 0);
+}

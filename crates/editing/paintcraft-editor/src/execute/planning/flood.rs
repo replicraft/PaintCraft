@@ -8,24 +8,31 @@ pub(in crate::execute) fn classify(
     tolerance: u8,
     admission: &Admission,
     check: &dyn Fn() -> Result<()>,
-) -> Result<Vec<Span>> {
+) -> Result<paintcraft_raster::flood::AdmittedSpans> {
     if let Some(allowed) = allowed {
-        paintcraft_raster::flood::region_from_source_masked_checked(
+        paintcraft_raster::flood::region_from_source_masked_admitted_checked(
             read,
             allowed,
             seed,
             &area,
             tolerance,
-            admission.flood_scratch_limit(),
+            (
+                admission.flood_scratch_limit(),
+                admission.paint_metadata_scope(),
+            ),
             check,
         )
     } else {
-        paintcraft_raster::flood::region_from_source_checked(
+        paintcraft_raster::flood::region_from_source_masked_admitted_checked(
             read,
+            |_, _| Ok(true),
             seed,
             &area,
             tolerance,
-            admission.flood_scratch_limit(),
+            (
+                admission.flood_scratch_limit(),
+                admission.paint_metadata_scope(),
+            ),
             check,
         )
     }

@@ -1,15 +1,13 @@
 use paintcraft_commands::{Batch, LayerRef, Mode, Op};
-use paintcraft_core::types::{
-    Rect, Rgba,
-    resources::{AllocationClass, SharedBudget},
-};
+use paintcraft_core::types::{Rect, Rgba, resources::SharedBudget};
 use paintcraft_document::{POLICY, new_document};
 use paintcraft_editor::session::Session;
 use paintcraft_raster::{Admission, RasterLayer};
 use std::{cell::RefCell, sync::Arc};
 
 #[test]
-fn metadata_interference_after_a_private_edit_preserves_owner_and_releases_all_attempt_storage() {
+fn metadata_interference_after_private_paint_reuses_prepared_index_and_preserves_unpublished_owner()
+{
     let doc = new_document(8, 8, Some(Rgba([31, 63, 127, 0])), 0, POLICY).unwrap();
     let id = doc.roots[0];
     let batch = Batch {
@@ -39,7 +37,7 @@ fn metadata_interference_after_a_private_edit_preserves_owner_and_releases_all_a
         .unwrap();
     let probe = reservation.clone();
     let blockers = RefCell::new(Vec::new());
-    let error = session
+    let prepared = session
         .preparation()
         .unwrap()
         .apply_with_admission(
@@ -57,12 +55,24 @@ fn metadata_interference_after_a_private_edit_preserves_owner_and_releases_all_a
                 Ok(())
             },
         )
-        .unwrap_err();
-    assert_eq!(error.operation_index, Some(1));
-    assert_eq!(
-        error.allocation_denial().unwrap().class(),
-        AllocationClass::PaintMetadata
+        .unwrap();
+    assert!(
+        !blockers.borrow().is_empty(),
+        "pressure starts only after actual private tile allocation"
     );
+    assert!(probe.available() < probe.capacity());
+    let result = prepared.document_snapshot();
+    for x in 0..2 {
+        assert_eq!(
+            result.layers[&id].raster.get(x, 0),
+            Rgba([17, 88, 156, 128])
+        );
+    }
+    assert_eq!(session.ticket(), ticket);
+    assert_eq!(session.history_view(), history);
+    assert!(Arc::ptr_eq(&snapshot, &session.snapshot()));
+    drop(result);
+    drop(prepared);
     assert_eq!(probe.available(), probe.capacity());
     drop(probe);
     assert_eq!(decoded.usage().reserved, 0);

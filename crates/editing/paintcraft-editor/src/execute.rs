@@ -160,7 +160,8 @@ pub fn execute_with_geometry_cache(
     check()?;
     let (paints, footprint) = s.planning.take().expect("compiler stage").finish();
     // Logical source captures and simulated versions have dropped. Only original
-    // compiled descriptors survive; reserve the complete new decoded peak once.
+    // compiled descriptors and their already-admitted replay indices survive;
+    // reserve the complete new decoded peak before any replay writes.
     s.adm
         .reserve_tiles(footprint.peak)
         .map_err(|e| e.at(footprint.peak_operation))?;
@@ -201,7 +202,16 @@ pub fn execute_with_geometry_cache(
                 while paints.peek().is_some_and(|paint| paint.operation == index) {
                     let paint = paints.next().expect("peeked paint");
                     match paint.plan {
-                        planning::CompiledPlan::Paint(plan) => s.apply_paint(paint.layer, &plan)?,
+                        planning::CompiledPlan::Paint(plan) => plan.replay_checked(
+                            &mut s
+                                .doc
+                                .layers
+                                .get_mut(&paint.layer)
+                                .expect("compiled paint layer")
+                                .raster,
+                            &mut s.adm,
+                            s.check,
+                        )?,
                         planning::CompiledPlan::Mapped(plan) => {
                             s.doc
                                 .layers
@@ -307,7 +317,10 @@ impl Stage<'_> {
             x1: clip.x1 + n,
             y1: clip.y1 + n,
         };
-        let mut set = CheckedSpanSet::with_scratch_limit(self.adm.stroke_scratch_limit());
+        let mut set = CheckedSpanSet::with_metadata_scope(
+            self.adm.stroke_scratch_limit(),
+            self.adm.paint_metadata_scope(),
+        );
         for (k, (a, b)) in path::segments(points).enumerate() {
             walk_clipped(a, b, Some(reach), k > 0, self.check, |x, y| {
                 set.add_stamp(x, y, n, round, &clip, self.check)

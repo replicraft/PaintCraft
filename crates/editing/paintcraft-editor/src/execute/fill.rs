@@ -60,7 +60,7 @@ impl Stage<'_> {
         let mut plan = self.adm.paint_plan();
         // The classifier already returns clipped layer-local spans. Do not copy
         // them into an intermediate document-space vector only to translate back.
-        for span in spans {
+        for span in spans.as_slice() {
             (self.check)()?;
             plan.rect(
                 Rect {
@@ -73,6 +73,7 @@ impl Stage<'_> {
                 mode,
             )?;
         }
+        drop(spans);
         self.apply_paint(id, &plan)
     }
 }

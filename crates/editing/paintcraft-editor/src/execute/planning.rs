@@ -14,7 +14,7 @@ pub(super) struct Paint {
 }
 #[derive(Debug)]
 pub(super) enum CompiledPlan {
-    Paint(PaintPlan),
+    Paint(paintcraft_raster::PreparedPaint),
     Mapped(std::sync::Arc<paintcraft_raster::MappedPlan>),
 }
 #[derive(Debug)]
@@ -92,24 +92,28 @@ impl Compiler {
         }
         let index = self.ensure(id, source, admission, check)?;
         let logical = &mut self.layers.values[index].1;
-        if !logical.tiles.apply_checked(plan, operation, check)? {
-            return Ok(());
-        }
         // Share only immutable descriptor storage. Keep every replay record and
         // source-program append: equal translucent operations must blend again.
         // All plans in this compiler use the same admission realm/policy. Avoid
         // replacing a smaller freshly compiled payload with a larger capacity.
-        let retained = if let Some(Paint {
+        let previous = if let Some(Paint {
             plan: CompiledPlan::Paint(previous),
             ..
         }) = self.paints.values.last()
-            && previous.descriptor_bytes() <= plan.descriptor_bytes()
-            && previous.same_writes_checked(plan, check)?
+            && previous.plan().descriptor_bytes() <= plan.descriptor_bytes()
+            && previous.plan().same_writes_checked(plan, check)?
         {
-            previous.clone()
+            Some(previous)
         } else {
-            plan.clone()
+            None
         };
+        let retained = previous.map_or_else(|| plan.clone(), |previous| previous.plan().clone());
+        let prepared = logical
+            .tiles
+            .prepare_reusing_checked(&retained, operation, previous, check)?;
+        if prepared.is_empty() {
+            return Ok(());
+        }
         if self.needs_pixels && logical.pixels.is_none() {
             logical.pixels =
                 Some(PaintSnapshot::capture(source, admission, check)?.fork(admission, check)?);
@@ -120,7 +124,7 @@ impl Compiler {
         self.paints.push(Paint {
             operation,
             layer: id,
-            plan: CompiledPlan::Paint(retained),
+            plan: CompiledPlan::Paint(prepared),
         })
     }
     #[allow(clippy::too_many_arguments)]
@@ -134,7 +138,7 @@ impl Compiler {
         allowed: Option<&dyn Fn(i64, i64) -> Result<bool>>,
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,
-    ) -> Result<Vec<Span>> {
+    ) -> Result<paintcraft_raster::flood::AdmittedSpans> {
         if !self.needs_pixels {
             return Err(Error::new(
                 ErrorCode::InvariantViolation,
