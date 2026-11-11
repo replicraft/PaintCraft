@@ -15,7 +15,7 @@ pub(super) struct Mapping {
 impl Mapping {
     pub(super) fn bounds(&self) -> Rect {
         if let Some(a) = &self.affine {
-            return a.bounds;
+            return a.bounds();
         }
         self.patch
             .as_ref()

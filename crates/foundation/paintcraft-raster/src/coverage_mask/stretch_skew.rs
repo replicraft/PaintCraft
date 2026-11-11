@@ -1,13 +1,43 @@
 //! Finite nearest-neighbor field resampling, preserving fractional A8 samples.
 use super::mapping::{Buffer, Sample, assemble};
 use super::*;
-use paintcraft_core::types::stretch_skew::StretchSkew;
+use crate::resampling::Geometry;
+use paintcraft_core::types::{rotation::Rotation, stretch_skew::StretchSkew};
 impl A8Mask {
     /// Map a source-local layer field using the same global geometry as its pixels.
     /// Both enabled and disabled stored masks use this operation.
     pub fn stretch_skew_checked(
         &self,
         geometry: StretchSkew,
+        extent: Rect,
+        budget: &SharedBudget,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        self.resample_affine_checked(
+            Geometry::StretchSkew(geometry),
+            extent,
+            budget,
+            limits,
+            check,
+        )
+    }
+    /// Rotate a finite A8 layer field, including disabled stored masks.
+    /// # Errors
+    /// Preserves the same finite geometry/work/admission/callback errors.
+    pub fn rotated_checked(
+        &self,
+        geometry: Rotation,
+        extent: Rect,
+        budget: &SharedBudget,
+        limits: Limits,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        self.resample_affine_checked(Geometry::Rotation(geometry), extent, budget, limits, check)
+    }
+    fn resample_affine_checked(
+        &self,
+        geometry: Geometry,
         extent: Rect,
         budget: &SharedBudget,
         limits: Limits,

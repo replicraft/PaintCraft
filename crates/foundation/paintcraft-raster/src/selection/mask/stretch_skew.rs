@@ -1,10 +1,46 @@
 //! Binary selection resampling uses the same finite inverse map as RGBA/A8.
 use super::*;
-use paintcraft_core::types::stretch_skew::StretchSkew;
+use crate::resampling::Geometry;
+use paintcraft_core::types::{rotation::Rotation, stretch_skew::StretchSkew};
 impl BinaryMask {
     pub fn stretch_skew_with_remaining_checked(
         &self,
         geometry: StretchSkew,
+        budget: &SharedBudget,
+        limits: MaskLimits,
+        work: &mut u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        self.resample_affine_with_remaining_checked(
+            Geometry::StretchSkew(geometry),
+            budget,
+            limits,
+            work,
+            check,
+        )
+    }
+    /// Same finite selected-source contract, with one exact rotation map.
+    /// # Errors
+    /// Returns the original mask work/admission/geometry/cancellation refusal.
+    pub fn rotated_with_remaining_checked(
+        &self,
+        geometry: Rotation,
+        budget: &SharedBudget,
+        limits: MaskLimits,
+        work: &mut u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        self.resample_affine_with_remaining_checked(
+            Geometry::Rotation(geometry),
+            budget,
+            limits,
+            work,
+            check,
+        )
+    }
+    fn resample_affine_with_remaining_checked(
+        &self,
+        geometry: Geometry,
         budget: &SharedBudget,
         mut limits: MaskLimits,
         work: &mut u64,

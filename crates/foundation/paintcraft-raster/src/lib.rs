@@ -3,6 +3,7 @@ pub mod coverage_mask;
 pub mod flood;
 pub mod font;
 pub mod raster;
+mod resampling;
 pub mod selection;
 pub mod shape;
 pub mod smooth;

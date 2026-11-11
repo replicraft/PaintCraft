@@ -1,7 +1,8 @@
 //! Source-bound affine sampling; metadata first, decoded allocation only on replay.
 use super::*;
 use crate::Selection;
-use paintcraft_core::types::stretch_skew::StretchSkew;
+use crate::resampling::Geometry;
+use paintcraft_core::types::{rotation::Rotation, stretch_skew::StretchSkew};
 use std::mem::size_of;
 /// Global coordinates bind the geometry to one captured layer. Selected mode
 /// preserves unselected pixels and clears the original selection before replacing.
@@ -13,13 +14,38 @@ pub struct StretchSkewMapping {
     pub selection: Option<Selection>,
     pub clear: Rgba,
 }
+#[derive(Clone, Debug)]
+pub struct RotationMapping {
+    pub transform: Rotation,
+    pub source_origin: (i64, i64),
+    pub destination: Rect,
+    pub selection: Option<Selection>,
+    pub clear: Rgba,
+}
+#[derive(Debug)]
+struct Request {
+    pub transform: Geometry,
+    pub source_origin: (i64, i64),
+    pub destination: Rect,
+    pub selection: Option<Selection>,
+    pub clear: Rgba,
+}
 #[derive(Debug)]
 pub(super) struct Affine {
-    pub bounds: Rect,
-    request: StretchSkewMapping,
+    request: Request,
     source_bounds: Rect,
 }
 impl Affine {
+    // Destination was validated before formation. Avoid retaining a duplicate
+    // local bounds Rect alongside the same destination width/height.
+    pub(super) fn bounds(&self) -> Rect {
+        Rect {
+            x0: 0,
+            y0: 0,
+            x1: self.request.destination.width(),
+            y1: self.request.destination.height(),
+        }
+    }
     fn selected(&self, x: i64, y: i64) -> bool {
         if self.request.selection.is_some() && !self.request.transform.source().contains(x, y) {
             return false;
@@ -72,6 +98,53 @@ impl MappedPlan {
         limit: u64,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        Self::prepare_affine(
+            source,
+            Request {
+                transform: Geometry::StretchSkew(request.transform),
+                source_origin: request.source_origin,
+                destination: request.destination,
+                selection: request.selection,
+                clear: request.clear,
+            },
+            admission,
+            limit,
+            check,
+        )
+    }
+    /// Prepare one immutable-source nearest-neighbor rotation; no intermediate
+    /// resampled image is created. Admission and the cumulative read limit are
+    /// the caller's original ones, exactly as for stretch/skew.
+    /// # Errors
+    /// Refuses invalid extents, resource admission or the original callback error.
+    pub fn prepare_rotation(
+        source: PaintSnapshot,
+        request: RotationMapping,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        Self::prepare_affine(
+            source,
+            Request {
+                transform: Geometry::Rotation(request.transform),
+                source_origin: request.source_origin,
+                destination: request.destination,
+                selection: request.selection,
+                clear: request.clear,
+            },
+            admission,
+            limit,
+            check,
+        )
+    }
+    fn prepare_affine(
+        source: PaintSnapshot,
+        request: Request,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         check()?;
         let d = request.destination;
         use paintcraft_core::types::policy::{CANVAS_SIDE_MAX, COORD_ABS_MAX};
@@ -108,7 +181,6 @@ impl MappedPlan {
         // Validate finite output before any source reader/index allocation.
         request.transform.bounds(request.transform.source())?;
         let affine = Affine {
-            bounds,
             request,
             source_bounds: source.bounds(),
         };

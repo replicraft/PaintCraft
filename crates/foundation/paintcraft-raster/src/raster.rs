@@ -17,7 +17,7 @@ mod paint;
 pub use paint::{
     CropPlan, DEFAULT_PAINT_METADATA_BYTES, DEFAULT_RESIDENT_PAINT_METADATA_BYTES, MappedPlan,
     PaintOverlay, PaintPlan, PaintProjection, PaintReader, PaintSnapshot, PreparedPaint,
-    RgbaPastePlan, SimulatedLayer, StretchSkewMapping, TileFootprint, TilePlanner,
+    RgbaPastePlan, RotationMapping, SimulatedLayer, StretchSkewMapping, TileFootprint, TilePlanner,
 };
 mod tile_table;
 pub use tile_table::RetainedTileTableQuote;

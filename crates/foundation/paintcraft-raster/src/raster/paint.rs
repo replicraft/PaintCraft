@@ -5,7 +5,7 @@ mod affine;
 mod index;
 mod lineage;
 mod mapped;
-pub use affine::StretchSkewMapping;
+pub use affine::{RotationMapping, StretchSkewMapping};
 mod paste;
 mod patch;
 pub use paste::RgbaPastePlan;
