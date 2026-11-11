@@ -5,9 +5,26 @@ pub struct Options {
     /// Include qualified discovery rows for this frontend without changing the envelope.
     #[arg(long, value_enum)]
     frontend: Option<super::format_profile::Profile>,
+    /// Inspect the installed native JXR writer using the shared scoped host record.
+    #[arg(long, conflicts_with = "frontend")]
+    installation_jxr: bool,
 }
 
 pub fn run(a: Options, json: bool) -> Reply {
+    if a.installation_jxr {
+        return bare(
+            json,
+            paintcraft_formats::codec_worker::native::jxr_installation::observe(&|| Ok(())).map(
+                |observation| {
+                    (
+                        observation.to_value(),
+                        "Scoped installed JPEG XR writer observation (not release qualification)"
+                            .into(),
+                    )
+                },
+            ),
+        );
+    }
     bare(
         json,
         Ok({
