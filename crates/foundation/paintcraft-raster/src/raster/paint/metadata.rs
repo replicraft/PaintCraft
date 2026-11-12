@@ -160,3 +160,21 @@ impl Metadata {
         }
     }
 }
+
+/// Temporary candidate payload retires before its original shared declaration,
+/// on success and every early error. No additional allocation or scope is made.
+pub(super) struct RetainedTable<T> {
+    pub(super) values: HashMap<TileCoord, T>,
+    pub(super) charge: BudgetAccount,
+}
+impl<T> RetainedTable<T> {
+    pub(super) fn new(admission: &Admission) -> Self {
+        Self {
+            values: HashMap::new(),
+            charge: admission.paint_metadata_account(),
+        }
+    }
+}
+#[cfg(test)]
+#[path = "metadata/candidate_retirement_tests.rs"]
+mod candidate_retirement_tests;

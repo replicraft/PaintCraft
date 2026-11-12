@@ -119,17 +119,18 @@ impl MappedPlan {
         let mut metadata =
             metadata::Metadata::new(size_of::<Mapping>(), admission.paint_metadata_limit)?;
         let reader = source.reader(admission, check)?;
-        let mut candidates = HashMap::new();
-        let mut candidate_charge = admission.paint_metadata_account();
+        let mut candidates = metadata::RetainedTable::new(admission);
         reader.visit_candidate_tiles(check, |coord| {
-            if tile_rect(coord).intersect(&area).is_some() && !candidates.contains_key(&coord) {
-                metadata.table(&mut candidates, &mut candidate_charge)?;
-                candidates.insert(coord, ());
+            if tile_rect(coord).intersect(&area).is_some()
+                && !candidates.values.contains_key(&coord)
+            {
+                metadata.table(&mut candidates.values, &mut candidates.charge)?;
+                candidates.values.insert(coord, ());
             }
             Ok(())
         })?;
         let mut reads = 0_u64;
-        for coord in candidates.keys() {
+        for coord in candidates.values.keys() {
             let region = tile_rect(*coord).intersect(&area).unwrap();
             reads = reads
                 .checked_add(region.width() as u64 * region.height() as u64)

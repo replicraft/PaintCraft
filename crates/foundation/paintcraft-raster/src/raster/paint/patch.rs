@@ -276,17 +276,16 @@ impl MappedPlan {
         mapping.charge.resize(size_of::<mapped::Mapping>() as u64)?;
         let mut metadata =
             metadata::Metadata::new(size_of::<mapped::Mapping>(), admission.paint_metadata_limit)?;
-        let mut candidates = HashMap::new();
-        let mut candidate_charge = admission.paint_metadata_account();
+        let mut candidates = metadata::RetainedTable::new(admission);
         let mut add = |r: Rect| -> Result<()> {
             if let Some(r) = r.intersect(&mapping.bounds()) {
                 for ty in r.y0 / i64::from(TILE_EDGE)..=(r.y1 - 1) / i64::from(TILE_EDGE) {
                     check()?;
                     for tx in r.x0 / i64::from(TILE_EDGE)..=(r.x1 - 1) / i64::from(TILE_EDGE) {
                         let coord = TileCoord { tx, ty };
-                        if !candidates.contains_key(&coord) {
-                            metadata.table(&mut candidates, &mut candidate_charge)?;
-                            candidates.insert(coord, ());
+                        if !candidates.values.contains_key(&coord) {
+                            metadata.table(&mut candidates.values, &mut candidates.charge)?;
+                            candidates.values.insert(coord, ());
                         }
                     }
                 }
@@ -328,7 +327,7 @@ impl MappedPlan {
             }
         }
         let mut reads = key_reads;
-        for coord in candidates.keys() {
+        for coord in candidates.values.keys() {
             let r = Rect::new(
                 coord.tx * i64::from(TILE_EDGE),
                 coord.ty * i64::from(TILE_EDGE),
