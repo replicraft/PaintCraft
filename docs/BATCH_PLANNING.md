@@ -232,3 +232,39 @@ Wasm test compilation is not Wasm/browser execution. Earlier browser receipts
 remain tied to their pre-fix builds. Complete mapped/all-resource admission,
 other retained controls and services/GPU, physical memory and latency remain
 unfinished. T04 and T11 remain partial.
+
+## Mapped-plan ownership checkpoint
+
+Editor compiler records now own each mapped plan directly rather than wrapping
+it in an otherwise unshared outer `Arc`. Existing inner mapping and source
+lineage sharing remains intact. The larger compiler record is charged through
+its actual `size_of` by the existing metadata store under the original budget;
+this change does not grant extra capacity or establish a speed improvement.
+
+Temporary candidate tables now retire their payload before releasing their
+original metadata account, including cancellation and constructor errors. A
+historical-order negative control reproduces the early wake; the new owner
+invokes its release callback after payload retirement, before same-scope reentry.
+Original candidate
+fees, checks, source-read limits and pixel results remain unchanged.
+
+Before the separate fixed-slot rectangle-difference change, Raster/Editor passes
+647 tests across 89 result groups, with none ignored. The desktop metadata-retry
+subset passes nine tests, including the original 4,096-byte success case. Strict
+native all-target and Wasm test-target Clippy, and Raster/Editor rustdoc, pass.
+These counts overlap other focused checks and must not be added as unique tests.
+The ownership changes are commits `09da45f3` and `dcb5cb34`.
+
+The rectangle-difference helper separately replaces a temporary vector with four
+inline optional rectangles in the same order, preserving caller loops and
+sampling. Its library and five crop/selection/orientation consumer suites pass
+191 tests with none ignored. A named test-case type resolves the only new Clippy
+warning; its unchanged literals pass again. Final strict native/Wasm checks and
+formatting pass. This separate result overlaps the earlier suite. The
+[scoped aggregate receipt](validation/mapped-plan-owner-root/root-final.json)
+is SHA-256 `2cc8c387d9c660ec76dcf8607e86a8456bb285d9c3be1e375bed3624734d4a79`.
+
+No new browser execution, allocator/RSS bound, latency or performance result is
+claimed. Node/Mapping ownership headers and replay scratch remain outside full
+pre-admission. Complete mapped/all-resource admission is unfinished; T04 and
+T11 remain partial.
