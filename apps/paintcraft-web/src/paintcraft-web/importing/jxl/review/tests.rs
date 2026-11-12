@@ -1,14 +1,24 @@
+//! Native egui/report-adoption tests retain the original admitted Rust document.
+//! They create no browser codec request/result, so have no JS lease to retire.
+//! Each dependent test/helper is scoped individually; portable JXL wire and
+//! resident-admission tests remain target-compiled in the sibling test module.
+#[cfg(not(target_arch = "wasm32"))]
 use super::*;
+#[cfg(not(target_arch = "wasm32"))]
 use egui_kittest::{
     Harness,
     kittest::{NodeT, Queryable},
 };
+#[cfg(not(target_arch = "wasm32"))]
 use paintcraft_core::types::resources::SharedBudget;
+#[cfg(not(target_arch = "wasm32"))]
 use paintcraft_ui::i18n::{self, Language, translate};
 
+#[cfg(not(target_arch = "wasm32"))]
 const PIXELS: [u8; 16] = [
     0, 0, 255, 1, 1, 127, 128, 0, 255, 4, 8, 128, 16, 32, 64, 255,
 ];
+#[cfg(not(target_arch = "wasm32"))]
 fn prepared(budget: SharedBudget) -> Prepared {
     let mut admission = paintcraft_raster::Admission::with_residency(
         paintcraft_core::types::policy::STAGED_PIXELS_MAX,
@@ -37,11 +47,13 @@ fn prepared(budget: SharedBudget) -> Prepared {
         },
     }
 }
+#[cfg(not(target_arch = "wasm32"))]
 fn app(ctx: &egui::Context) -> WebApp {
     let mut app = WebApp::new(ctx);
     app.frontend = paintcraft_ui::actions::Frontend::Studio;
     app
 }
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn only_a_visible_previous_frame_enables_consent() {
     let ctx = egui::Context::default();
@@ -68,6 +80,7 @@ fn only_a_visible_previous_frame_enables_consent() {
     output.textures_delta.clear();
     assert!(ready);
 }
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn mandatory_precision_consent_binds_the_complete_report_even_with_zero_changed_counts() {
     let ctx = egui::Context::default();
@@ -95,6 +108,7 @@ fn mandatory_precision_consent_binds_the_complete_report_even_with_zero_changed_
         assert_eq!(budget.usage().reserved, 0);
     }
 }
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn cancellation_and_stale_review_retire_private_tiles_without_changing_the_open_project() {
     let ctx = egui::Context::default();
@@ -118,6 +132,7 @@ fn cancellation_and_stale_review_retire_private_tiles_without_changing_the_open_
     assert_eq!(budget.usage().reserved, 0);
     assert!(Arc::ptr_eq(&newer, &app.editor.session.snapshot()));
 }
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn interface_skin_composition_gesture_and_replaced_session_invalidate_review() {
     let ctx = egui::Context::default();
@@ -151,6 +166,7 @@ fn interface_skin_composition_gesture_and_replaced_session_invalidate_review() {
         assert_eq!(ticket, candidate.editor.session.ticket());
     }
 }
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn translated_visible_preview_consent_adopts_exact_hidden_rgb_and_survives_pcnd_reopen() {
     for language in [Language::English, Language::Japanese] {

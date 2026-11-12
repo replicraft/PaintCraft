@@ -1,4 +1,26 @@
 use super::*;
+// These response tests use only File identity/bytes, never a JS result lease.
+// Native retains the original wire-only descriptor; Wasm uses the real File API
+// and production Source constructor rather than inventing a placeholder field.
+fn source_fixture(name: &str, bytes: &[u8]) -> Source {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        Source {
+            name: name.into(),
+            length: bytes.len() as u64,
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        let parts = js_sys::Array::new();
+        let data = js_sys::Uint8Array::from(bytes);
+        parts.push(data.as_ref());
+        let file = web_sys::File::new_with_u8_array_sequence(parts.as_ref(), name)
+            .expect("bounded browser File fixture");
+        Source::new(file).expect("valid original source fixture")
+    }
+}
+
 #[test]
 fn actual_integer_decoder_results_require_matching_rust_report_and_source_binding() {
     const EIGHT: &[u8] = include_bytes!(concat!(
@@ -40,10 +62,7 @@ fn actual_integer_decoder_results_require_matching_rust_report_and_source_bindin
         )
         .unwrap();
         let output = wire::jxl_integer::execute(request.header, bytes, &|| 0).unwrap();
-        let source = Source {
-            name: "fixture.jxl".into(),
-            length: bytes.len() as u64,
-        };
+        let source = source_fixture("fixture.jxl", bytes);
         let (_, frame) = response::validate(
             &source,
             owner,
@@ -118,10 +137,7 @@ fn browser_jxl_has_no_generic_open_or_classic_route() {
 fn rust_response_binding_preserves_hidden_rgb_and_charges_actual_resident_tiles() {
     use paintcraft_core::types::resources::SharedBudget;
     use sha2::{Digest, Sha256};
-    let source = Source {
-        name: "painting.jxl".into(),
-        length: 3,
-    };
+    let source = source_fixture("painting.jxl", &[1, 2, 3]);
     let owner = wire::Owner {
         session: Uuid::new_v4(),
         state: Uuid::new_v4(),
@@ -237,6 +253,8 @@ fn foreign_file_work_does_not_lose_original_import_owner_or_project() {
     assert!(app.import_owner.as_ref().unwrap().current(&app));
     assert!(Arc::ptr_eq(&before, &app.editor.session.snapshot()));
 }
+// Native Rust adoption fixture owns no browser Codec-service result lease.
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn completed_import_uses_normal_editor_preferences_and_project_copy_name() {
     let context = eframe::egui::Context::default();
@@ -296,6 +314,8 @@ fn completed_import_uses_normal_editor_preferences_and_project_copy_name() {
         [10, 20, 30, 0]
     );
 }
+// Native Rust adoption fixture owns no browser Codec-service result lease.
+#[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn stale_completed_import_drops_private_document_without_replacing_newer_work() {
     let context = eframe::egui::Context::default();
