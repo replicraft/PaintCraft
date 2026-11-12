@@ -55,7 +55,7 @@ impl CpuPublication8 {
         }
         self.fence()
     }
-    #[cfg(test)]
+    #[cfg(all(test, not(target_arch = "wasm32")))]
     pub fn image(&self) -> &Arc<ColorImage> {
         self.image.as_ref().unwrap()
     }

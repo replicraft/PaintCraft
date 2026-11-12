@@ -26,7 +26,7 @@ pub(super) struct Snapshot8 {
     operation: Operation8,
 }
 impl Snapshot8 {
-    #[cfg(test)]
+    #[cfg(all(test, not(target_arch = "wasm32")))]
     pub fn prepare(key: Key8, factory: Factory8, check: &dyn Fn() -> Result<()>) -> Result<Self> {
         Preparation8::new(key, factory, check)?.finish(check)
     }

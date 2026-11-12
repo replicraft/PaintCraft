@@ -76,7 +76,7 @@ impl Funding8 {
     pub fn js_is_retired(&self) -> bool {
         !self.data().js.get()
     }
-    #[cfg(test)]
+    #[cfg(all(test, not(target_arch = "wasm32")))]
     pub fn used(&self) -> u64 {
         self.data().operation.used()
     }
@@ -174,7 +174,7 @@ impl FrameStage8 {
         bytes.copy_to(self.bytes.as_mut().ok_or_else(denied)?.as_mut_slice());
         Ok(())
     }
-    #[cfg(test)]
+    #[cfg(all(test, not(target_arch = "wasm32")))]
     pub fn fill_test(&mut self, bytes: &[u8]) -> Result<()> {
         if bytes.len() != self.byte_len() {
             return Err(denied());

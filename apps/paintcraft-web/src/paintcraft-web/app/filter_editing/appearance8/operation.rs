@@ -73,7 +73,7 @@ impl Operation8 {
     pub fn factory(&self) -> &Factory8 {
         &self.factory
     }
-    #[cfg(test)]
+    #[cfg(all(test, not(target_arch = "wasm32")))]
     pub fn used(&self) -> u64 {
         self.base.work_used()
     }
