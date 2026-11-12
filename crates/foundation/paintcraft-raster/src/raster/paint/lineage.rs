@@ -65,8 +65,18 @@ pub struct PaintReader<'a> {
     source: &'a PaintSnapshot,
     program: Option<&'a PaintProjection>,
     bounds: Rect,
-    chain: Vec<Frame<'a>>,
+    scratch: RetainedScratch<ReaderBuffers<'a>>,
+}
+/// A private reader's payload must retire before its original declaration wakes
+/// another caller. No new allocation, factory or resource authority is introduced.
+#[derive(Debug)]
+struct RetainedScratch<T> {
+    payload: T,
     charge: BudgetAccount,
+}
+#[derive(Debug)]
+struct ReaderBuffers<'a> {
+    chain: Vec<Frame<'a>>,
     positions: Option<std::sync::Mutex<Vec<(i64, i64)>>>,
 }
 #[derive(Debug)]
@@ -382,9 +392,13 @@ impl<'a> PaintReader<'a> {
                 source,
                 program,
                 bounds,
-                chain,
-                charge,
-                positions: None,
+                scratch: RetainedScratch {
+                    payload: ReaderBuffers {
+                        chain,
+                        positions: None,
+                    },
+                    charge,
+                },
             });
         }
         let mut metadata = metadata::Metadata::new(0, admission.paint_metadata_limit)?;
@@ -422,13 +436,14 @@ impl<'a> PaintReader<'a> {
             source,
             program,
             bounds,
-            chain,
-            charge,
-            positions,
+            scratch: RetainedScratch {
+                payload: ReaderBuffers { chain, positions },
+                charge,
+            },
         })
     }
     pub fn scratch_bytes(&self) -> u64 {
-        self.charge.bytes()
+        self.scratch.charge.bytes()
     }
     /// Potentially non-default tiles in the reader's own coordinate space.
     /// Entries can repeat across ordered programs; no decoded pixels are copied.
@@ -443,7 +458,7 @@ impl<'a> PaintReader<'a> {
                 emit(coord)?;
             }
         }
-        for frame in &self.chain {
+        for frame in &self.scratch.payload.chain {
             match &frame.node.data {
                 Data::Raster(raster) => {
                     for &coord in raster.tiles.keys() {
@@ -471,14 +486,14 @@ impl<'a> PaintReader<'a> {
     /// Outside the captured extent returns its implicit default, as RasterLayer::get.
     pub fn read_checked(&self, x: i64, y: i64, check: &dyn Fn() -> Result<()>) -> Result<Rgba> {
         check()?;
-        if self.chain.is_empty() || !self.bounds.contains(x, y) {
+        if self.scratch.payload.chain.is_empty() || !self.bounds.contains(x, y) {
             return Ok(self.source.default);
         }
-        if let Some(positions) = &self.positions {
+        if let Some(positions) = &self.scratch.payload.positions {
             return self.read_conditional(x, y, positions, check);
         }
         let mut pixel = self.source.default;
-        for frame in self.chain.iter().rev() {
+        for frame in self.scratch.payload.chain.iter().rev() {
             check()?;
             let node = frame.node;
             let (x, y) = frame.coordinates.pixel(x, y)?;
@@ -513,7 +528,7 @@ impl<'a> PaintReader<'a> {
         let mut at = (x, y);
         let mut end = 0;
         let mut pixel = self.source.default;
-        for (i, frame) in self.chain.iter().enumerate() {
+        for (i, frame) in self.scratch.payload.chain.iter().enumerate() {
             check()?;
             positions[i] = at;
             end = i + 1;
@@ -539,9 +554,13 @@ impl<'a> PaintReader<'a> {
         }
         for i in (0..end).rev() {
             check()?;
-            if let Data::Program(p) = &self.chain[i].node.data {
+            if let Data::Program(p) = &self.scratch.payload.chain[i].node.data {
                 let at = positions[i];
-                if self.chain[i].node.bounds.contains(at.0, at.1) {
+                if self.scratch.payload.chain[i]
+                    .node
+                    .bounds
+                    .contains(at.0, at.1)
+                {
                     pixel = p.read_checked(at.0, at.1, |_, _| Ok(pixel), check)?;
                 }
             }
@@ -552,3 +571,7 @@ impl<'a> PaintReader<'a> {
         Ok(pixel)
     }
 }
+
+#[cfg(test)]
+#[path = "lineage/retirement_tests.rs"]
+mod retirement_tests;
