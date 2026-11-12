@@ -201,3 +201,34 @@ This finite browser checkpoint does not establish numeric Main credit balances,
 all-resource admission, layer-style browser support, immediate physical Worker
 termination, allocator/RSS ceilings, latency or physical input qualification.
 It does not complete T04, T11 or the broader roadmap.
+
+## Returned mapped-reader retirement checkpoint
+
+A returned mapped reader now drops both its chain and optional coordinate scratch
+before releasing their original metadata account. Releasing this account
+notifies a waiting caller only after those owners retire. The private
+inline carrier adds no heap allocation, factory, fee or capacity; constructor
+failure paths and cancellation checkpoints remain unchanged.
+
+Four focused native regressions pass, and a separate Raster/Editor run passes
+642 tests with none ignored. The focused four are included in that broader run.
+The two-node conditional fixture needs **288 bytes**: each vector first reserves
+four slots, giving `4 × 56-byte Frame + 4 × 16-byte coordinates`. Exactly 288 free
+bytes succeed and 287 refuse under the same original 4,096-byte budget; a uniform
+reader still needs zero scratch. This is a fixture-specific demand, not a fixed
+fee for every reader. Safe wake/reentry witnesses establish owner retirement,
+not direct allocator deallocation or an RSS bound.
+
+Native and Wasm test-target compiler assertions preserve complete reader
+size/alignment against its prior defining fields. Strict native/Wasm Clippy and
+Raster/Editor rustdoc checks pass. Adjacent target-fixture repairs pass 13 native
+JXL tests (one existing ignored) and 30 appearance tests; they preserve native
+assertions and do not manufacture a browser result lease. Earlier failures and
+the initial zero-matching-test run remain archived, not counted as qualification.
+The [scoped aggregate receipt](validation/mapped-reader-retirement-root/root-final.json)
+is SHA-256 `c78c9c023a92eb446971f4713bdbda43d52fcaab765e588d2fbc4d9f725f74b3`.
+
+Wasm test compilation is not Wasm/browser execution. Earlier browser receipts
+remain tied to their pre-fix builds. Complete mapped/all-resource admission,
+other retained controls and services/GPU, physical memory and latency remain
+unfinished. T04 and T11 remain partial.
