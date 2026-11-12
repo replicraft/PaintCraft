@@ -56,20 +56,20 @@ impl Patch {
         })
     }
 }
-fn difference(outer: Rect, inner: Rect) -> Vec<Rect> {
-    let Some(i) = outer.intersect(&inner) else {
-        return vec![outer];
+fn difference(outer: Rect, inner: Rect) -> impl Iterator<Item = Rect> {
+    let pieces = if let Some(i) = outer.intersect(&inner) {
+        [
+            Rect::new(outer.x0, outer.y0, outer.width(), i.y0 - outer.y0),
+            Rect::new(outer.x0, i.y1, outer.width(), outer.y1 - i.y1),
+            Rect::new(outer.x0, i.y0, i.x0 - outer.x0, i.height()),
+            Rect::new(i.x1, i.y0, outer.x1 - i.x1, i.height()),
+        ]
+    } else {
+        [Some(outer), None, None, None]
     };
-    [
-        (outer.x0, outer.y0, outer.width(), i.y0 - outer.y0),
-        (outer.x0, i.y1, outer.width(), outer.y1 - i.y1),
-        (outer.x0, i.y0, i.x0 - outer.x0, i.height()),
-        (i.x1, i.y0, outer.x1 - i.x1, i.height()),
-    ]
-    .into_iter()
-    .filter_map(|(x, y, w, h)| Rect::new(x, y, w, h))
-    .collect()
+    pieces.into_iter().flatten()
 }
+
 fn transformed(s: sampling::Sampling, r: Rect) -> Rect {
     let a = s.target_pixel(r.x0, r.y0);
     let b = s.target_pixel(r.x1 - 1, r.y1 - 1);
@@ -506,3 +506,7 @@ fn keyed_paste_mask(
     )?;
     Ok((field, reads))
 }
+
+#[cfg(test)]
+#[path = "patch/difference_tests.rs"]
+mod difference_tests;
