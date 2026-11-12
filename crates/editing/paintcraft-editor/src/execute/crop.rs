@@ -1,7 +1,6 @@
 //! Destructive canvas crop with compiled, source-bound sparse pixel mappings.
 use super::*;
 use paintcraft_raster::CropPlan;
-use std::sync::Arc;
 const READS_MAX: u64 = 16_777_216;
 
 enum LayerCrop {
@@ -122,13 +121,13 @@ impl Stage<'_> {
                 LayerCrop::Clip(area) => {
                     let planning = self.planning.as_mut().expect("crops compile before replay");
                     let source = planning.snapshot(id, &layer.raster, &self.adm, self.check)?;
-                    let plan = Arc::new(CropPlan::prepare_limited(
+                    let plan = CropPlan::prepare_limited(
                         source,
                         area,
                         &self.adm,
                         READS_MAX - self.transform_reads,
                         self.check,
-                    )?);
+                    )?;
                     self.transform_reads += plan.source_reads();
                     let target = clipped_raster(&layer.raster, area);
                     planning.replace_mapping(

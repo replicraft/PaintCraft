@@ -15,7 +15,7 @@ pub(super) struct Paint {
 #[derive(Debug)]
 pub(super) enum CompiledPlan {
     Paint(paintcraft_raster::PreparedPaint),
-    Mapped(std::sync::Arc<paintcraft_raster::MappedPlan>),
+    Mapped(paintcraft_raster::MappedPlan),
 }
 #[derive(Debug)]
 struct Logical {
@@ -218,7 +218,7 @@ impl Compiler {
         &mut self,
         id: Uuid,
         target: &RasterLayer,
-        plan: std::sync::Arc<paintcraft_raster::MappedPlan>,
+        plan: paintcraft_raster::MappedPlan,
         operation: usize,
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,

@@ -4,7 +4,6 @@ use paintcraft_core::types::{
     orthogonal::OrthogonalTransform as Transform, policy::CANVAS_SIDE_MAX,
 };
 use paintcraft_raster::MappedPlan;
-use std::sync::Arc;
 #[derive(Clone)]
 pub(super) struct Geometry {
     pub(super) source: Rect,
@@ -163,14 +162,7 @@ impl Stage<'_> {
         }
         self.transform_reads += plan.source_reads();
         let target = RasterLayer::new(g.size.0, g.size.1, l.raster.default_pixel());
-        planning.replace_mapping(
-            id,
-            &target,
-            Arc::new(plan),
-            self.operation,
-            &self.adm,
-            self.check,
-        )?;
+        planning.replace_mapping(id, &target, plan, self.operation, &self.adm, self.check)?;
         self.install_selection_geometry(id, &g)?;
         Ok(())
     }

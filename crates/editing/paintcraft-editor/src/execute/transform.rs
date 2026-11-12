@@ -2,7 +2,6 @@
 use super::*;
 use paintcraft_core::types::orthogonal::OrthogonalTransform;
 use paintcraft_raster::MappedPlan;
-use std::sync::Arc;
 const READS_MAX: u64 = 16_777_216;
 
 fn origin(t: OrthogonalTransform, canvas: (u32, u32), extent: Rect) -> Result<(i64, i64)> {
@@ -111,13 +110,13 @@ impl Stage<'_> {
                 .as_mut()
                 .expect("transforms compile before replay");
             let source = planning.snapshot(id, &layer.raster, &self.adm, self.check)?;
-            let plan = Arc::new(MappedPlan::prepare_transform(
+            let plan = MappedPlan::prepare_transform(
                 source,
                 t,
                 &self.adm,
                 READS_MAX - self.transform_reads,
                 self.check,
-            )?);
+            )?;
             self.transform_reads += plan.source_reads();
             planning.replace_mapping(id, &target, plan, self.operation, &self.adm, self.check)?;
             let layer = self.doc.layers.get_mut(&id).unwrap();

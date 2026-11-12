@@ -3,7 +3,6 @@ use super::*;
 use paintcraft_core::types::stretch_skew::StretchSkew;
 use paintcraft_raster::selection::{BinaryMask, MaskLimits};
 use paintcraft_raster::{MappedPlan, StretchSkewMapping};
-use std::sync::Arc;
 fn bounds_limit() -> Error {
     Error::new(
         ErrorCode::ResourceLimit,
@@ -96,7 +95,7 @@ impl Stage<'_> {
                 planning.replace_mapping(
                     id,
                     &target,
-                    Arc::new(plan),
+                    plan,
                     self.operation,
                     &self.adm,
                     self.check,
@@ -172,14 +171,7 @@ impl Stage<'_> {
             self.check,
         )?;
         self.transform_reads += plan.source_reads();
-        planning.replace_mapping(
-            id,
-            &target,
-            Arc::new(plan),
-            self.operation,
-            &self.adm,
-            self.check,
-        )?;
+        planning.replace_mapping(id, &target, plan, self.operation, &self.adm, self.check)?;
         self.selection_geometries
             .push((self.operation, Some(geometry.clone())))?;
         self.install_selection_geometry(id, &geometry)

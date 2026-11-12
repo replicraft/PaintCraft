@@ -3,7 +3,6 @@ use super::selection_transform::Geometry;
 use super::*;
 use paintcraft_core::types::policy::CANVAS_SIDE_MAX;
 use paintcraft_raster::MappedPlan;
-use std::sync::Arc;
 
 impl Stage<'_> {
     fn moved_geometry(&mut self, id: Uuid, offset: (i64, i64)) -> Result<Option<Geometry>> {
@@ -134,14 +133,7 @@ impl Stage<'_> {
             geometry.size.1,
             layer.raster.default_pixel(),
         );
-        planning.replace_mapping(
-            id,
-            &target,
-            Arc::new(plan),
-            self.operation,
-            &self.adm,
-            self.check,
-        )?;
+        planning.replace_mapping(id, &target, plan, self.operation, &self.adm, self.check)?;
         self.install_selection_geometry(id, &geometry)?;
         Ok(())
     }
